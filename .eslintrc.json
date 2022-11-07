@@ -1,3 +1,9 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/strict"],
+  "rules": {
+    "@typescript-eslint/consistent-type-definitions": ["error", "type"]
+  },
+  "parserOptions": {
+    "project": ["./tsconfig.json"]
+  }
 }
