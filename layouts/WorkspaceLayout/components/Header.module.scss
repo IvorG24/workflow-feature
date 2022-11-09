@@ -3,6 +3,13 @@
   align-items: center;
 }
 
+.inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .darkmodeToggle {
   font-size: 16px;
 }
