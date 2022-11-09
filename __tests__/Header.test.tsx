@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import Header from "../components/Layout/WorkspaceLayout/WorkspaceLayout";
+import Header from "components/Layout/WorkspaceLayout/WorkspaceLayout";
 
 const setup = () => {
-  render(<Header>sadasdsa</Header>);
+  render(<Header>sadasdsas</Header>);
 };
 
 // mock mantine
@@ -15,12 +15,12 @@ jest.mock("@mantine/core", () => ({
 }));
 
 describe("header", () => {
-  test("renders a logo", () => {
+  it("renders a logo", () => {
     setup();
     expect(screen.getByRole("img", { name: /logo/i }));
   });
 
-  test("renders a dark mode toggler", () => {
+  it("renders a dark mode toggler", () => {
     setup();
     expect(screen.getByRole("button", { name: /toggle dark mode/i }));
   });

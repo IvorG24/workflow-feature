@@ -1,10 +1,8 @@
 import { Header as MantineHeader } from "@mantine/core";
-import Image from "next/image";
 import { Container } from "@mantine/core";
-import styles from "./Header.module.css";
-import Sun from "../../../Icons/Sun";
-import MoonStars from "../../../Icons/MoonStars";
+import styles from "./Header.module.scss";
 import { ActionIcon, useMantineColorScheme } from "@mantine/core";
+import Image from "next/image";
 
 const Header = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -18,12 +16,17 @@ const Header = () => {
           width={150}
           height={48}
         />
-        <ActionIcon
-          variant="default"
-          onClick={() => toggleColorScheme()}
-          aria-label="toggle dark mode"
-        >
-          {colorScheme === "dark" ? <MoonStars /> : <Sun />}
+        <ActionIcon variant="default" onClick={() => toggleColorScheme()}>
+          <Image
+            src={
+              colorScheme === "dark"
+                ? "/icons/moon-stars-light.png"
+                : "/icons/sun-dark.png"
+            }
+            alt="toggle dark mode"
+            width={20}
+            height={20}
+          />
         </ActionIcon>
       </Container>
     </MantineHeader>
