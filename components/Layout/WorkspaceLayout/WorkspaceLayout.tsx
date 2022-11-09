@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { AppShell } from "@mantine/core";
-import Header from "./components/Header";
+import Header from "./Header/Header";
 
 type Props = {
   children: ReactNode;

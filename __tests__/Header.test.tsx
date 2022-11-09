@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import Header from "../components/layouts/WorkspaceLayout/WorkspaceLayout";
+import Header from "../components/Layout/WorkspaceLayout/WorkspaceLayout";
 
 const setup = () => {
   render(<Header>sadasdsa</Header>);

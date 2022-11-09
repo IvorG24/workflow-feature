@@ -2,7 +2,8 @@ import { Header as MantineHeader } from "@mantine/core";
 import Image from "next/image";
 import { Container } from "@mantine/core";
 import styles from "./Header.module.css";
-import { Sun, MoonStars } from "components/icons";
+import Sun from "../../../Icons/Sun";
+import MoonStars from "../../../Icons/MoonStars";
 import { ActionIcon, useMantineColorScheme } from "@mantine/core";
 
 const Header = () => {
