@@ -1,4 +1,4 @@
-import WorkspaceLayout from "layouts/WorkspaceLayout/WorkspaceLayout";
+import WorkspaceLayout from "../components/layouts/WorkspaceLayout/WorkspaceLayout";
 
 const test = () => {
   return (
