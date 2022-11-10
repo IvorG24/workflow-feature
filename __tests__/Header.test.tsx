@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import Header from "components/Layout/WorkspaceLayout/WorkspaceLayout";
+import Navbar from "components/Layout/WorkspaceLayout/Navbar/Navbar";
 
 const setup = () => {
-  render(<Header>sadasdsas</Header>);
+  render(<Navbar />);
 };
 
 // mock mantine
