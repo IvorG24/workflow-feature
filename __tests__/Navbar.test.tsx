@@ -17,11 +17,20 @@ jest.mock("@mantine/core", () => ({
 describe("header", () => {
   it("renders a logo", () => {
     setup();
-    expect(screen.getByRole("img", { name: /logo/i }));
+    expect(screen.getByRole("img", { name: /logo/i })).toBeInTheDocument();
   });
 
   it("renders a dark mode toggler", () => {
     setup();
-    expect(screen.getByRole("button", { name: /toggle dark mode/i }));
+    expect(
+      screen.getByRole("button", { name: /toggle dark mode/i })
+    ).toBeInTheDocument();
+  });
+
+  it("renders a workspaces dropdown", () => {
+    setup();
+    expect(
+      screen.getByRole("searchbox", { name: /workspace/i })
+    ).toBeInTheDocument();
   });
 });
