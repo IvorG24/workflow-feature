@@ -33,4 +33,28 @@ describe("header", () => {
       screen.getByRole("searchbox", { name: /workspace/i })
     ).toBeInTheDocument();
   });
+
+  it("renders a link to dashboard", () => {
+    setup();
+    const link = screen.getByRole("link", { name: /dashboard/i });
+    expect(link).toHaveAttribute("href", "/dashboard");
+  });
+
+  it("renders a link to requests", () => {
+    setup();
+    const link = screen.getByRole("link", { name: /requests/i });
+    expect(link).toHaveAttribute("href", "/requests");
+  });
+
+  it("renders a link to forms", () => {
+    setup();
+    const link = screen.getByRole("link", { name: /forms/i });
+    expect(link).toHaveAttribute("href", "/forms");
+  });
+
+  it("renders a link to team", () => {
+    setup();
+    const link = screen.getByRole("link", { name: /team/i });
+    expect(link).toHaveAttribute("href", "/team");
+  });
 });
