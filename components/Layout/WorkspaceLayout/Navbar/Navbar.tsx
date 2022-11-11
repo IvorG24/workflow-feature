@@ -15,7 +15,6 @@ import {
   Title,
 } from "@mantine/core";
 import Icon from "components/Icon/Icon";
-import styles from "./Navbar.module.scss";
 
 const WORKSPACES = [
   { value: "Acme Corporation", label: "Acme Corporation" },

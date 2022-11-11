@@ -1,9 +1,10 @@
 import WorkspaceLayout from "components/Layout/WorkspaceLayout/WorkspaceLayout";
+import { Text } from "@mantine/core";
 
 const test = () => {
   return (
     <WorkspaceLayout>
-      <div>Test</div>
+      <Text color="green">Test</Text>
     </WorkspaceLayout>
   );
 };

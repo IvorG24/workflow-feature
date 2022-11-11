@@ -12,7 +12,7 @@ import {
   ColorScheme,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import mantineTheme from "utils/mantineTheme";
+import getMantineTheme from "utils/getMantineTheme";
 
 export default function App({
   Component,
@@ -38,7 +38,7 @@ export default function App({
         withGlobalStyles
         withNormalizeCSS
         withCSSVariables
-        theme={{ colorScheme, ...mantineTheme }}
+        theme={{ colorScheme, ...getMantineTheme(colorScheme) }}
       >
         <SessionContextProvider
           supabaseClient={createClient}
