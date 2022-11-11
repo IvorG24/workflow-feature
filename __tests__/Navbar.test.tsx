@@ -57,4 +57,17 @@ describe("header", () => {
     const link = screen.getByRole("link", { name: /team/i });
     expect(link).toHaveAttribute("href", "/team");
   });
+
+  it("renders a notifications button", () => {
+    setup();
+    expect(
+      screen.getByRole("button", { name: /notifications/i })
+    ).toBeInTheDocument();
+  });
+
+  it("renders a link to settings", () => {
+    setup();
+    const link = screen.getByRole("link", { name: /settings/i });
+    expect(link).toHaveAttribute("href", "/settings");
+  });
 });

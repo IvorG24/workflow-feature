@@ -4,6 +4,7 @@ import {
   Select,
   Avatar,
   NavLink,
+  Stack,
 } from "@mantine/core";
 import Image from "next/image";
 import {
@@ -11,6 +12,7 @@ import {
   useMantineColorScheme,
   Divider,
   Group,
+  Title,
 } from "@mantine/core";
 import Icon from "components/Icon/Icon";
 import styles from "./Navbar.module.scss";
@@ -38,11 +40,7 @@ const Navbar = () => {
             width={150}
             height={48}
           />
-          <ActionIcon
-            variant="default"
-            onClick={() => toggleColorScheme()}
-            className={styles.icon}
-          >
+          <ActionIcon variant="default" onClick={() => toggleColorScheme()}>
             <Image
               src={
                 colorScheme === "dark"
@@ -119,6 +117,42 @@ const Navbar = () => {
               width={24}
               height={24}
               alt="team"
+            />
+          }
+        />
+      </MantineNavbar.Section>
+
+      <Divider mt="xs" />
+
+      <MantineNavbar.Section mt="lg">
+        <Title order={2} size={14} weight={400}>
+          Account
+        </Title>
+
+        <NavLink
+          component="button"
+          label="Notifications"
+          mt="xs"
+          icon={
+            <Icon
+              src={`/icons/notifications-${colorScheme}.png`}
+              width={24}
+              height={24}
+              alt="notifications"
+            />
+          }
+        />
+
+        <NavLink
+          component="a"
+          href="/settings"
+          label="Settings"
+          icon={
+            <Icon
+              src={`/icons/settings-${colorScheme}.png`}
+              width={24}
+              height={24}
+              alt="settings"
             />
           }
         />
