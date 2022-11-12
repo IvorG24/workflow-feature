@@ -13,13 +13,21 @@ import {
   Title,
   Button,
 } from "@mantine/core";
+import SelectItem from "components/SelectItem/SelectItem";
 import Image from "next/image";
-import Icon from "components/Icon/Icon";
 import styles from "./Navbar.module.scss";
 
 const WORKSPACES = [
-  { value: "Acme Corporation", label: "Acme Corporation" },
-  { value: "Wonka Industries", label: "Wonka Industries" },
+  {
+    image: "",
+    value: "Acme Corporation",
+    label: "Acme Corporation",
+  },
+  {
+    image: "",
+    value: "Wonka Industries",
+    label: "Wonka Industries",
+  },
 ];
 
 const Navbar = () => {
@@ -28,6 +36,9 @@ const Navbar = () => {
     string | null
   >(WORKSPACES[0].value);
 
+  const selectedWorkspace = WORKSPACES.find(
+    (workspace) => workspace.value === workspaceDropdownValue
+  );
   return (
     <MantineNavbar
       width={{ base: 300 }}
@@ -67,8 +78,9 @@ const Navbar = () => {
         label="Workspace"
         value={workspaceDropdownValue}
         data={WORKSPACES}
+        itemComponent={SelectItem}
         onChange={(val) => setWorkspaceDropdownValue(val)}
-        icon={<Avatar radius="xl" size="sm" />}
+        icon={<Avatar src={selectedWorkspace?.image} radius="xl" size="sm" />}
         size="md"
         styles={{
           label: {
@@ -83,7 +95,7 @@ const Navbar = () => {
           href="/dashboard"
           label="Dashboard"
           icon={
-            <Icon
+            <Image
               src={`/icons/dashboard-${colorScheme}.png`}
               width={24}
               height={24}
@@ -96,7 +108,7 @@ const Navbar = () => {
           href="/requests"
           label="Requests"
           icon={
-            <Icon
+            <Image
               src={`/icons/edit-document-${colorScheme}.png`}
               width={24}
               height={24}
@@ -104,7 +116,12 @@ const Navbar = () => {
             />
           }
           rightSection={
-            <ActionIcon component="button" onClick={(e) => e.preventDefault()}>
+            <ActionIcon
+              variant="subtle"
+              component="button"
+              onClick={(e) => e.preventDefault()}
+              className={styles.createRequestButton}
+            >
               <Image
                 src={
                   colorScheme === "dark"
@@ -123,7 +140,7 @@ const Navbar = () => {
           href="/forms"
           label="Forms"
           icon={
-            <Icon
+            <Image
               src={`/icons/description-${colorScheme}.png`}
               width={24}
               height={24}
@@ -136,7 +153,7 @@ const Navbar = () => {
           href="/team"
           label="Team"
           icon={
-            <Icon
+            <Image
               src={`/icons/group-${colorScheme}.png`}
               width={24}
               height={24}
@@ -149,7 +166,7 @@ const Navbar = () => {
       <Divider mt="xs" />
 
       <MantineNavbar.Section mt="lg">
-        <Title order={2} size={14} weight={400}>
+        <Title order={2} size={14} weight={400} color="dimmed">
           Account
         </Title>
 
@@ -159,7 +176,7 @@ const Navbar = () => {
             label="Notifications"
             mt="xs"
             icon={
-              <Icon
+              <Image
                 src={`/icons/notifications-${colorScheme}.png`}
                 width={24}
                 height={24}
@@ -180,7 +197,7 @@ const Navbar = () => {
           href="/settings"
           label="Settings"
           icon={
-            <Icon
+            <Image
               src={`/icons/settings-${colorScheme}.png`}
               width={24}
               height={24}
@@ -203,7 +220,7 @@ const Navbar = () => {
           color="red"
           fullWidth
           leftIcon={
-            <Icon
+            <Image
               src={`/icons/logout-red.png`}
               width={20}
               height={20}

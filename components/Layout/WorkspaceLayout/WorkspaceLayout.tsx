@@ -7,7 +7,11 @@ type Props = {
 };
 
 const WorkspaceLayout = ({ children }: Props) => {
-  return <AppShell navbar={<Navbar />}>{children}</AppShell>;
+  return (
+    <AppShell navbar={<Navbar />}>
+      <main>{children}</main>
+    </AppShell>
+  );
 };
 
 export default WorkspaceLayout;
