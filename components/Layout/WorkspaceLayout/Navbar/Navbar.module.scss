@@ -1,3 +1,14 @@
-.icon {
-  opacity: 0.7;
+.notificationsButtonWrapper {
+  position: relative;
+
+  &__badge {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 1rem;
+  }
+}
+
+.footer {
+  margin-top: auto;
 }

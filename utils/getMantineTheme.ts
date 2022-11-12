@@ -16,7 +16,15 @@ const getMantineTheme = (colorScheme: ColorScheme): MantineThemeOverride => ({
     Text: {
       defaultProps: {
         color: colorScheme === "dark" ? "dark.0" : "dark.3",
+        size: "sm",
       },
+    },
+    InputWrapper: {
+      styles: () => ({
+        label: {
+          color: colorScheme === "dark" ? "dark.0" : "dark.6",
+        },
+      }),
     },
   },
 });

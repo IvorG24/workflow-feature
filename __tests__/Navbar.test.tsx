@@ -17,21 +17,20 @@ jest.mock("@mantine/core", () => ({
 describe("header", () => {
   it("renders a logo", () => {
     setup();
-    expect(screen.getByRole("img", { name: /logo/i })).toBeInTheDocument();
+    const logo = screen.getByRole("img", { name: "logo" });
+    expect(logo).toBeInTheDocument();
   });
 
   it("renders a dark mode toggler", () => {
     setup();
-    expect(
-      screen.getByRole("button", { name: /toggle dark mode/i })
-    ).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "toggle dark mode" });
+    expect(button).toBeInTheDocument();
   });
 
   it("renders a workspaces dropdown", () => {
     setup();
-    expect(
-      screen.getByRole("searchbox", { name: /workspace/i })
-    ).toBeInTheDocument();
+    const searchbox = screen.getByRole("searchbox", { name: /workspace/i });
+    expect(searchbox).toBeInTheDocument();
   });
 
   it("renders a link to dashboard", () => {
@@ -60,14 +59,25 @@ describe("header", () => {
 
   it("renders a notifications button", () => {
     setup();
-    expect(
-      screen.getByRole("button", { name: /notifications/i })
-    ).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: /notifications/i });
+    expect(button).toBeInTheDocument();
   });
 
   it("renders a link to settings", () => {
     setup();
     const link = screen.getByRole("link", { name: /settings/i });
     expect(link).toHaveAttribute("href", "/settings");
+  });
+
+  it("renders a link to view profile", () => {
+    setup();
+    const link = screen.getByRole("link", { name: /view profile/i });
+    expect(link).toHaveAttribute("href", "/profile");
+  });
+
+  it("renders a logout button", () => {
+    setup();
+    const button = screen.getByRole("button", { name: /logout/i });
+    expect(button).toBeInTheDocument();
   });
 });
