@@ -103,6 +103,20 @@ const Navbar = () => {
               alt="requests"
             />
           }
+          rightSection={
+            <ActionIcon component="button" onClick={(e) => e.preventDefault()}>
+              <Image
+                src={
+                  colorScheme === "dark"
+                    ? "/icons/add-circle-dark.png"
+                    : "/icons/add-circle-light.png"
+                }
+                alt="create a request"
+                width={20}
+                height={20}
+              />
+            </ActionIcon>
+          }
         />
         <NavLink
           component="a"

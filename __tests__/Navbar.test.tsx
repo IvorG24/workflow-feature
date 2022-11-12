@@ -45,6 +45,12 @@ describe("header", () => {
     expect(link).toHaveAttribute("href", "/requests");
   });
 
+  it("renders a create a request button", () => {
+    setup();
+    const button = screen.getByRole("button", { name: /create a request/i });
+    expect(button).toBeInTheDocument();
+  });
+
   it("renders a link to forms", () => {
     setup();
     const link = screen.getByRole("link", { name: /forms/i });
