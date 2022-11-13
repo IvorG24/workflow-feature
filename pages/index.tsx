@@ -1,6 +1,7 @@
-import type { NextPage } from "next";
-import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
+import { Container } from "@mantine/core";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
+import type { NextPage } from "next";
 import Account from "../components/Account";
 
 const Home: NextPage = () => {
@@ -8,7 +9,7 @@ const Home: NextPage = () => {
   const supabase = useSupabaseClient();
 
   return (
-    <div className="container" style={{ padding: "50px 0 100px 0" }}>
+    <Container>
       {!session ? (
         <Auth
           supabaseClient={supabase}
@@ -18,7 +19,7 @@ const Home: NextPage = () => {
       ) : (
         <Account session={session} />
       )}
-    </div>
+    </Container>
   );
 };
 

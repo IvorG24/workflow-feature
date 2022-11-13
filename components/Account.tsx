@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
 import {
-  useUser,
-  useSupabaseClient,
   Session,
+  useSupabaseClient,
+  useUser,
 } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
 import { Database } from "../utils/database.types";
 import Avatar from "./Avatar";
 type Profiles = Database["public"]["Tables"]["profiles"]["Row"];
@@ -25,7 +25,7 @@ export default function Account({ session }: { session: Session }) {
       setLoading(true);
       if (!user) throw new Error("No user");
 
-      let { data, error, status } = await supabase
+      const { data, error, status } = await supabase
         .from("profiles")
         .select(`username, website, avatar_url`)
         .eq("id", user.id)
@@ -69,7 +69,7 @@ export default function Account({ session }: { session: Session }) {
         updated_at: new Date().toISOString(),
       };
 
-      let { error } = await supabase.from("profiles").upsert(updates);
+      const { error } = await supabase.from("profiles").upsert(updates);
       if (error) throw error;
       alert("Profile updated!");
     } catch (error) {

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Database } from "../utils/database.types";
 import Image from "next/image";
+import React, { useEffect, useState } from "react";
+import { Database } from "../utils/database.types";
 type Profiles = Database["public"]["Tables"]["profiles"]["Row"];
 
 export default function Avatar({
@@ -53,7 +53,7 @@ export default function Avatar({
       const fileName = `${uid}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      let { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true });
 

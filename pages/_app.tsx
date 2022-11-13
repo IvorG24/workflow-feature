@@ -1,8 +1,7 @@
-import "../styles/globals.css";
+import { MantineProvider } from "@mantine/core";
+import { Session, SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { SessionContextProvider, Session } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import "../styles/globals.css";
 import createClient from "../utils/supabase";
 
 export default function App({
@@ -10,11 +9,13 @@ export default function App({
   pageProps,
 }: AppProps<{ initialSession: Session }>) {
   return (
-    <SessionContextProvider
-      supabaseClient={createClient}
-      initialSession={pageProps.initialSession}
-    >
-      <Component {...pageProps} />;
-    </SessionContextProvider>
+    <MantineProvider withGlobalStyles withNormalizeCSS>
+      <SessionContextProvider
+        supabaseClient={createClient}
+        initialSession={pageProps.initialSession}
+      >
+        <Component {...pageProps} />;
+      </SessionContextProvider>
+    </MantineProvider>
   );
 }
