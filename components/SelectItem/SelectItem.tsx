@@ -1,5 +1,5 @@
+import { Avatar, Group, Text } from "@mantine/core";
 import { forwardRef } from "react";
-import { Group, Text, Avatar } from "@mantine/core";
 
 // ref: https://mantine.dev/core/select/#custom-item-component
 //  need to use interface to use extend
@@ -18,9 +18,11 @@ const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
         <Avatar src={image} size="sm" radius="xl" />
         <div>
           <Text size="sm">{label}</Text>
-          {/* <Text size="xs" color="dimmed">
-            {description}
-          </Text> */}
+          {description && (
+            <Text size="xs" color="dimmed">
+              {description}
+            </Text>
+          )}
         </div>
       </Group>
     </div>

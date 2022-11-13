@@ -1,5 +1,5 @@
+import Navbar from "@/components/Navbar/Navbar";
 import { render, screen } from "@testing-library/react";
-import Navbar from "components/Layout/WorkspaceLayout/Navbar/Navbar";
 
 const setup = () => {
   render(<Navbar />);

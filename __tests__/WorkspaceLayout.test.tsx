@@ -1,4 +1,4 @@
-import WorkspaceLayout from "components/Layout/WorkspaceLayout/WorkspaceLayout";
+import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {

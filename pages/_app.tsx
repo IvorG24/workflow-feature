@@ -1,23 +1,29 @@
+import getMantineTheme from "@/utils/getMantineTheme";
 import createClient from "@/utils/supabase";
-import { MantineProvider } from "@mantine/core";
-import { Session, SessionContextProvider } from "@supabase/auth-helpers-react";
-import type { AppProps } from "next/app";
-import "../styles/globals.css";
-import type { AppProps } from "next/app";
-import { SessionContextProvider, Session } from "@supabase/auth-helpers-react";
-import createClient from "../utils/supabase";
 import {
-  MantineProvider,
-  ColorSchemeProvider,
   ColorScheme,
+  ColorSchemeProvider,
+  MantineProvider,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import getMantineTheme from "utils/getMantineTheme";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import type { AppProps } from "next/app";
+import { NextPage } from "next/types";
+import { ReactElement, ReactNode } from "react";
+import "../styles/globals.css";
 
-export default function App({
-  Component,
-  pageProps,
-}: AppProps<{ initialSession: Session }>) {
+// #todo: implement better typing but I think it's okay because it's from the docs
+// https://nextjs.org/docs/basic-features/layouts
+// eslint-disable-next-line
+export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode;
+};
+
+type AppPropsWithLayout = AppProps & {
+  Component: NextPageWithLayout;
+};
+
+export default function App({ Component, pageProps }: AppPropsWithLayout) {
   // save theme to local storage
   // ref: https://mantine.dev/guides/dark-theme/
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
@@ -28,6 +34,8 @@ export default function App({
 
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value ?? (colorScheme === "dark" ? "light" : "dark"));
+
+  const getLayout = Component.getLayout ?? ((page) => page);
 
   return (
     <ColorSchemeProvider
@@ -44,7 +52,7 @@ export default function App({
           supabaseClient={createClient}
           initialSession={pageProps.initialSession}
         >
-          <Component {...pageProps} />
+          {getLayout(<Component {...pageProps} />)}
         </SessionContextProvider>
       </MantineProvider>
     </ColorSchemeProvider>

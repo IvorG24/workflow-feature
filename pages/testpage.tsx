@@ -1,12 +1,25 @@
-import WorkspaceLayout from "components/Layout/WorkspaceLayout/WorkspaceLayout";
+// this page was just used to test layout, you can delete it if you want
+import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import Meta from "@/components/Meta/Meta";
 import { Text } from "@mantine/core";
+import { ReactElement } from "react";
+import type { NextPageWithLayout } from "./_app";
 
-const test = () => {
+const Page: NextPageWithLayout = () => {
   return (
-    <WorkspaceLayout>
+    <div>
+      <Meta
+        description="Test page used for testing layout"
+        // this is just a temporary url, canoncial url will be set in the future
+        url="localhost:3000/testpage"
+      />
       <Text color="green">Test</Text>
-    </WorkspaceLayout>
+    </div>
   );
 };
 
-export default test;
+Page.getLayout = function getLayout(page: ReactElement) {
+  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+};
+
+export default Page;

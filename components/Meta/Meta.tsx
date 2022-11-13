@@ -10,7 +10,7 @@ type Props = {
   url: string;
   image?: string;
   // #todo: there can be more types of og:type
-  type: "article" | "website";
+  type?: "article" | "website";
 };
 
 const Meta = ({

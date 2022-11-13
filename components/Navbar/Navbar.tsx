@@ -1,20 +1,20 @@
-import { useState } from "react";
+import SelectItem from "@/components/SelectItem/SelectItem";
 import {
-  Navbar as MantineNavbar,
-  Select,
-  Avatar,
-  NavLink,
-  Badge,
-  Container,
   ActionIcon,
-  useMantineColorScheme,
+  Avatar,
+  Badge,
+  Button,
+  Container,
   Divider,
   Group,
+  Navbar as MantineNavbar,
+  NavLink,
+  Select,
   Title,
-  Button,
+  useMantineColorScheme,
 } from "@mantine/core";
-import SelectItem from "components/SelectItem/SelectItem";
 import Image from "next/image";
+import { useState } from "react";
 import styles from "./Navbar.module.scss";
 
 const WORKSPACES = [
