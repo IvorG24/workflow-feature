@@ -1,8 +1,8 @@
+import Account from "@/components/Account/Account";
 import { Container } from "@mantine/core";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
 import type { NextPage } from "next";
-import Account from "../components/Account";
 
 const Home: NextPage = () => {
   const session = useSession();
