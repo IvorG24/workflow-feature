@@ -15,6 +15,18 @@ import {
 } from "@mantine/core";
 import Image from "next/image";
 import { useState } from "react";
+import {
+  AddCircle,
+  Dashboard,
+  Description,
+  EditDocument,
+  Group as GroupIcon,
+  Logout,
+  Moon,
+  Notifications,
+  Settings,
+  Sun,
+} from "../Icon";
 import styles from "./Navbar.module.scss";
 
 const WORKSPACES = [
@@ -39,6 +51,10 @@ const Navbar = () => {
   const selectedWorkspace = WORKSPACES.find(
     (workspace) => workspace.value === workspaceDropdownValue
   );
+
+  const iconStyle =
+    colorScheme === "dark" ? `${styles.icon} ${styles.iconLight}` : styles.icon;
+
   return (
     <MantineNavbar
       width={{ base: 300 }}
@@ -49,24 +65,18 @@ const Navbar = () => {
       <MantineNavbar.Section>
         <Group position="apart">
           <Image
-            src={`/images/logo-${
-              colorScheme === "dark" ? "light" : "dark"
-            }.png`}
+            src={`/image/logo-${colorScheme === "dark" ? "light" : "dark"}.png`}
             alt="logo"
             width={150}
             height={48}
           />
-          <ActionIcon variant="default" onClick={() => toggleColorScheme()}>
-            <Image
-              src={
-                colorScheme === "dark"
-                  ? "/icons/moon-dark.png"
-                  : "/icons/sun-light.png"
-              }
-              alt="toggle dark mode"
-              width={20}
-              height={20}
-            />
+          <ActionIcon
+            variant="default"
+            onClick={() => toggleColorScheme()}
+            className={styles.darkModeToggler}
+          >
+            {colorScheme === "dark" && <Sun />}
+            {colorScheme === "light" && <Moon />}
           </ActionIcon>
         </Group>
       </MantineNavbar.Section>
@@ -95,43 +105,27 @@ const Navbar = () => {
           href="/dashboard"
           label="Dashboard"
           icon={
-            <Image
-              src={`/icons/dashboard-${colorScheme}.png`}
-              width={24}
-              height={24}
-              alt="dashboard"
-            />
+            <div className={iconStyle}>
+              <Dashboard />
+            </div>
           }
         />
         <NavLink
           component="a"
           href="/requests"
           label="Requests"
-          icon={
-            <Image
-              src={`/icons/edit-document-${colorScheme}.png`}
-              width={24}
-              height={24}
-              alt="requests"
-            />
-          }
+          className={iconStyle}
+          icon={<EditDocument />}
           rightSection={
             <ActionIcon
               variant="subtle"
               component="button"
               onClick={(e) => e.preventDefault()}
-              className={styles.createRequestButton}
+              className={`${styles.createRequestButton} ${
+                colorScheme === "dark" ? styles.iconLight : ""
+              }`}
             >
-              <Image
-                src={
-                  colorScheme === "dark"
-                    ? "/icons/add-circle-dark.png"
-                    : "/icons/add-circle-light.png"
-                }
-                alt="create a request"
-                width={20}
-                height={20}
-              />
+              <AddCircle />
             </ActionIcon>
           }
         />
@@ -140,12 +134,9 @@ const Navbar = () => {
           href="/forms"
           label="Forms"
           icon={
-            <Image
-              src={`/icons/description-${colorScheme}.png`}
-              width={24}
-              height={24}
-              alt="forms"
-            />
+            <div className={iconStyle}>
+              <Description />
+            </div>
           }
         />
         <NavLink
@@ -153,12 +144,9 @@ const Navbar = () => {
           href="/team"
           label="Team"
           icon={
-            <Image
-              src={`/icons/group-${colorScheme}.png`}
-              width={24}
-              height={24}
-              alt="team"
-            />
+            <div className={iconStyle}>
+              <GroupIcon />
+            </div>
           }
         />
       </MantineNavbar.Section>
@@ -176,12 +164,9 @@ const Navbar = () => {
             label="Notifications"
             mt="xs"
             icon={
-              <Image
-                src={`/icons/notifications-${colorScheme}.png`}
-                width={24}
-                height={24}
-                alt="notifications"
-              />
+              <div className={iconStyle}>
+                <Notifications />
+              </div>
             }
           />
           <Badge
@@ -197,12 +182,9 @@ const Navbar = () => {
           href="/settings"
           label="Settings"
           icon={
-            <Image
-              src={`/icons/settings-${colorScheme}.png`}
-              width={24}
-              height={24}
-              alt="settings"
-            />
+            <div className={iconStyle}>
+              <Settings />
+            </div>
           }
         />
       </MantineNavbar.Section>
@@ -213,19 +195,20 @@ const Navbar = () => {
           href="/profile"
           label="Mary Joy Dumancal"
           description="View Profile"
-          icon={<Avatar radius="xl" />}
+          icon={
+            <div className={iconStyle}>
+              <Avatar radius="xl" />
+            </div>
+          }
         />
         <Button
           variant="light"
           color="red"
           fullWidth
           leftIcon={
-            <Image
-              src={`/icons/logout-red.png`}
-              width={20}
-              height={20}
-              alt="logout"
-            />
+            <div className={styles.logoutButton__icon}>
+              <Logout />
+            </div>
           }
         >
           Logout

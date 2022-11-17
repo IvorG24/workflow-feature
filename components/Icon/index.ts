@@ -1,1 +1,10 @@
+export { default as AddCircle } from "./AddCircle";
+export { default as Dashboard } from "./Dashboard";
+export { default as Description } from "./Description";
+export { default as EditDocument } from "./EditDocument";
+export { default as Group } from "./Group";
+export { default as Logout } from "./Logout";
 export { default as Moon } from "./Moon";
+export { default as Notifications } from "./Notifications";
+export { default as Settings } from "./Settings";
+export { default as Sun } from "./Sun";
