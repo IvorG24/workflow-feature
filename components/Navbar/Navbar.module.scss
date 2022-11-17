@@ -9,6 +9,12 @@
   &:hover {
     background-color: var(--mantine-color-gray-2);
   }
+
+  &__darkMode {
+    &:hover {
+      background-color: var(--mantine-color-gray-8);
+    }
+  }
 }
 
 .notificationsButtonWrapper {
@@ -37,9 +43,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--mantine-color-gray-8);
+  color: var(--mantine-color-dark-6);
 }
 
-.iconLight {
-  color: #fff;
+.colorLight {
+  color: var(--mantine-color-dark-0);
 }

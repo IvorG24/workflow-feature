@@ -52,8 +52,9 @@ const Navbar = () => {
     (workspace) => workspace.value === workspaceDropdownValue
   );
 
-  const iconStyle =
-    colorScheme === "dark" ? `${styles.icon} ${styles.iconLight}` : styles.icon;
+  const iconStyle = `${styles.icon} ${
+    colorScheme === "dark" ? styles.colorLight : ""
+  }`;
 
   return (
     <MantineNavbar
@@ -65,7 +66,7 @@ const Navbar = () => {
       <MantineNavbar.Section>
         <Group position="apart">
           <Image
-            src={`/image/logo-${colorScheme === "dark" ? "light" : "dark"}.png`}
+            src={`/image/logo-${colorScheme}.png`}
             alt="logo"
             width={150}
             height={48}
@@ -75,8 +76,7 @@ const Navbar = () => {
             onClick={() => toggleColorScheme()}
             className={styles.darkModeToggler}
           >
-            {colorScheme === "dark" && <Sun />}
-            {colorScheme === "light" && <Moon />}
+            {colorScheme === "dark" ? <Sun /> : <Moon />}
           </ActionIcon>
         </Group>
       </MantineNavbar.Section>
@@ -122,7 +122,9 @@ const Navbar = () => {
               component="button"
               onClick={(e) => e.preventDefault()}
               className={`${styles.createRequestButton} ${
-                colorScheme === "dark" ? styles.iconLight : ""
+                colorScheme === "dark"
+                  ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                  : ""
               }`}
             >
               <AddCircle />
