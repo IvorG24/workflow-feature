@@ -6,15 +6,15 @@ import {
   useUser,
 } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
-type Profiles = Database["public"]["Tables"]["profiles"]["Row"];
+type UserProfile = Database["public"]["Tables"]["user_profile"]["Row"];
 
 export default function Account({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>();
   const user = useUser();
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState<Profiles["username"]>(null);
-  const [website, setWebsite] = useState<Profiles["website"]>(null);
-  const [avatar_url, setAvatarUrl] = useState<Profiles["avatar_url"]>(null);
+  const [username, setUsername] = useState<UserProfile["username"]>(null);
+  const [avatar_url, setAvatarUrl] = useState<UserProfile["avatar_url"]>(null);
+  const [fullname, setFullname] = useState<UserProfile["full_name"]>(null);
 
   useEffect(() => {
     getProfile();
@@ -26,10 +26,30 @@ export default function Account({ session }: { session: Session }) {
       if (!user) throw new Error("No user");
 
       const { data, error, status } = await supabase
-        .from("profiles")
-        .select(`username, website, avatar_url`)
+        .from("user_profile")
+        .select(`username, full_name, avatar_url`)
         .eq("id", user.id)
         .single();
+
+      if (!data) {
+        // if no data, initialize a user_profile for current user
+        // id
+        // updated_at - no need since DEFAULT NOW() is used
+        // username
+        // full_name
+        // avatar_url
+        console.log(user);
+        const { error } = await supabase.from("user_profile").insert({
+          id: user.id,
+          username: "",
+          full_name: "",
+          avatar_url: "",
+        });
+        if (error) {
+          console.log(error);
+        }
+        console.log("success");
+      }
 
       if (error && status !== 406) {
         throw error;
@@ -37,7 +57,7 @@ export default function Account({ session }: { session: Session }) {
 
       if (data) {
         setUsername(data.username);
-        setWebsite(data.website);
+        setFullname(data.full_name);
         setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
@@ -50,12 +70,12 @@ export default function Account({ session }: { session: Session }) {
 
   async function updateProfile({
     username,
-    website,
+    fullname,
     avatar_url,
   }: {
-    username: Profiles["username"];
-    website: Profiles["website"];
-    avatar_url: Profiles["avatar_url"];
+    username: UserProfile["username"];
+    fullname: UserProfile["full_name"];
+    avatar_url: UserProfile["avatar_url"];
   }) {
     try {
       setLoading(true);
@@ -64,12 +84,12 @@ export default function Account({ session }: { session: Session }) {
       const updates = {
         id: user.id,
         username,
-        website,
+        full_name: fullname,
         avatar_url,
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase.from("profiles").upsert(updates);
+      const { error } = await supabase.from("user_profile").upsert(updates);
       if (error) throw error;
       alert("Profile updated!");
     } catch (error) {
@@ -88,7 +108,7 @@ export default function Account({ session }: { session: Session }) {
         size={150}
         onUpload={(url) => {
           setAvatarUrl(url);
-          updateProfile({ username, website, avatar_url: url });
+          updateProfile({ username, full_name: fullname, avatar_url: url });
         }}
       />
       <div>
@@ -105,19 +125,19 @@ export default function Account({ session }: { session: Session }) {
         />
       </div>
       <div>
-        <label htmlFor="website">Website</label>
+        <label htmlFor="fullname">Full Name</label>
         <input
-          id="website"
-          type="website"
-          value={website || ""}
-          onChange={(e) => setWebsite(e.target.value)}
+          id="fullname"
+          type="text"
+          value={fullname || ""}
+          onChange={(e) => setFullname(e.target.value)}
         />
       </div>
 
       <div>
         <button
           className="button primary block"
-          onClick={() => updateProfile({ username, website, avatar_url })}
+          onClick={() => updateProfile({ username, fullname, avatar_url })}
           disabled={loading}
         >
           {loading ? "Loading ..." : "Update"}
