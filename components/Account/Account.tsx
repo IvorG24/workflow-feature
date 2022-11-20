@@ -14,7 +14,7 @@ export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState<UserProfile["username"]>(null);
   const [avatar_url, setAvatarUrl] = useState<UserProfile["avatar_url"]>(null);
-  const [fullname, setFullname] = useState<UserProfile["full_name"]>(null);
+  const [full_name, setFullname] = useState<UserProfile["full_name"]>(null);
 
   useEffect(() => {
     getProfile();
@@ -70,11 +70,11 @@ export default function Account({ session }: { session: Session }) {
 
   async function updateProfile({
     username,
-    fullname,
+    full_name,
     avatar_url,
   }: {
     username: UserProfile["username"];
-    fullname: UserProfile["full_name"];
+    full_name: UserProfile["full_name"];
     avatar_url: UserProfile["avatar_url"];
   }) {
     try {
@@ -84,7 +84,7 @@ export default function Account({ session }: { session: Session }) {
       const updates = {
         id: user.id,
         username,
-        full_name: fullname,
+        full_name,
         avatar_url,
         updated_at: new Date().toISOString(),
       };
@@ -108,7 +108,7 @@ export default function Account({ session }: { session: Session }) {
         size={150}
         onUpload={(url) => {
           setAvatarUrl(url);
-          updateProfile({ username, full_name: fullname, avatar_url: url });
+          updateProfile({ username, full_name, avatar_url: url });
         }}
       />
       <div>
@@ -127,9 +127,9 @@ export default function Account({ session }: { session: Session }) {
       <div>
         <label htmlFor="fullname">Full Name</label>
         <input
-          id="fullname"
+          id="full_name"
           type="text"
-          value={fullname || ""}
+          value={full_name || ""}
           onChange={(e) => setFullname(e.target.value)}
         />
       </div>
@@ -137,7 +137,7 @@ export default function Account({ session }: { session: Session }) {
       <div>
         <button
           className="button primary block"
-          onClick={() => updateProfile({ username, fullname, avatar_url })}
+          onClick={() => updateProfile({ username, full_name, avatar_url })}
           disabled={loading}
         >
           {loading ? "Loading ..." : "Update"}
