@@ -23,7 +23,7 @@ export default function Avatar({
     async function downloadImage(path: string) {
       try {
         const { data, error } = await supabase.storage
-          .from("avatars")
+          .from("avatar")
           .download(path);
         if (error) {
           throw error;
@@ -54,7 +54,7 @@ export default function Avatar({
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
+        .from("avatar")
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) {
