@@ -1,4 +1,3 @@
-import * as React from "react";
 const SvgGoogle = () => (
   <svg
     width="1em"

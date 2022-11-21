@@ -6,6 +6,7 @@ export { default as Facebook } from "./Facebook";
 export { default as Github } from "./Github";
 export { default as Google } from "./Google";
 export { default as Group } from "./Group";
+export { default as Logo } from "./Logo";
 export { default as Logout } from "./Logout";
 export { default as Moon } from "./Moon";
 export { default as Notifications } from "./Notifications";
