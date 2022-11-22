@@ -11,7 +11,7 @@ const AuthLayout = ({ children }: Props) => {
   const colorScheme = useColorScheme();
   return (
     <MantineProvider theme={{ colorScheme }} withGlobalStyles withNormalizeCSS>
-      <Auth>{children}</Auth>;
+      <Auth>{children}</Auth>
     </MantineProvider>
   );
 };
