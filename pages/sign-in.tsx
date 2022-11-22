@@ -1,24 +1,17 @@
+import AuthLayout from "@/components/Layout/AuthLayout";
 import SignIn from "@/components/SignIn/SignIn";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { useSession } from "@supabase/auth-helpers-react";
 import { GetServerSidePropsContext } from "next";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { ReactElement } from "react";
 
 export default function SignInPage() {
-  const session = useSession();
-  const router = useRouter();
-
-  // If after sign in we have a session, redirect to home page.
-  useEffect(() => {
-    if (!router.isReady) return;
-    if (session) router.push("/");
-  }, [router, session]);
-
   return <SignIn />;
 }
 
-// If we have a session, redirect to home page directly.
+SignInPage.getLayout = function getLayout(page: ReactElement) {
+  return <AuthLayout>{page}</AuthLayout>;
+};
+
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabase = createServerSupabaseClient(ctx);
   const {
