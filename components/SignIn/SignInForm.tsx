@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { Dispatch, FC, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
+import validator from "validator";
 import { Facebook, Github, Google } from "../Icon";
 import styles from "./SignIn.module.scss";
 
@@ -32,6 +33,8 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<FormData>();
   const onSubmit = handleSubmit(async (data) => {
@@ -67,6 +70,19 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
     }
   };
 
+  const handleEmailValidation = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    if (email.length <= 0) return;
+    const isValid = validator.isEmail(email);
+    if (isValid) {
+      clearErrors("email");
+    } else {
+      setError("email", {
+        type: "validate",
+        message: "Email address is invalid",
+      });
+    }
+  };
   return (
     <>
       <div className={styles.signin}>
@@ -82,6 +98,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
                 {...register("email", {
                   required: "Email address is required",
                 })}
+                onChange={handleEmailValidation}
                 aria-invalid={errors.email ? "true" : "false"}
               />
               <Text color="red" role="alert" className="error">
