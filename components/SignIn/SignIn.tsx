@@ -25,7 +25,7 @@ type FormData = {
   password: string;
 };
 
-const SignInWrapper = () => {
+const SignIn = () => {
   const { colorScheme } = useMantineColorScheme();
   const [notification, setNotification] = useState<string | null>(null);
   const router = useRouter();
@@ -194,4 +194,4 @@ const SignInWrapper = () => {
   );
 };
 
-export default SignInWrapper;
+export default SignIn;
