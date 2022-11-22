@@ -31,6 +31,7 @@
 .welcome {
   padding-left: 5rem;
   padding-right: 5rem;
+  margin: 0 30px 0 auto;
 }
 
 .signin {
@@ -62,6 +63,7 @@
   }
   .signin {
     width: 100vw;
+    margin: 0 auto;
   }
 }
 @media only screen and (max-width: 500px) {
