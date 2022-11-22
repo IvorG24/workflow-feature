@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   Title,
+  useMantineColorScheme,
 } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Provider } from "@supabase/supabase-js";
@@ -25,6 +26,7 @@ type FormData = {
 };
 
 const SignInWrapper = () => {
+  const { colorScheme } = useMantineColorScheme();
   const [notification, setNotification] = useState<string | null>(null);
   const router = useRouter();
   const supabase = useSupabaseClient<Database>();
@@ -35,6 +37,7 @@ const SignInWrapper = () => {
     clearErrors,
     formState: { errors },
   } = useForm<FormData>();
+
   const onSubmit = handleSubmit(async (data) => {
     if (!emailValidation(data.email)) return;
     try {
@@ -147,7 +150,7 @@ const SignInWrapper = () => {
               fullWidth
               onClick={() => signInWithProvider("google")}
             >
-              <div style={{ fontSize: "25px", color: "#DB4437" }}>
+              <div className={styles.google}>
                 <Google />
               </div>
             </Button>
@@ -158,7 +161,7 @@ const SignInWrapper = () => {
               fullWidth
               onClick={() => signInWithProvider("facebook")}
             >
-              <div style={{ fontSize: "25px", color: "#4267B2" }}>
+              <div className={styles.facebook}>
                 <Facebook />
               </div>
             </Button>
@@ -170,10 +173,9 @@ const SignInWrapper = () => {
               onClick={() => signInWithProvider("github")}
             >
               <div
-                style={{
-                  fontSize: "25px",
-                  color: "#4f4f4f",
-                }}
+                className={`${styles.github} ${
+                  colorScheme === "dark" ? styles.github__darkMode : ""
+                }`}
               >
                 <Github />
               </div>

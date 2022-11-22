@@ -19,6 +19,21 @@
   .form,
   .provider {
     width: 100%;
+    .google {
+      font-size: 25px;
+      color: #db4437;
+    }
+    .facebook {
+      font-size: 25px;
+      color: #4267b2;
+    }
+    .github {
+      font-size: 25px;
+      color: var(--mantine-color-dark-6);
+      &__darkMode {
+        color: var(--mantine-color-gray-1);
+      }
+    }
   }
 
   @media (min-width: 800px) {
