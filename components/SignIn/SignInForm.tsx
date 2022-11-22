@@ -38,6 +38,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
     formState: { errors },
   } = useForm<FormData>();
   const onSubmit = handleSubmit(async (data) => {
+    if (!emailValidation(data.email)) return;
     try {
       const { email, password } = data;
       const { error } = await supabase.auth.signInWithPassword({
@@ -70,9 +71,8 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
     }
   };
 
-  const handleEmailValidation = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const email = e.target.value;
-    if (email.length <= 0) return;
+  const emailValidation = (email: string) => {
+    if (email.length <= 0) return false;
     const isValid = validator.isEmail(email);
     if (isValid) {
       clearErrors("email");
@@ -82,6 +82,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
         message: "Email address is invalid",
       });
     }
+    return isValid;
   };
   return (
     <>
@@ -98,7 +99,6 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
                 {...register("email", {
                   required: "Email address is required",
                 })}
-                onChange={handleEmailValidation}
                 aria-invalid={errors.email ? "true" : "false"}
               />
               <Text color="red" role="alert" className="error">
