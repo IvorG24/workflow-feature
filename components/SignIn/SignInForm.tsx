@@ -29,7 +29,11 @@ type Props = {
 const SignInForm: FC<Props> = ({ setNotification }) => {
   const router = useRouter();
   const supabase = useSupabaseClient<Database>();
-  const { register, handleSubmit } = useForm<FormData>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>();
   const onSubmit = handleSubmit(async (data) => {
     try {
       const { email, password } = data;
@@ -43,7 +47,6 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
       }
       router.push("/");
     } catch (e) {
-      setNotification("Failed to sign in.");
       console.error(e);
     }
   });
@@ -76,14 +79,26 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
                 label="Email"
                 mt="lg"
                 type="email"
-                {...register("email", { required: true })}
+                {...register("email", {
+                  required: "Email address is required",
+                })}
+                aria-invalid={errors.email ? "true" : "false"}
               />
+              <Text color="red" role="alert" className="error">
+                {errors.email?.message}
+              </Text>
               <TextInput
                 label="Password"
                 type="password"
                 mt="sm"
-                {...register("password", { required: true })}
+                {...register("password", {
+                  required: "Password is required",
+                })}
+                aria-invalid={errors.password ? "true" : "false"}
               />
+              <Text color="red" role="alert" className="error">
+                {errors.password?.message}
+              </Text>
             </>
             <Button mt={25} type="submit" color="green">
               Sign In
