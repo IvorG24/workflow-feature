@@ -8,8 +8,8 @@ import {
   Text,
   TextInput,
   Title,
-  useMantineColorScheme,
 } from "@mantine/core";
+import { useColorScheme } from "@mantine/hooks";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Provider } from "@supabase/supabase-js";
 import Link from "next/link";
@@ -26,7 +26,7 @@ type FormData = {
 };
 
 const SignIn = () => {
-  const { colorScheme } = useMantineColorScheme();
+  const colorScheme = useColorScheme();
   const [notification, setNotification] = useState<string | null>(null);
   const router = useRouter();
   const supabase = useSupabaseClient<Database>();
