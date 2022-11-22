@@ -121,7 +121,12 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
                 {errors.password?.message}
               </Text>
             </>
-            <Button mt={25} type="submit" color="green">
+            <Button
+              mt={25}
+              type="submit"
+              color="green"
+              aria-label="sign in with email and password"
+            >
               Sign In
             </Button>
           </Stack>
@@ -136,6 +141,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
           <Flex gap="md" my="xl">
             <Button
               variant="outline"
+              aria-label="sign in with google"
               color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("google")}
@@ -146,6 +152,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
             </Button>
             <Button
               variant="outline"
+              aria-label="sign in with facebook"
               color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("facebook")}
@@ -156,6 +163,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
             </Button>
             <Button
               variant="outline"
+              aria-label="sign in with github"
               color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("github")}
