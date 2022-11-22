@@ -1,11 +1,11 @@
-import SignInWrapper from "@/components/SignIn/SignInWrapper";
+import SignIn from "@/components/SignIn/SignIn";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useSession } from "@supabase/auth-helpers-react";
 import { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
-export default function SignIn() {
+export default function SignInPage() {
   const session = useSession();
   const router = useRouter();
 
@@ -15,7 +15,7 @@ export default function SignIn() {
     if (session) router.push("/");
   }, [router, session]);
 
-  return <SignInWrapper />;
+  return <SignIn />;
 }
 
 // If we have a session, redirect to home page directly.

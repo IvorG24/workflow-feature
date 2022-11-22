@@ -1,4 +1,4 @@
-import SignIn from "@/components/SignIn/SignInWrapper";
+import SignIn from "@/components/SignIn/SignIn";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {
