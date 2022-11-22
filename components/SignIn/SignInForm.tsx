@@ -99,11 +99,8 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
                 {...register("email", {
                   required: "Email address is required",
                 })}
-                aria-invalid={errors.email ? "true" : "false"}
+                error={errors.email?.message}
               />
-              <Text color="red" role="alert" className="error">
-                {errors.email?.message}
-              </Text>
               <TextInput
                 label="Password"
                 type="password"
@@ -115,11 +112,8 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
                     message: "Password must be at least 8 characters",
                   },
                 })}
-                aria-invalid={errors.password ? "true" : "false"}
+                error={errors.password?.message}
               />
-              <Text color="red" role="alert" className="error">
-                {errors.password?.message}
-              </Text>
             </>
             <Button
               mt={25}
