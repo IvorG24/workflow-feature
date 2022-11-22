@@ -114,6 +114,7 @@ const SignIn = () => {
               <TextInput
                 label="Password"
                 type="password"
+                data-testid="password"
                 mt="sm"
                 {...register("password", {
                   required: "Password is required",
