@@ -12,13 +12,13 @@ const Auth = ({ children }: Props) => {
     <Flex styles={styles.auth}>
       <Container className={styles.welcome}>
         <Stack w={300}>
-          <div className={styles.logo}>
+          <div className={styles.logo} data-testid="logo">
             <Logo />
           </div>
           <Title order={1} color="dark.6">
             Welcome to Formsly
           </Title>
-          <Text color="gray.7">
+          <Text color="gray.7" data-testid="description">
             We help businesses automate all their requests and processes with
             their teams
           </Text>
