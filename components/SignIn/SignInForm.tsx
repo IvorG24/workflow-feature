@@ -1,5 +1,13 @@
 import { Database } from "@/utils/database.types";
-import { Button, Flex, Stack, Text, TextInput, Title } from "@mantine/core";
+import {
+  Button,
+  Divider,
+  Flex,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Provider } from "@supabase/supabase-js";
 import Link from "next/link";
@@ -22,7 +30,6 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
   const router = useRouter();
   const supabase = useSupabaseClient<Database>();
   const { register, handleSubmit } = useForm<FormData>();
-
   const onSubmit = handleSubmit(async (data) => {
     try {
       const { email, password } = data;
@@ -36,6 +43,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
       }
       router.push("/");
     } catch (e) {
+      setNotification("Failed to sign in.");
       console.error(e);
     }
   });
@@ -50,8 +58,9 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
         setNotification(error.message);
         throw error;
       }
-    } catch (error) {
+    } catch (e) {
       setNotification("Failed to sign in.");
+      console.error(e);
     }
   };
 
@@ -82,13 +91,16 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
           </Stack>
         </form>
         <div className={styles.provider}>
-          <Text size="xs" align="center" my="xl">
-            Or sign in with
-          </Text>
+          <Divider
+            my="xs"
+            label="Or sign in with"
+            labelPosition="center"
+            pt="lg"
+          />
           <Flex gap="md" my="xl">
             <Button
               variant="outline"
-              color="gray"
+              color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("google")}
             >
@@ -98,7 +110,7 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
             </Button>
             <Button
               variant="outline"
-              color="gray"
+              color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("facebook")}
             >
@@ -108,18 +120,23 @@ const SignInForm: FC<Props> = ({ setNotification }) => {
             </Button>
             <Button
               variant="outline"
-              color="gray"
+              color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("github")}
             >
-              <div style={{ fontSize: "25px", color: "#171515" }}>
+              <div
+                style={{
+                  fontSize: "25px",
+                  color: "#4f4f4f",
+                }}
+              >
                 <Github />
               </div>
             </Button>
           </Flex>
         </div>
 
-        <Flex gap={5} justify="center" align="center">
+        <Flex gap={5} justify="center" align="center" mt="lg">
           <Text>Do not have an account yet?</Text>
           <Link href="/sign-up">
             <Text color="green">Sign Up</Text>

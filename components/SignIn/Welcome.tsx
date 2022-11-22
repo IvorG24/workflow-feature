@@ -9,8 +9,10 @@ const Welcome = () => {
         <div className={styles.logo}>
           <Logo />
         </div>
-        <Title order={1}>Welcome to Formsly</Title>
-        <Text>
+        <Title order={1} color="dark.6">
+          Welcome to Formsly
+        </Title>
+        <Text color="gray.7">
           We help businesses automate all their requests and processes with
           their teams
         </Text>
