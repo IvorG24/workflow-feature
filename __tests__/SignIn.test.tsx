@@ -5,15 +5,6 @@ const setup = () => {
   render(<SignIn />);
 };
 
-// // mock mantine
-// jest.mock("@mantine/core", () => ({
-//   ...jest.requireActual("@mantine/core"),
-//   useMantineColorScheme: () => ({
-//     colorScheme: "dark",
-//     toggleColorScheme: jest.fn(),
-//   }),
-// }));
-
 describe("Sign In Page", () => {
   it("renders heading", () => {
     setup();
