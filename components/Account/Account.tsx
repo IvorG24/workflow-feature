@@ -6,7 +6,7 @@ import {
   useUser,
 } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
-type UserProfile = Database["public"]["Tables"]["user_profile"]["Row"];
+type UserProfile = Database["public"]["Tables"]["user_profile_table"]["Row"];
 
 export default function Account({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>();
@@ -26,9 +26,9 @@ export default function Account({ session }: { session: Session }) {
       if (!user) throw new Error("No user");
 
       const { data, error, status } = await supabase
-        .from("user_profile")
+        .from("user_profile_table")
         .select(`username, full_name, avatar_url`)
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
       if (!data) {
@@ -39,8 +39,8 @@ export default function Account({ session }: { session: Session }) {
         // full_name
         // avatar_url
         console.log(user);
-        const { error } = await supabase.from("user_profile").insert({
-          id: user.id,
+        const { error } = await supabase.from("user_profile_table").insert({
+          user_id: user.id,
           username: "",
           full_name: "",
           avatar_url: "",
@@ -82,14 +82,16 @@ export default function Account({ session }: { session: Session }) {
       if (!user) throw new Error("No user");
 
       const updates = {
-        id: user.id,
+        user_id: user.id,
         username,
         full_name,
         avatar_url,
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase.from("user_profile").upsert(updates);
+      const { error } = await supabase
+        .from("user_profile_table")
+        .upsert(updates);
       if (error) throw error;
       alert("Profile updated!");
     } catch (error) {
