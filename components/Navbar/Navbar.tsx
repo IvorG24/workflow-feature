@@ -143,8 +143,8 @@ const Navbar = () => {
         />
         <NavLink
           component="a"
-          href="/team"
-          label="Team"
+          href="/settings/member"
+          label="Member"
           icon={
             <div className={iconStyle}>
               <GroupIcon />
@@ -181,7 +181,7 @@ const Navbar = () => {
 
         <NavLink
           component="a"
-          href="/settings"
+          href="/settings/general"
           label="Settings"
           icon={
             <div className={iconStyle}>
