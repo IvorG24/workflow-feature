@@ -1,6 +1,7 @@
 import { Database } from "@/utils/database.types";
 import {
   Button,
+  Container,
   Divider,
   Flex,
   Notification,
@@ -81,7 +82,7 @@ const SignIn = () => {
           {notification}
         </Notification>
       )}
-      <div className={styles.signin}>
+      <Container className={styles.signin}>
         <form onSubmit={onSubmit} className={styles.form}>
           <Stack spacing="xs">
             <Title order={3}>Sign in</Title>
@@ -125,7 +126,7 @@ const SignIn = () => {
             </Button>
           </Stack>
         </form>
-        <div className={styles.provider}>
+        <Container className={styles.provider}>
           <Divider
             my="xs"
             label="Or sign in with"
@@ -139,10 +140,9 @@ const SignIn = () => {
               color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("google")}
+              className={styles.google}
             >
-              <div className={styles.google}>
-                <Google />
-              </div>
+              <Google />
             </Button>
             <Button
               variant="outline"
@@ -150,10 +150,9 @@ const SignIn = () => {
               color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("facebook")}
+              className={styles.facebook}
             >
-              <div className={styles.facebook}>
-                <Facebook />
-              </div>
+              <Facebook />
             </Button>
             <Button
               variant="outline"
@@ -161,17 +160,14 @@ const SignIn = () => {
               color="gray.4"
               fullWidth
               onClick={() => signInWithProvider("github")}
+              className={`${styles.github} ${
+                colorScheme === "dark" ? styles.github__darkMode : ""
+              }`}
             >
-              <div
-                className={`${styles.github} ${
-                  colorScheme === "dark" ? styles.github__darkMode : ""
-                }`}
-              >
-                <Github />
-              </div>
+              <Github />
             </Button>
           </Flex>
-        </div>
+        </Container>
 
         <Flex gap={5} justify="center" align="center" mt="lg">
           <Text>Do not have an account yet?</Text>
@@ -179,7 +175,7 @@ const SignIn = () => {
             <Text color="green">Sign Up</Text>
           </Link>
         </Flex>
-      </div>
+      </Container>
     </>
   );
 };
