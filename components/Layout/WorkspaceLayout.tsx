@@ -1,6 +1,8 @@
 import { AppShell } from "@mantine/core";
 import { ReactNode } from "react";
-import Navbar from "../Navbar/Navbar";
+import MobileHeader from "./MobileHeader/MobileHeader";
+import Navbar from "./Navbar/Navbar";
+import styles from "./WorkspaceLayout.module.scss";
 
 type Props = {
   children: ReactNode;
@@ -8,8 +10,8 @@ type Props = {
 
 const WorkspaceLayout = ({ children }: Props) => {
   return (
-    <AppShell navbar={<Navbar />}>
-      <main>{children}</main>
+    <AppShell navbar={<Navbar />} header={<MobileHeader />}>
+      <main className={styles.childrenContainer}>{children}</main>
     </AppShell>
   );
 };
