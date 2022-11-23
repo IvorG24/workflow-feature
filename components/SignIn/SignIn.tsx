@@ -33,13 +33,11 @@ const SignIn = () => {
   const {
     register,
     handleSubmit,
-    setError,
-    clearErrors,
     formState: { errors },
   } = useForm<FormData>();
 
   const onSubmit = handleSubmit(async (data) => {
-    if (!emailValidation(data.email)) return;
+    // if (!emailValidation(data.email)) return;
     try {
       const { email, password } = data;
       const { error } = await supabase.auth.signInWithPassword({
@@ -72,19 +70,6 @@ const SignIn = () => {
     }
   };
 
-  const emailValidation = (email: string) => {
-    if (email.length <= 0) return false;
-    const isValid = validator.isEmail(email);
-    if (isValid) {
-      clearErrors("email");
-    } else {
-      setError("email", {
-        type: "validate",
-        message: "Email address is invalid",
-      });
-    }
-    return isValid;
-  };
   return (
     <>
       {notification !== null && (
@@ -108,6 +93,10 @@ const SignIn = () => {
                 type="email"
                 {...register("email", {
                   required: "Email address is required",
+                  validate: {
+                    isEmail: (input) =>
+                      validator.isEmail(input) || "Email is invalid",
+                  },
                 })}
                 error={errors.email?.message}
               />
