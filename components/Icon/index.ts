@@ -1,4 +1,5 @@
 export { default as AddCircle } from "./AddCircle";
+export { default as Calendar } from "./Calendar";
 export { default as Dashboard } from "./Dashboard";
 export { default as Description } from "./Description";
 export { default as EditDocument } from "./EditDocument";
