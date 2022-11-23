@@ -38,7 +38,6 @@ const SignIn = () => {
   } = useForm<FormData>();
 
   const onSubmit = handleSubmit(async (data) => {
-    // if (!emailValidation(data.email)) return;
     try {
       const { email, password } = data;
       const { error } = await supabase.auth.signInWithPassword({
@@ -104,7 +103,6 @@ const SignIn = () => {
               <TextInput
                 label="Password"
                 type="password"
-                data-testid="password"
                 mt="sm"
                 {...register("password", {
                   required: "Password is required",
