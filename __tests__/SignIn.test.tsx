@@ -1,5 +1,6 @@
 import SignIn from "@/components/SignIn/SignIn";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 const setup = () => {
   render(<SignIn />);
@@ -19,7 +20,8 @@ describe("Sign In Page", () => {
   it("renders email and password input", () => {
     setup();
     const email = screen.getByRole("textbox", { name: /email/i });
-    const password = screen.getByTestId("password");
+    const password = screen.getByLabelText("Password");
+
     expect(email).toBeInTheDocument();
     expect(password).toBeInTheDocument();
   });
@@ -58,23 +60,18 @@ describe("Sign In Page", () => {
 
   it("should display matching error when email is invalid", async () => {
     setup();
-    fireEvent.input(screen.getByRole("textbox", { name: /email/i }), {
-      target: {
-        value: "test@emailcom",
-      },
-    });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    await userEvent.type(emailInput, "johndoe@gmail");
+    expect(emailInput).toHaveValue("johndoe@gmail");
 
-    fireEvent.input(screen.getByTestId("password"), {
-      target: {
-        value: "password",
-      },
-    });
+    const passwordInput = screen.getByLabelText("Password");
+    await userEvent.type(passwordInput, "mypassword");
+    expect(passwordInput).toHaveValue("mypassword");
 
-    fireEvent.submit(
-      screen.getByRole("button", {
-        name: "sign in with email and password",
-      })
-    );
+    const signInButton = screen.getByRole("button", {
+      name: "sign in with email and password",
+    });
+    await userEvent.click(signInButton);
 
     expect(await screen.findAllByRole("alert")).toHaveLength(1);
     expect(mockLogin).not.toBeCalled();
@@ -82,23 +79,18 @@ describe("Sign In Page", () => {
 
   it("should display matching error when password length is less than 8", async () => {
     setup();
-    fireEvent.input(screen.getByRole("textbox", { name: /email/i }), {
-      target: {
-        value: "test@email.com",
-      },
-    });
+    const emailInput = screen.getByRole("textbox", { name: /email/i });
+    await userEvent.type(emailInput, "johndoe@gmail.com");
+    expect(emailInput).toHaveValue("johndoe@gmail.com");
 
-    fireEvent.input(screen.getByTestId("password"), {
-      target: {
-        value: "pass",
-      },
-    });
+    const passwordInput = screen.getByLabelText("Password");
+    await userEvent.type(passwordInput, "pass");
+    expect(passwordInput).toHaveValue("pass");
 
-    fireEvent.submit(
-      screen.getByRole("button", {
-        name: "sign in with email and password",
-      })
-    );
+    const signInButton = screen.getByRole("button", {
+      name: "sign in with email and password",
+    });
+    await userEvent.click(signInButton);
 
     expect(await screen.findAllByRole("alert")).toHaveLength(1);
     expect(mockLogin).not.toBeCalled();
