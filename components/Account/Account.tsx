@@ -1,12 +1,11 @@
 import Avatar from "@/components/Avatar";
-import { Database } from "@/utils/database.types";
+import type { Database, UserProfile } from "@/utils/types";
 import {
   Session,
   useSupabaseClient,
   useUser,
 } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
-type UserProfile = Database["public"]["Tables"]["user_profile_table"]["Row"];
 
 export default function Account({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>();
