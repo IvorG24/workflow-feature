@@ -8,6 +8,8 @@ const setup = () => {
 describe("auth layout", () => {
   it("renders a logo", () => {
     setup();
+
+    // Todo: refactor into expect(screen.getByRole("img", {name: "logo"})
     const logo = screen.getByTestId("logo");
     expect(logo).toBeInTheDocument();
   });
