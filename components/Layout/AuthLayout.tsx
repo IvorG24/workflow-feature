@@ -25,7 +25,7 @@ const AuthLayout = ({ children }: Props) => {
             <div className={styles.logo} data-testid="logo">
               <Logo />
             </div>
-            <Title order={1} color="dark.6">
+            <Title order={1} size={50} color="dark.6">
               Welcome to Formsly
             </Title>
             <Text color="gray.7">

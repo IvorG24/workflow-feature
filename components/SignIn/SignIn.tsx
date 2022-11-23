@@ -103,7 +103,6 @@ const SignIn = () => {
               <TextInput
                 label="Password"
                 type="password"
-                mt="sm"
                 {...register("password", {
                   required: "Password is required",
                   minLength: {
