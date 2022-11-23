@@ -16,10 +16,4 @@ describe("auth layout", () => {
     const heading = screen.getByRole("heading");
     expect(heading).toBeInTheDocument();
   });
-
-  it("renders a description", () => {
-    setup();
-    const description = screen.getByTestId("description");
-    expect(description).toBeInTheDocument();
-  });
 });
