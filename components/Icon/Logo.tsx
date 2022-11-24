@@ -1,5 +1,9 @@
 import * as React from "react";
-const SvgLogo = () => (
+interface SVGRProps {
+  title?: string;
+  titleId?: string;
+}
+const SvgLogo = ({ title, titleId }: SVGRProps) => (
   <svg
     width="1em"
     height="1em"
@@ -7,7 +11,9 @@ const SvgLogo = () => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     role="img"
+    aria-labelledby={titleId}
   >
+    {title ? <title id={titleId}>{title}</title> : null}
     <rect
       y={35.219}
       width={38.891}

@@ -5,6 +5,7 @@ import {
   Divider,
   Group,
   Paper,
+  Rating,
   Slider,
   Text,
   Textarea,
@@ -12,7 +13,6 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Star } from "../Icon";
 import styles from "./PeerReviewForm.module.scss";
 
 const PeerReviewForm = () => {
@@ -22,7 +22,7 @@ const PeerReviewForm = () => {
   const [punctualityScore, setPunctualityScore] = useState(0);
   const [meetsDeadlinesScore, setMeetsDeadlinesScore] = useState(0);
   const [communicationScore, setCommunicationScore] = useState(0);
-  const [rating, setRating] = useState(1);
+  const [rating, setRating] = useState(0);
 
   const { register, handleSubmit } = useForm();
 
@@ -164,51 +164,12 @@ const PeerReviewForm = () => {
             How would you rate the quality of you co-worker&apos;s performance?
           </Title>
           <Group mt="xs">
-            <Button
-              variant="subtle"
-              color="yellow"
-              onClick={() => setRating(1)}
-            >
-              <div className={styles.starIcon}>
-                <Star />
-              </div>
-            </Button>
-            <Button
-              variant="subtle"
-              color="yellow"
-              onClick={() => setRating(2)}
-            >
-              <div className={styles.starIcon}>
-                <Star />
-              </div>
-            </Button>
-            <Button
-              variant="subtle"
-              color="yellow"
-              onClick={() => setRating(3)}
-            >
-              <div className={styles.starIcon}>
-                <Star />
-              </div>
-            </Button>
-            <Button
-              variant="subtle"
-              color="yellow"
-              onClick={() => setRating(4)}
-            >
-              <div className={styles.starIcon}>
-                <Star />
-              </div>
-            </Button>
-            <Button
-              variant="subtle"
-              color="yellow"
-              onClick={() => setRating(5)}
-            >
-              <div className={styles.starIcon}>
-                <Star />
-              </div>
-            </Button>
+            <Rating
+              defaultValue={rating}
+              onChange={(value) => setRating(value)}
+              size="xl"
+              className={styles.rating}
+            />
           </Group>
 
           <Title order={3} mt="xl">
