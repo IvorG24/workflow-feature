@@ -6,10 +6,10 @@ DROP TABLE IF EXISTS question_table CASCADE;
 DROP TABLE IF EXISTS form_table CASCADE;
 DROP TABLE IF EXISTS form_priority_table CASCADE;
 DROP TABLE IF EXISTS user_created_select_option_table CASCADE;
+DROP TABLE IF EXISTS review_score_table CASCADE;
+DROP TABLE IF EXISTS review_table CASCADE;
 DROP TYPE IF EXISTS expected_response_type CASCADE;
 DROP TYPE IF EXISTS team_role CASCADE;
-
-
 
 CREATE TYPE expected_response_type AS ENUM('text', 'number', 'date', 'daterange', 'time', 'email', 'select', 'slider', 'multiple');
 CREATE TYPE team_role AS ENUM('member','manager');
@@ -77,6 +77,21 @@ CREATE TABLE form_table(
   response_owner UUID REFERENCES auth.users(id),
   response_comment VARCHAR(254) DEFAULT NULL,
   team_id INT REFERENCES team_table(team_id) DEFAULT 1
+);
+
+CREATE TABLE review_score_table(
+  review_score_id INT GENERATED ALWAYS AS IDENTITY UNIQUE PRIMARY KEY,
+  review_score_name VARCHAR(254),
+  review_score_value INT,
+  review_score_comment VARCHAR(254)
+);
+
+CREATE TABLE review_table(
+  review_id INT GENERATED ALWAYS AS IDENTITY UNIQUE PRIMARY KEY,
+  review_source UUID REFERENCES auth.users(id),
+  review_target UUID REFERENCES auth.users(id),
+  review_score INT REFERENCES review_score_table(review_score_id),
+  team_id INT REFERENCES team_table(team_id)
 );
 
 CREATE TABLE form_priority_table (
