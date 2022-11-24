@@ -1,0 +1,63 @@
+@import "@/styles/variables";
+
+.darkModeToggler {
+  font-size: 20px;
+}
+
+.createRequestButton {
+  font-size: 20px;
+  color: var(--mantine-color-gray-8);
+
+  &:hover {
+    background-color: var(--mantine-color-gray-2);
+  }
+
+  &__darkMode {
+    &:hover {
+      background-color: var(--mantine-color-gray-8);
+    }
+  }
+}
+
+.notificationsButtonWrapper {
+  position: relative;
+
+  &__badge {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 1rem;
+  }
+}
+
+.footer {
+  margin-top: auto;
+}
+
+.logoutButton {
+  &__icon {
+    font-size: 20px;
+  }
+}
+
+.icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mantine-color-dark-6);
+}
+
+.colorLight {
+  color: var(--mantine-color-dark-0);
+}
+
+.container {
+  margin-right: 300px;
+}
+
+@media only screen and (max-width: $breakpoint-desktop-s) {
+  .container {
+    display: none;
+  }
+}
