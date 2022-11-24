@@ -1,0 +1,31 @@
+.searchMembers {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.clear {
+  position: absolute;
+  right: 4rem;
+  top: 50%;
+  margin-top: 0.25rem;
+  transform: translateY(-55%);
+  opacity: 25%;
+}
+
+.search {
+  position: absolute;
+  right: 1.6rem;
+  top: 50%;
+  margin-top: 0.25rem;
+  transform: translateY(-70%);
+}
+
+.inputSearch {
+  flex: 1;
+}
+
+.input {
+  padding-right: 6rem;
+}
