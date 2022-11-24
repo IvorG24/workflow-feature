@@ -13,4 +13,6 @@ export { default as Moon } from "./Moon";
 export { default as Notifications } from "./Notifications";
 export { default as Search } from "./Search";
 export { default as Settings } from "./Settings";
+export { default as StarFilled } from "./StarFilled";
+export { default as Star } from "./Star";
 export { default as Sun } from "./Sun";
