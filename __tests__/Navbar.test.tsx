@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar/Navbar";
+import Navbar from "@/components/Layout/Navbar/Navbar";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {

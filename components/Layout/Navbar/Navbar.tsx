@@ -26,10 +26,10 @@ import {
   Notifications,
   Settings,
   Sun,
-} from "../Icon";
+} from "../../Icon";
 import styles from "./Navbar.module.scss";
 
-const WORKSPACES = [
+const TEAMS = [
   {
     image: "",
     value: "Acme Corporation",
@@ -44,13 +44,11 @@ const WORKSPACES = [
 
 const Navbar = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [workspaceDropdownValue, setWorkspaceDropdownValue] = useState<
-    string | null
-  >(WORKSPACES[0].value);
-
-  const selectedWorkspace = WORKSPACES.find(
-    (workspace) => workspace.value === workspaceDropdownValue
+  const [teamDropdownValue, setTeamDropdownValue] = useState<string | null>(
+    TEAMS[0].value
   );
+
+  const selectedTeam = TEAMS.find((team) => team.value === teamDropdownValue);
 
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
@@ -58,7 +56,9 @@ const Navbar = () => {
 
   return (
     <MantineNavbar
-      width={{ base: 300 }}
+      width={{ base: "250" }}
+      style={{ maxWidth: "250px" }}
+      className={styles.container}
       px="md"
       py="lg"
       aria-label="sidebar navigation"
@@ -68,8 +68,8 @@ const Navbar = () => {
           <Image
             src={`/image/logo-${colorScheme}.png`}
             alt="logo"
-            width={150}
-            height={48}
+            width={147}
+            height={52}
           />
           <ActionIcon
             variant="default"
@@ -85,12 +85,12 @@ const Navbar = () => {
 
       <Select
         mt="md"
-        label="Workspace"
-        value={workspaceDropdownValue}
-        data={WORKSPACES}
+        label="Team"
+        value={teamDropdownValue}
+        data={TEAMS}
         itemComponent={SelectItem}
-        onChange={(val) => setWorkspaceDropdownValue(val)}
-        icon={<Avatar src={selectedWorkspace?.image} radius="xl" size="sm" />}
+        onChange={(val) => setTeamDropdownValue(val)}
+        icon={<Avatar src={selectedTeam?.image} radius="xl" size="sm" />}
         size="md"
         styles={{
           label: {
@@ -143,8 +143,8 @@ const Navbar = () => {
         />
         <NavLink
           component="a"
-          href="/settings/member"
-          label="Member"
+          href="/settings/members"
+          label="Members"
           icon={
             <div className={iconStyle}>
               <GroupIcon />
@@ -181,7 +181,7 @@ const Navbar = () => {
 
         <NavLink
           component="a"
-          href="/settings/general"
+          href="/settings"
           label="Settings"
           icon={
             <div className={iconStyle}>

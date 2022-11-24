@@ -18,9 +18,6 @@ $breakpoint-desktop-s: 992px;
 $breakpoint-desktop-m: 1200px;
 $breakpoint-desktop-l: 1400px;
 
-// App
-$max-width: 1440px;
-
 // Z-Index
 $z-index-base: 0;
 $above: 1;
@@ -32,6 +29,3 @@ $z-index-navigation-popup: $above + $z-index-fixed-navigation;
 $z-index-modal-backdrop: $above + $z-index-navigation-popup;
 $z-index-modal: $above + $z-index-modal-backdrop;
 $z-index-popover: $above + $z-index-modal;
-
-// Elements
-$dropdown-menu-max-height: 195px;
