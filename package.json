@@ -21,16 +21,20 @@
     "moment": "^2.29.4",
     "next": "13.0.0",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "react-hook-form": "^7.39.4",
+    "validator": "^13.7.0"
   },
   "devDependencies": {
     "@svgr/cli": "^6.5.1",
     "@svgr/webpack": "^6.5.1",
     "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/user-event": "^14.4.3",
     "@types/jest": "^29.2.1",
     "@types/node": "18.11.7",
     "@types/react": "18.0.24",
     "@types/react-dom": "18.0.8",
+    "@types/validator": "^13.7.10",
     "@typescript-eslint/eslint-plugin": "^5.42.1",
     "eslint": "8.26.0",
     "eslint-config-next": "13.0.0",

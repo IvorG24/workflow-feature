@@ -1,3 +1,4 @@
+
 // Colors
 $color-primary: #4ac776;
 $color-secondary: #3e79a7;
@@ -18,8 +19,10 @@ $breakpoint-desktop-s: 992px;
 $breakpoint-desktop-m: 1200px;
 $breakpoint-desktop-l: 1400px;
 
+
 // App
 $max-width: 1440px;
+
 
 // Z-Index
 $z-index-base: 0;
@@ -33,5 +36,7 @@ $z-index-modal-backdrop: $above + $z-index-navigation-popup;
 $z-index-modal: $above + $z-index-modal-backdrop;
 $z-index-popover: $above + $z-index-modal;
 
+
 // Elements
 $dropdown-menu-max-height: 195px;
+
