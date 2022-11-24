@@ -10,14 +10,39 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Star } from "../Icon";
 import styles from "./PeerReviewForm.module.scss";
 
 const PeerReviewForm = () => {
+  const [responsibilityScore, setResponsibilityScore] = useState(0);
+  const [learnabilityScore, setLearnabilityScore] = useState(0);
+  const [creativityScore, setCreativityScore] = useState(0);
+  const [punctualityScore, setPunctualityScore] = useState(0);
+  const [meetsDeadlinesScore, setMeetsDeadlinesScore] = useState(0);
+  const [communicationScore, setCommunicationScore] = useState(0);
+  const [rating, setRating] = useState(1);
+
+  const { register, handleSubmit } = useForm();
+
+  const onSubmit = handleSubmit((data) => {
+    // values you need
+    console.log(responsibilityScore);
+    console.log(learnabilityScore);
+    console.log(creativityScore);
+    console.log(punctualityScore);
+    console.log(meetsDeadlinesScore);
+    console.log(communicationScore);
+    console.log(rating);
+    const { additionalComments } = data;
+    console.log(additionalComments);
+  });
+
   return (
     <Container size="xs">
       <Paper shadow="xs" p="xl">
-        <form>
+        <form onSubmit={onSubmit}>
           <Title order={2}>Peer Review</Title>
           <Group mt="sm">
             <Text weight={500}>Employee: </Text>
@@ -35,6 +60,8 @@ const PeerReviewForm = () => {
           <Slider
             mt="xs"
             step={25}
+            value={responsibilityScore}
+            onChange={(value) => setResponsibilityScore(value)}
             marks={[
               { value: 0, label: "1" },
               { value: 25, label: "2" },
@@ -48,6 +75,8 @@ const PeerReviewForm = () => {
             Has the ability to learn and use new skills
           </Text>
           <Slider
+            value={learnabilityScore}
+            onChange={(value) => setLearnabilityScore(value)}
             mt="xs"
             step={25}
             marks={[
@@ -63,6 +92,8 @@ const PeerReviewForm = () => {
             Generate creative ideas and solutions
           </Text>
           <Slider
+            value={creativityScore}
+            onChange={(value) => setCreativityScore(value)}
             mt="xs"
             step={25}
             pb="xl"
@@ -79,6 +110,8 @@ const PeerReviewForm = () => {
             Meets attendance requirements
           </Text>
           <Slider
+            value={punctualityScore}
+            onChange={(value) => setPunctualityScore(value)}
             mt="xs"
             pb="xl"
             step={25}
@@ -95,6 +128,8 @@ const PeerReviewForm = () => {
             Set and meet deadlines
           </Text>
           <Slider
+            value={meetsDeadlinesScore}
+            onChange={(value) => setMeetsDeadlinesScore(value)}
             mt="xs"
             pb="xl"
             step={25}
@@ -111,6 +146,8 @@ const PeerReviewForm = () => {
             Effectively communicate with others
           </Text>
           <Slider
+            value={communicationScore}
+            onChange={(value) => setCommunicationScore(value)}
             mt="xs"
             pb="xl"
             step={25}
@@ -127,27 +164,47 @@ const PeerReviewForm = () => {
             How would you rate the quality of you co-worker&apos;s performance?
           </Title>
           <Group mt="xs">
-            <Button variant="subtle" color="yellow">
+            <Button
+              variant="subtle"
+              color="yellow"
+              onClick={() => setRating(1)}
+            >
               <div className={styles.starIcon}>
                 <Star />
               </div>
             </Button>
-            <Button variant="subtle" color="yellow">
+            <Button
+              variant="subtle"
+              color="yellow"
+              onClick={() => setRating(2)}
+            >
               <div className={styles.starIcon}>
                 <Star />
               </div>
             </Button>
-            <Button variant="subtle" color="yellow">
+            <Button
+              variant="subtle"
+              color="yellow"
+              onClick={() => setRating(3)}
+            >
               <div className={styles.starIcon}>
                 <Star />
               </div>
             </Button>
-            <Button variant="subtle" color="yellow">
+            <Button
+              variant="subtle"
+              color="yellow"
+              onClick={() => setRating(4)}
+            >
               <div className={styles.starIcon}>
                 <Star />
               </div>
             </Button>
-            <Button variant="subtle" color="yellow">
+            <Button
+              variant="subtle"
+              color="yellow"
+              onClick={() => setRating(5)}
+            >
               <div className={styles.starIcon}>
                 <Star />
               </div>
@@ -157,8 +214,10 @@ const PeerReviewForm = () => {
           <Title order={3} mt="xl">
             Additional Comments
           </Title>
-          <Textarea mt="xs"></Textarea>
-          <Button mt="xl">Submit</Button>
+          <Textarea mt="xs" {...register("additionalComments")} />
+          <Button mt="xl" type="submit">
+            Submit
+          </Button>
         </form>
       </Paper>
     </Container>
