@@ -34,7 +34,7 @@ const Profile = () => {
       <Modal
         opened={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
-        withCloseButton={false}
+        withCloseButton
         size="auto"
       >
         <PeerReviewForm user={`${user?.name}`} />
