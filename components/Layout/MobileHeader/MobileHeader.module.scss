@@ -2,11 +2,13 @@
 
 .container {
   display: none;
-  border-bottom: 12px red;
 }
 
 .modal {
-  position: absolute;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 250px;
 }
 
 @media only screen and (max-width: $breakpoint-desktop-s) {
@@ -15,6 +17,18 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 30px;
+
+    position: fixed;
+    width: 100%;
+  }
+
+  .lightContainer {
     box-shadow: 0rem 0rem 0.6rem 0.1rem rgb(0 0 0 / 0.1);
+    background-color: white;
+  }
+
+  .darkContainer {
+    box-shadow: 0rem 0rem 0.6rem 0.1rem rgb(255 255 255 / 0.1);
+    background-color: #1a1b1e;
   }
 }

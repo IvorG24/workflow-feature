@@ -1,3 +1,4 @@
+// todo: create test for #61
 import {
   Burger,
   Group,
@@ -14,10 +15,15 @@ const MobileHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Group position="apart" className={styles.container}>
+    <Group
+      position="apart"
+      className={`${styles.container} ${
+        colorScheme === "light" ? styles.lightContainer : styles.darkContainer
+      }`}
+    >
       <Transition
         mounted={isOpen}
-        transition="fade"
+        transition="slide-right"
         duration={400}
         timingFunction="ease"
       >
