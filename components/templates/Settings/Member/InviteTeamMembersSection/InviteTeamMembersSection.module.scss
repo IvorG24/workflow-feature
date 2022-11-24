@@ -1,0 +1,52 @@
+@import "@/styles/variables";
+
+.container {
+  margin-top: 5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.header,
+.subheader {
+  margin: 0;
+}
+.description {
+  margin-top: 0.6rem;
+}
+
+.invitesList {
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.invitesList__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sendInvitesButton {
+  width: 15rem;
+}
+
+.emailInput {
+  flex: 1;
+  min-width: 30rem;
+}
+
+@media (min-width: $breakpoint-desktop-l) {
+  .container {
+    flex-direction: row;
+  }
+
+  .details {
+    width: 30%;
+    margin-right: 10rem;
+  }
+
+  .invitesList {
+    margin-top: 0;
+  }
+}

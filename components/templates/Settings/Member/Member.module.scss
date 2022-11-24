@@ -1,0 +1,12 @@
+@import "@/styles/variables";
+@import "@/styles/utils";
+
+.content {
+  max-width: $breakpoint-desktop-l;
+}
+
+.divider {
+  @extend %divider;
+  margin-top: 5rem;
+  width: 100%;
+}

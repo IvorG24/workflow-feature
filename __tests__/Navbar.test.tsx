@@ -1,4 +1,4 @@
-import Navbar from "@/components/Navbar/Navbar";
+import Navbar from "@/components/Layout/Navbar/Navbar";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {
@@ -23,7 +23,7 @@ describe("header", () => {
 
   it("renders a dark mode toggler", () => {
     setup();
-    const button = screen.getByRole("button", { name: "toggle dark mode" });
+    const button = screen.getByRole("button", { name: /toggle dark mode/i });
     expect(button).toBeInTheDocument();
   });
 

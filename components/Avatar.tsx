@@ -2,7 +2,7 @@ import { Database } from "@/utils/database.types";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-type Profiles = Database["public"]["Tables"]["user_profile"]["Row"];
+type Profiles = Database["public"]["Tables"]["user_profile_table"]["Row"];
 
 export default function Avatar({
   uid,
