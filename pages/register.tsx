@@ -1,16 +1,15 @@
 import AuthLayout from "@/components/Layout/AuthLayout";
-import SignIn from "@/components/SignIn/SignIn";
+import Register from "@/components/Register/Register";
 import createClient from "@/utils/supabase";
 import { ReactElement } from "react";
 
-export default function SignInPage() {
-  return <SignIn />;
+export default function RegisterPage() {
+  return <Register />;
 }
 
-SignInPage.getLayout = function getLayout(page: ReactElement) {
+RegisterPage.getLayout = function getLayout(page: ReactElement) {
   return <AuthLayout>{page}</AuthLayout>;
 };
-
 export const getServerSideProps = async () => {
   const supabase = createClient;
   const {
