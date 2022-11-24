@@ -98,3 +98,13 @@ CREATE TABLE form_priority_table (
   form_name_id INT REFERENCES form_name_table(form_name_id) PRIMARY KEY,
   priority INT[]
 );
+
+CREATE OR REPLACE FUNCTION handle_new_user() RETURNS VOID AS $$
+DECLARE
+  full_name text;
+BEGIN
+  SELECT raw_user_meta_data->>'full_name' INTO full_name FROM auth.users WHERE id = auth.uid();
+  INSERT INTO user_profile_table (user_id, full_name) VALUES (auth.uid(), full_name);
+END;
+$$ language plpgsql security definer;
+;
