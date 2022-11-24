@@ -14,7 +14,7 @@ const Page: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/testpage"
       />
-      <PeerReviewForm />
+      <PeerReviewForm user="Sample User" />
     </div>
   );
 };

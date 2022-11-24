@@ -15,7 +15,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./PeerReviewForm.module.scss";
 
-const PeerReviewForm = () => {
+type Props = {
+  user: string;
+};
+
+const PeerReviewForm = ({ user }: Props) => {
   const [responsibilityScore, setResponsibilityScore] = useState(0);
   const [learnabilityScore, setLearnabilityScore] = useState(0);
   const [creativityScore, setCreativityScore] = useState(0);
@@ -47,7 +51,7 @@ const PeerReviewForm = () => {
           <Group mt="sm">
             <Text weight={500}>Employee: </Text>
             <Avatar radius={100} />
-            <Text>Patricia Smith</Text>
+            <Text>{user}</Text>
           </Group>
           <Divider mt="xs" />
           <Title order={3} mt="xl">

@@ -1,14 +1,19 @@
 import { AddCircle, Calendar } from "@/components/Icon";
+import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
 import {
   Avatar,
   Button,
   Group,
+  Modal,
   Stack,
   Tabs,
   Text,
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { MEMBERS } from "../../../tempData";
 import Assesment from "./Assessment/Assessment";
 import Bio from "./Bio/Bio";
 import Notes from "./Notes/Notes";
@@ -17,18 +22,34 @@ import Reviews from "./Reviews/Reviews";
 
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();
+  const router = useRouter();
+  const user = MEMBERS.find((member) => {
+    return member.id === router.query.id;
+  });
+
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   return (
     <div className={styles.container}>
+      <Modal
+        opened={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        withCloseButton={false}
+        size="auto"
+      >
+        <PeerReviewForm user={`${user?.name}`} />
+      </Modal>
       <div className={styles.banner} />
       <Group px={30} mt={-30}>
         <Avatar size={200} radius={100} />
         <Stack spacing={0}>
-          <Title order={2}>Mason Mills</Title>
-          <Text>Hr Administrator - Full Time</Text>
+          <Title order={2}>{user?.name}</Title>
+          <Text>
+            {user?.position} - {user?.status}
+          </Text>
           <Group mt={10}>
             <Calendar />
-            <Text>Hired January 2, 2020</Text>
+            <Text>Hired {user?.hired_date}</Text>
           </Group>
         </Stack>
       </Group>
@@ -47,7 +68,11 @@ const Profile = () => {
               borderColor: colorScheme === "light" ? "#dee2e6" : "#373A40",
             }}
           >
-            <Button variant="outline" className={styles.addReviewButton}>
+            <Button
+              variant="outline"
+              className={styles.addReviewButton}
+              onClick={() => setIsReviewModalOpen((prev) => !prev)}
+            >
               <AddCircle />
               &nbsp;Add a Review
             </Button>
