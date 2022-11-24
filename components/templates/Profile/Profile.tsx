@@ -37,7 +37,7 @@ const Profile = () => {
         withCloseButton={false}
         size="auto"
       >
-        <PeerReviewForm />
+        <PeerReviewForm user={user.name} />
       </Modal>
       <div className={styles.banner} />
       <Group px={30} mt={-30}>
