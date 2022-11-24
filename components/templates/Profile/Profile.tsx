@@ -1,8 +1,10 @@
 import { AddCircle, Calendar } from "@/components/Icon";
+import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
 import {
   Avatar,
   Button,
   Group,
+  Modal,
   Stack,
   Tabs,
   Text,
@@ -10,6 +12,7 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import { MEMBERS } from "../../../tempData";
 import Assesment from "./Assessment/Assessment";
 import Bio from "./Bio/Bio";
@@ -24,8 +27,18 @@ const Profile = () => {
     return member.id === router.query.id;
   });
 
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
   return (
     <div className={styles.container}>
+      <Modal
+        opened={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        withCloseButton={false}
+        size="auto"
+      >
+        <PeerReviewForm />
+      </Modal>
       <div className={styles.banner} />
       <Group px={30} mt={-30}>
         <Avatar size={200} radius={100} />
@@ -58,11 +71,7 @@ const Profile = () => {
             <Button
               variant="outline"
               className={styles.addReviewButton}
-              onClick={() =>
-                router.push(
-                  `/reviews/create?t=${1}&ft=${1}&reviewee=${router.query.id}`
-                )
-              }
+              onClick={() => setIsReviewModalOpen((prev) => !prev)}
             >
               <AddCircle />
               &nbsp;Add a Review
