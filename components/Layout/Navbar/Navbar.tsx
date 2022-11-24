@@ -75,6 +75,7 @@ const Navbar = () => {
             variant="default"
             onClick={() => toggleColorScheme()}
             className={styles.darkModeToggler}
+            aria-label="toggle dark mode"
           >
             {colorScheme === "dark" ? <Sun /> : <Moon />}
           </ActionIcon>
@@ -121,6 +122,7 @@ const Navbar = () => {
               variant="subtle"
               component="button"
               onClick={(e) => e.preventDefault()}
+              aria-label="create a request"
               className={`${styles.createRequestButton} ${
                 colorScheme === "dark"
                   ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
