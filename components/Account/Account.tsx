@@ -30,25 +30,26 @@ export default function Account({ session }: { session: Session }) {
         .eq("user_id", user.id)
         .single();
 
-      if (!data) {
-        // if no data, initialize a user_profile for current user
-        // id
-        // updated_at - no need since DEFAULT NOW() is used
-        // username
-        // full_name
-        // avatar_url
-        console.log(user);
-        const { error } = await supabase.from("user_profile_table").insert({
-          user_id: user.id,
-          username: "",
-          full_name: "",
-          avatar_url: "",
-        });
-        if (error) {
-          console.log(error);
-        }
-        console.log("success");
-      }
+      // Insert new only to user_profile_table if user visits profile page.
+      // if (!data) {
+      //   // if no data, initialize a user_profile for current user
+      //   // id
+      //   // updated_at - no need since DEFAULT NOW() is used
+      //   // username
+      //   // full_name
+      //   // avatar_url
+      //   console.log(user);
+      //   const { error } = await supabase.from("user_profile_table").insert({
+      //     user_id: user.id,
+      //     username: "",
+      //     full_name: "",
+      //     avatar_url: "",
+      //   });
+      //   if (error) {
+      //     console.log(error);
+      //   }
+      //   console.log("success");
+      // }
 
       if (error && status !== 406) {
         throw error;

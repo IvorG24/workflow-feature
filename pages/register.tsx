@@ -1,10 +1,11 @@
+// todo: add meta tags
 import AuthLayout from "@/components/Layout/AuthLayout";
-import SignIn from "@/components/SignIn/SignIn";
+import Register from "@/components/Register/Register";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { ReactElement, useEffect } from "react";
 
-export default function SignInPage() {
+export default function RegisterPage() {
   const { session, isLoading } = useSessionContext();
   const router = useRouter();
 
@@ -20,20 +21,22 @@ export default function SignInPage() {
     handleAuthProtect();
   }, [router, session, isLoading]);
 
-  return <SignIn />;
+  return <Register />;
 }
 
-SignInPage.getLayout = function getLayout(page: ReactElement) {
+RegisterPage.getLayout = function getLayout(page: ReactElement) {
   return <AuthLayout>{page}</AuthLayout>;
 };
-
 // export const getServerSideProps = async () => {
 //   const supabase = createClient;
 //   const {
 //     data: { session },
 //   } = await supabase.auth.getSession();
 
-//   console.log(session);
+//   // fetch all users from user_profile_table
+//   const { data } = await supabase.from("user_profile_table").select("*");
+
+//   console.log(data);
 
 //   if (session)
 //     return {
