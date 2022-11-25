@@ -1,5 +1,5 @@
 import getMantineTheme from "@/utils/getMantineTheme";
-import { default as createClient, default as supabase } from "@/utils/supabase";
+import createClient from "@/utils/supabase";
 import {
   ColorScheme,
   ColorSchemeProvider,
@@ -9,7 +9,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
 import { NextPage } from "next/types";
-import { ReactElement, ReactNode, useEffect } from "react";
+import { ReactElement, ReactNode } from "react";
 import "../styles/globals.css";
 
 // #todo: implement better typing but I think it's okay because it's from the docs
@@ -24,25 +24,6 @@ type AppPropsWithLayout = AppProps & {
 };
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
-  // Purpose: Auto save new user to user_profile_table without using database triggers.
-  // Other approach is only save to user_profile_table when user visits their profile but user_profile_table info might be needed before user visits their profile.
-  // https://github.com/supabase/supabase/tree/master/examples/slack-clone/nextjs-slack-clone
-  useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session?.user) return;
-      const { data } = await supabase
-        .from("user_profile_table")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .single();
-      if (!data) await supabase.rpc("handle_new_user");
-    });
-
-    return () => {
-      data.subscription.unsubscribe();
-    };
-  }, []);
-
   // save theme to local storage
   // ref: https://mantine.dev/guides/dark-theme/
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
