@@ -1,3 +1,4 @@
+// todo: add minlength validations and create unit tests
 import { Database } from "@/utils/database.types";
 import {
   Button,
@@ -42,7 +43,7 @@ const Register = () => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       const { email, password, fullName, phoneNumber } = data;
-
+      // todo: add loading state
       const { error } = await supabase.auth.signUp({
         email,
         password,
