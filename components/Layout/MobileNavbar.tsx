@@ -27,7 +27,7 @@ import {
   Settings,
   Sun,
 } from "../Icon";
-import styles from "./Navbar.module.scss";
+import styles from "./MobileNavbar.module.scss";
 
 const TEAMS = [
   {

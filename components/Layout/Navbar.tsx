@@ -1,15 +1,3 @@
-import {
-  AddCircle,
-  Dashboard,
-  Description,
-  EditDocument,
-  Group as GroupIcon,
-  Logout,
-  Moon,
-  Notifications,
-  Settings,
-  Sun,
-} from "@/components/Icon";
 import SelectItem from "@/components/SelectItem/SelectItem";
 import {
   ActionIcon,
@@ -27,6 +15,18 @@ import {
 } from "@mantine/core";
 import Image from "next/image";
 import { useState } from "react";
+import {
+  AddCircle,
+  Dashboard,
+  Description,
+  EditDocument,
+  Group as GroupIcon,
+  Logout,
+  Moon,
+  Notifications,
+  Settings,
+  Sun,
+} from "../Icon";
 import styles from "./Navbar.module.scss";
 
 const TEAMS = [
