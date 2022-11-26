@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "scriptname": "husky install"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
@@ -18,12 +19,10 @@
     "@supabase/auth-ui-react": "^0.2.2",
     "@supabase/supabase-js": "^2.0.4",
     "@testing-library/react": "^13.4.0",
-
     "lodash": "^4.17.21",
-
     "moment": "^2.29.4",
-
     "next": "13.0.0",
+    "npm": "^9.1.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.39.4",
