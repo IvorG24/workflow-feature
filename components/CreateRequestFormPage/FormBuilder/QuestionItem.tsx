@@ -1,5 +1,5 @@
 import EXPECTED_RESPONSE_TYPE_VALUE from "@/components/CreateRequestFormPage/constant/ExpectedResponseType";
-import AddOptions from "@/components/CreateRequestFormPage/FormBuilder/components/AddOptions";
+import AddOptions from "@/components/CreateRequestFormPage/FormBuilder/AddOptions";
 import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 import {
   Center,

@@ -1,4 +1,4 @@
-import QuestionItem from "@/components/CreateRequestFormPage/FormBuilder/components/QuestionItem";
+import QuestionItem from "@/components/CreateRequestFormPage/FormBuilder/QuestionItem";
 import FormRequest, {
   Question,
   QuestionOption,
