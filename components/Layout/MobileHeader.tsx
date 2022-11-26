@@ -8,7 +8,7 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import styles from "./MobileHeader.module.scss";
-import Navbar from "./Navbar";
+import Navbar from "./MobileNavbar";
 
 const MobileHeader = () => {
   const { colorScheme } = useMantineColorScheme();
