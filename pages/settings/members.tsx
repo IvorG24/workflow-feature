@@ -1,6 +1,6 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
-import { Settings } from "@/components/templates/Settings/Settings";
+import Setting from "@/components/Setting/Setting";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../_app";
 
@@ -11,7 +11,7 @@ const MemberSettingsPage: NextPageWithLayout = () => {
         description="Member Settings Page"
         url="localhost:3000/settings/member"
       />
-      <Settings activeTab="member" />
+      <Setting activeTab="member" />
     </div>
   );
 };

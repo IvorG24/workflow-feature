@@ -1,8 +1,8 @@
 import { Divider } from "@mantine/core";
-import { MEMBERS } from "../../../../tempData";
-import InviteTeamMembersSection from "./InviteTeamMembersSection/InviteTeamMembersSection";
+import { MEMBERS } from "../../tempData";
+import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import styles from "./Member.module.scss";
-import YourTeamSection from "./YourTeamSection/YourTeamSection";
+import YourTeamSection from "./YourTeamSection";
 
 export type Member = {
   id: string;

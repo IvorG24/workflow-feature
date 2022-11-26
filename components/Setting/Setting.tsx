@@ -1,13 +1,13 @@
 import { Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
-import Member from "./Member/Member";
-import styles from "./Settings.module.scss";
+import Member from "./Member";
+import styles from "./Setting.module.scss";
 
 type Props = {
   activeTab: string;
 };
 
-export const Settings = ({ activeTab }: Props) => {
+const Setting = ({ activeTab }: Props) => {
   const router = useRouter();
 
   const renderActiveTab = () => {
@@ -46,3 +46,5 @@ export const Settings = ({ activeTab }: Props) => {
     </div>
   );
 };
+
+export default Setting;
