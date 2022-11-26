@@ -20,8 +20,8 @@ import {
 } from "react-hook-form";
 
 import EXPECTED_RESPONSE_TYPE_VALUE from "@/components/CreateRequestFormPage/constant/ExpectedResponseType";
+import AddOptions from "@/components/CreateRequestFormPage/FormBuilder/components/AddOptions";
 import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
-import AddOptions from "./AddOptions";
 
 type Props = {
   questionIndex: number;

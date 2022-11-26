@@ -1,4 +1,4 @@
-import { QuestionRow } from "../type/FormModel";
+import { QuestionRow } from "@/components/CreateRequestFormPage/type/FormModel";
 
 const reorderByPriority = (questions: QuestionRow[], priority: number[]) => {
   const newQuestion = [];

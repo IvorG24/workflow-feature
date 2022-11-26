@@ -1,4 +1,8 @@
-import { OptionRow, QuestionOption, QuestionRow } from "../type/FormModel";
+import {
+  OptionRow,
+  QuestionOption,
+  QuestionRow,
+} from "@/components/CreateRequestFormPage/type/FormModel";
 
 const alignQuestionOption = (
   questionRecord: QuestionRow[],

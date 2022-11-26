@@ -1,7 +1,7 @@
+import QuestionPreview from "@/components/CreateRequestFormPage/FormPreview/components/QuestionPreview";
+import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 import { Divider, Paper, Stack, Title } from "@mantine/core";
 import { FC, memo } from "react";
-import FormRequest from "../../type/FormModel";
-import QuestionPreview from "./components/QuestionPreview";
 
 type Props = {
   formRequest: FormRequest;

@@ -1,4 +1,4 @@
-import { InputTypes } from "../type/FormModel";
+import { InputTypes } from "@/components/CreateRequestFormPage/type/FormModel";
 
 type ExpectedResponseType = {
   value: InputTypes;

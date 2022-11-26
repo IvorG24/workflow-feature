@@ -1,11 +1,11 @@
 import { Box, Container, Grid, Title } from "@mantine/core";
-import { FC } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
+import FormBuilder from "@/components/CreateRequestFormPage/FormBuilder/FormBuilder";
+import FormPreview from "@/components/CreateRequestFormPage/FormPreview/FormPreview";
+import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 import { useDebouncedValue } from "@mantine/hooks";
-import FormBuilder from "./components/FormBuilder/FormBuilder";
-import FormPreview from "./components/FormPreview/FormPreview";
-import FormRequest from "./type/FormModel";
+import { FC } from "react";
 
 const CreateRequestFormPage: FC = () => {
   /* @fetchQuestion will set as default value on useForm whenever the user click on existing form,

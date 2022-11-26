@@ -1,3 +1,10 @@
+import QuestionItem from "@/components/CreateRequestFormPage/FormBuilder/components/QuestionItem";
+import FormRequest, {
+  Question,
+  QuestionOption,
+  QuestionRow,
+} from "@/components/CreateRequestFormPage/type/FormModel";
+import alignQuestionOption from "@/components/CreateRequestFormPage/utils/alignQuestionOption";
 import { AddCircle } from "@/components/Icon";
 import { Database } from "@/utils/database.types";
 import {
@@ -19,14 +26,6 @@ import {
   UseFormRegister,
   useFormState,
 } from "react-hook-form";
-
-import FormRequest, {
-  Question,
-  QuestionOption,
-  QuestionRow,
-} from "../../type/FormModel";
-import alignQuestionOption from "../../utils/alignQuestionOption";
-import QuestionItem from "./components/QuestionItem";
 
 type Props = {
   control: Control<FormRequest>;
