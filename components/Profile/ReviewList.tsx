@@ -10,7 +10,7 @@ import {
 import moment from "moment";
 import { useRouter } from "next/router";
 import React from "react";
-import { MEMBERS, REVIEWS } from "../../../../tempData";
+import { MEMBERS, REVIEWS } from "../../tempData";
 
 const Reviews = () => {
   const router = useRouter();
@@ -22,7 +22,7 @@ const Reviews = () => {
       });
       return { ...review, review_from: reviewer };
     }
-  }).filter(review =>  review);
+  }).filter((review) => review);
 
   const setTimeDifference = (date: Date) => {
     const minutes = Math.floor(

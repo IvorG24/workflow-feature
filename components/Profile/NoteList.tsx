@@ -1,4 +1,4 @@
-import styles from "./Notes.module.scss";
+import styles from "./NoteList.module.scss";
 
 const Notes = () => {
   return <div className={styles.container}>Notes</div>;
