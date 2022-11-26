@@ -1,3 +1,6 @@
+import EXPECTED_RESPONSE_TYPE_VALUE from "@/components/CreateRequestFormPage/constant/ExpectedResponseType";
+import AddOptions from "@/components/CreateRequestFormPage/FormBuilder/components/AddOptions";
+import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 import {
   Center,
   CloseButton,
@@ -18,10 +21,6 @@ import {
   useFormState,
   useWatch,
 } from "react-hook-form";
-
-import EXPECTED_RESPONSE_TYPE_VALUE from "@/components/CreateRequestFormPage/constant/ExpectedResponseType";
-import AddOptions from "@/components/CreateRequestFormPage/FormBuilder/components/AddOptions";
-import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 
 type Props = {
   questionIndex: number;
