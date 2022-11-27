@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest --watch",
-    "pre-commit": "jest",
+    "pre-commit:style": "npx stylelint \"**/*.module.scss\" --fix",
+    "pre-commit:test": "jest",
     "prepare": "husky install"
   },
   "dependencies": {
