@@ -10,6 +10,7 @@
     "test": "jest --watch",
     "pre-commit:style": "npx stylelint -f verbose \"**/*.module.scss\" --fix",
     "pre-commit:test": "jest",
+    "pre-push": "jest",
     "prepare": "husky install"
   },
   "dependencies": {
