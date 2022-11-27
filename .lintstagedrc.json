@@ -1,4 +1,5 @@
 {
-  "src/**/*.+(js|json|ts|tsx)": ["eslint"],
-  "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": ["prettier --write"]
+  "src/**/*.+(js|json|ts|tsx)": ["eslint --fix"],
+  "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": ["prettier --write"],
+  "src/**/*.module.{css,scss}": ["stylelint --fix"]
 }
