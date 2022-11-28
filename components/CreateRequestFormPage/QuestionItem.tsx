@@ -1,5 +1,5 @@
+import AddQuestionOptions from "@/components/CreateRequestFormPage/AddQuestionOptions";
 import EXPECTED_RESPONSE_TYPE_VALUE from "@/components/CreateRequestFormPage/constant/ExpectedResponseType";
-import AddOptions from "@/components/CreateRequestFormPage/FormBuilder/AddOptions";
 import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 import {
   Center,
@@ -106,7 +106,10 @@ const QuestionItem: FC<Props> = (props) => {
                 )}
               />
               {isMultiOrSelect && (
-                <AddOptions control={control} questionIndex={questionIndex} />
+                <AddQuestionOptions
+                  control={control}
+                  questionIndex={questionIndex}
+                />
               )}
             </Stack>
             <CloseButton

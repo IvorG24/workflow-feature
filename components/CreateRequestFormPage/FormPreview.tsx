@@ -1,4 +1,4 @@
-import QuestionPreview from "@/components/CreateRequestFormPage/FormPreview/QuestionPreview";
+import QuestionPreview from "@/components/CreateRequestFormPage/QuestionPreview";
 import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 import { Divider, Paper, Stack, Title } from "@mantine/core";
 import { FC, memo } from "react";

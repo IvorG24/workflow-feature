@@ -9,7 +9,7 @@ type Props = {
   questionIndex: number;
 };
 
-const AddOptions: FC<Props> = (props) => {
+const AddQuestionOptions: FC<Props> = (props) => {
   const { control, questionIndex } = props;
   const [valueToRemove, setValueToRemove] = useState("");
   const [search, setSearch] = useState("");
@@ -84,4 +84,4 @@ const AddOptions: FC<Props> = (props) => {
   );
 };
 
-export default memo(AddOptions);
+export default memo(AddQuestionOptions);
