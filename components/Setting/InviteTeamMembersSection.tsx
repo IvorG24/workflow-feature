@@ -1,7 +1,7 @@
 import { Button, MultiSelect, Text, Title } from "@mantine/core";
 import { FormEvent, useState } from "react";
-import { Member } from "../Member";
 import styles from "./InviteTeamMembersSection.module.scss";
+import { Member } from "./Member";
 
 type Props = {
   members: Member[];

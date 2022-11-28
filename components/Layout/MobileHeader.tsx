@@ -8,7 +8,7 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import styles from "./MobileHeader.module.scss";
-import Navbar from "./Navbar";
+import MobileNavbar from "./MobileNavbar";
 
 const MobileHeader = () => {
   const { colorScheme } = useMantineColorScheme();
@@ -29,7 +29,7 @@ const MobileHeader = () => {
       >
         {(transitionStyles) => (
           <div style={transitionStyles} className={styles.modal}>
-            <Navbar />
+            <MobileNavbar />
           </div>
         )}
       </Transition>

@@ -1,7 +1,7 @@
 import { AppShell } from "@mantine/core";
 import { ReactNode } from "react";
-import MobileHeader from "./MobileHeader/MobileHeader";
-import Navbar from "./Navbar/Navbar";
+import MobileHeader from "./MobileHeader";
+import Navbar from "./Navbar";
 import styles from "./WorkspaceLayout.module.scss";
 
 type Props = {

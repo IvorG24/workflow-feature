@@ -2,9 +2,9 @@
 import { Text, Title } from "@mantine/core";
 import { lowerCase } from "lodash";
 import { useState } from "react";
-import { Member } from "../Member";
-import MembersTable from "./MembersTable/MembersTable";
-import SearchBar from "./SearchBar/SearchBar";
+import { Member } from "./Member";
+import MembersTable from "./MembersTable";
+import SearchBar from "./SearchBar";
 import styles from "./YourTeamSection.module.scss";
 
 type Props = {
