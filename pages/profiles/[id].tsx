@@ -41,7 +41,7 @@ const ProfilePage: NextPageWithLayout = () => {
     <div>
       <Meta
         description="Profile Page for every Team Members"
-        url="localhost:3000/profile/id"
+        url="localhost:3000/profiles/id"
       />
       <Profile />
     </div>
