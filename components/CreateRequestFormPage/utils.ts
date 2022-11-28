@@ -2,9 +2,9 @@ import {
   OptionRow,
   QuestionOption,
   QuestionRow,
-} from "@/components/CreateRequestFormPage/type/FormModel";
+} from "@/components/CreateRequestFormPage/type";
 
-const alignQuestionOption = (
+export const alignQuestionOption = (
   questionRecord: QuestionRow[],
   options: QuestionOption[][]
 ) => {
@@ -28,4 +28,19 @@ const alignQuestionOption = (
   return questionWithOption.filter(Boolean);
 };
 
-export default alignQuestionOption;
+export const reorderByPriority = (
+  questions: QuestionRow[],
+  priority: number[]
+) => {
+  const newQuestion = [];
+
+  for (let i = 0; i < priority.length; i++) {
+    const indexPriority = priority[i];
+    const findQuestion = questions.find(
+      (item) => item.question_id === indexPriority
+    );
+    newQuestion.push(findQuestion);
+  }
+
+  return newQuestion.filter(Boolean) as QuestionRow[];
+};

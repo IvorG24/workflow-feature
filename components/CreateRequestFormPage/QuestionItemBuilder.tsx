@@ -1,6 +1,6 @@
-import EXPECTED_RESPONSE_TYPE_VALUE from "@/components/CreateRequestFormPage/constant/ExpectedResponseType";
+import { EXPECTED_RESPONSE_TYPE_VALUE } from "@/components/CreateRequestFormPage/constant";
 import QuestionOptionsBuilder from "@/components/CreateRequestFormPage/QuestionOptionsBuilder";
-import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
+import { FormRequest } from "@/components/CreateRequestFormPage/type";
 import {
   Center,
   CloseButton,

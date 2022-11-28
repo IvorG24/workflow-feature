@@ -1,4 +1,4 @@
-import { FormQuestion } from "@/components/CreateRequestFormPage/type/FormModel";
+import { FormQuestion } from "@/components/CreateRequestFormPage/type";
 import {
   Box,
   MultiSelect,

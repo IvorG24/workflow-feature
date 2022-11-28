@@ -1,7 +1,7 @@
 // todo: create unit tests for create form page
 import FormBuilder from "@/components/CreateRequestFormPage/FormBuilder";
 import FormPreview from "@/components/CreateRequestFormPage/FormPreview";
-import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
+import { FormRequest } from "@/components/CreateRequestFormPage/type";
 import { Box, Container, Grid, Title } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { FC } from "react";

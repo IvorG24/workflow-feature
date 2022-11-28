@@ -1,4 +1,4 @@
-import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
+import { FormRequest } from "@/components/CreateRequestFormPage/type";
 import { AddCircle } from "@/components/Icon";
 import { Flex, Select } from "@mantine/core";
 import { FC, memo, useCallback, useEffect, useState } from "react";

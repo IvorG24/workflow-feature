@@ -1,10 +1,11 @@
 import QuestionItemBuilder from "@/components/CreateRequestFormPage/QuestionItemBuilder";
-import FormRequest, {
+import {
+  FormRequest,
   Question,
   QuestionOption,
   QuestionRow,
-} from "@/components/CreateRequestFormPage/type/FormModel";
-import alignQuestionOption from "@/components/CreateRequestFormPage/utils/alignQuestionOption";
+} from "@/components/CreateRequestFormPage/type";
+import { alignQuestionOption } from "@/components/CreateRequestFormPage/utils";
 import { AddCircle } from "@/components/Icon";
 import { Database } from "@/utils/database.types";
 import {
