@@ -14,21 +14,11 @@ import {
 import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
+import { User } from "../Profile";
 import styles from "./EditProfileForm.module.scss";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  position: string;
-  status: string;
-  hired_date: string;
-  image: string;
-};
-
 type Props = {
-  user: User | undefined;
+  user: User;
   setIsEditProfileOpen: Dispatch<SetStateAction<boolean>>;
 };
 

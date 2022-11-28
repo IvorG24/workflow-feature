@@ -23,12 +23,23 @@ import Notes from "./Notes/Notes";
 import styles from "./Profile.module.scss";
 import Reviews from "./Reviews/Reviews";
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  position: string;
+  status: string;
+  hired_date: string;
+  image: string;
+};
+
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
   const user = MEMBERS.find((member) => {
     return member.id === router.query.id;
-  });
+  }) as User;
   const isMobile = useMediaQuery("(max-width: 576px)");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -41,7 +52,7 @@ const Profile = () => {
         withCloseButton
         size="auto"
       >
-        <PeerReviewForm user={`${user?.name}`} />
+        <PeerReviewForm user={`${user.name}`} />
       </Modal>
       <Modal
         opened={isEditProfileOpen}
@@ -59,13 +70,13 @@ const Profile = () => {
         <Group px={30} mt={-30}>
           <Avatar size={200} radius={100} />
           <Stack spacing={0}>
-            <Title order={2}>{user?.name}</Title>
+            <Title order={2}>{user.name}</Title>
             <Text>
-              {user?.position} - {user?.status}
+              {user.position} - {user.status}
             </Text>
             <Flex align="center">
               <Mail />
-              <Text>&nbsp;{user?.email}</Text>
+              <Text>&nbsp;{user.email}</Text>
             </Flex>
           </Stack>
         </Group>
