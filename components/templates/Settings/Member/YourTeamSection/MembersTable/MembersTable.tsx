@@ -16,7 +16,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
         return (
           <div
             key={id}
-            onClick={() => router.push(`/profile/${id}`)}
+            onClick={() => router.push(`/profiles/${id}`)}
             className={styles.desktopOnlyRow}
             data-testid="membersRow"
           >

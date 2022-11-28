@@ -11,7 +11,7 @@ import {
   NavLink,
   Select,
   Title,
-  useMantineColorScheme
+  useMantineColorScheme,
 } from "@mantine/core";
 import Image from "next/image";
 import { useState } from "react";
@@ -25,7 +25,7 @@ import {
   Moon,
   Notifications,
   Settings,
-  Sun
+  Sun,
 } from "../../Icon";
 import styles from "./Navbar.module.scss";
 

@@ -14,7 +14,7 @@
   "overrides": [
     {
       "files": ["__tests__/**"],
-      "plugins": ["jest"],
+      "plugins": ["testing-library", "jest", "jest-dom"],
       "extends": ["plugin:jest/recommended"],
       "rules": { "jest/prefer-expect-assertions": "off" }
     }
