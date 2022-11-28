@@ -13,12 +13,12 @@ import {
 } from "@mantine/core";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { MEMBERS } from "../../../tempData";
-import Assesment from "./Assessment/Assessment";
-import Bio from "./Bio/Bio";
-import Notes from "./Notes/Notes";
+import { MEMBERS } from "../../tempData";
+import Assesment from "./Assessment";
+import Bio from "./Bio";
+import Notes from "./NoteList";
 import styles from "./Profile.module.scss";
-import Reviews from "./Reviews/Reviews";
+import Reviews from "./ReviewList";
 
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();

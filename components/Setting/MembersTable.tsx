@@ -1,6 +1,6 @@
 import { Avatar, Select, Text, Title } from "@mantine/core";
 import { useRouter } from "next/router";
-import { Member } from "../../Member";
+import { Member } from "./Member";
 import styles from "./MembersTable.module.scss";
 
 type Props = {
