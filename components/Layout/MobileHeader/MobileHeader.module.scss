@@ -2,6 +2,7 @@
 
 .container {
   display: none;
+  z-index: $above;
 }
 
 .modal {
