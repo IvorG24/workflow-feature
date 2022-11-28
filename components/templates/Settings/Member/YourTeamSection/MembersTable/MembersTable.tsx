@@ -38,7 +38,10 @@ const MembersTable = ({ filteredMembers }: Props) => {
               // Reason: the Select input and MoreOptions button should not redirect to user profile
               onClick={() => router.push(`/profiles/${id}`)}
             >
-              <Flex gap="sm">
+              <Flex
+                gap={{ sm: "sm" }}
+                direction={{ base: "column", sm: "row" }}
+              >
                 <MantineAvatar
                   size={40}
                   radius={40}
@@ -50,6 +53,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
                     {name}
                   </Text>
                   <Text fz="xs">{email}</Text>
+                  {/*  Select should have smaller padding. */}
                   <Select
                     value={role}
                     onChange={(e) => console.log(e)}
