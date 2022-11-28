@@ -1,4 +1,5 @@
 import AuthLayout from "@/components/Layout/AuthLayout";
+import Meta from "@/components/Meta/Meta";
 import SignIn from "@/components/SignIn/SignIn";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
@@ -20,7 +21,12 @@ export default function SignInPage() {
     handleAuthProtect();
   }, [router, session, isLoading]);
 
-  return <SignIn />;
+  return (
+    <>
+      <Meta description="Sign in Page" url="localhost:3000/sign-in" />
+      <SignIn />
+    </>
+  );
 }
 
 SignInPage.getLayout = function getLayout(page: ReactElement) {

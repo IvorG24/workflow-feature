@@ -1,3 +1,5 @@
+@import "@/styles/variables";
+
 .notification {
   position: absolute;
   top: 1rem;
@@ -5,17 +7,12 @@
 }
 
 .register {
-  height: 100vh;
-  max-width: 500px;
   display: flex;
-  justify-content: flex-start;
   flex-direction: column;
-  padding: 4rem;
-
-  // padding-top: 15vh;
-  // padding: 15vh 2rem;
+  padding: clamp(5vh, 20vw, 15vh) clamp(2rem, 5vw, 5rem);
   width: 100%;
-  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
 
   .form,
   .provider {
@@ -40,16 +37,11 @@
       }
     }
   }
+}
 
-  @media (min-width: 800px) {
-    .register {
-      width: 50vw;
-    }
-  }
-
-  @media (min-width: 500px) {
-    .register {
-      padding: 15vh 5rem;
-    }
+@media only screen and (min-width: $breakpoint-tablet) {
+  .register {
+    width: 50%;
+    height: 100vh;
   }
 }

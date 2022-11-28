@@ -1,5 +1,6 @@
 // todo: add meta tags
 import AuthLayout from "@/components/Layout/AuthLayout";
+import Meta from "@/components/Meta/Meta";
 import Register from "@/components/Register/Register";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
@@ -21,7 +22,12 @@ export default function RegisterPage() {
     handleAuthProtect();
   }, [router, session, isLoading]);
 
-  return <Register />;
+  return (
+    <>
+      <Meta description="Register Page" url="localhost:3000/register" />
+      <Register />
+    </>
+  );
 }
 
 RegisterPage.getLayout = function getLayout(page: ReactElement) {
