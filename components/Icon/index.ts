@@ -1,5 +1,7 @@
 export { default as AddCircle } from "./AddCircle";
 export { default as Calendar } from "./Calendar";
+export { default as Check } from "./Check";
+export { default as Close } from "./Close";
 export { default as Dashboard } from "./Dashboard";
 export { default as Description } from "./Description";
 export { default as EditDocument } from "./EditDocument";
@@ -14,3 +16,4 @@ export { default as Notifications } from "./Notifications";
 export { default as Search } from "./Search";
 export { default as Settings } from "./Settings";
 export { default as Sun } from "./Sun";
+export { default as Warning } from "./Warning";
