@@ -1,8 +1,9 @@
-import { AddCircle, Calendar } from "@/components/Icon";
+import { AddCircle, Edit, Mail } from "@/components/Icon";
 import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
 import {
   Avatar,
   Button,
+  Flex,
   Group,
   Modal,
   Stack,
@@ -11,11 +12,13 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { MEMBERS } from "../../../tempData";
 import Assesment from "./Assessment/Assessment";
 import Bio from "./Bio/Bio";
+import EditProfileForm from "./EditProfileForm/EditProfileForm";
 import Notes from "./Notes/Notes";
 import styles from "./Profile.module.scss";
 import Reviews from "./Reviews/Reviews";
@@ -26,8 +29,9 @@ const Profile = () => {
   const user = MEMBERS.find((member) => {
     return member.id === router.query.id;
   });
-
+  const isMobile = useMediaQuery("(max-width: 576px)");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   return (
     <div className={styles.container}>
@@ -39,20 +43,44 @@ const Profile = () => {
       >
         <PeerReviewForm user={`${user?.name}`} />
       </Modal>
+      <Modal
+        opened={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        size="auto"
+        fullScreen={isMobile}
+      >
+        <EditProfileForm
+          user={user}
+          setIsEditProfileOpen={setIsEditProfileOpen}
+        />
+      </Modal>
       <div className={styles.banner} />
-      <Group px={30} mt={-30}>
-        <Avatar size={200} radius={100} />
-        <Stack spacing={0}>
-          <Title order={2}>{user?.name}</Title>
-          <Text>
-            {user?.position} - {user?.status}
-          </Text>
-          <Group mt={10}>
-            <Calendar />
-            <Text>Hired {user?.hired_date}</Text>
-          </Group>
-        </Stack>
-      </Group>
+      <Flex align="flex-start" justify="space-between" wrap="wrap">
+        <Group px={30} mt={-30}>
+          <Avatar size={200} radius={100} />
+          <Stack spacing={0}>
+            <Title order={2}>{user?.name}</Title>
+            <Text>
+              {user?.position} - {user?.status}
+            </Text>
+            <Flex align="center">
+              <Mail />
+              <Text>&nbsp;{user?.email}</Text>
+            </Flex>
+          </Stack>
+        </Group>
+        <Button
+          variant="outline"
+          size="xs"
+          onClick={() => setIsEditProfileOpen(true)}
+          leftIcon={<Edit />}
+          color="gray"
+          mt="md"
+          mr="md"
+        >
+          Edit Profile
+        </Button>
+      </Flex>
 
       <Tabs defaultValue="bio" mt={30}>
         <Group>
