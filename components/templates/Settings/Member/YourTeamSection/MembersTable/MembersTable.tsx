@@ -1,4 +1,5 @@
-import { Avatar, Select, Text, Title } from "@mantine/core";
+import SvgMoreOptionsHoriz from "@/components/Icon/MoreOptionsHoriz";
+import { Avatar, Button, Select, Text, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import { Member } from "../../Member";
 import styles from "./MembersTable.module.scss";
@@ -40,6 +41,9 @@ const MembersTable = ({ filteredMembers }: Props) => {
                 onClick={(e) => e.stopPropagation()}
                 value={role}
               />
+              <Button>
+                <SvgMoreOptionsHoriz />
+              </Button>
             </div>
           </div>
         );
