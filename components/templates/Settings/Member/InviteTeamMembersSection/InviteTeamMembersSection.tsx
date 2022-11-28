@@ -1,7 +1,6 @@
-import { Button, MultiSelect, Text, Title } from "@mantine/core";
+import { Button, MultiSelect, Stack, Text, Title } from "@mantine/core";
 import { FormEvent, useState } from "react";
 import { Member } from "../Member";
-import styles from "./InviteTeamMembersSection.module.scss";
 
 type Props = {
   members: Member[];
@@ -31,8 +30,8 @@ const InviteTeamMembersSection = ({ members }: Props) => {
   };
 
   return (
-    <section className={styles.container}>
-      <div className={styles.details}>
+    <Stack pt="sm" style={{ maxWidth: "800px" }}>
+      <div>
         <Title order={3}>Invite Team Members</Title>
         <Text>
           Admins can edit your profile, invite team members and manage all jobs.
@@ -41,30 +40,27 @@ const InviteTeamMembersSection = ({ members }: Props) => {
       </div>
 
       <form
-        className={styles.invitesList}
         data-testid="team__sendInvitesForm"
         autoComplete="off"
         onSubmit={handleFormSubmit}
       >
-        <div className={styles.invitesList__content}>
-          <div className={styles.emailInput}>
-            <MultiSelect
-              data={emails}
-              placeholder="Select items"
-              searchable
-              creatable
-              getCreateLabel={(query) => `+ Create ${query}`}
-              onCreate={(query) => {
-                const item = { value: query, label: query };
-                setEmails((current) => [...current, item]);
-                return item;
-              }}
-            />
-          </div>
-          <Button className={styles.sendInvitesButton}>Send Invites</Button>
-        </div>
+        <MultiSelect
+          data={emails}
+          placeholder="Add users"
+          size="md"
+          mb="sm"
+          searchable
+          creatable
+          getCreateLabel={(query) => `+ Create ${query}`}
+          onCreate={(query) => {
+            const item = { value: query, label: query };
+            setEmails((current) => [...current, item]);
+            return item;
+          }}
+        />
+        <Button fullWidth>Send Invites</Button>
       </form>
-    </section>
+    </Stack>
   );
 };
 

@@ -1,7 +1,6 @@
 import { Divider } from "@mantine/core";
 import { MEMBERS } from "../../../../tempData";
 import InviteTeamMembersSection from "./InviteTeamMembersSection/InviteTeamMembersSection";
-import styles from "./Member.module.scss";
 import YourTeamSection from "./YourTeamSection/YourTeamSection";
 
 export type Member = {
@@ -16,12 +15,12 @@ export type Members = Member[];
 
 const Member = () => {
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
+    <div>
+      <div>
         <YourTeamSection members={MEMBERS} />
       </div>
       <Divider mt={50} />
-      <div className={styles.content}>
+      <div>
         <InviteTeamMembersSection members={MEMBERS} />
       </div>
     </div>
