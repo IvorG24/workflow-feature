@@ -1,8 +1,8 @@
-interface SVGRProps {
+type SVGRProps = {
   title?: string;
   titleId?: string;
   color?: string;
-}
+};
 const SvgCheck = ({ title, titleId, color = "#444746" }: SVGRProps) => (
   <svg
     width="1em"
