@@ -9,7 +9,7 @@ type Props = {
   questionIndex: number;
 };
 
-const AddQuestionOptions: FC<Props> = (props) => {
+const QuestionOptionsBuilder: FC<Props> = (props) => {
   const { control, questionIndex } = props;
   const [valueToRemove, setValueToRemove] = useState("");
   const [search, setSearch] = useState("");
@@ -57,8 +57,7 @@ const AddQuestionOptions: FC<Props> = (props) => {
     if (!valueToRemove) return;
     handleRemoveOption(valueToRemove);
     setValueToRemove("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [valueToRemove]);
+  }, [handleRemoveOption, valueToRemove]);
 
   return (
     <Select
@@ -84,4 +83,4 @@ const AddQuestionOptions: FC<Props> = (props) => {
   );
 };
 
-export default memo(AddQuestionOptions);
+export default memo(QuestionOptionsBuilder);

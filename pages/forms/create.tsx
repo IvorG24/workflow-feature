@@ -4,7 +4,7 @@ import Meta from "@/components/Meta/Meta";
 import { GetServerSideProps } from "next";
 import { ReactElement } from "react";
 import { resetServerContext } from "react-beautiful-dnd";
-import type { NextPageWithLayout } from "./_app";
+import type { NextPageWithLayout } from "../_app";
 
 export const getServerSideProps: GetServerSideProps = async () => {
   resetServerContext();
@@ -15,6 +15,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   };
 };
 
+// todo: fix meta tags
 const CreateRequestForm: NextPageWithLayout = () => {
   return (
     <div>

@@ -1,4 +1,4 @@
-import QuestionItem from "@/components/CreateRequestFormPage/FormBuilder/QuestionItem";
+import QuestionItemBuilder from "@/components/CreateRequestFormPage/QuestionItemBuilder";
 import FormRequest, {
   Question,
   QuestionOption,
@@ -159,7 +159,7 @@ const FormBuilder: FC<Props> = (props) => {
               {(provided) => (
                 <Box ref={provided.innerRef} {...provided.droppableProps}>
                   {questionList.map((item, index) => (
-                    <QuestionItem
+                    <QuestionItemBuilder
                       key={item.id}
                       register={register}
                       control={control}

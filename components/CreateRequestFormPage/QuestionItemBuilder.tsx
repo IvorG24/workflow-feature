@@ -1,5 +1,5 @@
-import AddQuestionOptions from "@/components/CreateRequestFormPage/AddQuestionOptions";
 import EXPECTED_RESPONSE_TYPE_VALUE from "@/components/CreateRequestFormPage/constant/ExpectedResponseType";
+import QuestionOptionsBuilder from "@/components/CreateRequestFormPage/QuestionOptionsBuilder";
 import FormRequest from "@/components/CreateRequestFormPage/type/FormModel";
 import {
   Center,
@@ -29,7 +29,7 @@ type Props = {
   handleRemoveQuestion: (index: number) => void;
 };
 
-const QuestionItem: FC<Props> = (props) => {
+const QuestionItemBuilder: FC<Props> = (props) => {
   const { register, control, questionIndex, handleRemoveQuestion } = props;
 
   const { errors } = useFormState({ control });
@@ -106,7 +106,7 @@ const QuestionItem: FC<Props> = (props) => {
                 )}
               />
               {isMultiOrSelect && (
-                <AddQuestionOptions
+                <QuestionOptionsBuilder
                   control={control}
                   questionIndex={questionIndex}
                 />
@@ -127,4 +127,4 @@ const QuestionItem: FC<Props> = (props) => {
   );
 };
 
-export default memo(QuestionItem);
+export default memo(QuestionItemBuilder);
