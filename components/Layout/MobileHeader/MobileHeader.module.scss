@@ -2,7 +2,7 @@
 
 .container {
   display: none;
-  z-index: $above;
+  z-index: $z-index-fixed-navigation;
 }
 
 .modal {
