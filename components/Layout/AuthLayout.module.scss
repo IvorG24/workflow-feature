@@ -1,24 +1,39 @@
-.auth {
-  width: 100vw;
+@import "@/styles/variables";
+
+.mainContainer {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.container {
+  max-width: $breakpoint-desktop-l;
+  align-self: center;
+  padding: 0;
+}
+
+.darkModeToggler {
+  font-size: 20px;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
 }
 
 .welcome {
-  width: 50vw;
-  height: 100vh;
+  height: 42rem;
   background-color: #edf9f1;
-  margin: 0;
-  display: none;
   justify-content: center;
   align-items: flex-start;
-  padding: 4rem;
-  padding-top: 15vh;
-
+  padding: 10rem 0;
+  width: 100%;
   .logo {
     font-size: 80px;
     height: 90px;
   }
+}
 
-  @media (min-width: 600px) {
-    display: flex;
+@media only screen and (min-width: $breakpoint-tablet) {
+  .welcome {
+    width: 50%;
+    height: 100vh;
   }
 }

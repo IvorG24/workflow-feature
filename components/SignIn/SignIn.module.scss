@@ -1,3 +1,5 @@
+@import "@/styles/variables";
+
 .notification {
   position: absolute;
   top: 1rem;
@@ -5,14 +7,13 @@
 }
 
 .signin {
-  height: 100vh;
-  max-width: 500px;
   display: flex;
-  justify-content: flex-start;
   flex-direction: column;
-  padding: 15vh 2rem;
+  padding: 15vh clamp(2rem, 5vw, 5rem);
   width: 100%;
-  margin: 0 auto;
+  height: 42rem;
+  align-items: center;
+  justify-content: center;
 
   .form,
   .provider {
@@ -37,16 +38,11 @@
       }
     }
   }
+}
 
-  @media (min-width: 800px) {
-    .signin {
-      width: 50vw;
-    }
-  }
-
-  @media (min-width: 500px) {
-    .signin {
-      padding: 15vh 5rem;
-    }
+@media only screen and (min-width: $breakpoint-tablet) {
+  .signin {
+    width: 50%;
+    height: 100vh;
   }
 }
