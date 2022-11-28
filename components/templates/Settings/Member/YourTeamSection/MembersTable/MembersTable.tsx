@@ -1,3 +1,4 @@
+// JC: scss is not needed; can move component as a standalone component
 import {
   Avatar as MantineAvatar,
   Button,
@@ -10,7 +11,6 @@ import {
 } from "@mantine/core";
 
 import SvgMoreOptionsHoriz from "@/components/Icon/MoreOptionsHoriz";
-
 import { useRouter } from "next/router";
 import { Member } from "../../Member";
 
@@ -24,7 +24,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
   return (
     <Stack justify="space-between" style={{ minHeight: "400px" }}>
       {
-        // change the properties to match fetched member data
+        // JC: Change the properties to match fetched member data
         filteredMembers.map(({ id, name, email, role, image }) => {
           return (
             <MantineGroup
@@ -34,6 +34,8 @@ const MembersTable = ({ filteredMembers }: Props) => {
                 paddingTop: "10px",
               }}
               key={id}
+              // JC: Propose to move this onClick function to MantineAvatar and Text/name
+              // Reason: the Select input and MoreOptions button should not redirect to user profile
               onClick={() => router.push(`/profiles/${id}`)}
             >
               <Flex gap="sm">
@@ -58,9 +60,9 @@ const MembersTable = ({ filteredMembers }: Props) => {
                     ]}
                     radius={4}
                     style={{ width: "100px" }}
-                    // JC: Add icon for dropdown arrow
-                    // rightSection={<ArrowDropDown />}
-                    // rightSectionWidth={20}
+                    // JC: Replace icon for dropdown arrow
+                    rightSection={<Text>&#8595;</Text>}
+                    rightSectionWidth={20}
                     readOnly
                   />
                 </div>
