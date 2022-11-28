@@ -5,6 +5,14 @@ const setup = () => {
   render(<AuthLayout>children</AuthLayout>);
 };
 
+jest.mock("@mantine/core", () => ({
+  ...jest.requireActual("@mantine/core"),
+  useMantineColorScheme: () => ({
+    colorScheme: "dark",
+    toggleColorScheme: jest.fn(),
+  }),
+}));
+
 describe("auth layout", () => {
   it("renders a logo", () => {
     setup();

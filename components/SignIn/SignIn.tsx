@@ -81,7 +81,12 @@ const SignIn = () => {
           {notification}
         </Notification>
       )}
-      <Container className={styles.signin}>
+      <Container
+        className={styles.signin}
+        style={{
+          backgroundColor: colorScheme === "light" ? "#FFFFFF" : "#1A1B1E",
+        }}
+      >
         <form onSubmit={onSubmit} className={styles.form}>
           <Stack spacing="xs">
             <Title order={3}>Sign in</Title>

@@ -1,8 +1,9 @@
 type SVGRProps = {
   title?: string;
   titleId?: string;
+  color?: string;
 };
-const SvgLogout = ({ title, titleId }: SVGRProps) => (
+const SvgCheck = ({ title, titleId, color = "#444746" }: SVGRProps) => (
   <svg
     width="1em"
     height="1em"
@@ -14,9 +15,9 @@ const SvgLogout = ({ title, titleId }: SVGRProps) => (
   >
     {title ? <title id={titleId}>{title}</title> : null}
     <path
-      d="M9 42c-.8 0-1.5-.3-2.1-.9-.6-.6-.9-1.3-.9-2.1V9c0-.8.3-1.5.9-2.1C7.5 6.3 8.2 6 9 6h14.55v3H9v30h14.55v3H9Zm24.3-9.25-2.15-2.15 5.1-5.1h-17.5v-3h17.4l-5.1-5.1 2.15-2.15 8.8 8.8-8.7 8.7Z"
-      fill="currentColor"
+      d="M18.9 35.7002L7.69995 24.5002L9.84995 22.3502L18.9 31.4002L38.0999 12.2002L40.25 14.3502L18.9 35.7002Z"
+      fill={color}
     />
   </svg>
 );
-export default SvgLogout;
+export default SvgCheck;

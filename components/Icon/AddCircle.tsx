@@ -1,7 +1,7 @@
-interface SVGRProps {
+type SVGRProps = {
   title?: string;
   titleId?: string;
-}
+};
 const SvgAddCircle = ({ title, titleId }: SVGRProps) => (
   <svg
     width="1em"
