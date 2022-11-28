@@ -10,6 +10,7 @@ import {
   Text,
 } from "@mantine/core";
 
+import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
 import SvgMoreOptionsHoriz from "@/components/Icon/MoreOptionsHoriz";
 import { useRouter } from "next/router";
 import { Member } from "../../Member";
@@ -64,8 +65,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
                     ]}
                     radius={4}
                     style={{ width: "100px" }}
-                    // JC: Replace icon for dropdown arrow
-                    rightSection={<Text>&#8595;</Text>}
+                    rightSection={<SvgArrowDropDown />}
                     rightSectionWidth={20}
                     readOnly
                   />
