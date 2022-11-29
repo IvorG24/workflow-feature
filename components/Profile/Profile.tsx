@@ -68,7 +68,7 @@ const Profile = () => {
           />
         )}
       </Modal>
-
+      {/* todo: add default styling when no background image is available */}
       <BackgroundImage className={styles.banner} src="" />
       <Flex align="flex-start" justify="space-between" wrap="wrap">
         <Group px={30} mt={-30}>
