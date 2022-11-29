@@ -1,8 +1,29 @@
-import * as React from "react";
-interface SVGRProps {
+type SVGRProps = {
   title?: string;
   titleId?: string;
-}
+};
+const SvgPhotoCamera = ({ title, titleId }: SVGRProps) => (
+  <svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-labelledby={titleId}
+  >
+    {title ? <title id={titleId}>{title}</title> : null}
+    <path
+      d="M24 34.7c2.4 0 4.417-.817 6.05-2.45 1.633-1.633 2.45-3.667 2.45-6.1 0-2.4-.817-4.408-2.45-6.025C28.417 18.508 26.4 17.7 24 17.7c-2.433 0-4.458.808-6.075 2.425-1.617 1.617-2.425 3.625-2.425 6.025 0 2.433.808 4.467 2.425 6.1 1.617 1.633 3.642 2.45 6.075 2.45Zm0-3c-1.6 0-2.917-.525-3.95-1.575-1.033-1.05-1.55-2.375-1.55-3.975 0-1.567.517-2.867 1.55-3.9S22.4 20.7 24 20.7c1.567 0 2.875.517 3.925 1.55 1.05 1.033 1.575 2.333 1.575 3.9 0 1.6-.525 2.925-1.575 3.975-1.05 1.05-2.358 1.575-3.925 1.575ZM7 42c-.8 0-1.5-.3-2.1-.9-.6-.6-.9-1.3-.9-2.1V13.35c0-.767.3-1.458.9-2.075.6-.617 1.3-.925 2.1-.925h7.35L18 6h12l3.65 4.35H41c.767 0 1.458.308 2.075.925.617.617.925 1.308.925 2.075V39c0 .8-.308 1.5-.925 2.1-.617.6-1.308.9-2.075.9H7Zm34-3V13.35h-8.75L28.6 9h-9.2l-3.65 4.35H7V39h34Z"
+      fill="#444746"
+    />
+  </svg>
+);
+export default SvgPhotoCamera;
+type SVGRProps = {
+  title?: string;
+  titleId?: string;
+};
 const SvgPhotoCamera = ({ title, titleId }: SVGRProps) => (
   <svg
     width="1em"

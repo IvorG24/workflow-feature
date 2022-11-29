@@ -95,7 +95,12 @@ const Register = () => {
           {notification}
         </Notification>
       )}
-      <Container className={styles.register}>
+      <Container
+        className={styles.register}
+        style={{
+          backgroundColor: colorScheme === "light" ? "#FFFFFF" : "#1A1B1E",
+        }}
+      >
         <form onSubmit={onSubmit} className={styles.form}>
           <Stack spacing="xs">
             <Title order={3}>Register</Title>
@@ -106,13 +111,23 @@ const Register = () => {
                 type="text"
                 {...register("fullName", {
                   required: "Full Name is required",
+                  minLength: {
+                    value: 3,
+                    message: "Full name must be at least 3 characters",
+                  },
                 })}
                 error={errors.fullName?.message}
               />
               <TextInput
                 label="Phone Number"
                 type="text"
-                {...register("phoneNumber", {})}
+                {...register("phoneNumber", {
+                  validate: {
+                    isPhoneNumber: (input) =>
+                      validator.isMobilePhone(input) ||
+                      "Phone number is invalid",
+                  },
+                })}
                 error={errors.phoneNumber?.message}
               />
               <TextInput

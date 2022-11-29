@@ -6,6 +6,7 @@ import {
   MantineProvider,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import { NotificationsProvider } from "@mantine/notifications";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
 import { NextPage } from "next/types";
@@ -52,7 +53,9 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           supabaseClient={createClient}
           initialSession={pageProps.initialSession}
         >
-          {getLayout(<Component {...pageProps} />)}
+          <NotificationsProvider position="top-center">
+            {getLayout(<Component {...pageProps} />)}
+          </NotificationsProvider>
         </SessionContextProvider>
       </MantineProvider>
     </ColorSchemeProvider>
