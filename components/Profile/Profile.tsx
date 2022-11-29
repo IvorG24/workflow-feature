@@ -1,4 +1,5 @@
 // todo: create unit test
+import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
 import {
@@ -38,6 +39,7 @@ export type User = {
 
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();
+  const [activeTab, setActiveTab] = useState<string | null>("bio");
   const router = useRouter();
   // todo: fetch user profile
   const user = MEMBERS.find((member) => {
@@ -54,7 +56,10 @@ const Profile = () => {
         withCloseButton
         size="auto"
       >
-        <PeerReviewForm user={`${user?.name}`} />
+        {activeTab === "reviews" && <PeerReviewForm user={`${user?.name}`} />}
+        {activeTab === "assessment" && (
+          <EmployeeReviewForm user={`${user?.name}`} />
+        )}
       </Modal>
       <Modal
         opened={isEditProfileOpen}
@@ -97,7 +102,7 @@ const Profile = () => {
         </Button>
       </Flex>
 
-      <Tabs defaultValue="bio" mt={30}>
+      <Tabs value={activeTab} onTabChange={setActiveTab} mt={30}>
         <Group>
           <Tabs.List className={styles.tabContainer}>
             <Tabs.Tab value="bio">Bio</Tabs.Tab>
@@ -111,14 +116,26 @@ const Profile = () => {
               borderColor: colorScheme === "light" ? "#dee2e6" : "#373A40",
             }}
           >
-            <Button
-              variant="outline"
-              className={styles.addReviewButton}
-              onClick={() => setIsReviewModalOpen((prev) => !prev)}
-            >
-              <AddCircle />
-              &nbsp;Add a Review
-            </Button>
+            {activeTab === "reviews" && (
+              <Button
+                variant="outline"
+                className={styles.addReviewButton}
+                onClick={() => setIsReviewModalOpen((prev) => !prev)}
+              >
+                <AddCircle />
+                &nbsp;Add a Review
+              </Button>
+            )}
+            {activeTab === "assessment" && (
+              <Button
+                variant="outline"
+                className={styles.addReviewButton}
+                onClick={() => setIsReviewModalOpen((prev) => !prev)}
+              >
+                <AddCircle />
+                &nbsp;Add an Assessment
+              </Button>
+            )}
           </div>
         </Group>
 
@@ -131,7 +148,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <Assesment />
+          <Assesment user={user} />
         </Tabs.Panel>
 
         <Tabs.Panel value="notes" pt="xl">

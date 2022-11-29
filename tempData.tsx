@@ -109,6 +109,58 @@ export const FORMS = [
       },
     ],
   },
+  {
+    id: 2,
+    team: 1,
+    name: "Employee Review",
+    fields: [
+      {
+        label: "Takes Responsibility",
+        expected_value: "number",
+      },
+      {
+        label: "Has the ability to learn and use new skills",
+        expected_value: "number",
+      },
+      {
+        label: "Generate creative ideas and solutions",
+        expected_value: "number",
+      },
+      {
+        label: "Meets attendance requirements",
+        expected_value: "number",
+      },
+      {
+        label: "Set and meet deadlines",
+        expected_value: "number",
+      },
+      {
+        label: "Effectively communicate with others",
+        expected_value: "number",
+      },
+      {
+        label: "What are the employee’s strongest points?",
+        expected_value: "text",
+      },
+      {
+        label: "What are the employee’s weakest points?",
+        expected_value: "text",
+      },
+      {
+        label:
+          "What can the employee do to be more effective  or make improvements?",
+        expected_value: "text",
+      },
+      {
+        label: "What additional training would benefit the employee?",
+        expected_value: "text",
+      },
+      {
+        label: "Additional Comments",
+        expected_value: "text",
+      },
+    ],
+  },
 ];
 
 export const REVIEWS = [
@@ -203,6 +255,69 @@ export const REVIEWS = [
       4,
       4,
       "The clock within this blog and the clock on my laptop are 1 hour different from each other.",
+    ],
+  },
+];
+
+export const ASSESSMENTS = [
+  {
+    id: 1,
+    created_at: "10/10/22",
+    review_form: 1,
+    review_from: "447350a5-fa14-48cc-8848-abe0f8270d36",
+    review_to: "c1b5244e-bb3d-4675-9aa0-20f7eb9904ca",
+    answers: [
+      5,
+      4,
+      3,
+      2,
+      1,
+      2,
+      "The truth is that you pay for your lifestyle in hours.",
+      "The clock within this blog and the clock on my laptop are 1 hour different from each other.",
+      "He never understood why what, when, and where left out who.",
+      "The family’s excitement over going to Disneyland was crazier than she anticipated.",
+      "He never understood why what, when, and where left out who.",
+    ],
+  },
+  {
+    id: 2,
+    created_at: "10/10/22",
+    review_form: 1,
+    review_from: "447350a5-fa14-48cc-8848-abe0f8270d36",
+    review_to: "bab76520-32cc-4e9b-8755-68e67eaab328",
+    answers: [
+      1,
+      2,
+      3,
+      4,
+      5,
+      4,
+      "The truth is that you pay for your lifestyle in hours.",
+      "The clock within this blog and the clock on my laptop are 1 hour different from each other.",
+      "He never understood why what, when, and where left out who.",
+      "He never understood why what, when, and where left out who.",
+      "The family’s excitement over going to Disneyland was crazier than she anticipated.",
+    ],
+  },
+  {
+    id: 3,
+    created_at: "10/10/22",
+    review_form: 1,
+    review_from: "447350a5-fa14-48cc-8848-abe0f8270d36",
+    review_to: "d91c01a8-7a8f-4e27-9825-25f276426dcb",
+    answers: [
+      3,
+      4,
+      5,
+      4,
+      3,
+      2,
+      "The truth is that you pay for your lifestyle in hours.",
+      "The clock within this blog and the clock on my laptop are 1 hour different from each other.",
+      "He never understood why what, when, and where left out who.",
+      "The family’s excitement over going to Disneyland was crazier than she anticipated.",
+      "He never understood why what, when, and where left out who.",
     ],
   },
 ];
