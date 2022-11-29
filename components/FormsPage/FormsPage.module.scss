@@ -2,15 +2,10 @@
 
 .input {
   width: 100%;
-  @media (min-width: $breakpoint-mobile) {
+}
+
+@media (min-width: $breakpoint-mobile) {
+  .input {
     width: auto;
   }
-}
-
-.lightColor {
-  background-color: var(--mantine-color-green-1);
-}
-
-.darkColor {
-  background-color: var(--mantine-color-dark-4);
 }
