@@ -1,4 +1,4 @@
-import { Button, MultiSelect, Stack, Text, Title } from "@mantine/core";
+import { Box, Button, MultiSelect, Stack, Text, Title } from "@mantine/core";
 import { FormEvent, useState } from "react";
 import { Member } from "./Member";
 
@@ -30,14 +30,14 @@ const InviteTeamMembersSection = ({ members }: Props) => {
   };
 
   return (
-    <Stack pt="sm" style={{ maxWidth: "800px" }}>
-      <div>
+    <Stack pt="sm" maw="800px">
+      <Box>
         <Title order={3}>Invite Team Members</Title>
         <Text>
           Admins can edit your profile, invite team members and manage all jobs.
           Recruiters can only manage their own jobs
         </Text>
-      </div>
+      </Box>
 
       <form
         data-testid="team__sendInvitesForm"
