@@ -1,5 +1,5 @@
 import { Search } from "@/components/Icon";
-import { Flex, TextInput } from "@mantine/core";
+import { Flex, Text, TextInput } from "@mantine/core";
 import { InputHTMLAttributes, MouseEventHandler } from "react";
 import styles from "./SearchBar.module.scss";
 
@@ -12,18 +12,18 @@ const SearchBar = ({ onClear, numberOfMembers, ...inputProps }: Props) => {
   return (
     <Flex
       gap="sm"
-      direction={{ base: "column", lg: "row-reverse" }}
-      align={{ base: "flex-start", lg: "center" }}
+      direction={{ base: "column", md: "row-reverse" }}
+      align={{ base: "flex-start", md: "center" }}
       justify={{ lg: "flex-start" }}
-      mb="sm"
+      mb={{ base: "sm", md: "0" }}
     >
       <TextInput
-        w="100%"
+        w={{ base: "100%", md: "auto", lg: "400px" }}
         maw="400px"
         placeholder="Search members"
         rightSection={<Search />}
       />
-      <small>{numberOfMembers} members</small>
+      <Text fw={700}>{numberOfMembers} members</Text>
       {inputProps.value && (
         // todo: use Mantine Button
         <button

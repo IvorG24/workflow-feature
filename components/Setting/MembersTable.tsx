@@ -24,7 +24,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
   const router = useRouter();
 
   return (
-    <Stack justify="space-between" mih="400px" py="xl">
+    <Stack justify="space-between" mih="400px" pt="md">
       {
         // JC: Change the properties to match fetched member data
         filteredMembers.map(({ id, name, email, role, image }) => {
