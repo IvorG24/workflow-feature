@@ -3,6 +3,7 @@ import {
   Button,
   Container,
   Flex,
+  Group,
   Pagination,
   Select,
   TextInput,
@@ -60,46 +61,45 @@ const FormList = () => {
       <Title order={1} my="md">
         Forms
       </Title>
-      <Flex wrap="wrap" gap="xs" my="lg" justify="space-between">
-        <form>
-          <Flex wrap="wrap" gap="xs" justify="stretch">
-            {/* search bar */}
-            <TextInput
-              className={styles.input}
-              placeholder="Search"
-              rightSection={
-                <ActionIcon>
-                  <Search />
-                </ActionIcon>
-              }
-            />
+      <Group spacing="xs" my="lg" align="top">
+        <Group spacing="xs" className={styles.filter}>
+          {/* search bar */}
+          <TextInput
+            className={styles.searchInput}
+            placeholder="Search"
+            rightSection={
+              <ActionIcon>
+                <Search />
+              </ActionIcon>
+            }
+          />
 
-            {/* status dropdown */}
-            <Select
-              className={styles.input}
-              placeholder="Status"
-              data={[
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-              ]}
-            />
+          {/* status dropdown */}
+          <Select
+            className={styles.statusDropdown}
+            placeholder="Status"
+            data={[
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ]}
+          />
 
-            {/* date picker */}
-            <Select
-              className={styles.input}
-              placeholder="Date"
-              data={[
-                { value: "7", label: "7 days ago" },
-                { value: "30", label: "30 days ago" },
-                { value: "90", label: "90 days ago" },
-              ]}
-            />
-          </Flex>
-        </form>
+          {/* date picker */}
+          <Select
+            className={styles.dateDropdown}
+            placeholder="Date"
+            data={[
+              { value: "7", label: "7 days ago" },
+              { value: "30", label: "30 days ago" },
+              { value: "90", label: "90 days ago" },
+            ]}
+          />
+        </Group>
+
         <Button rightIcon={<AddCircle />} variant="subtle">
           Create a Form
         </Button>
-      </Flex>
+      </Group>
 
       <FormsTable forms={forms} colorScheme={colorScheme} />
       <Flex justify="flex-end" mt="xl">
