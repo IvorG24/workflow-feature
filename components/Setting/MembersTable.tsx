@@ -1,4 +1,4 @@
-// JC: scss is not needed; can move component as a standalone component
+// todo: create unit test
 import {
   Avatar as MantineAvatar,
   Button,
