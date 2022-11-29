@@ -24,6 +24,7 @@ type Props = {
 
 const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
   const { register, handleSubmit } = useForm();
+  // Todo: validate file input size
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [bgFile, setBGFile] = useState<File | null>(null);
   const onSubmit = handleSubmit(async (data) => {
@@ -39,12 +40,15 @@ const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
       </Title>
       <form onSubmit={onSubmit}>
         <Stack>
-          <BackgroundImage className={styles.backgroundImage} src="">
+          <BackgroundImage className={styles.backgroundImage} src="" mb={50}>
             <FileButton onChange={setBGFile} accept="image/png,image/jpeg">
               {(props) => (
                 <Button
                   variant="subtle"
                   {...props}
+                  p={0}
+                  h={40}
+                  w={40}
                   className={styles.centerIcon}
                 >
                   <PhotoCamera />
@@ -52,10 +56,10 @@ const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
               )}
             </FileButton>
           </BackgroundImage>
-          <Container className={styles.avatar} mt={-120}>
+          <Container className={styles.avatar} mt={-80} ml={10}>
             <Avatar
-              size={120}
-              radius={60}
+              size={90}
+              radius={45}
               className={styles.avatarImage}
               src=""
             />
@@ -64,6 +68,9 @@ const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
                 <Button
                   variant="subtle"
                   {...props}
+                  p={0}
+                  h={40}
+                  w={40}
                   className={styles.centerIcon}
                 >
                   <PhotoCamera />

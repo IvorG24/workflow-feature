@@ -12,7 +12,6 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { MEMBERS } from "../../../tempData";
@@ -40,7 +39,6 @@ const Profile = () => {
   const user = MEMBERS.find((member) => {
     return member.id === router.query.id;
   }) as User;
-  const isMobile = useMediaQuery("(max-width: 576px)");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
@@ -58,7 +56,6 @@ const Profile = () => {
         opened={isEditProfileOpen}
         onClose={() => setIsEditProfileOpen(false)}
         size="auto"
-        fullScreen={isMobile}
       >
         {user && (
           <EditProfileForm
