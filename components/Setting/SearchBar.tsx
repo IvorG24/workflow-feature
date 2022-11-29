@@ -18,7 +18,7 @@ const SearchBar = ({ onClear, numberOfMembers, ...inputProps }: Props) => {
       mb={{ base: "sm", md: "0" }}
     >
       <TextInput
-        w={{ base: "100%", md: "auto", lg: "400px" }}
+        w={{ base: "100%", md: "auto", xl: "400px" }}
         maw="400px"
         placeholder="Search members"
         rightSection={<Search />}
