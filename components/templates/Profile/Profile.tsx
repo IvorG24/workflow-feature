@@ -52,7 +52,7 @@ const Profile = () => {
         withCloseButton
         size="auto"
       >
-        <PeerReviewForm user={`${user.name}`} />
+        <PeerReviewForm user={`${user?.name}`} />
       </Modal>
       <Modal
         opened={isEditProfileOpen}
@@ -60,23 +60,25 @@ const Profile = () => {
         size="auto"
         fullScreen={isMobile}
       >
-        <EditProfileForm
-          user={user}
-          setIsEditProfileOpen={setIsEditProfileOpen}
-        />
+        {user && (
+          <EditProfileForm
+            user={user}
+            setIsEditProfileOpen={setIsEditProfileOpen}
+          />
+        )}
       </Modal>
       <div className={styles.banner} />
       <Flex align="flex-start" justify="space-between" wrap="wrap">
         <Group px={30} mt={-30}>
           <Avatar size={200} radius={100} />
           <Stack spacing={0}>
-            <Title order={2}>{user.name}</Title>
+            <Title order={2}>{user?.name}</Title>
             <Text>
-              {user.position} - {user.status}
+              {user?.position} - {user?.status}
             </Text>
             <Flex align="center">
               <Mail />
-              <Text>&nbsp;{user.email}</Text>
+              <Text>&nbsp;{user?.email}</Text>
             </Flex>
           </Stack>
         </Group>
