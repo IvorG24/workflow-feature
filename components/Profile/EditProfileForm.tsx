@@ -14,7 +14,7 @@ import {
 import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
-import { User } from "../Profile";
+import { User } from "./Profile";
 import styles from "./EditProfileForm.module.scss";
 
 type Props = {
