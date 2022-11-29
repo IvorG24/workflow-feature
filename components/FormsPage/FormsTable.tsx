@@ -1,8 +1,8 @@
 // todo:fix tables on mobile
 // todo: create unit test
-import { Checkbox, Table, Text } from "@mantine/core";
+import Table from "@/components/Table/Table";
+import { Checkbox, Text } from "@mantine/core";
 import { Form } from "./FormsPage";
-import styles from "./FormsPage.module.scss";
 import FormsRow from "./FormsRow";
 
 type Props = {
@@ -10,14 +10,10 @@ type Props = {
   forms: Form[];
 };
 
-const FormsTable = ({ colorScheme, forms }: Props) => {
+const FormsTable = ({ forms }: Props) => {
   return (
     <Table mt="lg">
-      <thead
-        className={
-          colorScheme === "dark" ? styles.darkColor : styles.lightColor
-        }
-      >
+      <thead>
         <tr>
           <th>
             <Checkbox size="xs" label={<Text>Id</Text>} />

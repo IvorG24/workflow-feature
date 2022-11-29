@@ -1,0 +1,13 @@
+.table {
+  th {
+    padding-block: 0.5em !important;
+  }
+
+  th:first-child {
+    border-top-left-radius: 0.4em;
+  }
+
+  th:last-child {
+    border-top-right-radius: 0.4em;
+  }
+}
