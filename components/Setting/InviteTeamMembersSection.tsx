@@ -30,7 +30,7 @@ const InviteTeamMembersSection = ({ members }: Props) => {
   };
 
   return (
-    <Stack pt="sm" maw="800px">
+    <Stack>
       <Box>
         <Title order={3}>Invite Team Members</Title>
         <Text>

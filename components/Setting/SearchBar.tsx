@@ -17,9 +17,15 @@ const SearchBar = ({ onClear, numberOfMembers, ...inputProps }: Props) => {
       justify={{ lg: "flex-start" }}
       mb="sm"
     >
-      <TextInput placeholder="Search members" rightSection={<Search />} />
+      <TextInput
+        w="100%"
+        maw="400px"
+        placeholder="Search members"
+        rightSection={<Search />}
+      />
       <small>{numberOfMembers} members</small>
       {inputProps.value && (
+        // todo: use Mantine Button
         <button
           onClick={onClear}
           aria-label="Clear search"

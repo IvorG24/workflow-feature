@@ -1,7 +1,5 @@
 // todo: create unit tests
-import { Divider, SimpleGrid } from "@mantine/core";
 import { MEMBERS } from "tempData";
-import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import YourTeamSection from "./YourTeamSection";
 
 export type Member = {
@@ -15,13 +13,7 @@ export type Member = {
 export type Members = Member[];
 
 const Member = () => {
-  return (
-    <SimpleGrid cols={1} p={0}>
-      <YourTeamSection members={MEMBERS} />
-      <Divider mt={50} />
-      <InviteTeamMembersSection members={MEMBERS} />
-    </SimpleGrid>
-  );
+  return <YourTeamSection members={MEMBERS} />;
 };
 
 export default Member;
