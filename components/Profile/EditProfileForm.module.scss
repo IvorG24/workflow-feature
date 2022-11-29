@@ -1,17 +1,14 @@
 @import "@/styles/variables";
 
-.avatar {
-  position: absolute;
-  top: 50%;
-  left: 6rem;
-  transform: translate(-50%, -50%);
+.avatarWrapper {
+  position: relative;
 }
 
 .backgroundImage {
   position: relative;
   width: 100%;
   height: 10rem;
-  background-color: #efefef;
+  background-color: var(--mantine-color-gray-1);
 }
 
 .centerIcon {
@@ -21,7 +18,7 @@
   transform: translate(-50%, -50%);
   border-radius: 50%;
   font-size: 1.5rem;
-  background-color: #d9d9d984;
+  background-color: var(--mantine-color-gray-2);
 
   &:active {
     transform: translate(-50%, -50%);

@@ -1,3 +1,4 @@
+// todo: create unit test
 import { PhotoCamera } from "@/components/Icon";
 import {
   Avatar,
@@ -11,18 +12,18 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { Dispatch, SetStateAction, useState } from "react";
+import { MouseEventHandler, useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
-import { User } from "./Profile";
 import styles from "./EditProfileForm.module.scss";
+import { User } from "./Profile";
 
 type Props = {
   user: User;
-  setIsEditProfileOpen: Dispatch<SetStateAction<boolean>>;
+  onCancel: MouseEventHandler<HTMLButtonElement>;
 };
 
-const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
+const EditProfileForm = ({ user, onCancel }: Props) => {
   const { register, handleSubmit } = useForm();
   // Todo: validate file input size
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -34,7 +35,7 @@ const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
   });
 
   return (
-    <Container className={styles.container}>
+    <Container>
       <Title order={1} weight={600} size={25} mb="lg">
         Edit Profile
       </Title>
@@ -56,13 +57,8 @@ const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
               )}
             </FileButton>
           </BackgroundImage>
-          <Container className={styles.avatar} mt={-80} ml={10}>
-            <Avatar
-              size={90}
-              radius={45}
-              className={styles.avatarImage}
-              src=""
-            />
+          <Container mt={-100} ml={10} className={styles.avatarWrapper}>
+            <Avatar size={90} radius={45} src="" />
             <FileButton onChange={setAvatarFile} accept="image/png,image/jpeg">
               {(props) => (
                 <Button
@@ -104,7 +100,7 @@ const EditProfileForm = ({ user, setIsEditProfileOpen }: Props) => {
             <Button
               variant="outline"
               color="dark"
-              onClick={() => setIsEditProfileOpen(false)}
+              onClick={onCancel}
               aria-label="cancel edit profile"
             >
               Cancel

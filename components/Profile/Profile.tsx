@@ -1,8 +1,11 @@
+// todo: create unit test
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
 import {
   Avatar,
+  BackgroundImage,
   Button,
+  Container,
   Flex,
   Group,
   Modal,
@@ -36,6 +39,7 @@ export type User = {
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
+  // todo: fetch user profile
   const user = MEMBERS.find((member) => {
     return member.id === router.query.id;
   }) as User;
@@ -43,7 +47,7 @@ const Profile = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   return (
-    <div className={styles.container}>
+    <Container fluid pt="xl">
       <Modal
         opened={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
@@ -55,16 +59,17 @@ const Profile = () => {
       <Modal
         opened={isEditProfileOpen}
         onClose={() => setIsEditProfileOpen(false)}
-        size="auto"
+        size="lg"
       >
         {user && (
           <EditProfileForm
             user={user}
-            setIsEditProfileOpen={setIsEditProfileOpen}
+            onCancel={() => setIsEditProfileOpen(false)}
           />
         )}
       </Modal>
-      <div className={styles.banner} />
+
+      <BackgroundImage className={styles.banner} src="" />
       <Flex align="flex-start" justify="space-between" wrap="wrap">
         <Group px={30} mt={-30}>
           <Avatar size={200} radius={100} />
@@ -133,7 +138,7 @@ const Profile = () => {
           <Notes />
         </Tabs.Panel>
       </Tabs>
-    </div>
+    </Container>
   );
 };
 
