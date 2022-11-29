@@ -44,6 +44,7 @@ const InviteTeamMembersSection = ({ members }: Props) => {
         autoComplete="off"
         onSubmit={handleFormSubmit}
       >
+       // todo: validate inputs to only accept emails
         <MultiSelect
           data={emails}
           placeholder="Add users"
