@@ -1,8 +1,9 @@
-type SVGRProps = {
+import * as React from "react";
+interface SVGRProps {
   title?: string;
   titleId?: string;
-};
-const SvgMoreOptionsHoriz = ({ title, titleId }: SVGRProps) => (
+}
+const SvgMoreHoriz = ({ title, titleId }: SVGRProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 48 48"
@@ -18,4 +19,4 @@ const SvgMoreOptionsHoriz = ({ title, titleId }: SVGRProps) => (
     />
   </svg>
 );
-export default SvgMoreOptionsHoriz;
+export default SvgMoreHoriz;

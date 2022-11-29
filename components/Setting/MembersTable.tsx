@@ -11,8 +11,8 @@ import {
 } from "@mantine/core";
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
-import SvgMoreOptionsHoriz from "@/components/Icon/MoreOptionsHoriz";
 import { useRouter } from "next/router";
+import SvgMoreHoriz from "../Icon/MoreHoriz";
 import { Member } from "./Member";
 
 type Props = {
@@ -77,7 +77,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
                 color="dark"
                 style={{ fontSize: "24px" }}
               >
-                <SvgMoreOptionsHoriz />
+                <SvgMoreHoriz />
               </Button>
             </MantineGroup>
           );
