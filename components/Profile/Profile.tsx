@@ -116,26 +116,15 @@ const Profile = () => {
               borderColor: colorScheme === "light" ? "#dee2e6" : "#373A40",
             }}
           >
-            {activeTab === "reviews" && (
-              <Button
-                variant="outline"
-                className={styles.addReviewButton}
-                onClick={() => setIsReviewModalOpen((prev) => !prev)}
-              >
-                <AddCircle />
-                &nbsp;Add a Review
-              </Button>
-            )}
-            {activeTab === "assessment" && (
-              <Button
-                variant="outline"
-                className={styles.addReviewButton}
-                onClick={() => setIsReviewModalOpen((prev) => !prev)}
-              >
-                <AddCircle />
-                &nbsp;Add an Assessment
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              className={styles.addReviewButton}
+              onClick={() => setIsReviewModalOpen((prev) => !prev)}
+            >
+              <AddCircle />
+              &nbsp;Add{activeTab === "reviews" && " a Review"}
+              {activeTab === "assessment" && " an Assessment"}
+            </Button>
           </div>
         </Group>
 
