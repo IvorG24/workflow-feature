@@ -54,7 +54,7 @@ const CreateRequest = () => {
   return (
     <Container m={0} px={8} py={16} fluid>
       <Title>Create Approval Request</Title>
-      <Paper shadow="xl" radius={8} mt={32} className={styles.formContainer}>
+      <Paper shadow="xl" radius={8} mt={32} px={32} py={48}>
         <form onSubmit={onSubmit}>
           <Stack>
             <Flex gap="xl" wrap="wrap">
