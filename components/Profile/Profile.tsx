@@ -2,6 +2,7 @@
 // todo: fix mobile view
 import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
+import IconWrapper from "@/components/IconWrapper/IconWrapper";
 import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
 import {
   Avatar,
@@ -15,27 +16,25 @@ import {
   Tabs,
   Text,
   Title,
-  useMantineColorScheme,
 } from "@mantine/core";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import data from "../../teams.json";
 import AssessmentPage from "../AssessmentPage/AssessmentPage";
+import ProfileReviewsPage from "../ProfileReviewsPage/ProfileReviewsPage";
 import Bio from "./Bio";
 import EditProfileForm from "./EditProfileForm";
 import styles from "./Profile.module.scss";
-import Reviews from "./ReviewList";
 
 const Profile = () => {
-  const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
   const { profileId, activeTab } = router.query;
   // todo: fetch user profile
 
-  const profile = data[0].members.find((member) => member.id === profileId);
-
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+
+  const profile = data[0].members.find((member) => member.id === profileId);
 
   return (
     <Container fluid pt="xl">
@@ -47,18 +46,30 @@ const Profile = () => {
           <Stack spacing={0}>
             <Title order={2}>{profile?.name}</Title>
             <Text>{profile?.position}</Text>
-            <Flex align="center" mt="xs">
-              <Mail />
-              <Text>&nbsp;{profile?.email}</Text>
-            </Flex>
+            <Group align="center" mt="xs" spacing={4}>
+              <IconWrapper fontSize={20} color="dimmed">
+                <Mail />
+              </IconWrapper>
+              <Text color="dimmed">&nbsp;{profile?.email}</Text>
+            </Group>
           </Stack>
         </Group>
         <Button
           variant="outline"
-          size="xs"
+          size="sm"
           onClick={() => setIsEditProfileOpen(true)}
-          leftIcon={<Edit />}
-          color="gray"
+          leftIcon={
+            <IconWrapper fontSize={16}>
+              <Edit />
+            </IconWrapper>
+          }
+          sx={(theme) => ({
+            color:
+              theme.colorScheme === "dark"
+                ? theme.colors.dark[0]
+                : theme.colors.dark[6],
+          })}
+          color="dark"
           mt="md"
           mr="md"
         >
@@ -84,15 +95,17 @@ const Profile = () => {
             }}
           >
             <Button
-              variant="outline"
-              className={styles.addReviewButton}
+              variant="subtle"
               onClick={() => setIsReviewModalOpen((prev) => !prev)}
+              ml="auto"
             >
-              <AddCircle />
+              <IconWrapper fontSize={20}>
+                <AddCircle />
+              </IconWrapper>
               &nbsp;Add{activeTab === "reviews" && " a Review"}
               {activeTab === "assessment" && " an Assessment"}
             </Button>
-          </div>
+          </Tabs.List>
         </Group>
 
         <Tabs.Panel value="bio" pt="xl">
@@ -100,7 +113,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="reviews" pt="xl">
-          <Reviews />
+          <ProfileReviewsPage />
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">

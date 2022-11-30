@@ -40,7 +40,7 @@ const MembersTable = ({ members }: Props) => {
           return (
             <Grid
               key={id}
-              onClick={() => router.push(`/profiles/${id}`)}
+              onClick={() => router.push(`/profiles/${id}/bio`)}
               sx={{ borderTop: "1px solid #E9E9E9" }}
             >
               <Grid.Col order={1} orderMd={1} span={10} md={8}>

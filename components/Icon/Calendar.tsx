@@ -1,7 +1,8 @@
-type SVGRProps = {
+import * as React from "react";
+interface SVGRProps {
   title?: string;
   titleId?: string;
-};
+}
 const SvgCalendar = ({ title, titleId }: SVGRProps) => (
   <svg
     width="1em"
