@@ -1,6 +1,6 @@
 import { Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
-import Member from "./Member";
+import MembersPage from "../MembersPage/MembersPage";
 import styles from "./Setting.module.scss";
 
 type Props = {
@@ -15,7 +15,7 @@ const Setting = ({ activeTab }: Props) => {
       case "general":
       // return <General />;
       case "member":
-        return <Member />;
+        return <MembersPage />;
       case "profile":
       // return <Profile />;
       case "notification":
