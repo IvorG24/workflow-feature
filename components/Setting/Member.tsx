@@ -29,7 +29,7 @@ const Member = () => {
           <Title order={3}>Your Team Members</Title>
           <Text>Manage your existing team and change roles/permissions</Text>
         </Grid.Col>
-        <Grid.Col md={6}>
+        <Grid.Col md={8} lg={6}>
           <SearchBar
             onChange={(e) => setSearchBarValue(e.target.value)}
             onClear={() => setSearchBarValue("")}
@@ -41,7 +41,7 @@ const Member = () => {
       </Grid>
       <Divider my={{ base: 10, lg: 20 }} />
       <Grid justify="flex-end">
-        <Grid.Col md={6}>
+        <Grid.Col md={8} lg={6}>
           <InviteTeamMembersSection members={MEMBERS} />
         </Grid.Col>
       </Grid>

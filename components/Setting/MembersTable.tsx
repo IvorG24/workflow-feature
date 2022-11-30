@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Flex,
+  Grid,
   Group,
   Pagination,
   Select,
@@ -26,56 +27,68 @@ const MembersTable = ({ filteredMembers }: Props) => {
   return (
     <Stack justify="space-between" mih="400px" pt="md">
       {
-        // JC: Change the properties to match fetched member data
+        // todo: update properties to match fetched data
         filteredMembers.map(({ id, name, email, role, image }) => {
           return (
-            <Group
-              position="apart"
+            <Grid
               key={id}
-              // JC: Propose to move this onClick function to MantineAvatar and Text/name
-              // Reason: the Select input and MoreOptions button should not redirect to user profile
               onClick={() => router.push(`/profiles/${id}`)}
               sx={{ borderTop: "1px solid #E9E9E9" }}
-              pt="sm"
             >
-              <Flex gap="sm" direction="row">
-                <MantineAvatar
-                  size={40}
-                  radius={40}
-                  src={image}
-                  alt={`${name}'s Formsly Avatar`}
-                />
-                <Box>
-                  <Text fw="bold" color="dark">
-                    {name}
-                  </Text>
-                  <Text fz="xs">{email}</Text>
-                  <Select
-                    value={role}
-                    onChange={(e) => console.log(e)}
-                    data={[
-                      { value: "admin", label: "Admin" },
-                      { value: "manager", label: "Manager" },
-                      { value: "member", label: "Member" },
-                    ]}
-                    radius={4}
-                    size="xs"
-                    w="90px"
-                    mt="xs"
-                    rightSection={<SvgArrowDropDown />}
-                    rightSectionWidth={20}
-                    readOnly
+              <Grid.Col order={1} orderMd={1} span={10} md={8}>
+                <Group>
+                  <MantineAvatar
+                    size={40}
+                    radius={40}
+                    src={image}
+                    alt={`${name}'s Formsly Avatar`}
                   />
-                </Box>
-              </Flex>
-              <Button variant="subtle" size="xs" color="dark" fz="xl">
-                <SvgMoreHoriz />
-              </Button>
-            </Group>
+                  <Box>
+                    <Text fw="bold" color="dark">
+                      {name}
+                    </Text>
+                    <Text fz="xs">{email}</Text>
+                  </Box>
+                </Group>
+              </Grid.Col>
+              <Grid.Col
+                order={3}
+                orderMd={2}
+                span={1}
+                offset={2}
+                offsetSm={1}
+                offsetMd={1}
+              >
+                <Select
+                  value={role}
+                  onChange={(e) => console.log(e)}
+                  data={[
+                    { value: "admin", label: "Admin" },
+                    { value: "manager", label: "Manager" },
+                    { value: "member", label: "Member" },
+                  ]}
+                  radius={4}
+                  size="xs"
+                  w="90px"
+                  rightSection={<SvgArrowDropDown />}
+                  rightSectionWidth={20}
+                  readOnly
+                />
+              </Grid.Col>
+              <Grid.Col order={2} orderMd={3} span={1} offsetMd={1}>
+                <Button variant="subtle" size="xs" color="dark" fz="xl">
+                  <SvgMoreHoriz />
+                </Button>
+              </Grid.Col>
+            </Grid>
           );
         })
       }
-      <Flex justify={{ base: "center", md: "flex-end" }}>
+      <Flex
+        justify={{ base: "center", md: "flex-end" }}
+        sx={{ borderTop: "1px solid #E9E9E9" }}
+        pt="sm"
+      >
         <Pagination total={1} siblings={1} />
       </Flex>
     </Stack>
