@@ -28,13 +28,11 @@ import Reviews from "./ReviewList";
 
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();
-  const [activeTab, setActiveTab] = useState<string | null>("bio");
   const router = useRouter();
+  const { profileId, activeTab } = router.query;
   // todo: fetch user profile
 
-  const profile = data[0].members.find(
-    (member) => member.id === router.query.id
-  );
+  const profile = data[0].members.find((member) => member.id === profileId);
 
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -68,7 +66,11 @@ const Profile = () => {
         </Button>
       </Flex>
 
-      <Tabs value={activeTab} onTabChange={setActiveTab} mt={30}>
+      <Tabs
+        value={router.query.activeTab as string}
+        onTabChange={(value) => router.push(`/profiles/${profileId}/${value}`)}
+        mt={30}
+      >
         <Group>
           <Tabs.List className={styles.tabContainer}>
             <Tabs.Tab value="bio">Bio</Tabs.Tab>
