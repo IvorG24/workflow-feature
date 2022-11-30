@@ -1,6 +1,5 @@
-import { Button, MultiSelect, Text, Title } from "@mantine/core";
+import { Button, Flex, MultiSelect } from "@mantine/core";
 import { FormEvent, useState } from "react";
-import styles from "./InviteTeamMembersSection.module.scss";
 import { Member } from "./Member";
 
 type Props = {
@@ -31,40 +30,32 @@ const InviteTeamMembersSection = ({ members }: Props) => {
   };
 
   return (
-    <section className={styles.container}>
-      <div className={styles.details}>
-        <Title order={3}>Invite Team Members</Title>
-        <Text>
-          Admins can edit your profile, invite team members and manage all jobs.
-          Recruiters can only manage their own jobs
-        </Text>
-      </div>
-
-      <form
-        className={styles.invitesList}
-        data-testid="team__sendInvitesForm"
-        autoComplete="off"
-        onSubmit={handleFormSubmit}
-      >
-        <div className={styles.invitesList__content}>
-          <div className={styles.emailInput}>
-            <MultiSelect
-              data={emails}
-              placeholder="Select items"
-              searchable
-              creatable
-              getCreateLabel={(query) => `+ Create ${query}`}
-              onCreate={(query) => {
-                const item = { value: query, label: query };
-                setEmails((current) => [...current, item]);
-                return item;
-              }}
-            />
-          </div>
-          <Button className={styles.sendInvitesButton}>Send Invites</Button>
-        </div>
-      </form>
-    </section>
+    <form
+      data-testid="team__sendInvitesForm"
+      autoComplete="off"
+      onSubmit={handleFormSubmit}
+    >
+      <Flex gap="sm" align="center" direction={{ base: "column", md: "row" }}>
+        {/* todo: validate inputs to only accept emails */}
+        <MultiSelect
+          data={emails}
+          placeholder="Add users"
+          size="md"
+          searchable
+          creatable
+          getCreateLabel={(query) => `+ Create ${query}`}
+          onCreate={(query) => {
+            const item = { value: query, label: query };
+            setEmails((current) => [...current, item]);
+            return item;
+          }}
+          w="100%"
+        />
+        <Button fullWidth maw={{ md: "150px", lg: "200px" }} size="md">
+          Send Invites
+        </Button>
+      </Flex>
+    </form>
   );
 };
 
