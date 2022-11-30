@@ -1,7 +1,10 @@
+// todo: create unit test
+import { setBadgeColor } from "@/utils/request";
 import {
   Avatar,
   Badge,
   Button,
+  Container,
   Divider,
   Flex,
   Group,
@@ -244,23 +247,6 @@ const Request = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const setBadgeColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "blue";
-      case "approved":
-        return "green";
-      case "rejected":
-        return "red";
-      case "forRevision":
-        return "orange";
-      case "stale":
-        return "gray";
-      case "cancelled":
-        return "dark";
-    }
-  };
-
   const handleApprove = () => {
     setIsLoading(true);
     showNotification({
@@ -296,10 +282,9 @@ const Request = () => {
   }
 
   return (
-    <div className={styles.container}>
-      <div>
-        <LoadingOverlay visible={isLoading} overlayBlur={2} />
-      </div>
+    <Container px={8} py={16} fluid>
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+
       <Stack>
         <Flex
           direction="row"
@@ -308,22 +293,22 @@ const Request = () => {
           wrap="wrap"
           gap="xl"
         >
-          <Stack className={styles.flex}>
-            <Title order={4}> Request Title</Title>
+          <Stack className={styles.flex} mt={16}>
+            <Title order={4}>Request Title</Title>
             <Text>{selectedRequest.requestTitle}</Text>
           </Stack>
-          <Stack className={styles.flex}>
-            <Title order={4}> Request By</Title>
+          <Stack className={styles.flex} mt={16}>
+            <Title order={4}>Request By</Title>
             <Group>
               <Avatar radius={100} />
               <Text>{selectedRequest.requestedBy}</Text>
             </Group>
           </Stack>
-          <Stack className={styles.flex}>
+          <Stack className={styles.flex} mt={16}>
             <Title order={4}>Date Created</Title>
             <Text>{selectedRequest.lastUpdated}</Text>
           </Stack>
-          <Stack className={styles.flex}>
+          <Stack className={styles.flex} mt={16}>
             <Title order={4}>Status</Title>
             <Badge color={setBadgeColor("approved")}>
               {startCase("approved")}
@@ -338,12 +323,12 @@ const Request = () => {
           gap="xl"
           mt="lg"
         >
-          <Stack className={styles.flex}>
+          <Stack className={styles.flex} mt={16}>
             <Title order={4}> Request Description</Title>
             <Text>{selectedRequest.description}</Text>
           </Stack>
 
-          <Stack className={styles.flex}>
+          <Stack className={styles.flex} mt={16}>
             <Title order={4}>On Behalf Of</Title>
             <Text>---</Text>
           </Stack>
@@ -370,21 +355,25 @@ const Request = () => {
           <Text>---</Text>
 
           {isApprover ? (
-            <Group mt="xl" className={styles.buttons}>
-              <Button color="green" onClick={() => handleApprove()}>
+            <Group mt="xl" position="right">
+              <Button color="green" onClick={() => handleApprove()} size="md">
                 Approve
               </Button>
-              <Button color="dark" onClick={() => handleSendToRevision()}>
+              <Button
+                color="dark"
+                onClick={() => handleSendToRevision()}
+                size="md"
+              >
                 Send to Revision
               </Button>
-              <Button color="red" onClick={() => handleReject()}>
+              <Button color="red" onClick={() => handleReject()} size="md">
                 Reject
               </Button>
             </Group>
           ) : null}
         </Stack>
       </Stack>
-    </div>
+    </Container>
   );
 };
 

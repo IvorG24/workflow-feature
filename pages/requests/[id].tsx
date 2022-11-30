@@ -5,6 +5,7 @@ import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../_app";
 
 const RequestPage: NextPageWithLayout = () => {
+  // todo: fix meta tags
   return (
     <div>
       <Meta description="Specific Request" url="localhost:3000/requests/id" />

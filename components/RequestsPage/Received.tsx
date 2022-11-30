@@ -22,14 +22,14 @@ const tempStatus = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
-const All = () => {
+const Received = () => {
   const [search, setSearch] = useState("");
   const [formType, setFormType] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
   return (
     <Stack>
-      <Group mt={"xl"}>
+      <Group mt="xl">
         <TextInput
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -60,4 +60,4 @@ const All = () => {
   );
 };
 
-export default All;
+export default Received;

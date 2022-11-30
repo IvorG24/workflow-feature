@@ -1,9 +1,11 @@
 import { Close } from "@/components/Icon";
+import { setBadgeColor } from "@/utils/request";
 import {
   ActionIcon,
   Avatar,
   Badge,
   Button,
+  Container,
   Divider,
   Group,
   LoadingOverlay,
@@ -301,23 +303,6 @@ const RequestTable = ({ formType, status, search }: Props) => {
     );
   };
 
-  const setBadgeColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "blue";
-      case "approved":
-        return "green";
-      case "rejected":
-        return "red";
-      case "forRevision":
-        return "orange";
-      case "stale":
-        return "gray";
-      case "cancelled":
-        return "dark";
-    }
-  };
-
   const rows = visibleRequests.map((request) => (
     <tr
       key={request.id}
@@ -398,9 +383,8 @@ const RequestTable = ({ formType, status, search }: Props) => {
 
   return (
     <>
-      <div>
-        <LoadingOverlay visible={isLoading} overlayBlur={2} />
-      </div>
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+
       <Group align="flex-start">
         <Table
           mt="xl"
@@ -423,11 +407,11 @@ const RequestTable = ({ formType, status, search }: Props) => {
 
         {selectedRequest ? (
           <Paper shadow="xl" className={styles.requestContainer}>
-            <div className={styles.closeIcon}>
+            <Container m={0} p={0} className={styles.closeIcon}>
               <ActionIcon onClick={() => setSelectedRequest(null)}>
                 <Close />
               </ActionIcon>
-            </div>
+            </Container>
             <Group position="apart" grow>
               <Stack align="flex-start">
                 <Title order={5}>Request Title</Title>

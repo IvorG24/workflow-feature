@@ -1,10 +1,11 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
-import Requests from "@/components/Requests/Requests";
+import Requests from "@/components/RequestsPage/RequestsPage";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../_app";
 
 const RequestsReceivedPage: NextPageWithLayout = () => {
+  // todo: fix meta tags
   return (
     <div>
       <Meta

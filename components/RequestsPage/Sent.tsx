@@ -29,7 +29,7 @@ const Sent = () => {
 
   return (
     <Stack>
-      <Group mt={"xl"}>
+      <Group mt="xl">
         <TextInput
           value={search}
           onChange={(e) => setSearch(e.target.value)}

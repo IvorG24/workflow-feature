@@ -1,15 +1,15 @@
-import { Tabs, Title } from "@mantine/core";
+// todo: create unit tests for requests page and all of its sub components
+import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import All from "./All";
 import Received from "./Received";
-import styles from "./Requests.module.scss";
 import Sent from "./Sent";
 
 type Props = {
   activeTab: string;
 };
 
-const Requests = ({ activeTab }: Props) => {
+const RequestsPage = ({ activeTab }: Props) => {
   const router = useRouter();
 
   const renderActiveTab = () => {
@@ -24,7 +24,7 @@ const Requests = ({ activeTab }: Props) => {
   };
 
   return (
-    <div className={styles.container}>
+    <Container px={8} py={16} fluid>
       <Title>Requests</Title>
 
       <Tabs
@@ -33,7 +33,7 @@ const Requests = ({ activeTab }: Props) => {
           router.push(`/requests/${value === "all" ? "" : value}`)
         }
         defaultValue={activeTab}
-        className={styles.tabsContainer}
+        mt={50}
       >
         <Tabs.List>
           <Tabs.Tab value="all">All</Tabs.Tab>
@@ -42,9 +42,11 @@ const Requests = ({ activeTab }: Props) => {
         </Tabs.List>
       </Tabs>
 
-      <div>{renderActiveTab()}</div>
-    </div>
+      <Container fluid m={0} p={0}>
+        {renderActiveTab()}
+      </Container>
+    </Container>
   );
 };
 
-export default Requests;
+export default RequestsPage;
