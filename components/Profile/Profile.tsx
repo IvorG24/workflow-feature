@@ -1,4 +1,6 @@
 // todo: create unit test
+// todo: fix mobile view
+import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
 import {
@@ -38,6 +40,7 @@ export type User = {
 
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();
+  const [activeTab, setActiveTab] = useState<string | null>("bio");
   const router = useRouter();
   // todo: fetch user profile
   const user = MEMBERS.find((member) => {
@@ -48,26 +51,6 @@ const Profile = () => {
 
   return (
     <Container fluid pt="xl">
-      <Modal
-        opened={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        withCloseButton
-        size="auto"
-      >
-        <PeerReviewForm user={`${user?.name}`} />
-      </Modal>
-      <Modal
-        opened={isEditProfileOpen}
-        onClose={() => setIsEditProfileOpen(false)}
-        size="lg"
-      >
-        {user && (
-          <EditProfileForm
-            user={user}
-            onCancel={() => setIsEditProfileOpen(false)}
-          />
-        )}
-      </Modal>
       {/* todo: add default styling when no background image is available */}
       <BackgroundImage className={styles.banner} src="" />
       <Flex align="flex-start" justify="space-between" wrap="wrap">
@@ -97,7 +80,7 @@ const Profile = () => {
         </Button>
       </Flex>
 
-      <Tabs defaultValue="bio" mt={30}>
+      <Tabs value={activeTab} onTabChange={setActiveTab} mt={30}>
         <Group>
           <Tabs.List className={styles.tabContainer}>
             <Tabs.Tab value="bio">Bio</Tabs.Tab>
@@ -117,7 +100,8 @@ const Profile = () => {
               onClick={() => setIsReviewModalOpen((prev) => !prev)}
             >
               <AddCircle />
-              &nbsp;Add a Review
+              &nbsp;Add{activeTab === "reviews" && " a Review"}
+              {activeTab === "assessment" && " an Assessment"}
             </Button>
           </div>
         </Group>
@@ -131,13 +115,36 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <Assesment />
+          <Assesment user={user} />
         </Tabs.Panel>
 
         <Tabs.Panel value="notes" pt="xl">
           <Notes />
         </Tabs.Panel>
       </Tabs>
+      <Modal
+        opened={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        withCloseButton
+        size="lg"
+      >
+        {activeTab === "reviews" && <PeerReviewForm user={`${user?.name}`} />}
+        {activeTab === "assessment" && (
+          <EmployeeReviewForm user={`${user?.name}`} />
+        )}
+      </Modal>
+      <Modal
+        opened={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        size="lg"
+      >
+        {user && (
+          <EditProfileForm
+            user={user}
+            onCancel={() => setIsEditProfileOpen(false)}
+          />
+        )}
+      </Modal>
     </Container>
   );
 };

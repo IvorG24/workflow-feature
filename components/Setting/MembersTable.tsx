@@ -1,7 +1,21 @@
-import { Avatar, Select, Text, Title } from "@mantine/core";
+// todo: create unit test
+import {
+  Avatar as MantineAvatar,
+  Box,
+  Button,
+  Flex,
+  Grid,
+  Group,
+  Pagination,
+  Select,
+  Stack,
+  Text,
+} from "@mantine/core";
+
+import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
 import { useRouter } from "next/router";
+import SvgMoreHoriz from "../Icon/MoreHoriz";
 import { Member } from "./Member";
-import styles from "./MembersTable.module.scss";
 
 type Props = {
   filteredMembers: Member[];
@@ -11,40 +25,74 @@ const MembersTable = ({ filteredMembers }: Props) => {
   const router = useRouter();
 
   return (
-    <div className={styles.tableWrapper}>
-      {filteredMembers.map(({ name, id, email, role, image }) => {
-        return (
-          <div
-            key={id}
-            onClick={() => router.push(`/profiles/${id}`)}
-            className={styles.desktopOnlyRow}
-            data-testid="membersRow"
-          >
-            <div className={styles.userInfoContainer}>
-              <Avatar src={image} alt="user profile" size={30} />
-              <div>
-                <Title order={5}>{name ? name : "---"}</Title>
-                <Text>{email}</Text>
-              </div>
-            </div>
-
-            <div className={styles.roleContainer}>
-              <Select
-                placeholder="Role"
-                data={[
-                  { value: "member", label: "Member" },
-                  { value: "manager", label: "Manager" },
-                  { value: "admin", label: "Admin" },
-                  { value: "owner", label: "Owner" },
-                ]}
-                onClick={(e) => e.stopPropagation()}
-                value={role}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <Stack justify="space-between" mih="400px" pt="md">
+      {
+        // todo: update properties to match fetched data
+        filteredMembers.map(({ id, name, email, role, image }) => {
+          return (
+            <Grid
+              key={id}
+              onClick={() => router.push(`/profiles/${id}`)}
+              sx={{ borderTop: "1px solid #E9E9E9" }}
+            >
+              <Grid.Col order={1} orderMd={1} span={10} md={8}>
+                <Group>
+                  <MantineAvatar
+                    size={40}
+                    radius={40}
+                    src={image}
+                    alt={`${name}'s Formsly Avatar`}
+                  />
+                  <Box>
+                    <Text fw="bold" color="dark">
+                      {name}
+                    </Text>
+                    <Text fz="xs">{email}</Text>
+                  </Box>
+                </Group>
+              </Grid.Col>
+              <Grid.Col
+                order={3}
+                orderMd={2}
+                span={1}
+                offset={2}
+                offsetSm={1}
+                offsetMd={1}
+              >
+                <Select
+                  value={role}
+                  onChange={(e) => console.log(e)}
+                  data={[
+                    { value: "admin", label: "Admin" },
+                    { value: "manager", label: "Manager" },
+                    { value: "member", label: "Member" },
+                    { value: "owner", label: "Owner" },
+                  ]}
+                  radius={4}
+                  size="xs"
+                  w="90px"
+                  rightSection={<SvgArrowDropDown />}
+                  rightSectionWidth={20}
+                  readOnly
+                />
+              </Grid.Col>
+              <Grid.Col order={2} orderMd={3} span={1} offsetMd={1}>
+                <Button variant="subtle" size="xs" color="dark" fz="xl">
+                  <SvgMoreHoriz />
+                </Button>
+              </Grid.Col>
+            </Grid>
+          );
+        })
+      }
+      <Flex
+        justify={{ base: "center", md: "flex-end" }}
+        sx={{ borderTop: "1px solid #E9E9E9" }}
+        pt="sm"
+      >
+        <Pagination total={1} siblings={1} />
+      </Flex>
+    </Stack>
   );
 };
 

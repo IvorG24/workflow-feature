@@ -1,8 +1,12 @@
-import { Divider } from "@mantine/core";
-import { MEMBERS } from "../../tempData";
+// todo: create unit tests
+// todo: improve mobile responsiveness and improve layout
+import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
+import { lowerCase } from "lodash";
+import { useState } from "react";
+import { MEMBERS } from "tempData";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
-import styles from "./Member.module.scss";
-import YourTeamSection from "./YourTeamSection";
+import MembersTable from "./MembersTable";
+import SearchBar from "./SearchBar";
 
 export type Member = {
   id: string;
@@ -12,19 +16,44 @@ export type Member = {
   image: string;
 };
 
-export type Members = Member[];
-
 const Member = () => {
+  const [searchBarValue, setSearchBarValue] = useState("");
+
+  const filteredMembers = MEMBERS.filter((member) =>
+    lowerCase(member.name).includes(searchBarValue)
+  );
+
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
-        <YourTeamSection members={MEMBERS} />
-      </div>
-      <Divider mt={50} />
-      <div className={styles.content}>
-        <InviteTeamMembersSection members={MEMBERS} />
-      </div>
-    </div>
+    <Stack>
+      <Grid justify="space-between">
+        <Grid.Col md={4}>
+          <Title order={3}>Your Team Members</Title>
+          <Text>Manage your existing team and change roles/permissions</Text>
+        </Grid.Col>
+        <Grid.Col md={8} lg={6}>
+          <SearchBar
+            onChange={(e) => setSearchBarValue(e.target.value)}
+            onClear={() => setSearchBarValue("")}
+            value={searchBarValue}
+            numberOfMembers={MEMBERS.length}
+          />
+          <MembersTable filteredMembers={filteredMembers} />
+        </Grid.Col>
+      </Grid>
+      <Divider my={{ base: 10, lg: 20 }} />
+      <Grid justify="space-between">
+        <Grid.Col md={4}>
+          <Title order={3}>Invite Team Members</Title>
+          <Text>
+            Admins can edit your profile, invite team members and manage all
+            jobs. Recruiters can only manage their own jobs
+          </Text>
+        </Grid.Col>
+        <Grid.Col md={8} lg={6}>
+          <InviteTeamMembersSection members={MEMBERS} />
+        </Grid.Col>
+      </Grid>
+    </Stack>
   );
 };
 
