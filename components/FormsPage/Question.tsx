@@ -29,7 +29,7 @@ const Question = () => {
   });
 
   return (
-    <Container p="md" fluid>
+    <Container size="lg" p="md" maw={500}>
       <Tabs value={activeTab} onTabChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Tab value="question">Question</Tabs.Tab>

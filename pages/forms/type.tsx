@@ -1,8 +1,6 @@
 import Type from "@/components/FormsPage/Type";
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { GetServerSideProps } from "next";
-import { ReactElement } from "react";
 import { resetServerContext } from "react-beautiful-dnd";
 import type { NextPageWithLayout } from "../_app";
 
@@ -23,10 +21,6 @@ const FormType: NextPageWithLayout = () => {
       <Type />
     </div>
   );
-};
-
-FormType.getLayout = function getLayout(page: ReactElement) {
-  return <WorkspaceLayout>{page}</WorkspaceLayout>;
 };
 
 export default FormType;

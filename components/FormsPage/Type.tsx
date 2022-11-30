@@ -20,8 +20,8 @@ const FormsType = () => {
   });
 
   return (
-    <Container p="md" fluid>
-      <Paper shadow="sm" p="lg" withBorder>
+    <Container p="md" maw={500}>
+      <Paper shadow="sm" p="lg" withBorder mt="lg">
         <Title order={1} mb="xl">
           Create Form
         </Title>
