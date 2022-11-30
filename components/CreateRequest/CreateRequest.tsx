@@ -1,6 +1,8 @@
 import {
   Button,
+  Container,
   Flex,
+  Group,
   Paper,
   Select,
   Stack,
@@ -50,9 +52,9 @@ const CreateRequest = () => {
   });
 
   return (
-    <div className={styles.container}>
+    <Container m={0} px={8} py={16} fluid>
       <Title>Create Approval Request</Title>
-      <Paper shadow="xl" className={styles.formContainer}>
+      <Paper shadow="xl" radius={8} mt={32} className={styles.formContainer}>
         <form onSubmit={onSubmit}>
           <Stack>
             <Flex gap="xl" wrap="wrap">
@@ -118,15 +120,15 @@ const CreateRequest = () => {
               })}
               error={errors.details?.message}
             />
-            <div className={styles.createButton}>
+            <Group position="right">
               <Button mt="xl" size="md" px={50} type="submit">
                 CREATE
               </Button>
-            </div>
+            </Group>
           </Stack>
         </form>
       </Paper>
-    </div>
+    </Container>
   );
 };
 

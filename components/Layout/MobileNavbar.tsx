@@ -99,17 +99,17 @@ const Navbar = () => {
             defaultValue={tempFormType[0].value}
             onChange={setSelectedForm}
           />
-          <div className={styles.proceedButton}>
+
+          <Group position="right">
             <Button mt="xl" variant="subtle" onClick={handleProceed}>
               {`Got to Next Page >`}
             </Button>
-          </div>
+          </Group>
         </Container>
       </Modal>
 
       <MantineNavbar
         width={{ base: "250" }}
-        style={{ maxWidth: "250px" }}
         className={styles.container}
         px="md"
         py="lg"
