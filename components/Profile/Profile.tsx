@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { MEMBERS } from "../../tempData";
+import data from "../../teams.json";
 import AssessmentPage from "../AssessmentPage/AssessmentPage";
 import Bio from "./Bio";
 import EditProfileForm from "./EditProfileForm";
@@ -27,25 +27,16 @@ import Notes from "./NoteList";
 import styles from "./Profile.module.scss";
 import Reviews from "./ReviewList";
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  position: string;
-  status: string;
-  hired_date: string;
-  image: string;
-};
-
 const Profile = () => {
   const { colorScheme } = useMantineColorScheme();
   const [activeTab, setActiveTab] = useState<string | null>("bio");
   const router = useRouter();
   // todo: fetch user profile
-  const user = MEMBERS.find((member) => {
-    return member.id === router.query.id;
-  }) as User;
+
+  const profile = data[0].members.find(
+    (member) => member.id === router.query.id
+  );
+
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
@@ -57,13 +48,11 @@ const Profile = () => {
         <Group px={30} mt={-30}>
           <Avatar size={200} radius={100} />
           <Stack spacing={0}>
-            <Title order={2}>{user?.name}</Title>
-            <Text>
-              {user?.position} - {user?.status}
-            </Text>
-            <Flex align="center">
+            <Title order={2}>{profile?.name}</Title>
+            <Text>{profile?.position}</Text>
+            <Flex align="center" mt="xs">
               <Mail />
-              <Text>&nbsp;{user?.email}</Text>
+              <Text>&nbsp;{profile?.email}</Text>
             </Flex>
           </Stack>
         </Group>
@@ -115,7 +104,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <AssessmentPage user={user} />
+          <AssessmentPage user={profile} />
         </Tabs.Panel>
 
         <Tabs.Panel value="notes" pt="xl">
@@ -128,9 +117,11 @@ const Profile = () => {
         withCloseButton
         size="lg"
       >
-        {activeTab === "reviews" && <PeerReviewForm user={`${user?.name}`} />}
+        {activeTab === "reviews" && (
+          <PeerReviewForm user={`${profile?.name}`} />
+        )}
         {activeTab === "assessment" && (
-          <EmployeeReviewForm user={`${user?.name}`} />
+          <EmployeeReviewForm user={`${profile?.name}`} />
         )}
       </Modal>
       <Modal
@@ -138,9 +129,9 @@ const Profile = () => {
         onClose={() => setIsEditProfileOpen(false)}
         size="lg"
       >
-        {user && (
+        {profile && (
           <EditProfileForm
-            user={user}
+            user={profile}
             onCancel={() => setIsEditProfileOpen(false)}
           />
         )}
