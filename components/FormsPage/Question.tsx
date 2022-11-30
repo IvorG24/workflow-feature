@@ -1,8 +1,9 @@
 import {
   Button,
   Container,
-  Group,
+  Flex,
   Paper,
+  Radio,
   Tabs,
   TextInput,
 } from "@mantine/core";
@@ -14,6 +15,8 @@ type Data = {
   title: string;
   description: string;
   approver: string;
+  review_period: string;
+  default: string;
 };
 
 const Question = () => {
@@ -36,10 +39,10 @@ const Question = () => {
           <Tabs.Tab value="settings">Settings</Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="question" pt="xs">
-          <Paper shadow="sm" p="lg" withBorder>
-            <Group>
-              <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit}>
+          <Tabs.Panel value="question" pt="xs">
+            <Paper shadow="sm" p="lg" withBorder>
+              <Flex direction="column">
                 <TextInput
                   label="Title"
                   withAsterisk
@@ -51,24 +54,56 @@ const Question = () => {
                   {...register("description")}
                   mt="lg"
                 />
-                <Button
-                  variant="subtle"
-                  leftIcon={<AddCircle />}
-                  my="lg"
-                  aria-label="Add default approvers"
-                >
-                  Add Default Approvers
-                </Button>
-              </form>
-            </Group>
-          </Paper>
-        </Tabs.Panel>
+              </Flex>
+              <Button
+                variant="subtle"
+                leftIcon={<AddCircle />}
+                my="lg"
+                aria-label="Add default approvers"
+              >
+                Add Default Approvers
+              </Button>
+            </Paper>
+          </Tabs.Panel>
 
-        <Tabs.Panel value="settings" pt="xs">
-          <Paper shadow="sm" p="lg" withBorder>
-            Settings tab content
-          </Paper>
-        </Tabs.Panel>
+          <Tabs.Panel value="settings" pt="xs">
+            <Paper shadow="sm" p="lg" withBorder>
+              <Radio.Group
+                label="Review period"
+                error={errors.review_period?.message}
+                mb="sm"
+              >
+                <Flex direction="column" gap="sm" mt="xs">
+                  <Radio
+                    value="approval_form"
+                    label="Approval Form"
+                    {...register("review_period")}
+                  />
+                  <Radio
+                    value="review_form"
+                    label="Review Form"
+                    {...register("review_period")}
+                  />
+                </Flex>
+              </Radio.Group>
+              <Radio.Group label="Set as default for" mt="lg">
+                <Flex direction="column" gap="sm" mt="xs">
+                  <Radio value="none" label="None" {...register("default")} />
+                  <Radio
+                    value="peer_review"
+                    label="Peer Review"
+                    {...register("default")}
+                  />
+                  <Radio
+                    value="employee_review"
+                    label="Employee Review"
+                    {...register("default")}
+                  />
+                </Flex>
+              </Radio.Group>
+            </Paper>
+          </Tabs.Panel>
+        </form>
       </Tabs>
     </Container>
   );
