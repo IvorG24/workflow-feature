@@ -1,0 +1,57 @@
+[
+  {
+    "id": 1,
+    "name": "SCIC",
+    "members": [
+      {
+        "id": "a3075ce7-d7a1-4695-aa89-5aa9be559c5d",
+        "name": "Lance Andrei Juat",
+        "email": "lancejuat@gmail.com",
+        "role": "owner",
+        "avatar_url": "",
+        "bg_url": ""
+      },
+      {
+        "id": "d7bb58ae-3680-44b0-aabf-b1428b83692d",
+        "name": "Gianfranco Olofernes",
+        "email": "gianfrancoolofernes@gmail.com",
+        "role": "admin",
+        "avatar_url": "",
+        "bg_url": ""
+      },
+      {
+        "id": "447350a5-fa14-48cc-8848-abe0f8270d36",
+        "name": "Renzo Vispreas",
+        "email": "renzovisperas@gmail.com",
+        "role": "manager",
+        "position": "Full Stack Web Developer",
+        "avatar_url": "",
+        "bg_url": ""
+      },
+      {
+        "id": "c1b5244e-bb3d-4675-9aa0-20f7eb9904ca",
+        "name": "Jayson Evangelista",
+        "email": "jaysonevangelista@gmail.com",
+        "role": "member",
+        "avatar_url": "",
+        "bg_url": ""
+      },
+      {
+        "id": "bab76520-32cc-4e9b-8755-68e67eaab328",
+        "name": "Juan Carlos Lumingkit",
+        "email": "juancarloslumingkit@gmail.com",
+        "role": "member",
+        "avatar_url": "",
+        "bg_url": ""
+      },
+      {
+        "id": "d91c01a8-7a8f-4e27-9825-25f276426dcb",
+        "name": "Mark Jay Lunas",
+        "email": "matkjaylunas@gmail.com",
+        "role": "member",
+        "avatar_url": "",
+        "bg_url": ""
+      }
+    ]
+  }
+]

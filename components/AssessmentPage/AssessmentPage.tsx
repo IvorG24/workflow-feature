@@ -9,13 +9,13 @@ import {
   Text,
 } from "@mantine/core";
 import { ASSESSMENTS, MEMBERS } from "tempData";
-import { User } from "./Profile";
+import { User } from "../Profile/Profile";
 
 type Props = {
   user: User;
 };
 
-const Assessment = ({ user }: Props) => {
+const AssessmentPage = ({ user }: Props) => {
   const assessments = ASSESSMENTS.map((assessment) => {
     const reviewed = MEMBERS.find(
       (member) => member.id === assessment.review_to
@@ -30,6 +30,7 @@ const Assessment = ({ user }: Props) => {
     }
   });
 
+  console.log(assessments);
   return (
     <Container fluid p={0}>
       {assessments.map((assessment, index) => (
@@ -55,4 +56,4 @@ const Assessment = ({ user }: Props) => {
   );
 };
 
-export default Assessment;
+export default AssessmentPage;

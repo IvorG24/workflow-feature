@@ -20,7 +20,7 @@ import {
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { MEMBERS } from "../../tempData";
-import Assesment from "./Assessment";
+import AssessmentPage from "../AssessmentPage/AssessmentPage";
 import Bio from "./Bio";
 import EditProfileForm from "./EditProfileForm";
 import Notes from "./NoteList";
@@ -115,7 +115,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <Assesment user={user} />
+          <AssessmentPage user={user} />
         </Tabs.Panel>
 
         <Tabs.Panel value="notes" pt="xl">
