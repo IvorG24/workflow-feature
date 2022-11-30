@@ -1,3 +1,4 @@
+// todo: close navbar when clicked outside
 import SelectItem from "@/components/SelectItem/SelectItem";
 import {
   ActionIcon,
