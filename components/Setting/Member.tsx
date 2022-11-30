@@ -1,4 +1,5 @@
 // todo: create unit tests
+// todo: improve mobile responsiveness and improve layout
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { lowerCase } from "lodash";
 import { useState } from "react";
@@ -40,7 +41,14 @@ const Member = () => {
         </Grid.Col>
       </Grid>
       <Divider my={{ base: 10, lg: 20 }} />
-      <Grid justify="flex-end">
+      <Grid justify="space-between">
+        <Grid.Col md={4}>
+          <Title order={3}>Invite Team Members</Title>
+          <Text>
+            Admins can edit your profile, invite team members and manage all
+            jobs. Recruiters can only manage their own jobs
+          </Text>
+        </Grid.Col>
         <Grid.Col md={8} lg={6}>
           <InviteTeamMembersSection members={MEMBERS} />
         </Grid.Col>

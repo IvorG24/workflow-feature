@@ -1,4 +1,4 @@
-import { Box, Button, MultiSelect, Stack, Text, Title } from "@mantine/core";
+import { Button, Flex, MultiSelect } from "@mantine/core";
 import { FormEvent, useState } from "react";
 import { Member } from "./Member";
 
@@ -30,26 +30,17 @@ const InviteTeamMembersSection = ({ members }: Props) => {
   };
 
   return (
-    <Stack>
-      <Box>
-        <Title order={3}>Invite Team Members</Title>
-        <Text>
-          Admins can edit your profile, invite team members and manage all jobs.
-          Recruiters can only manage their own jobs
-        </Text>
-      </Box>
-
-      <form
-        data-testid="team__sendInvitesForm"
-        autoComplete="off"
-        onSubmit={handleFormSubmit}
-      >
+    <form
+      data-testid="team__sendInvitesForm"
+      autoComplete="off"
+      onSubmit={handleFormSubmit}
+    >
+      <Flex gap="sm" align="center" direction={{ base: "column", md: "row" }}>
         {/* todo: validate inputs to only accept emails */}
         <MultiSelect
           data={emails}
           placeholder="Add users"
           size="md"
-          mb="sm"
           searchable
           creatable
           getCreateLabel={(query) => `+ Create ${query}`}
@@ -58,10 +49,13 @@ const InviteTeamMembersSection = ({ members }: Props) => {
             setEmails((current) => [...current, item]);
             return item;
           }}
+          w="100%"
         />
-        <Button fullWidth>Send Invites</Button>
-      </form>
-    </Stack>
+        <Button fullWidth maw={{ md: "150px", lg: "200px" }} size="md">
+          Send Invites
+        </Button>
+      </Flex>
+    </form>
   );
 };
 
