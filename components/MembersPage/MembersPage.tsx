@@ -1,9 +1,9 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
-import { lowerCase } from "lodash";
 import { useState } from "react";
 import { MEMBERS } from "tempData";
+import data from "../../teams.json";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import MembersTable from "./MembersTable";
 import SearchBar from "./SearchBar";
@@ -18,10 +18,7 @@ export type Member = {
 
 const Member = () => {
   const [searchBarValue, setSearchBarValue] = useState("");
-
-  const filteredMembers = MEMBERS.filter((member) =>
-    lowerCase(member.name).includes(searchBarValue)
-  );
+  const members = data[0].members;
 
   return (
     <Stack>
@@ -37,7 +34,7 @@ const Member = () => {
             value={searchBarValue}
             numberOfMembers={MEMBERS.length}
           />
-          <MembersTable filteredMembers={filteredMembers} />
+          <MembersTable members={members} />
         </Grid.Col>
       </Grid>
       <Divider my={{ base: 10, lg: 20 }} />

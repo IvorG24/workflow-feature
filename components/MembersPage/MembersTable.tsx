@@ -14,12 +14,23 @@ import {
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
 import { useRouter } from "next/router";
-import data from "../../teams.json";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
-const MembersTable = () => {
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar_url: string;
+  bg_url: string;
+};
+
+type Props = {
+  members: Member[];
+};
+
+const MembersTable = ({ members }: Props) => {
   const router = useRouter();
-  const members = data[0].members;
 
   return (
     <Stack justify="space-between" mih="400px" pt="md">

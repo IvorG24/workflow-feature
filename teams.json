@@ -7,6 +7,7 @@
         "id": "c40605b7-321e-40bb-ac51-4ca315cfaf9c",
         "name": "Alberto Linao",
         "email": "albertolinao@gmail.com",
+        "position": "IT Manager",
         "role": "manager",
         "avatar_url": "",
         "bg_url": ""
@@ -15,6 +16,7 @@
         "id": "a3075ce7-d7a1-4695-aa89-5aa9be559c5d",
         "name": "Lance Andrei Juat",
         "email": "lancejuat@gmail.com",
+        "position": "Full Stack Developer",
         "role": "admin",
         "avatar_url": "",
         "bg_url": ""
@@ -23,6 +25,7 @@
         "id": "d7bb58ae-3680-44b0-aabf-b1428b83692d",
         "name": "Gianfranco Olofernes",
         "email": "gianfrancoolofernes@gmail.com",
+        "position": "Back End Developer",
         "role": "admin",
         "avatar_url": "",
         "bg_url": ""
@@ -32,7 +35,7 @@
         "name": "Renzo Vispreas",
         "email": "renzovisperas@gmail.com",
         "role": "admin",
-        "position": "Full Stack Web Developer",
+        "position": "Front End Developer",
         "avatar_url": "",
         "bg_url": ""
       },
@@ -41,6 +44,7 @@
         "name": "Jayson Evangelista",
         "email": "jaysonevangelista@gmail.com",
         "role": "member",
+        "position": "Full Stack Developer",
         "avatar_url": "",
         "bg_url": ""
       },
@@ -49,6 +53,7 @@
         "name": "Juan Carlos Lumingkit",
         "email": "juancarloslumingkit@gmail.com",
         "role": "member",
+        "position": "Full Stack Developer",
         "avatar_url": "",
         "bg_url": ""
       },
@@ -56,6 +61,7 @@
         "id": "d91c01a8-7a8f-4e27-9825-25f276426dcb",
         "name": "Mark Jay Lunas",
         "email": "matkjaylunas@gmail.com",
+        "position": "Full Stack Developer",
         "role": "member",
         "avatar_url": "",
         "bg_url": ""
