@@ -1,0 +1,40 @@
+@import "@/styles/variables";
+
+.row {
+  cursor: pointer;
+}
+
+.pagination {
+  align-self: flex-end;
+}
+
+.tableContainer {
+  flex: 1.5;
+}
+
+.tableContainers {
+  max-height: 10rem;
+  overflow: auto;
+}
+
+.requestContainer {
+  display: none;
+  position: relative;
+}
+
+.closeIcon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+@media (min-width: $breakpoint-desktop-m) {
+  .requestContainer {
+    display: block;
+    flex: 1;
+    align-self: stretch;
+    padding: 2rem;
+    min-width: 20vw;
+    border: solid 0.1rem #bfbfbf;
+  }
+}
