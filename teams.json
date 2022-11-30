@@ -4,10 +4,18 @@
     "name": "SCIC",
     "members": [
       {
+        "id": "c40605b7-321e-40bb-ac51-4ca315cfaf9c",
+        "name": "Alberto Linao",
+        "email": "albertolinao@gmail.com",
+        "role": "manager",
+        "avatar_url": "",
+        "bg_url": ""
+      },
+      {
         "id": "a3075ce7-d7a1-4695-aa89-5aa9be559c5d",
         "name": "Lance Andrei Juat",
         "email": "lancejuat@gmail.com",
-        "role": "owner",
+        "role": "admin",
         "avatar_url": "",
         "bg_url": ""
       },
@@ -23,7 +31,7 @@
         "id": "447350a5-fa14-48cc-8848-abe0f8270d36",
         "name": "Renzo Vispreas",
         "email": "renzovisperas@gmail.com",
-        "role": "manager",
+        "role": "admin",
         "position": "Full Stack Web Developer",
         "avatar_url": "",
         "bg_url": ""
