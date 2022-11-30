@@ -1,4 +1,5 @@
 // todo: create unit test
+// todo: fix mobile view
 import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
@@ -50,29 +51,6 @@ const Profile = () => {
 
   return (
     <Container fluid pt="xl">
-      <Modal
-        opened={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        withCloseButton
-        size="auto"
-      >
-        {activeTab === "reviews" && <PeerReviewForm user={`${user?.name}`} />}
-        {activeTab === "assessment" && (
-          <EmployeeReviewForm user={`${user?.name}`} />
-        )}
-      </Modal>
-      <Modal
-        opened={isEditProfileOpen}
-        onClose={() => setIsEditProfileOpen(false)}
-        size="lg"
-      >
-        {user && (
-          <EditProfileForm
-            user={user}
-            onCancel={() => setIsEditProfileOpen(false)}
-          />
-        )}
-      </Modal>
       {/* todo: add default styling when no background image is available */}
       <BackgroundImage className={styles.banner} src="" />
       <Flex align="flex-start" justify="space-between" wrap="wrap">
@@ -144,6 +122,29 @@ const Profile = () => {
           <Notes />
         </Tabs.Panel>
       </Tabs>
+      <Modal
+        opened={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        withCloseButton
+        size="lg"
+      >
+        {activeTab === "reviews" && <PeerReviewForm user={`${user?.name}`} />}
+        {activeTab === "assessment" && (
+          <EmployeeReviewForm user={`${user?.name}`} />
+        )}
+      </Modal>
+      <Modal
+        opened={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        size="lg"
+      >
+        {user && (
+          <EditProfileForm
+            user={user}
+            onCancel={() => setIsEditProfileOpen(false)}
+          />
+        )}
+      </Modal>
     </Container>
   );
 };
