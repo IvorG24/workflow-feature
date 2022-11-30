@@ -118,7 +118,7 @@ const RequestTable = ({
         </thead>
         <tbody>{rows}</tbody>
       </Table>
-
+      {/* todo: convert into a component and move outside request table*/}
       {selectedRequest ? (
         <Paper shadow="xl" className={styles.requestContainer}>
           <Container m={0} p={0} className={styles.closeIcon}>
