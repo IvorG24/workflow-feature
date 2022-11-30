@@ -1,4 +1,3 @@
-// todo: create unit test
 export { default as AddCircle } from "./AddCircle";
 export { default as ArrowDropDown } from "./ArrowDropDown";
 export { default as Calendar } from "./Calendar";
@@ -6,8 +5,8 @@ export { default as Check } from "./Check";
 export { default as Close } from "./Close";
 export { default as Dashboard } from "./Dashboard";
 export { default as Description } from "./Description";
-export { default as Edit } from "./Edit";
 export { default as EditDocument } from "./EditDocument";
+export { default as Edit } from "./Edit";
 export { default as Facebook } from "./Facebook";
 export { default as Github } from "./Github";
 export { default as Google } from "./Google";
@@ -16,6 +15,7 @@ export { default as Logo } from "./Logo";
 export { default as Logout } from "./Logout";
 export { default as Mail } from "./Mail";
 export { default as Moon } from "./Moon";
+export { default as MoreHoriz } from "./MoreHoriz";
 export { default as Notifications } from "./Notifications";
 export { default as PhotoCamera } from "./PhotoCamera";
 export { default as Search } from "./Search";

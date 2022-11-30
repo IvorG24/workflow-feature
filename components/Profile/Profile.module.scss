@@ -1,10 +1,5 @@
 @import "@/styles/variables";
 
-.container {
-  padding: 1.5rem;
-  max-width: $breakpoint-desktop-l;
-}
-
 .banner {
   width: 100%;
   height: 10rem;
@@ -13,15 +8,4 @@
 
 .tabContainer {
   flex: 1;
-}
-
-.addReviewButtonContainer {
-  border-bottom: solid 2px;
-  margin-left: -18px;
-  margin-top: -1px;
-}
-
-.addReviewButton {
-  color: $color-primary;
-  border: none;
 }
