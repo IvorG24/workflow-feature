@@ -66,6 +66,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
                     { value: "admin", label: "Admin" },
                     { value: "manager", label: "Manager" },
                     { value: "member", label: "Member" },
+                    { value: "owner", label: "Owner" },
                   ]}
                   radius={4}
                   size="xs"
