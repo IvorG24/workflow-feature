@@ -16,7 +16,7 @@ import { MouseEventHandler, useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
 import styles from "./EditProfileForm.module.scss";
-import { User } from "./Profile";
+import { User } from "./ProfilePage";
 
 type Props = {
   user: User;
