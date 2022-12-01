@@ -8,7 +8,7 @@ import {
   Title,
 } from "@mantine/core";
 import moment from "moment";
-import { ReviewType } from "./ProfileReviewsPage";
+import { ReviewType } from "./ProfilePage";
 
 type Props = {
   review: ReviewType;

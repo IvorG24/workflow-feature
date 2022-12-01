@@ -9,7 +9,7 @@ import {
   Text,
 } from "@mantine/core";
 import { ASSESSMENTS, MEMBERS } from "tempData";
-import { User } from "../Profile/Profile";
+import { User } from "./ProfilePage";
 
 type Props = {
   user?: User;
@@ -30,7 +30,6 @@ const AssessmentPage = ({ user }: Props) => {
     }
   });
 
-  console.log(assessments);
   return (
     <Container fluid p={0}>
       {assessments.map((assessment, index) => (

@@ -1,6 +1,6 @@
 import { Container, Divider } from "@mantine/core";
 import { Fragment } from "react";
-import { ReviewType } from "../Profile/Profile";
+import { ReviewType } from "./ProfilePage";
 import Review from "./Review";
 
 type Props = {
