@@ -1,8 +1,8 @@
 // todo: create unit test
 // todo: fix mobile view
-import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import IconWrapper from "@/components/IconWrapper/IconWrapper";
+import EmployeeReviewForm from "@/components/ProfilePage/EmployeeReviewForm";
 import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
 import {
   Avatar,
@@ -47,12 +47,15 @@ export type ReviewType = {
   id: number;
 } & CreateReview;
 
-export type Assessment = {
-  id: number;
+export type CreateAssessment = {
   created_at: string;
   review_from: User;
   comment: string;
 };
+
+export type Assessment = {
+  id: number;
+} & CreateAssessment;
 
 const Profile = () => {
   const router = useRouter();
@@ -96,6 +99,15 @@ const Profile = () => {
       ...review,
     };
     setReviews((prev) => [...prev, newReview]);
+    setIsReviewModalOpen(false);
+  };
+
+  const handleCreateAssessment = (assessment: CreateAssessment) => {
+    const newAssessment = {
+      id: Math.floor(Math.random() * 1000),
+      ...assessment,
+    };
+    setAssessments((prev) => [...prev, newAssessment]);
     setIsReviewModalOpen(false);
   };
 
@@ -173,7 +185,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <AssessmentPage user={profile} assessments={assessments} />
+          <AssessmentPage assessments={assessments} />
         </Tabs.Panel>
       </Tabs>
       <Modal
@@ -189,7 +201,10 @@ const Profile = () => {
           />
         )}
         {activeTab === "assessment" && (
-          <EmployeeReviewForm user={`${profile?.name}`} />
+          <EmployeeReviewForm
+            user={profile}
+            onCreate={handleCreateAssessment}
+          />
         )}
       </Modal>
       <Modal

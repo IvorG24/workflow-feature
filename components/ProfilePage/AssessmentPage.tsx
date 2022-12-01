@@ -8,11 +8,10 @@ import {
   Group,
   Text,
 } from "@mantine/core";
-import { Assessment, User } from "./ProfilePage";
+import { Assessment } from "./ProfilePage";
 import { setTimeDifference } from "./utils";
 
 type Props = {
-  user?: User;
   assessments: Assessment[];
 };
 
