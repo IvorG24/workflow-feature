@@ -2,7 +2,7 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 // import { Text } from "@mantine/core";
-import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
+import PeerReviewForm from "@/components/Profile/PeerReviewForm";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "./_app";
 

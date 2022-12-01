@@ -8,26 +8,10 @@ import {
   Title,
 } from "@mantine/core";
 import moment from "moment";
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  position: string;
-  avatar_url: string;
-  bg_url: string;
-};
-
-type Review = {
-  id: number;
-  rating: number;
-  comment: string;
-  created_at: string;
-  review_from: User;
-};
+import { ReviewType } from "./ProfileReviewsPage";
 
 type Props = {
-  review: Review;
+  review: ReviewType;
 };
 
 const setTimeDifference = (date: Date) => {

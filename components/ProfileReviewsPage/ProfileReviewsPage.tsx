@@ -1,24 +1,21 @@
 import { Container, Divider } from "@mantine/core";
-
-import { useRouter } from "next/router";
 import { Fragment } from "react";
-import data from "../../teams.json";
+import { ReviewType } from "../Profile/Profile";
 import Review from "./Review";
 
-const Reviews = () => {
-  const router = useRouter();
-  const { profileId } = router.query;
-  const profile = data[0].members.find((member) => member.id === profileId);
+type Props = {
+  reviews: ReviewType[];
+};
 
+const Reviews = ({ reviews }: Props) => {
   return (
     <Container fluid p={0}>
-      {profile?.reviews &&
-        profile?.reviews.map((review, index) => (
-          <Fragment key={review?.id}>
-            {index !== 0 ? <Divider my="md" /> : null}
-            <Review review={review} />
-          </Fragment>
-        ))}
+      {reviews?.map((review, index) => (
+        <Fragment key={review?.id}>
+          {index !== 0 ? <Divider my="md" /> : null}
+          <Review review={review} />
+        </Fragment>
+      ))}
     </Container>
   );
 };
