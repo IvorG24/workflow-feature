@@ -47,6 +47,13 @@ export type ReviewType = {
   id: number;
 } & CreateReview;
 
+export type Assessment = {
+  id: number;
+  created_at: string;
+  review_from: User;
+  comment: string;
+};
+
 const Profile = () => {
   const router = useRouter();
   const { profileId, activeTab } = router.query;
@@ -55,6 +62,7 @@ const Profile = () => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [reviews, setReviews] = useState<ReviewType[]>([]);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
 
   const profile = data[0].members.find((member) => member.id === profileId);
 
@@ -69,6 +77,18 @@ const Profile = () => {
       mounted = false;
     };
   }, [profile?.reviews]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (profile?.assessments) {
+      mounted && setAssessments(profile.assessments);
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [profile?.assessments]);
 
   const handleCreateReview = (review: CreateReview) => {
     const newReview = {
@@ -153,7 +173,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <AssessmentPage user={profile} />
+          <AssessmentPage user={profile} assessments={assessments} />
         </Tabs.Panel>
       </Tabs>
       <Modal
