@@ -1,5 +1,6 @@
 import { Button, Flex, MultiSelect } from "@mantine/core";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import validator from "validator";
 import { Member } from "./MembersPage";
 
@@ -8,34 +9,29 @@ type Props = {
 };
 
 const InviteTeamMembersSection = ({ members }: Props) => {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    setValue,
+    formState: { errors },
+  } = useForm<{ emails: string[] }>();
   const [emails, setEmails] = useState<{ value: string; label: string }[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = handleSubmit(async (data) => {
+    console.log(data.emails);
+  });
 
-    if (emails.length === 0) {
-      setError("No email provided.");
-      return;
-    }
-
-    //  don't invite if email is already in workspace
+  const emailExists = (newEmail: string) => {
     const memberEmails = members.map((m) => m.email);
-    const isAlreadyAMember = emails.some((email) =>
-      memberEmails.includes(email.value)
-    );
-
-    if (isAlreadyAMember) {
-      setError("Cannot invite existing members.");
-      return;
-    }
+    return memberEmails.includes(newEmail);
   };
 
   return (
     <form
       data-testid="team__sendInvitesForm"
       autoComplete="off"
-      onSubmit={handleFormSubmit}
+      onSubmit={onSubmit}
     >
       <Flex gap="sm" align="center" direction={{ base: "column", md: "row" }}>
         <MultiSelect
@@ -46,20 +42,32 @@ const InviteTeamMembersSection = ({ members }: Props) => {
           creatable
           getCreateLabel={(query) => `+ Create ${query}`}
           onCreate={(query) => {
-            if (validator.isEmail(query)) {
-              setError(null);
-              const item = { value: query, label: query };
-              setEmails((current) => [...current, item]);
-              return item;
-            } else {
-              setError("Email is invalid");
+            if (!validator.isEmail(query)) {
+              setError("emails", { message: "Email is invalid" });
               return null;
             }
+            if (emailExists(query)) {
+              setError("emails", { message: "Email already exist" });
+              return null;
+            }
+            setError("emails", { message: "" });
+            const item = { value: query, label: query };
+            setEmails((current) => [...current, item]);
+            return item;
           }}
           w="100%"
-          error={error}
+          {...register("emails", { required: "Email is required" })}
+          onChange={(e) => {
+            setValue("emails", [...e]);
+          }}
+          error={errors.emails?.message}
         />
-        <Button fullWidth maw={{ md: "150px", lg: "200px" }} size="md">
+        <Button
+          type="submit"
+          fullWidth
+          maw={{ md: "150px", lg: "200px" }}
+          size="md"
+        >
           Send Invites
         </Button>
       </Flex>
