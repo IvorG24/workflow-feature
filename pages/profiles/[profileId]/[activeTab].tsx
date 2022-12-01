@@ -3,24 +3,24 @@ import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import Profile from "@/components/ProfilePage/ProfilePage";
 import { useSessionContext } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { ReactElement, useEffect } from "react";
 import type { NextPageWithLayout } from "../../_app";
 
 const ProfilePage: NextPageWithLayout = () => {
   const { supabaseClient, session, isLoading } = useSessionContext();
+  const router = useRouter();
 
   // todo: transfer this to GSSP when fetching sesion inside GSSP is figured out.
   useEffect(() => {
     const handleNewUser = async () => {
+      if (!router.isReady) return;
       if (isLoading) return;
 
-      if (!session)
-        return {
-          redirect: {
-            destination: "/sign-in",
-            permanent: false,
-          },
-        };
+      if (!session) {
+        router.push("/");
+        return null;
+      }
 
       // Purpose: Auto save new user to user_profile_table without using database triggers.
       // This approach - new user only saved to user_profile_table when user visits their profile.
@@ -47,7 +47,7 @@ const ProfilePage: NextPageWithLayout = () => {
     };
 
     handleNewUser();
-  }, [supabaseClient, session, isLoading]);
+  }, [supabaseClient, session, isLoading, router]);
 
   return (
     <div>
