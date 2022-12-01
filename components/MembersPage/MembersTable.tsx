@@ -15,24 +15,32 @@ import {
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
 import { useRouter } from "next/router";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
-import { Member } from "./Member";
 
-type Props = {
-  filteredMembers: Member[];
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar_url: string;
+  bg_url: string;
 };
 
-const MembersTable = ({ filteredMembers }: Props) => {
+type Props = {
+  members: Member[];
+};
+
+const MembersTable = ({ members }: Props) => {
   const router = useRouter();
 
   return (
     <Stack justify="space-between" mih="400px" pt="md">
       {
         // todo: update properties to match fetched data
-        filteredMembers.map(({ id, name, email, role, image }) => {
+        members.map(({ id, name, email, role, avatar_url }) => {
           return (
             <Grid
               key={id}
-              onClick={() => router.push(`/profiles/${id}`)}
+              onClick={() => router.push(`/profiles/${id}/bio`)}
               sx={{ borderTop: "1px solid #E9E9E9" }}
             >
               <Grid.Col order={1} orderMd={1} span={10} md={8}>
@@ -40,7 +48,7 @@ const MembersTable = ({ filteredMembers }: Props) => {
                   <MantineAvatar
                     size={40}
                     radius={40}
-                    src={image}
+                    src={avatar_url}
                     alt={`${name}'s Formsly Avatar`}
                   />
                   <Box>

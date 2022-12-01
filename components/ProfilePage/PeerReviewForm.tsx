@@ -14,12 +14,14 @@ import {
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./PeerReviewForm.module.scss";
+import { CreateReview } from "./ProfilePage";
 
 type Props = {
   user: string;
+  onCreateReview: (review: CreateReview) => void;
 };
 
-const PeerReviewForm = ({ user }: Props) => {
+const PeerReviewForm = ({ user, onCreateReview }: Props) => {
   const [responsibilityScore, setResponsibilityScore] = useState(0);
   const [learnabilityScore, setLearnabilityScore] = useState(0);
   const [creativityScore, setCreativityScore] = useState(0);
@@ -41,6 +43,21 @@ const PeerReviewForm = ({ user }: Props) => {
     console.log(rating);
     const { additionalComments } = data;
     console.log(additionalComments);
+
+    onCreateReview({
+      created_at: new Date().toISOString(),
+      review_from: {
+        id: "c40605b7-321e-40bb-ac51-4ca315cfaf9c",
+        name: "Alberto Linao",
+        email: "albertolinao@gmail.com",
+        position: "IT Manager",
+        role: "manager",
+        avatar_url: "",
+        bg_url: "",
+      },
+      rating: rating,
+      comment: additionalComments,
+    });
   });
 
   return (

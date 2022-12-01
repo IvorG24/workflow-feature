@@ -35,8 +35,8 @@ const ChooseFormType = () => {
             <Flex direction="column" gap="sm" mt="xs">
               <Radio
                 size="sm"
-                value="approval"
-                label="Approval Form"
+                value="request"
+                label="Request Form"
                 {...register("formType", { required: "Form type required" })}
               />
               <Radio
