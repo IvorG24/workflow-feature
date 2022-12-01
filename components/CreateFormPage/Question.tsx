@@ -1,16 +1,9 @@
 // todo: create unit test
-import {
-  Button,
-  Container,
-  Flex,
-  Paper,
-  Radio,
-  Tabs,
-  TextInput,
-} from "@mantine/core";
+import { Container, Flex, Paper, Radio, Tabs, TextInput } from "@mantine/core";
+import { DatePicker } from "@mantine/dates";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { AddCircle } from "../Icon";
+import { Controller, useForm } from "react-hook-form";
+import CreateRequestFormPage from "../CreateRequestFormPage/CreateRequestFormPage";
 
 type Data = {
   title: string;
@@ -25,6 +18,7 @@ const Question = () => {
     register,
     handleSubmit,
     formState: { errors },
+    control,
   } = useForm<Data>();
   const [activeTab, setActiveTab] = useState<string | null>("question");
 
@@ -55,16 +49,27 @@ const Question = () => {
                   {...register("description")}
                   mt="lg"
                 />
+                <Controller
+                  rules={{
+                    required: "Review Period is required",
+                  }}
+                  control={control}
+                  name="review_period"
+                  render={({ field: { name, onChange, ref } }) => (
+                    <DatePicker
+                      mt="lg"
+                      name={name}
+                      onChange={onChange}
+                      ref={ref}
+                      label="Review Period"
+                      withAsterisk
+                      error={errors.review_period?.message}
+                    />
+                  )}
+                />
               </Flex>
-              <Button
-                variant="subtle"
-                leftIcon={<AddCircle />}
-                my="lg"
-                aria-label="Add default approvers"
-              >
-                Add Default Approvers
-              </Button>
             </Paper>
+            <CreateRequestFormPage />
           </Tabs.Panel>
 
           <Tabs.Panel value="settings" pt="xs">

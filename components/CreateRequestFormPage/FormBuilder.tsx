@@ -8,16 +8,9 @@ import {
 import { alignQuestionOption } from "@/components/CreateRequestFormPage/utils";
 import { AddCircle } from "@/components/Icon";
 import { Database } from "@/utils/database.types";
-import {
-  Box,
-  Button,
-  Notification,
-  Paper,
-  Stack,
-  TextInput,
-} from "@mantine/core";
+import { Box, Button, Stack } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { FC, memo, useCallback, useState } from "react";
+import { FC, memo, useCallback } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import {
   Control,
@@ -38,10 +31,9 @@ type Props = {
 const FormBuilder: FC<Props> = (props) => {
   const supabase = useSupabaseClient<Database>();
 
-  const { register, control, handleSubmit, getValues } = props;
-  const [notification, setNotification] = useState("");
+  const { register, control, getValues } = props;
 
-  const { errors, isSubmitting } = useFormState({ control });
+  const { isSubmitting } = useFormState({ control });
   const {
     fields: questionList,
     append: appendQuestion,
@@ -113,87 +105,53 @@ const FormBuilder: FC<Props> = (props) => {
         .from("user_created_select_option_table")
         .insert(userCreatedOption);
     } catch (e) {
-      setNotification("Error saving the form");
+      console.error(e);
     }
   };
 
   return (
-    <>
-      {notification && (
-        <Notification
-          title="Something went wrong"
-          color="red"
-          onClose={() => setNotification("")}
-          mb="md"
+    <Stack mt="lg">
+      <DragDropContext onDragEnd={handleOnDragEnd}>
+        <Droppable
+          droppableId="questions"
+          type="questionDroppable"
+          isDropDisabled={isSubmitting}
         >
-          {notification}
-        </Notification>
-      )}
-      <form
-        role="form"
-        aria-label="Create Request Form"
-        onSubmit={handleSubmit(handleSaveFormRequest)}
+          {(provided) => (
+            <Box ref={provided.innerRef} {...provided.droppableProps}>
+              {questionList.map((item, index) => (
+                <QuestionItemBuilder
+                  key={item.id}
+                  register={register}
+                  control={control}
+                  questionIndex={index}
+                  handleRemoveQuestion={handleRemoveQuestion}
+                />
+              ))}
+              {provided.placeholder}
+            </Box>
+          )}
+        </Droppable>
+      </DragDropContext>
+      <Button
+        role="button"
+        aria-label="Add Question"
+        variant="outline"
+        disabled={isSubmitting ? true : false}
+        onClick={handleAppendQuestion}
       >
-        <Stack>
-          <Paper withBorder shadow="sm" p="md">
-            <TextInput
-              role="textbox"
-              aria-label="Form Name"
-              label="Form Name"
-              size="md"
-              variant="filled"
-              placeholder="Name"
-              withAsterisk
-              mb="sm"
-              {...register("form_name", {
-                required: "Form name is required",
-              })}
-              error={errors.form_name?.message}
-            />
-          </Paper>
-          <DragDropContext onDragEnd={handleOnDragEnd}>
-            <Droppable
-              droppableId="questions"
-              type="questionDroppable"
-              isDropDisabled={isSubmitting}
-            >
-              {(provided) => (
-                <Box ref={provided.innerRef} {...provided.droppableProps}>
-                  {questionList.map((item, index) => (
-                    <QuestionItemBuilder
-                      key={item.id}
-                      register={register}
-                      control={control}
-                      questionIndex={index}
-                      handleRemoveQuestion={handleRemoveQuestion}
-                    />
-                  ))}
-                  {provided.placeholder}
-                </Box>
-              )}
-            </Droppable>
-          </DragDropContext>
-          <Button
-            role="button"
-            aria-label="Add Question"
-            variant="outline"
-            disabled={isSubmitting ? true : false}
-            onClick={handleAppendQuestion}
-          >
-            <AddCircle />
-            &nbsp;Add Question
-          </Button>
-          <Button
-            aria-label="Save"
-            role="button"
-            type="submit"
-            loading={isSubmitting}
-          >
-            Save
-          </Button>
-        </Stack>
-      </form>
-    </>
+        <AddCircle />
+        &nbsp;Add Question
+      </Button>
+      <Button
+        aria-label="Save"
+        role="button"
+        loading={isSubmitting}
+        onClick={handleSaveFormRequest}
+      >
+        Save
+      </Button>
+    </Stack>
   );
 };
 
