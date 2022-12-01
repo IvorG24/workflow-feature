@@ -217,10 +217,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      handle_new_user: {
-        Args: Record<PropertyKey, never>;
-        Returns: undefined;
-      };
+      [_ in never]: never;
     };
     Enums: {
       expected_response_type:

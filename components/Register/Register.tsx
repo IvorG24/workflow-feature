@@ -22,8 +22,6 @@ import { Facebook, Github, Google } from "../Icon";
 import styles from "./Register.module.scss";
 
 type FormData = {
-  fullName: string;
-  phoneNumber: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -42,18 +40,11 @@ const Register = () => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const { email, password, fullName, phoneNumber } = data;
+      const { email, password } = data;
       // todo: add loading state
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            // Using underscore case as naming convention in key just follow the naming convention of Facebook when saving user metadata. See auth.users.raw_user_metadata.
-            phone_number: phoneNumber,
-            full_name: fullName,
-          },
-        },
       });
       if (error) {
         setNotification(error.message);
@@ -106,30 +97,6 @@ const Register = () => {
             <Title order={3}>Register</Title>
             <Text>Register to start using Formsly.</Text>
             <>
-              <TextInput
-                label="Full Name"
-                type="text"
-                {...register("fullName", {
-                  required: "Full Name is required",
-                  minLength: {
-                    value: 3,
-                    message: "Full name must be at least 3 characters",
-                  },
-                })}
-                error={errors.fullName?.message}
-              />
-              <TextInput
-                label="Phone Number"
-                type="text"
-                {...register("phoneNumber", {
-                  validate: {
-                    isPhoneNumber: (input) =>
-                      validator.isMobilePhone(input) ||
-                      "Phone number is invalid",
-                  },
-                })}
-                error={errors.phoneNumber?.message}
-              />
               <TextInput
                 label="Email"
                 type="email"

@@ -31,7 +31,19 @@ const ProfilePage: NextPageWithLayout = () => {
         .eq("user_id", session.user.id)
         .single();
 
-      if (!data) await supabaseClient.rpc("handle_new_user");
+      if (!data) {
+        const { error } = await supabaseClient
+          .from("user_profile_table")
+          .insert({
+            user_id: session.user.id,
+            username: "",
+            full_name: "",
+            avatar_url: "",
+          });
+        if (error) {
+          console.log(error);
+        }
+      }
     };
 
     handleNewUser();

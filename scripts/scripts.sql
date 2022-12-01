@@ -108,3 +108,5 @@ BEGIN
 END;
 $$ language plpgsql security definer;
 ;
+
+DROP FUNCTION IF EXISTS handle_new_user();
