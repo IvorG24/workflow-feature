@@ -10,6 +10,7 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { AddCircle, Search } from "../Icon";
 import styles from "./FormsPage.module.scss";
@@ -52,6 +53,7 @@ const forms: Form[] = [
 const FormList = () => {
   const [activePage, setPage] = useState(1);
   const { colorScheme } = useMantineColorScheme();
+  const router = useRouter();
 
   // todo: fetch forms backend
   // todo: add actual filtering
@@ -96,7 +98,11 @@ const FormList = () => {
           />
         </Group>
 
-        <Button rightIcon={<AddCircle />} variant="subtle">
+        <Button
+          rightIcon={<AddCircle />}
+          variant="subtle"
+          onClick={() => router.push("/forms/create?step=1")}
+        >
           Create a Form
         </Button>
       </Group>
