@@ -18,7 +18,7 @@ const ProfilePage: NextPageWithLayout = () => {
       if (isLoading) return;
 
       if (!session) {
-        router.push("/");
+        router.push("/sign-in");
         return null;
       }
 
