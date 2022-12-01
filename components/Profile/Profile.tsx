@@ -3,7 +3,7 @@
 import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import IconWrapper from "@/components/IconWrapper/IconWrapper";
-import PeerReviewForm from "@/components/PeerReviewForm/PeerReviewForm";
+import PeerReviewForm from "@/components/Profile/PeerReviewForm";
 import {
   Avatar,
   BackgroundImage,
@@ -18,7 +18,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import data from "../../teams.json";
 import AssessmentPage from "../AssessmentPage/AssessmentPage";
 import ProfileReviewsPage from "../ProfileReviewsPage/ProfileReviewsPage";
@@ -27,6 +27,24 @@ import EditProfileForm from "./EditProfileForm";
 import Notes from "./NoteList";
 import styles from "./Profile.module.scss";
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  position: string;
+  role: string;
+  avatar_url?: string;
+  bg_url?: string;
+};
+
+export type ReviewType = {
+  id: number;
+  created_at: string;
+  review_from: User;
+  rating: number;
+  comment: string;
+};
+
 const Profile = () => {
   const router = useRouter();
   const { profileId, activeTab } = router.query;
@@ -34,8 +52,21 @@ const Profile = () => {
 
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [reviews, setReviews] = useState<ReviewType[]>([]);
 
   const profile = data[0].members.find((member) => member.id === profileId);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (profile?.reviews) {
+      mounted && setReviews(profile.reviews);
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [profile?.reviews]);
 
   return (
     <Container fluid pt="xl">
@@ -108,7 +139,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="reviews" pt="xl">
-          <ProfileReviewsPage />
+          <ProfileReviewsPage reviews={reviews} />
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">

@@ -12,7 +12,7 @@ import { ASSESSMENTS, MEMBERS } from "tempData";
 import { User } from "../Profile/Profile";
 
 type Props = {
-  user: User;
+  user?: User;
 };
 
 const AssessmentPage = ({ user }: Props) => {
