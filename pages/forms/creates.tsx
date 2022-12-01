@@ -1,24 +1,36 @@
-import CreateRequest from "@/components/CreateRequest/CreateRequest";
+import CreateRequestFormPage from "@/components/CreateRequestFormPage/CreateRequestFormPage";
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
+import { GetServerSideProps } from "next";
 import { ReactElement } from "react";
+import { resetServerContext } from "react-beautiful-dnd";
 import type { NextPageWithLayout } from "../_app";
 
-const CreateRequestPage: NextPageWithLayout = () => {
-  // todo: fix meta tags
+export const getServerSideProps: GetServerSideProps = async () => {
+  resetServerContext();
+  return {
+    props: {
+      data: [],
+    },
+  };
+};
+
+// todo: fix meta tags
+const CreateRequestForm: NextPageWithLayout = () => {
   return (
     <div>
       <Meta
-        description="Create Request Page"
-        url="localhost:3000/requests/create"
+        description="Create Request Form"
+        // this is just a temporary url, canoncial url will be set in the future
+        url="localhost:3000/testpage"
       />
-      <CreateRequest />
+      <CreateRequestFormPage />
     </div>
   );
 };
 
-CreateRequestPage.getLayout = function getLayout(page: ReactElement) {
+CreateRequestForm.getLayout = function getLayout(page: ReactElement) {
   return <WorkspaceLayout>{page}</WorkspaceLayout>;
 };
 
-export default CreateRequestPage;
+export default CreateRequestForm;
