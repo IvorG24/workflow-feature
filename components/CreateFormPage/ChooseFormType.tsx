@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 
 type Data = {
-  formType: "approval_form" | "review_form";
+  formType: "approval" | "review";
 };
 
 const ChooseFormType = () => {
@@ -16,8 +16,7 @@ const ChooseFormType = () => {
   } = useForm<Data>();
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log(data);
-    router.push("/forms/create?step=2");
+    router.push(`/forms/create?step=2formType=${data.formType}`);
   });
 
   return (
