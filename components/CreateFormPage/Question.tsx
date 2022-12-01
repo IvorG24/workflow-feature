@@ -1,3 +1,4 @@
+// todo: create unit test
 import {
   Button,
   Container,
@@ -41,7 +42,7 @@ const Question = () => {
 
         <form onSubmit={onSubmit}>
           <Tabs.Panel value="question" pt="xs">
-            <Paper shadow="sm" p="lg" withBorder>
+            <Paper shadow="sm" p="lg" withBorder mt="sm">
               <Flex direction="column">
                 <TextInput
                   label="Title"
@@ -67,34 +68,44 @@ const Question = () => {
           </Tabs.Panel>
 
           <Tabs.Panel value="settings" pt="xs">
-            <Paper shadow="sm" p="lg" withBorder>
+            <Paper shadow="sm" p="lg" withBorder mt="md">
               <Radio.Group
+                size="lg"
                 label="Review period"
                 error={errors.review_period?.message}
-                mb="sm"
               >
-                <Flex direction="column" gap="sm" mt="xs">
+                <Flex direction="column" gap="sm" mt="sm">
                   <Radio
+                    size="sm"
                     value="approval_form"
                     label="Approval Form"
                     {...register("review_period")}
                   />
                   <Radio
+                    size="sm"
                     value="review_form"
                     label="Review Form"
                     {...register("review_period")}
                   />
                 </Flex>
               </Radio.Group>
-              <Radio.Group label="Set as default for" mt="lg">
+
+              <Radio.Group label="Set as default for" mt="lg" size="lg">
                 <Flex direction="column" gap="sm" mt="xs">
-                  <Radio value="none" label="None" {...register("default")} />
                   <Radio
+                    size="sm"
+                    value="none"
+                    label="None"
+                    {...register("default")}
+                  />
+                  <Radio
+                    size="sm"
                     value="peer_review"
                     label="Peer Review"
                     {...register("default")}
                   />
                   <Radio
+                    size="sm"
                     value="employee_review"
                     label="Employee Review"
                     {...register("default")}

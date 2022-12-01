@@ -1,3 +1,4 @@
+// todo: create unit test
 import { Button, Container, Flex, Paper, Radio, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
@@ -6,7 +7,7 @@ type Data = {
   formType: "approval_form" | "review_form";
 };
 
-const FormsType = () => {
+const ChooseFormType = () => {
   const router = useRouter();
   const {
     register,
@@ -16,7 +17,7 @@ const FormsType = () => {
 
   const onSubmit = handleSubmit(async (data) => {
     console.log(data);
-    router.push("/forms/question");
+    router.push("/forms/create?step=2");
   });
 
   return (
@@ -28,24 +29,27 @@ const FormsType = () => {
 
         <form onSubmit={onSubmit}>
           <Radio.Group
+            size="lg"
             label="What type of form do you want to create?"
             error={errors.formType?.message}
           >
             <Flex direction="column" gap="sm" mt="xs">
               <Radio
-                value="approval_form"
+                size="sm"
+                value="approval"
                 label="Approval Form"
                 {...register("formType", { required: "Form type required" })}
               />
               <Radio
-                value="review_form"
+                size="sm"
+                value="review"
                 label="Review Form"
                 {...register("formType")}
               />
             </Flex>
           </Radio.Group>
 
-          <Button type="submit" my="lg" aria-label="continue">
+          <Button type="submit" mt="xl" aria-label="continue">
             Continue
           </Button>
         </form>
@@ -54,4 +58,4 @@ const FormsType = () => {
   );
 };
 
-export default FormsType;
+export default ChooseFormType;

@@ -101,7 +101,7 @@ const FormList = () => {
         <Button
           rightIcon={<AddCircle />}
           variant="subtle"
-          onClick={() => router.push("/forms/type")}
+          onClick={() => router.push("/forms/create?step=1")}
         >
           Create a Form
         </Button>
