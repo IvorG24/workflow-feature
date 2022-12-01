@@ -23,7 +23,6 @@ import { MEMBERS } from "../../tempData";
 import Assesment from "./Assessment";
 import Bio from "./Bio";
 import EditProfileForm from "./EditProfileForm";
-import Notes from "./NoteList";
 import styles from "./Profile.module.scss";
 import Reviews from "./ReviewList";
 
@@ -86,7 +85,6 @@ const Profile = () => {
             <Tabs.Tab value="bio">Bio</Tabs.Tab>
             <Tabs.Tab value="reviews">Reviews</Tabs.Tab>
             <Tabs.Tab value="assessment">Assessment</Tabs.Tab>
-            <Tabs.Tab value="notes">Notes</Tabs.Tab>
           </Tabs.List>
           <div
             className={styles.addReviewButtonContainer}
@@ -116,10 +114,6 @@ const Profile = () => {
 
         <Tabs.Panel value="assessment" pt="xl">
           <Assesment user={user} />
-        </Tabs.Panel>
-
-        <Tabs.Panel value="notes" pt="xl">
-          <Notes />
         </Tabs.Panel>
       </Tabs>
       <Modal
