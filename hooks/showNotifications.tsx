@@ -1,4 +1,5 @@
 import { Check, Close, Warning } from "@/components/Icon";
+import IconWrapper from "@/components/IconWrapper/IconWrapper";
 import {
   NotificationProps,
   showNotification as notification,
@@ -13,23 +14,33 @@ type NotificationParams = {
   icon?: ReactElement;
 };
 
-const WHITE_COLOR = "#fff";
-
 const notifProps: Record<NotifcationState, Partial<NotificationProps>> = {
   Success: {
     color: "green",
     title: "Success!",
-    icon: <Check color={WHITE_COLOR} />,
+    icon: (
+      <IconWrapper color="#fff">
+        <Check />
+      </IconWrapper>
+    ),
   },
   Warning: {
     color: "yellow",
     title: "Warning!",
-    icon: <Warning color={WHITE_COLOR} />,
+    icon: (
+      <IconWrapper color="#fff">
+        <Warning />
+      </IconWrapper>
+    ),
   },
   Danger: {
     color: "red",
     title: "Danger!",
-    icon: <Close color={WHITE_COLOR} />,
+    icon: (
+      <IconWrapper color="#fff">
+        <Close />
+      </IconWrapper>
+    ),
   },
 };
 

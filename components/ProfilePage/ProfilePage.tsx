@@ -3,7 +3,7 @@
 import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import IconWrapper from "@/components/IconWrapper/IconWrapper";
-import PeerReviewForm from "@/components/Profile/PeerReviewForm";
+import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
 import {
   Avatar,
   BackgroundImage,
@@ -20,12 +20,12 @@ import {
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import data from "../../teams.json";
-import AssessmentPage from "../AssessmentPage/AssessmentPage";
-import ProfileReviewsPage from "../ProfileReviewsPage/ProfileReviewsPage";
-import Bio from "./Bio";
+import AssessmentPage from "./AssessmentPage";
+import Bio from "./BioPage";
 import EditProfileForm from "./EditProfileForm";
 import Notes from "./NoteList";
-import styles from "./Profile.module.scss";
+import styles from "./ProfilePage.module.scss";
+import ProfileReviewsPage from "./ReviewsPage";
 
 export type User = {
   id: string;
@@ -37,13 +37,16 @@ export type User = {
   bg_url?: string;
 };
 
-export type ReviewType = {
-  id: number;
+export type CreateReview = {
   created_at: string;
   review_from: User;
   rating: number;
   comment: string;
 };
+
+export type ReviewType = {
+  id: number;
+} & CreateReview;
 
 const Profile = () => {
   const router = useRouter();
@@ -67,6 +70,15 @@ const Profile = () => {
       mounted = false;
     };
   }, [profile?.reviews]);
+
+  const handleCreateReview = (review: CreateReview) => {
+    const newReview = {
+      id: Math.floor(Math.random() * 1000),
+      ...review,
+    };
+    setReviews((prev) => [...prev, newReview]);
+    setIsReviewModalOpen(false);
+  };
 
   return (
     <Container fluid pt="xl">
@@ -157,7 +169,10 @@ const Profile = () => {
         size="lg"
       >
         {activeTab === "reviews" && (
-          <PeerReviewForm user={`${profile?.name}`} />
+          <PeerReviewForm
+            user={`${profile?.name}`}
+            onCreateReview={handleCreateReview}
+          />
         )}
         {activeTab === "assessment" && (
           <EmployeeReviewForm user={`${profile?.name}`} />
