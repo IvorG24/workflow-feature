@@ -1,8 +1,8 @@
 // todo: create unit test
 // todo: fix mobile view
-import EmployeeReviewForm from "@/components/EmployeeReviewForm/EmployeeReviewForm";
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import IconWrapper from "@/components/IconWrapper/IconWrapper";
+import EmployeeReviewForm from "@/components/ProfilePage/EmployeeReviewForm";
 import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
 import {
   Avatar,
@@ -47,6 +47,16 @@ export type ReviewType = {
   id: number;
 } & CreateReview;
 
+export type CreateAssessment = {
+  created_at: string;
+  review_from: User;
+  comment: string;
+};
+
+export type Assessment = {
+  id: number;
+} & CreateAssessment;
+
 const Profile = () => {
   const router = useRouter();
   const { profileId, activeTab } = router.query;
@@ -55,6 +65,7 @@ const Profile = () => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [reviews, setReviews] = useState<ReviewType[]>([]);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
 
   const profile = data[0].members.find((member) => member.id === profileId);
 
@@ -70,12 +81,33 @@ const Profile = () => {
     };
   }, [profile?.reviews]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    if (profile?.assessments) {
+      mounted && setAssessments(profile.assessments);
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [profile?.assessments]);
+
   const handleCreateReview = (review: CreateReview) => {
     const newReview = {
       id: Math.floor(Math.random() * 1000),
       ...review,
     };
     setReviews((prev) => [...prev, newReview]);
+    setIsReviewModalOpen(false);
+  };
+
+  const handleCreateAssessment = (assessment: CreateAssessment) => {
+    const newAssessment = {
+      id: Math.floor(Math.random() * 1000),
+      ...assessment,
+    };
+    setAssessments((prev) => [...prev, newAssessment]);
     setIsReviewModalOpen(false);
   };
 
@@ -153,7 +185,7 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <AssessmentPage user={profile} />
+          <AssessmentPage assessments={assessments} />
         </Tabs.Panel>
       </Tabs>
       <Modal
@@ -169,7 +201,10 @@ const Profile = () => {
           />
         )}
         {activeTab === "assessment" && (
-          <EmployeeReviewForm user={`${profile?.name}`} />
+          <EmployeeReviewForm
+            user={profile}
+            onCreate={handleCreateAssessment}
+          />
         )}
       </Modal>
       <Modal
