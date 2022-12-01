@@ -1,10 +1,10 @@
 // this page was just used to test layout, you can delete it if you want
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
-import Profile from "@/components/Profile/Profile";
+import Profile from "@/components/ProfilePage/ProfilePage";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { ReactElement, useEffect } from "react";
-import type { NextPageWithLayout } from "../_app";
+import type { NextPageWithLayout } from "../../_app";
 
 const ProfilePage: NextPageWithLayout = () => {
   const { supabaseClient, session, isLoading } = useSessionContext();
@@ -31,7 +31,19 @@ const ProfilePage: NextPageWithLayout = () => {
         .eq("user_id", session.user.id)
         .single();
 
-      if (!data) await supabaseClient.rpc("handle_new_user");
+      if (!data) {
+        const { error } = await supabaseClient
+          .from("user_profile_table")
+          .insert({
+            user_id: session.user.id,
+            username: "",
+            full_name: "",
+            avatar_url: "",
+          });
+        if (error) {
+          console.log(error);
+        }
+      }
     };
 
     handleNewUser();

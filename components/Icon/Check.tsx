@@ -1,9 +1,8 @@
 type SVGRProps = {
   title?: string;
   titleId?: string;
-  color?: string;
 };
-const SvgCheck = ({ title, titleId, color = "#444746" }: SVGRProps) => (
+const SvgCheck = ({ title, titleId }: SVGRProps) => (
   <svg
     width="1em"
     height="1em"
@@ -15,8 +14,8 @@ const SvgCheck = ({ title, titleId, color = "#444746" }: SVGRProps) => (
   >
     {title ? <title id={titleId}>{title}</title> : null}
     <path
-      d="M18.9 35.7002L7.69995 24.5002L9.84995 22.3502L18.9 31.4002L38.0999 12.2002L40.25 14.3502L18.9 35.7002Z"
-      fill={color}
+      d="M18.9 35.7 7.7 24.5l2.15-2.15 9.05 9.05 19.2-19.2 2.15 2.15L18.9 35.7Z"
+      fill="currentColor"
     />
   </svg>
 );

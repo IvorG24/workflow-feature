@@ -1,7 +1,7 @@
 import { Button, Flex, MultiSelect } from "@mantine/core";
 import { FormEvent, useState } from "react";
 import validator from "validator";
-import { Member } from "./Member";
+import { Member } from "./MembersPage";
 
 type Props = {
   members: Member[];
