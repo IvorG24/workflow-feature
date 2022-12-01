@@ -1,5 +1,6 @@
 import { Button, Flex, MultiSelect } from "@mantine/core";
 import { FormEvent, useState } from "react";
+import validator from "validator";
 import { Member } from "./Member";
 
 type Props = {
@@ -8,12 +9,13 @@ type Props = {
 
 const InviteTeamMembersSection = ({ members }: Props) => {
   const [emails, setEmails] = useState<{ value: string; label: string }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (emails.length === 0) {
-      // setError("No email provided.");
+      setError("No email provided.");
       return;
     }
 
@@ -24,7 +26,7 @@ const InviteTeamMembersSection = ({ members }: Props) => {
     );
 
     if (isAlreadyAMember) {
-      // setError("Cannot invite existing members.");
+      setError("Cannot invite existing members.");
       return;
     }
   };
@@ -36,7 +38,6 @@ const InviteTeamMembersSection = ({ members }: Props) => {
       onSubmit={handleFormSubmit}
     >
       <Flex gap="sm" align="center" direction={{ base: "column", md: "row" }}>
-        {/* todo: validate inputs to only accept emails */}
         <MultiSelect
           data={emails}
           placeholder="Add users"
@@ -45,11 +46,18 @@ const InviteTeamMembersSection = ({ members }: Props) => {
           creatable
           getCreateLabel={(query) => `+ Create ${query}`}
           onCreate={(query) => {
-            const item = { value: query, label: query };
-            setEmails((current) => [...current, item]);
-            return item;
+            if (validator.isEmail(query)) {
+              setError(null);
+              const item = { value: query, label: query };
+              setEmails((current) => [...current, item]);
+              return item;
+            } else {
+              setError("Email is invalid");
+              return null;
+            }
           }}
           w="100%"
+          error={error}
         />
         <Button fullWidth maw={{ md: "150px", lg: "200px" }} size="md">
           Send Invites
