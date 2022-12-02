@@ -1,4 +1,6 @@
+// todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
+import { Team } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -31,19 +33,6 @@ import {
 } from "../Icon";
 import styles from "./Navbar.module.scss";
 
-const TEAMS = [
-  {
-    image: "",
-    value: "Acme Corporation",
-    label: "Acme Corporation",
-  },
-  {
-    image: "",
-    value: "Wonka Industries",
-    label: "Wonka Industries",
-  },
-];
-
 const tempFormType = [
   { value: "1", label: "Approval Request" },
   { value: "2", label: "IT" },
@@ -54,18 +43,25 @@ const tempFormType = [
   { value: "7", label: "Release Order" },
 ];
 
-const Navbar = () => {
+type Props = {
+  teams: Team[];
+};
+
+const Navbar = ({ teams }: Props) => {
   const router = useRouter();
+  const { tid } = router.query;
+  const activeTeam = teams.find((team) => team.team_id === tid);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [teamDropdownValue, setTeamDropdownValue] = useState<string | null>(
-    TEAMS[0].value
-  );
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(
     tempFormType[0].value
   );
 
-  const selectedTeam = TEAMS.find((team) => team.value === teamDropdownValue);
+  const teamOptions = teams.map((team) => ({
+    value: team.team_id,
+    label: team.team_name as string, // todo: team_name should not be null in database
+    image: "", // todo: add logo column to team table in database
+  }));
 
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
@@ -136,11 +132,11 @@ const Navbar = () => {
         <Select
           mt="md"
           label="Team"
-          value={teamDropdownValue}
-          data={TEAMS}
+          value={activeTeam?.team_id}
+          data={teamOptions}
           itemComponent={SelectItem}
-          onChange={(val) => setTeamDropdownValue(val)}
-          icon={<Avatar src={selectedTeam?.image} radius="xl" size="sm" />}
+          onChange={(val) => router.push(`/t/${val}/dashboard`)}
+          icon={<Avatar src="" radius="xl" size="sm" />}
           size="md"
           styles={{
             label: {

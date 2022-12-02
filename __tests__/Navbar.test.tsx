@@ -2,7 +2,7 @@ import Navbar from "@/components/Layout/Navbar";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {
-  render(<Navbar />);
+  render(<Navbar teams={[]} />);
 };
 
 // mock mantine
@@ -11,6 +11,15 @@ jest.mock("@mantine/core", () => ({
   useMantineColorScheme: () => ({
     colorScheme: "dark",
     toggleColorScheme: jest.fn(),
+  }),
+}));
+
+// mock next
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    query: {
+      wid: "1",
+    },
   }),
 }));
 

@@ -47,7 +47,7 @@ export type Database = {
           response_value: string[] | null;
           response_owner: string | null;
           response_comment: string | null;
-          team_id: number | null;
+          team_id: string | null;
         };
         Insert: {
           form_id?: never;
@@ -58,7 +58,7 @@ export type Database = {
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
-          team_id?: number | null;
+          team_id?: string | null;
         };
         Update: {
           form_id?: never;
@@ -69,7 +69,7 @@ export type Database = {
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
-          team_id?: number | null;
+          team_id?: string | null;
         };
       };
       question_table: {
@@ -121,38 +121,38 @@ export type Database = {
           review_source: string | null;
           review_target: string | null;
           review_score: number | null;
-          team_id: number | null;
+          team_id: string | null;
         };
         Insert: {
           review_id?: never;
           review_source?: string | null;
           review_target?: string | null;
           review_score?: number | null;
-          team_id?: number | null;
+          team_id?: string | null;
         };
         Update: {
           review_id?: never;
           review_source?: string | null;
           review_target?: string | null;
           review_score?: number | null;
-          team_id?: number | null;
+          team_id?: string | null;
         };
       };
       team_role_table: {
         Row: {
-          team_id: number;
+          team_id: string;
           user_id: string;
           team_role: Database["public"]["Enums"]["team_role"] | null;
           lock_account: boolean | null;
         };
         Insert: {
-          team_id: number;
+          team_id: string;
           user_id: string;
           team_role?: Database["public"]["Enums"]["team_role"] | null;
           lock_account?: boolean | null;
         };
         Update: {
-          team_id?: number;
+          team_id?: string;
           user_id?: string;
           team_role?: Database["public"]["Enums"]["team_role"] | null;
           lock_account?: boolean | null;
@@ -160,17 +160,17 @@ export type Database = {
       };
       team_table: {
         Row: {
-          team_id: number;
+          team_id: string;
           team_name: string | null;
           user_id: string | null;
         };
         Insert: {
-          team_id?: never;
+          team_id?: string;
           team_name?: string | null;
           user_id?: string | null;
         };
         Update: {
-          team_id?: never;
+          team_id?: string;
           team_name?: string | null;
           user_id?: string | null;
         };
@@ -217,7 +217,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      install_available_extensions_and_test: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
     };
     Enums: {
       expected_response_type:
