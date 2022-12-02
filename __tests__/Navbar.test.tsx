@@ -14,6 +14,15 @@ jest.mock("@mantine/core", () => ({
   }),
 }));
 
+// mock next
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    query: {
+      wid: "1",
+    },
+  }),
+}));
+
 describe("header", () => {
   it("renders a logo", () => {
     setup();

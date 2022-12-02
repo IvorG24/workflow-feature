@@ -2,7 +2,7 @@ import { Team } from "@/utils/types";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 
-const useTeams = () => {
+const useFetchTeams = () => {
   const { supabaseClient } = useSessionContext();
   const [data, setData] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,4 +34,4 @@ const useTeams = () => {
   return { data, loading, error };
 };
 
-export default useTeams;
+export default useFetchTeams;

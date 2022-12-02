@@ -1,6 +1,6 @@
 // todo: create integration tests for this component
 import showNotification from "@/hooks/showNotifications";
-import useTeams from "@/hooks/useTeams";
+import useTeams from "@/hooks/useFetchTeams";
 import { AppShell, Container } from "@mantine/core";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { ReactNode, useEffect } from "react";

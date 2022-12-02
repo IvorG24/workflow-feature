@@ -1,3 +1,4 @@
+// todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
 import { Team } from "@/utils/types";
 import {
@@ -17,7 +18,7 @@ import {
 } from "@mantine/core";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { MouseEvent, useEffect, useState } from "react";
+import { MouseEvent, useState } from "react";
 import {
   AddCircle,
   Dashboard,
@@ -48,29 +49,19 @@ type Props = {
 
 const Navbar = ({ teams }: Props) => {
   const router = useRouter();
+  const { wid } = router.query;
+  const activeTeam = teams.find((team) => team.team_id.toString() === wid);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [teamDropdownValue, setTeamDropdownValue] = useState<string | null>(
-    null
-  );
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(
     tempFormType[0].value
   );
-
-  useEffect(() => {
-    // refractor this to set the teamdropdownvalue depending on the team id in url
-    if (teams.length > 0) setTeamDropdownValue(teams[0].team_name);
-  }, [teams]);
 
   const teamOptions = teams.map((team) => ({
     value: team.team_id.toString(),
     label: team.team_name as string, // todo: team_name should not be null in database
     image: "", // todo: add logo column to team table in database
   }));
-
-  const selectedTeam = teamOptions.find(
-    (team) => team.value === teamDropdownValue
-  );
 
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
@@ -141,11 +132,11 @@ const Navbar = ({ teams }: Props) => {
         <Select
           mt="md"
           label="Team"
-          value={teamDropdownValue}
+          value={activeTeam?.team_id.toString()}
           data={teamOptions}
           itemComponent={SelectItem}
-          onChange={(val) => setTeamDropdownValue(val)}
-          icon={<Avatar src={selectedTeam?.image} radius="xl" size="sm" />}
+          onChange={(val) => router.push(`/t/${val}/dashboard`)}
+          icon={<Avatar src="" radius="xl" size="sm" />}
           size="md"
           styles={{
             label: {
