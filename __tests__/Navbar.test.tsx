@@ -2,7 +2,7 @@ import Navbar from "@/components/Layout/Navbar";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {
-  render(<Navbar />);
+  render(<Navbar teams={[]} />);
 };
 
 // mock mantine

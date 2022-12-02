@@ -17,7 +17,7 @@ import {
 } from "@mantine/core";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import {
   AddCircle,
   Dashboard,
@@ -31,19 +31,6 @@ import {
   Sun,
 } from "../Icon";
 import styles from "./Navbar.module.scss";
-
-// const TEAMS = [
-//   {
-//     image: "",
-//     value: "Acme Corporation",
-//     label: "Acme Corporation",
-//   },
-//   {
-//     image: "",
-//     value: "Wonka Industries",
-//     label: "Wonka Industries",
-//   },
-// ];
 
 const tempFormType = [
   { value: "1", label: "Approval Request" },
@@ -61,19 +48,25 @@ type Props = {
 
 const Navbar = ({ teams }: Props) => {
   const router = useRouter();
-  const teamOptions = teams.map((team) => ({
-    value: team.team_id.toString(),
-    label: team.team_name as string, // todo: team_name should not be null in database
-    image: "", // todo: add logo column to team table in database
-  }));
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [teamDropdownValue, setTeamDropdownValue] = useState<string | null>(
-    teamOptions[0].value
+    null
   );
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(
     tempFormType[0].value
   );
+
+  useEffect(() => {
+    // refractor this to set the teamdropdownvalue depending on the team id in url
+    if (teams.length > 0) setTeamDropdownValue(teams[0].team_name);
+  }, [teams]);
+
+  const teamOptions = teams.map((team) => ({
+    value: team.team_id.toString(),
+    label: team.team_name as string, // todo: team_name should not be null in database
+    image: "", // todo: add logo column to team table in database
+  }));
 
   const selectedTeam = teamOptions.find(
     (team) => team.value === teamDropdownValue
