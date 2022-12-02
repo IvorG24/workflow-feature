@@ -27,7 +27,7 @@ const InviteTeamMembersSection = ({ members }: Props) => {
     return memberEmails.includes(newEmail);
   };
 
-  const handleValidateQuery = (query: string) => {
+  const handleCreateQuery = (query: string) => {
     if (!validator.isEmail(query)) {
       setError("emails", { message: "Email is invalid" });
       return null;
@@ -55,7 +55,7 @@ const InviteTeamMembersSection = ({ members }: Props) => {
           searchable
           creatable
           getCreateLabel={(query) => `+ Create ${query}`}
-          onCreate={(query) => handleValidateQuery(query)}
+          onCreate={(query) => handleCreateQuery(query)}
           w="100%"
           {...register("emails", { required: "Email is required" })}
           onChange={(e) => setValue("emails", e)}
