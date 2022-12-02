@@ -1,37 +1,24 @@
-import QuestionItemBuilder from "@/components/CreateRequestFormPage/QuestionItemBuilder";
-import {
-  FormRequest,
-  Question,
-  QuestionOption,
-  QuestionRow,
-} from "@/components/CreateRequestFormPage/type";
-import { alignQuestionOption } from "@/components/CreateRequestFormPage/utils";
+import {} from "@/components/CreateRequestFormPage/type";
 import { AddCircle } from "@/components/Icon";
-import { Database } from "@/utils/database.types";
 import { Box, Button, Stack } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { FC, memo, useCallback } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import {
   Control,
   useFieldArray,
-  UseFormGetValues,
-  UseFormHandleSubmit,
   UseFormRegister,
   useFormState,
 } from "react-hook-form";
+import QuestionItemBuilder from "./QuestionItemBuilder";
+import { FormRequestData } from "./type";
 
 type Props = {
-  control: Control<FormRequest>;
-  register: UseFormRegister<FormRequest>;
-  handleSubmit: UseFormHandleSubmit<FormRequest>;
-  getValues: UseFormGetValues<FormRequest>;
+  control: Control<FormRequestData>;
+  register: UseFormRegister<FormRequestData>;
 };
 
 const FormBuilder: FC<Props> = (props) => {
-  const supabase = useSupabaseClient<Database>();
-
-  const { register, control, getValues } = props;
+  const { register, control } = props;
 
   const { isSubmitting } = useFormState({ control });
   const {
@@ -69,15 +56,16 @@ const FormBuilder: FC<Props> = (props) => {
     moveQuestion(source, destination);
   };
 
+  /** For referencing saving on database
   const handleSaveFormRequest = async () => {
     try {
-      const { form_name, questions } = getValues();
+      const { title, questions } = getValues();
 
       const options = questions.map((item) => item.option);
 
       const formNameRecord = await supabase
         .from("form_name_table")
-        .insert({ form_name })
+        .insert({ form_name: title })
         .select();
 
       const questionRecord = await supabase
@@ -107,7 +95,7 @@ const FormBuilder: FC<Props> = (props) => {
     } catch (e) {
       console.error(e);
     }
-  };
+  }; **/
 
   return (
     <Stack mt="lg">
@@ -136,20 +124,12 @@ const FormBuilder: FC<Props> = (props) => {
       <Button
         role="button"
         aria-label="Add Question"
-        variant="outline"
+        variant="light"
         disabled={isSubmitting ? true : false}
         onClick={handleAppendQuestion}
       >
         <AddCircle />
         &nbsp;Add Question
-      </Button>
-      <Button
-        aria-label="Save"
-        role="button"
-        loading={isSubmitting}
-        onClick={handleSaveFormRequest}
-      >
-        Save
       </Button>
     </Stack>
   );
