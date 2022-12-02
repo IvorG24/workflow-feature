@@ -1,17 +1,18 @@
 // todo: create unit test
-import { Container, Flex, Paper, Radio, Tabs, TextInput } from "@mantine/core";
-import { DatePicker } from "@mantine/dates";
+import {
+  Button,
+  Container,
+  Flex,
+  Paper,
+  Radio,
+  Tabs,
+  TextInput,
+} from "@mantine/core";
+import { DateRangePicker } from "@mantine/dates";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import CreateRequestFormPage from "../CreateRequestFormPage/CreateRequestFormPage";
-
-type Data = {
-  title: string;
-  description: string;
-  approver: string;
-  review_period: string;
-  default: string;
-};
+import FormBuilder from "./FormBuilder";
+import { FormRequestData } from "./type";
 
 const Question = () => {
   const {
@@ -19,7 +20,7 @@ const Question = () => {
     handleSubmit,
     formState: { errors },
     control,
-  } = useForm<Data>();
+  } = useForm<FormRequestData>();
   const [activeTab, setActiveTab] = useState<string | null>("question");
 
   const onSubmit = handleSubmit(async (data) => {
@@ -56,7 +57,7 @@ const Question = () => {
                   control={control}
                   name="review_period"
                   render={({ field: { name, onChange, ref } }) => (
-                    <DatePicker
+                    <DateRangePicker
                       mt="lg"
                       name={name}
                       onChange={onChange}
@@ -69,7 +70,7 @@ const Question = () => {
                 />
               </Flex>
             </Paper>
-            <CreateRequestFormPage />
+            <FormBuilder control={control} register={register} />
           </Tabs.Panel>
 
           <Tabs.Panel value="settings" pt="xs">
@@ -119,6 +120,9 @@ const Question = () => {
               </Radio.Group>
             </Paper>
           </Tabs.Panel>
+          <Button type="submit" fullWidth mt="lg">
+            Save
+          </Button>
         </form>
       </Tabs>
     </Container>
