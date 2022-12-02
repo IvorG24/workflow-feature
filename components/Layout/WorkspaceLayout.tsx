@@ -13,17 +13,15 @@ type Props = {
 
 const WorkspaceLayout = ({ children }: Props) => {
   const { session, isLoading } = useSessionContext();
-
   const { data: teams, error: teamsError, loading: teamsLoading } = useTeams();
 
   if (isLoading || teamsLoading) return <Container fluid>Loading...</Container>; // todo: use mantine loading page
   if (teamsError) return <Container fluid>Error...</Container>; // todo: create a custom error page
 
   console.log(session?.user);
-  console.log(teams);
 
   return (
-    <AppShell navbar={<Navbar />} header={<MobileHeader />}>
+    <AppShell navbar={<Navbar teams={teams} />} header={<MobileHeader />}>
       <main className={styles.childrenContainer}>{children}</main>
     </AppShell>
   );

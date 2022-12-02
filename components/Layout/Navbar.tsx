@@ -1,4 +1,5 @@
 import SelectItem from "@/components/SelectItem/SelectItem";
+import { Team } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -31,18 +32,18 @@ import {
 } from "../Icon";
 import styles from "./Navbar.module.scss";
 
-const TEAMS = [
-  {
-    image: "",
-    value: "Acme Corporation",
-    label: "Acme Corporation",
-  },
-  {
-    image: "",
-    value: "Wonka Industries",
-    label: "Wonka Industries",
-  },
-];
+// const TEAMS = [
+//   {
+//     image: "",
+//     value: "Acme Corporation",
+//     label: "Acme Corporation",
+//   },
+//   {
+//     image: "",
+//     value: "Wonka Industries",
+//     label: "Wonka Industries",
+//   },
+// ];
 
 const tempFormType = [
   { value: "1", label: "Approval Request" },
@@ -54,18 +55,29 @@ const tempFormType = [
   { value: "7", label: "Release Order" },
 ];
 
-const Navbar = () => {
+type Props = {
+  teams: Team[];
+};
+
+const Navbar = ({ teams }: Props) => {
   const router = useRouter();
+  const teamOptions = teams.map((team) => ({
+    value: team.team_id.toString(),
+    label: team.team_name as string, // todo: team_name should not be null in database
+    image: "", // todo: add logo column to team table in database
+  }));
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [teamDropdownValue, setTeamDropdownValue] = useState<string | null>(
-    TEAMS[0].value
+    teamOptions[0].value
   );
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(
     tempFormType[0].value
   );
 
-  const selectedTeam = TEAMS.find((team) => team.value === teamDropdownValue);
+  const selectedTeam = teamOptions.find(
+    (team) => team.value === teamDropdownValue
+  );
 
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
@@ -137,7 +149,7 @@ const Navbar = () => {
           mt="md"
           label="Team"
           value={teamDropdownValue}
-          data={TEAMS}
+          data={teamOptions}
           itemComponent={SelectItem}
           onChange={(val) => setTeamDropdownValue(val)}
           icon={<Avatar src={selectedTeam?.image} radius="xl" size="sm" />}
