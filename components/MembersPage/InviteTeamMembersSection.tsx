@@ -57,9 +57,7 @@ const InviteTeamMembersSection = ({ members }: Props) => {
           }}
           w="100%"
           {...register("emails", { required: "Email is required" })}
-          onChange={(e) => {
-            setValue("emails", [...e]);
-          }}
+          onChange={(e) => setValue("emails", e)}
           error={errors.emails?.message}
         />
         <Button
