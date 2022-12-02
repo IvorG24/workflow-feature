@@ -8,45 +8,18 @@ import {
   Group,
   Text,
 } from "@mantine/core";
-import { ASSESSMENTS, MEMBERS } from "tempData";
-import { User } from "./ProfilePage";
+import { Assessment } from "./ProfilePage";
+import { setTimeDifference } from "./utils";
 
 type Props = {
-  user?: User;
+  assessments: Assessment[];
 };
 
-const AssessmentPage = ({ user }: Props) => {
-  const assessments = ASSESSMENTS.map((assessment) => {
-    const reviewed = MEMBERS.find(
-      (member) => member.id === assessment.review_to
-    );
-    if (assessment.review_from === user?.id) {
-      return {
-        ...assessment,
-        assessment_id: assessment?.id,
-        ...reviewed,
-        user_id: reviewed?.id,
-      };
-    }
-  });
-
+const AssessmentPage = ({ assessments }: Props) => {
   return (
     <Container fluid p={0}>
       {assessments.map((assessment, index) => (
-        <Container key={assessment?.assessment_id} fluid py="sm" p={0}>
-          {index !== 0 && <Divider mb="lg" />}
-          <Group mb="sm">
-            <Avatar size={50} radius={25} />
-            <Flex direction="column">
-              <Group spacing="xs">
-                <Text weight="bold">{assessment?.name}</Text>
-                <Text c="dimmed">&#x2022;&nbsp; {assessment?.hired_date}</Text>
-              </Group>
-              <Text c="dimmed">{assessment?.position}</Text>
-            </Flex>
-          </Group>
-          <Text>{assessment?.answers.slice(-1)[0]}</Text>
-        </Container>
+        <Assessment key={index} assessment={assessment} index={index} />
       ))}
       <Center pt="lg">
         <Button>Show More Reviews</Button>
@@ -56,3 +29,30 @@ const AssessmentPage = ({ user }: Props) => {
 };
 
 export default AssessmentPage;
+
+type AssessmentProps = {
+  assessment: Assessment;
+  index: number;
+};
+
+function Assessment({ assessment, index }: AssessmentProps) {
+  return (
+    <Container key={assessment?.id} fluid py="sm" p={0}>
+      {index !== 0 && <Divider mb="lg" />}
+      <Group mb="sm">
+        <Avatar size={50} radius={25} />
+        <Flex direction="column">
+          <Group spacing="xs">
+            <Text weight="bold">{assessment?.review_from.name}</Text>
+            <Text c="dimmed">
+              &#x2022;&nbsp;{" "}
+              {setTimeDifference(new Date(`${assessment?.created_at}`))}
+            </Text>
+          </Group>
+          <Text c="dimmed">{assessment.review_from.position}</Text>
+        </Flex>
+      </Group>
+      <Text>{assessment.comment}</Text>
+    </Container>
+  );
+}
