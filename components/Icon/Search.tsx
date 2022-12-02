@@ -17,7 +17,7 @@ const SvgSearch = ({ title, titleId }: SVGRProps) => (
       fillRule="evenodd"
       clipRule="evenodd"
       d="m8.595 7.74 3.228 3.227a.605.605 0 1 1-.856.856L7.739 8.595a4.8 4.8 0 1 1 .855-.856h.001ZM4.8 8.4a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z"
-      fill="#202124"
+      fill="currentColor"
     />
   </svg>
 );
