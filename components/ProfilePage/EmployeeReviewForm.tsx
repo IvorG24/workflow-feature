@@ -15,11 +15,14 @@ import {
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./EmployeeReviewForm.module.scss";
+import { CreateAssessment, User } from "./ProfilePage";
+
 type Props = {
-  user: string;
+  user?: User;
+  onCreate: (data: CreateAssessment) => void;
 };
 
-const EmployeeReviewForm = ({ user }: Props) => {
+const EmployeeReviewForm = ({ user, onCreate }: Props) => {
   const [responsibilityScore, setResponsibilityScore] = useState(0);
   const [learnabilityScore, setLearnabilityScore] = useState(0);
   const [creativityScore, setCreativityScore] = useState(0);
@@ -39,6 +42,20 @@ const EmployeeReviewForm = ({ user }: Props) => {
     console.log(communicationScore);
     const { additionalComments } = data;
     console.log(additionalComments);
+
+    onCreate({
+      created_at: new Date().toISOString(),
+      review_from: {
+        id: "c40605b7-321e-40bb-ac51-4ca315cfaf9c",
+        name: "Alberto Linao",
+        email: "albertolinao@gmail.com",
+        position: "IT Manager",
+        role: "manager",
+        avatar_url: "",
+        bg_url: "",
+      },
+      comment: additionalComments,
+    });
   });
 
   return (
@@ -50,7 +67,7 @@ const EmployeeReviewForm = ({ user }: Props) => {
         <Group mt="xl">
           <Text weight={500}>Employee: </Text>
           <Avatar radius={100} />
-          <Text>{user}</Text>
+          <Text>{user?.name}</Text>
         </Group>
         <Divider mt="xs" />
         <Title order={4} mt="xl" weight={600}>
