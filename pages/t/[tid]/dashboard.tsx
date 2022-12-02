@@ -7,8 +7,8 @@ import type { NextPageWithLayout } from "../../_app";
 
 const Page: NextPageWithLayout = () => {
   const router = useRouter();
-  const { wid } = router.query;
-  console.log(wid);
+  const { tid } = router.query;
+  console.log(tid);
   return (
     <div>
       <Meta

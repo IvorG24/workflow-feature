@@ -50,7 +50,7 @@ type Props = {
 const Navbar = ({ teams }: Props) => {
   const router = useRouter();
   const { tid } = router.query;
-  const activeTeam = teams.find((team) => team.team_id.toString() === tid);
+  const activeTeam = teams.find((team) => team.team_id === tid);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(
@@ -58,7 +58,7 @@ const Navbar = ({ teams }: Props) => {
   );
 
   const teamOptions = teams.map((team) => ({
-    value: team.team_id.toString(),
+    value: team.team_id,
     label: team.team_name as string, // todo: team_name should not be null in database
     image: "", // todo: add logo column to team table in database
   }));
@@ -132,7 +132,7 @@ const Navbar = ({ teams }: Props) => {
         <Select
           mt="md"
           label="Team"
-          value={activeTeam?.team_id.toString()}
+          value={activeTeam?.team_id}
           data={teamOptions}
           itemComponent={SelectItem}
           onChange={(val) => router.push(`/t/${val}/dashboard`)}
