@@ -49,8 +49,8 @@ type Props = {
 
 const Navbar = ({ teams }: Props) => {
   const router = useRouter();
-  const { wid } = router.query;
-  const activeTeam = teams.find((team) => team.team_id.toString() === wid);
+  const { tid } = router.query;
+  const activeTeam = teams.find((team) => team.team_id.toString() === tid);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(
