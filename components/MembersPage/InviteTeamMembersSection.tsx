@@ -27,6 +27,20 @@ const InviteTeamMembersSection = ({ members }: Props) => {
     return memberEmails.includes(newEmail);
   };
 
+  const handleValidateQuery = (query: string) => {
+    if (!validator.isEmail(query)) {
+      setError("emails", { message: "Email is invalid" });
+      return null;
+    }
+    if (emailExists(query)) {
+      setError("emails", { message: "Email already exist" });
+      return null;
+    }
+    setError("emails", { message: "" });
+    const item = { value: query, label: query };
+    setEmails((current) => [...current, item]);
+    return item;
+  };
   return (
     <form
       data-testid="team__sendInvitesForm"
@@ -41,20 +55,7 @@ const InviteTeamMembersSection = ({ members }: Props) => {
           searchable
           creatable
           getCreateLabel={(query) => `+ Create ${query}`}
-          onCreate={(query) => {
-            if (!validator.isEmail(query)) {
-              setError("emails", { message: "Email is invalid" });
-              return null;
-            }
-            if (emailExists(query)) {
-              setError("emails", { message: "Email already exist" });
-              return null;
-            }
-            setError("emails", { message: "" });
-            const item = { value: query, label: query };
-            setEmails((current) => [...current, item]);
-            return item;
-          }}
+          onCreate={(query) => handleValidateQuery(query)}
           w="100%"
           {...register("emails", { required: "Email is required" })}
           onChange={(e) => setValue("emails", e)}
