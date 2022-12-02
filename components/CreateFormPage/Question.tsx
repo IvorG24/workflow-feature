@@ -8,24 +8,19 @@ import {
   Tabs,
   TextInput,
 } from "@mantine/core";
+import { DateRangePicker } from "@mantine/dates";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { AddCircle } from "../Icon";
-
-type Data = {
-  title: string;
-  description: string;
-  approver: string;
-  review_period: string;
-  default: string;
-};
+import { Controller, useForm } from "react-hook-form";
+import FormBuilder from "./FormBuilder";
+import { FormRequestData } from "./type";
 
 const Question = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Data>();
+    control,
+  } = useForm<FormRequestData>();
   const [activeTab, setActiveTab] = useState<string | null>("question");
 
   const onSubmit = handleSubmit(async (data) => {
@@ -55,16 +50,27 @@ const Question = () => {
                   {...register("description")}
                   mt="lg"
                 />
+                <Controller
+                  rules={{
+                    required: "Review Period is required",
+                  }}
+                  control={control}
+                  name="review_period"
+                  render={({ field: { name, onChange, ref } }) => (
+                    <DateRangePicker
+                      mt="lg"
+                      name={name}
+                      onChange={onChange}
+                      ref={ref}
+                      label="Review Period"
+                      withAsterisk
+                      error={errors.review_period?.message}
+                    />
+                  )}
+                />
               </Flex>
-              <Button
-                variant="subtle"
-                leftIcon={<AddCircle />}
-                my="lg"
-                aria-label="Add default approvers"
-              >
-                Add Default Approvers
-              </Button>
             </Paper>
+            <FormBuilder control={control} register={register} />
           </Tabs.Panel>
 
           <Tabs.Panel value="settings" pt="xs">
@@ -114,6 +120,9 @@ const Question = () => {
               </Radio.Group>
             </Paper>
           </Tabs.Panel>
+          <Button type="submit" fullWidth mt="lg">
+            Save
+          </Button>
         </form>
       </Tabs>
     </Container>
