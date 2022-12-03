@@ -6,7 +6,7 @@ export const setBadgeColor = (status: string) => {
       return "green";
     case "rejected":
       return "red";
-    case "forRevision":
+    case "revision":
       return "orange";
     case "stale":
       return "gray";

@@ -1,4 +1,5 @@
 import SelectItem from "@/components/SelectItem/SelectItem";
+import type { Database } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -14,9 +15,10 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import {
   AddCircle,
   Dashboard,
@@ -44,26 +46,30 @@ const TEAMS = [
   },
 ];
 
-const tempFormType = [
-  { value: "1", label: "Approval Request" },
-  { value: "2", label: "IT" },
-  { value: "3", label: "Purchase Order" },
-  { value: "4", label: "PTRF" },
-  { value: "5", label: "Requisition Form" },
-  { value: "6", label: "Request for Payment" },
-  { value: "7", label: "Release Order" },
-];
-
 const Navbar = () => {
+  const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [teamDropdownValue, setTeamDropdownValue] = useState<string | null>(
     TEAMS[0].value
   );
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
-  const [selectedForm, setSelectedForm] = useState<string | null>(
-    tempFormType[0].value
-  );
+  const [selectedForm, setSelectedForm] = useState<string | null>(null);
+  const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
+
+  useEffect(() => {
+    const fetchForms = async () => {
+      const { data } = await supabase.from("form_name_table").select("*");
+      const forms = data?.map((form) => {
+        return { value: `${form.form_name_id}`, label: `${form.form_name}` };
+      });
+      if (forms !== undefined) {
+        setForms(forms);
+        setSelectedForm(`${forms[0].value}`);
+      }
+    };
+    fetchForms();
+  }, [supabase]);
 
   const selectedTeam = TEAMS.find((team) => team.value === teamDropdownValue);
 
@@ -94,7 +100,7 @@ const Navbar = () => {
           <Select
             mt="xl"
             placeholder="Choose one"
-            data={tempFormType}
+            data={forms}
             value={selectedForm}
             onChange={setSelectedForm}
           />

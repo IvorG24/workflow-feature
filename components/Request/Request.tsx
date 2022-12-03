@@ -1,5 +1,7 @@
 // todo: create unit test
 import { setBadgeColor } from "@/utils/request";
+import type { Database } from "@/utils/types";
+import { FormTable, UserProfile } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -8,278 +10,135 @@ import {
   Divider,
   Flex,
   Group,
-  Loader,
   LoadingOverlay,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./Request.module.scss";
 
-type RequestType = {
-  id: number;
-  ref: string;
-  formType: string;
-  requestTitle: string;
-  status: string;
-  lastUpdated: string;
-  requestedBy: string;
-  description: string;
-  approvers: {
-    name: string;
-    status: string;
-  }[];
+// TODO current user
+const currentUser = {
+  id: "d0eceb39-8c1b-4e84-b7d7-9fdeddf53f8f",
+  name: "Albert Linao",
+  email: "albertlinao@email.com",
 };
 
-const tempRequests: RequestType[] = [
-  {
-    id: 1,
-    ref: "AR-1",
-    formType: "approvalRequest",
-    requestTitle: "Approval Request 1",
-    status: "rejected",
-    lastUpdated: "10/19/20",
-    requestedBy: "Lance Juat",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Maria Deanna Romero",
-        status: "rejected",
-      },
-    ],
-  },
-  {
-    id: 2,
-    ref: "AR-2",
-    formType: "approvalRequest",
-    requestTitle: "Approval Request 2",
-    status: "approved",
-    lastUpdated: "11/23/20",
-    requestedBy: "James Bautista",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Maria Deanna Romero",
-        status: "approved",
-      },
-      {
-        name: "Alberto Luis Linao",
-        status: "approved",
-      },
-    ],
-  },
-  {
-    id: 3,
-    ref: "IT-4803",
-    formType: "it",
-    requestTitle: "IT 4803",
-    status: "approved",
-    lastUpdated: "11/15/21",
-    requestedBy: "Arianne Roxas",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Alberto Luis Linao",
-        status: "approved",
-      },
-    ],
-  },
-  {
-    id: 4,
-    ref: "IT-4805",
-    formType: "it",
-    requestTitle: "IT 4805",
-    status: "cancelled",
-    lastUpdated: "11/15/21",
-    requestedBy: "Alvin Ramos",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Lance Juat",
-        status: "pending",
-      },
-    ],
-  },
-  {
-    id: 5,
-    ref: "IT-4830",
-    formType: "it",
-    requestTitle: "IT 4830",
-    status: "pending",
-    lastUpdated: "11/16/21",
-    requestedBy: "Rico Precioso",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Lance Juat",
-        status: "pending",
-      },
-    ],
-  },
-  {
-    id: 6,
-    ref: "PTRF-5644",
-    formType: "it",
-    requestTitle: "From HR to IT",
-    status: "forRevision",
-    lastUpdated: "09/29/22",
-    requestedBy: "Christine Molina",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Alberto Luis Linao",
-        status: "forRevision",
-      },
-    ],
-  },
-  {
-    id: 7,
-    ref: "PTRF-5645",
-    formType: "it",
-    requestTitle: "ILIJAN LNG - PTRF",
-    status: "stale",
-    lastUpdated: "09/29/22",
-    requestedBy: "Arianne Roxas",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Maria Deanna Romero",
-        status: "pending",
-      },
-    ],
-  },
-  {
-    id: 8,
-    ref: "RF-53",
-    formType: "requisitionForm",
-    requestTitle: "Requisition Form 53",
-    status: "approved",
-    lastUpdated: "11/16/22",
-    requestedBy: "Arianne Roxas",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Alberto Luis Linao",
-        status: "approved",
-      },
-      {
-        name: "Maria Deanna Romero",
-        status: "approved",
-      },
-    ],
-  },
-  {
-    id: 9,
-    ref: "RF-408",
-    formType: "requisitionForm",
-    requestTitle: "Requisition Form 408",
-    status: "pending",
-    lastUpdated: "12/02/20",
-    requestedBy: "Arianne Roxas",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Lance Juat",
-        status: "pending",
-      },
-      {
-        name: "Maria Deanna Romero",
-        status: "pending",
-      },
-    ],
-  },
-  {
-    id: 10,
-    ref: "RF-409",
-    formType: "requisitionForm",
-    requestTitle: "Requisition Form 409",
-    status: "pending",
-    lastUpdated: "12/02/20",
-    requestedBy: "Arianne Roxas",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sagittis odio ut bibendum bibendum. Nullam faucibus ex vitae varius molestie. Pellentesque tincidunt sit amet mauris eu malesuada. Etiam auctor ex sed mattis imperdiet. Nulla viverra ullamcorper laoreet. Integer pharetra nec dolor id ornare. Mauris sit amet tincidunt lectus.",
-    approvers: [
-      {
-        name: "Alberto Luis Linao",
-        status: "pending",
-      },
-      {
-        name: "Lance Juat",
-        status: "approved",
-      },
-    ],
-  },
-];
-
-const currentUser = "Lance Juat";
+type RequestType = FormTable & {
+  owner: UserProfile;
+} & { approver: UserProfile };
 
 const Request = () => {
+  const supabase = useSupabaseClient<Database>();
   const router = useRouter();
-  const selectedRequest = tempRequests.find(
-    (request) => `${request.id}` === router.query.id
-  );
+
+  const [request, setRequest] = useState<RequestType | null>(null);
+
+  useEffect(() => {
+    const fetchRequest = async () => {
+      const { data } = await supabase
+        .from("form_table")
+        .select("*, owner:response_owner(*), approver:approver_id(*)")
+        .eq("request_id", `${router.query.id}`)
+        .single();
+      if (data) {
+        setRequest(data as RequestType);
+      }
+    };
+
+    fetchRequest();
+  }, [supabase, router]);
+
   let isApprover = false;
-  if (selectedRequest) {
+  if (request) {
     if (
-      selectedRequest.status === "stale" ||
-      selectedRequest.status === "pending"
+      (request.approval_status === "stale" ||
+        request.approval_status === "pending") &&
+      request.approver.user_id === currentUser.id
     ) {
-      selectedRequest.approvers.map((approver) => {
-        if (approver.name === currentUser && approver.status === "pending") {
-          isApprover = true;
-        }
-      });
+      isApprover = true;
     }
   }
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     setIsLoading(true);
-    showNotification({
-      title: "Success!",
-      message: `You approved ${selectedRequest?.requestTitle}`,
-      color: "green",
-    });
-    router.push("/requests");
+
+    const { error } = await supabase
+      .from("form_table")
+      .update({ approval_status: "approved" })
+      .eq("request_id", Number(`${router.query.id}`));
+
+    if (error) {
+      showNotification({
+        title: "Error!",
+        message: `Failed to approve ${request?.request_title}`,
+        color: "red",
+      });
+      setIsLoading(false);
+    } else {
+      showNotification({
+        title: "Success!",
+        message: `You approved ${request?.request_title}`,
+        color: "green",
+      });
+      router.push("/requests");
+    }
   };
 
-  const handleSendToRevision = () => {
+  const handleSendToRevision = async () => {
     setIsLoading(true);
-    showNotification({
-      title: "Success!",
-      message: `${selectedRequest?.requestTitle} is Sent to Revision`,
-      color: "green",
-    });
-    router.push("/requests");
+
+    const { error } = await supabase
+      .from("form_table")
+      .update({ approval_status: "approved" })
+      .eq("request_id", Number(`${router.query.id}`));
+
+    if (error) {
+      showNotification({
+        title: "Error!",
+        message: `Failed to approve ${request?.request_title}`,
+        color: "red",
+      });
+      setIsLoading(false);
+    } else {
+      showNotification({
+        title: "Success!",
+        message: `${request?.request_title} is Sent to Revision`,
+        color: "green",
+      });
+      router.push("/requests");
+    }
   };
 
-  const handleReject = () => {
-    setIsLoading(true);
-    showNotification({
-      title: "Success!",
-      message: `You rejected ${selectedRequest?.requestTitle}`,
-      color: "green",
-    });
-    router.push("/requests");
-  };
+  const handleReject = async () => {
+    const { error } = await supabase
+      .from("form_table")
+      .update({ approval_status: "approved" })
+      .eq("request_id", Number(`${router.query.id}`));
 
-  if (!selectedRequest) {
-    return <Loader />;
-  }
+    if (error) {
+      showNotification({
+        title: "Error!",
+        message: `Failed to approve ${request?.request_title}`,
+        color: "red",
+      });
+      setIsLoading(false);
+    } else {
+      showNotification({
+        title: "Success!",
+        message: `You rejected ${request?.request_title}`,
+        color: "green",
+      });
+      router.push("/requests");
+    }
+  };
 
   return (
     <Container px={8} py={16} fluid>
@@ -295,23 +154,23 @@ const Request = () => {
         >
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Request Title</Title>
-            <Text>{selectedRequest.requestTitle}</Text>
+            <Text>{request?.request_title}</Text>
           </Stack>
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Request By</Title>
             <Group>
               <Avatar radius={100} />
-              <Text>{selectedRequest.requestedBy}</Text>
+              <Text>{request?.owner.full_name}</Text>
             </Group>
           </Stack>
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Date Created</Title>
-            <Text>{selectedRequest.lastUpdated}</Text>
+            <Text>{request?.created_at?.slice(0, 10)}</Text>
           </Stack>
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Status</Title>
-            <Badge color={setBadgeColor("approved")}>
-              {startCase("approved")}
+            <Badge color={setBadgeColor(`${request?.approval_status}`)}>
+              {startCase(`${request?.approval_status}`)}
             </Badge>
           </Stack>
         </Flex>
@@ -325,7 +184,7 @@ const Request = () => {
         >
           <Stack className={styles.flex} mt={16}>
             <Title order={4}> Request Description</Title>
-            <Text>{selectedRequest.description}</Text>
+            <Text>{request?.request_description}</Text>
           </Stack>
 
           <Stack className={styles.flex} mt={16}>
@@ -338,13 +197,9 @@ const Request = () => {
 
         <Stack mt="xl">
           <Title order={5}>Approver</Title>
-          <Group align="apart" grow>
-            {selectedRequest.approvers.map((approver) => (
-              <Group key={approver.name}>
-                <Badge color={setBadgeColor(approver.status)} />
-                <Text>{approver.name}</Text>
-              </Group>
-            ))}
+          <Group align="apart">
+            <Badge color={setBadgeColor(`${request?.approval_status}`)} />
+            <Text>{request?.approver.full_name}</Text>
           </Group>
         </Stack>
 
