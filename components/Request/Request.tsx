@@ -189,7 +189,7 @@ const Request = () => {
 
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>On Behalf Of</Title>
-            <Text>---</Text>
+            <Text>{request?.on_behalf_of}</Text>
           </Stack>
         </Flex>
 

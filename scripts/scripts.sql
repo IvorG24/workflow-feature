@@ -89,7 +89,7 @@ CREATE TABLE form_table(
   approver_id UUID REFERENCES user_profile_table(user_id),
   approval_status VARCHAR(254),
   request_id INT REFERENCES request_table(request_id),
-  ob_behalf_of VARCHAR(254)
+  on_behalf_of VARCHAR(254)
 );
 
 CREATE TABLE review_score_table(
