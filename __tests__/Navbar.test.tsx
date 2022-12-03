@@ -2,7 +2,7 @@ import Navbar from "@/components/Layout/Navbar";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {
-  render(<Navbar />);
+  render(<Navbar teams={[]} />);
 };
 
 // mock mantine
@@ -13,6 +13,16 @@ jest.mock("@mantine/core", () => ({
     toggleColorScheme: jest.fn(),
   }),
 }));
+
+// mock next
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    query: {
+      wid: "1",
+    },
+  }),
+}));
+
 // TODO Mock Supabase
 describe.skip("header", () => {
   it("renders a logo", () => {

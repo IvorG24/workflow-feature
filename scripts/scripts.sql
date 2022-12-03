@@ -41,14 +41,14 @@ CREATE policy "Users can update own profile." ON user_profile_table
 -- END user_profile_table
 
 CREATE TABLE team_table(
-  team_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY ,
   team_name VARCHAR(254),
   user_id UUID REFERENCES user_profile_table(user_id)
 );
 
 CREATE TABLE team_role_table(
-  team_id INT REFERENCES team_table(team_id),
   user_id UUID REFERENCES user_profile_table(user_id),
+  team_id UUID REFERENCES team_table(team_id),
   team_role team_role,
   lock_account BOOL,
   PRIMARY KEY (team_id, user_id)
@@ -83,13 +83,13 @@ CREATE TABLE form_table(
   response_value VARCHAR(254)[],
   response_owner UUID REFERENCES user_profile_table(user_id),
   response_comment VARCHAR(254) DEFAULT NULL,
-  team_id INT REFERENCES team_table(team_id) DEFAULT 1,
   request_title VARCHAR(254),
   request_description VARCHAR(254),
   approver_id UUID REFERENCES user_profile_table(user_id),
   approval_status VARCHAR(254),
   request_id INT REFERENCES request_table(request_id),
   on_behalf_of VARCHAR(254)
+  team_id UUID REFERENCES team_table(team_id) 
 );
 
 CREATE TABLE review_score_table(
@@ -104,7 +104,7 @@ CREATE TABLE review_table(
   review_source UUID REFERENCES user_profile_table(user_id),
   review_target UUID REFERENCES user_profile_table(user_id),
   review_score INT REFERENCES review_score_table(review_score_id),
-  team_id INT REFERENCES team_table(team_id)
+  team_id UUID REFERENCES team_table(team_id)
 );
 
 CREATE TABLE form_priority_table (
