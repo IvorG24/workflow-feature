@@ -11,18 +11,11 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useEffect, useState } from "react";
 import RequestTable from "./RequestTable";
 import styles from "./Sent.module.scss";
-
-// TODO current user
-const currentUser = {
-  id: "d0eceb39-8c1b-4e84-b7d7-9fdeddf53f8f",
-  name: "Albert Linao",
-  email: "albertlinao@email.com",
-};
 
 const tempStatus = [
   { value: "pending", label: "Pending" },
@@ -41,7 +34,7 @@ type RequestType = FormTable & {
 
 const Sent = () => {
   const supabase = useSupabaseClient<Database>();
-
+  const user = useUser();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [requestList, setRequestList] = useState<RequestType[]>([]);
@@ -63,12 +56,12 @@ const Sent = () => {
       .from("form_table")
       .select("*, owner:response_owner(*), approver:approver_id(*)")
       .neq("approval_status", "null")
-      .eq("response_owner", currentUser.id)
+      .eq("response_owner", user?.id)
       .range(start, start + REQUEST_PER_PAGE - 1);
     let countQuery = supabase
       .from("form_table")
       .select("*", { count: "exact" })
-      .eq("response_owner", currentUser.id)
+      .eq("response_owner", user?.id)
       .neq("approval_status", "null");
     if (selectedForm) {
       query = query.eq("form_name_id", selectedForm);
@@ -140,12 +133,12 @@ const Sent = () => {
       if (
         (selectedRequest.approval_status === "stale" ||
           selectedRequest.approval_status === "pending") &&
-        selectedRequest.approver.user_id === currentUser.id
+        selectedRequest.approver.user_id === user?.id
       ) {
         setIsApprover(true);
       }
     }
-  }, [selectedRequest]);
+  }, [selectedRequest, user]);
 
   const handleApprove = async () => {
     setIsLoading(true);

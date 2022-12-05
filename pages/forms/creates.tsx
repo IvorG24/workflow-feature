@@ -1,3 +1,4 @@
+import CreateRequestFormPage from "@/components/CreateRequestFormPage/CreateRequestFormPage";
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { GetServerSideProps } from "next";
@@ -23,7 +24,7 @@ const CreateRequestForm: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/testpage"
       />
-      {/* <CreateRequestFormPage /> */}
+      <CreateRequestFormPage />
     </div>
   );
 };

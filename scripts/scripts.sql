@@ -23,7 +23,8 @@ CREATE TABLE user_profile_table (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   username VARCHAR(254) UNIQUE,
   full_name VARCHAR(254),
-  avatar_url VARCHAR(254)
+  avatar_url VARCHAR(254),
+  email VARCHAR(254)
 );
 -- Set up Row Level Security (RLS)
 -- See https://supabase.com/docs/guides/auth/row-level-security FOR more details.
@@ -89,7 +90,9 @@ CREATE TABLE form_table(
   approval_status VARCHAR(254),
   request_id INT REFERENCES request_table(request_id),
   on_behalf_of VARCHAR(254),
-  team_id UUID REFERENCES team_table(team_id) 
+  team_id UUID REFERENCES team_table(team_id),
+  question_option_id INT REFERENCES user_created_select_option_table(question_id),
+  is_draft BOOL
 );
 
 CREATE TABLE review_score_table(

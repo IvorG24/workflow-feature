@@ -39,6 +39,7 @@ const ProfilePage: NextPageWithLayout = () => {
             username: "",
             full_name: "",
             avatar_url: "",
+            email: session.user.email,
           });
         if (error) {
           console.log(error);

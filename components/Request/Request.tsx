@@ -16,18 +16,11 @@ import {
   Title,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import styles from "./Request.module.scss";
-
-// TODO current user
-const currentUser = {
-  id: "d0eceb39-8c1b-4e84-b7d7-9fdeddf53f8f",
-  name: "Albert Linao",
-  email: "albertlinao@email.com",
-};
 
 type RequestType = FormTable & {
   owner: UserProfile;
@@ -36,6 +29,7 @@ type RequestType = FormTable & {
 const Request = () => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
+  const user = useUser();
 
   const [request, setRequest] = useState<RequestType | null>(null);
 
@@ -59,7 +53,7 @@ const Request = () => {
     if (
       (request.approval_status === "stale" ||
         request.approval_status === "pending") &&
-      request.approver.user_id === currentUser.id
+      request.approver.user_id === user?.id
     ) {
       isApprover = true;
     }
