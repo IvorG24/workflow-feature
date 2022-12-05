@@ -1,4 +1,3 @@
-import {} from "@/components/CreateRequestFormPage/type";
 import { AddCircle } from "@/components/Icon";
 import { Box, Button, Stack } from "@mantine/core";
 import { FC, memo, useCallback } from "react";

@@ -1,24 +1,48 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
+import { UserProfile } from "@/utils/types";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
-import { useState } from "react";
+import { useSessionContext } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import { MEMBERS } from "tempData";
-import data from "../../teams.json";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import MembersTable from "./MembersTable";
 import SearchBar from "./SearchBar";
 
-export type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  image: string;
+export type TeamMember = {
+  team_id: string;
+  lock_account: boolean;
+  team_role: string;
+  user_profile_table: UserProfile;
 };
 
 const Member = () => {
   const [searchBarValue, setSearchBarValue] = useState("");
-  const members = data[0].members;
+  const { supabaseClient } = useSessionContext();
+  const router = useRouter();
+  const [memberList, setMemberList] = useState<TeamMember[]>([]);
+  const { tid } = router.query;
+
+  // todo: refractor useEffects into a join
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: team_role_table, error } = await supabaseClient
+          .from("team_role_table")
+          .select(`team_id, team_role, lock_account, user_profile_table(*)`)
+          .eq("team_id", tid);
+
+        if (error) throw error;
+
+        setMemberList(team_role_table as TeamMember[]);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [supabaseClient, tid]);
+
+  console.log(memberList);
 
   return (
     <Stack>
@@ -34,7 +58,7 @@ const Member = () => {
             value={searchBarValue}
             numberOfMembers={MEMBERS.length}
           />
-          <MembersTable members={members} />
+          <MembersTable members={memberList} />
         </Grid.Col>
       </Grid>
       <Divider my={{ base: 10, lg: 20 }} />
@@ -47,7 +71,8 @@ const Member = () => {
           </Text>
         </Grid.Col>
         <Grid.Col md={8} lg={6}>
-          <InviteTeamMembersSection members={MEMBERS} />
+          {/* use members from membersList */}
+          <InviteTeamMembersSection members={[]} />
         </Grid.Col>
       </Grid>
     </Stack>

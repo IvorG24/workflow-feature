@@ -6,7 +6,6 @@ import {
   Rating,
   Stack,
   Text,
-  Title,
 } from "@mantine/core";
 import { Fragment } from "react";
 import { ReviewType } from "./ProfilePage";
@@ -41,9 +40,18 @@ function Review({ review }: ReviewProps) {
       <Group>
         <Avatar radius={100} size={50} />
         <Stack spacing={0}>
-          <Title order={4} mb={0}>
+          <Text
+            size="md"
+            weight="bold"
+            sx={(theme) => ({
+              color:
+                theme.colorScheme === "dark"
+                  ? theme.colors.dark[6]
+                  : theme.colors.gray[9],
+            })}
+          >
             {review?.review_from?.name}
-          </Title>
+          </Text>
           <Text mt={0}>{review?.review_from?.position}</Text>
         </Stack>
       </Group>

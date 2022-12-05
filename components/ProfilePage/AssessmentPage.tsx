@@ -43,13 +43,24 @@ function Assessment({ assessment, index }: AssessmentProps) {
         <Avatar size={50} radius={25} />
         <Flex direction="column">
           <Group spacing="xs">
-            <Text weight="bold">{assessment?.review_from.name}</Text>
+            <Text
+              weight="bold"
+              size="md"
+              sx={(theme) => ({
+                color:
+                  theme.colorScheme === "dark"
+                    ? theme.colors.dark[6]
+                    : theme.colors.gray[9],
+              })}
+            >
+              {assessment?.review_from.name}
+            </Text>
             <Text c="dimmed">
               &#x2022;&nbsp;{" "}
               {setTimeDifference(new Date(`${assessment?.created_at}`))}
             </Text>
           </Group>
-          <Text c="dimmed">{assessment.review_from.position}</Text>
+          <Text>{assessment.review_from.position}</Text>
         </Flex>
       </Group>
       <Text>{assessment.comment}</Text>

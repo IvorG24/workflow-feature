@@ -2,8 +2,9 @@
 // todo: fix mobile view
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import IconWrapper from "@/components/IconWrapper/IconWrapper";
-import EmployeeReviewForm from "@/components/ProfilePage/EmployeeReviewForm";
-import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
+// import EmployeeReviewForm from "@/components/ProfilePage/EmployeeReviewForm";
+// import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
+import { UserProfile } from "@/utils/types";
 import {
   Avatar,
   BackgroundImage,
@@ -17,12 +18,13 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import data from "../../teams.json";
 import AssessmentPage from "./AssessmentPage";
 import Bio from "./BioPage";
-import EditProfileForm from "./EditProfileForm";
+// import data from "../../teams.json";
+// import EditProfileForm from "./EditProfileForm";
 import styles from "./ProfilePage.module.scss";
 import ProfileReviewsPage from "./ReviewsPage";
 
@@ -60,56 +62,51 @@ export type Assessment = {
 const Profile = () => {
   const router = useRouter();
   const { profileId, activeTab } = router.query;
+  const { supabaseClient } = useSessionContext();
+  const { pid } = router.query;
   // todo: fetch user profile
 
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [reviews, setReviews] = useState<ReviewType[]>([]);
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
-
-  const profile = data[0].members.find((member) => member.id === profileId);
-
-  useEffect(() => {
-    let mounted = true;
-
-    if (profile?.reviews) {
-      mounted && setReviews(profile.reviews);
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [profile?.reviews]);
+  // const [reviews, setReviews] = useState<ReviewType[]>([]);
+  // const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    let mounted = true;
+    (async () => {
+      try {
+        const { data: user_profile_table, error } = await supabaseClient
+          .from("user_profile_table")
+          .select("*")
+          .eq("user_id", pid)
+          .single();
 
-    if (profile?.assessments) {
-      mounted && setAssessments(profile.assessments);
-    }
+        if (error) throw error;
 
-    return () => {
-      mounted = false;
-    };
-  }, [profile?.assessments]);
+        setProfile(user_profile_table);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [supabaseClient, pid]);
 
-  const handleCreateReview = (review: CreateReview) => {
-    const newReview = {
-      id: Math.floor(Math.random() * 1000),
-      ...review,
-    };
-    setReviews((prev) => [...prev, newReview]);
-    setIsReviewModalOpen(false);
-  };
+  // const handleCreateReview = (review: CreateReview) => {
+  //   const newReview = {
+  //     id: Math.floor(Math.random() * 1000),
+  //     ...review,
+  //   };
+  //   setReviews((prev) => [...prev, newReview]);
+  //   setIsReviewModalOpen(false);
+  // };
 
-  const handleCreateAssessment = (assessment: CreateAssessment) => {
-    const newAssessment = {
-      id: Math.floor(Math.random() * 1000),
-      ...assessment,
-    };
-    setAssessments((prev) => [...prev, newAssessment]);
-    setIsReviewModalOpen(false);
-  };
+  // const handleCreateAssessment = (assessment: CreateAssessment) => {
+  //   const newAssessment = {
+  //     id: Math.floor(Math.random() * 1000),
+  //     ...assessment,
+  //   };
+  //   setAssessments((prev) => [...prev, newAssessment]);
+  //   setIsReviewModalOpen(false);
+  // };
 
   return (
     <Container fluid pt="xl">
@@ -119,13 +116,15 @@ const Profile = () => {
         <Group px={30} mt={-30}>
           <Avatar size={200} radius={100} />
           <Stack spacing={0}>
-            <Title order={2}>{profile?.name}</Title>
-            <Text>{profile?.position}</Text>
+            <Title order={2}>{profile?.full_name}</Title>
+            {/* add position column to user profile */}
+            <Text></Text>
             <Group align="center" mt="xs" spacing={4}>
               <IconWrapper fontSize={20} color="dimmed">
                 <Mail />
               </IconWrapper>
-              <Text color="dimmed">&nbsp;{profile?.email}</Text>
+              {/* add email to user profile column */}
+              <Text color="dimmed">&nbsp;</Text>
             </Group>
           </Stack>
         </Group>
@@ -181,11 +180,11 @@ const Profile = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="reviews" pt="xl">
-          <ProfileReviewsPage reviews={reviews} />
+          <ProfileReviewsPage reviews={[]} />
         </Tabs.Panel>
 
         <Tabs.Panel value="assessment" pt="xl">
-          <AssessmentPage assessments={assessments} />
+          <AssessmentPage assessments={[]} />
         </Tabs.Panel>
       </Tabs>
       <Modal
@@ -194,30 +193,31 @@ const Profile = () => {
         withCloseButton
         size="lg"
       >
-        {activeTab === "reviews" && (
+        {/* {activeTab === "reviews" && (
           <PeerReviewForm
-            user={`${profile?.name}`}
+
+            user={`${profile?.full_name}`}
             onCreateReview={handleCreateReview}
           />
-        )}
-        {activeTab === "assessment" && (
+        )} */}
+        {/* {activeTab === "assessment" && (
           <EmployeeReviewForm
             user={profile}
             onCreate={handleCreateAssessment}
           />
-        )}
+        )} */}
       </Modal>
       <Modal
         opened={isEditProfileOpen}
         onClose={() => setIsEditProfileOpen(false)}
         size="lg"
       >
-        {profile && (
+        {/* {profile && (
           <EditProfileForm
             user={profile}
             onCancel={() => setIsEditProfileOpen(false)}
           />
-        )}
+        )} */}
       </Modal>
     </Container>
   );

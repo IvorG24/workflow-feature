@@ -42,33 +42,54 @@ export type Database = {
           form_id: number;
           form_name_id: number | null;
           form_owner: string | null;
+          form_type: Database["public"]["Enums"]["form_type"] | null;
           created_at: string | null;
           question_id: number | null;
           response_value: string[] | null;
           response_owner: string | null;
           response_comment: string | null;
+          request_title: string | null;
+          request_description: string | null;
+          approver_id: string | null;
+          approval_status: string | null;
+          request_id: number | null;
+          on_behalf_of: string | null;
           team_id: string | null;
         };
         Insert: {
           form_id?: never;
           form_name_id?: number | null;
           form_owner?: string | null;
+          form_type?: Database["public"]["Enums"]["form_type"] | null;
           created_at?: string | null;
           question_id?: number | null;
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
+          request_title?: string | null;
+          request_description?: string | null;
+          approver_id?: string | null;
+          approval_status?: string | null;
+          request_id?: number | null;
+          on_behalf_of?: string | null;
           team_id?: string | null;
         };
         Update: {
           form_id?: never;
           form_name_id?: number | null;
           form_owner?: string | null;
+          form_type?: Database["public"]["Enums"]["form_type"] | null;
           created_at?: string | null;
           question_id?: number | null;
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
+          request_title?: string | null;
+          request_description?: string | null;
+          approver_id?: string | null;
+          approval_status?: string | null;
+          request_id?: number | null;
+          on_behalf_of?: string | null;
           team_id?: string | null;
         };
       };
@@ -93,6 +114,17 @@ export type Database = {
           expected_response_type?:
             | Database["public"]["Enums"]["expected_response_type"]
             | null;
+        };
+      };
+      request_table: {
+        Row: {
+          request_id: number;
+        };
+        Insert: {
+          request_id?: never;
+        };
+        Update: {
+          request_id?: never;
         };
       };
       review_score_table: {
@@ -140,20 +172,20 @@ export type Database = {
       };
       team_role_table: {
         Row: {
-          team_id: string;
           user_id: string;
+          team_id: string;
           team_role: Database["public"]["Enums"]["team_role"] | null;
           lock_account: boolean | null;
         };
         Insert: {
-          team_id: string;
           user_id: string;
+          team_id: string;
           team_role?: Database["public"]["Enums"]["team_role"] | null;
           lock_account?: boolean | null;
         };
         Update: {
-          team_id?: string;
           user_id?: string;
+          team_id?: string;
           team_role?: Database["public"]["Enums"]["team_role"] | null;
           lock_account?: boolean | null;
         };
@@ -233,6 +265,14 @@ export type Database = {
         | "select"
         | "slider"
         | "multiple";
+      form_type: "request" | "review";
+      request_status:
+        | "approved"
+        | "rejected"
+        | "pending"
+        | "revision"
+        | "stale"
+        | "cancelled";
       team_role: "member" | "manager";
     };
   };

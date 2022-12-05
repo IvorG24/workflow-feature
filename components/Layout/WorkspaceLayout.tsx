@@ -4,7 +4,7 @@ import useTeams from "@/hooks/useFetchTeams";
 import { AppShell, Container } from "@mantine/core";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import MobileHeader from "./MobileHeader";
 import Navbar from "./Navbar";
 import styles from "./WorkspaceLayout.module.scss";
@@ -19,18 +19,14 @@ const WorkspaceLayout = ({ children }: Props) => {
   const router = useRouter();
   const { tid } = router.query;
 
-  // redirect to first team in array if teamid is not present in url
-  useEffect(() => {
-    if (teamsLoading || teamsError || tid || !teams.length) return;
-
-    router.push(`/t/${teams[0].team_id}/dashboard`);
-  }, [router, teams, teamsError, teamsLoading, tid]);
-
   if (isLoading || teamsLoading) return <LoadingPage />;
   if (teamsError) return <Container fluid>Error...</Container>; // todo: create a custom error page
 
   return (
-    <AppShell navbar={<Navbar teams={teams} />} header={<MobileHeader />}>
+    <AppShell
+      navbar={<Navbar teams={teams} teamId={tid as string} />} // don't use typecasting for tid
+      header={<MobileHeader />}
+    >
       <main className={styles.childrenContainer}>{children}</main>
     </AppShell>
   );

@@ -14,9 +14,10 @@ const ChooseFormType = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<Data>();
+  const { tid } = router.query;
 
   const onSubmit = handleSubmit(async (data) => {
-    router.push(`/forms/create?step=2formType=${data.formType}`);
+    router.push(`/t/${tid}/forms/create?step=2formType=${data.formType}`);
   });
 
   return (
