@@ -82,7 +82,7 @@ const InviteUser = () => {
 
             {invited.length > 0 && (
               <Text size="lg" color="dark" mt="xl">
-                Invited People:
+                People Invited:
               </Text>
             )}
             {invited.map((email) => (
