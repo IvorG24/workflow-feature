@@ -25,10 +25,10 @@ const CreateTeamName = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<Data>();
-  const { teamName } = router.query;
+  const { name } = router.query;
 
   const onSubmit = handleSubmit(async (data) => {
-    router.push(`/teams/create?step=2&teamName=${data.teamName}`);
+    router.push(`/teams/create?step=2&name=${data.teamName}`);
   });
 
   return (
@@ -40,7 +40,7 @@ const CreateTeamName = () => {
         <form onSubmit={onSubmit}>
           <TextInput
             placeholder="Team Name"
-            defaultValue={teamName}
+            defaultValue={name}
             {...register("teamName", { required: "Team name is required" })}
             error={errors.teamName?.message}
           />
