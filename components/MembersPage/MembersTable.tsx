@@ -11,36 +11,33 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import { TeamMember } from "./MembersPage";
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
 import { useRouter } from "next/router";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
-type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar_url: string;
-  bg_url: string;
-};
-
 type Props = {
-  members: Member[];
+  members: TeamMember[];
 };
 
 const MembersTable = ({ members }: Props) => {
   const router = useRouter();
+  const { tid } = router.query;
 
   return (
     <Stack justify="space-between" mih="400px" pt="md">
       {
         // todo: update properties to match fetched data
-        members.map(({ id, name, email, role, avatar_url }) => {
+        members.map((member) => {
           return (
             <Grid
-              key={id}
-              onClick={() => router.push(`/profiles/${id}/bio`)}
+              key={member.user_profile_table.user_id}
+              onClick={() =>
+                router.push(
+                  `/t/${tid}/profiles/${member.user_profile_table.user_id}/bio`
+                )
+              }
               sx={{ borderTop: "1px solid #E9E9E9" }}
             >
               <Grid.Col order={1} orderMd={1} span={10} md={8}>
@@ -48,14 +45,15 @@ const MembersTable = ({ members }: Props) => {
                   <MantineAvatar
                     size={40}
                     radius={40}
-                    src={avatar_url}
-                    alt={`${name}'s Formsly Avatar`}
+                    src={member.user_profile_table.avatar_url}
+                    alt={`${member.user_profile_table.full_name}'s Formsly Avatar`}
                   />
                   <Box>
                     <Text fw="bold" color="dark">
-                      {name}
+                      {member.user_profile_table.full_name}
                     </Text>
-                    <Text fz="xs">{email}</Text>
+                    {/* user profile has no email */}
+                    <Text fz="xs"></Text>
                   </Box>
                 </Group>
               </Grid.Col>
@@ -68,7 +66,7 @@ const MembersTable = ({ members }: Props) => {
                 offsetMd={1}
               >
                 <Select
-                  value={role}
+                  value={member.team_role}
                   onChange={(e) => console.log(e)}
                   data={[
                     { value: "admin", label: "Admin" },

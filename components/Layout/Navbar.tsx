@@ -36,13 +36,13 @@ import styles from "./Navbar.module.scss";
 
 type Props = {
   teams: Team[];
+  teamId: string;
 };
 
-const Navbar = ({ teams }: Props) => {
+const Navbar = ({ teams, teamId }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
-  const { tid } = router.query;
-  const activeTeam = teams.find((team) => team.team_id === tid);
+  const activeTeam = teams.find((team) => team.team_id === teamId);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -186,7 +186,7 @@ const Navbar = ({ teams }: Props) => {
           />
           <NavLink
             component="a"
-            href="/forms"
+            href={`/t/${teamId}/forms`}
             label="Forms"
             icon={
               <div className={iconStyle}>
@@ -196,7 +196,7 @@ const Navbar = ({ teams }: Props) => {
           />
           <NavLink
             component="a"
-            href="/settings/members"
+            href={`/t/${teamId}/settings/members`}
             label="Members"
             icon={
               <div className={iconStyle}>

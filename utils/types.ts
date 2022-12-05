@@ -77,3 +77,4 @@ export type RequestInsert =
   Database["public"]["Tables"]["request_table"]["Insert"];
 export type RequestUpdate =
   Database["public"]["Tables"]["request_table"]["Update"];
+export type TeamMember = Database["public"]["Tables"]["team_role_table"]["Row"];
