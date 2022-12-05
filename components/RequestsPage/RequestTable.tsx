@@ -1,5 +1,6 @@
 import { Close } from "@/components/Icon";
 import { setBadgeColor } from "@/utils/request";
+import { FormTable, UserProfile } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -13,7 +14,6 @@ import {
   Table,
   Text,
   Title,
-  Tooltip,
 } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import { startCase } from "lodash";
@@ -21,23 +21,12 @@ import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import styles from "./RequestTable.module.scss";
 
-type RequestType = {
-  id: number;
-  ref: string;
-  formType: string;
-  requestTitle: string;
-  status: string;
-  lastUpdated: string;
-  requestedBy: string;
-  description: string;
-  approvers: {
-    name: string;
-    status: string;
-  }[];
-};
+type RequestType = FormTable & {
+  owner: UserProfile;
+} & { approver: UserProfile };
 
 type Props = {
-  visibleRequests: RequestType[];
+  requestList: RequestType[];
   selectedRequest: RequestType | null;
   setSelectedRequest: Dispatch<SetStateAction<RequestType | null>>;
   isApprover: boolean;
@@ -47,7 +36,7 @@ type Props = {
 };
 
 const RequestTable = ({
-  visibleRequests,
+  requestList,
   selectedRequest,
   setSelectedRequest,
   isApprover,
@@ -58,50 +47,40 @@ const RequestTable = ({
   const { width } = useViewportSize();
   const router = useRouter();
 
-  const rows = visibleRequests.map((request) => (
-    <tr
-      key={request.id}
-      className={styles.row}
-      onClick={() => {
-        width < 1200
-          ? router.push(`/requests/${request.id}`)
-          : setSelectedRequest(request);
-      }}
-    >
-      <td>{request.ref}</td>
-      <td>{request.requestTitle}</td>
-      <td>
-        <Badge color={setBadgeColor(request.status)}>
-          {startCase(request.status)}
-        </Badge>
-      </td>
-      <td>{request.lastUpdated}</td>
-      <td>
-        <Group>
-          <Avatar radius={100} />
-          {request.requestedBy}
-        </Group>
-      </td>
-      <td>
-        <Group>
-          {request.approvers.length === 1 ? (
-            <>
-              <Avatar radius={100} />
-              {request.approvers[0].name}
-            </>
-          ) : (
-            <>
-              {request.approvers.map((approver) => (
-                <Tooltip key={approver.name} label={approver.name}>
-                  <Avatar radius={100} />
-                </Tooltip>
-              ))}
-            </>
-          )}
-        </Group>
-      </td>
-    </tr>
-  ));
+  const rows = requestList.map((request) => {
+    return (
+      <tr
+        key={request.form_id}
+        className={styles.row}
+        onClick={() => {
+          width < 1200
+            ? router.push(`/requests/${request.request_id}`)
+            : setSelectedRequest(request);
+        }}
+      >
+        <td>{request.request_id}</td>
+        <td>{request.request_title}</td>
+        <td>
+          <Badge color={setBadgeColor(`${request.approval_status}`)}>
+            {startCase(`${request.approval_status}`)}
+          </Badge>
+        </td>
+        <td>{request.created_at?.slice(0, 10)}</td>
+        <td>
+          <Group>
+            <Avatar radius={100} />
+            {request.owner.full_name}
+          </Group>
+        </td>
+        <td>
+          <Group>
+            <Avatar radius={100} />
+            {request.approver.full_name}
+          </Group>
+        </td>
+      </tr>
+    );
+  });
 
   return (
     <Group align="flex-start">
@@ -129,42 +108,44 @@ const RequestTable = ({
           <Group position="apart" grow>
             <Stack align="flex-start">
               <Title order={5}>Request Title</Title>
-              <Text>{selectedRequest.requestTitle}</Text>
+              <Text>{selectedRequest.request_title}</Text>
             </Stack>
             <Stack align="flex-start">
-              <Title order={5}>Request By</Title>
+              <Title order={5}>Requested By</Title>
               <Group>
                 <Avatar radius={100} />
-                <Text>{selectedRequest.requestedBy}</Text>
+                <Text>{selectedRequest.owner.full_name}</Text>
               </Group>
             </Stack>
           </Group>
           <Group mt="xl" position="apart" grow>
             <Stack align="flex-start">
               <Title order={5}>Date Created</Title>
-              <Text>{selectedRequest.lastUpdated}</Text>
+              <Text>{selectedRequest.created_at?.slice(0, 10)}</Text>
             </Stack>
             <Stack align="flex-start">
               <Title order={5}>Status</Title>
-              <Badge color={setBadgeColor(selectedRequest.status)}>
-                {startCase(selectedRequest.status)}
+              <Badge
+                color={setBadgeColor(`${selectedRequest.approval_status}`)}
+              >
+                {startCase(`${selectedRequest.approval_status}`)}
               </Badge>
             </Stack>
           </Group>
           <Stack mt="xl" align="flex-start">
             <Title order={5}>Request Description</Title>
-            <Text>{selectedRequest.description}</Text>
+            <Text>{selectedRequest.request_description}</Text>
           </Stack>
           <Divider mt="xl" />
           <Stack mt="xl">
             <Title order={5}>Approver</Title>
             <Group align="apart" grow>
-              {selectedRequest.approvers.map((approver) => (
-                <Group key={approver.name}>
-                  <Badge color={setBadgeColor(approver.status)} />
-                  <Text>{approver.name}</Text>
-                </Group>
-              ))}
+              <Group>
+                <Badge
+                  color={setBadgeColor(`${selectedRequest.approval_status}`)}
+                />
+                <Text>{selectedRequest.approver.full_name}</Text>
+              </Group>
             </Group>
           </Stack>
           <Divider mt="xl" />

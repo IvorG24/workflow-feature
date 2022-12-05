@@ -50,6 +50,12 @@ export type Database = {
           response_owner: string | null;
           response_comment: string | null;
           team_id: string | null;
+          request_title: string | null;
+          request_description: string | null;
+          approver_id: string | null;
+          approval_status: string | null;
+          request_id: number | null;
+          on_behalf_of: string | null;
         };
         Insert: {
           form_id?: never;
@@ -62,7 +68,13 @@ export type Database = {
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
-          team_id?: string | null;
+          team_id?: number | null;
+          request_title?: string | null;
+          request_description?: string | null;
+          approver_id?: string | null;
+          approval_status?: string | null;
+          request_id?: number | null;
+          on_behalf_of?: string | null;
         };
         Update: {
           form_id?: never;
@@ -75,7 +87,13 @@ export type Database = {
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
-          team_id?: string | null;
+          team_id?: number | null;
+          request_title?: string | null;
+          request_description?: string | null;
+          approver_id?: string | null;
+          approval_status?: string | null;
+          request_id?: number | null;
+          on_behalf_of?: string | null;
         };
       };
       question_table: {
@@ -99,6 +117,17 @@ export type Database = {
           expected_response_type?:
             | Database["public"]["Enums"]["expected_response_type"]
             | null;
+        };
+      };
+      request_table: {
+        Row: {
+          request_id: number;
+        };
+        Insert: {
+          request_id?: never;
+        };
+        Update: {
+          request_id?: never;
         };
       };
       review_score_table: {
@@ -134,14 +163,14 @@ export type Database = {
           review_source?: string | null;
           review_target?: string | null;
           review_score?: number | null;
-          team_id?: string | null;
+          team_id?: number | null;
         };
         Update: {
           review_id?: never;
           review_source?: string | null;
           review_target?: string | null;
           review_score?: number | null;
-          team_id?: string | null;
+          team_id?: number | null;
         };
       };
       team_role_table: {
@@ -171,12 +200,12 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
-          team_id?: string;
+          team_id?: never;
           team_name?: string | null;
           user_id?: string | null;
         };
         Update: {
-          team_id?: string;
+          team_id?: never;
           team_name?: string | null;
           user_id?: string | null;
         };
@@ -239,6 +268,13 @@ export type Database = {
         | "select"
         | "slider"
         | "multiple";
+      request_status:
+        | "approved"
+        | "rejected"
+        | "pending"
+        | "revision"
+        | "stale"
+        | "cancelled";
       form_type: "request" | "review";
       team_role: "member" | "manager";
     };
