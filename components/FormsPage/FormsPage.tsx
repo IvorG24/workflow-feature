@@ -54,6 +54,7 @@ const FormList = () => {
   const [activePage, setPage] = useState(1);
   const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
+  const { tid } = router.query;
 
   // todo: fetch forms backend
   // todo: add actual filtering
@@ -101,7 +102,7 @@ const FormList = () => {
         <Button
           rightIcon={<AddCircle />}
           variant="subtle"
-          onClick={() => router.push("/forms/create?step=1")}
+          onClick={() => router.push(`/t/${tid}/forms/create?step=1`)}
         >
           Create a Form
         </Button>

@@ -186,7 +186,7 @@ const Navbar = ({ teams, teamId }: Props) => {
           />
           <NavLink
             component="a"
-            href="/forms"
+            href={`/t/${teamId}/forms`}
             label="Forms"
             icon={
               <div className={iconStyle}>
