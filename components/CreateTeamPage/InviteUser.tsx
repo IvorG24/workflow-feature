@@ -32,11 +32,13 @@ const InviteUser = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<Data>();
 
   const onSubmit = handleSubmit(async (data) => {
     setInvited((prevEmails) => [...prevEmails, data.email]);
+    reset();
   });
 
   return (
