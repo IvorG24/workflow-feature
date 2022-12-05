@@ -1,4 +1,4 @@
-import CreateTeam from "@/components/CreateTeamPage/CreateTeam";
+import CreateTeamName from "@/components/CreateTeamPage/CreateTeamName";
 import InviteUser from "@/components/CreateTeamPage/InviteUser";
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
@@ -26,7 +26,7 @@ const FormTeam: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/forms/type"
       />
-      <CreateTeam />
+      <CreateTeamName />
     </div>
   );
 };
@@ -49,10 +49,10 @@ FormInvite.getLayout = function getLayout(page: ReactElement) {
   return <WorkspaceLayout>{page}</WorkspaceLayout>;
 };
 
-const CreateForm = () => {
+const CreateTeam = () => {
   const router = useRouter();
   const { step } = router.query;
   return Number(step) === 1 ? <FormTeam /> : <FormInvite />;
 };
 
-export default CreateForm;
+export default CreateTeam;

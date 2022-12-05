@@ -17,7 +17,7 @@ type Data = {
   teamName: string;
 };
 
-const CreateTeam = () => {
+const CreateTeamName = () => {
   const theme = useMantineTheme();
   const router = useRouter();
   const {
@@ -59,4 +59,4 @@ const CreateTeam = () => {
   );
 };
 
-export default CreateTeam;
+export default CreateTeamName;
