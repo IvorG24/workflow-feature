@@ -1,5 +1,6 @@
 export { default as AddCircle } from "./AddCircle";
 export { default as ArrowDropDown } from "./ArrowDropDown";
+export { default as ArrowBack } from "./ArrowBack";
 export { default as Calendar } from "./Calendar";
 export { default as Check } from "./Check";
 export { default as Close } from "./Close";
