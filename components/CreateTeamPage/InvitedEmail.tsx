@@ -12,7 +12,7 @@ const InvitedEmail = ({ email, onRemove }: Props) => {
   return (
     <Container fluid p="xs">
       <Flex justify="space-between" align="center">
-        <Flex justify="start" align="center">
+        <Flex justify="start" align="center" gap="sm">
           <Avatar radius="lg" size="sm" src="" alt={email} />
           <Text>{email}</Text>
         </Flex>
