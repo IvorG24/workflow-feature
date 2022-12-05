@@ -2,7 +2,7 @@ import type { Database } from "@/utils/database.types";
 
 type InputTypes = Database["public"]["Enums"]["expected_response_type"];
 
-type Question = Database["public"]["Tables"]["question_table"]["Insert"];
+type QuestionInsert = Database["public"]["Tables"]["question_table"]["Insert"];
 
 type FormTableInsert = Database["public"]["Tables"]["form_table"]["Insert"];
 
@@ -40,7 +40,7 @@ export type {
   FormQuestion,
   FormTableInsert,
   InputTypes,
-  Question,
+  QuestionInsert,
   QuestionRow,
   QuestionOption,
   Option,

@@ -18,7 +18,12 @@ import { Controller, useForm } from "react-hook-form";
 import { alignQuestionOption } from "../CreateRequestFormPage/utils";
 import FormBuilder from "./FormBuilder";
 import { saveToFormTable } from "./saveToFormTable";
-import { FormRequestData, Question, QuestionOption, QuestionRow } from "./type";
+import {
+  FormRequestData,
+  QuestionInsert,
+  QuestionOption,
+  QuestionRow,
+} from "./type";
 
 const Question = () => {
   const supabase = useSupabaseClient<Database>();
@@ -43,7 +48,7 @@ const Question = () => {
 
       const questionRecord = await supabase
         .from("question_table")
-        .insert([...(questions.map((item) => item.data) as Question[])])
+        .insert([...(questions.map((item) => item.data) as QuestionInsert[])])
         .select();
 
       const priority = questionRecord.data?.map(
