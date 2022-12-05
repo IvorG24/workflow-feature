@@ -80,7 +80,7 @@ CREATE TABLE request_table(
 CREATE TABLE form_table(
   form_id INT GENERATED ALWAYS AS IDENTITY UNIQUE PRIMARY KEY,
   form_name_id INT REFERENCES form_name_table(form_name_id),
-  form_owner UUID REFERENCES auth.users(id),
+  form_owner UUID REFERENCES user_profile_table(user_id),
   form_type form_type,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   question_id INT REFERENCES question_table(question_id),

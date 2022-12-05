@@ -8,18 +8,23 @@ import {
   TeamRow,
 } from "@/utils/types";
 import {
+  Box,
   Button,
   Container,
   Flex,
   Group,
   LoadingOverlay,
+  NumberInput,
   Paper,
   Select,
+  Slider,
   Stack,
+  Text,
   Textarea,
   TextInput,
   Title,
 } from "@mantine/core";
+import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import axios from "axios";
@@ -41,7 +46,34 @@ export type Form = (FormRow & { form_name: FormNameRow } & {
   question: QuestionRow;
 } & { question_option: SelectOptionRow } & { team: TeamRow })[];
 
+type Marks = {
+  value: number;
+  label: string;
+};
+
 const CreateRequest = () => {
+  const MARKS: Marks[] = [
+    {
+      value: 1,
+      label: "0%",
+    },
+    {
+      value: 2,
+      label: "25%",
+    },
+    {
+      value: 3,
+      label: "50%",
+    },
+    {
+      value: 4,
+      label: "75%",
+    },
+    {
+      value: 5,
+      label: "100%",
+    },
+  ];
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const user = useUser();
@@ -74,6 +106,8 @@ const CreateRequest = () => {
     { questionId: string; value: string }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+  // const [selectOptionRowList, setSelectOptionRowList] =
+  //   useState<SelectOptionRow[]>();
 
   useBeforeunload(() => {
     if (formTemplate && formTemplate[0].is_draft) {
@@ -104,6 +138,7 @@ const CreateRequest = () => {
   };
 
   useEffect(() => {
+    if (!router.isReady) return;
     resetState();
     setIsLoading(true);
     // TODO add eq("team_id")
@@ -160,6 +195,13 @@ const CreateRequest = () => {
         .eq("form_name_id", router.query.formId)
         .order("created_at", { ascending: true });
 
+      // const { data: formPriority } = await supabase
+      //   .from("form_priority_table")
+      //   .select()
+      //   .eq("form_name_id", router.query.formId)
+      //   .limit(1)
+      //   .single();
+
       if (error) {
         console.log(error);
         return;
@@ -173,6 +215,15 @@ const CreateRequest = () => {
       ) as Form;
 
       const formTemplate = handleClearResponseValues(filteredForm as Form);
+
+      // TODO: Sort questions by form priority.
+      // Sort questions by priority
+      // const clearedForm = handleClearResponseValues(filteredForm as Form);
+      // const formTemplate = clearedForm.sort(
+      //   (a, b) =>
+      //     formPriority.priority.indexOf(a.question_id) -
+      //     formPriority.priority.indexOf(b.question_id)
+      // );
 
       setAnswers(
         formTemplate.map((form) => {
@@ -201,10 +252,13 @@ const CreateRequest = () => {
 
       if (requests) {
         const newRequests = requests as Form;
+        // TODO: Can remove this since may setFormTemplate(newRequests) sa line 32?
         setFormTemplate(newRequests);
       }
 
       const newRequest = requests as Form;
+
+      console.log(JSON.stringify(requests, null, 2));
 
       if (!newRequest) return;
       setValue(
@@ -321,6 +375,7 @@ const CreateRequest = () => {
       response_owner: user?.id,
       request_id: Number(`${request.data.request_id}`),
       is_draft: isDraft,
+      form_owner: `${user?.id}`,
     });
 
     const questionIdList = answers.map((answer) => Number(answer.questionId));
@@ -498,16 +553,115 @@ const CreateRequest = () => {
             />
 
             {formTemplate?.map((form, index) => {
-              return (
-                <TextInput
-                  key={form.form_id}
-                  label={form.question.question}
-                  onChange={(e) =>
-                    handleAnswer(`${form.question_id}`, e.target.value)
-                  }
-                  value={answers[index].value}
-                />
-              );
+              if (
+                form.question.expected_response_type === "text" ||
+                form.question.expected_response_type === "email"
+              ) {
+                return (
+                  <TextInput
+                    key={form.form_id}
+                    label={form.question.question}
+                    onChange={(e) =>
+                      handleAnswer(`${form.question_id}`, e.target.value)
+                    }
+                    value={answers[index].value}
+                  />
+                );
+              }
+              if (form.question.expected_response_type === "number") {
+                return (
+                  <NumberInput
+                    key={form.form_id}
+                    label={form.question.question}
+                    onChange={(e) =>
+                      handleAnswer(`${form.question_id}`, `${e}`)
+                    }
+                    value={Number(answers[index].value)}
+                  />
+                );
+              }
+              if (form.question.expected_response_type === "date") {
+                return (
+                  <DatePicker
+                    key={form.form_id}
+                    label={form.question.question}
+                    placeholder={"Choose date"}
+                    onChange={(e) =>
+                      handleAnswer(`${form.question_id}`, `${e}`)
+                    }
+                  />
+                );
+              }
+              if (form.question.expected_response_type === "daterange") {
+                return (
+                  <DateRangePicker
+                    key={form.form_id}
+                    label={form.question.question}
+                    placeholder={"Choose a date range"}
+                    onChange={(e) =>
+                      handleAnswer(`${form.question_id}`, `${e}`)
+                    }
+                  />
+                );
+              }
+              if (form.question.expected_response_type === "time") {
+                return (
+                  <TimeInput
+                    key={form.form_id}
+                    label={form.question.question}
+                    placeholder={"Choose time"}
+                    format="12"
+                    onChange={(e) =>
+                      handleAnswer(`${form.question_id}`, `${e}`)
+                    }
+                  />
+                );
+              }
+              if (form.question.expected_response_type === "slider") {
+                return (
+                  <Box my="md" key={form.form_id}>
+                    <Text component="label" color="dark">
+                      {form.question.question}
+                    </Text>
+                    <Slider
+                      label={form.question.question}
+                      placeholder={"Slide to choose value"}
+                      marks={MARKS}
+                      min={1}
+                      max={5}
+                      labelAlwaysOn={false}
+                      onChange={(e) =>
+                        handleAnswer(`${form.question_id}`, `${e}`)
+                      }
+                    />
+                  </Box>
+                );
+              }
+              // if (form.question.expected_response_type === "multiple") {
+              //   return (
+              //     <Box>
+              //       <MultiSelect
+              //         data={parseOption}
+              //         label={data.question}
+              //         placeholder={GENERIC_PLACEHOLDER}
+              //       />
+              //     </Box>
+              //   );
+              // }
+
+              // if (form.question.expected_response_type === "select") {
+              //   return (
+              //     <Box>
+              //       <Select
+              //         data={parseOption}
+              //         searchable
+              //         clearable
+              //         label={data.question}
+              //         placeholder={GENERIC_PLACEHOLDER}
+              //       />
+              //     </Box>
+              //   );
+              // }
             })}
 
             <Group position="right">
