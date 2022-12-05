@@ -54,7 +54,7 @@ const FormList = () => {
   const [activePage, setPage] = useState(1);
   const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
-  const { tid } = router.query;
+  // const { tid } = router.query;
 
   // todo: fetch forms backend
   // todo: add actual filtering
