@@ -2,7 +2,15 @@ import { Button, Flex, MultiSelect } from "@mantine/core";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
-import { Member } from "./MembersPage";
+
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar_url: string;
+  bg_url: string;
+};
 
 type Props = {
   members: Member[];

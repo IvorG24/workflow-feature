@@ -30,7 +30,10 @@ const WorkspaceLayout = ({ children }: Props) => {
   if (teamsError) return <Container fluid>Error...</Container>; // todo: create a custom error page
 
   return (
-    <AppShell navbar={<Navbar teams={teams} />} header={<MobileHeader />}>
+    <AppShell
+      navbar={<Navbar teams={teams} teamId={tid as string} />} // don't use typecasting for tid
+      header={<MobileHeader />}
+    >
       <main className={styles.childrenContainer}>{children}</main>
     </AppShell>
   );
