@@ -98,10 +98,10 @@ const CreateRequest = () => {
       .insert({})
       .select()
       .single();
-    console.log(data);
+
     const { error } = await supabase.from("form_table").insert({
       form_name_id: Number(`${router.query.formId}`),
-      team_id: 1,
+      team_id: null,
       request_title: formData.title,
       request_description: formData.description,
       approver_id: selectedApprover,

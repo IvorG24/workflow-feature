@@ -59,12 +59,13 @@ const Navbar = () => {
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
+    // TODO: Convert into a hook
     const fetchForms = async () => {
       const { data } = await supabase.from("form_name_table").select("*");
       const forms = data?.map((form) => {
         return { value: `${form.form_name_id}`, label: `${form.form_name}` };
       });
-      if (forms !== undefined) {
+      if (forms !== undefined && forms.length !== 0) {
         setForms(forms);
         setSelectedForm(`${forms[0].value}`);
       }

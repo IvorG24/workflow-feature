@@ -41,7 +41,7 @@ CREATE policy "Users can update own profile." ON user_profile_table
 -- END user_profile_table
 
 CREATE TABLE team_table(
-  team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY ,
+  team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   team_name VARCHAR(254),
   user_id UUID REFERENCES user_profile_table(user_id)
 );
@@ -88,7 +88,7 @@ CREATE TABLE form_table(
   approver_id UUID REFERENCES user_profile_table(user_id),
   approval_status VARCHAR(254),
   request_id INT REFERENCES request_table(request_id),
-  on_behalf_of VARCHAR(254)
+  on_behalf_of VARCHAR(254),
   team_id UUID REFERENCES team_table(team_id) 
 );
 

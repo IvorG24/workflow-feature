@@ -1,3 +1,4 @@
+// Todo: convert into an integration test
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import { render, screen } from "@testing-library/react";
 
