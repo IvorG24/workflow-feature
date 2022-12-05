@@ -242,7 +242,7 @@ const Navbar = ({ teams }: Props) => {
           <NavLink
             component="a"
             href="/profile"
-            label="Mary Joy Dumancal"
+            label="Alberto Linao"
             description="View Profile"
             icon={
               <div className={iconStyle}>
