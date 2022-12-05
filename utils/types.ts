@@ -6,3 +6,4 @@ export type UserProfile =
 
 export type FormTable = Database["public"]["Tables"]["form_table"]["Row"];
 export type Team = Database["public"]["Tables"]["team_table"]["Row"];
+export type TeamMember = Database["public"]["Tables"]["team_role_table"]["Row"];

@@ -42,8 +42,7 @@ type Props = {
 const Navbar = ({ teams, teamId }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
-  const { tid } = router.query;
-  const activeTeam = teams.find((team) => team.team_id === tid);
+  const activeTeam = teams.find((team) => team.team_id === teamId);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -197,7 +196,7 @@ const Navbar = ({ teams, teamId }: Props) => {
           />
           <NavLink
             component="a"
-            href={`/t/${tid}/settings/members`}
+            href={`/t/${teamId}/settings/members`}
             label="Members"
             icon={
               <div className={iconStyle}>
