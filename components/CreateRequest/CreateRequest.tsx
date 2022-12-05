@@ -22,6 +22,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
@@ -51,8 +52,12 @@ const CreateRequest = () => {
     formState: { errors },
     getValues,
     setValue,
+    reset,
   } = useForm<FormData>({
     defaultValues: {
+      title: "",
+      behalf: "",
+      description: "",
       requestor: "",
       date: `${new Date().toLocaleDateString()}`,
     },
@@ -68,13 +73,39 @@ const CreateRequest = () => {
   const [answers, setAnswers] = useState<
     { questionId: string; value: string }[]
   >([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useBeforeunload((event) => {
-    handleSave(getValues(), true);
-    event.preventDefault();
+  useBeforeunload(() => {
+    if (formTemplate && formTemplate[0].is_draft) {
+      axios.post("/api/update", {
+        formData: getValues(),
+        approver: selectedApprover,
+        answers: answers,
+        requestId: formTemplate[0].request_id,
+      });
+    } else {
+      axios.post("/api/insert", {
+        formData: getValues(),
+        isDraft: true,
+        formId: router.query.formId,
+        userId: user?.id,
+        approver: selectedApprover,
+        answers: answers,
+      });
+    }
   });
 
+  const resetState = () => {
+    reset();
+    setFormName("");
+    setApprovers([]);
+    setFormTemplate(undefined);
+    setAnswers([]);
+  };
+
   useEffect(() => {
+    resetState();
+    setIsLoading(true);
     // TODO add eq("team_id")
     const fetchApprovers = async () => {
       // todo: fetch from team_role
@@ -165,6 +196,7 @@ const CreateRequest = () => {
           `
         )
         .eq("request_id", request_id)
+        .eq("form_name_id", router.query.formId)
         .order("created_at", { ascending: true });
 
       if (requests) {
@@ -199,6 +231,7 @@ const CreateRequest = () => {
       });
       setAnswers(draftAnswers);
       setFormTemplate(newRequest);
+      setSelectedApprover(`${requests && requests[0].approver_id}`);
       setFormName(`${newRequest[0].form_name.form_name}`);
     };
 
@@ -216,6 +249,7 @@ const CreateRequest = () => {
     fetchApprovers();
     fetchForm();
     fetchCurrentUser();
+    setIsLoading(false);
   }, [supabase, router, user]);
 
   const onSubmit = handleSubmit((fromData) =>
@@ -235,7 +269,8 @@ const CreateRequest = () => {
             is_draft: false,
             response_value: [answer.value],
           })
-          .eq("question_id", answer.questionId);
+          .eq("question_id", answer.questionId)
+          .eq("request_id", formTemplate && formTemplate[0].request_id);
         if (error) throw error;
       });
 
@@ -244,6 +279,7 @@ const CreateRequest = () => {
         .update({
           request_title: formData.title,
           request_description: formData.description,
+          on_behalf_of: formData.behalf,
           approver_id: selectedApprover,
           is_draft: false,
         })
@@ -392,7 +428,7 @@ const CreateRequest = () => {
 
   return (
     <Container m={0} px={8} py={16} fluid>
-      <LoadingOverlay visible={isCreating} />
+      <LoadingOverlay visible={isCreating || isLoading} />
       <Title>Create {formName}</Title>
       <Paper shadow="xl" radius={8} mt={32} px={32} py={48}>
         <form onSubmit={onSubmit}>

@@ -145,7 +145,8 @@ const Sent = () => {
     const { error } = await supabase
       .from("form_table")
       .update({ approval_status: "approved" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+      .eq("request_id", Number(`${selectedRequest?.request_id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({
@@ -182,7 +183,8 @@ const Sent = () => {
     const { error } = await supabase
       .from("form_table")
       .update({ approval_status: "revision" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+      .eq("request_id", Number(`${selectedRequest?.request_id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({
@@ -219,7 +221,8 @@ const Sent = () => {
     const { error } = await supabase
       .from("form_table")
       .update({ approval_status: "rejected" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+      .eq("request_id", Number(`${selectedRequest?.request_id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({

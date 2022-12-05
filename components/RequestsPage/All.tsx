@@ -56,12 +56,12 @@ const All = () => {
     let query = supabase
       .from("form_table")
       .select("*, owner:response_owner(*), approver:approver_id(*)")
-      .neq("approval_status", "null")
+      .neq("approval_status", null)
       .range(start, start + REQUEST_PER_PAGE - 1);
     let countQuery = supabase
       .from("form_table")
       .select("*", { count: "exact" })
-      .neq("approval_status", "null");
+      .neq("approval_status", null);
     if (selectedForm) {
       query = query.eq("form_name_id", selectedForm);
       countQuery = countQuery.eq("form_name_id", selectedForm);
@@ -144,7 +144,8 @@ const All = () => {
     const { error } = await supabase
       .from("form_table")
       .update({ approval_status: "approved" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+      .eq("request_id", Number(`${selectedRequest?.request_id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({
@@ -181,7 +182,8 @@ const All = () => {
     const { error } = await supabase
       .from("form_table")
       .update({ approval_status: "revision" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+      .eq("request_id", Number(`${selectedRequest?.request_id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({
@@ -218,7 +220,8 @@ const All = () => {
     const { error } = await supabase
       .from("form_table")
       .update({ approval_status: "rejected" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+      .eq("request_id", Number(`${selectedRequest?.request_id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({

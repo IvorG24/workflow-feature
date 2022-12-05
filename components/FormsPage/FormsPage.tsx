@@ -1,3 +1,4 @@
+import type { Database } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -10,8 +11,9 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddCircle, Search } from "../Icon";
 import styles from "./FormsPage.module.scss";
 import FormsTable from "./FormsTable";
@@ -23,41 +25,38 @@ export type Form = {
   updated_at: string;
 };
 
-const forms: Form[] = [
-  {
-    id: "4438",
-    title: "Request Form",
-    status: "Active",
-    updated_at: "January 5, 2022",
-  },
-  {
-    id: "4439",
-    title: "Peer Review Form",
-    status: "Active",
-    updated_at: "February 5, 2022",
-  },
-  {
-    id: "4440",
-    title: "Request Form",
-    status: "Inactive",
-    updated_at: "March 5, 2022",
-  },
-  {
-    id: "4441",
-    title: "Peer Review Form",
-    status: "Active",
-    updated_at: "April 5, 2022",
-  },
-];
-
 const FormList = () => {
+  const supabase = useSupabaseClient<Database>();
+
   const [activePage, setPage] = useState(1);
   const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
+  const [formList, setFormList] = useState<Form[]>([]);
   // const { tid } = router.query;
 
   // todo: fetch forms backend
   // todo: add actual filtering
+  useEffect(() => {
+    const fetchForms = async () => {
+      const { data } = await supabase
+        .from("form_name_table")
+        .select("*")
+        .order("form_name_id", { ascending: true });
+      if (data) {
+        const newForms = data.map((form) => {
+          return {
+            id: `${form.form_name_id}`,
+            title: `${form.form_name}`,
+            status: "Active",
+            updated_at: "February 5, 2022",
+          };
+        });
+        setFormList(newForms);
+      }
+    };
+
+    fetchForms();
+  }, [supabase]);
 
   return (
     <Container p="md" fluid>
@@ -109,7 +108,7 @@ const FormList = () => {
         </Button>
       </Group>
 
-      <FormsTable forms={forms} colorScheme={colorScheme} />
+      <FormsTable forms={formList} colorScheme={colorScheme} />
       <Flex justify="flex-end" mt="xl">
         <Pagination page={activePage} onChange={setPage} total={20} />
       </Flex>
