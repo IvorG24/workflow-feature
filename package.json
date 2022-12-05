@@ -33,7 +33,6 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.39.4",
-    "supabase": "^1.17.4",
     "validator": "^13.7.0"
   },
   "devDependencies": {
