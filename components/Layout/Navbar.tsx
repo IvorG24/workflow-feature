@@ -36,9 +36,10 @@ import styles from "./Navbar.module.scss";
 
 type Props = {
   teams: Team[];
+  teamId: string;
 };
 
-const Navbar = ({ teams }: Props) => {
+const Navbar = ({ teams, teamId }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const { tid } = router.query;
@@ -196,7 +197,7 @@ const Navbar = ({ teams }: Props) => {
           />
           <NavLink
             component="a"
-            href="/settings/members"
+            href={`/t/${tid}/settings/members`}
             label="Members"
             icon={
               <div className={iconStyle}>
