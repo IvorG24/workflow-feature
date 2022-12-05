@@ -1,4 +1,6 @@
 import { Search } from "@/components/Icon";
+import type { Database } from "@/utils/types";
+import { FormTable, UserProfile } from "@/utils/types";
 import {
   ActionIcon,
   Group,
@@ -9,148 +11,249 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { ceil, toLower } from "lodash";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { ceil } from "lodash";
 import { useEffect, useState } from "react";
 import styles from "./All.module.scss";
 import RequestTable from "./RequestTable";
 
-type RequestType = {
-  id: number;
-  ref: string;
-  formType: string;
-  requestTitle: string;
-  status: string;
-  lastUpdated: string;
-  requestedBy: string;
-  description: string;
-  approvers: {
-    name: string;
-    status: string;
-  }[];
+// TODO current user
+const currentUser = {
+  id: "d0eceb39-8c1b-4e84-b7d7-9fdeddf53f8f",
+  name: "Albert Linao",
+  email: "albertlinao@email.com",
 };
-
-const currentUser = "Lance Juat";
-
-const tempFormType = [
-  { value: "approvalRequest", label: "Approval Request" },
-  { value: "it", label: "IT" },
-  { value: "purchaseOrder", label: "Purchase Order" },
-  { value: "ptrf", label: "PTRF" },
-  { value: "requisitionForm", label: "Requisition Form" },
-  { value: "requestforPayment", label: "Request for Payment" },
-  { value: "releaseOrder", label: "Release Order" },
-];
 
 const tempStatus = [
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
-  { value: "forRevision", label: "For Revision" },
+  { value: "revision", label: "Revision" },
   { value: "stale", label: "Stale" },
   { value: "cancelled", label: "Cancelled" },
 ];
 
-const tempRequests: RequestType[] = [];
-
 const REQUEST_PER_PAGE = 8;
 
+type RequestType = FormTable & {
+  owner: UserProfile;
+} & { approver: UserProfile };
+
 const All = () => {
+  const supabase = useSupabaseClient<Database>();
+
   const [search, setSearch] = useState("");
-  const [formType, setFormType] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [requestList, setRequestList] = useState<RequestType[]>(tempRequests);
-  const [activePage, setPage] = useState(1);
-  const [visibleRequests, setVisibleRequests] = useState(
-    tempRequests.slice(0, REQUEST_PER_PAGE)
-  );
+  const [requestList, setRequestList] = useState<RequestType[]>([]);
+  const [activePage, setActivePage] = useState(1);
+  const [requestCount, setRequestCount] = useState(0);
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
     null
   );
-
   const [isApprover, setIsApprover] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
+  const [selectedForm, setSelectedForm] = useState<string | null>(null);
 
-  const filterPage = (page: number, requestList: RequestType[]) => {
+  const fetchRequests = async (isSearch: boolean) => {
     setSelectedRequest(null);
-    setPage(page);
-    setVisibleRequests(
-      requestList.slice(
-        (page - 1) * REQUEST_PER_PAGE,
-        (page - 1) * REQUEST_PER_PAGE + REQUEST_PER_PAGE
-      )
-    );
+    setIsLoading(true);
+    const start = (activePage - 1) * REQUEST_PER_PAGE;
+    let query = supabase
+      .from("form_table")
+      .select("*, owner:response_owner(*), approver:approver_id(*)")
+      .neq("approval_status", "null")
+      .range(start, start + REQUEST_PER_PAGE - 1);
+    let countQuery = supabase
+      .from("form_table")
+      .select("*", { count: "exact" })
+      .neq("approval_status", "null");
+    if (selectedForm) {
+      query = query.eq("form_name_id", selectedForm);
+      countQuery = countQuery.eq("form_name_id", selectedForm);
+    }
+    if (status) {
+      query = query.eq("approval_status", status);
+      countQuery = countQuery.eq("approval_status", status);
+    }
+    if (isSearch && search) {
+      query = query.or(
+        `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
+      );
+      countQuery = countQuery.or(
+        `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
+      );
+    }
+    const { data, error } = await query;
+    const { count } = await countQuery;
+
+    if (error) {
+      showNotification({
+        title: "Failed to Fetch Request!",
+        message: error.message,
+        color: "red",
+      });
+    }
+    if (data && count) {
+      const newData = data as RequestType[];
+      setRequestList(newData);
+      setRequestCount(count);
+    } else {
+      setRequestCount(0);
+      setRequestList([]);
+    }
+    setIsLoading(false);
   };
+
+  const fetchForms = async () => {
+    const { data } = await supabase.from("form_name_table").select("*");
+    const forms = data?.map((form) => {
+      return { value: `${form.form_name_id}`, label: `${form.form_name}` };
+    });
+    if (forms !== undefined) {
+      setForms(forms);
+    }
+  };
+
+  // first load
+  useEffect(() => {
+    fetchRequests(false);
+    fetchForms();
+  }, [supabase]);
+
+  // filter
+  useEffect(() => {
+    setActivePage(1);
+    fetchRequests(false);
+  }, [selectedForm, status]);
+
+  // change page
+  useEffect(() => {
+    fetchRequests(false);
+  }, [activePage]);
 
   useEffect(() => {
     setIsApprover(false);
     if (selectedRequest) {
       if (
-        selectedRequest.status === "stale" ||
-        selectedRequest.status === "pending"
+        (selectedRequest.approval_status === "stale" ||
+          selectedRequest.approval_status === "pending") &&
+        selectedRequest.approver.user_id === currentUser.id
       ) {
-        selectedRequest.approvers.map((approver) => {
-          if (approver.name === currentUser && approver.status === "pending") {
-            setIsApprover(true);
-          }
-        });
+        setIsApprover(true);
       }
     }
   }, [selectedRequest]);
 
-  useEffect(() => {
-    let newRequestList: RequestType[] = tempRequests;
-    if (formType) {
-      newRequestList = newRequestList.filter(
-        (request) => request.formType === formType
-      );
-    }
-    if (status) {
-      newRequestList = newRequestList.filter(
-        (request) => request.status === status
-      );
-    }
-    if (search) {
-      newRequestList = newRequestList.filter((request) =>
-        toLower(request.requestTitle).includes(toLower(search))
-      );
-    }
-
-    console.log;
-    setRequestList(newRequestList);
-    filterPage(1, newRequestList);
-  }, [search, formType, status]);
-
-  const handleApprove = () => {
+  const handleApprove = async () => {
     setIsLoading(true);
-    showNotification({
-      title: "Success!",
-      message: `You approved ${selectedRequest?.requestTitle}`,
-      color: "green",
-    });
-    setSelectedRequest(null);
-    setIsLoading(false);
+    const { error } = await supabase
+      .from("form_table")
+      .update({ approval_status: "approved" })
+      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+
+    if (error) {
+      showNotification({
+        title: "Error!",
+        message: `Failed to approve ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+      setIsLoading(false);
+    } else {
+      setRequestList((prev) =>
+        prev.map((request) => {
+          if (request.request_id === selectedRequest?.request_id) {
+            return {
+              ...request,
+              approval_status: "approved",
+            };
+          } else {
+            return request;
+          }
+        })
+      );
+      setSelectedRequest(null);
+      setIsLoading(false);
+      showNotification({
+        title: "Success!",
+        message: `You approved ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+    }
   };
 
-  const handleSendToRevision = () => {
+  const handleSendToRevision = async () => {
     setIsLoading(true);
-    showNotification({
-      title: "Success!",
-      message: `${selectedRequest?.requestTitle} is Sent to Revision`,
-      color: "green",
-    });
-    setSelectedRequest(null);
-    setIsLoading(false);
+    const { error } = await supabase
+      .from("form_table")
+      .update({ approval_status: "revision" })
+      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+
+    if (error) {
+      showNotification({
+        title: "Error!",
+        message: `Failed to send to revision the ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+      setIsLoading(false);
+    } else {
+      setRequestList((prev) =>
+        prev.map((request) => {
+          if (request.request_id === selectedRequest?.request_id) {
+            return {
+              ...request,
+              approval_status: "revision",
+            };
+          } else {
+            return request;
+          }
+        })
+      );
+      setSelectedRequest(null);
+      setIsLoading(false);
+      showNotification({
+        title: "Success!",
+        message: `You send to revision the ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     setIsLoading(true);
-    showNotification({
-      title: "Success!",
-      message: `You rejected ${selectedRequest?.requestTitle}`,
-      color: "green",
-    });
-    setSelectedRequest(null);
-    setIsLoading(false);
+    const { error } = await supabase
+      .from("form_table")
+      .update({ approval_status: "rejected" })
+      .eq("request_id", Number(`${selectedRequest?.request_id}`));
+
+    if (error) {
+      showNotification({
+        title: "Error!",
+        message: `Failed to reject ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+      setIsLoading(false);
+    } else {
+      setRequestList((prev) =>
+        prev.map((request) => {
+          if (request.request_id === selectedRequest?.request_id) {
+            return {
+              ...request,
+              approval_status: "rejected",
+            };
+          } else {
+            return request;
+          }
+        })
+      );
+      setSelectedRequest(null);
+      setIsLoading(false);
+      showNotification({
+        title: "Success!",
+        message: `You reject ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+    }
   };
 
   // todo: add eslint to show error for `mt={"xl"}`
@@ -163,7 +266,7 @@ const All = () => {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search"
           rightSection={
-            <ActionIcon>
+            <ActionIcon onClick={() => fetchRequests(true)}>
               <Search />
             </ActionIcon>
           }
@@ -171,9 +274,9 @@ const All = () => {
         <Select
           clearable
           placeholder="Form Type"
-          data={tempFormType}
-          value={formType}
-          onChange={setFormType}
+          data={forms}
+          value={selectedForm}
+          onChange={setSelectedForm}
         />
         <Select
           clearable
@@ -184,7 +287,7 @@ const All = () => {
         />
       </Group>
       <RequestTable
-        visibleRequests={visibleRequests}
+        requestList={requestList}
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
         isApprover={isApprover}
@@ -192,12 +295,12 @@ const All = () => {
         handleSendToRevision={handleSendToRevision}
         handleReject={handleReject}
       />
-      {requestList.length / REQUEST_PER_PAGE > 1 ? (
+      {requestCount / REQUEST_PER_PAGE > 1 ? (
         <Pagination
           className={styles.pagination}
           page={activePage}
-          onChange={(page) => filterPage(page, requestList)}
-          total={ceil(requestList.length / REQUEST_PER_PAGE)}
+          onChange={setActivePage}
+          total={ceil(requestCount / REQUEST_PER_PAGE)}
         />
       ) : null}
     </Stack>
