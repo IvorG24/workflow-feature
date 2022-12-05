@@ -42,58 +42,55 @@ export type Database = {
           form_id: number;
           form_name_id: number | null;
           form_owner: string | null;
-          description: string | null;
           form_type: Database["public"]["Enums"]["form_type"] | null;
           created_at: string | null;
           question_id: number | null;
           response_value: string[] | null;
           response_owner: string | null;
           response_comment: string | null;
-          team_id: string | null;
           request_title: string | null;
           request_description: string | null;
           approver_id: string | null;
           approval_status: string | null;
           request_id: number | null;
           on_behalf_of: string | null;
+          team_id: string | null;
         };
         Insert: {
           form_id?: never;
           form_name_id?: number | null;
           form_owner?: string | null;
-          description?: string | null;
           form_type?: Database["public"]["Enums"]["form_type"] | null;
           created_at?: string | null;
           question_id?: number | null;
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
-          team_id?: number | null;
           request_title?: string | null;
           request_description?: string | null;
           approver_id?: string | null;
           approval_status?: string | null;
           request_id?: number | null;
           on_behalf_of?: string | null;
+          team_id?: string | null;
         };
         Update: {
           form_id?: never;
           form_name_id?: number | null;
           form_owner?: string | null;
-          description?: string | null;
           form_type?: Database["public"]["Enums"]["form_type"] | null;
           created_at?: string | null;
           question_id?: number | null;
           response_value?: string[] | null;
           response_owner?: string | null;
           response_comment?: string | null;
-          team_id?: number | null;
           request_title?: string | null;
           request_description?: string | null;
           approver_id?: string | null;
           approval_status?: string | null;
           request_id?: number | null;
           on_behalf_of?: string | null;
+          team_id?: string | null;
         };
       };
       question_table: {
@@ -163,32 +160,32 @@ export type Database = {
           review_source?: string | null;
           review_target?: string | null;
           review_score?: number | null;
-          team_id?: number | null;
+          team_id?: string | null;
         };
         Update: {
           review_id?: never;
           review_source?: string | null;
           review_target?: string | null;
           review_score?: number | null;
-          team_id?: number | null;
+          team_id?: string | null;
         };
       };
       team_role_table: {
         Row: {
-          team_id: string;
           user_id: string;
+          team_id: string;
           team_role: Database["public"]["Enums"]["team_role"] | null;
           lock_account: boolean | null;
         };
         Insert: {
-          team_id: string;
           user_id: string;
+          team_id: string;
           team_role?: Database["public"]["Enums"]["team_role"] | null;
           lock_account?: boolean | null;
         };
         Update: {
-          team_id?: string;
           user_id?: string;
+          team_id?: string;
           team_role?: Database["public"]["Enums"]["team_role"] | null;
           lock_account?: boolean | null;
         };
@@ -200,12 +197,12 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
-          team_id?: never;
+          team_id?: string;
           team_name?: string | null;
           user_id?: string | null;
         };
         Update: {
-          team_id?: never;
+          team_id?: string;
           team_name?: string | null;
           user_id?: string | null;
         };
@@ -268,6 +265,7 @@ export type Database = {
         | "select"
         | "slider"
         | "multiple";
+      form_type: "request" | "review";
       request_status:
         | "approved"
         | "rejected"
@@ -275,7 +273,6 @@ export type Database = {
         | "revision"
         | "stale"
         | "cancelled";
-      form_type: "request" | "review";
       team_role: "member" | "manager";
     };
   };

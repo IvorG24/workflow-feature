@@ -68,9 +68,9 @@ const Question = () => {
       const formTableRecord = saveToFormTable(
         formNameId || 0,
         priority,
-        "3a820e69-8da1-4d80-98e2-5966fd2d663b",
+        "c09ae64a-196f-4874-b211-bf97d653fa64",
         description,
-        "af4e95a7-7198-440b-86cc-7127e6317408"
+        "69ec9e4c-70e9-41cb-b471-599006aacf2a"
       );
 
       await supabase.from("form_table").insert(formTableRecord);

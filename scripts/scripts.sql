@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS request_table CASCADE;
 DROP TYPE IF EXISTS expected_response_type CASCADE;
 DROP TYPE IF EXISTS team_role CASCADE;
 DROP TYPE IF EXISTS request_status CASCADE;
+DROP TYPE IF EXISTS form_type CASCADE;
 
 CREATE TYPE expected_response_type AS ENUM('text', 'number', 'date', 'daterange', 'time', 'email', 'select', 'slider', 'multiple');
 CREATE TYPE team_role AS ENUM('member','manager');
@@ -90,7 +91,7 @@ CREATE TABLE form_table(
   approval_status VARCHAR(254),
   request_id INT REFERENCES request_table(request_id),
   on_behalf_of VARCHAR(254),
-  team_id UUID REFERENCES team_table(team_id) 
+  team_id UUID REFERENCES team_table(team_id)
 );
 
 CREATE TABLE review_score_table(
