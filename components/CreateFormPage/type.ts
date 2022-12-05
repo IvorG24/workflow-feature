@@ -4,6 +4,8 @@ type InputTypes = Database["public"]["Enums"]["expected_response_type"];
 
 type Question = Database["public"]["Tables"]["question_table"]["Insert"];
 
+type FormTableInsert = Database["public"]["Tables"]["form_table"]["Insert"];
+
 type QuestionRow = Partial<
   Database["public"]["Tables"]["question_table"]["Row"]
 >;
@@ -36,6 +38,7 @@ type FormRequestData = {
 export type {
   FormRequestData,
   FormQuestion,
+  FormTableInsert,
   InputTypes,
   Question,
   QuestionRow,

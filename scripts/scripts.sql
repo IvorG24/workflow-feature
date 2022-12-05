@@ -13,6 +13,7 @@ DROP TYPE IF EXISTS team_role CASCADE;
 
 CREATE TYPE expected_response_type AS ENUM('text', 'number', 'date', 'daterange', 'time', 'email', 'select', 'slider', 'multiple');
 CREATE TYPE team_role AS ENUM('member','manager');
+CREATE TYPE form_type AS ENUM('request','review');
 
 -- START user_profile_table
 CREATE TABLE user_profile_table (
@@ -71,6 +72,8 @@ CREATE TABLE form_table(
   form_id INT GENERATED ALWAYS AS IDENTITY UNIQUE PRIMARY KEY,
   form_name_id INT REFERENCES form_name_table(form_name_id),
   form_owner UUID REFERENCES auth.users(id),
+  description VARCHAR(254),
+  form_type form_type,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   question_id INT REFERENCES question_table(question_id),
   response_value VARCHAR(254)[],

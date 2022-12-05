@@ -1,4 +1,6 @@
 // todo: create unit test
+import showNotification from "@/hooks/showNotifications";
+import { Database } from "@/utils/database.types";
 import {
   Button,
   Container,
@@ -6,15 +8,20 @@ import {
   Paper,
   Radio,
   Tabs,
+  Textarea,
   TextInput,
 } from "@mantine/core";
 import { DateRangePicker } from "@mantine/dates";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { alignQuestionOption } from "../CreateRequestFormPage/utils";
 import FormBuilder from "./FormBuilder";
-import { FormRequestData } from "./type";
+import { saveToFormTable } from "./saveToFormTable";
+import { FormRequestData, Question, QuestionOption, QuestionRow } from "./type";
 
 const Question = () => {
+  const supabase = useSupabaseClient<Database>();
   const {
     register,
     handleSubmit,
@@ -24,7 +31,56 @@ const Question = () => {
   const [activeTab, setActiveTab] = useState<string | null>("question");
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log(data);
+    try {
+      const { description, questions, title } = data;
+      const options = questions.map((item) => item.option);
+
+      const formNameRecord = await supabase
+        .from("form_name_table")
+        .insert({ form_name: title })
+        .select()
+        .single();
+
+      const questionRecord = await supabase
+        .from("question_table")
+        .insert([...(questions.map((item) => item.data) as Question[])])
+        .select();
+
+      const priority = questionRecord.data?.map(
+        (item) => item.question_id
+      ) as number[];
+
+      const formNameId = formNameRecord.data?.form_name_id;
+
+      await supabase
+        .from("form_priority_table")
+        .insert({ form_name_id: formNameId as number, priority });
+
+      const userCreatedOption = alignQuestionOption(
+        questionRecord.data as QuestionRow[],
+        options as unknown as QuestionOption[][]
+      );
+
+      await supabase
+        .from("user_created_select_option_table")
+        .insert(userCreatedOption);
+
+      const formTableRecord = saveToFormTable(
+        formNameId || 0,
+        priority,
+        "3a820e69-8da1-4d80-98e2-5966fd2d663b",
+        description,
+        "af4e95a7-7198-440b-86cc-7127e6317408"
+      );
+
+      await supabase.from("form_table").insert(formTableRecord);
+    } catch (e) {
+      showNotification({
+        message: "Error saving the form",
+        state: "Danger",
+        title: "Error",
+      });
+    }
   });
 
   return (
@@ -45,15 +101,13 @@ const Question = () => {
                   {...register("title", { required: "Title is required" })}
                   error={errors.title?.message}
                 />
-                <TextInput
+                <Textarea
                   label="Description"
                   {...register("description")}
                   mt="lg"
+                  minRows={3}
                 />
                 <Controller
-                  rules={{
-                    required: "Review Period is required",
-                  }}
                   control={control}
                   name="review_period"
                   render={({ field: { name, onChange, ref } }) => (

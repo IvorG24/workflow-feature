@@ -42,6 +42,8 @@ export type Database = {
           form_id: number;
           form_name_id: number | null;
           form_owner: string | null;
+          description: string | null;
+          form_type: Database["public"]["Enums"]["form_type"] | null;
           created_at: string | null;
           question_id: number | null;
           response_value: string[] | null;
@@ -53,6 +55,8 @@ export type Database = {
           form_id?: never;
           form_name_id?: number | null;
           form_owner?: string | null;
+          description?: string | null;
+          form_type?: Database["public"]["Enums"]["form_type"] | null;
           created_at?: string | null;
           question_id?: number | null;
           response_value?: string[] | null;
@@ -64,6 +68,8 @@ export type Database = {
           form_id?: never;
           form_name_id?: number | null;
           form_owner?: string | null;
+          description?: string | null;
+          form_type?: Database["public"]["Enums"]["form_type"] | null;
           created_at?: string | null;
           question_id?: number | null;
           response_value?: string[] | null;
@@ -233,6 +239,7 @@ export type Database = {
         | "select"
         | "slider"
         | "multiple";
+      form_type: "request" | "review";
       team_role: "member" | "manager";
     };
   };
