@@ -40,8 +40,8 @@ const CreateTeamName = () => {
         <form onSubmit={onSubmit}>
           <TextInput
             placeholder="Team Name"
+            defaultValue={teamName}
             {...register("teamName", { required: "Team name is required" })}
-            value={teamName}
             error={errors.teamName?.message}
           />
           <Center mt="xl">
