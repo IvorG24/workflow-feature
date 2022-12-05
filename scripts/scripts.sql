@@ -12,10 +12,12 @@ DROP TABLE IF EXISTS request_table CASCADE;
 DROP TYPE IF EXISTS expected_response_type CASCADE;
 DROP TYPE IF EXISTS team_role CASCADE;
 DROP TYPE IF EXISTS request_status CASCADE;
+DROP TYPE IF EXISTS form_type CASCADE;
 
 CREATE TYPE expected_response_type AS ENUM('text', 'number', 'date', 'daterange', 'time', 'email', 'select', 'slider', 'multiple');
 CREATE TYPE team_role AS ENUM('member','manager');
 CREATE TYPE request_status AS ENUM('approved', 'rejected', 'pending', 'revision', 'stale', 'cancelled');
+CREATE TYPE form_type AS ENUM('request','review');
 
 -- START user_profile_table
 CREATE TABLE user_profile_table (
@@ -77,7 +79,8 @@ CREATE TABLE request_table(
 CREATE TABLE form_table(
   form_id INT GENERATED ALWAYS AS IDENTITY UNIQUE PRIMARY KEY,
   form_name_id INT REFERENCES form_name_table(form_name_id),
-  form_owner UUID REFERENCES user_profile_table(user_id),
+  form_owner UUID REFERENCES auth.users(id),
+  form_type form_type,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   question_id INT REFERENCES question_table(question_id),
   response_value VARCHAR(254)[],
@@ -89,7 +92,7 @@ CREATE TABLE form_table(
   approval_status VARCHAR(254),
   request_id INT REFERENCES request_table(request_id),
   on_behalf_of VARCHAR(254),
-  team_id UUID REFERENCES team_table(team_id) 
+  team_id UUID REFERENCES team_table(team_id)
 );
 
 CREATE TABLE review_score_table(
