@@ -12,7 +12,11 @@ import {
   TextInput,
 } from "@mantine/core";
 import { DateRangePicker } from "@mantine/dates";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import {
+  useSessionContext,
+  useSupabaseClient,
+} from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { alignQuestionOption } from "../CreateRequestFormPage/utils";
@@ -27,6 +31,9 @@ import {
 
 const Question = () => {
   const supabase = useSupabaseClient<Database>();
+  const router = useRouter();
+  const { tid } = router.query;
+  const { session } = useSessionContext();
   const {
     register,
     handleSubmit,
@@ -73,12 +80,14 @@ const Question = () => {
       const formTableRecord = saveToFormTable(
         formNameId || 0,
         priority,
-        "c09ae64a-196f-4874-b211-bf97d653fa64",
+        session?.user.id as string, // todo: should not need typecasting, should not be undefined
         description,
-        "69ec9e4c-70e9-41cb-b471-599006aacf2a"
+        tid as string // todo: should not need typecasting, should not be undefined
       );
 
       await supabase.from("form_table").insert(formTableRecord);
+
+      router.push(`/t/${tid}/forms`);
     } catch (e) {
       showNotification({
         message: "Error saving the form",

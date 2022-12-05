@@ -23,6 +23,7 @@ type Props = {
 
 const MembersTable = ({ members }: Props) => {
   const router = useRouter();
+  const { tid } = router.query;
 
   return (
     <Stack justify="space-between" mih="400px" pt="md">
@@ -34,7 +35,7 @@ const MembersTable = ({ members }: Props) => {
               key={member.user_profile_table.user_id}
               onClick={() =>
                 router.push(
-                  `/profiles/${member.user_profile_table.user_id}/bio`
+                  `/t/${tid}/profiles/${member.user_profile_table.user_id}/bio`
                 )
               }
               sx={{ borderTop: "1px solid #E9E9E9" }}
