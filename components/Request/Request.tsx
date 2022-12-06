@@ -1,65 +1,154 @@
 // todo: create unit test
 import { setBadgeColor } from "@/utils/request";
-import type { Database } from "@/utils/types";
-import { FormTable, UserProfile } from "@/utils/types";
+import type {
+  Database,
+  FormNameRow,
+  FormRow,
+  QuestionRow,
+  SelectOptionRow,
+  TeamRow,
+  UserProfileRow,
+} from "@/utils/types";
 import {
   Avatar,
   Badge,
+  Box,
   Button,
   Container,
   Divider,
   Flex,
   Group,
   LoadingOverlay,
+  NumberInput,
+  Slider,
   Stack,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
+import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import styles from "./Request.module.scss";
 
-// TODO current user
-const currentUser = {
-  id: "d0eceb39-8c1b-4e84-b7d7-9fdeddf53f8f",
-  name: "Albert Linao",
-  email: "albertlinao@email.com",
+// type RequestType = FormTable & {
+//   owner: UserProfile;
+// } & { approver: UserProfile };
+
+export type Request = (FormRow & { form_name: FormNameRow } & {
+  question: QuestionRow;
+} & { question_option: SelectOptionRow } & { team: TeamRow } & {
+  owner: UserProfileRow;
+} & {
+  approver: UserProfileRow;
+})[];
+
+type Marks = {
+  value: number;
+  label: string;
 };
 
-type RequestType = FormTable & {
-  owner: UserProfile;
-} & { approver: UserProfile };
-
 const Request = () => {
+  const MARKS: Marks[] = [
+    {
+      value: 1,
+      label: "0%",
+    },
+    {
+      value: 2,
+      label: "25%",
+    },
+    {
+      value: 3,
+      label: "50%",
+    },
+    {
+      value: 4,
+      label: "75%",
+    },
+    {
+      value: 5,
+      label: "100%",
+    },
+  ];
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
-
-  const [request, setRequest] = useState<RequestType | null>(null);
+  const user = useUser();
+  const [isFetchingRequest, setIsFetchingRequest] = useState(true);
+  const [request, setRequest] = useState<Request | null>(null);
+  const [requiredFields, setRequiredFields] = useState({
+    approval_status: "",
+    request_title: "",
+    request_description: "",
+    on_behalf_of: "",
+    requestedBy: "",
+    approverName: "",
+    approverId: "",
+    created_at: "",
+  });
 
   useEffect(() => {
+    if (!router.isReady) return;
+    setIsFetchingRequest(true);
+
     const fetchRequest = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("form_table")
-        .select("*, owner:response_owner(*), approver:approver_id(*)")
-        .eq("request_id", `${router.query.id}`)
-        .single();
+        .select(
+          `
+            *,
+            form_name:form_name_id(*),
+            question:question_id(*),
+            question_option:question_option_id(*),
+            team:team_id(*),
+            owner:form_owner(*),
+            approver:approver_id(*)
+
+          `
+        )
+        .eq("request_id", router.query.id)
+        // .eq("form_name_id", router.query.formId)
+        .order("created_at", { ascending: true });
+      if (error) {
+        console.log(error);
+      }
       if (data) {
-        setRequest(data as RequestType);
+        setRequest(data as Request);
+
+        // TODO: I just did this to give type to data because data[0].etc. outputs Object is of type unknown linting error.
+        const temp = data as Request;
+
+        setRequiredFields({
+          approval_status: `${temp[0].approval_status}`,
+          request_title: `${temp[0].request_title}`,
+          request_description: `${temp[0].request_description}`,
+          on_behalf_of: `${temp[0].on_behalf_of}`,
+          requestedBy: `${temp[0].owner.full_name}`,
+          approverName: `${temp[0].approver.full_name}`,
+          created_at: `${temp[0].created_at}`,
+          approverId: `${temp[0].approver.user_id}`,
+        });
+        setIsFetchingRequest(false);
+        console.log(JSON.stringify(data, null, 2));
       }
     };
 
     fetchRequest();
   }, [supabase, router]);
 
+  useEffect(() => {
+    console.log(isFetchingRequest);
+  }, [isFetchingRequest]);
+
   let isApprover = false;
   if (request) {
     if (
-      (request.approval_status === "stale" ||
-        request.approval_status === "pending") &&
-      request.approver.user_id === currentUser.id
+      (requiredFields.approval_status === "stale" ||
+        requiredFields.approval_status === "pending") &&
+      requiredFields.approverId === user?.id
     ) {
       isApprover = true;
     }
@@ -73,19 +162,20 @@ const Request = () => {
     const { error } = await supabase
       .from("form_table")
       .update({ approval_status: "approved" })
-      .eq("request_id", Number(`${router.query.id}`));
+      .eq("request_id", Number(`${router.query.id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({
         title: "Error!",
-        message: `Failed to approve ${request?.request_title}`,
+        message: `Failed to approve ${requiredFields?.request_title}`,
         color: "red",
       });
       setIsLoading(false);
     } else {
       showNotification({
         title: "Success!",
-        message: `You approved ${request?.request_title}`,
+        message: `You approved ${requiredFields?.request_title}`,
         color: "green",
       });
       router.push("/requests");
@@ -97,20 +187,21 @@ const Request = () => {
 
     const { error } = await supabase
       .from("form_table")
-      .update({ approval_status: "approved" })
-      .eq("request_id", Number(`${router.query.id}`));
+      .update({ approval_status: "revision" })
+      .eq("request_id", Number(`${router.query.id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({
         title: "Error!",
-        message: `Failed to approve ${request?.request_title}`,
+        message: `Failed to approve ${requiredFields?.request_title}`,
         color: "red",
       });
       setIsLoading(false);
     } else {
       showNotification({
         title: "Success!",
-        message: `${request?.request_title} is Sent to Revision`,
+        message: `${requiredFields?.request_title} is Sent to Revision`,
         color: "green",
       });
       router.push("/requests");
@@ -120,29 +211,35 @@ const Request = () => {
   const handleReject = async () => {
     const { error } = await supabase
       .from("form_table")
-      .update({ approval_status: "approved" })
-      .eq("request_id", Number(`${router.query.id}`));
+      .update({ approval_status: "rejected" })
+      .eq("request_id", Number(`${router.query.id}`))
+      .neq("approval_status", null);
 
     if (error) {
       showNotification({
         title: "Error!",
-        message: `Failed to approve ${request?.request_title}`,
+        message: `Failed to approve ${requiredFields?.request_title}`,
         color: "red",
       });
       setIsLoading(false);
     } else {
       showNotification({
         title: "Success!",
-        message: `You rejected ${request?.request_title}`,
+        message: `You rejected ${requiredFields?.request_title}`,
         color: "green",
       });
       router.push("/requests");
     }
   };
 
+  // if (isFetchingRequest) return null;
+
   return (
     <Container px={8} py={16} fluid>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      <LoadingOverlay
+        visible={isLoading || isFetchingRequest}
+        overlayBlur={2}
+      />
 
       <Stack>
         <Flex
@@ -154,23 +251,23 @@ const Request = () => {
         >
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Request Title</Title>
-            <Text>{request?.request_title}</Text>
+            <Text>{requiredFields.request_title}</Text>
           </Stack>
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Request By</Title>
             <Group>
               <Avatar radius={100} />
-              <Text>{request?.owner.full_name}</Text>
+              <Text>{requiredFields.requestedBy}</Text>
             </Group>
           </Stack>
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Date Created</Title>
-            <Text>{request?.created_at?.slice(0, 10)}</Text>
+            <Text>{requiredFields.created_at?.slice(0, 10)}</Text>
           </Stack>
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>Status</Title>
-            <Badge color={setBadgeColor(`${request?.approval_status}`)}>
-              {startCase(`${request?.approval_status}`)}
+            <Badge color={setBadgeColor(`${requiredFields.approval_status}`)}>
+              {startCase(`${requiredFields.approval_status}`)}
             </Badge>
           </Stack>
         </Flex>
@@ -184,12 +281,12 @@ const Request = () => {
         >
           <Stack className={styles.flex} mt={16}>
             <Title order={4}> Request Description</Title>
-            <Text>{request?.request_description}</Text>
+            <Text>{requiredFields.request_description}</Text>
           </Stack>
 
           <Stack className={styles.flex} mt={16}>
             <Title order={4}>On Behalf Of</Title>
-            <Text>{request?.on_behalf_of}</Text>
+            <Text>{requiredFields.on_behalf_of}</Text>
           </Stack>
         </Flex>
 
@@ -198,8 +295,8 @@ const Request = () => {
         <Stack mt="xl">
           <Title order={5}>Approver</Title>
           <Group align="apart">
-            <Badge color={setBadgeColor(`${request?.approval_status}`)} />
-            <Text>{request?.approver.full_name}</Text>
+            <Badge color={setBadgeColor(`${requiredFields.approval_status}`)} />
+            <Text>{requiredFields.approverName}</Text>
           </Group>
         </Stack>
 
@@ -227,6 +324,91 @@ const Request = () => {
             </Group>
           ) : null}
         </Stack>
+        {request?.map((form) => {
+          const responseValue =
+            form.response_value && form.response_value[0]
+              ? form.response_value[0]
+              : "";
+
+          if (
+            form?.question?.expected_response_type === "text" ||
+            form?.question?.expected_response_type === "email"
+          ) {
+            return (
+              <Box key={form.form_id}>
+                <TextInput
+                  label={form.question.question}
+                  value={responseValue}
+                />
+              </Box>
+            );
+          }
+          if (form?.question?.expected_response_type === "number") {
+            return (
+              <Box key={form?.form_id}>
+                <NumberInput
+                  label={form?.question.question}
+                  value={Number(responseValue)}
+                />
+              </Box>
+            );
+          }
+          if (form?.question?.expected_response_type === "date") {
+            return (
+              <Box key={form?.form_id}>
+                <DatePicker
+                  label={form?.question?.question}
+                  placeholder={"Choose date"}
+                  value={new Date(responseValue)}
+                />
+              </Box>
+            );
+          }
+          if (form?.question?.expected_response_type === "daterange") {
+            return (
+              <Box key={form?.form_id}>
+                <DateRangePicker
+                  label={form?.question?.question}
+                  placeholder={"Choose a date range"}
+                  value={[
+                    new Date(responseValue.split(",")[0]),
+                    new Date(responseValue.split(",")[1]),
+                  ]}
+                />
+              </Box>
+            );
+          }
+          if (form?.question?.expected_response_type === "time") {
+            return (
+              <Box key={form?.form_id}>
+                <TimeInput
+                  label={form?.question?.question}
+                  placeholder={"Choose time"}
+                  format="12"
+                  value={new Date(responseValue)}
+                />
+              </Box>
+            );
+          }
+          if (form?.question?.expected_response_type === "slider") {
+            return (
+              <Box my="md" key={form?.form_id}>
+                <Text component="label" color="dark">
+                  {form?.question?.question}
+                </Text>
+                <Slider
+                  label={form?.question?.question}
+                  placeholder={"Slide to choose value"}
+                  marks={MARKS}
+                  min={1}
+                  max={5}
+                  labelAlwaysOn={false}
+                  value={Number(responseValue)}
+                />
+              </Box>
+            );
+          }
+        })}
       </Stack>
     </Container>
   );

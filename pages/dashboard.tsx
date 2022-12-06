@@ -2,7 +2,7 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { ReactElement } from "react";
-import type { NextPageWithLayout } from "../../_app";
+import type { NextPageWithLayout } from "./_app";
 
 const Page: NextPageWithLayout = () => {
   return (

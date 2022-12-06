@@ -12,6 +12,7 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -28,7 +29,8 @@ const InviteUser = () => {
   const [invited, setInvited] = useState<string[]>([]);
   const theme = useMantineTheme();
   const router = useRouter();
-  const { teamName } = router.query;
+  const { name } = router.query;
+  const { session, supabaseClient } = useSessionContext();
   const {
     register,
     handleSubmit,
@@ -41,14 +43,27 @@ const InviteUser = () => {
     reset();
   });
 
+  const handleCreateTeam = async () => {
+    try {
+      const { error } = await supabaseClient
+        .from("team_table")
+        .insert([{ team_name: name, user_id: session?.user.id }]);
+
+      if (error) throw error;
+
+      router.push("/dashboard");
+    } catch (error) {
+      // todo: create a notification
+      console.error(error);
+    }
+  };
+
   return (
     <Container p="md" maw={700}>
       <Paper shadow="sm" p="lg" withBorder mt="lg">
         <Flex>
           <UnstyledButton
-            onClick={() =>
-              router.push(`/teams/create?step=1&teamName=${teamName}`)
-            }
+            onClick={() => router.push(`/teams/create?step=1&name=${name}`)}
           >
             <IconWrapper color="gray" fontSize={20} display="block">
               <ArrowBack />
@@ -102,7 +117,7 @@ const InviteUser = () => {
                 type="submit"
                 aria-label="create team"
                 mt="xl"
-                onClick={() => router.push("/dashboard")}
+                onClick={() => handleCreateTeam()}
               >
                 Create Team
               </Button>
