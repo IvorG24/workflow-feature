@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
 type ItemData = {
+  id: string;
   src: string;
   alt: string;
   text: string;
@@ -63,8 +64,7 @@ const mockData = [
 
 const savedOrder = ["a", "b", "c", "d", "e"];
 
-function Item({ data }) {
-  const { id, src, alt, text, badge, buttonMessage } = data;
+function Item({ id, src, alt, text, badge, buttonMessage }: ItemData) {
   return (
     <Card shadow="sm" p="lg" radius="md" withBorder>
       <Card.Section>
@@ -100,7 +100,12 @@ function DragAndDropPage(): JSX.Element {
     // we use temp as staging for item
     const tempArr = cardData;
     const [tempItem] = tempArr.splice(item.source.index, 1);
-    cardData.splice(item.destination.index, 0, tempItem);
+    tempArr.splice(item.destination.index, 0, tempItem);
+    setCardData(tempArr);
+    // take order of id's in modified tempArr
+    const arrOfIds = tempArr.map((item) => item.id);
+    setOrderArr(arrOfIds);
+    console.log(orderArr);
     console.log(cardData);
   };
   return (
@@ -125,7 +130,7 @@ function DragAndDropPage(): JSX.Element {
                             {...provided.dragHandleProps}
                             ref={provided.innerRef}
                           >
-                            <Item data={item} />
+                            <Item {...item} />
                           </li>
                         )}
                       </Draggable>
