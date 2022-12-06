@@ -14,6 +14,7 @@ import {
   Flex,
   Group,
   LoadingOverlay,
+  MultiSelect,
   NumberInput,
   Paper,
   Select,
@@ -250,12 +251,6 @@ const CreateRequest = () => {
         .eq("form_name_id", router.query.formId)
         .order("created_at", { ascending: true });
 
-      if (requests) {
-        const newRequests = requests as Form;
-        // TODO: Can remove this since may setFormTemplate(newRequests) sa line 32?
-        setFormTemplate(newRequests);
-      }
-
       const newRequest = requests as Form;
 
       console.log(JSON.stringify(requests, null, 2));
@@ -283,8 +278,10 @@ const CreateRequest = () => {
           value: `${request.response_value ? request.response_value[0] : ""}`,
         };
       });
+
       setAnswers(draftAnswers);
       setFormTemplate(newRequest);
+
       setSelectedApprover(`${requests && requests[0].approver_id}`);
       setFormName(`${newRequest[0].form_name.form_name}`);
     };
@@ -567,8 +564,7 @@ const CreateRequest = () => {
                     value={answers[index].value}
                   />
                 );
-              }
-              if (form.question.expected_response_type === "number") {
+              } else if (form.question.expected_response_type === "number") {
                 return (
                   <NumberInput
                     key={form.form_id}
@@ -579,8 +575,7 @@ const CreateRequest = () => {
                     value={Number(answers[index].value)}
                   />
                 );
-              }
-              if (form.question.expected_response_type === "date") {
+              } else if (form.question.expected_response_type === "date") {
                 return (
                   <DatePicker
                     key={form.form_id}
@@ -589,10 +584,15 @@ const CreateRequest = () => {
                     onChange={(e) =>
                       handleAnswer(`${form.question_id}`, `${e}`)
                     }
+                    defaultValue={
+                      answers[index].value
+                        ? new Date(answers[index].value)
+                        : null
+                    }
                   />
                 );
-              }
-              if (form.question.expected_response_type === "daterange") {
+              } else if (form.question.expected_response_type === "daterange") {
+                const dates = answers[index].value.split(",");
                 return (
                   <DateRangePicker
                     key={form.form_id}
@@ -601,10 +601,14 @@ const CreateRequest = () => {
                     onChange={(e) =>
                       handleAnswer(`${form.question_id}`, `${e}`)
                     }
+                    defaultValue={
+                      dates[0]
+                        ? [new Date(dates[0]), new Date(dates[1])]
+                        : [null, null]
+                    }
                   />
                 );
-              }
-              if (form.question.expected_response_type === "time") {
+              } else if (form.question.expected_response_type === "time") {
                 return (
                   <TimeInput
                     key={form.form_id}
@@ -614,10 +618,14 @@ const CreateRequest = () => {
                     onChange={(e) =>
                       handleAnswer(`${form.question_id}`, `${e}`)
                     }
+                    defaultValue={
+                      answers[index].value
+                        ? new Date(answers[index].value)
+                        : null
+                    }
                   />
                 );
-              }
-              if (form.question.expected_response_type === "slider") {
+              } else if (form.question.expected_response_type === "slider") {
                 return (
                   <Box my="md" key={form.form_id}>
                     <Text component="label" color="dark">
@@ -633,35 +641,49 @@ const CreateRequest = () => {
                       onChange={(e) =>
                         handleAnswer(`${form.question_id}`, `${e}`)
                       }
+                      value={Number(answers[index].value)}
                     />
                   </Box>
                 );
+              } else if (
+                form.question.expected_response_type === "multiple" &&
+                form.question_option.question_option !== null
+              ) {
+                return (
+                  <MultiSelect
+                    key={form.form_id}
+                    data={form.question_option.question_option.map((option) => {
+                      return { value: `${option}`, label: `${option}` };
+                    })}
+                    label={form.question.question}
+                    placeholder={"Choose multiple"}
+                    onChange={(e) =>
+                      handleAnswer(`${form.question_id}`, `${e}`)
+                    }
+                    value={answers[index].value.split(",")}
+                  />
+                );
+              } else if (
+                form.question.expected_response_type === "select" &&
+                form.question_option.question_option !== null
+              ) {
+                return (
+                  <Select
+                    key={form.form_id}
+                    data={form.question_option.question_option.map((option) => {
+                      return { value: `${option}`, label: `${option}` };
+                    })}
+                    searchable
+                    clearable
+                    label={form.question.question}
+                    placeholder={"Choose one"}
+                    onChange={(e) =>
+                      handleAnswer(`${form.question_id}`, `${e}`)
+                    }
+                    value={answers[index].value}
+                  />
+                );
               }
-              // if (form.question.expected_response_type === "multiple") {
-              //   return (
-              //     <Box>
-              //       <MultiSelect
-              //         data={parseOption}
-              //         label={data.question}
-              //         placeholder={GENERIC_PLACEHOLDER}
-              //       />
-              //     </Box>
-              //   );
-              // }
-
-              // if (form.question.expected_response_type === "select") {
-              //   return (
-              //     <Box>
-              //       <Select
-              //         data={parseOption}
-              //         searchable
-              //         clearable
-              //         label={data.question}
-              //         placeholder={GENERIC_PLACEHOLDER}
-              //       />
-              //     </Box>
-              //   );
-              // }
             })}
 
             <Group position="right">

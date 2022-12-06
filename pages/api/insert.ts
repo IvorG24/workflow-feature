@@ -10,7 +10,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   if (req.method === "POST") {
-
     const { formData, isDraft, formId, userId, approver, answers } = req.body;
     const newAnswers = answers as { questionId: string; value: string }[];
 
@@ -18,7 +17,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       .from("request_table")
       .insert({})
       .select()
-      .limit(1)
       .single();
 
     if (!request.data) throw new Error();
@@ -40,6 +38,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       Number(answer.questionId)
     );
     const answerList = newAnswers.map((answer) => answer.value);
+    const { data } = await supabase
+      .from("user_created_select_option_table")
+      .select("question_id");
+    const optionIdList = data?.map((id) => id.question_id);
     const form: FormInsert[] = saveToFormTable(
       Number(formId),
       questionIdList,
@@ -50,7 +52,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       approver,
       formData.behalf,
       answerList,
-      isDraft
+      isDraft,
+      optionIdList
     );
 
     await supabase.from("form_table").insert(form);
@@ -69,7 +72,8 @@ const saveToFormTable = (
   approver: string,
   behalf: string,
   answerList: string[],
-  isDraft: boolean
+  isDraft: boolean,
+  optionIdList: number[] | undefined
 ) => {
   const formTableRecord: FormInsert[] = [];
 
@@ -88,6 +92,9 @@ const saveToFormTable = (
       approver_id: approver,
       on_behalf_of: behalf,
       response_value: [answer],
+      question_option_id: optionIdList?.includes(question_id)
+        ? question_id
+        : null,
     });
   }
 

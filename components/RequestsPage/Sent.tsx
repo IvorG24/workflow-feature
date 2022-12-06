@@ -57,11 +57,13 @@ const Sent = () => {
       .select("*, owner:response_owner(*), approver:approver_id(*)")
       .neq("approval_status", "null")
       .eq("response_owner", user?.id)
+      .eq("is_draft", false)
       .range(start, start + REQUEST_PER_PAGE - 1);
     let countQuery = supabase
       .from("form_table")
       .select("*", { count: "exact" })
       .eq("response_owner", user?.id)
+      .eq("is_draft", false)
       .neq("approval_status", "null");
     if (selectedForm) {
       query = query.eq("form_name_id", selectedForm);
