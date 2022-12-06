@@ -56,7 +56,7 @@ const NotificationsPage = () => {
       <Divider mt="lg" color="gray.2" />
       <Flex gap="xl" align="center">
         <Container m={0} p={0}>
-          <Text weight="bold">Requests Approval</Text>
+          <Text weight="bold">Requests For Approval</Text>
           <Text>Lorem ipsum dolor sit amet, consectetur adipisicing.</Text>
         </Container>
         <Container m={0} p={0}>
