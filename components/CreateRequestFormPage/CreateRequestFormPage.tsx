@@ -36,7 +36,7 @@ const CreateRequestFormPage: FC = () => {
   return (
     <Container fluid>
       <Title size="h2" mb="lg">
-        Create Request
+        Create Request Form
       </Title>
       <Grid>
         <Grid.Col span={12} lg={6}>

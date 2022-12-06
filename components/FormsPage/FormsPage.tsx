@@ -102,7 +102,7 @@ const FormList = () => {
           rightIcon={<AddCircle />}
           variant="subtle"
           // todo: temporary create form
-          onClick={() => router.push("/forms/creates")}
+          onClick={() => router.push("/forms/build")}
         >
           Create a Form
         </Button>
