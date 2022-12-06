@@ -196,7 +196,9 @@ const Navbar = ({ teams, teamId }: Props) => {
           />
           <NavLink
             component="a"
-            href={`/t/${teamId}/settings/members`}
+            // TODO: Commented out page route has no content. Kindly fix.
+            // href={`/t/${teamId}/settings/members`}
+            href={`/settings/members`}
             label="Members"
             icon={
               <div className={iconStyle}>
@@ -234,7 +236,7 @@ const Navbar = ({ teams, teamId }: Props) => {
 
           <NavLink
             component="a"
-            href="/settings"
+            href="/settings/general"
             label="Settings"
             icon={
               <div className={iconStyle}>
