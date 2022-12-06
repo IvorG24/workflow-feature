@@ -1,5 +1,4 @@
 import getMantineTheme from "@/utils/getMantineTheme";
-import createClient from "@/utils/supabase";
 import {
   ColorScheme,
   ColorSchemeProvider,
@@ -7,10 +6,11 @@ import {
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { NotificationsProvider } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
 import { NextPage } from "next/types";
-import { ReactElement, ReactNode } from "react";
+import { ReactElement, ReactNode, useState } from "react";
 import "../styles/globals.css";
 
 // #todo: implement better typing but I think it's okay because it's from the docs
@@ -25,6 +25,7 @@ type AppPropsWithLayout = AppProps & {
 };
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
+  const [supabaseClient] = useState(() => createBrowserSupabaseClient());
   // save theme to local storage
   // ref: https://mantine.dev/guides/dark-theme/
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
@@ -50,7 +51,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         theme={{ colorScheme, ...getMantineTheme(colorScheme) }}
       >
         <SessionContextProvider
-          supabaseClient={createClient}
+          supabaseClient={supabaseClient}
           initialSession={pageProps.initialSession}
         >
           <NotificationsProvider position="top-center">
