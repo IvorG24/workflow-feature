@@ -1,0 +1,40 @@
+@import "@/styles/variables";
+
+.pagination {
+  button {
+    background-color: transparent;
+    border: none;
+    color: var(--mantine-color-dark-4);
+  }
+
+  button[data-active="true"] {
+    font-weight: 600;
+    background-color: var(--mantine-color-gray-2);
+    color: var(--mantine-color-dark-4);
+  }
+
+  button:first-child::after {
+    content: "Previous";
+    padding-left: 4px;
+  }
+
+  button:last-child::before {
+    content: "Next";
+    padding-right: 4px;
+  }
+
+  button:first-child svg,
+  button:last-child svg {
+    transform: scale(1.7);
+  }
+}
+
+.dark {
+  button {
+    color: var(--mantine-color-light-4);
+  }
+
+  button[data-active="true"] {
+    background-color: var(--mantine-color-gray-4);
+  }
+}

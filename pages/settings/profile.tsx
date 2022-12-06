@@ -4,20 +4,20 @@ import Setting from "@/components/Setting/Setting";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../_app";
 
-const MemberSettingsPage: NextPageWithLayout = () => {
+const ProfileSettingsPage: NextPageWithLayout = () => {
   return (
     <div>
       <Meta
-        description="Member Settings Page"
-        url="localhost:3000/settings/members"
+        description="Profile Settings Page"
+        url="localhost:3000/settings/profile"
       />
-      <Setting activeTab="members" />
+      <Setting activeTab="profile" />
     </div>
   );
 };
 
-MemberSettingsPage.getLayout = function getLayout(page: ReactElement) {
+ProfileSettingsPage.getLayout = function getLayout(page: ReactElement) {
   return <WorkspaceLayout>{page}</WorkspaceLayout>;
 };
 
-export default MemberSettingsPage;
+export default ProfileSettingsPage;

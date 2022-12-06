@@ -1,7 +1,7 @@
-import { Tabs, Title } from "@mantine/core";
+import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import MembersPage from "../MembersPage/MembersPage";
-import styles from "./Setting.module.scss";
+import NotificationsPage from "../NotificationsPage/NotificationsPage";
 
 type Props = {
   activeTab: string;
@@ -10,40 +10,40 @@ type Props = {
 const Setting = ({ activeTab }: Props) => {
   const router = useRouter();
 
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case "general":
-      // return <General />;
-      case "member":
-        return <MembersPage />;
-      case "profile":
-      // return <Profile />;
-      case "notification":
-      // return <Notification />;
-      case "billing":
-      // return <Billing />;
-    }
-  };
-
   return (
-    <div className={styles.container}>
+    <Container fluid px="xs" py="sm">
       <Title>Settings</Title>
       <Tabs
         value={activeTab}
         onTabChange={(value) => router.push(`/settings/${value}`)}
         defaultValue={activeTab}
-        className={styles.tabsContainer}
+        mt="xl"
       >
         <Tabs.List>
           <Tabs.Tab value="general">General</Tabs.Tab>
-          <Tabs.Tab value="member">Member</Tabs.Tab>
+          <Tabs.Tab value="members">Member</Tabs.Tab>
           <Tabs.Tab value="profile">Profile</Tabs.Tab>
           <Tabs.Tab value="notification">Notification</Tabs.Tab>
           <Tabs.Tab value="billing">Billing</Tabs.Tab>
         </Tabs.List>
-        <div className={styles.mainContainer}>{renderActiveTab()}</div>
+
+        <Tabs.Panel value="general" pt="xl">
+          {/* <General /> */}
+        </Tabs.Panel>
+        <Tabs.Panel value="members" pt="xl">
+          <MembersPage />
+        </Tabs.Panel>
+        <Tabs.Panel value="profile" pt="xl">
+          {/* <Profile /> */}
+        </Tabs.Panel>
+        <Tabs.Panel value="notification" pt="xl">
+          <NotificationsPage />
+        </Tabs.Panel>
+        <Tabs.Panel value="billing" pt="xl">
+          {/* <Billing /> */}
+        </Tabs.Panel>
       </Tabs>
-    </div>
+    </Container>
   );
 };
 
