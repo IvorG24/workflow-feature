@@ -8,9 +8,19 @@ import {
 import { alignQuestionOption } from "@/components/CreateRequestFormPage/utils";
 import { AddCircle } from "@/components/Icon";
 import { Database } from "@/utils/database.types";
-import { Box, Button, Stack } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { FC, memo, useCallback } from "react";
+import { FormInsert } from "@/utils/types";
+import {
+  Box,
+  Button,
+  Notification,
+  Paper,
+  Stack,
+  TextInput,
+} from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
+import { FC, memo, useCallback, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import {
   Control,
@@ -30,10 +40,13 @@ type Props = {
 
 const FormBuilder: FC<Props> = (props) => {
   const supabase = useSupabaseClient<Database>();
+  const user = useUser();
+  const router = useRouter();
 
-  const { register, control, getValues } = props;
+  const { register, control, handleSubmit, getValues } = props;
+  const [notification, setNotification] = useState("");
 
-  const { isSubmitting } = useFormState({ control });
+  const { errors, isSubmitting } = useFormState({ control });
   const {
     fields: questionList,
     append: appendQuestion,
@@ -104,54 +117,127 @@ const FormBuilder: FC<Props> = (props) => {
       await supabase
         .from("user_created_select_option_table")
         .insert(userCreatedOption);
+
+      const form: FormInsert[] = saveToFormTable(
+        form_name_id,
+        priority,
+        `${user?.id}`,
+        userCreatedOption.map((e) => e.question_id)
+      );
+
+      await supabase.from("form_table").insert(form);
+      showNotification({
+        title: "Form built",
+        message: "You can now create requests with this form!",
+      });
+      router.push("/forms");
     } catch (e) {
-      console.error(e);
+      setNotification("Error saving the form");
     }
   };
 
+  const saveToFormTable = (
+    form_name_id: number,
+    priority: number[],
+    form_owner: string,
+    options?: number[]
+    // team_id?: number | null
+  ) => {
+    const formTableRecord: FormInsert[] = [];
+    // TODO: team_id
+    for (let i = 0; i < priority.length; i++) {
+      const question_id = priority[i];
+      formTableRecord.push({
+        question_id,
+        question_option_id: options ? options[i] : undefined,
+        request_id: null,
+        form_name_id,
+        form_owner,
+        team_id: null,
+        is_draft: false,
+      });
+    }
+
+    return formTableRecord;
+  };
+
   return (
-    <Stack mt="lg">
-      <DragDropContext onDragEnd={handleOnDragEnd}>
-        <Droppable
-          droppableId="questions"
-          type="questionDroppable"
-          isDropDisabled={isSubmitting}
+    <>
+      {notification && (
+        <Notification
+          title="Something went wrong"
+          color="red"
+          onClose={() => setNotification("")}
+          mb="md"
         >
-          {(provided) => (
-            <Box ref={provided.innerRef} {...provided.droppableProps}>
-              {questionList.map((item, index) => (
-                <QuestionItemBuilder
-                  key={item.id}
-                  register={register}
-                  control={control}
-                  questionIndex={index}
-                  handleRemoveQuestion={handleRemoveQuestion}
-                />
-              ))}
-              {provided.placeholder}
-            </Box>
-          )}
-        </Droppable>
-      </DragDropContext>
-      <Button
-        role="button"
-        aria-label="Add Question"
-        variant="outline"
-        disabled={isSubmitting ? true : false}
-        onClick={handleAppendQuestion}
+          {notification}
+        </Notification>
+      )}
+      <form
+        role="form"
+        aria-label="Create Request Form"
+        onSubmit={handleSubmit(handleSaveFormRequest)}
       >
-        <AddCircle />
-        &nbsp;Add Question
-      </Button>
-      <Button
-        aria-label="Save"
-        role="button"
-        loading={isSubmitting}
-        onClick={handleSaveFormRequest}
-      >
-        Save
-      </Button>
-    </Stack>
+        <Stack>
+          <Paper withBorder shadow="sm" p="md">
+            <TextInput
+              role="textbox"
+              aria-label="Form Name"
+              label="Form Name"
+              size="md"
+              variant="filled"
+              placeholder="Name"
+              withAsterisk
+              mb="sm"
+              {...register("form_name", {
+                required: "Form name is required",
+              })}
+              error={errors.form_name?.message}
+            />
+          </Paper>
+          <DragDropContext onDragEnd={handleOnDragEnd}>
+            <Droppable
+              droppableId="questions"
+              type="questionDroppable"
+              isDropDisabled={isSubmitting}
+            >
+              {(provided) => (
+                <Box ref={provided.innerRef} {...provided.droppableProps}>
+                  {questionList.map((item, index) => (
+                    <QuestionItemBuilder
+                      key={item.id}
+                      register={register}
+                      control={control}
+                      questionIndex={index}
+                      handleRemoveQuestion={handleRemoveQuestion}
+                    />
+                  ))}
+                  {provided.placeholder}
+                </Box>
+              )}
+            </Droppable>
+          </DragDropContext>
+          <Button
+            role="button"
+            aria-label="Add Question"
+            variant="outline"
+            disabled={isSubmitting ? true : false}
+            onClick={handleAppendQuestion}
+          >
+            <AddCircle />
+            &nbsp;Add Question
+          </Button>
+          <Button
+            aria-label="Save"
+            role="button"
+            type="submit"
+            loading={isSubmitting}
+          >
+            Save
+          </Button>
+        </Stack>
+      </form>
+    </>
   );
 };
 

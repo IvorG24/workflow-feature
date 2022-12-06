@@ -15,7 +15,7 @@ export const saveToFormTable = (
       question_id,
       form_name_id,
       form_owner,
-      form_type: "review",
+      // form_type: "review",
       request_description: description,
       team_id,
     });
