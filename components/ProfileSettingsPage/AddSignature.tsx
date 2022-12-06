@@ -43,7 +43,20 @@ const AddSignature = ({ onCancel }: Props) => {
         Add Signature
       </Title>
       {!choice && (
-        <Flex justify="space-evenly" align="center" gap="sm" mt="xl">
+        <Flex
+          justify="space-evenly"
+          align="center"
+          gap="sm"
+          mt="xl"
+          wrap={{
+            base: "wrap",
+            xs: "nowrap",
+            sm: "nowrap",
+            md: "nowrap",
+            lg: "nowrap",
+            xl: "nowrap",
+          }}
+        >
           <UnstyledButton onClick={() => setChoice("draw")}>
             <Paper withBorder shadow="md" p="xl" miw={180} radius="lg">
               <Center>
@@ -98,7 +111,7 @@ const AddSignature = ({ onCancel }: Props) => {
           <Image radius="md" src={imageUrl} alt="Random unsplash image" />
         </Paper>
       )}
-      <Flex justify="flex-end" gap="xl" mt="xl">
+      <Flex justify="center" gap="xl" mt="xl">
         <Button onClick={onCancel} variant="outline">
           Cancel
         </Button>
