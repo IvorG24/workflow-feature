@@ -50,6 +50,7 @@ const Register = () => {
         setNotification(error.message);
         throw error;
       }
+
       reset();
       setNotification(
         "Please check your email for the email confirmation link."
