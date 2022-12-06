@@ -234,7 +234,7 @@ const Navbar = ({ teams, teamId }: Props) => {
 
           <NavLink
             component="a"
-            href="/settings"
+            href="/settings/general"
             label="Settings"
             icon={
               <div className={iconStyle}>
