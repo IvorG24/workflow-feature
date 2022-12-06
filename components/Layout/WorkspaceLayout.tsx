@@ -23,7 +23,8 @@ const WorkspaceLayout = ({ children }: Props) => {
   useEffect(() => {
     if (teamsLoading || teamsError || tid || !teams.length) return;
 
-    router.push(`/t/${teams[0].team_id}/dashboard`);
+    // TODO: Every time I click on a tab, laging an reredirect sa dashbooard so I will comment this muna for now.
+    // router.push(`/t/${teams[0].team_id}/dashboard`);
   }, [router, teams, teamsError, teamsLoading, tid]);
 
   if (isLoading || teamsLoading) return <LoadingPage />;
