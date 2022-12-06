@@ -1,4 +1,5 @@
 // this page was just used to test layout, you can delete it if you want
+import PaginationCustom from "@/components/Layout/PaginationCustom";
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { ReactElement } from "react";
@@ -13,6 +14,7 @@ const Page: NextPageWithLayout = () => {
         url="localhost:3000/testpage"
       />
       tespage
+      <PaginationCustom total={20} />
     </div>
   );
 };
