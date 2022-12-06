@@ -1,6 +1,7 @@
 import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import MembersPage from "../MembersPage/MembersPage";
+import NotificationsPage from "../NotificationsPage/NotificationsPage";
 
 type Props = {
   activeTab: string;
@@ -36,7 +37,7 @@ const Setting = ({ activeTab }: Props) => {
           {/* <Profile /> */}
         </Tabs.Panel>
         <Tabs.Panel value="notification" pt="xl">
-          {/* <Notification /> */}
+          <NotificationsPage />
         </Tabs.Panel>
         <Tabs.Panel value="billing" pt="xl">
           {/* <Billing /> */}
