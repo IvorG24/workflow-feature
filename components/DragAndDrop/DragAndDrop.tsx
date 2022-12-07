@@ -1,11 +1,7 @@
 import { Badge, Button, Card, Group, Image, Text } from "@mantine/core";
+import { DropResult } from "@types/react-beautiful-dnd";
 import { useEffect, useState } from "react";
-import {
-  DragDropContext,
-  Draggable,
-  DragUpdate,
-  Droppable,
-} from "react-beautiful-dnd";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
 type ItemData = {
   id: string;
@@ -52,7 +48,7 @@ function ItemList({
   useEffect(() => {
     setWinReady(true);
   }, []);
-  const handleOnDragEnd = (result: DragUpdate) => {
+  const handleOnDragEnd = (result: DropResult) => {
     // handles dragged to outside of draggable area
     if (!result.destination) return;
     // we use temp as staging for item
