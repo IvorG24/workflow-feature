@@ -15,7 +15,7 @@ DROP TYPE IF EXISTS request_status CASCADE;
 DROP TYPE IF EXISTS form_type CASCADE;
 DROP FUNCTION IF EXISTS handle_new_user();
 
-CREATE TYPE expected_response_type AS ENUM('text', 'number', 'date', 'daterange', 'time', 'email', 'select', 'slider', 'multiple');
+CREATE TYPE field_type AS ENUM('text', 'number', 'date', 'daterange', 'time', 'email', 'select', 'slider', 'multiple');
 CREATE TYPE team_role AS ENUM('owner','admin','member');
 CREATE TYPE request_status AS ENUM('approved', 'rejected', 'pending', 'revision', 'stale', 'cancelled');
 CREATE TYPE form_type AS ENUM('request','review');
@@ -79,7 +79,7 @@ CREATE TABLE form_table (
 CREATE TABLE field_table (
   field_id INT GENERATED ALWAYS AS IDENTITY UNIQUE PRIMARY KEY,
   field_name VARCHAR(254),
-  field_type VARCHAR(254),
+  field_type field_type,
   field_option VARCHAR(254)[],
   is_required BOOL,
   field_tooltip VARCHAR(254),
