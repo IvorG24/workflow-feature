@@ -3,6 +3,7 @@
 import { UserProfile } from "@/utils/types";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { useSessionContext } from "@supabase/auth-helpers-react";
+import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
@@ -62,6 +63,13 @@ const Member = () => {
     return members;
   };
 
+  const filterMemberList = memberList.filter((member) => {
+    const memberName = member.user_profile_table.full_name;
+    if (memberName) {
+      return lowerCase(memberName).includes(searchBarValue);
+    }
+  });
+
   return (
     <Stack>
       <Grid justify="space-between">
@@ -71,12 +79,11 @@ const Member = () => {
         </Grid.Col>
         <Grid.Col md={8} lg={6}>
           <SearchBar
-            onChange={(e) => setSearchBarValue(e.target.value)}
-            onClear={() => setSearchBarValue("")}
+            setSearchBarValue={setSearchBarValue}
             value={searchBarValue}
             numberOfMembers={memberList.length}
           />
-          <MembersTable members={memberList} />
+          <MembersTable members={filterMemberList} />
         </Grid.Col>
       </Grid>
       <Divider my={{ base: 10, lg: 20 }} />
