@@ -11,6 +11,10 @@ type ItemData = {
   buttonMessage: string;
 };
 
+type ItemOrder = {
+  order: string[];
+};
+
 function Item({ id, src, alt, text, badge, buttonMessage }: ItemData) {
   return (
     <Card shadow="sm" p="lg" radius="md" withBorder>
@@ -34,7 +38,13 @@ function Item({ id, src, alt, text, badge, buttonMessage }: ItemData) {
   );
 }
 
-function ItemList({ data, order }): JSX.Element {
+function ItemList({
+  data,
+  order,
+}: {
+  data: ItemData;
+  order: ItemOrder;
+}): JSX.Element {
   const [winReady, setWinReady] = useState(false);
   const [orderArr, setOrderArr] = useState(order);
   const [cardData, setCardData] = useState(data);
