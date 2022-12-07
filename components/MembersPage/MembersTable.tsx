@@ -24,6 +24,7 @@ type Props = {
 
 const MembersTable = ({ members }: Props) => {
   const router = useRouter();
+
   const { tid } = router.query;
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 7;
@@ -45,15 +46,16 @@ const MembersTable = ({ members }: Props) => {
           return (
             <Grid
               key={member.user_profile_table.user_id}
-              onClick={() =>
-                router.push(
-                  `/t/${tid}/profiles/${member.user_profile_table.user_id}/bio`
-                )
-              }
               sx={{ borderTop: "1px solid #E9E9E9" }}
             >
               <Grid.Col order={1} span={10} sm={8}>
-                <Group>
+                <Group
+                  onClick={() =>
+                    router.push(
+                      `/t/${tid}/profiles/${member.user_profile_table.user_id}/bio`
+                    )
+                  }
+                >
                   <MantineAvatar
                     size={40}
                     radius={40}
