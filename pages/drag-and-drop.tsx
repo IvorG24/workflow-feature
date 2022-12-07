@@ -94,13 +94,13 @@ function DragAndDropPage(): JSX.Element {
   useEffect(() => {
     setWinReady(true);
   }, []);
-  const handleOnDragEnd = (item) => {
+  const handleOnDragEnd = (result) => {
     // handles dragged to outside of draggable area
-    if (!item.destination) return;
+    if (!result.destination) return;
     // we use temp as staging for item
     const tempArr = cardData;
-    const [tempItem] = tempArr.splice(item.source.index, 1);
-    tempArr.splice(item.destination.index, 0, tempItem);
+    const [tempItem] = tempArr.splice(result.source.index, 1);
+    tempArr.splice(result.destination.index, 0, tempItem);
     setCardData(tempArr);
     // take order of id's in modified tempArr
     const arrOfIds = tempArr.map((item) => item.id);
