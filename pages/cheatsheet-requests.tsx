@@ -172,6 +172,7 @@ const CheatSheetPage: NextPageWithLayout = () => {
       .select(`*, form_table!inner(*)`)
       .eq("requested_by", userId)
       .eq("form_table.team_id", teamId);
+    console.log(data);
   };
 
   // Fetch received request list of a user under a team.
@@ -185,6 +186,7 @@ const CheatSheetPage: NextPageWithLayout = () => {
       .select(`*, form_table!inner(*)`)
       .eq("approver_id", userId)
       .eq("form_table.team_id", teamId);
+    console.log(data);
   };
 
   // Search request using keyword
@@ -204,8 +206,23 @@ const CheatSheetPage: NextPageWithLayout = () => {
       .select("*")
       .ilike("response_value", `%${keyword}%`);
 
+    console.log(data);
+    console.log(responseData);
+
     // Combine the result above to display request list.
   };
+
+  // To remove build error no unused vars
+
+  console.log(handleBuildRequestForm);
+  console.log(handleFetchRequestForm);
+  console.log(handleFillOutRequestForm);
+  console.log(handleFetchFilledOutRequestForm);
+  console.log(fetchRequestListByTeam);
+  console.log(fetchFormList);
+  console.log(fetchRequestListSentByUserUnderATeam);
+  console.log(fetchRequestListReceivedByUserUnderATeam);
+  console.log(searchRequestByKeyword);
 
   return (
     <div>

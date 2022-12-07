@@ -1,5 +1,5 @@
 import Avatar from "@/components/Avatar";
-import type { Database, UserProfile } from "@/utils/types";
+import type { Database, UserProfileTableRow } from "@/utils/types";
 import {
   Session,
   useSupabaseClient,
@@ -11,9 +11,9 @@ export default function Account({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>();
   const user = useUser();
   const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState<UserProfile["username"]>(null);
-  const [avatar_url, setAvatarUrl] = useState<UserProfile["avatar_url"]>(null);
-  const [full_name, setFullname] = useState<UserProfile["full_name"]>(null);
+  const [username, setUsername] = useState<UserProfileTableRow["username"]>(null);
+  const [avatar_url, setAvatarUrl] = useState<UserProfileTableRow["avatar_url"]>(null);
+  const [full_name, setFullname] = useState<UserProfileTableRow["full_name"]>(null);
 
   useEffect(() => {
     getProfile();
@@ -73,9 +73,9 @@ export default function Account({ session }: { session: Session }) {
     full_name,
     avatar_url,
   }: {
-    username: UserProfile["username"];
-    full_name: UserProfile["full_name"];
-    avatar_url: UserProfile["avatar_url"];
+    username: UserProfileTableRow["username"];
+    full_name: UserProfileTableRow["full_name"];
+    avatar_url: UserProfileTableRow["avatar_url"];
   }) {
     try {
       setLoading(true);
