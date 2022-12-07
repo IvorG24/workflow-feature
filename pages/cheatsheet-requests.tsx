@@ -161,6 +161,52 @@ const CheatSheetPage: NextPageWithLayout = () => {
     return data;
   };
 
+  // Fetch sent request list of a user under a team.
+  // https://supabase.com/docs/reference/javascript/select#filtering-through-foreign-tables
+  const fetchRequestListSentByUserUnderATeam = async (
+    userId: string,
+    teamId: string
+  ) => {
+    const { data } = await supabase
+      .from("request_table")
+      .select(`*, form_table!inner(*)`)
+      .eq("requested_by", userId)
+      .eq("form_table.team_id", teamId);
+  };
+
+  // Fetch received request list of a user under a team.
+  // https://supabase.com/docs/reference/javascript/select#filtering-through-foreign-tables
+  const fetchRequestListReceivedByUserUnderATeam = async (
+    userId: string,
+    teamId: string
+  ) => {
+    const { data } = await supabase
+      .from("request_table")
+      .select(`*, form_table!inner(*)`)
+      .eq("approver_id", userId)
+      .eq("form_table.team_id", teamId);
+  };
+
+  // Search request using keyword
+  const searchRequestByKeyword = async (keyword: string) => {
+    // Search inside request_title and request_description
+    const { data } = await supabase
+      .from("request_table")
+      .select("*")
+      .or(
+        `or(request_description.ilike.%${keyword}%,request_title.ilike.%${keyword}%)`
+      );
+
+    // Search inside request response values
+    /// Below can also be used for keyword analytics
+    const { data: responseData } = await supabase
+      .from("request_response_table")
+      .select("*")
+      .ilike("response_value", `%${keyword}%`);
+
+    // Combine the result above to display request list.
+  };
+
   return (
     <div>
       <Meta
