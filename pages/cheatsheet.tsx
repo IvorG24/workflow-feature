@@ -18,6 +18,7 @@ const CheatSheetPage: NextPageWithLayout = () => {
   const user = useUser();
   const router = useRouter();
   const [responseData, setResponseData] = useState("");
+  const [team, setTeam] = useState("");
 
   // Auth check here
   useEffect(() => {
@@ -27,7 +28,18 @@ const CheatSheetPage: NextPageWithLayout = () => {
       router.push("/sign-in");
       return;
     }
-  }, [router]);
+
+    const fetchFirstTeam = async () => {
+      const { data } = await supabase
+        .from("team_table")
+        .select("*")
+        .eq("team_name", "SCIC")
+        .single();
+
+      setTeam(`${data?.team_id}`);
+    };
+    fetchFirstTeam();
+  }, [router, isLoading, supabase, user]);
 
   // DB functions here
 
@@ -45,15 +57,18 @@ const CheatSheetPage: NextPageWithLayout = () => {
 
     // * TODO: Form priority
 
-    fieldTableInsert.map((a) => ({
+    const newFields = fieldTableInsert.map((a) => ({
       ...a,
-      form_id: formTableRow?.form_id,
+      form_table_id: formTableRow?.form_id,
     }));
 
-    const { data } = await supabase
+    const { data: fieldTableRow } = await supabase
       .from("field_table")
-      .insert(fieldTableInsert)
+      .insert(newFields)
       .select();
+
+    setResponseData(JSON.stringify({ formTableRow, fieldTableRow }, null, 2));
+    return { formTableRow, fieldTableRow };
   };
 
   // Fetch review form for creating review
@@ -70,6 +85,9 @@ const CheatSheetPage: NextPageWithLayout = () => {
       .select()
       .eq("form_table_id", formTableId);
 
+    setResponseData(
+      JSON.stringify({ formTableRow, fieldTableRowList }, null, 2)
+    );
     return { formTableRow, fieldTableRowList };
   };
 
@@ -78,21 +96,30 @@ const CheatSheetPage: NextPageWithLayout = () => {
     reviewTableInsert: Database["public"]["Tables"]["review_table"]["Insert"],
     reviewRespoonseTableInsert: Database["public"]["Tables"]["review_response_table"]["Insert"][]
   ) => {
-    const { data } = await supabase
+    const { data: reviewTableRow } = await supabase
       .from("review_table")
       .insert(reviewTableInsert)
       .select()
       .single();
 
-    reviewRespoonseTableInsert.map((a) => ({
-      ...a,
-      review_id: data?.review_id,
-    }));
+    const reviewRespoonseTableInsertWithReviewId =
+      reviewRespoonseTableInsert.map((a) => ({
+        ...a,
+        review_id: reviewTableRow?.review_id as number,
+      }));
 
-    await supabase
+    const { data: reviewResponseTableRow } = await supabase
       .from("review_response_table")
-      .insert(reviewRespoonseTableInsert)
+      .insert(reviewRespoonseTableInsertWithReviewId)
       .select();
+
+    setResponseData(
+      JSON.stringify({ reviewTableRow, reviewResponseTableRow }, null, 2)
+    );
+    return {
+      reviewTableRow,
+      reviewResponseTableRow,
+    };
   };
 
   // Fetch a filled out review
@@ -110,6 +137,9 @@ const CheatSheetPage: NextPageWithLayout = () => {
       .select(`*, field_table:field_id(*)`)
       .eq("review_id", reviewId);
 
+    setResponseData(
+      JSON.stringify({ reviewTableRow, reviewResponseTableRowList }, null, 2)
+    );
     return { reviewTableRow, reviewResponseTableRowList };
   };
 
@@ -120,6 +150,8 @@ const CheatSheetPage: NextPageWithLayout = () => {
       .from("review_table")
       .select(`*, form_table!inner(*)`)
       .eq("form_table.team_id", teamId);
+
+    setResponseData(JSON.stringify({ data }, null, 2));
     return data;
   };
 
@@ -134,8 +166,89 @@ const CheatSheetPage: NextPageWithLayout = () => {
       .eq("team_id", teamId)
       .eq("form_type", formType);
 
+    setResponseData(JSON.stringify({ data }, null, 2));
     return data;
   };
+
+  const formTableData = {
+    form_name: "Peer Review",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: team,
+    form_type: "review" as Database["public"]["Enums"]["form_type"],
+    form_priority: null,
+  };
+
+  const fieldTable = [
+    {
+      field_name: "Text Field",
+      field_type: "text" as Database["public"]["Enums"]["field_type"],
+      field_option: null,
+      is_required: true,
+      field_tooltip: "This is a text field tooltip",
+    },
+    {
+      field_name: "Number Field",
+      field_type: "number" as Database["public"]["Enums"]["field_type"],
+      field_option: null,
+      is_required: true,
+      field_tooltip: "This is a number field tooltip",
+    },
+    {
+      field_name: "Email Field",
+      field_type: "email" as Database["public"]["Enums"]["field_type"],
+      field_option: null,
+      is_required: true,
+      field_tooltip: "This is a email field tooltip",
+    },
+    {
+      field_name: "Select Field",
+      field_type: "select" as Database["public"]["Enums"]["field_type"],
+      field_option: ["aaa", "bbb", "ccc"],
+      is_required: true,
+      field_tooltip: "This is a select field tooltip",
+    },
+    {
+      field_name: "Multiple Field",
+      field_type: "multiple" as Database["public"]["Enums"]["field_type"],
+      field_option: ["aaa", "bbb", "ccc", "ddd", "eee"],
+      is_required: true,
+      field_tooltip: "This is a multiple field tooltip",
+    },
+  ];
+
+  const reviewTableData = {
+    form_table_id: 1,
+    review_source: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    review_target: "00320854-19c6-49da-845f-133886c04f94",
+  };
+
+  const reviewResponseTableData = [
+    {
+      field_id: 1,
+      response_value: "text",
+      review_id: 1,
+    },
+    {
+      field_id: 2,
+      response_value: "number",
+      review_id: 1,
+    },
+    {
+      field_id: 3,
+      response_value: "email",
+      review_id: 1,
+    },
+    {
+      field_id: 4,
+      response_value: "select",
+      review_id: 1,
+    },
+    {
+      field_id: 5,
+      response_value: "multiple",
+      review_id: 1,
+    },
+  ];
 
   return (
     <div>
@@ -146,27 +259,36 @@ const CheatSheetPage: NextPageWithLayout = () => {
       />
       <Container>
         <Flex>
-          <Button onClick={() => handleBuildReviewForm()}>
+          <Button
+            onClick={() => handleBuildReviewForm(formTableData, fieldTable)}
+          >
             handleBuildReviewForm
           </Button>
-          <Button onClick={() => handleFetchReviewForm()}>
+          <Button onClick={() => handleFetchReviewForm(1)}>
             handleFetchReviewForm
           </Button>
-          <Button onClick={() => handleFillOutReviewForm()}>
+          <Button
+            onClick={() =>
+              handleFillOutReviewForm(reviewTableData, reviewResponseTableData)
+            }
+          >
             handleFillOutReviewForm
           </Button>
-          <Button onClick={() => handleFetchFilledOutReviewForm()}>
+          <Button onClick={() => handleFetchFilledOutReviewForm(1)}>
             handleFetchFilledOutReviewForm
           </Button>
-          <Button onClick={() => fetchReviewListByTeam()}>
+          <Button onClick={() => fetchReviewListByTeam(team)}>
             fetchReviewListByTeam
           </Button>
-          <Button onClick={() => fetchFormList()}>fetchFormList</Button>
+          <Button onClick={() => fetchFormList(team, "review")}>
+            fetchFormList
+          </Button>
         </Flex>
         <JsonInput
           label="Query response here"
           placeholder="Query response here"
           value={responseData}
+          minRows={100}
         />
       </Container>
     </div>

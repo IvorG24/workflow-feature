@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS user_created_select_option_table CASCADE;
 DROP TABLE IF EXISTS review_score_table CASCADE;
 DROP TABLE IF EXISTS review_table CASCADE;
 DROP TABLE IF EXISTS request_table CASCADE;
-DROP TYPE IF EXISTS expected_response_type CASCADE;
+DROP TYPE IF EXISTS field_type CASCADE;
 DROP TYPE IF EXISTS team_role CASCADE;
 DROP TYPE IF EXISTS request_status CASCADE;
 DROP TYPE IF EXISTS form_type CASCADE;

@@ -13,7 +13,7 @@ export interface Database {
         Row: {
           field_id: number
           field_name: string | null
-          field_type: string | null
+          field_type: Database["public"]["Enums"]["field_type"] | null
           field_option: string[] | null
           is_required: boolean | null
           field_tooltip: string | null
@@ -22,7 +22,7 @@ export interface Database {
         Insert: {
           field_id?: never
           field_name?: string | null
-          field_type?: string | null
+          field_type?: Database["public"]["Enums"]["field_type"] | null
           field_option?: string[] | null
           is_required?: boolean | null
           field_tooltip?: string | null
@@ -31,7 +31,7 @@ export interface Database {
         Update: {
           field_id?: never
           field_name?: string | null
-          field_type?: string | null
+          field_type?: Database["public"]["Enums"]["field_type"] | null
           field_option?: string[] | null
           is_required?: boolean | null
           field_tooltip?: string | null
@@ -227,7 +227,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      expected_response_type:
+      field_type:
         | "text"
         | "number"
         | "date"
