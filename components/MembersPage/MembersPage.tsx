@@ -42,7 +42,7 @@ const Member = () => {
     const authUserRoleIndex = rolesOrder.indexOf(authUserRole);
     const newRoleIndex = rolesOrder.indexOf(newRole);
 
-    if (authUserRoleIndex >= 1 || newRoleIndex === 0) {
+    if (authUserRoleIndex > newRoleIndex) {
       return showNotification({
         title: "Error!",
         message: `You don't have permission to perform this action.`,

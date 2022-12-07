@@ -104,7 +104,8 @@ const MembersTable = ({
                 rightSectionWidth={20}
                 readOnly={
                   authUserRole === "member" ||
-                  authUser?.id === member.user_profile_table.user_id
+                  authUser?.id === member.user_profile_table.user_id ||
+                  authUserRole === member.team_role
                     ? true
                     : false
                 }
