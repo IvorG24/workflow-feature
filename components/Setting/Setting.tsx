@@ -10,7 +10,6 @@ type Props = {
 const Setting = ({ activeTab }: Props) => {
   const router = useRouter();
   const { tid } = router.query;
-  console.log(tid);
 
   return (
     <Container fluid px="0">

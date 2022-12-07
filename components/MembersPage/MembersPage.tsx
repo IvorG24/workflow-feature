@@ -5,7 +5,6 @@ import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { MEMBERS } from "tempData";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import MembersTable from "./MembersTable";
 import SearchBar from "./SearchBar";
@@ -35,18 +34,21 @@ const Member = () => {
 
         if (error) throw error;
 
-        // sort roles from Manager > Member
-        // todo: change sort conditions if roles are Owner > Admin > Member
-        const sorted_team_role_table = team_role_table.sort((a, b) =>
-          a.team_role.localeCompare(b.team_role)
-        );
-
-        setMemberList(sorted_team_role_table as TeamMember[]);
+        setMemberList(sortMemberList(team_role_table) as TeamMember[]);
       } catch (error) {
         console.error(error);
       }
     })();
   }, [supabaseClient, tid]);
+
+  // sort based on member role
+  const sortMemberList = (members: TeamMember[]) => {
+    const sortedMembers = members.sort((a, b) =>
+      a.team_role.localeCompare(b.team_role)
+    );
+
+    return sortedMembers;
+  };
 
   return (
     <Stack>
@@ -60,7 +62,7 @@ const Member = () => {
             onChange={(e) => setSearchBarValue(e.target.value)}
             onClear={() => setSearchBarValue("")}
             value={searchBarValue}
-            numberOfMembers={MEMBERS.length}
+            numberOfMembers={memberList.length}
           />
           <MembersTable members={memberList} />
         </Grid.Col>

@@ -15,6 +15,7 @@ import { TeamMember } from "./MembersPage";
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
 type Props = {
@@ -24,12 +25,23 @@ type Props = {
 const MembersTable = ({ members }: Props) => {
   const router = useRouter();
   const { tid } = router.query;
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = 7;
+  const totalPages = Math.ceil(members.length / pageSize);
+
+  const paginate = (
+    array: TeamMember[],
+    page_size: number,
+    page_number: number
+  ) => {
+    return array.slice((page_number - 1) * page_size, page_number * page_size);
+  };
 
   return (
-    <Stack justify="space-between" mih="400px" pt="md">
+    <Stack justify="space-between" mih="300px" pt="md">
       {
         // todo: update properties to match fetched data
-        members.map((member) => {
+        paginate(members, pageSize, pageNumber).map((member) => {
           return (
             <Grid
               key={member.user_profile_table.user_id}
@@ -88,7 +100,12 @@ const MembersTable = ({ members }: Props) => {
         sx={{ borderTop: "1px solid #E9E9E9" }}
         pt="sm"
       >
-        <Pagination total={1} siblings={1} />
+        <Pagination
+          page={pageNumber}
+          onChange={setPageNumber}
+          total={totalPages}
+          siblings={1}
+        />
       </Flex>
     </Stack>
   );
