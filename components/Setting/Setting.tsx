@@ -13,7 +13,7 @@ const Setting = ({ activeTab }: Props) => {
   console.log(tid);
 
   return (
-    <Container fluid px="xs" py="sm">
+    <Container fluid px="0">
       <Title>Settings</Title>
       <Tabs
         value={activeTab}

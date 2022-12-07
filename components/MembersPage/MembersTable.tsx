@@ -40,7 +40,7 @@ const MembersTable = ({ members }: Props) => {
               }
               sx={{ borderTop: "1px solid #E9E9E9" }}
             >
-              <Grid.Col order={1} orderMd={1} span={10} md={8}>
+              <Grid.Col order={1} span={10} sm={8}>
                 <Group>
                   <MantineAvatar
                     size={40}
@@ -52,19 +52,11 @@ const MembersTable = ({ members }: Props) => {
                     <Text fw="bold" color="dark">
                       {member.user_profile_table.full_name}
                     </Text>
-                    {/* user profile has no email */}
-                    <Text fz="xs"></Text>
+                    <Text fz="xs">{member.user_profile_table.email}</Text>
                   </Box>
                 </Group>
               </Grid.Col>
-              <Grid.Col
-                order={3}
-                orderMd={2}
-                span={1}
-                offset={2}
-                offsetSm={1}
-                offsetMd={1}
-              >
+              <Grid.Col order={3} orderXs={2} span={1} offset={2} offsetXs={1}>
                 <Select
                   value={member.team_role}
                   onChange={(e) => console.log(e)}
@@ -82,7 +74,7 @@ const MembersTable = ({ members }: Props) => {
                   readOnly
                 />
               </Grid.Col>
-              <Grid.Col order={2} orderMd={3} span={1} offsetMd={1}>
+              <Grid.Col order={2} orderXs={3} span={1} offsetXs={1}>
                 <Button variant="subtle" size="xs" color="dark" fz="xl">
                   <SvgMoreHoriz />
                 </Button>
