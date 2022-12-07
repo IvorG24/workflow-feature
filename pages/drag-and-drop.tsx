@@ -8,7 +8,12 @@ import {
   Text,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import {
+  DragDropContext,
+  Draggable,
+  DragUpdate,
+  Droppable,
+} from "react-beautiful-dnd";
 
 type ItemData = {
   id: string;
@@ -94,7 +99,7 @@ function DragAndDropPage(): JSX.Element {
   useEffect(() => {
     setWinReady(true);
   }, []);
-  const handleOnDragEnd = (result) => {
+  const handleOnDragEnd = (result: DragUpdate) => {
     // handles dragged to outside of draggable area
     if (!result.destination) return;
     // we use temp as staging for item
