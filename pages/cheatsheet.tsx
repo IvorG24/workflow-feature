@@ -2,6 +2,14 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { Database } from "@/utils/database.types";
+import {
+  FieldTableInsert,
+  FieldTypeEnum,
+  FormTableInsert,
+  FormTypeEnum,
+  ReviewResponseTableInsert,
+  ReviewTableInsert,
+} from "@/utils/types";
 import { Button, Container, Flex, JsonInput } from "@mantine/core";
 import {
   useSessionContext,
@@ -45,8 +53,8 @@ const CheatSheetPage: NextPageWithLayout = () => {
 
   // Build review form
   const handleBuildReviewForm = async (
-    formTableInsert: Database["public"]["Tables"]["form_table"]["Insert"],
-    fieldTableInsert: Database["public"]["Tables"]["field_table"]["Insert"][]
+    formTableInsert: FormTableInsert,
+    fieldTableInsert: FieldTableInsert[]
   ) => {
     const { data: formTableRow } = await supabase
       .from("form_table")
@@ -93,8 +101,8 @@ const CheatSheetPage: NextPageWithLayout = () => {
 
   // Fill out review form
   const handleFillOutReviewForm = async (
-    reviewTableInsert: Database["public"]["Tables"]["review_table"]["Insert"],
-    reviewRespoonseTableInsert: Database["public"]["Tables"]["review_response_table"]["Insert"][]
+    reviewTableInsert: ReviewTableInsert,
+    reviewRespoonseTableInsert: ReviewResponseTableInsert[]
   ) => {
     const { data: reviewTableRow } = await supabase
       .from("review_table")
@@ -124,7 +132,6 @@ const CheatSheetPage: NextPageWithLayout = () => {
 
   // Fetch a filled out review
   const handleFetchFilledOutReviewForm = async (reviewId: number) => {
-    // Fetch request title and request description, on_behalf_of, request_status, approver, date created.
     const { data: reviewTableRow } = await supabase
       .from("review_table")
       .select()
@@ -156,10 +163,7 @@ const CheatSheetPage: NextPageWithLayout = () => {
   };
 
   // Fetch review form list under a team
-  const fetchFormList = async (
-    teamId: string,
-    formType: Database["public"]["Enums"]["form_type"]
-  ) => {
+  const fetchFormList = async (teamId: string, formType: FormTypeEnum) => {
     const { data } = await supabase
       .from("form_table")
       .select("*")
@@ -174,42 +178,42 @@ const CheatSheetPage: NextPageWithLayout = () => {
     form_name: "Peer Review",
     form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
     team_id: team,
-    form_type: "review" as Database["public"]["Enums"]["form_type"],
+    form_type: "review" as FormTypeEnum,
     form_priority: null,
   };
 
   const fieldTable = [
     {
       field_name: "Text Field",
-      field_type: "text" as Database["public"]["Enums"]["field_type"],
+      field_type: "text" as FieldTypeEnum,
       field_option: null,
       is_required: true,
       field_tooltip: "This is a text field tooltip",
     },
     {
       field_name: "Number Field",
-      field_type: "number" as Database["public"]["Enums"]["field_type"],
+      field_type: "number" as FieldTypeEnum,
       field_option: null,
       is_required: true,
       field_tooltip: "This is a number field tooltip",
     },
     {
       field_name: "Email Field",
-      field_type: "email" as Database["public"]["Enums"]["field_type"],
+      field_type: "email" as FieldTypeEnum,
       field_option: null,
       is_required: true,
       field_tooltip: "This is a email field tooltip",
     },
     {
       field_name: "Select Field",
-      field_type: "select" as Database["public"]["Enums"]["field_type"],
+      field_type: "select" as FieldTypeEnum,
       field_option: ["aaa", "bbb", "ccc"],
       is_required: true,
       field_tooltip: "This is a select field tooltip",
     },
     {
       field_name: "Multiple Field",
-      field_type: "multiple" as Database["public"]["Enums"]["field_type"],
+      field_type: "multiple" as FieldTypeEnum,
       field_option: ["aaa", "bbb", "ccc", "ddd", "eee"],
       is_required: true,
       field_tooltip: "This is a multiple field tooltip",
