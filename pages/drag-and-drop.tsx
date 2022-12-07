@@ -99,8 +99,8 @@ function DragAndDropPage(): JSX.Element {
   useEffect(() => {
     setWinReady(true);
   }, []);
-  
-  const handleOnDragEnd = (item: DragUpdate) => {
+
+  const handleOnDragEnd = (result: DragUpdate) => {
     // handles dragged to outside of draggable area
     if (!result.destination) return;
     // we use temp as staging for item
