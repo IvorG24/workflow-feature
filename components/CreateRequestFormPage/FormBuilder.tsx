@@ -149,7 +149,7 @@ const FormBuilder: FC<Props> = (props) => {
       const question_id = priority[i];
       formTableRecord.push({
         question_id,
-        question_option_id: options ? options[i] : undefined,
+        question_option_id: options?.includes(question_id) ? question_id : null,
         request_id: null,
         form_name_id,
         form_owner,

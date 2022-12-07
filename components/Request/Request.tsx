@@ -19,7 +19,9 @@ import {
   Flex,
   Group,
   LoadingOverlay,
+  MultiSelect,
   NumberInput,
+  Select,
   Slider,
   Stack,
   Text,
@@ -104,7 +106,7 @@ const Request = () => {
             question:question_id(*),
             question_option:question_option_id(*),
             team:team_id(*),
-            owner:form_owner(*),
+            owner:response_owner(*),
             approver:approver_id(*)
 
           `
@@ -120,7 +122,7 @@ const Request = () => {
 
         // TODO: I just did this to give type to data because data[0].etc. outputs Object is of type unknown linting error.
         const temp = data as Request;
-
+        console.log(temp);
         setRequiredFields({
           approval_status: `${temp[0].approval_status}`,
           request_title: `${temp[0].request_title}`,
@@ -342,8 +344,7 @@ const Request = () => {
                 />
               </Box>
             );
-          }
-          if (form?.question?.expected_response_type === "number") {
+          } else if (form?.question?.expected_response_type === "number") {
             return (
               <Box key={form?.form_id}>
                 <NumberInput
@@ -352,8 +353,7 @@ const Request = () => {
                 />
               </Box>
             );
-          }
-          if (form?.question?.expected_response_type === "date") {
+          } else if (form?.question?.expected_response_type === "date") {
             return (
               <Box key={form?.form_id}>
                 <DatePicker
@@ -363,8 +363,7 @@ const Request = () => {
                 />
               </Box>
             );
-          }
-          if (form?.question?.expected_response_type === "daterange") {
+          } else if (form?.question?.expected_response_type === "daterange") {
             return (
               <Box key={form?.form_id}>
                 <DateRangePicker
@@ -377,8 +376,7 @@ const Request = () => {
                 />
               </Box>
             );
-          }
-          if (form?.question?.expected_response_type === "time") {
+          } else if (form?.question?.expected_response_type === "time") {
             return (
               <Box key={form?.form_id}>
                 <TimeInput
@@ -389,8 +387,7 @@ const Request = () => {
                 />
               </Box>
             );
-          }
-          if (form?.question?.expected_response_type === "slider") {
+          } else if (form?.question?.expected_response_type === "slider") {
             return (
               <Box my="md" key={form?.form_id}>
                 <Text component="label" color="dark">
@@ -406,6 +403,38 @@ const Request = () => {
                   value={Number(responseValue)}
                 />
               </Box>
+            );
+          } else if (
+            form?.question?.expected_response_type === "multiple" &&
+            form.question_option.question_option !== null
+          ) {
+            return (
+              <MultiSelect
+                key={form.form_id}
+                data={form.question_option.question_option.map((option) => {
+                  return { value: `${option}`, label: `${option}` };
+                })}
+                label={form.question.question}
+                placeholder={"Choose multiple"}
+                value={responseValue.split(",")}
+              />
+            );
+          } else if (
+            form?.question?.expected_response_type === "select" &&
+            form.question_option.question_option !== null
+          ) {
+            return (
+              <Select
+                key={form.form_id}
+                data={form.question_option.question_option.map((option) => {
+                  return { value: `${option}`, label: `${option}` };
+                })}
+                searchable
+                clearable
+                label={form.question.question}
+                placeholder={"Choose one"}
+                value={responseValue}
+              />
             );
           }
         })}

@@ -38,6 +38,13 @@ export type QuestionInsert =
 export type QuestionUpdate =
   Database["public"]["Tables"]["question_table"]["Update"];
 
+export type QuestionOptionRow =
+  Database["public"]["Tables"]["user_created_select_option_table"]["Row"];
+export type QuestionOptionInser =
+  Database["public"]["Tables"]["user_created_select_option_table"]["Insert"];
+export type QuestionOptionUpdate =
+  Database["public"]["Tables"]["user_created_select_option_table"]["Update"];
+
 export type ReviewScoreRow =
   Database["public"]["Tables"]["review_score_table"]["Row"];
 export type ReviewScoreInsert =
