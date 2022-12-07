@@ -377,6 +377,10 @@ const CreateRequest = () => {
 
     const questionIdList = answers.map((answer) => Number(answer.questionId));
     const answerList = answers.map((answer) => answer.value);
+    const { data: options } = await supabase
+      .from("user_created_select_option_table")
+      .select("*");
+    const optionIdList = options?.map((option) => option.question_id);
     const form: FormInsert[] = saveToFormTable(
       Number(`${router.query.formId}`),
       questionIdList,
@@ -387,7 +391,8 @@ const CreateRequest = () => {
       `${selectedApprover}`,
       formData.behalf,
       answerList,
-      isDraft
+      isDraft,
+      optionIdList
     );
 
     await supabase.from("form_table").insert(form);
@@ -438,7 +443,8 @@ const CreateRequest = () => {
     approver: string,
     behalf: string,
     answerList: string[],
-    isDraft: boolean
+    isDraft: boolean,
+    optionIdList: number[] | undefined
   ) => {
     const formTableRecord: FormInsert[] = [];
 
@@ -457,6 +463,9 @@ const CreateRequest = () => {
         approver_id: approver,
         on_behalf_of: behalf,
         response_value: [answer],
+        question_option_id: optionIdList?.includes(question_id)
+          ? question_id
+          : null,
       });
     }
 
