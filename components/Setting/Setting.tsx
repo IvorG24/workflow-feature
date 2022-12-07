@@ -9,19 +9,21 @@ type Props = {
 
 const Setting = ({ activeTab }: Props) => {
   const router = useRouter();
+  const { tid } = router.query;
+  console.log(tid);
 
   return (
     <Container fluid px="xs" py="sm">
       <Title>Settings</Title>
       <Tabs
         value={activeTab}
-        onTabChange={(value) => router.push(`/settings/${value}`)}
+        onTabChange={(value) => router.push(`/t/${tid}/settings/${value}`)}
         defaultValue={activeTab}
         mt="xl"
       >
         <Tabs.List>
           <Tabs.Tab value="general">General</Tabs.Tab>
-          <Tabs.Tab value="members">Member</Tabs.Tab>
+          <Tabs.Tab value="member">Member</Tabs.Tab>
           <Tabs.Tab value="profile">Profile</Tabs.Tab>
           <Tabs.Tab value="notification">Notification</Tabs.Tab>
           <Tabs.Tab value="billing">Billing</Tabs.Tab>
@@ -30,7 +32,7 @@ const Setting = ({ activeTab }: Props) => {
         <Tabs.Panel value="general" pt="xl">
           {/* <General /> */}
         </Tabs.Panel>
-        <Tabs.Panel value="members" pt="xl">
+        <Tabs.Panel value="member" pt="xl">
           <MembersPage />
         </Tabs.Panel>
         <Tabs.Panel value="profile" pt="xl">

@@ -24,7 +24,7 @@ const Member = () => {
   const [memberList, setMemberList] = useState<TeamMember[]>([]);
   const { tid } = router.query;
 
-  // todo: refractor useEffects into a join
+  // todo: refactor useEffects into a join
   useEffect(() => {
     (async () => {
       try {
@@ -35,14 +35,18 @@ const Member = () => {
 
         if (error) throw error;
 
-        setMemberList(team_role_table as TeamMember[]);
+        // sort roles from Manager > Member
+        // todo: change sort conditions if roles are Owner > Admin > Member
+        const sorted_team_role_table = team_role_table.sort((a, b) =>
+          a.team_role.localeCompare(b.team_role)
+        );
+
+        setMemberList(sorted_team_role_table as TeamMember[]);
       } catch (error) {
         console.error(error);
       }
     })();
   }, [supabaseClient, tid]);
-
-  console.log(memberList);
 
   return (
     <Stack>
