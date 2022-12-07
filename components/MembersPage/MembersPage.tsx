@@ -23,7 +23,6 @@ const Member = () => {
   const [memberList, setMemberList] = useState<TeamMember[]>([]);
   const { tid } = router.query;
 
-  // todo: refactor useEffects into a join
   useEffect(() => {
     (async () => {
       try {
@@ -39,15 +38,28 @@ const Member = () => {
         console.error(error);
       }
     })();
-  }, [supabaseClient, tid]);
+  }, [supabaseClient, tid, searchBarValue]);
 
-  // sort based on member role
+  // sort A-Z and Owner > Admin > Manager/Member
   const sortMemberList = (members: TeamMember[]) => {
-    const sortedMembers = members.sort((a, b) =>
-      a.team_role.localeCompare(b.team_role)
-    );
+    members.sort((a, b) => {
+      const nameA = a.user_profile_table.full_name;
+      const nameB = b.user_profile_table.full_name;
+      if (nameA !== null && nameB !== null) {
+        return nameA < nameB ? -1 : 1;
+      }
+      return 0;
+    });
 
-    return sortedMembers;
+    // todo: update member roles to match team_role_table
+    const rolesOrder = ["owner", "admin", "manager", "member"];
+
+    members.sort((a, b) => {
+      const indexA = rolesOrder.indexOf(a.team_role);
+      const indexB = rolesOrder.indexOf(b.team_role);
+      return indexA - indexB;
+    });
+    return members;
   };
 
   return (

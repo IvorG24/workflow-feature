@@ -24,7 +24,6 @@ type Props = {
 
 const MembersTable = ({ members }: Props) => {
   const router = useRouter();
-
   const { tid } = router.query;
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 7;
