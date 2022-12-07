@@ -1,7 +1,11 @@
 import { Badge, Button, Card, Group, Image, Text } from "@mantine/core";
-import { DropResult } from "@types/react-beautiful-dnd";
 import { useEffect, useState } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "react-beautiful-dnd";
 
 type ItemData = {
   id: string;
