@@ -32,6 +32,7 @@ import {
   Settings,
   Sun,
 } from "../Icon";
+import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./MobileNavbar.module.scss";
 
 const TEAMS = [
@@ -164,9 +165,9 @@ const Navbar = () => {
             href="/dashboard"
             label="Dashboard"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Dashboard />
-              </div>
+              </IconWrapper>
             }
           />
           <NavLink
@@ -195,9 +196,9 @@ const Navbar = () => {
             href="/forms"
             label="Forms"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Description />
-              </div>
+              </IconWrapper>
             }
           />
           <NavLink
@@ -205,9 +206,9 @@ const Navbar = () => {
             href="/settings/members"
             label="Members"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <GroupIcon />
-              </div>
+              </IconWrapper>
             }
           />
         </MantineNavbar.Section>
@@ -225,9 +226,9 @@ const Navbar = () => {
               label="Notifications"
               mt="xs"
               icon={
-                <div className={iconStyle}>
+                <IconWrapper className={iconStyle}>
                   <Notifications />
-                </div>
+                </IconWrapper>
               }
             />
             <Badge
@@ -243,9 +244,9 @@ const Navbar = () => {
             href="/settings/general"
             label="Settings"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Settings />
-              </div>
+              </IconWrapper>
             }
           />
         </MantineNavbar.Section>
@@ -257,9 +258,9 @@ const Navbar = () => {
             label="Mary Joy Dumancal"
             description="View Profile"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Avatar radius="xl" />
-              </div>
+              </IconWrapper>
             }
           />
           <Button
@@ -267,9 +268,9 @@ const Navbar = () => {
             color="red"
             fullWidth
             leftIcon={
-              <div className={styles.logoutButton__icon}>
+              <IconWrapper className={styles.logoutButton__icon}>
                 <Logout />
-              </div>
+              </IconWrapper>
             }
           >
             Logout
