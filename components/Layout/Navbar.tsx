@@ -32,6 +32,7 @@ import {
   Settings,
   Sun,
 } from "../Icon";
+import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./Navbar.module.scss";
 
 type Props = {
@@ -157,9 +158,9 @@ const Navbar = ({ teams, teamId }: Props) => {
             href="/dashboard"
             label="Dashboard"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Dashboard />
-              </div>
+              </IconWrapper>
             }
           />
           <NavLink
@@ -189,9 +190,9 @@ const Navbar = ({ teams, teamId }: Props) => {
             href={`/t/${teamId}/forms`}
             label="Forms"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Description />
-              </div>
+              </IconWrapper>
             }
           />
           <NavLink
@@ -201,9 +202,9 @@ const Navbar = ({ teams, teamId }: Props) => {
             href={`/settings/members`}
             label="Members"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <GroupIcon />
-              </div>
+              </IconWrapper>
             }
           />
         </MantineNavbar.Section>
@@ -221,9 +222,9 @@ const Navbar = ({ teams, teamId }: Props) => {
               label="Notifications"
               mt="xs"
               icon={
-                <div className={iconStyle}>
+                <IconWrapper className={iconStyle}>
                   <Notifications />
-                </div>
+                </IconWrapper>
               }
             />
             <Badge
@@ -239,9 +240,9 @@ const Navbar = ({ teams, teamId }: Props) => {
             href="/settings/general"
             label="Settings"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Settings />
-              </div>
+              </IconWrapper>
             }
           />
         </MantineNavbar.Section>
@@ -253,9 +254,9 @@ const Navbar = ({ teams, teamId }: Props) => {
             label="Alberto Linao"
             description="View Profile"
             icon={
-              <div className={iconStyle}>
+              <IconWrapper className={iconStyle}>
                 <Avatar radius="xl" />
-              </div>
+              </IconWrapper>
             }
           />
           <Button
@@ -263,9 +264,9 @@ const Navbar = ({ teams, teamId }: Props) => {
             color="red"
             fullWidth
             leftIcon={
-              <div className={styles.logoutButton__icon}>
+              <IconWrapper className={styles.logoutButton__icon}>
                 <Logout />
-              </div>
+              </IconWrapper>
             }
           >
             Logout

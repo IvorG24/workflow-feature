@@ -11,6 +11,7 @@ import {
 } from "@mantine/core";
 import { ReactNode } from "react";
 import { Logo } from "../Icon";
+import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./AuthLayout.module.scss";
 
 type Props = {
@@ -20,7 +21,8 @@ type Props = {
 const AuthLayout = ({ children }: Props) => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   return (
-    <div
+    <Container
+      fluid
       className={styles.mainContainer}
       style={{
         background: `linear-gradient(90deg, #edf9f1 50%, ${
@@ -41,9 +43,9 @@ const AuthLayout = ({ children }: Props) => {
         <Flex wrap="wrap">
           <Flex className={styles.welcome}>
             <Stack w={300}>
-              <div className={styles.logo} data-testid="logo">
+              <IconWrapper fontSize={80} data-testid="logo">
                 <Logo />
-              </div>
+              </IconWrapper>
               <Title order={1} size={50} color="dark.6">
                 Welcome to Formsly
               </Title>
@@ -56,7 +58,7 @@ const AuthLayout = ({ children }: Props) => {
           {children}
         </Flex>
       </Container>
-    </div>
+    </Container>
   );
 };
 
