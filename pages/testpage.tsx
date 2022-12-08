@@ -9,14 +9,14 @@ const itemData = [
   {
     id: "a",
     question: "What are the employee’s strongest points?",
-    reponse_type: "text",
+    response_type: "text",
     required: true,
     tooltip: "this is a tooltip",
   },
   {
     id: "b",
     question: "What are the employee’s weakest points?",
-    reponse_type: "text",
+    response_type: "text",
     required: false,
     tooltip: "this is a tooltip",
   },
@@ -24,14 +24,14 @@ const itemData = [
     id: "c",
     question:
       "What can the employee do to be more effective  or make improvements?",
-    reponse_type: "text",
+    response_type: "text",
     required: true,
     tooltip: "this is a tooltip",
   },
   {
     id: "d",
     question: "What additional training would benefit the employee?",
-    reponse_type: "text",
+    response_type: "text",
     required: true,
     tooltip: "this is a tooltip",
   },

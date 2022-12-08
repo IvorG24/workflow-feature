@@ -11,7 +11,7 @@ import Item from "./Item";
 export type ItemData = {
   id: string;
   question: string;
-  reponse_type: string;
+  response_type: string;
   required: boolean;
   tooltip: string;
 };

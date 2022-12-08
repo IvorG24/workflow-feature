@@ -29,7 +29,7 @@ const Item = ({ item, onDelete, isDelete, provided }: Props) => {
   );
   const [requiredChecked, setRequiredChecked] = useState(item.required);
   const [responseType, setResponseType] = useState<string | null>(
-    item.reponse_type
+    item.response_type
   );
   const [toolTip, setToolTip] = useState(item.tooltip);
   const [selectionArray, setSelectionArray] = useState<
