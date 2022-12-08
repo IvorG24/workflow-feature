@@ -30,7 +30,11 @@ export async function middleware(request: NextRequest) {
     // Invalid Token
     const vercelUrl = process.env.VERCEL_URL || "http://localhost:3000";
 
-    return NextResponse.next();
+    if (
+      request.nextUrl.pathname.includes("/sign-in") ||
+      request.nextUrl.pathname.includes("/register")
+    )
+      return NextResponse.next();
 
     // * TODO - If API protection return a response instead of page redirect.
     // https://nextjs.org/docs/advanced-features/middleware#:~:text=Once%20enabled%2C%20you%20can%20provide%20a%20response%20from%20middleware%20using%20the%20Response%20or%20NextResponse%20API%3A
