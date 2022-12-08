@@ -1,12 +1,5 @@
-import type { Database } from "@/utils/types";
-import {
-  FormInsert,
-  FormNameRow,
-  FormRow,
-  QuestionRow,
-  SelectOptionRow,
-  TeamRow,
-} from "@/utils/types";
+import type { Database, RequestRow } from "@/utils/types";
+import { FieldRow, FormRow, RequestResponseRow } from "@/utils/types";
 import {
   Box,
   Button,
@@ -35,7 +28,7 @@ import { useBeforeunload } from "react-beforeunload";
 import { useForm } from "react-hook-form";
 import styles from "./CreateRequest.module.scss";
 
-type FormData = {
+type RequestFieldsType = {
   requestor: string;
   date: string;
   title: string;
@@ -43,9 +36,8 @@ type FormData = {
   description: string;
 };
 
-export type Form = (FormRow & { form_name: FormNameRow } & {
-  question: QuestionRow;
-} & { question_option: SelectOptionRow } & { team: TeamRow })[];
+type RequestType = RequestRow & { form: FormRow };
+type RequestResponseType = RequestResponseRow & { field: FieldRow };
 
 type Marks = {
   value: number;
@@ -86,7 +78,7 @@ const CreateRequest = () => {
     getValues,
     setValue,
     reset,
-  } = useForm<FormData>({
+  } = useForm<RequestFieldsType>({
     defaultValues: {
       title: "",
       behalf: "",
@@ -97,45 +89,40 @@ const CreateRequest = () => {
   });
 
   const [selectedApprover, setSelectedApprover] = useState<string | null>(null);
-  const [formName, setFormName] = useState("");
   const [approvers, setApprovers] = useState<
     { label: string; value: string }[]
   >([]);
   const [isCreating, setIsCreating] = useState(false);
-  const [formTemplate, setFormTemplate] = useState<Form>();
-  const [answers, setAnswers] = useState<
-    { questionId: string; value: string }[]
+  const [form, setForm] = useState<FormRow | null>(null);
+  const [fields, setFields] = useState<
+    (FieldRow & { response: string; responseId: number | null })[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
-  // const [selectOptionRowList, setSelectOptionRowList] =
-  //   useState<SelectOptionRow[]>();
+  const [draftId, setDraftId] = useState<number | null>(null);
 
   useBeforeunload(() => {
-    if (formTemplate && formTemplate[0].is_draft) {
+    if (Boolean(draftId)) {
       axios.post("/api/update", {
-        formData: getValues(),
-        approver: selectedApprover,
-        answers: answers,
-        requestId: formTemplate[0].request_id,
+        answers: fields,
+        requestId: draftId,
       });
     } else {
       axios.post("/api/insert", {
         formData: getValues(),
-        isDraft: true,
         formId: router.query.formId,
         userId: user?.id,
         approver: selectedApprover,
-        answers: answers,
+        answers: fields,
       });
     }
   });
 
   const resetState = () => {
     reset();
-    setFormName("");
     setApprovers([]);
-    setFormTemplate(undefined);
-    setAnswers([]);
+    setForm(null);
+    setFields([]);
+    setDraftId(null);
   };
 
   useEffect(() => {
@@ -144,341 +131,263 @@ const CreateRequest = () => {
     setIsLoading(true);
     // TODO add eq("team_id")
     const fetchApprovers = async () => {
-      // todo: fetch from team_role
-      const { data } = await supabase.from("user_profile_table").select("*");
-      // TODO remove current user if the current user is a manager
-      if (data) {
+      try {
+        // todo: fetch from team_role
+        const { data, error } = await supabase
+          .from("user_profile_table")
+          .select("*");
+        if (error) throw new Error();
+        // TODO remove current user if the current user is an admin
+
         const approvers = data.map((approver) => {
           return {
             label: `${approver.full_name}`,
             value: `${approver.user_id}`,
           };
         });
-        if (approvers !== undefined) {
-          const newApprovers = approvers.filter(
-            (approver) => approver.value !== user?.id
-          );
-          setApprovers(newApprovers);
-          setSelectedApprover(newApprovers[0].value);
-        }
+
+        const newApprovers = approvers.filter(
+          (approver) => approver.value !== user?.id
+        );
+        setApprovers(newApprovers);
+        setSelectedApprover(newApprovers[0].value);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Faield to fetch Approvers",
+          color: "red",
+        });
       }
     };
 
-    const fetchForm = async () => {
-      const { data: request_id } = await supabase
-        .from("form_table")
-        .select(`request_id`)
-        .eq("form_name_id", router.query.formId)
-        .eq("is_draft", true)
-        .eq("response_owner", user?.id)
-        .limit(1)
-        .single();
+    const fetchRequest = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("request_table")
+          .select("*")
+          .eq("is_draft", true)
+          .eq("form_table_id", router.query.formId)
+          .eq("response_owner", user?.id)
+          .single();
+        if (error) throw new Error();
 
-      if (request_id) {
-        fetchDraft(`${request_id.request_id}`);
-      } else {
-        handleFetchFormTemplate();
+        data ? fetchDraft(data.request_id) : handleFetchForm();
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Faield to fetch Request",
+          color: "red",
+        });
       }
     };
 
-    const handleFetchFormTemplate = async () => {
-      const { data, error } = await supabase
-        .from("form_table")
-        .select(
-          `
-            *,
-            form_name:form_name_id(*),
-            question:question_id(*),
-            question_option:question_option_id(*),
-            team:team_id(*)
-          `
-        )
-        .eq("form_name_id", router.query.formId)
-        .order("created_at", { ascending: true });
+    const handleFetchForm = async () => {
+      try {
+        const { data: form, error: formError } = await supabase
+          .from("form_table")
+          .select("*")
+          .eq("form_id", router.query.formId)
+          .single();
 
-      // const { data: formPriority } = await supabase
-      //   .from("form_priority_table")
-      //   .select()
-      //   .eq("form_name_id", router.query.formId)
-      //   .limit(1)
-      //   .single();
+        if (!form || formError) throw new Error();
 
-      if (error) {
-        console.log(error);
-        return;
+        const { data: fields, error: fieldsError } = await supabase
+          .from("field_table")
+          .select("*")
+          .eq("form_table_id", form.form_id);
+
+        if (fieldsError) throw new Error();
+
+        setFields(
+          fields.map((field) => {
+            return { ...field, response: "", responseId: null };
+          })
+        );
+        setForm(form);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Faield to fetch Form",
+          color: "red",
+        });
       }
-      if (!data) return;
-      if (data.length === 0) return;
-
-      // get only elements where request_id of first element is equal to other elements.
-      const filteredForm = data.filter(
-        (formRow) => formRow.request_id === data[0].request_id
-      ) as Form;
-
-      const formTemplate = handleClearResponseValues(filteredForm as Form);
-
-      // TODO: Sort questions by form priority.
-      // Sort questions by priority
-      // const clearedForm = handleClearResponseValues(filteredForm as Form);
-      // const formTemplate = clearedForm.sort(
-      //   (a, b) =>
-      //     formPriority.priority.indexOf(a.question_id) -
-      //     formPriority.priority.indexOf(b.question_id)
-      // );
-
-      setAnswers(
-        formTemplate.map((form) => {
-          return { questionId: `${form.question_id}`, value: "" };
-        })
-      );
-      setFormTemplate(formTemplate);
-      setFormName(`${filteredForm[0].form_name.form_name}`);
     };
 
-    const fetchDraft = async (request_id: string) => {
-      const { data: requests } = await supabase
-        .from("form_table")
-        .select(
-          `
-            *,
-            form_name:form_name_id(*),
-            question:question_id(*),
-            question_option:question_option_id(*),
-            team:team_id(*)
-          `
-        )
-        .eq("request_id", request_id)
-        .eq("form_name_id", router.query.formId)
-        .order("created_at", { ascending: true });
+    const fetchDraft = async (request_id: number) => {
+      setDraftId(request_id);
+      try {
+        const { data: request, error: requestError } = await supabase
+          .from("request_table")
+          .select("*, form: form_table_id(*)")
+          .eq("request_id", request_id)
+          .single();
+        const newRequest = request as RequestType;
 
-      const newRequest = requests as Form;
+        if (!request || requestError) throw new Error();
 
-      console.log(JSON.stringify(requests, null, 2));
+        setValue("title", `${request.request_title}`);
+        setValue("description", `${request.request_description}`);
+        setValue("behalf", `${request.on_behalf_of}`);
 
-      if (!newRequest) return;
-      setValue(
-        "title",
-        newRequest[0].request_title ? newRequest[0].request_title : ""
-      );
-      setValue(
-        "description",
-        newRequest[0].request_description
-          ? newRequest[0].request_description
-          : ""
-      );
-      setValue(
-        "behalf",
-        newRequest[0].on_behalf_of ? newRequest[0].on_behalf_of : ""
-      );
+        const { data: requestFields, error: requestFieldsError } =
+          await supabase
+            .from("request_response_table")
+            .select("*, field: field_id(*)")
+            .eq("request_id", request.request_id);
+        const newRequestFields = requestFields as RequestResponseType[];
 
-      newRequest.shift();
-      const draftAnswers = newRequest.map((request) => {
-        return {
-          questionId: `${request.question.question_id}`,
-          value: `${request.response_value ? request.response_value[0] : ""}`,
-        };
-      });
+        if (!request || requestFieldsError) throw new Error();
 
-      setAnswers(draftAnswers);
-      setFormTemplate(newRequest);
-
-      setSelectedApprover(`${requests && requests[0].approver_id}`);
-      setFormName(`${newRequest[0].form_name.form_name}`);
+        const fieldsWithResponse = newRequestFields.map((field) => {
+          return {
+            ...field.field,
+            response: `${field.response_value}`,
+            responseId: field.request_id,
+          };
+        });
+        setFields(fieldsWithResponse);
+        setForm(newRequest.form);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Faield to fetch Request Draft",
+          color: "red",
+        });
+      }
     };
 
     const fetchCurrentUser = async () => {
-      const { data } = await supabase
-        .from("user_profile_table")
-        .select("*")
-        .eq("user_id", user?.id)
-        .single();
-      if (data) {
+      try {
+        const { data, error } = await supabase
+          .from("user_profile_table")
+          .select("*")
+          .eq("user_id", user?.id)
+          .single();
+        if (!data || error) throw new Error();
         setValue("requestor", `${data.full_name}`);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Faield to fetch Current User",
+          color: "red",
+        });
       }
     };
 
-    fetchApprovers();
-    fetchForm();
     fetchCurrentUser();
+    fetchApprovers();
+    fetchRequest();
     setIsLoading(false);
   }, [supabase, router, user]);
 
-  const onSubmit = handleSubmit((fromData) =>
-    formTemplate && formTemplate[0].is_draft
-      ? handleUpdate(fromData)
-      : handleSave(fromData, false)
+  const onSubmit = handleSubmit((formData) =>
+    draftId ? handleUpdate(formData) : handleSave(formData)
   );
 
-  const handleUpdate = async (formData: FormData) => {
+  const handleUpdate = async (formData: RequestFieldsType) => {
     setIsCreating(true);
     try {
-      // update each response value
-      answers.map(async (answer) => {
-        const { error } = await supabase
-          .from("form_table")
-          .update({
-            is_draft: false,
-            response_value: [answer.value],
-          })
-          .eq("question_id", answer.questionId)
-          .eq("request_id", formTemplate && formTemplate[0].request_id);
-        if (error) throw error;
+      const requestResponseList = fields.map((field) => {
+        return {
+          field_id: Number(field.field_id),
+          response_value: field.response,
+          request_id: Number(field.responseId),
+        };
       });
 
-      await supabase
-        .from("form_table")
+      const { error: requestResponseError } = await supabase
+        .from("request_response_table")
+        .upsert(requestResponseList);
+
+      if (requestResponseError) throw new Error();
+
+      const { error: requestError } = await supabase
+        .from("request_table")
         .update({
-          request_title: formData.title,
-          request_description: formData.description,
-          on_behalf_of: formData.behalf,
           approver_id: selectedApprover,
+          request_created_at: `${new Date()}`,
+          request_title: formData.title,
+          on_behalf_of: formData.behalf,
+          request_description: formData.description,
           is_draft: false,
         })
-        .eq("request_id", formTemplate && formTemplate[0].request_id);
+        .eq("request_id", draftId);
 
-      // const { error } = await supabase.from("form_table").insert(form);
-      // if (error) throw error;
+      if (requestError) throw new Error();
+
       showNotification({
-        title: "Request sent for approval",
-        message: "Kindly wait :)",
+        title: "Success!",
+        message: "Request sent for approval",
+        color: "green",
       });
       router.push("/requests");
-    } catch (e) {
-      console.error("Error saving the form", e);
-      alert("Error saving the form");
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: "Failed to Save Request",
+        color: "red",
+      });
     }
   };
 
-  const handleSave = async (formData: FormData, isDraft: boolean) => {
-    setIsCreating(true);
+  const handleSave = async (formData: RequestFieldsType) => {
+    try {
+      setIsCreating(true);
 
-    const request = await supabase
-      .from("request_table")
-      .insert({})
-      .select()
-      .limit(1)
-      .single();
+      const { data: request, error: requestError } = await supabase
+        .from("request_table")
+        .insert({
+          approver_id: selectedApprover,
+          requested_by: user?.id,
+          form_table_id: form?.form_id,
+          request_title: formData.title,
+          on_behalf_of: formData.behalf,
+          request_description: formData.description,
+          is_draft: false,
+        })
+        .select()
+        .single();
 
-    if (!request.data) throw new Error();
+      if (requestError) throw new Error();
 
-    const { error } = await supabase.from("form_table").insert({
-      form_name_id: Number(`${router.query.formId}`),
-      team_id: null,
-      request_title: formData.title,
-      request_description: formData.description,
-      on_behalf_of: formData.behalf,
-      approver_id: selectedApprover,
-      approval_status: "pending",
-      response_owner: user?.id,
-      request_id: Number(`${request.data.request_id}`),
-      is_draft: isDraft,
-      form_owner: `${user?.id}`,
-    });
+      const requestResponse = fields.map((field) => {
+        return {
+          field_id: Number(field.responseId),
+          request_id: request.request_id,
+          response_value: field.response,
+        };
+      });
+      const { error: requestResponseError } = await supabase
+        .from("request_response_table")
+        .insert(requestResponse);
 
-    const questionIdList = answers.map((answer) => Number(answer.questionId));
-    const answerList = answers.map((answer) => answer.value);
-    const { data: options } = await supabase
-      .from("user_created_select_option_table")
-      .select("*");
-    const optionIdList = options?.map((option) => option.question_id);
-    const form: FormInsert[] = saveToFormTable(
-      Number(`${router.query.formId}`),
-      questionIdList,
-      `${user?.id}`,
-      Number(`${request.data?.request_id}`),
-      formData.title,
-      formData.description,
-      `${selectedApprover}`,
-      formData.behalf,
-      answerList,
-      isDraft,
-      optionIdList
-    );
+      if (requestResponseError) throw new Error();
 
-    await supabase.from("form_table").insert(form);
-
-    if (error) {
       showNotification({
-        title: "Failed to Create Request!",
-        message: error.message,
+        title: "Success!",
+        message: "Request Created",
+        color: "green",
+      });
+
+      router.push("/requests");
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: "Failed to Create Request!",
         color: "red",
       });
       setIsCreating(false);
-    } else {
-      if (isDraft) {
-        showNotification({
-          title: "Success!",
-          message: "Draft Saved",
-          color: "green",
-        });
-      } else {
-        showNotification({
-          title: "Success!",
-          message: "Request Created",
-          color: "green",
-        });
-      }
-      router.push("/requests");
     }
   };
 
-  const handleClearResponseValues = (form: Form) => {
-    return form.map((formRow) => {
-      return {
-        ...formRow,
-        response_value: [""],
-        response_owner: "",
-        response_comment: "",
-      };
-    });
-  };
-
-  const saveToFormTable = (
-    form_name_id: number,
-    questionIdList: number[],
-    form_owner: string,
-    request_id: number,
-    title: string,
-    description: string,
-    approver: string,
-    behalf: string,
-    answerList: string[],
-    isDraft: boolean,
-    optionIdList: number[] | undefined
-  ) => {
-    const formTableRecord: FormInsert[] = [];
-
-    for (let i = 0; i < questionIdList.length; i++) {
-      const question_id = questionIdList[i];
-      const answer = answerList[i];
-      formTableRecord.push({
-        question_id,
-        request_id,
-        form_name_id,
-        form_owner,
-        team_id: null,
-        is_draft: isDraft,
-        request_title: title,
-        request_description: description,
-        approver_id: approver,
-        on_behalf_of: behalf,
-        response_value: [answer],
-        question_option_id: optionIdList?.includes(question_id)
-          ? question_id
-          : null,
-      });
-    }
-
-    return formTableRecord;
-  };
-
-  const handleAnswer = (questionId: string, value: string) => {
-    setAnswers((prev) => {
+  const handleAnswer = (questionId: number, value: string) => {
+    setFields((prev) => {
       return prev.map((answer) => {
-        if (`${questionId}` === `${answer.questionId}`) {
+        if (questionId === answer.field_id) {
           return {
-            questionId: questionId,
-            value: value,
+            ...answer,
+            responseId: questionId,
+            response: value,
           };
         } else {
           return answer;
@@ -490,7 +399,7 @@ const CreateRequest = () => {
   return (
     <Container m={0} px={8} py={16} fluid>
       <LoadingOverlay visible={isCreating || isLoading} />
-      <Title>Create {formName}</Title>
+      <Title>Create {form?.form_name}</Title>
       <Paper shadow="xl" radius={8} mt={32} px={32} py={48}>
         <form onSubmit={onSubmit}>
           <Stack>
@@ -558,57 +467,55 @@ const CreateRequest = () => {
               error={errors.description?.message}
             />
 
-            {formTemplate?.map((form, index) => {
-              if (
-                form.question.expected_response_type === "text" ||
-                form.question.expected_response_type === "email"
-              ) {
+            {fields?.map((field) => {
+              if (field.field_type === "text" || field.field_type === "email") {
                 return (
                   <TextInput
-                    key={form.form_id}
-                    label={form.question.question}
+                    key={field.field_id}
+                    label={field.field_name}
                     onChange={(e) =>
-                      handleAnswer(`${form.question_id}`, e.target.value)
+                      handleAnswer(
+                        Number(`${field.responseId}`),
+                        e.target.value
+                      )
                     }
-                    value={answers[index].value}
+                    value={field.response}
                   />
                 );
-              } else if (form.question.expected_response_type === "number") {
+              } else if (field.field_type === "number") {
                 return (
                   <NumberInput
-                    key={form.form_id}
-                    label={form.question.question}
+                    key={field.field_id}
+                    label={field.field_name}
                     onChange={(e) =>
-                      handleAnswer(`${form.question_id}`, `${e}`)
+                      handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
-                    value={Number(answers[index].value)}
+                    value={Number(field.response)}
                   />
                 );
-              } else if (form.question.expected_response_type === "date") {
+              } else if (field.field_type === "date") {
                 return (
                   <DatePicker
-                    key={form.form_id}
-                    label={form.question.question}
+                    key={field.field_id}
+                    label={field.field_name}
                     placeholder={"Choose date"}
                     onChange={(e) =>
-                      handleAnswer(`${form.question_id}`, `${e}`)
+                      handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
                     defaultValue={
-                      answers[index].value
-                        ? new Date(answers[index].value)
-                        : null
+                      field.response ? new Date(field.response) : null
                     }
                   />
                 );
-              } else if (form.question.expected_response_type === "daterange") {
-                const dates = answers[index].value.split(",");
+              } else if (field.field_type === "daterange") {
+                const dates = field.response.split(",");
                 return (
                   <DateRangePicker
-                    key={form.form_id}
-                    label={form.question.question}
+                    key={field.field_id}
+                    label={field.field_name}
                     placeholder={"Choose a date range"}
                     onChange={(e) =>
-                      handleAnswer(`${form.question_id}`, `${e}`)
+                      handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
                     defaultValue={
                       dates[0]
@@ -617,79 +524,77 @@ const CreateRequest = () => {
                     }
                   />
                 );
-              } else if (form.question.expected_response_type === "time") {
+              } else if (field.field_type === "time") {
                 return (
                   <TimeInput
-                    key={form.form_id}
-                    label={form.question.question}
+                    key={field.field_id}
+                    label={field.field_name}
                     placeholder={"Choose time"}
                     format="12"
                     onChange={(e) =>
-                      handleAnswer(`${form.question_id}`, `${e}`)
+                      handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
                     defaultValue={
-                      answers[index].value
-                        ? new Date(answers[index].value)
-                        : null
+                      field.response ? new Date(field.response) : null
                     }
                   />
                 );
-              } else if (form.question.expected_response_type === "slider") {
+              } else if (field.field_type === "slider") {
                 return (
-                  <Box my="md" key={form.form_id}>
+                  <Box my="md" key={field.field_id}>
                     <Text component="label" color="dark">
-                      {form.question.question}
+                      {field.field_name}
                     </Text>
                     <Slider
-                      label={form.question.question}
+                      label={field.field_name}
                       placeholder={"Slide to choose value"}
                       marks={MARKS}
                       min={1}
                       max={5}
                       labelAlwaysOn={false}
                       onChange={(e) =>
-                        handleAnswer(`${form.question_id}`, `${e}`)
+                        handleAnswer(Number(`${field.responseId}`), `${e}`)
                       }
-                      value={Number(answers[index].value)}
+                      value={Number(field.response)}
                     />
                   </Box>
                 );
               } else if (
-                form.question.expected_response_type === "multiple" &&
-                form.question_option.question_option !== null
+                field.field_type === "multiple" &&
+                field.field_option !== null
               ) {
                 return (
                   <MultiSelect
-                    key={form.form_id}
-                    data={form.question_option.question_option.map((option) => {
+                    key={field.field_id}
+                    data={field.field_option.map((option) => {
                       return { value: `${option}`, label: `${option}` };
                     })}
-                    label={form.question.question}
+                    label={field.field_name}
                     placeholder={"Choose multiple"}
                     onChange={(e) =>
-                      handleAnswer(`${form.question_id}`, `${e}`)
+                      handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
-                    value={answers[index].value.split(",")}
+                    value={field.response.split(",")}
                   />
                 );
               } else if (
-                form.question.expected_response_type === "select" &&
-                form.question_option.question_option !== null
+                field.field_type === "select" &&
+                field.field_option !== null
               ) {
                 return (
                   <Select
-                    key={form.form_id}
-                    data={form.question_option.question_option.map((option) => {
+                    key={field.field_id}
+                    data={field.field_option.map((option) => {
                       return { value: `${option}`, label: `${option}` };
                     })}
                     searchable
                     clearable
-                    label={form.question.question}
+                    label={field.field_name}
                     placeholder={"Choose one"}
                     onChange={(e) =>
-                      handleAnswer(`${form.question_id}`, `${e}`)
+                      handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
-                    value={answers[index].value}
+                    value={field.response}
                   />
                 );
               }

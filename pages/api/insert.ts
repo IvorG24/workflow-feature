@@ -1,5 +1,5 @@
 import type { Database } from "@/utils/database.types";
-import { FormInsert } from "@/utils/types";
+import { FieldRow } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -10,95 +10,47 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   if (req.method === "POST") {
-    const { formData, isDraft, formId, userId, approver, answers } = req.body;
-    const newAnswers = answers as { questionId: string; value: string }[];
+    const { formData, formId, userId, approver, answers } = req.body;
+    const newAnswers = answers as (FieldRow & {
+      response: string;
+      responseId: number | null;
+    })[];
 
-    const request = await supabase
-      .from("request_table")
-      .insert({})
-      .select()
-      .single();
+    try {
+      const { data: request, error: requestError } = await supabase
+        .from("request_table")
+        .insert({
+          approver_id: approver,
+          requested_by: userId,
+          form_table_id: formId,
+          request_title: formData.title,
+          on_behalf_of: formData.behalf,
+          request_description: formData.description,
+          is_draft: true,
+        })
+        .select()
+        .single();
 
-    if (!request.data) throw new Error();
+      if (!request || requestError) throw new Error();
 
-    await supabase.from("form_table").insert({
-      form_name_id: Number(formId),
-      team_id: null,
-      request_title: formData.title,
-      request_description: formData.description,
-      on_behalf_of: formData.behalf,
-      approver_id: approver,
-      approval_status: "pending",
-      response_owner: userId,
-      request_id: Number(`${request.data.request_id}`),
-      is_draft: isDraft,
-    });
+      const requestResponseList = newAnswers.map((response) => {
+        return {
+          field_id: Number(response.field_id),
+          response_value: response.response,
+          request_id: request.request_id,
+        };
+      });
+      const { error: requestResponseError } = await supabase
+        .from("request_response_table")
+        .insert(requestResponseList);
 
-    const questionIdList = newAnswers.map((answer) =>
-      Number(answer.questionId)
-    );
-    const answerList = newAnswers.map((answer) => answer.value);
-    const { data } = await supabase
-      .from("user_created_select_option_table")
-      .select("question_id");
-    const optionIdList = data?.map((id) => id.question_id);
-    const form: FormInsert[] = saveToFormTable(
-      Number(formId),
-      questionIdList,
-      userId,
-      Number(`${request.data?.request_id}`),
-      formData.title,
-      formData.description,
-      approver,
-      formData.behalf,
-      answerList,
-      isDraft,
-      optionIdList
-    );
+      if (requestResponseError) throw new Error();
 
-    await supabase.from("form_table").insert(form);
-
-    res.status(200);
+      res.status(200);
+    } catch (e) {
+      res.status(500);
+    }
   }
-};
-
-const saveToFormTable = (
-  form_name_id: number,
-  questionIdList: number[],
-  form_owner: string,
-  request_id: number,
-  title: string,
-  description: string,
-  approver: string,
-  behalf: string,
-  answerList: string[],
-  isDraft: boolean,
-  optionIdList: number[] | undefined
-) => {
-  const formTableRecord: FormInsert[] = [];
-
-  for (let i = 0; i < questionIdList.length; i++) {
-    const question_id = questionIdList[i];
-    const answer = answerList[i];
-    formTableRecord.push({
-      question_id,
-      request_id,
-      form_name_id,
-      form_owner,
-      team_id: null,
-      is_draft: isDraft,
-      request_title: title,
-      request_description: description,
-      approver_id: approver,
-      on_behalf_of: behalf,
-      response_value: [answer],
-      question_option_id: optionIdList?.includes(question_id)
-        ? question_id
-        : null,
-    });
-  }
-
-  return formTableRecord;
 };
 
 export default handler;

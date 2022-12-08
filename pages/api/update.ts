@@ -1,4 +1,5 @@
 import type { Database } from "@/utils/database.types";
+import { FieldRow } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -9,32 +10,42 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   if (req.method === "POST") {
-    const { formData, approver, answers, requestId } = req.body;
-    const newAnswers = answers as { questionId: string; value: string }[];
+    const { answers, requestId } = req.body;
+    const newAnswers = answers as (FieldRow & {
+      response: string;
+      responseId: number | null;
+    })[];
 
-    newAnswers.map(async (answer) => {
-      await supabase
-        .from("form_table")
-        .update({
-          is_draft: true,
-          response_value: [answer.value],
-        })
-        .eq("question_id", answer.questionId)
-        .eq("request_id", requestId);
-    });
+    try {
+      // query per field
+      // newAnswers.map(async (answer) => {
+      //   const { error } = await supabase
+      //     .from("request_response_table")
+      //     .update({
+      //       response_value: answer.value,
+      //     })
+      //     .eq("field_id", answer.questionId);
 
-    await supabase
-      .from("form_table")
-      .update({
-        request_title: formData.title,
-        request_description: formData.description,
-        approver_id: approver,
-        on_behalf_of: formData.behalf,
-        is_draft: true,
-      })
-      .eq("request_id", requestId);
+      //   if (error) throw new Error();
+      // });
 
-    res.status(200);
+      const requestResponseFieldList = newAnswers.map((field) => {
+        return {
+          field_id: Number(field.field_id),
+          response_value: field.response,
+          request_id: requestId,
+        };
+      });
+
+      const { error } = await supabase
+        .from("request_response_table")
+        .upsert(requestResponseFieldList);
+
+      if (error) throw new Error();
+      res.status(200);
+    } catch {
+      res.status(500);
+    }
   }
 };
 
