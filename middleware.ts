@@ -4,7 +4,8 @@
 // https://github.com/vercel/next.js/discussions/38227
 
 import { jwtVerify } from "jose";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
   try {
@@ -16,15 +17,33 @@ export async function middleware(request: NextRequest) {
       token,
       new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET)
     );
+
+    return NextResponse.next();
   } catch {
     // Invalid Token
     const vercelUrl = process.env.VERCEL_URL || "http://localhost:3000";
+
+    // * TODO - If API protection return a response instead of page redirect.
+    // https://nextjs.org/docs/advanced-features/middleware#:~:text=Once%20enabled%2C%20you%20can%20provide%20a%20response%20from%20middleware%20using%20the%20Response%20or%20NextResponse%20API%3A
+    // if (request.nextUrl.pathname.includes("/api")) {
+    //   return new NextResponse(
+    //     JSON.stringify({ success: false, message: "authentication failed" }),
+    //     { status: 401, headers: { "content-type": "application/json" } }
+    //   );
+    // }
+
     return NextResponse.redirect(`${vercelUrl}/sign-in`);
   }
-
-  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/t/:path*"],
+  matcher: [
+    "/",
+    "/profiles/:path*",
+    "/requests/:path*",
+    "/t/:path*",
+    "/teams/:path*",
+    "/forms/:path*",
+    "/api/:function*",
+  ],
 };
