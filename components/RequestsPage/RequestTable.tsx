@@ -1,29 +1,70 @@
 import { Close } from "@/components/Icon";
 import { setBadgeColor } from "@/utils/request";
+import type { Database, QuestionOptionRow, QuestionRow } from "@/utils/types";
 import { FormTable, UserProfile } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
   Badge,
+  Box,
   Button,
   Container,
   Divider,
   Group,
+  MultiSelect,
+  NumberInput,
   Paper,
+  Select,
+  Slider,
   Stack,
   Table,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
+import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
 import { useViewportSize } from "@mantine/hooks";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import styles from "./RequestTable.module.scss";
+
+type Marks = {
+  value: number;
+  label: string;
+};
+
+const MARKS: Marks[] = [
+  {
+    value: 1,
+    label: "0%",
+  },
+  {
+    value: 2,
+    label: "25%",
+  },
+  {
+    value: 3,
+    label: "50%",
+  },
+  {
+    value: 4,
+    label: "75%",
+  },
+  {
+    value: 5,
+    label: "100%",
+  },
+];
 
 type RequestType = FormTable & {
   owner: UserProfile;
 } & { approver: UserProfile };
+
+type QuestionsType = FormTable & { question: QuestionRow } & {
+  question_option: QuestionOptionRow;
+};
 
 type Props = {
   requestList: RequestType[];
@@ -46,17 +87,41 @@ const RequestTable = ({
 }: Props) => {
   const { width } = useViewportSize();
   const router = useRouter();
+  const supabase = useSupabaseClient<Database>();
+  const [selectedRequestFields, setSelectedRequestFields] = useState<
+    QuestionsType[]
+  >([]);
+
+  const handleSetSelectedRequest = async (request: RequestType) => {
+    if (width < 1200) {
+      router.push(`/requests/${request.request_id}`);
+    } else {
+      const { data } = await supabase
+        .from("form_table")
+        .select(
+          `
+            *,
+            question:question_id(*),
+            question_option:question_option_id(*)
+          `
+        )
+        .eq("request_id", request.request_id)
+        .not("question_id", "is", null)
+        .order("created_at", { ascending: true });
+
+      if (data) {
+        setSelectedRequestFields(data as unknown as QuestionsType[]);
+      }
+      setSelectedRequest(request);
+    }
+  };
 
   const rows = requestList.map((request) => {
     return (
       <tr
         key={request.form_id}
         className={styles.row}
-        onClick={() => {
-          width < 1200
-            ? router.push(`/requests/${request.request_id}`)
-            : setSelectedRequest(request);
-        }}
+        onClick={() => handleSetSelectedRequest(request)}
       >
         <td>{request.request_id}</td>
         <td>{request.request_title}</td>
@@ -170,6 +235,125 @@ const RequestTable = ({
               </Stack>
             </>
           ) : null}
+
+          {selectedRequestFields?.map((form) => {
+            const responseValue =
+              form.response_value && form.response_value[0]
+                ? form.response_value[0]
+                : "";
+
+            if (
+              form?.question?.expected_response_type === "text" ||
+              form?.question?.expected_response_type === "email"
+            ) {
+              return (
+                <Box key={form.form_id} py="sm">
+                  <TextInput
+                    label={form.question.question}
+                    value={responseValue}
+                    readOnly
+                  />
+                </Box>
+              );
+            } else if (form?.question?.expected_response_type === "number") {
+              return (
+                <Box key={form?.form_id} py="sm">
+                  <NumberInput
+                    label={form?.question.question}
+                    value={Number(responseValue)}
+                    readOnly
+                  />
+                </Box>
+              );
+            } else if (form?.question?.expected_response_type === "date") {
+              return (
+                <Box key={form?.form_id} py="sm">
+                  <DatePicker
+                    label={form?.question?.question}
+                    placeholder={"Choose date"}
+                    value={new Date(responseValue)}
+                    readOnly
+                  />
+                </Box>
+              );
+            } else if (form?.question?.expected_response_type === "daterange") {
+              return (
+                <Box key={form?.form_id} py="sm">
+                  <DateRangePicker
+                    label={form?.question?.question}
+                    placeholder={"Choose a date range"}
+                    value={[
+                      new Date(responseValue.split(",")[0]),
+                      new Date(responseValue.split(",")[1]),
+                    ]}
+                    readOnly
+                  />
+                </Box>
+              );
+            } else if (form?.question?.expected_response_type === "time") {
+              return (
+                <Box key={form?.form_id} py="sm">
+                  <TimeInput
+                    label={form?.question?.question}
+                    placeholder={"Choose time"}
+                    format="12"
+                    value={new Date(responseValue)}
+                  />
+                </Box>
+              );
+            } else if (form?.question?.expected_response_type === "slider") {
+              return (
+                <Box my="md" key={form?.form_id} py="sm">
+                  <Text component="label" color="dark">
+                    {form?.question?.question}
+                  </Text>
+                  <Slider
+                    label={form?.question?.question}
+                    placeholder={"Slide to choose value"}
+                    marks={MARKS}
+                    min={1}
+                    max={5}
+                    labelAlwaysOn={false}
+                    value={Number(responseValue)}
+                  />
+                </Box>
+              );
+            } else if (
+              form?.question?.expected_response_type === "multiple" &&
+              form.question_option.question_option !== null
+            ) {
+              return (
+                <MultiSelect
+                  key={form.form_id}
+                  data={form.question_option.question_option.map((option) => {
+                    return { value: `${option}`, label: `${option}` };
+                  })}
+                  label={form.question.question}
+                  placeholder={"Choose multiple"}
+                  value={responseValue.split(",")}
+                  py="sm"
+                />
+              );
+            } else if (
+              form?.question?.expected_response_type === "select" &&
+              form.question_option.question_option !== null
+            ) {
+              return (
+                <Select
+                  key={form.form_id}
+                  data={form.question_option.question_option.map((option) => {
+                    return { value: `${option}`, label: `${option}` };
+                  })}
+                  searchable
+                  clearable
+                  label={form.question.question}
+                  placeholder={"Choose one"}
+                  value={responseValue}
+                  py="sm"
+                />
+              );
+            }
+          })}
         </Paper>
       ) : null}
     </Group>
