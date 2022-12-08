@@ -11,11 +11,14 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import {
+  useSessionContext,
+  useSupabaseClient,
+} from "@supabase/auth-helpers-react";
 import { Provider } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
 import { Facebook, Github, Google } from "../Icon";
@@ -37,6 +40,8 @@ const SignIn = () => {
     formState: { errors },
   } = useForm<FormData>();
 
+
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       const { email, password } = data;
@@ -48,7 +53,7 @@ const SignIn = () => {
         setNotification(error.message);
         throw error;
       }
-      router.push("/");
+      await router.push("/");
     } catch (e) {
       console.error(e);
     }
@@ -64,6 +69,7 @@ const SignIn = () => {
         setNotification(error.message);
         throw error;
       }
+      await router.push("/");
     } catch (e) {
       setNotification("Failed to sign in.");
       console.error(e);
