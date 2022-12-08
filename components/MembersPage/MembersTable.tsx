@@ -73,6 +73,13 @@ const MembersTable = ({
                   radius={40}
                   src={member.user_profile_table.avatar_url}
                   alt={`${member.user_profile_table.full_name}'s Formsly Avatar`}
+                  // add indicator for auth user member data
+                  sx={{
+                    border: `${
+                      authUser?.id === member.user_profile_table.user_id &&
+                      "3px solid #4ac776"
+                    }`,
+                  }}
                 />
                 <Box>
                   <Text fw="bold" color="dark">
