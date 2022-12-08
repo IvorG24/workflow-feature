@@ -12,6 +12,7 @@ import {
   Modal,
   Navbar as MantineNavbar,
   NavLink,
+  ScrollArea,
   Select,
   Title,
   useMantineColorScheme,
@@ -34,6 +35,88 @@ import {
 } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./Navbar.module.scss";
+
+const formList = [
+  {
+    form_id: 1,
+    form_name: "Request Form 1",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "request",
+    form_priority: null,
+  },
+  {
+    form_id: 2,
+    form_name: "Request Form 2",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "request",
+    form_priority: null,
+  },
+  {
+    form_id: 3,
+    form_name: "Review Form 1",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "review",
+    form_priority: null,
+  },
+  {
+    form_id: 4,
+    form_name: "Review Form 2",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "review",
+    form_priority: null,
+  },
+  {
+    form_id: 5,
+    form_name: "Review Form 3",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "review",
+    form_priority: null,
+  },
+  {
+    form_id: 6,
+    form_name: "Review Form 4",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "review",
+    form_priority: null,
+  },
+  {
+    form_id: 7,
+    form_name: "Review Form 5",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "review",
+    form_priority: null,
+  },
+  {
+    form_id: 8,
+    form_name: "Review Form 6",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "review",
+    form_priority: null,
+  },
+  {
+    form_id: 9,
+    form_name: "Review Form 7",
+    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
+    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
+    form_type: "review",
+    form_priority: null,
+  },
+];
+
+export const requestForms = formList.filter(
+  (form) => form.form_type === "request"
+);
+export const reviewForms = formList.filter(
+  (form) => form.form_type === "review"
+);
 
 type Props = {
   teams: Team[];
@@ -153,65 +236,6 @@ const Navbar = ({ teams, teamId }: Props) => {
         />
 
         <MantineNavbar.Section mt="lg">
-          <NavLink
-            component="a"
-            href="/dashboard"
-            label="Dashboard"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Dashboard />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            href="/requests"
-            label="Requests"
-            className={iconStyle}
-            icon={<EditDocument />}
-            rightSection={
-              <ActionIcon
-                variant="subtle"
-                component="button"
-                onClick={handleAddRequest}
-                aria-label="create a request"
-                className={`${styles.createRequestButton} ${
-                  colorScheme === "dark"
-                    ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                    : ""
-                }`}
-              >
-                <AddCircle />
-              </ActionIcon>
-            }
-          />
-          <NavLink
-            component="a"
-            href={`/t/${teamId}/forms`}
-            label="Forms"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Description />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            // TODO: Commented out page route has no content. Kindly fix.
-            // href={`/t/${teamId}/settings/members`}
-            href={`/settings/members`}
-            label="Members"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <GroupIcon />
-              </IconWrapper>
-            }
-          />
-        </MantineNavbar.Section>
-
-        <Divider mt="xs" />
-
-        <MantineNavbar.Section mt="lg">
           <Title order={2} size={14} weight={400} color="dimmed">
             Account
           </Title>
@@ -247,6 +271,134 @@ const Navbar = ({ teams, teamId }: Props) => {
           />
         </MantineNavbar.Section>
 
+        <Divider mt="xs" />
+
+        <ScrollArea className={styles.navScroll}>
+          <MantineNavbar.Section mt="lg">
+            <NavLink
+              component="a"
+              href="/dashboard"
+              label="Dashboard"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <Dashboard />
+                </IconWrapper>
+              }
+            />
+            <NavLink
+              component="a"
+              href="/requests"
+              label="Requests"
+              className={iconStyle}
+              icon={<EditDocument />}
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  component="button"
+                  onClick={handleAddRequest}
+                  aria-label="create a request"
+                  className={`${styles.createRequestButton} ${
+                    colorScheme === "dark"
+                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                      : ""
+                  }`}
+                >
+                  <AddCircle />
+                </ActionIcon>
+              }
+            />
+            <NavLink
+              label="Request Forms"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <Description />
+                </IconWrapper>
+              }
+              childrenOffset={28}
+            >
+              {requestForms.map((form) => (
+                <NavLink
+                  key={form.form_id}
+                  component="a"
+                  href={`/t/${teamId}/forms/${form.form_id}`}
+                  label={form.form_name}
+                  rightSection={
+                    <ActionIcon
+                      variant="subtle"
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(
+                          `/t/${teamId}/requests/create/${form.form_id}`
+                        );
+                      }}
+                      aria-label="create a request"
+                      className={`${styles.createRequestButton} ${
+                        colorScheme === "dark"
+                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                          : ""
+                      }`}
+                    >
+                      <AddCircle />
+                    </ActionIcon>
+                  }
+                />
+              ))}
+            </NavLink>
+
+            <NavLink
+              label="Review Forms"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <Description />
+                </IconWrapper>
+              }
+              childrenOffset={28}
+            >
+              {reviewForms.map((form) => (
+                <NavLink
+                  key={form.form_id}
+                  component="a"
+                  href={`/t/${teamId}/forms/${form.form_id}`}
+                  label={form.form_name}
+                  rightSection={
+                    <ActionIcon
+                      variant="subtle"
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(
+                          `/t/${teamId}/review/create/${form.form_id}`
+                        );
+                      }}
+                      aria-label="create a review"
+                      className={`${styles.createRequestButton} ${
+                        colorScheme === "dark"
+                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                          : ""
+                      }`}
+                    >
+                      <AddCircle />
+                    </ActionIcon>
+                  }
+                />
+              ))}
+            </NavLink>
+
+            <NavLink
+              component="a"
+              // TODO: Commented out page route has no content. Kindly fix.
+              // href={`/t/${teamId}/settings/members`}
+              href={`/settings/members`}
+              label="Members"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <GroupIcon />
+                </IconWrapper>
+              }
+            />
+          </MantineNavbar.Section>
+        </ScrollArea>
         <MantineNavbar.Section className={styles.footer}>
           <NavLink
             component="a"

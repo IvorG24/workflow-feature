@@ -12,6 +12,7 @@ import {
   Modal,
   Navbar as MantineNavbar,
   NavLink,
+  ScrollArea,
   Select,
   Title,
   useMantineColorScheme,
@@ -34,14 +35,17 @@ import {
 } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./MobileNavbar.module.scss";
+import { requestForms, reviewForms } from "./Navbar";
 
 const TEAMS = [
   {
+    id: 1,
     image: "",
     value: "Acme Corporation",
     label: "Acme Corporation",
   },
   {
+    id: 2,
     image: "",
     value: "Wonka Industries",
     label: "Wonka Industries",
@@ -160,62 +164,6 @@ const Navbar = () => {
         />
 
         <MantineNavbar.Section mt="lg">
-          <NavLink
-            component="a"
-            href="/dashboard"
-            label="Dashboard"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Dashboard />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            href="/requests"
-            label="Requests"
-            className={iconStyle}
-            icon={<EditDocument />}
-            rightSection={
-              <ActionIcon
-                variant="subtle"
-                component="button"
-                onClick={handleAddRequest}
-                className={`${styles.createRequestButton} ${
-                  colorScheme === "dark"
-                    ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                    : ""
-                }`}
-              >
-                <AddCircle />
-              </ActionIcon>
-            }
-          />
-          <NavLink
-            component="a"
-            href="/forms"
-            label="Forms"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Description />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            href="/settings/members"
-            label="Members"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <GroupIcon />
-              </IconWrapper>
-            }
-          />
-        </MantineNavbar.Section>
-
-        <Divider mt="xs" />
-
-        <MantineNavbar.Section mt="lg">
           <Title order={2} size={14} weight={400} color="dimmed">
             Account
           </Title>
@@ -251,6 +199,130 @@ const Navbar = () => {
           />
         </MantineNavbar.Section>
 
+        <Divider mt="xs" />
+        <ScrollArea className={styles.navScroll}>
+          <MantineNavbar.Section mt="lg">
+            <NavLink
+              component="a"
+              href="/dashboard"
+              label="Dashboard"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <Dashboard />
+                </IconWrapper>
+              }
+            />
+            <NavLink
+              component="a"
+              href="/requests"
+              label="Requests"
+              className={iconStyle}
+              icon={<EditDocument />}
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  component="button"
+                  onClick={handleAddRequest}
+                  className={`${styles.createRequestButton} ${
+                    colorScheme === "dark"
+                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                      : ""
+                  }`}
+                >
+                  <AddCircle />
+                </ActionIcon>
+              }
+            />
+
+            <NavLink
+              label="Request Forms"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <Description />
+                </IconWrapper>
+              }
+              childrenOffset={28}
+            >
+              {requestForms.map((form) => (
+                <NavLink
+                  key={form.form_id}
+                  component="a"
+                  href={`/t/${selectedTeam?.id}/forms/${form.form_id}`}
+                  label={form.form_name}
+                  rightSection={
+                    <ActionIcon
+                      variant="subtle"
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(
+                          `/t/${selectedTeam?.id}/requests/create/${form.form_id}`
+                        );
+                      }}
+                      aria-label="create a request"
+                      className={`${styles.createRequestButton} ${
+                        colorScheme === "dark"
+                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                          : ""
+                      }`}
+                    >
+                      <AddCircle />
+                    </ActionIcon>
+                  }
+                />
+              ))}
+            </NavLink>
+
+            <NavLink
+              label="Review Forms"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <Description />
+                </IconWrapper>
+              }
+              childrenOffset={28}
+            >
+              {reviewForms.map((form) => (
+                <NavLink
+                  key={form.form_id}
+                  component="a"
+                  href={`/t/${selectedTeam?.id}/forms/${form.form_id}`}
+                  label={form.form_name}
+                  rightSection={
+                    <ActionIcon
+                      variant="subtle"
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(
+                          `/t/${selectedTeam?.id}/review/create/${form.form_id}`
+                        );
+                      }}
+                      aria-label="create a review"
+                      className={`${styles.createRequestButton} ${
+                        colorScheme === "dark"
+                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                          : ""
+                      }`}
+                    >
+                      <AddCircle />
+                    </ActionIcon>
+                  }
+                />
+              ))}
+            </NavLink>
+            <NavLink
+              component="a"
+              href="/settings/members"
+              label="Members"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <GroupIcon />
+                </IconWrapper>
+              }
+            />
+          </MantineNavbar.Section>
+        </ScrollArea>
         <MantineNavbar.Section className={styles.footer}>
           <NavLink
             component="a"

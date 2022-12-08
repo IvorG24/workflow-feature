@@ -57,6 +57,11 @@
   max-width: 250px;
 }
 
+.navScroll {
+  height: auto;
+  padding-right: 8px;
+}
+
 @media only screen and (max-width: $breakpoint-desktop-s) {
   .container {
     display: none;
