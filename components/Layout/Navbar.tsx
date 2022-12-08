@@ -1,6 +1,7 @@
 // todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
-import { Database, Team } from "@/utils/types";
+import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
+import { Database } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -16,7 +17,7 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { MouseEvent, useEffect, useState } from "react";
@@ -35,14 +36,15 @@ import {
 import styles from "./Navbar.module.scss";
 
 type Props = {
-  teams: Team[];
-  teamId: string;
+  teamList: CreateOrRetrieveUserTeamList;
+  activeTeamIndex: number;
 };
 
-const Navbar = ({ teams, teamId }: Props) => {
+const Navbar = ({ teamList, activeTeamIndex }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
-  const activeTeam = teams.find((team) => team.team_id === teamId);
+  const user = useUser();
+  const activeTeam = teamList[activeTeamIndex];
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -63,9 +65,9 @@ const Navbar = ({ teams, teamId }: Props) => {
     fetchForms();
   }, [supabase]);
 
-  const teamOptions = teams.map((team) => ({
+  const teamOptions = teamList.map((team) => ({
     value: team.team_id,
-    label: team.team_name as string, // todo: team_name should not be null in database
+    label: team.team_table.team_name as string, // todo: team_name should not be null in database
     image: "", // todo: add logo column to team table in database
   }));
 
@@ -79,7 +81,9 @@ const Navbar = ({ teams, teamId }: Props) => {
   };
 
   const handleProceed = () => {
-    router.push(`/requests/create?formId=${selectedForm}`);
+    router.push(
+      `/t/${activeTeam.team_id}/requests/create?formId=${selectedForm}`
+    );
     setIsCreatingRequest(false);
   };
 
@@ -138,7 +142,7 @@ const Navbar = ({ teams, teamId }: Props) => {
         <Select
           mt="md"
           label="Team"
-          value={activeTeam?.team_id}
+          value={activeTeam.team_id}
           data={teamOptions}
           itemComponent={SelectItem}
           onChange={(val) => router.push(`/t/${val}/dashboard`)}
@@ -154,7 +158,7 @@ const Navbar = ({ teams, teamId }: Props) => {
         <MantineNavbar.Section mt="lg">
           <NavLink
             component="a"
-            href="/dashboard"
+            href={`/t/${activeTeam.team_id}/dashboard`}
             label="Dashboard"
             icon={
               <div className={iconStyle}>
@@ -164,7 +168,7 @@ const Navbar = ({ teams, teamId }: Props) => {
           />
           <NavLink
             component="a"
-            href="/requests"
+            href={`/t/${activeTeam.team_id}/requests`}
             label="Requests"
             className={iconStyle}
             icon={<EditDocument />}
@@ -186,7 +190,7 @@ const Navbar = ({ teams, teamId }: Props) => {
           />
           <NavLink
             component="a"
-            href={`/t/${teamId}/forms`}
+            href={`/t/${activeTeam.team_id}/forms`}
             label="Forms"
             icon={
               <div className={iconStyle}>
@@ -197,8 +201,7 @@ const Navbar = ({ teams, teamId }: Props) => {
           <NavLink
             component="a"
             // TODO: Commented out page route has no content. Kindly fix.
-            // href={`/t/${teamId}/settings/members`}
-            href={`/settings/members`}
+            href={`/t/${activeTeam.team_id}/settings/members`}
             label="Members"
             icon={
               <div className={iconStyle}>
@@ -236,7 +239,7 @@ const Navbar = ({ teams, teamId }: Props) => {
 
           <NavLink
             component="a"
-            href="/settings/general"
+            href={`/t/${activeTeam.team_id}/settings/general`}
             label="Settings"
             icon={
               <div className={iconStyle}>
@@ -249,7 +252,7 @@ const Navbar = ({ teams, teamId }: Props) => {
         <MantineNavbar.Section className={styles.footer}>
           <NavLink
             component="a"
-            href="/profile"
+            href={`/profiles/${user?.id}/bio`}
             label="Alberto Linao"
             description="View Profile"
             icon={
@@ -267,6 +270,7 @@ const Navbar = ({ teams, teamId }: Props) => {
                 <Logout />
               </div>
             }
+            onClick={async () => await supabase.auth.signOut()}
           >
             Logout
           </Button>

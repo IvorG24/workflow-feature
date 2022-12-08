@@ -1,10 +1,10 @@
-import { Team } from "@/utils/types";
+import { TeamTableRow } from "@/utils/types";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 
 const useFetchTeams = () => {
   const { supabaseClient } = useSessionContext();
-  const [data, setData] = useState<Team[]>([]);
+  const [data, setData] = useState<TeamTableRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

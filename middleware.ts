@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
   try {
+    const vercelUrl = process.env.VERCEL_URL || "http://localhost:3000";
     const cookie = request.cookies.get("supabase-auth-token");
     const token = cookie ? JSON.parse(cookie)[0] : null;
     if (!token) throw new Error("Invalid Token");
@@ -18,10 +19,18 @@ export async function middleware(request: NextRequest) {
       new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET)
     );
 
+    if (
+      request.nextUrl.pathname.includes("/sign-in") ||
+      request.nextUrl.pathname.includes("/register")
+    )
+      return NextResponse.redirect(`${vercelUrl}`);
+
     return NextResponse.next();
   } catch {
     // Invalid Token
     const vercelUrl = process.env.VERCEL_URL || "http://localhost:3000";
+
+    return NextResponse.next();
 
     // * TODO - If API protection return a response instead of page redirect.
     // https://nextjs.org/docs/advanced-features/middleware#:~:text=Once%20enabled%2C%20you%20can%20provide%20a%20response%20from%20middleware%20using%20the%20Response%20or%20NextResponse%20API%3A
@@ -39,11 +48,10 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/sign-in/:path*",
+    "/register/:path*",
     "/profiles/:path*",
-    "/requests/:path*",
     "/t/:path*",
-    "/teams/:path*",
-    "/forms/:path*",
     "/api/:function*",
   ],
 };

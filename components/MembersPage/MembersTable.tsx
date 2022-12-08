@@ -11,17 +11,17 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { TeamMember } from "./MembersPage";
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
+import { FetchTeamMemberList } from "@/utils/queries";
 import { useRouter } from "next/router";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
 type Props = {
-  members: TeamMember[];
+  memberList: FetchTeamMemberList;
 };
 
-const MembersTable = ({ members }: Props) => {
+const MembersTable = ({ memberList }: Props) => {
   const router = useRouter();
   const { tid } = router.query;
 
@@ -29,14 +29,12 @@ const MembersTable = ({ members }: Props) => {
     <Stack justify="space-between" mih="400px" pt="md">
       {
         // todo: update properties to match fetched data
-        members.map((member) => {
+        memberList.map((member) => {
           return (
             <Grid
-              key={member.user_profile_table.user_id}
+              key={member.user_id}
               onClick={() =>
-                router.push(
-                  `/t/${tid}/profiles/${member.user_profile_table.user_id}/bio`
-                )
+                router.push(`/t/${tid}/profiles/${member.user_id}/bio`)
               }
               sx={{ borderTop: "1px solid #E9E9E9" }}
             >
