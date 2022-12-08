@@ -1,5 +1,3 @@
-import ChooseFormType from "@/components/CreateFormPage/ChooseFormType";
-import Question from "@/components/CreateFormPage/Question";
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { GetServerSideProps } from "next";
@@ -26,7 +24,6 @@ const FormType: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/forms/type"
       />
-      <ChooseFormType />
     </div>
   );
 };
@@ -40,7 +37,6 @@ const FormQuestion: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/forms/question"
       />
-      <Question />
     </div>
   );
 };
