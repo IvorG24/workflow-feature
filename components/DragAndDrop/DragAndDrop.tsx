@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import {
   DragDropContext,
   Draggable,
-  DragUpdate,
   Droppable,
+  DropResult,
 } from "react-beautiful-dnd";
 
 type ItemData = {
@@ -52,7 +52,7 @@ function ItemList({
   useEffect(() => {
     setWinReady(true);
   }, []);
-  const handleOnDragEnd = (result: DragUpdate) => {
+  const handleOnDragEnd = (result: DropResult) => {
     // handles dragged to outside of draggable area
     if (!result.destination) return;
     // we use temp as staging for item
