@@ -113,7 +113,7 @@ const MembersTable = ({
                 readOnly={
                   authUserRole === "member" ||
                   authUser?.id === member.user_profile_table.user_id ||
-                  authUserRole === member.team_role
+                  ["owner", authUserRole].includes(member.team_role)
                     ? true
                     : false
                 }
