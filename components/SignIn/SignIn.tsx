@@ -11,14 +11,11 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
-import {
-  useSessionContext,
-  useSupabaseClient,
-} from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Provider } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
 import { Facebook, Github, Google } from "../Icon";
@@ -39,8 +36,6 @@ const SignIn = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>();
-
-
 
   const onSubmit = handleSubmit(async (data) => {
     try {
