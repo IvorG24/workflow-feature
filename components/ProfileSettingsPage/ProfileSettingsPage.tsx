@@ -1,0 +1,106 @@
+import {
+  Button,
+  Container,
+  Divider,
+  Modal,
+  PasswordInput,
+  Text,
+  Title,
+} from "@mantine/core";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import AddSignature from "./AddSignature";
+
+type ChangePasswordData = {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+const ProfileSettingsPage = () => {
+  const [openedSignature, setOpenedSignature] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm<ChangePasswordData>();
+
+  const onDeleteAccount = () => {
+    console.log("delete account");
+  };
+  const onSubmit = handleSubmit(async (data) => {
+    console.log(data);
+  });
+  return (
+    <Container fluid m={0} p={0}>
+      <Title order={3}>Set your signature</Title>
+      <Text>
+        This signature will be auto-attached on every approval you make.
+      </Text>
+      <Modal opened={openedSignature} onClose={() => setOpenedSignature(false)}>
+        <AddSignature onCancel={() => setOpenedSignature(false)} />
+      </Modal>
+      <Button onClick={() => setOpenedSignature(true)} mt="lg">
+        Add Signature
+      </Button>
+      <Divider color="gray.2" mt="xl" />
+      <Title order={3} mt="xl">
+        Change Password
+      </Title>
+      <Container fluid size="sm" maw={400} m={0} p={0} mt="lg">
+        <form onSubmit={onSubmit}>
+          <PasswordInput
+            label="Old Password"
+            {...register("oldPassword", {
+              required: "Old password is required",
+            })}
+            error={errors.oldPassword?.message}
+          />
+          <PasswordInput
+            label="New Password"
+            {...register("newPassword", {
+              required: "New password is required",
+              minLength: {
+                value: 8,
+                message: "Password must be at least 8 characters",
+              },
+            })}
+            error={errors.newPassword?.message}
+            mt="sm"
+          />
+          <PasswordInput
+            label="Confirm  Password"
+            {...register("confirmPassword", {
+              required: "Confirm password is required",
+              minLength: {
+                value: 8,
+                message: "Password must be at least 8 characters",
+              },
+              validate: (value) =>
+                getValues("newPassword") === value || "Passwords do not match",
+            })}
+            error={errors.confirmPassword?.message}
+            mt="sm"
+          />
+          <Button type="submit" mt="xl">
+            Update Password
+          </Button>
+        </form>
+      </Container>
+      <Divider color="gray.2" mt="xl" />
+      <Title order={3} mt="xl">
+        Delete Account
+      </Title>
+      <Text>
+        Once you delete your account, there&apos;s no going back. Make sure you
+        want to do this.
+      </Text>
+      <Button onClick={onDeleteAccount} mt="lg" variant="outline" color="red">
+        Delete Your Account
+      </Button>
+    </Container>
+  );
+};
+
+export default ProfileSettingsPage;
