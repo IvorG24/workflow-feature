@@ -1,7 +1,11 @@
 import { Close } from "@/components/Icon";
 import { setBadgeColor } from "@/utils/request";
-import type { Database, QuestionOptionRow, QuestionRow } from "@/utils/types";
-import { FormTable, UserProfile } from "@/utils/types";
+import type {
+  Database,
+  Marks,
+  RequestFields,
+  RequestType,
+} from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -24,16 +28,12 @@ import {
 } from "@mantine/core";
 import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
 import { useViewportSize } from "@mantine/hooks";
+import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useState } from "react";
 import styles from "./RequestTable.module.scss";
-
-type Marks = {
-  value: number;
-  label: string;
-};
 
 const MARKS: Marks[] = [
   {
@@ -58,14 +58,6 @@ const MARKS: Marks[] = [
   },
 ];
 
-type RequestType = FormTable & {
-  owner: UserProfile;
-} & { approver: UserProfile };
-
-type QuestionsType = FormTable & { question: QuestionRow } & {
-  question_option: QuestionOptionRow;
-};
-
 type Props = {
   requestList: RequestType[];
   selectedRequest: RequestType | null;
@@ -89,48 +81,49 @@ const RequestTable = ({
   const router = useRouter();
   const supabase = useSupabaseClient<Database>();
   const [selectedRequestFields, setSelectedRequestFields] = useState<
-    QuestionsType[]
+    RequestFields[]
   >([]);
 
   const handleSetSelectedRequest = async (request: RequestType) => {
     if (width < 1200) {
       router.push(`/requests/${request.request_id}`);
     } else {
-      const { data } = await supabase
-        .from("form_table")
-        .select(
-          `
-            *,
-            question:question_id(*),
-            question_option:question_option_id(*)
-          `
-        )
-        .eq("request_id", request.request_id)
-        .not("question_id", "is", null)
-        .order("created_at", { ascending: true });
+      try {
+        const { data: requestFields, error: requestFieldsError } =
+          await supabase
+            .from("request_response_table, field: field_id(*)")
+            .select("*")
+            .eq("request_id", request.request_id);
 
-      if (data) {
-        setSelectedRequestFields(data as unknown as QuestionsType[]);
+        if (requestFieldsError) throw new Error();
+
+        setSelectedRequest(request);
+        setSelectedRequestFields(requestFields as RequestFields[]);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Faield to fetch Request",
+          color: "red",
+        });
       }
-      setSelectedRequest(request);
     }
   };
 
   const rows = requestList.map((request) => {
     return (
       <tr
-        key={request.form_id}
+        key={request.request_id}
         className={styles.row}
         onClick={() => handleSetSelectedRequest(request)}
       >
         <td>{request.request_id}</td>
         <td>{request.request_title}</td>
         <td>
-          <Badge color={setBadgeColor(`${request.approval_status}`)}>
-            {startCase(`${request.approval_status}`)}
+          <Badge color={setBadgeColor(`${request.request_status}`)}>
+            {startCase(`${request.request_status}`)}
           </Badge>
         </td>
-        <td>{request.created_at?.slice(0, 10)}</td>
+        <td>{request.request_created_at?.slice(0, 10)}</td>
         <td>
           <Group>
             <Avatar radius={100} />
@@ -186,14 +179,12 @@ const RequestTable = ({
           <Group mt="xl" position="apart" grow>
             <Stack align="flex-start">
               <Title order={5}>Date Created</Title>
-              <Text>{selectedRequest.created_at?.slice(0, 10)}</Text>
+              <Text>{selectedRequest.request_created_at?.slice(0, 10)}</Text>
             </Stack>
             <Stack align="flex-start">
               <Title order={5}>Status</Title>
-              <Badge
-                color={setBadgeColor(`${selectedRequest.approval_status}`)}
-              >
-                {startCase(`${selectedRequest.approval_status}`)}
+              <Badge color={setBadgeColor(`${selectedRequest.request_status}`)}>
+                {startCase(`${selectedRequest.request_status}`)}
               </Badge>
             </Stack>
           </Group>
@@ -207,7 +198,7 @@ const RequestTable = ({
             <Group align="apart" grow>
               <Group>
                 <Badge
-                  color={setBadgeColor(`${selectedRequest.approval_status}`)}
+                  color={setBadgeColor(`${selectedRequest.request_status}`)}
                 />
                 <Text>{selectedRequest.approver.full_name}</Text>
               </Group>
@@ -236,119 +227,110 @@ const RequestTable = ({
             </>
           ) : null}
 
-          {selectedRequestFields?.map((form) => {
-            const responseValue =
-              form.response_value && form.response_value[0]
-                ? form.response_value[0]
-                : "";
+          {selectedRequestFields?.map((field) => {
+            const fieldType = field.fields.field_type;
+            const fieldLabel = field.fields.field_name;
+            const fieldResponse = `${field.response_value}`;
+            const fieldOptions = field.fields.field_option;
 
-            if (
-              form?.question?.expected_response_type === "text" ||
-              form?.question?.expected_response_type === "email"
-            ) {
+            if (fieldType === "text" || fieldType === "email") {
               return (
-                <Box key={form.form_id} py="sm">
+                <Box key={field.field_id} py="sm">
                   <TextInput
-                    label={form.question.question}
-                    value={responseValue}
+                    label={fieldLabel}
+                    value={`${field.response_value}`}
                     readOnly
                   />
                 </Box>
               );
-            } else if (form?.question?.expected_response_type === "number") {
+            } else if (fieldType === "number") {
               return (
-                <Box key={form?.form_id} py="sm">
+                <Box key={field.field_id} py="sm">
                   <NumberInput
-                    label={form?.question.question}
-                    value={Number(responseValue)}
+                    label={fieldLabel}
+                    value={Number(fieldResponse)}
                     readOnly
                   />
                 </Box>
               );
-            } else if (form?.question?.expected_response_type === "date") {
+            } else if (fieldType === "date") {
               return (
-                <Box key={form?.form_id} py="sm">
+                <Box key={field.field_id} py="sm">
                   <DatePicker
-                    label={form?.question?.question}
+                    label={fieldLabel}
                     placeholder={"Choose date"}
-                    value={new Date(responseValue)}
+                    value={new Date(fieldResponse)}
                     readOnly
                   />
                 </Box>
               );
-            } else if (form?.question?.expected_response_type === "daterange") {
+            } else if (fieldType === "daterange") {
               return (
-                <Box key={form?.form_id} py="sm">
+                <Box key={field.field_id} py="sm">
                   <DateRangePicker
-                    label={form?.question?.question}
+                    label={fieldLabel}
                     placeholder={"Choose a date range"}
                     value={[
-                      new Date(responseValue.split(",")[0]),
-                      new Date(responseValue.split(",")[1]),
+                      new Date(fieldResponse.split(",")[0]),
+                      new Date(fieldResponse.split(",")[1]),
                     ]}
                     readOnly
                   />
                 </Box>
               );
-            } else if (form?.question?.expected_response_type === "time") {
+            } else if (fieldType === "time") {
               return (
-                <Box key={form?.form_id} py="sm">
+                <Box key={field.field_id} py="sm">
                   <TimeInput
-                    label={form?.question?.question}
+                    label={fieldLabel}
                     placeholder={"Choose time"}
                     format="12"
-                    value={new Date(responseValue)}
+                    value={new Date(fieldResponse)}
                   />
                 </Box>
               );
-            } else if (form?.question?.expected_response_type === "slider") {
+            } else if (fieldType === "slider") {
               return (
-                <Box my="md" key={form?.form_id} py="sm">
+                <Box my="md" key={field.field_id} py="sm">
                   <Text component="label" color="dark">
-                    {form?.question?.question}
+                    {fieldLabel}
                   </Text>
                   <Slider
-                    label={form?.question?.question}
+                    label={fieldLabel}
                     placeholder={"Slide to choose value"}
                     marks={MARKS}
                     min={1}
                     max={5}
                     labelAlwaysOn={false}
-                    value={Number(responseValue)}
+                    value={Number(fieldResponse)}
                   />
                 </Box>
               );
-            } else if (
-              form?.question?.expected_response_type === "multiple" &&
-              form.question_option.question_option !== null
-            ) {
+            } else if (fieldType === "multiple" && fieldOptions !== null) {
               return (
                 <MultiSelect
-                  key={form.form_id}
-                  data={form.question_option.question_option.map((option) => {
+                  key={field.field_id}
+                  data={fieldOptions.map((option) => {
                     return { value: `${option}`, label: `${option}` };
                   })}
-                  label={form.question.question}
+                  label={fieldLabel}
                   placeholder={"Choose multiple"}
-                  value={responseValue.split(",")}
+                  value={fieldResponse.split(",")}
                   py="sm"
                 />
               );
-            } else if (
-              form?.question?.expected_response_type === "select" &&
-              form.question_option.question_option !== null
-            ) {
+            } else if (fieldType === "select" && fieldOptions !== null) {
               return (
                 <Select
-                  key={form.form_id}
-                  data={form.question_option.question_option.map((option) => {
+                  key={field.field_id}
+                  data={fieldOptions.map((option) => {
                     return { value: `${option}`, label: `${option}` };
                   })}
                   searchable
                   clearable
-                  label={form.question.question}
+                  label={fieldLabel}
                   placeholder={"Choose one"}
-                  value={responseValue}
+                  value={fieldResponse}
                   py="sm"
                 />
               );

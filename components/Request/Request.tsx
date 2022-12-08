@@ -4,6 +4,7 @@ import type {
   Database,
   FormNameRow,
   FormRow,
+  Marks,
   QuestionRow,
   SelectOptionRow,
   TeamRow,
@@ -47,11 +48,6 @@ export type Request = (FormRow & { form_name: FormNameRow } & {
 } & {
   approver: UserProfileRow;
 })[];
-
-type Marks = {
-  value: number;
-  label: string;
-};
 
 const Request = () => {
   const MARKS: Marks[] = [

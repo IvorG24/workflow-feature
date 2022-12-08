@@ -48,3 +48,14 @@ export type TeamMember = Database["public"]["Tables"]["team_role_table"]["Row"];
 export type FieldRow = Database["public"]["Tables"]["field_table"]["Row"];
 export type RequestResponseRow =
   Database["public"]["Tables"]["request_response_table"]["Row"];
+
+export type RequestType = RequestRow & { approver: UserProfileRow } & {
+  owner: UserProfileRow;
+};
+
+export type Marks = {
+  value: number;
+  label: string;
+};
+
+export type RequestFields = RequestResponseRow & { fields: FieldRow };

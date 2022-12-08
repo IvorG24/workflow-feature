@@ -1,6 +1,5 @@
 import { Search } from "@/components/Icon";
-import type { Database } from "@/utils/types";
-import { FormTable, UserProfile } from "@/utils/types";
+import type { Database, RequestType } from "@/utils/types";
 import {
   ActionIcon,
   Group,
@@ -14,10 +13,13 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useEffect, useState } from "react";
-import styles from "./Received.module.scss";
+import styles from "./All.module.scss";
 import RequestTable from "./RequestTable";
 
-const tempStatus = [
+const statusOptions: {
+  value: Database["public"]["Enums"]["request_status"];
+  label: string;
+}[] = [
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
@@ -27,10 +29,6 @@ const tempStatus = [
 ];
 
 const REQUEST_PER_PAGE = 8;
-
-type RequestType = FormTable & {
-  owner: UserProfile;
-} & { approver: UserProfile };
 
 const Received = () => {
   const supabase = useSupabaseClient<Database>();
@@ -50,57 +48,65 @@ const Received = () => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
 
   const fetchRequests = async (isSearch: boolean) => {
-    setSelectedRequest(null);
-    setIsLoading(true);
-    const start = (activePage - 1) * REQUEST_PER_PAGE;
-    let query = supabase
-      .from("form_table")
-      .select("*, owner:response_owner(*), approver:approver_id(*)")
-      .neq("approval_status", "null")
-      .eq("approver_id", user?.id)
-      .eq("is_draft", false)
-      .range(start, start + REQUEST_PER_PAGE - 1);
-    let countQuery = supabase
-      .from("form_table")
-      .select("*", { count: "exact" })
-      .eq("approver_id", user?.id)
-      .eq("is_draft", false)
-      .neq("approval_status", "null");
-    if (selectedForm) {
-      query = query.eq("form_name_id", selectedForm);
-      countQuery = countQuery.eq("form_name_id", selectedForm);
-    }
-    if (status) {
-      query = query.eq("approval_status", status);
-      countQuery = countQuery.eq("approval_status", status);
-    }
-    if (isSearch && search) {
-      query = query.or(
-        `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
-      );
-      countQuery = countQuery.or(
-        `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
-      );
-    }
-    const { data, error } = await query;
-    const { count } = await countQuery;
+    try {
+      setSelectedRequest(null);
+      setIsLoading(true);
+      // todo team_id
+      const start = (activePage - 1) * REQUEST_PER_PAGE;
+      let query = supabase
+        .from("request_table")
+        .select(
+          "*, form: form_table_id(*), approver: approver_id(*), owner: requested_by(*)"
+        )
+        .eq("is_draft", false)
+        .eq("form.team_id", null)
+        .eq("approver_id", user?.id)
+        .range(start, start + REQUEST_PER_PAGE - 1);
+      let countQuery = supabase
+        .from("request_table")
+        .select("*")
+        .eq("is_draft", false)
+        .eq("form.team_id", null)
+        .eq("approver_id", user?.id);
 
-    if (error) {
+      if (selectedForm) {
+        query = query.eq("form_table_id", selectedForm);
+        countQuery = countQuery.eq("form_table_id", selectedForm);
+      }
+      if (status) {
+        query = query.eq("request_status", status);
+        countQuery = countQuery.eq("request_status", status);
+      }
+      if (isSearch && search) {
+        query = query.or(
+          `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
+        );
+        countQuery = countQuery.or(
+          `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
+        );
+      }
+      const { data: requestList, error: requestListError } = await query;
+      const { count: requestCount, error: requestCountError } =
+        await countQuery;
+
+      if (requestListError || requestCountError) throw new Error();
+
+      if (requestList && requestCount) {
+        const newRequestList = requestList as RequestType[];
+        setRequestList(newRequestList);
+        setRequestCount(requestCount);
+      } else {
+        setRequestCount(0);
+        setRequestList([]);
+      }
+      setIsLoading(false);
+    } catch {
       showNotification({
-        title: "Failed to Fetch Request!",
-        message: error.message,
+        title: "Error!",
+        message: "Faield to fetch Request List",
         color: "red",
       });
     }
-    if (data && count) {
-      const newData = data as RequestType[];
-      setRequestList(newData);
-      setRequestCount(count);
-    } else {
-      setRequestCount(0);
-      setRequestList([]);
-    }
-    setIsLoading(false);
   };
 
   const fetchForms = async () => {
@@ -134,9 +140,9 @@ const Received = () => {
     setIsApprover(false);
     if (selectedRequest) {
       if (
-        (selectedRequest.approval_status === "stale" ||
-          selectedRequest.approval_status === "pending") &&
-        selectedRequest.approver.user_id === user?.id
+        (selectedRequest.request_status === "stale" ||
+          selectedRequest.request_status === "pending") &&
+        selectedRequest.approver_id === user?.id
       ) {
         setIsApprover(true);
       }
@@ -145,26 +151,20 @@ const Received = () => {
 
   const handleApprove = async () => {
     setIsLoading(true);
-    const { error } = await supabase
-      .from("form_table")
-      .update({ approval_status: "approved" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`))
-      .neq("approval_status", null);
+    try {
+      const { error } = await supabase
+        .from("request_table")
+        .update({ request_status: "approved" })
+        .eq("request_id", Number(`${selectedRequest?.request_id}`));
 
-    if (error) {
-      showNotification({
-        title: "Error!",
-        message: `Failed to approve ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-      setIsLoading(false);
-    } else {
+      if (error) throw new Error();
+
       setRequestList((prev) =>
         prev.map((request) => {
           if (request.request_id === selectedRequest?.request_id) {
             return {
               ...request,
-              approval_status: "approved",
+              request_status: "approved",
             };
           } else {
             return request;
@@ -172,37 +172,37 @@ const Received = () => {
         })
       );
       setSelectedRequest(null);
-      setIsLoading(false);
       showNotification({
         title: "Success!",
         message: `You approved ${selectedRequest?.request_title}`,
         color: "green",
       });
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to approve ${selectedRequest?.request_title}`,
+        color: "red",
+      });
     }
+    setIsLoading(false);
   };
 
   const handleSendToRevision = async () => {
     setIsLoading(true);
-    const { error } = await supabase
-      .from("form_table")
-      .update({ approval_status: "revision" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`))
-      .neq("approval_status", null);
+    try {
+      const { error } = await supabase
+        .from("request_table")
+        .update({ request_status: "revision" })
+        .eq("request_id", Number(`${selectedRequest?.request_id}`));
 
-    if (error) {
-      showNotification({
-        title: "Error!",
-        message: `Failed to send to revision the ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-      setIsLoading(false);
-    } else {
+      if (error) throw new Error();
+
       setRequestList((prev) =>
         prev.map((request) => {
           if (request.request_id === selectedRequest?.request_id) {
             return {
               ...request,
-              approval_status: "revision",
+              request_status: "revision",
             };
           } else {
             return request;
@@ -210,51 +210,57 @@ const Received = () => {
         })
       );
       setSelectedRequest(null);
-      setIsLoading(false);
       showNotification({
         title: "Success!",
-        message: `You send to revision the ${selectedRequest?.request_title}`,
+        message: `${selectedRequest?.request_title} is sent to revision`,
         color: "green",
       });
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `${selectedRequest?.request_title} has failed to send to revision `,
+        color: "red",
+      });
     }
+    setIsLoading(false);
   };
 
   const handleReject = async () => {
     setIsLoading(true);
-    const { error } = await supabase
-      .from("form_table")
-      .update({ approval_status: "rejected" })
-      .eq("request_id", Number(`${selectedRequest?.request_id}`))
-      .neq("approval_status", null);
+    try {
+      const { error } = await supabase
+        .from("request_table")
+        .update({ request_status: "rejected" })
+        .eq("request_id", Number(`${selectedRequest?.request_id}`));
 
-    if (error) {
+      if (error) throw new Error();
+
+      setRequestList((prev) =>
+        prev.map((request) => {
+          if (request.request_id === selectedRequest?.request_id) {
+            return {
+              ...request,
+              request_status: "rejected",
+            };
+          } else {
+            return request;
+          }
+        })
+      );
+      setSelectedRequest(null);
+      showNotification({
+        title: "Success!",
+        message: `You rejected ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+    } catch {
       showNotification({
         title: "Error!",
         message: `Failed to reject ${selectedRequest?.request_title}`,
         color: "red",
       });
-      setIsLoading(false);
-    } else {
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              approval_status: "rejected",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      setIsLoading(false);
-      showNotification({
-        title: "Success!",
-        message: `You reject ${selectedRequest?.request_title}`,
-        color: "green",
-      });
     }
+    setIsLoading(false);
   };
 
   // todo: add eslint to show error for `mt={"xl"}`
@@ -282,7 +288,7 @@ const Received = () => {
         <Select
           clearable
           placeholder="Status"
-          data={tempStatus}
+          data={statusOptions}
           value={status}
           onChange={setStatus}
         />

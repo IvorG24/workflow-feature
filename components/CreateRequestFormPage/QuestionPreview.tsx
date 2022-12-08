@@ -1,4 +1,5 @@
 import { FormQuestion } from "@/components/CreateRequestFormPage/type";
+import { Marks } from "@/utils/types";
 import {
   Box,
   MultiSelect,
@@ -19,10 +20,6 @@ type Props = {
 type ParseOption = {
   label: string;
   value: string;
-};
-type Marks = {
-  value: number;
-  label: string;
 };
 
 const GENERIC_PLACEHOLDER = "Your Response...";

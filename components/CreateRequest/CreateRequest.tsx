@@ -1,4 +1,4 @@
-import type { Database, RequestRow } from "@/utils/types";
+import type { Database, RequestRow, Marks } from "@/utils/types";
 import { FieldRow, FormRow, RequestResponseRow } from "@/utils/types";
 import {
   Box,
@@ -39,10 +39,6 @@ type RequestFieldsType = {
 type RequestType = RequestRow & { form: FormRow };
 type RequestResponseType = RequestResponseRow & { field: FieldRow };
 
-type Marks = {
-  value: number;
-  label: string;
-};
 
 const CreateRequest = () => {
   const MARKS: Marks[] = [
