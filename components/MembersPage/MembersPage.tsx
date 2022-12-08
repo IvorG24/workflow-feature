@@ -1,7 +1,7 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
 import supabase from "@/utils/supabase";
-import { UserProfile } from "@/utils/types";
+import { TeamRoleEnum, UserProfile } from "@/utils/types";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
@@ -15,7 +15,7 @@ import SearchBar from "./SearchBar";
 export type TeamMember = {
   team_id: string;
   lock_account: boolean;
-  team_role: string;
+  team_role: TeamRoleEnum;
   user_profile_table: UserProfile;
 };
 
@@ -36,8 +36,8 @@ const Member = () => {
 
   const handleUpdateMemberRole = async (
     memberId: string,
-    memberRole: string,
-    newRole: string
+    memberRole: TeamRoleEnum,
+    newRole: TeamRoleEnum
   ) => {
     const authUserRoleIndex = rolesOrder.indexOf(authUserRole);
     const newRoleIndex = rolesOrder.indexOf(newRole);
@@ -45,7 +45,7 @@ const Member = () => {
     if (authUserRoleIndex > newRoleIndex) {
       return showNotification({
         title: "Error!",
-        message: `You don't have permission to perform this action.`,
+        message: `You don't have enough permission to perform this action.`,
         color: "red",
       });
     }
@@ -53,7 +53,7 @@ const Member = () => {
     if (newRole === memberRole) {
       return showNotification({
         title: "Update invalid.",
-        message: `User already has a ${memberRole} role.`,
+        message: `User can't be reassigned to the same role.`,
         color: "orange",
       });
     }
@@ -67,7 +67,7 @@ const Member = () => {
       if (error) throw error;
 
       showNotification({
-        title: "Success",
+        title: "Success!",
         message: `Member role updated.`,
         color: "green",
       });

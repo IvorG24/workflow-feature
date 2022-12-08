@@ -14,6 +14,7 @@ import {
 import { TeamMember } from "./MembersPage";
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
+import { TeamRoleEnum } from "@/utils/types";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -25,8 +26,8 @@ type Props = {
   authUserRole: string;
   updateMemberRole: (
     memberId: string,
-    memberRole: string,
-    newRole: string
+    memberRole: TeamRoleEnum,
+    newRole: TeamRoleEnum
   ) => void;
 };
 
@@ -84,7 +85,7 @@ const MembersTable = ({
             <Grid.Col order={3} orderXs={2} span={1} offset={2} offsetXs={1}>
               <Select
                 value={member.team_role}
-                onChange={(newRole: string) =>
+                onChange={(newRole: TeamRoleEnum) =>
                   updateMemberRole(
                     member.user_profile_table.user_id,
                     member.team_role,
