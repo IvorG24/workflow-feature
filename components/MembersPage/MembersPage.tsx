@@ -1,8 +1,9 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
-import { UserProfile } from "@/utils/types";
+import { Database } from "@/utils/database.types";
+import { fetchTeamMemberList, FetchTeamMemberList } from "@/utils/queries";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
-import { useSessionContext } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { MEMBERS } from "tempData";
@@ -10,39 +11,22 @@ import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import MembersTable from "./MembersTable";
 import SearchBar from "./SearchBar";
 
-export type TeamMember = {
-  team_id: string;
-  lock_account: boolean;
-  team_role: string;
-  user_profile_table: UserProfile;
-};
-
 const Member = () => {
   const [searchBarValue, setSearchBarValue] = useState("");
-  const { supabaseClient } = useSessionContext();
+  const supabaseClient = useSupabaseClient<Database>();
   const router = useRouter();
-  const [memberList, setMemberList] = useState<TeamMember[]>([]);
-  const { tid } = router.query;
+  const [memberList, setMemberList] = useState<FetchTeamMemberList>([]);
 
-  // todo: refractor useEffects into a join
   useEffect(() => {
     (async () => {
-      try {
-        const { data: team_role_table, error } = await supabaseClient
-          .from("team_role_table")
-          .select(`team_id, team_role, lock_account, user_profile_table(*)`)
-          .eq("team_id", tid);
-
-        if (error) throw error;
-
-        setMemberList(team_role_table as TeamMember[]);
-      } catch (error) {
-        console.error(error);
-      }
+      if (!router.isReady) return;
+      const fetchedMemberList = await fetchTeamMemberList(
+        supabaseClient,
+        `${router.query.tid}`
+      );
+      setMemberList(fetchedMemberList);
     })();
-  }, [supabaseClient, tid]);
-
-  console.log(memberList);
+  }, [supabaseClient, router]);
 
   return (
     <Stack>
@@ -58,7 +42,7 @@ const Member = () => {
             value={searchBarValue}
             numberOfMembers={MEMBERS.length}
           />
-          <MembersTable members={memberList} />
+          <MembersTable memberList={memberList} />
         </Grid.Col>
       </Grid>
       <Divider my={{ base: 10, lg: 20 }} />

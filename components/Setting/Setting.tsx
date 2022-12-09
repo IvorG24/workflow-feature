@@ -16,7 +16,9 @@ const Setting = ({ activeTab }: Props) => {
       <Title>Settings</Title>
       <Tabs
         value={activeTab}
-        onTabChange={(value) => router.push(`/settings/${value}`)}
+        onTabChange={(value) =>
+          router.push(`/t/${router.query.tid}/settings/${value}`)
+        }
         defaultValue={activeTab}
         mt="xl"
       >

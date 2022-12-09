@@ -1,103 +1,20 @@
-import Account from "@/components/Account/Account";
-import type { Database } from "@/utils/types";
-import { Team, UserProfile } from "@/utils/types";
-import { Container } from "@mantine/core";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
-import type { NextPage } from "next";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import Meta from "@/components/Meta/Meta";
+import { ReactElement } from "react";
+import { NextPageWithLayout } from "./_app";
 
-const Home: NextPage = () => {
-  const session = useSession();
-  const supabase = useSupabaseClient<Database>();
-  const router = useRouter();
-  const [team, setTeam] = useState<Team | null>(null);
-  const [teamLoading, setTeamLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
-
-  useEffect(() => {
-    if (!session) return;
-
-    (async () => {
-      try {
-        const { data: user_profile_table, error } = await supabase
-          .from("user_profile_table")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .single();
-
-        if (error) throw error;
-
-        setProfile(user_profile_table);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setProfileLoading(false);
-      }
-    })();
-  }, [session?.user.id, supabase, session]);
-
-  useEffect(() => {
-    if ((profileLoading && profile) || !session?.user.id) return;
-
-    (async () => {
-      try {
-        const { error } = await supabase
-          .from("user_profile_table")
-          .insert([{ user_id: session.user.id }]);
-
-        if (error) throw error;
-
-        router.push("/teams/create?step=1");
-      } catch (error) {
-        console.error(error);
-      }
-    })();
-  }, [profile, profileLoading, session?.user.id, supabase, router]);
-
-  useEffect(() => {
-    if (!session) return;
-
-    (async () => {
-      try {
-        const { data: team_table, error } = await supabase
-          .from("team_table")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .single();
-
-        if (error) throw error;
-
-        setTeam(team_table);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setTeamLoading(false);
-      }
-    })();
-  }, [supabase, session]);
-
-  useEffect(() => {
-    if (!session || teamLoading || team || !profile) return;
-
-    router.push("/teams/create?step=1");
-  }, [session, teamLoading, team, router, profile]);
-
+const Forms: NextPageWithLayout = () => {
   return (
-    <Container>
-      {!session ? (
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          theme="dark"
-        />
-      ) : (
-        <Account session={session} />
-      )}
-    </Container>
+    <div>
+      {/* todo: fix meta tags */}
+      <Meta description="Home page" url="localhost:3000/forms" />
+      <h1>Home page</h1>
+    </div>
   );
 };
 
-export default Home;
+Forms.getLayout = function getLayout(page: ReactElement) {
+  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+};
+
+export default Forms;

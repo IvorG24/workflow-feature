@@ -1,8 +1,7 @@
-import CreateRequest from "@/components/CreateRequest/CreateRequest";
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { ReactElement } from "react";
-import type { NextPageWithLayout } from "../_app";
+import type { NextPageWithLayout } from "../../../_app";
 
 const CreateRequestPage: NextPageWithLayout = () => {
   // todo: fix meta tags
@@ -12,7 +11,7 @@ const CreateRequestPage: NextPageWithLayout = () => {
         description="Create Request Page"
         url="localhost:3000/requests/create"
       />
-      <CreateRequest />
+      <h1>Create Request component here</h1>
     </div>
   );
 };

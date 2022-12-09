@@ -1,87 +1,79 @@
-import type { Database } from "./database.types";
+import { Database } from "./database.types";
 
 export type { Database } from "./database.types";
-export type UserProfile =
-  Database["public"]["Tables"]["user_profile_table"]["Row"];
 
-export type FormTable = Database["public"]["Tables"]["form_table"]["Row"];
-export type Team = Database["public"]["Tables"]["team_table"]["Row"];
-
-export type UserProfileRow =
+// user_profile_table
+export type UserProfileTableRow =
   Database["public"]["Tables"]["user_profile_table"]["Row"];
-export type UserProfileInsert =
+export type UserProfileTableInsert =
   Database["public"]["Tables"]["user_profile_table"]["Insert"];
-export type UserProfileUpdate =
+export type UserProfileTableUpdate =
   Database["public"]["Tables"]["user_profile_table"]["Update"];
 
-export type FormNameRow =
-  Database["public"]["Tables"]["form_name_table"]["Row"];
-export type FormNameInsert =
-  Database["public"]["Tables"]["form_name_table"]["Insert"];
-export type FormNameUpdate =
-  Database["public"]["Tables"]["form_name_table"]["Update"];
-
-export type FormRow = Database["public"]["Tables"]["form_table"]["Row"];
-export type FormInsert = Database["public"]["Tables"]["form_table"]["Insert"];
-export type FormUpdate = Database["public"]["Tables"]["form_table"]["Update"];
-
-export type FormPriorityRow =
-  Database["public"]["Tables"]["form_priority_table"]["Row"];
-export type FormPriorityInsert =
-  Database["public"]["Tables"]["form_priority_table"]["Insert"];
-export type FormPriorityUpdate =
-  Database["public"]["Tables"]["form_priority_table"]["Update"];
-
-export type QuestionRow = Database["public"]["Tables"]["question_table"]["Row"];
-export type QuestionInsert =
-  Database["public"]["Tables"]["question_table"]["Insert"];
-export type QuestionUpdate =
-  Database["public"]["Tables"]["question_table"]["Update"];
-
-export type QuestionOptionRow =
-  Database["public"]["Tables"]["user_created_select_option_table"]["Row"];
-export type QuestionOptionInser =
-  Database["public"]["Tables"]["user_created_select_option_table"]["Insert"];
-export type QuestionOptionUpdate =
-  Database["public"]["Tables"]["user_created_select_option_table"]["Update"];
-
-export type ReviewScoreRow =
-  Database["public"]["Tables"]["review_score_table"]["Row"];
-export type ReviewScoreInsert =
-  Database["public"]["Tables"]["review_score_table"]["Insert"];
-export type ReviewScoreUpdate =
-  Database["public"]["Tables"]["review_score_table"]["Update"];
-
-export type ReviewRow = Database["public"]["Tables"]["review_table"]["Row"];
-export type ReviewInsert =
-  Database["public"]["Tables"]["review_table"]["Insert"];
-export type ReviewUpdate =
-  Database["public"]["Tables"]["review_table"]["Update"];
-
-export type TeamRoleRow = Database["public"]["Tables"]["team_table"]["Row"];
-export type TeamRoleInsert =
+// team_table
+export type TeamTableRow = Database["public"]["Tables"]["team_table"]["Row"];
+export type TeamTableInsert =
   Database["public"]["Tables"]["team_table"]["Insert"];
-export type TeamRoleUpdate =
+export type TeamTableUpdate =
   Database["public"]["Tables"]["team_table"]["Update"];
 
-export type TeamRow = Database["public"]["Tables"]["team_table"]["Row"];
-export type TeamInsert = Database["public"]["Tables"]["team_table"]["Insert"];
-export type TeamUpdate = Database["public"]["Tables"]["team_table"]["Update"];
+// team_role_table
+export type TeamRoleTableRow =
+  Database["public"]["Tables"]["team_role_table"]["Row"];
+export type TeamRoleTableInsert =
+  Database["public"]["Tables"]["team_role_table"]["Insert"];
+export type TeamRoleTableUpdate =
+  Database["public"]["Tables"]["team_role_table"]["Update"];
 
-export type SelectOptionRow =
-  Database["public"]["Tables"]["user_created_select_option_table"]["Row"];
-export type SelectOptionInsert =
-  Database["public"]["Tables"]["user_created_select_option_table"]["Insert"];
-export type SelectOptionUpdate =
-  Database["public"]["Tables"]["user_created_select_option_table"]["Update"];
+// form_table
+export type FormTableRow = Database["public"]["Tables"]["form_table"]["Row"];
+export type FormTableInsert =
+  Database["public"]["Tables"]["form_table"]["Insert"];
+export type FormTableUpdate =
+  Database["public"]["Tables"]["form_table"]["Update"];
 
-export type ExpectedResponseType =
-  Database["public"]["Enums"]["expected_response_type"];
-export type TeamRoleEnum = Database["public"]["Enums"]["team_role"];
+// field_table
+export type FieldTableRow = Database["public"]["Tables"]["field_table"]["Row"];
+export type FieldTableInsert =
+  Database["public"]["Tables"]["field_table"]["Insert"];
+export type FieldTableUpdate =
+  Database["public"]["Tables"]["field_table"]["Update"];
 
-export type RequestRow = Database["public"]["Tables"]["request_table"]["Row"];
-export type RequestInsert =
+// review_table
+export type ReviewTableRow =
+  Database["public"]["Tables"]["review_table"]["Row"];
+export type ReviewTableInsert =
+  Database["public"]["Tables"]["review_table"]["Insert"];
+export type ReviewTableUpdate =
+  Database["public"]["Tables"]["review_table"]["Update"];
+
+// review_response_table
+export type ReviewResponseTableRow =
+  Database["public"]["Tables"]["review_response_table"]["Row"];
+export type ReviewResponseTableInsert =
+  Database["public"]["Tables"]["review_response_table"]["Insert"];
+export type ReviewResponseTableUpdate =
+  Database["public"]["Tables"]["review_response_table"]["Update"];
+
+// request_table
+export type RequestTableRow =
+  Database["public"]["Tables"]["request_table"]["Row"];
+export type RequestTableInsert =
   Database["public"]["Tables"]["request_table"]["Insert"];
-export type RequestUpdate =
+export type RequestTableUpdate =
   Database["public"]["Tables"]["request_table"]["Update"];
-export type TeamMember = Database["public"]["Tables"]["team_role_table"]["Row"];
+
+// request_response_table
+export type RequestResponseTableRow =
+  Database["public"]["Tables"]["request_response_table"]["Row"];
+export type RequestResponseTableInsert =
+  Database["public"]["Tables"]["request_response_table"]["Insert"];
+export type RequestResponseTableUpdate =
+  Database["public"]["Tables"]["request_response_table"]["Update"];
+
+// Enums
+export type FieldTypeEnum = Database["public"]["Enums"]["field_type"];
+export type FormTypeEnum = Database["public"]["Enums"]["form_type"];
+export type RequestStatusEnum = Database["public"]["Enums"]["request_status"];
+export type ReviewTypeEnum = Database["public"]["Enums"]["review_type"];
+export type TeamRoleEnum = Database["public"]["Enums"]["team_role"];

@@ -48,7 +48,7 @@ const SignIn = () => {
         setNotification(error.message);
         throw error;
       }
-      router.push("/");
+      await router.push("/");
     } catch (e) {
       console.error(e);
     }
@@ -64,6 +64,7 @@ const SignIn = () => {
         setNotification(error.message);
         throw error;
       }
+      await router.push("/");
     } catch (e) {
       setNotification("Failed to sign in.");
       console.error(e);
