@@ -20,7 +20,7 @@ import {
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { MouseEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AddCircle,
   Dashboard,
@@ -83,11 +83,6 @@ const Navbar = () => {
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
   }`;
-
-  const handleAddRequest = (e: MouseEvent) => {
-    e.preventDefault();
-    setIsCreatingRequest(true);
-  };
 
   const handleProceed = () => {
     router.push(`/requests/create?formId=${selectedForm}`);
@@ -216,21 +211,10 @@ const Navbar = () => {
               component="a"
               href="/requests"
               label="Requests"
-              className={iconStyle}
-              icon={<EditDocument />}
-              rightSection={
-                <ActionIcon
-                  variant="subtle"
-                  component="button"
-                  onClick={handleAddRequest}
-                  className={`${styles.createRequestButton} ${
-                    colorScheme === "dark"
-                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                      : ""
-                  }`}
-                >
-                  <AddCircle />
-                </ActionIcon>
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <EditDocument />
+                </IconWrapper>
               }
             />
 
