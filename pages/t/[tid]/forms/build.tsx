@@ -23,7 +23,7 @@ const CreateRequestForm: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/testpage"
       />
-      {/* <CreateRequestFormPage /> */}
+      <h1>Generalized form builder component here to build request form</h1>
     </div>
   );
 };

@@ -1,15 +1,14 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
-import Request from "@/components/Request/Request";
 import { ReactElement } from "react";
-import type { NextPageWithLayout } from "../_app";
+import type { NextPageWithLayout } from "../../../_app";
 
 const RequestPage: NextPageWithLayout = () => {
   // todo: fix meta tags
   return (
     <div>
       <Meta description="Specific Request" url="localhost:3000/requests/id" />
-      <Request />
+      <h1>Request Page</h1>
     </div>
   );
 };
