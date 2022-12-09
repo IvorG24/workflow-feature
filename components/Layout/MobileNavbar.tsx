@@ -18,6 +18,7 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useHover } from "@mantine/hooks";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -65,7 +66,10 @@ const Navbar = () => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
-
+  const [isOpenRequest, setIsOpenRequest] = useState(false);
+  const [isOpenReview, setIsOpenReview] = useState(false);
+  const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
+  const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
   useEffect(() => {
     // TODO: Convert into a hook
     const fetchForms = async () => {
@@ -223,9 +227,13 @@ const Navbar = () => {
             <NavLink
               component="a"
               label="Request Forms"
-              onClick={() =>
-                setActiveNest((v) => (v === "request" ? "" : "request"))
-              }
+              opened={isOpenRequest}
+              onClick={() => {
+                if (!addRequestHovered) {
+                  setActiveNest((v) => (v === "request" ? "" : "request"));
+                  setIsOpenRequest((v) => !v);
+                }
+              }}
               icon={
                 <Flex align="center" gap={4}>
                   <IconWrapper
@@ -244,21 +252,23 @@ const Navbar = () => {
               }
               disableRightSectionRotation
               rightSection={
-                <ActionIcon
-                  variant="subtle"
-                  component="a"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    router.push(`/t/${selectedTeam?.id}/requests/create`);
-                  }}
-                  className={`${styles.createRequestButton} ${
-                    colorScheme === "dark"
-                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                      : ""
-                  }`}
-                >
-                  <AddCircle />
-                </ActionIcon>
+                <Group ref={addRequestRef}>
+                  <ActionIcon
+                    variant="subtle"
+                    component="a"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/t/${selectedTeam?.id}/requests/create`);
+                    }}
+                    className={`${styles.createRequestButton} ${
+                      colorScheme === "dark"
+                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                        : ""
+                    }`}
+                  >
+                    <AddCircle />
+                  </ActionIcon>
+                </Group>
               }
               childrenOffset={28}
             >
@@ -296,9 +306,13 @@ const Navbar = () => {
               label="Review Forms"
               component="a"
               childrenOffset={28}
-              onClick={() =>
-                setActiveNest((v) => (v === "review" ? "" : "review"))
-              }
+              opened={isOpenReview}
+              onClick={() => {
+                if (!addReviewHovered) {
+                  setActiveNest((v) => (v === "review" ? "" : "review"));
+                  setIsOpenReview((v) => !v);
+                }
+              }}
               icon={
                 <Flex align="center" gap={4}>
                   <IconWrapper
@@ -317,21 +331,23 @@ const Navbar = () => {
               }
               disableRightSectionRotation
               rightSection={
-                <ActionIcon
-                  variant="subtle"
-                  component="a"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    router.push(`/t/${selectedTeam?.id}/review/create`);
-                  }}
-                  className={`${styles.createRequestButton} ${
-                    colorScheme === "dark"
-                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                      : ""
-                  }`}
-                >
-                  <AddCircle />
-                </ActionIcon>
+                <Group ref={addReviewRef}>
+                  <ActionIcon
+                    variant="subtle"
+                    component="a"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/t/${selectedTeam?.id}/review/create`);
+                    }}
+                    className={`${styles.createRequestButton} ${
+                      colorScheme === "dark"
+                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                        : ""
+                    }`}
+                  >
+                    <AddCircle />
+                  </ActionIcon>
+                </Group>
               }
             >
               {reviewForms.map((form) => (
