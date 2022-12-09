@@ -249,23 +249,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             component="a"
             href={`/t/${activeTeam.team_id}/requests`}
             label="Requests"
-            className={iconStyle}
             icon={<EditDocument />}
-            rightSection={
-              <ActionIcon
-                variant="subtle"
-                component="button"
-                onClick={handleAddRequest}
-                aria-label="create a request"
-                className={`${styles.createRequestButton} ${
-                  colorScheme === "dark"
-                    ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                    : ""
-                }`}
-              >
-                <AddCircle />
-              </ActionIcon>
-            }
           />
           <NavLink
             component="a"
@@ -365,7 +349,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                 <NavLink
                   key={form.form_id}
                   component="a"
-                  href={`/t/${teamId}/forms/${form.form_id}`}
+                  href={`/t/${activeTeam.team_id}/forms/${form.form_id}`}
                   label={form.form_name}
                   rightSection={
                     <ActionIcon
@@ -374,7 +358,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                       onClick={(e) => {
                         e.preventDefault();
                         router.push(
-                          `/t/${teamId}/requests/create/${form.form_id}`
+                          `/t/${activeTeam.team_id}/requests/create/${form.form_id}`
                         );
                       }}
                       aria-label="create a request"
@@ -404,7 +388,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                 <NavLink
                   key={form.form_id}
                   component="a"
-                  href={`/t/${teamId}/forms/${form.form_id}`}
+                  href={`/t/${activeTeam.team_id}/forms/${form.form_id}`}
                   label={form.form_name}
                   rightSection={
                     <ActionIcon
@@ -413,7 +397,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                       onClick={(e) => {
                         e.preventDefault();
                         router.push(
-                          `/t/${teamId}/review/create/${form.form_id}`
+                          `/t/${activeTeam.team_id}/review/create/${form.form_id}`
                         );
                       }}
                       aria-label="create a review"
