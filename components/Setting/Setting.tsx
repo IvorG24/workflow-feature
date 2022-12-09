@@ -10,20 +10,15 @@ type Props = {
 
 const Setting = ({ activeTab }: Props) => {
   const router = useRouter();
-  const { tid } = router.query;
 
   return (
     <Container fluid px="0">
       <Title>Settings</Title>
       <Tabs
         value={activeTab}
-<<<<<<< HEAD
-        onTabChange={(value) => router.push(`/t/${tid}/settings/${value}`)}
-=======
         onTabChange={(value) =>
           router.push(`/t/${router.query.tid}/settings/${value}`)
         }
->>>>>>> preview
         defaultValue={activeTab}
         mt="xl"
       >

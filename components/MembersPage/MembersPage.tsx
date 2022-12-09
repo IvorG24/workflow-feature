@@ -1,7 +1,10 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
-import { FetchTeamMemberList, fetchTeamMemberList } from "@/utils/queries";
-import supabase from "@/utils/supabase";
+import {
+  FetchTeamMemberList,
+  fetchTeamMemberList,
+  updateTeamMemberRole,
+} from "@/utils/queries";
 import { TeamRoleEnum, UserProfileTableRow } from "@/utils/types";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
@@ -28,11 +31,31 @@ const Member = () => {
   const [memberList, setMemberList] = useState<FetchTeamMemberList>([]);
   const [authUserRole, setAuthUserRole] = useState<string>("");
   const rolesOrder = ["owner", "admin", "member"];
+
+  const fetchTeamMembers = useCallback(async () => {
+    try {
+      const fetchedMemberList = await fetchTeamMemberList(
+        supabaseClient,
+        `${router.query.tid}`
+      );
+      setMemberList(fetchedMemberList as FetchTeamMemberList);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [router, supabaseClient]);
+
   // sort A-Z and Owner > Admin > Member
   const sortedMemberList = useMemo(
     () => sortMemberList(memberList),
     [memberList]
   );
+
+  const filterMemberList = sortedMemberList.filter((member) => {
+    const memberName = member.user_profile_table.full_name;
+    if (memberName) {
+      return lowerCase(memberName).includes(searchBarValue);
+    }
+  });
 
   const handleUpdateMemberRole = async (
     memberId: string,
@@ -59,42 +82,24 @@ const Member = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from("team_role_table")
-        .update({ team_role: newRole })
-        .eq("user_id", memberId);
+      const teamMember = await updateTeamMemberRole(
+        supabaseClient,
+        newRole,
+        memberId
+      );
 
-      if (error) throw error;
-
-      showNotification({
-        title: "Success!",
-        message: `Member role updated.`,
-        color: "green",
-      });
-      fetchTeamMembers();
+      if (teamMember !== null) {
+        showNotification({
+          title: "Success!",
+          message: `Member role updated.`,
+          color: "green",
+        });
+        fetchTeamMembers();
+      }
     } catch (error) {
       console.log(error);
     }
   };
-
-  const filterMemberList = sortedMemberList.filter((member) => {
-    const memberName = member.user_profile_table.full_name;
-    if (memberName) {
-      return lowerCase(memberName).includes(searchBarValue);
-    }
-  });
-
-  const fetchTeamMembers = useCallback(async () => {
-    try {
-      const fetchedMemberList = await fetchTeamMemberList(
-        supabaseClient,
-        `${router.query.tid}`
-      );
-      setMemberList(fetchedMemberList as FetchTeamMemberList);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [router, supabaseClient]);
 
   useEffect(() => {
     fetchTeamMembers();
