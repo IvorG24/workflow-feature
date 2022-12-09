@@ -11,9 +11,9 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { TeamMember } from "./MembersPage";
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
+import { FetchTeamMemberList } from "@/utils/queries";
 import { TeamRoleEnum } from "@/utils/types";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
@@ -21,7 +21,7 @@ import { useState } from "react";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
 type Props = {
-  members: TeamMember[];
+  memberList: FetchTeamMemberList;
   authUser: User | null;
   authUserRole: string;
   updateMemberRole: (
@@ -32,7 +32,7 @@ type Props = {
 };
 
 const MembersTable = ({
-  members,
+  memberList,
   authUser,
   authUserRole,
   updateMemberRole,
@@ -42,10 +42,10 @@ const MembersTable = ({
   // pagination
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 7;
-  const totalPages = Math.ceil(members.length / pageSize);
+  const totalPages = Math.ceil(memberList.length / pageSize);
 
   const paginate = (
-    array: TeamMember[],
+    array: FetchTeamMemberList,
     page_size: number,
     page_number: number
   ) => {
@@ -54,7 +54,7 @@ const MembersTable = ({
 
   return (
     <Stack mih="300px" pt="md">
-      {paginate(members, pageSize, pageNumber).map((member) => {
+      {paginate(memberList, pageSize, pageNumber).map((member) => {
         return (
           <Grid
             key={member.user_profile_table.user_id}
@@ -95,7 +95,7 @@ const MembersTable = ({
                 onChange={(newRole: TeamRoleEnum) =>
                   updateMemberRole(
                     member.user_profile_table.user_id,
-                    member.team_role,
+                    member.team_role as TeamRoleEnum,
                     newRole
                   )
                 }
@@ -113,7 +113,7 @@ const MembersTable = ({
                 readOnly={
                   authUserRole === "member" ||
                   authUser?.id === member.user_profile_table.user_id ||
-                  ["owner", authUserRole].includes(member.team_role)
+                  ["owner", authUserRole].includes(member.team_role as string)
                     ? true
                     : false
                 }

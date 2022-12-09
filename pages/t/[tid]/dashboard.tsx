@@ -12,7 +12,7 @@ const Page: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/testpage"
       />
-      tespage
+      <h1>Team Dashboard page</h1>
     </div>
   );
 };

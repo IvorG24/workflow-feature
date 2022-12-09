@@ -2,6 +2,7 @@ import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import MembersPage from "../MembersPage/MembersPage";
 import NotificationsPage from "../NotificationsPage/NotificationsPage";
+import ProfileSettingsPage from "../ProfileSettingsPage/ProfileSettingsPage";
 
 type Props = {
   activeTab: string;
@@ -16,7 +17,13 @@ const Setting = ({ activeTab }: Props) => {
       <Title>Settings</Title>
       <Tabs
         value={activeTab}
+<<<<<<< HEAD
         onTabChange={(value) => router.push(`/t/${tid}/settings/${value}`)}
+=======
+        onTabChange={(value) =>
+          router.push(`/t/${router.query.tid}/settings/${value}`)
+        }
+>>>>>>> preview
         defaultValue={activeTab}
         mt="xl"
       >
@@ -35,7 +42,7 @@ const Setting = ({ activeTab }: Props) => {
           <MembersPage />
         </Tabs.Panel>
         <Tabs.Panel value="profile" pt="xl">
-          {/* <Profile /> */}
+          <ProfileSettingsPage />
         </Tabs.Panel>
         <Tabs.Panel value="notification" pt="xl">
           <NotificationsPage />

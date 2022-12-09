@@ -1,7 +1,8 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
+import { FetchTeamMemberList, fetchTeamMemberList } from "@/utils/queries";
 import supabase from "@/utils/supabase";
-import { TeamRoleEnum, UserProfile } from "@/utils/types";
+import { TeamRoleEnum, UserProfileTableRow } from "@/utils/types";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
@@ -16,16 +17,15 @@ export type TeamMember = {
   team_id: string;
   lock_account: boolean;
   team_role: TeamRoleEnum;
-  user_profile_table: UserProfile;
+  user_profile_table: UserProfileTableRow;
 };
 
 const Member = () => {
   const router = useRouter();
   const user = useUser();
-  const { tid } = router.query;
   const { supabaseClient } = useSessionContext();
   const [searchBarValue, setSearchBarValue] = useState("");
-  const [memberList, setMemberList] = useState<TeamMember[]>([]);
+  const [memberList, setMemberList] = useState<FetchTeamMemberList>([]);
   const [authUserRole, setAuthUserRole] = useState<string>("");
   const rolesOrder = ["owner", "admin", "member"];
   // sort A-Z and Owner > Admin > Member
@@ -86,18 +86,15 @@ const Member = () => {
 
   const fetchTeamMembers = useCallback(async () => {
     try {
-      const { data: team_role_table, error } = await supabaseClient
-        .from("team_role_table")
-        .select(`team_id, team_role, lock_account, user_profile_table(*)`)
-        .eq("team_id", tid);
-
-      if (error) throw error;
-
-      setMemberList(team_role_table as TeamMember[]);
+      const fetchedMemberList = await fetchTeamMemberList(
+        supabaseClient,
+        `${router.query.tid}`
+      );
+      setMemberList(fetchedMemberList as FetchTeamMemberList);
     } catch (error) {
       console.error(error);
     }
-  }, [tid, supabaseClient]);
+  }, [router, supabaseClient]);
 
   useEffect(() => {
     fetchTeamMembers();
@@ -109,7 +106,7 @@ const Member = () => {
         (member) => member.user_profile_table.user_id === user.id
       )?.team_role;
 
-      userRole !== undefined && setAuthUserRole(userRole);
+      userRole !== undefined && setAuthUserRole(userRole as string);
     }
   }, [user, memberList]);
 
@@ -129,7 +126,7 @@ const Member = () => {
           <MembersTable
             authUserRole={authUserRole}
             authUser={user}
-            members={filterMemberList}
+            memberList={filterMemberList}
             updateMemberRole={handleUpdateMemberRole}
           />
         </Grid.Col>
@@ -152,7 +149,7 @@ const Member = () => {
   );
 };
 
-const sortMemberList = (members: TeamMember[]) => {
+const sortMemberList = (members: FetchTeamMemberList) => {
   members.sort((a, b) => {
     const nameA = a.user_profile_table.full_name;
     const nameB = b.user_profile_table.full_name;
@@ -166,8 +163,8 @@ const sortMemberList = (members: TeamMember[]) => {
   const rolesOrder = ["owner", "admin", "manager", "member"];
 
   members.sort((a, b) => {
-    const indexA = rolesOrder.indexOf(a.team_role);
-    const indexB = rolesOrder.indexOf(b.team_role);
+    const indexA = rolesOrder.indexOf(a.team_role as string);
+    const indexB = rolesOrder.indexOf(b.team_role as string);
     return indexA - indexB;
   });
   return members;
