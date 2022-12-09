@@ -4,7 +4,12 @@
 
 import { SupabaseClient, User } from "@supabase/supabase-js";
 import { Database } from "./database.types";
-import { TeamRoleTableRow, TeamTableRow, UserProfileTableRow } from "./types";
+import {
+  TeamRoleEnum,
+  TeamRoleTableRow,
+  TeamTableRow,
+  UserProfileTableRow,
+} from "./types";
 
 // * Creates or retrieve user if existing.
 export const createOrRetrieveUser = async (
@@ -170,3 +175,17 @@ export const fetchTeamMemberList = async (
 export type FetchTeamMemberList = (TeamRoleTableRow & {
   user_profile_table: UserProfileTableRow;
 })[];
+
+export const updateTeamMemberRole = async (
+  supabaseClient: SupabaseClient<Database>,
+  newRole: TeamRoleEnum,
+  memberId: string
+) => {
+  const { error: updateTeamMemberRoleError } = await supabaseClient
+    .from("team_role_table")
+    .update({ team_role: newRole })
+    .eq("user_id", memberId);
+
+  if (updateTeamMemberRoleError) throw updateTeamMemberRoleError;
+  return updateTeamMemberRoleError;
+};
