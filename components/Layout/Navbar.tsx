@@ -326,7 +326,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                   component="a"
                   onClick={(e) => {
                     e.preventDefault();
-                    router.push(`/t/${activeTeam.team_id}/requests/create`);
+                    router.push(`/t/${activeTeam.team_id}/requests/build`);
                   }}
                   className={`${styles.createRequestButton} ${
                     colorScheme === "dark"
@@ -399,7 +399,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                   component="a"
                   onClick={(e) => {
                     e.preventDefault();
-                    router.push(`/t/${activeTeam.team_id}/review/create`);
+                    router.push(`/t/${activeTeam.team_id}/review/build`);
                   }}
                   className={`${styles.createRequestButton} ${
                     colorScheme === "dark"
