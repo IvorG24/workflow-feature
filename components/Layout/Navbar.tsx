@@ -9,6 +9,7 @@ import {
   Button,
   Container,
   Divider,
+  Flex,
   Group,
   Modal,
   Navbar as MantineNavbar,
@@ -24,6 +25,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import {
   AddCircle,
+  ArrowBack,
   Dashboard,
   Description,
   EditDocument,
@@ -133,6 +135,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
+  const [activeNest, setActiveNest] = useState<string | null>(null);
 
   useEffect(() => {
     // TODO: Convert into a hook
@@ -235,48 +238,6 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
         />
 
         <MantineNavbar.Section mt="lg">
-          <NavLink
-            component="a"
-            href={`/t/${activeTeam.team_id}/dashboard`}
-            label="Dashboard"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Dashboard />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            href={`/t/${activeTeam.team_id}/requests`}
-            label="Requests"
-            icon={<EditDocument />}
-          />
-          <NavLink
-            component="a"
-            href={`/t/${activeTeam.team_id}/forms`}
-            label="Forms"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Description />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            // TODO: Commented out page route has no content. Kindly fix.
-            href={`/t/${activeTeam.team_id}/settings/members`}
-            label="Members"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <GroupIcon />
-              </IconWrapper>
-            }
-          />
-        </MantineNavbar.Section>
-
-        <Divider mt="xs" />
-
-        <MantineNavbar.Section mt="lg">
           <Title order={2} size={14} weight={400} color="dimmed">
             Account
           </Title>
@@ -318,7 +279,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
           <MantineNavbar.Section mt="lg">
             <NavLink
               component="a"
-              href="/dashboard"
+              href={`/t/${activeTeam.team_id}/dashboard`}
               label="Dashboard"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -328,7 +289,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             />
             <NavLink
               component="a"
-              href="/requests"
+              href={`/t/${activeTeam.team_id}/requests`}
               label="Requests"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -337,11 +298,44 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
               }
             />
             <NavLink
+              component="a"
               label="Request Forms"
+              onClick={() =>
+                setActiveNest((v) => (v === "request" ? "" : "request"))
+              }
               icon={
-                <IconWrapper className={iconStyle}>
-                  <Description />
-                </IconWrapper>
+                <Flex align="center" gap={4}>
+                  <IconWrapper
+                    fontSize={10}
+                    color="gray"
+                    className={`${styles.arrowRight} ${
+                      activeNest === "request" && styles.arrowDown
+                    }`}
+                  >
+                    <ArrowBack />
+                  </IconWrapper>
+                  <IconWrapper className={iconStyle}>
+                    <Description />
+                  </IconWrapper>
+                </Flex>
+              }
+              disableRightSectionRotation
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  component="a"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/t/${activeTeam.team_id}/requests/create`);
+                  }}
+                  className={`${styles.createRequestButton} ${
+                    colorScheme === "dark"
+                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                      : ""
+                  }`}
+                >
+                  <AddCircle />
+                </ActionIcon>
               }
               childrenOffset={28}
             >
@@ -377,12 +371,45 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
 
             <NavLink
               label="Review Forms"
-              icon={
-                <IconWrapper className={iconStyle}>
-                  <Description />
-                </IconWrapper>
-              }
+              component="a"
               childrenOffset={28}
+              onClick={() =>
+                setActiveNest((v) => (v === "review" ? "" : "review"))
+              }
+              icon={
+                <Flex align="center" gap={4}>
+                  <IconWrapper
+                    fontSize={10}
+                    color="gray"
+                    className={`${styles.arrowRight} ${
+                      activeNest === "review" && styles.arrowDown
+                    }`}
+                  >
+                    <ArrowBack />
+                  </IconWrapper>
+                  <IconWrapper className={iconStyle}>
+                    <Description />
+                  </IconWrapper>
+                </Flex>
+              }
+              disableRightSectionRotation
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  component="a"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/t/${activeTeam.team_id}/review/create`);
+                  }}
+                  className={`${styles.createRequestButton} ${
+                    colorScheme === "dark"
+                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                      : ""
+                  }`}
+                >
+                  <AddCircle />
+                </ActionIcon>
+              }
             >
               {reviewForms.map((form) => (
                 <NavLink
@@ -417,8 +444,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             <NavLink
               component="a"
               // TODO: Commented out page route has no content. Kindly fix.
-              // href={`/t/${teamId}/settings/members`}
-              href={`/settings/members`}
+              href={`/t/${activeTeam.team_id}/settings/members`}
               label="Members"
               icon={
                 <IconWrapper className={iconStyle}>

@@ -8,6 +8,7 @@ import {
   Button,
   Container,
   Divider,
+  Flex,
   Group,
   Modal,
   Navbar as MantineNavbar,
@@ -23,6 +24,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import {
   AddCircle,
+  ArrowBack,
   Dashboard,
   Description,
   EditDocument,
@@ -62,6 +64,7 @@ const Navbar = () => {
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
+  const [activeNest, setActiveNest] = useState<string | null>(null);
 
   useEffect(() => {
     // TODO: Convert into a hook
@@ -199,7 +202,7 @@ const Navbar = () => {
           <MantineNavbar.Section mt="lg">
             <NavLink
               component="a"
-              href="/dashboard"
+              href={`/t/${selectedTeam?.id}/dashboard`}
               label="Dashboard"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -209,7 +212,7 @@ const Navbar = () => {
             />
             <NavLink
               component="a"
-              href="/requests"
+              href={`/t/${selectedTeam?.id}/requests`}
               label="Requests"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -217,13 +220,45 @@ const Navbar = () => {
                 </IconWrapper>
               }
             />
-
             <NavLink
+              component="a"
               label="Request Forms"
+              onClick={() =>
+                setActiveNest((v) => (v === "request" ? "" : "request"))
+              }
               icon={
-                <IconWrapper className={iconStyle}>
-                  <Description />
-                </IconWrapper>
+                <Flex align="center" gap={4}>
+                  <IconWrapper
+                    fontSize={10}
+                    color="gray"
+                    className={`${styles.arrowRight} ${
+                      activeNest === "request" && styles.arrowDown
+                    }`}
+                  >
+                    <ArrowBack />
+                  </IconWrapper>
+                  <IconWrapper className={iconStyle}>
+                    <Description />
+                  </IconWrapper>
+                </Flex>
+              }
+              disableRightSectionRotation
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  component="a"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/t/${selectedTeam?.id}/requests/create`);
+                  }}
+                  className={`${styles.createRequestButton} ${
+                    colorScheme === "dark"
+                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                      : ""
+                  }`}
+                >
+                  <AddCircle />
+                </ActionIcon>
               }
               childrenOffset={28}
             >
@@ -259,12 +294,45 @@ const Navbar = () => {
 
             <NavLink
               label="Review Forms"
-              icon={
-                <IconWrapper className={iconStyle}>
-                  <Description />
-                </IconWrapper>
-              }
+              component="a"
               childrenOffset={28}
+              onClick={() =>
+                setActiveNest((v) => (v === "review" ? "" : "review"))
+              }
+              icon={
+                <Flex align="center" gap={4}>
+                  <IconWrapper
+                    fontSize={10}
+                    color="gray"
+                    className={`${styles.arrowRight} ${
+                      activeNest === "review" && styles.arrowDown
+                    }`}
+                  >
+                    <ArrowBack />
+                  </IconWrapper>
+                  <IconWrapper className={iconStyle}>
+                    <Description />
+                  </IconWrapper>
+                </Flex>
+              }
+              disableRightSectionRotation
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  component="a"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/t/${selectedTeam?.id}/review/create`);
+                  }}
+                  className={`${styles.createRequestButton} ${
+                    colorScheme === "dark"
+                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                      : ""
+                  }`}
+                >
+                  <AddCircle />
+                </ActionIcon>
+              }
             >
               {reviewForms.map((form) => (
                 <NavLink
@@ -295,9 +363,11 @@ const Navbar = () => {
                 />
               ))}
             </NavLink>
+
             <NavLink
               component="a"
-              href="/settings/members"
+              // TODO: Commented out page route has no content. Kindly fix.
+              href={`/t/${selectedTeam?.id}/settings/members`}
               label="Members"
               icon={
                 <IconWrapper className={iconStyle}>

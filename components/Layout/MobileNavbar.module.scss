@@ -60,3 +60,11 @@
 .colorLight {
   color: var(--mantine-color-dark-0);
 }
+
+.arrowRight {
+  transform: rotate(180deg);
+}
+
+.arrowDown {
+  transform: rotate(270deg);
+}
