@@ -9,9 +9,9 @@ const MemberSettingsPage: NextPageWithLayout = () => {
     <div>
       <Meta
         description="Member Settings Page"
-        url="localhost:3000/settings/member"
+        url="localhost:3000/settings/members"
       />
-      <Setting activeTab="member" />
+      <Setting activeTab="members" />
     </div>
   );
 };
