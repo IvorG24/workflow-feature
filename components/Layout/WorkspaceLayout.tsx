@@ -1,10 +1,14 @@
 // todo: create integration tests for this component
-import LoadingPage from "@/components/LoadingPage/LoadingPage";
-import useTeams from "@/hooks/useFetchTeams";
-import { AppShell, Container } from "@mantine/core";
-import { useSessionContext } from "@supabase/auth-helpers-react";
+import { Database } from "@/utils/database.types";
+import {
+  createOrRetrieveUser,
+  createOrRetrieveUserTeamList,
+  CreateOrRetrieveUserTeamList,
+} from "@/utils/queries";
+import { AppShell, LoadingOverlay } from "@mantine/core";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import MobileHeader from "./MobileHeader";
 import Navbar from "./Navbar";
 import styles from "./WorkspaceLayout.module.scss";
@@ -14,29 +18,60 @@ type Props = {
 };
 
 const WorkspaceLayout = ({ children }: Props) => {
-  const { isLoading } = useSessionContext();
-  const { data: teams, error: teamsError, loading: teamsLoading } = useTeams();
   const router = useRouter();
-  const { tid } = router.query;
+  const user = useUser();
+  const [isLoading, setIsLoading] = useState(true);
+  const supabaseClient = useSupabaseClient<Database>();
+  const [createdOrRetrievedUserTeamList, setCreatedOrRetrievedUserTeamList] =
+    useState<CreateOrRetrieveUserTeamList>([]);
 
-  // redirect to first team in array if teamid is not present in url
   useEffect(() => {
-    if (teamsLoading || teamsError || tid || !teams.length) return;
+    (async () => {
+      try {
+        if (!router.isReady) return;
+        if (!user) {
+          await router.push("/sign-in");
+          return;
+        }
 
-    // TODO: Every time I click on a tab, laging an reredirect sa dashbooard so I will comment this muna for now.
-    // router.push(`/t/${teams[0].team_id}/dashboard`);
-  }, [router, teams, teamsError, teamsLoading, tid]);
+        const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
+          await Promise.all([
+            createOrRetrieveUser(supabaseClient, user),
+            createOrRetrieveUserTeamList(supabaseClient, user),
+          ]);
 
-  if (isLoading || teamsLoading) return <LoadingPage />;
-  if (teamsError) return <Container fluid>Error...</Container>; // todo: create a custom error page
+        console.log(createdOrRetrievedUser);
+
+        setCreatedOrRetrievedUserTeamList(createdOrRetrievedUserTeamList);
+        setIsLoading(false);
+
+        if (router.pathname === "/")
+          await router.push(
+            `/t/${createdOrRetrievedUserTeamList[0].team_id}/dashboard`
+          );
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [router, user]);
 
   return (
-    <AppShell
-      navbar={<Navbar teams={teams} teamId={tid as string} />} // don't use typecasting for tid
-      header={<MobileHeader />}
-    >
-      <main className={styles.childrenContainer}>{children}</main>
-    </AppShell>
+    <>
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      {!isLoading && (
+        <AppShell
+          navbar={
+            <Navbar
+              teamList={createdOrRetrievedUserTeamList}
+              activeTeamIndex={0}
+            />
+          } // don't use typecasting for tid
+          header={<MobileHeader />}
+        >
+          <main className={styles.childrenContainer}>{children}</main>
+        </AppShell>
+      )}
+    </>
   );
 };
 
