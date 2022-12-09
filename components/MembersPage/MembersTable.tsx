@@ -38,7 +38,6 @@ const MembersTable = ({
   updateMemberRole,
 }: Props) => {
   const router = useRouter();
-  const { tid } = router.query;
   // pagination
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 7;
@@ -64,7 +63,7 @@ const MembersTable = ({
               <Group
                 onClick={() =>
                   router.push(
-                    `/t/${tid}/profiles/${member.user_profile_table.user_id}/bio`
+                    `/t/${router.query.tid}/profiles/${member.user_profile_table.user_id}/bio`
                   )
                 }
               >
@@ -73,7 +72,6 @@ const MembersTable = ({
                   radius={40}
                   src={member.user_profile_table.avatar_url}
                   alt={`${member.user_profile_table.full_name}'s Formsly Avatar`}
-                  // add indicator for auth user member data
                   sx={{
                     border: `${
                       authUser?.id === member.user_profile_table.user_id &&

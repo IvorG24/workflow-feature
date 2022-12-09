@@ -82,13 +82,13 @@ const Member = () => {
     }
 
     try {
-      const teamMember = await updateTeamMemberRole(
+      const updateError = await updateTeamMemberRole(
         supabaseClient,
         newRole,
         memberId
       );
-
-      if (teamMember !== null) {
+      console.log(updateError);
+      if (updateError === null) {
         showNotification({
           title: "Success!",
           message: `Member role updated.`,

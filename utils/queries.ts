@@ -181,14 +181,11 @@ export const updateTeamMemberRole = async (
   newRole: TeamRoleEnum,
   memberId: string
 ) => {
-  const { data: teamMember, error: updateTeamMemberRoleError } =
-    await supabaseClient
-      .from("team_role_table")
-      .update({ team_role: newRole })
-      .eq("user_id", memberId)
-      .select()
-      .single();
+  const { error: updateTeamMemberRoleError } = await supabaseClient
+    .from("team_role_table")
+    .update({ team_role: newRole })
+    .eq("user_id", memberId);
 
   if (updateTeamMemberRoleError) throw updateTeamMemberRoleError;
-  return teamMember;
+  return updateTeamMemberRoleError;
 };
