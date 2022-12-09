@@ -19,6 +19,7 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useHover } from "@mantine/hooks";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -136,6 +137,10 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
+  const [isOpenRequest, setIsOpenRequest] = useState(false);
+  const [isOpenReview, setIsOpenReview] = useState(false);
+  const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
+  const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
 
   useEffect(() => {
     // TODO: Convert into a hook
@@ -300,9 +305,13 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             <NavLink
               component="a"
               label="Request Forms"
-              onClick={() =>
-                setActiveNest((v) => (v === "request" ? "" : "request"))
-              }
+              opened={isOpenRequest}
+              onClick={() => {
+                if (!addRequestHovered) {
+                  setActiveNest((v) => (v === "request" ? "" : "request"));
+                  setIsOpenRequest((v) => !v);
+                }
+              }}
               icon={
                 <Flex align="center" gap={4}>
                   <IconWrapper
@@ -321,21 +330,23 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
               }
               disableRightSectionRotation
               rightSection={
-                <ActionIcon
-                  variant="subtle"
-                  component="a"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    router.push(`/t/${activeTeam.team_id}/requests/build`);
-                  }}
-                  className={`${styles.createRequestButton} ${
-                    colorScheme === "dark"
-                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                      : ""
-                  }`}
-                >
-                  <AddCircle />
-                </ActionIcon>
+                <Group ref={addRequestRef}>
+                  <ActionIcon
+                    variant="subtle"
+                    component="a"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/t/${activeTeam.team_id}/requests/build`);
+                    }}
+                    className={`${styles.createRequestButton} ${
+                      colorScheme === "dark"
+                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                        : ""
+                    }`}
+                  >
+                    <AddCircle />
+                  </ActionIcon>
+                </Group>
               }
               childrenOffset={28}
             >
@@ -373,9 +384,13 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
               label="Review Forms"
               component="a"
               childrenOffset={28}
-              onClick={() =>
-                setActiveNest((v) => (v === "review" ? "" : "review"))
-              }
+              opened={isOpenReview}
+              onClick={() => {
+                if (!addReviewHovered) {
+                  setActiveNest((v) => (v === "review" ? "" : "review"));
+                  setIsOpenReview((v) => !v);
+                }
+              }}
               icon={
                 <Flex align="center" gap={4}>
                   <IconWrapper
@@ -394,21 +409,23 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
               }
               disableRightSectionRotation
               rightSection={
-                <ActionIcon
-                  variant="subtle"
-                  component="a"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    router.push(`/t/${activeTeam.team_id}/review/build`);
-                  }}
-                  className={`${styles.createRequestButton} ${
-                    colorScheme === "dark"
-                      ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                      : ""
-                  }`}
-                >
-                  <AddCircle />
-                </ActionIcon>
+                <Group ref={addReviewRef}>
+                  <ActionIcon
+                    variant="subtle"
+                    component="a"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/t/${activeTeam.team_id}/review/build`);
+                    }}
+                    className={`${styles.createRequestButton} ${
+                      colorScheme === "dark"
+                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                        : ""
+                    }`}
+                  >
+                    <AddCircle />
+                  </ActionIcon>
+                </Group>
               }
             >
               {reviewForms.map((form) => (
