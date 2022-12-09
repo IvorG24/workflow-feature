@@ -58,4 +58,4 @@ export type Marks = {
   label: string;
 };
 
-export type RequestFields = RequestResponseRow & { fields: FieldRow };
+export type RequestFields = RequestResponseRow & { field: FieldRow };

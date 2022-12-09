@@ -1,4 +1,5 @@
-import type { Database, RequestRow, Marks } from "@/utils/types";
+import { renderTooltip } from "@/utils/request";
+import type { Database, Marks, RequestRow } from "@/utils/types";
 import { FieldRow, FormRow, RequestResponseRow } from "@/utils/types";
 import {
   Box,
@@ -38,7 +39,6 @@ type RequestFieldsType = {
 
 type RequestType = RequestRow & { form: FormRow };
 type RequestResponseType = RequestResponseRow & { field: FieldRow };
-
 
 const CreateRequest = () => {
   const MARKS: Marks[] = [
@@ -101,6 +101,8 @@ const CreateRequest = () => {
       axios.post("/api/update", {
         answers: fields,
         requestId: draftId,
+        formData: getValues(),
+        approver: selectedApprover,
       });
     } else {
       axios.post("/api/insert", {
@@ -150,7 +152,7 @@ const CreateRequest = () => {
       } catch {
         showNotification({
           title: "Error!",
-          message: "Faield to fetch Approvers",
+          message: "Failed to fetch Approvers",
           color: "red",
         });
       }
@@ -163,15 +165,16 @@ const CreateRequest = () => {
           .select("*")
           .eq("is_draft", true)
           .eq("form_table_id", router.query.formId)
-          .eq("response_owner", user?.id)
-          .single();
+          .eq("requested_by", user?.id)
+          .maybeSingle();
+
         if (error) throw error;
 
         data ? fetchDraft(data.request_id) : handleFetchForm();
       } catch {
         showNotification({
           title: "Error!",
-          message: "Faield to fetch Request",
+          message: "Failed to fetch Request",
           color: "red",
         });
       }
@@ -195,15 +198,15 @@ const CreateRequest = () => {
         if (fieldsError) throw fieldsError;
 
         setFields(
-          fields.map((field) => {
-            return { ...field, response: "", responseId: null };
+          fields.map((field, index) => {
+            return { ...field, response: "", responseId: index };
           })
         );
         setForm(form);
       } catch {
         showNotification({
           title: "Error!",
-          message: "Faield to fetch Form",
+          message: "Failed to fetch Form",
           color: "red",
         });
       }
@@ -234,19 +237,21 @@ const CreateRequest = () => {
 
         if (!request || requestFieldsError) throw requestFieldsError;
 
-        const fieldsWithResponse = newRequestFields.map((field) => {
+        const fieldsWithResponse = newRequestFields.map((field, index) => {
           return {
             ...field.field,
             response: `${field.response_value}`,
-            responseId: field.request_id,
+            responseId: index,
           };
         });
+
         setFields(fieldsWithResponse);
         setForm(newRequest.form);
+        setSelectedApprover(request.approver_id);
       } catch {
         showNotification({
           title: "Error!",
-          message: "Faield to fetch Request Draft",
+          message: "Failed to fetch Request Draft",
           color: "red",
         });
       }
@@ -264,7 +269,7 @@ const CreateRequest = () => {
       } catch {
         showNotification({
           title: "Error!",
-          message: "Faield to fetch Current User",
+          message: "Failed to fetch Current User",
           color: "red",
         });
       }
@@ -287,13 +292,14 @@ const CreateRequest = () => {
         return {
           field_id: Number(field.field_id),
           response_value: field.response,
-          request_id: Number(field.responseId),
+          request_id: Number(`${draftId}`),
         };
       });
 
       const { error: requestResponseError } = await supabase
         .from("request_response_table")
-        .upsert(requestResponseList);
+        .upsert(requestResponseList)
+        .eq("request_id", draftId);
 
       if (requestResponseError) throw requestResponseError;
 
@@ -301,14 +307,14 @@ const CreateRequest = () => {
         .from("request_table")
         .update({
           approver_id: selectedApprover,
-          request_created_at: `${new Date()}`,
+          request_created_at: `${new Date().toISOString()}`,
           request_title: formData.title,
           on_behalf_of: formData.behalf,
           request_description: formData.description,
           is_draft: false,
         })
         .eq("request_id", draftId);
-
+      console.log(requestError);
       if (requestError) throw requestError;
 
       showNotification({
@@ -348,7 +354,7 @@ const CreateRequest = () => {
 
       const requestResponse = fields.map((field) => {
         return {
-          field_id: Number(field.responseId),
+          field_id: Number(field.field_id),
           request_id: request.request_id,
           response_value: field.response,
         };
@@ -379,7 +385,7 @@ const CreateRequest = () => {
   const handleAnswer = (questionId: number, value: string) => {
     setFields((prev) => {
       return prev.map((answer) => {
-        if (questionId === answer.field_id) {
+        if (questionId === answer.responseId) {
           return {
             ...answer,
             responseId: questionId,
@@ -465,10 +471,11 @@ const CreateRequest = () => {
 
             {fields?.map((field) => {
               if (field.field_type === "text" || field.field_type === "email") {
-                return (
+                return renderTooltip(
                   <TextInput
                     key={field.field_id}
                     label={field.field_name}
+                    withAsterisk={Boolean(field.is_required)}
                     onChange={(e) =>
                       handleAnswer(
                         Number(`${field.responseId}`),
@@ -476,24 +483,28 @@ const CreateRequest = () => {
                       )
                     }
                     value={field.response}
-                  />
+                  />,
+                  `${field.field_tooltip}`
                 );
               } else if (field.field_type === "number") {
-                return (
+                return renderTooltip(
                   <NumberInput
                     key={field.field_id}
                     label={field.field_name}
+                    withAsterisk={Boolean(field.is_required)}
                     onChange={(e) =>
                       handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
                     value={Number(field.response)}
-                  />
+                  />,
+                  `${field.field_tooltip}`
                 );
               } else if (field.field_type === "date") {
-                return (
+                return renderTooltip(
                   <DatePicker
                     key={field.field_id}
                     label={field.field_name}
+                    withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose date"}
                     onChange={(e) =>
                       handleAnswer(Number(`${field.responseId}`), `${e}`)
@@ -501,14 +512,16 @@ const CreateRequest = () => {
                     defaultValue={
                       field.response ? new Date(field.response) : null
                     }
-                  />
+                  />,
+                  `${field.field_tooltip}`
                 );
               } else if (field.field_type === "daterange") {
                 const dates = field.response.split(",");
-                return (
+                return renderTooltip(
                   <DateRangePicker
                     key={field.field_id}
                     label={field.field_name}
+                    withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose a date range"}
                     onChange={(e) =>
                       handleAnswer(Number(`${field.responseId}`), `${e}`)
@@ -518,13 +531,15 @@ const CreateRequest = () => {
                         ? [new Date(dates[0]), new Date(dates[1])]
                         : [null, null]
                     }
-                  />
+                  />,
+                  `${field.field_tooltip}`
                 );
               } else if (field.field_type === "time") {
-                return (
+                return renderTooltip(
                   <TimeInput
                     key={field.field_id}
                     label={field.field_name}
+                    withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose time"}
                     format="12"
                     onChange={(e) =>
@@ -533,14 +548,18 @@ const CreateRequest = () => {
                     defaultValue={
                       field.response ? new Date(field.response) : null
                     }
-                  />
+                  />,
+                  `${field.field_tooltip}`
                 );
               } else if (field.field_type === "slider") {
                 return (
                   <Box my="md" key={field.field_id}>
-                    <Text component="label" color="dark">
-                      {field.field_name}
-                    </Text>
+                    {renderTooltip(
+                      <Text component="label" color="dark">
+                        {field.field_name}
+                      </Text>,
+                      `${field.field_tooltip}`
+                    )}
                     <Slider
                       label={field.field_name}
                       placeholder={"Slide to choose value"}
@@ -559,25 +578,27 @@ const CreateRequest = () => {
                 field.field_type === "multiple" &&
                 field.field_option !== null
               ) {
-                return (
+                return renderTooltip(
                   <MultiSelect
                     key={field.field_id}
                     data={field.field_option.map((option) => {
                       return { value: `${option}`, label: `${option}` };
                     })}
                     label={field.field_name}
+                    withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose multiple"}
                     onChange={(e) =>
                       handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
                     value={field.response.split(",")}
-                  />
+                  />,
+                  `${field.field_tooltip}`
                 );
               } else if (
                 field.field_type === "select" &&
                 field.field_option !== null
               ) {
-                return (
+                return renderTooltip(
                   <Select
                     key={field.field_id}
                     data={field.field_option.map((option) => {
@@ -586,12 +607,14 @@ const CreateRequest = () => {
                     searchable
                     clearable
                     label={field.field_name}
+                    withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose one"}
                     onChange={(e) =>
                       handleAnswer(Number(`${field.responseId}`), `${e}`)
                     }
                     value={field.response}
-                  />
+                  />,
+                  `${field.field_tooltip}`
                 );
               }
             })}

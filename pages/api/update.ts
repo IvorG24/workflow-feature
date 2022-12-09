@@ -10,24 +10,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   if (req.method === "POST") {
-    const { answers, requestId } = req.body;
+    console.log("UPDATE");
+    const { answers, requestId, formData, approver } = req.body;
     const newAnswers = answers as (FieldRow & {
       response: string;
       responseId: number | null;
     })[];
 
     try {
-      // query per field
-      // newAnswers.map(async (answer) => {
-      //   const { error } = await supabase
-      //     .from("request_response_table")
-      //     .update({
-      //       response_value: answer.value,
-      //     })
-      //     .eq("field_id", answer.questionId);
-
-      //   if (error) throw error;
-      // });
+      await supabase
+        .from("request_table")
+        .update({
+          approver_id: approver,
+          request_title: formData.title,
+          on_behalf_of: formData.behalf,
+          request_description: formData.description,
+        })
+        .eq("request_id", requestId);
 
       const requestResponseFieldList = newAnswers.map((field) => {
         return {

@@ -60,10 +60,11 @@ const Navbar = () => {
 
   useEffect(() => {
     // TODO: Convert into a hook
+    // todo: team_id
     const fetchForms = async () => {
-      const { data } = await supabase.from("form_name_table").select("*");
+      const { data } = await supabase.from("form_table").select("*");
       const forms = data?.map((form) => {
-        return { value: `${form.form_name_id}`, label: `${form.form_name}` };
+        return { value: `${form.form_id}`, label: `${form.form_name}` };
       });
       if (forms !== undefined && forms.length !== 0) {
         setForms(forms);

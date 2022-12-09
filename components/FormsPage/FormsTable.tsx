@@ -1,13 +1,13 @@
 // todo:fix tables on mobile
 // todo: create unit test
 import Table from "@/components/Table/Table";
+import { FormRow } from "@/utils/types";
 import { Checkbox, Text } from "@mantine/core";
-import { Form } from "./FormsPage";
 import FormsRow from "./FormsRow";
 
 type Props = {
   colorScheme: "light" | "dark";
-  forms: Form[];
+  forms: FormRow[];
 };
 
 const FormsTable = ({ forms }: Props) => {
@@ -20,12 +20,12 @@ const FormsTable = ({ forms }: Props) => {
           </th>
           <th>Title</th>
           <th>Status</th>
-          <th>Last Updated</th>
+          <th>Date Created</th>
         </tr>
       </thead>
       <tbody>
         {forms.map((form) => (
-          <FormsRow key={form.id} form={form} />
+          <FormsRow key={form.form_id} form={form} />
         ))}
       </tbody>
     </Table>

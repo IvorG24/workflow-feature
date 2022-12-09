@@ -10,6 +10,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   });
 
   if (req.method === "POST") {
+    console.log("INSERT");
     const { formData, formId, userId, approver, answers } = req.body;
     const newAnswers = answers as (FieldRow & {
       response: string;
@@ -48,6 +49,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       res.status(200);
     } catch (e) {
+      console.log(e);
       res.status(500);
     }
   }

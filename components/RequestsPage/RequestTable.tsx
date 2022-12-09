@@ -1,5 +1,5 @@
 import { Close } from "@/components/Icon";
-import { setBadgeColor } from "@/utils/request";
+import { renderTooltip, setBadgeColor } from "@/utils/request";
 import type {
   Database,
   Marks,
@@ -91,18 +91,18 @@ const RequestTable = ({
       try {
         const { data: requestFields, error: requestFieldsError } =
           await supabase
-            .from("request_response_table, field: field_id(*)")
-            .select("*")
+            .from("request_response_table")
+            .select("*, field: field_id(*)")
             .eq("request_id", request.request_id);
 
         if (requestFieldsError) throw requestFieldsError;
 
         setSelectedRequest(request);
-        setSelectedRequestFields(requestFields as RequestFields[]);
+        setSelectedRequestFields(requestFields as unknown as RequestFields[]);
       } catch {
         showNotification({
           title: "Error!",
-          message: "Faield to fetch Request",
+          message: "Failed to fetch Request",
           color: "red",
         });
       }
@@ -228,73 +228,96 @@ const RequestTable = ({
           ) : null}
 
           {selectedRequestFields?.map((field) => {
-            const fieldType = field.fields.field_type;
-            const fieldLabel = field.fields.field_name;
+            const fieldType = field.field.field_type;
+            const fieldLabel = field.field.field_name;
             const fieldResponse = `${field.response_value}`;
-            const fieldOptions = field.fields.field_option;
+            const fieldOptions = field.field.field_option;
 
             if (fieldType === "text" || fieldType === "email") {
               return (
                 <Box key={field.field_id} py="sm">
-                  <TextInput
-                    label={fieldLabel}
-                    value={`${field.response_value}`}
-                    readOnly
-                  />
+                  {renderTooltip(
+                    <TextInput
+                      label={fieldLabel}
+                      withAsterisk={Boolean(field.field.is_required)}
+                      value={`${field.response_value}`}
+                      readOnly
+                    />,
+                    `${field.field.field_tooltip}`
+                  )}
                 </Box>
               );
             } else if (fieldType === "number") {
               return (
                 <Box key={field.field_id} py="sm">
-                  <NumberInput
-                    label={fieldLabel}
-                    value={Number(fieldResponse)}
-                    readOnly
-                  />
+                  {renderTooltip(
+                    <NumberInput
+                      label={fieldLabel}
+                      withAsterisk={Boolean(field.field.is_required)}
+                      value={Number(fieldResponse)}
+                      readOnly
+                    />,
+                    `${field.field.field_tooltip}`
+                  )}
                 </Box>
               );
             } else if (fieldType === "date") {
               return (
                 <Box key={field.field_id} py="sm">
-                  <DatePicker
-                    label={fieldLabel}
-                    placeholder={"Choose date"}
-                    value={new Date(fieldResponse)}
-                    readOnly
-                  />
+                  {renderTooltip(
+                    <DatePicker
+                      label={fieldLabel}
+                      withAsterisk={Boolean(field.field.is_required)}
+                      placeholder={"Choose date"}
+                      value={new Date(fieldResponse)}
+                      readOnly
+                    />,
+                    `${field.field.field_tooltip}`
+                  )}
                 </Box>
               );
             } else if (fieldType === "daterange") {
               return (
                 <Box key={field.field_id} py="sm">
-                  <DateRangePicker
-                    label={fieldLabel}
-                    placeholder={"Choose a date range"}
-                    value={[
-                      new Date(fieldResponse.split(",")[0]),
-                      new Date(fieldResponse.split(",")[1]),
-                    ]}
-                    readOnly
-                  />
+                  {renderTooltip(
+                    <DateRangePicker
+                      label={fieldLabel}
+                      withAsterisk={Boolean(field.field.is_required)}
+                      placeholder={"Choose a date range"}
+                      value={[
+                        new Date(fieldResponse.split(",")[0]),
+                        new Date(fieldResponse.split(",")[1]),
+                      ]}
+                      readOnly
+                    />,
+                    `${field.field.field_tooltip}`
+                  )}
                 </Box>
               );
             } else if (fieldType === "time") {
               return (
                 <Box key={field.field_id} py="sm">
-                  <TimeInput
-                    label={fieldLabel}
-                    placeholder={"Choose time"}
-                    format="12"
-                    value={new Date(fieldResponse)}
-                  />
+                  {renderTooltip(
+                    <TimeInput
+                      label={fieldLabel}
+                      withAsterisk={Boolean(field.field.is_required)}
+                      placeholder={"Choose time"}
+                      format="12"
+                      value={new Date(fieldResponse)}
+                    />,
+                    `${field.field.field_tooltip}`
+                  )}
                 </Box>
               );
             } else if (fieldType === "slider") {
               return (
                 <Box my="md" key={field.field_id} py="sm">
-                  <Text component="label" color="dark">
-                    {fieldLabel}
-                  </Text>
+                  {renderTooltip(
+                    <Text component="label" color="dark">
+                      {fieldLabel}
+                    </Text>,
+                    `${field.field.field_tooltip}`
+                  )}
                   <Slider
                     label={fieldLabel}
                     placeholder={"Slide to choose value"}
@@ -307,20 +330,22 @@ const RequestTable = ({
                 </Box>
               );
             } else if (fieldType === "multiple" && fieldOptions !== null) {
-              return (
+              return renderTooltip(
                 <MultiSelect
                   key={field.field_id}
                   data={fieldOptions.map((option) => {
                     return { value: `${option}`, label: `${option}` };
                   })}
                   label={fieldLabel}
+                  withAsterisk={Boolean(field.field.is_required)}
                   placeholder={"Choose multiple"}
                   value={fieldResponse.split(",")}
                   py="sm"
-                />
+                />,
+                `${field.field.field_tooltip}`
               );
             } else if (fieldType === "select" && fieldOptions !== null) {
-              return (
+              return renderTooltip(
                 <Select
                   key={field.field_id}
                   data={fieldOptions.map((option) => {
@@ -329,10 +354,12 @@ const RequestTable = ({
                   searchable
                   clearable
                   label={fieldLabel}
+                  withAsterisk={Boolean(field.field.is_required)}
                   placeholder={"Choose one"}
                   value={fieldResponse}
                   py="sm"
-                />
+                />,
+                `${field.field.field_tooltip}`
               );
             }
           })}

@@ -51,69 +51,71 @@ const All = () => {
     try {
       setSelectedRequest(null);
       setIsLoading(true);
-      // todo team_id
       const start = (activePage - 1) * REQUEST_PER_PAGE;
-      let query = supabase
-        .from("request_table")
-        .select(
-          "*, form: form_table_id(*), approver: approver_id(*), owner: requested_by(*)"
-        )
-        .eq("is_draft", false)
-        .eq("form.team_id", null)
-        .range(start, start + REQUEST_PER_PAGE - 1);
-      let countQuery = supabase
-        .from("request_table")
-        .select("*")
-        .eq("is_draft", false)
-        .eq("form.team_id", null);
 
-      if (selectedForm) {
-        query = query.eq("form_table_id", selectedForm);
-        countQuery = countQuery.eq("form_table_id", selectedForm);
-      }
-      if (status) {
-        query = query.eq("request_status", status);
-        countQuery = countQuery.eq("request_status", status);
-      }
       if (isSearch && search) {
-        query = query.or(
-          `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
-        );
-        countQuery = countQuery.or(
-          `or(request_description.ilike.%${search}%,request_title.ilike.%${search}%)`
-        );
-      }
-      const { data: requestList, error: requestListError } = await query;
-      const { count: requestCount, error: requestCountError } =
-        await countQuery;
+        console.log("TODO SEARCH");
+      } else {
+        // todo team_id
+        let query = supabase
+          .from("request_table")
+          .select(
+            "*, form: form_table_id(*), approver: approver_id(*), owner: requested_by(*)"
+          )
+          .eq("is_draft", false)
+          // .eq("form.team_id", null)
+          .range(start, start + REQUEST_PER_PAGE - 1);
+        let countQuery = supabase
+          .from("request_table")
+          .select("*")
+          .eq("is_draft", false);
+        // .eq("form.team_id", null);
 
-      if (requestListError || requestCountError) throw requestListError;
+        if (selectedForm) {
+          query = query.eq("form_table_id", selectedForm);
+          countQuery = countQuery.eq("form_table_id", selectedForm);
+        }
+        if (status) {
+          query = query.eq("request_status", status);
+          countQuery = countQuery.eq("request_status", status);
+        }
 
-      if (requestList && requestCount) {
+        const { data: requestList, error: requestListError } = await query;
+        const { count: requestCount, error: requestCountError } =
+          await countQuery;
+        if (requestListError || requestCountError) throw requestListError;
+
         const newRequestList = requestList as RequestType[];
         setRequestList(newRequestList);
-        setRequestCount(requestCount);
-      } else {
-        setRequestCount(0);
-        setRequestList([]);
+        setRequestCount(Number(`${requestCount}`));
+        setSearch("");
       }
+
       setIsLoading(false);
     } catch {
       showNotification({
         title: "Error!",
-        message: "Faield to fetch Request List",
+        message: "Failed to fetch Request List",
         color: "red",
       });
     }
   };
 
   const fetchForms = async () => {
-    const { data } = await supabase.from("form_name_table").select("*");
-    const forms = data?.map((form) => {
-      return { value: `${form.form_name_id}`, label: `${form.form_name}` };
-    });
-    if (forms !== undefined) {
+    try {
+      // todo team_id
+      const { data, error } = await supabase.from("form_table").select("*");
+      if (error) throw error;
+      const forms = data?.map((form) => {
+        return { value: `${form.form_id}`, label: `${form.form_name}` };
+      });
       setForms(forms);
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: "Failed to fetch Form List",
+        color: "red",
+      });
     }
   };
 

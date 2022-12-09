@@ -1,5 +1,5 @@
 // todo: create unit test
-import { setBadgeColor } from "@/utils/request";
+import { renderTooltip, setBadgeColor } from "@/utils/request";
 import type {
   Database,
   Marks,
@@ -83,7 +83,7 @@ const Request = () => {
       try {
         const { data: requestRow, error: requestRowError } = await supabase
           .from("request_table")
-          .select("*, owner: request_by(*), approver: approver_id(*)")
+          .select("*, owner: requested_by(*), approver: approver_id(*)")
           .eq("request_id", router.query.id)
           .single();
 
@@ -93,8 +93,8 @@ const Request = () => {
 
         const { data: requestFields, error: requestFieldsError } =
           await supabase
-            .from("request_response_table, field: field_id(*)")
-            .select("*")
+            .from("request_response_table")
+            .select("*, field: field_id(*)")
             .eq("request_id", router.query.id);
 
         if (requestFieldsError) throw requestFieldsError;
@@ -110,12 +110,12 @@ const Request = () => {
           created_at: `${newRequest.request_created_at}`,
           approverId: `${newRequest.approver_id}`,
         });
-        setRequestFields(requestFields);
+        setRequestFields(requestFields as RequestFields[]);
         setIsFetchingRequest(false);
       } catch {
         showNotification({
           title: "Error!",
-          message: "Faield to fetch Request",
+          message: "Failed to fetch Request",
           color: "red",
         });
       }
@@ -306,63 +306,92 @@ const Request = () => {
           ) : null}
         </Stack>
         {requestFields?.map((field) => {
-          const fieldType = field.fields.field_type;
-          const fieldLabel = field.fields.field_name;
+          const fieldType = field.field.field_type;
+          const fieldLabel = field.field.field_name;
           const fieldResponse = `${field.response_value}`;
-          const fieldOptions = field.fields.field_option;
+          const fieldOptions = field.field.field_option;
 
           if (fieldType === "text" || fieldType === "email") {
             return (
               <Box key={field.field_id}>
-                <TextInput label={fieldLabel} value={fieldResponse} />
+                {renderTooltip(
+                  <TextInput
+                    label={fieldLabel}
+                    withAsterisk={Boolean(field.field.is_required)}
+                    value={fieldResponse}
+                  />,
+                  `${field.field.field_tooltip}`
+                )}
               </Box>
             );
           } else if (fieldType === "number") {
             return (
               <Box key={field.field_id}>
-                <NumberInput label={fieldLabel} value={Number(fieldResponse)} />
+                {renderTooltip(
+                  <NumberInput
+                    label={fieldLabel}
+                    withAsterisk={Boolean(field.field.is_required)}
+                    value={Number(fieldResponse)}
+                  />,
+                  `${field.field.field_tooltip}`
+                )}
               </Box>
             );
           } else if (fieldType === "date") {
             return (
               <Box key={field.field_id}>
-                <DatePicker
-                  label={fieldLabel}
-                  placeholder={"Choose date"}
-                  value={new Date(fieldResponse)}
-                />
+                {renderTooltip(
+                  <DatePicker
+                    label={fieldLabel}
+                    withAsterisk={Boolean(field.field.is_required)}
+                    placeholder={"Choose date"}
+                    value={new Date(fieldResponse)}
+                  />,
+                  `${field.field.field_tooltip}`
+                )}
               </Box>
             );
           } else if (fieldType === "daterange") {
             return (
               <Box key={field.field_id}>
-                <DateRangePicker
-                  label={fieldLabel}
-                  placeholder={"Choose a date range"}
-                  value={[
-                    new Date(fieldResponse.split(",")[0]),
-                    new Date(fieldResponse.split(",")[1]),
-                  ]}
-                />
+                {renderTooltip(
+                  <DateRangePicker
+                    label={fieldLabel}
+                    withAsterisk={Boolean(field.field.is_required)}
+                    placeholder={"Choose a date range"}
+                    value={[
+                      new Date(fieldResponse.split(",")[0]),
+                      new Date(fieldResponse.split(",")[1]),
+                    ]}
+                  />,
+                  `${field.field.field_tooltip}`
+                )}
               </Box>
             );
           } else if (fieldType === "time") {
             return (
               <Box key={field.field_id}>
-                <TimeInput
-                  label={fieldLabel}
-                  placeholder={"Choose time"}
-                  format="12"
-                  value={new Date(fieldResponse)}
-                />
+                {renderTooltip(
+                  <TimeInput
+                    label={fieldLabel}
+                    withAsterisk={Boolean(field.field.is_required)}
+                    placeholder={"Choose time"}
+                    format="12"
+                    value={new Date(fieldResponse)}
+                  />,
+                  `${field.field.field_tooltip}`
+                )}
               </Box>
             );
           } else if (fieldType === "slider") {
             return (
               <Box my="md" key={field.field_id}>
-                <Text component="label" color="dark">
-                  {fieldLabel}
-                </Text>
+                {renderTooltip(
+                  <Text component="label" color="dark">
+                    {fieldLabel}
+                  </Text>,
+                  `${field.field.field_tooltip}`
+                )}
                 <Slider
                   label={fieldLabel}
                   placeholder={"Slide to choose value"}
@@ -375,19 +404,21 @@ const Request = () => {
               </Box>
             );
           } else if (fieldType === "multiple" && fieldOptions !== null) {
-            return (
+            return renderTooltip(
               <MultiSelect
                 key={field.field_id}
                 data={fieldOptions.map((option) => {
                   return { value: `${option}`, label: `${option}` };
                 })}
                 label={fieldLabel}
+                withAsterisk={Boolean(field.field.is_required)}
                 placeholder={"Choose multiple"}
                 value={fieldResponse.split(",")}
-              />
+              />,
+              `${field.field.field_tooltip}`
             );
           } else if (fieldType === "select" && fieldOptions !== null) {
-            return (
+            return renderTooltip(
               <Select
                 key={field.field_id}
                 data={fieldOptions.map((option) => {
@@ -396,9 +427,11 @@ const Request = () => {
                 searchable
                 clearable
                 label={fieldLabel}
+                withAsterisk={Boolean(field.field.is_required)}
                 placeholder={"Choose one"}
                 value={fieldResponse}
-              />
+              />,
+              `${field.field.field_tooltip}`
             );
           }
         })}
