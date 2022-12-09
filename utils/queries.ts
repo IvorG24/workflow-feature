@@ -16,7 +16,7 @@ export const createOrRetrieveUser = async (
       .from("user_profile_table")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
   if (retrievedUserError) throw retrievedUserError;
   if (retrievedUser) return retrievedUser;
 
