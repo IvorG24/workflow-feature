@@ -57,6 +57,19 @@
   max-width: 250px;
 }
 
+.navScroll {
+  height: auto;
+  padding-right: 8px;
+}
+
+.arrowRight {
+  transform: rotate(180deg);
+}
+
+.arrowDown {
+  transform: rotate(270deg);
+}
+
 @media only screen and (max-width: $breakpoint-desktop-s) {
   .container {
     display: none;
