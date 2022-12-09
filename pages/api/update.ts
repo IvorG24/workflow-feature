@@ -26,7 +26,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       //     })
       //     .eq("field_id", answer.questionId);
 
-      //   if (error) throw new Error();
+      //   if (error) throw error;
       // });
 
       const requestResponseFieldList = newAnswers.map((field) => {
@@ -41,7 +41,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .from("request_response_table")
         .upsert(requestResponseFieldList);
 
-      if (error) throw new Error();
+      if (error) throw error;
       res.status(200);
     } catch {
       res.status(500);

@@ -132,7 +132,7 @@ const CreateRequest = () => {
         const { data, error } = await supabase
           .from("user_profile_table")
           .select("*");
-        if (error) throw new Error();
+        if (error) throw error;
         // TODO remove current user if the current user is an admin
 
         const approvers = data.map((approver) => {
@@ -165,7 +165,7 @@ const CreateRequest = () => {
           .eq("form_table_id", router.query.formId)
           .eq("response_owner", user?.id)
           .single();
-        if (error) throw new Error();
+        if (error) throw error;
 
         data ? fetchDraft(data.request_id) : handleFetchForm();
       } catch {
@@ -185,14 +185,14 @@ const CreateRequest = () => {
           .eq("form_id", router.query.formId)
           .single();
 
-        if (!form || formError) throw new Error();
+        if (!form || formError) throw formError;
 
         const { data: fields, error: fieldsError } = await supabase
           .from("field_table")
           .select("*")
           .eq("form_table_id", form.form_id);
 
-        if (fieldsError) throw new Error();
+        if (fieldsError) throw fieldsError;
 
         setFields(
           fields.map((field) => {
@@ -219,7 +219,7 @@ const CreateRequest = () => {
           .single();
         const newRequest = request as RequestType;
 
-        if (!request || requestError) throw new Error();
+        if (!request || requestError) throw requestError;
 
         setValue("title", `${request.request_title}`);
         setValue("description", `${request.request_description}`);
@@ -232,7 +232,7 @@ const CreateRequest = () => {
             .eq("request_id", request.request_id);
         const newRequestFields = requestFields as RequestResponseType[];
 
-        if (!request || requestFieldsError) throw new Error();
+        if (!request || requestFieldsError) throw requestFieldsError;
 
         const fieldsWithResponse = newRequestFields.map((field) => {
           return {
@@ -259,7 +259,7 @@ const CreateRequest = () => {
           .select("*")
           .eq("user_id", user?.id)
           .single();
-        if (!data || error) throw new Error();
+        if (!data || error) throw error;
         setValue("requestor", `${data.full_name}`);
       } catch {
         showNotification({
@@ -295,7 +295,7 @@ const CreateRequest = () => {
         .from("request_response_table")
         .upsert(requestResponseList);
 
-      if (requestResponseError) throw new Error();
+      if (requestResponseError) throw requestResponseError;
 
       const { error: requestError } = await supabase
         .from("request_table")
@@ -309,7 +309,7 @@ const CreateRequest = () => {
         })
         .eq("request_id", draftId);
 
-      if (requestError) throw new Error();
+      if (requestError) throw requestError;
 
       showNotification({
         title: "Success!",
@@ -344,7 +344,7 @@ const CreateRequest = () => {
         .select()
         .single();
 
-      if (requestError) throw new Error();
+      if (requestError) throw requestError;
 
       const requestResponse = fields.map((field) => {
         return {
@@ -357,7 +357,7 @@ const CreateRequest = () => {
         .from("request_response_table")
         .insert(requestResponse);
 
-      if (requestResponseError) throw new Error();
+      if (requestResponseError) throw requestResponseError;
 
       showNotification({
         title: "Success!",

@@ -31,7 +31,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .select()
         .single();
 
-      if (!request || requestError) throw new Error();
+      if (!request || requestError) throw requestError;
 
       const requestResponseList = newAnswers.map((response) => {
         return {
@@ -44,7 +44,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .from("request_response_table")
         .insert(requestResponseList);
 
-      if (requestResponseError) throw new Error();
+      if (requestResponseError) throw requestResponseError;
 
       res.status(200);
     } catch (e) {

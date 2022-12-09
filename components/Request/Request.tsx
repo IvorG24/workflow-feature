@@ -89,7 +89,7 @@ const Request = () => {
 
         const newRequest = requestRow as RequestType;
 
-        if (requestRowError) throw new Error();
+        if (requestRowError) throw requestRowError;
 
         const { data: requestFields, error: requestFieldsError } =
           await supabase
@@ -97,7 +97,7 @@ const Request = () => {
             .select("*")
             .eq("request_id", router.query.id);
 
-        if (requestFieldsError) throw new Error();
+        if (requestFieldsError) throw requestFieldsError;
 
         setRequest(newRequest);
         setRequiredFields({
@@ -143,7 +143,7 @@ const Request = () => {
         .update({ request_status: "approved" })
         .eq("request_id", Number(`${router.query.id}`));
 
-      if (error) throw new Error();
+      if (error) throw error;
 
       showNotification({
         title: "Success!",
@@ -169,7 +169,7 @@ const Request = () => {
         .update({ request_status: "revision" })
         .eq("request_id", Number(`${router.query.id}`));
 
-      if (error) throw new Error();
+      if (error) throw error;
 
       showNotification({
         title: "Success!",
@@ -196,7 +196,7 @@ const Request = () => {
         .update({ request_status: "rejected" })
         .eq("request_id", Number(`${router.query.id}`));
 
-      if (error) throw new Error();
+      if (error) throw error;
 
       showNotification({
         title: "Success!",

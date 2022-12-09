@@ -95,7 +95,7 @@ const RequestTable = ({
             .select("*")
             .eq("request_id", request.request_id);
 
-        if (requestFieldsError) throw new Error();
+        if (requestFieldsError) throw requestFieldsError;
 
         setSelectedRequest(request);
         setSelectedRequestFields(requestFields as RequestFields[]);

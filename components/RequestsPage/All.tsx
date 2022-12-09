@@ -87,7 +87,7 @@ const All = () => {
       const { count: requestCount, error: requestCountError } =
         await countQuery;
 
-      if (requestListError || requestCountError) throw new Error();
+      if (requestListError || requestCountError) throw requestListError;
 
       if (requestList && requestCount) {
         const newRequestList = requestList as RequestType[];
@@ -155,7 +155,7 @@ const All = () => {
         .update({ request_status: "approved" })
         .eq("request_id", Number(`${selectedRequest?.request_id}`));
 
-      if (error) throw new Error();
+      if (error) throw error;
 
       setRequestList((prev) =>
         prev.map((request) => {
@@ -193,7 +193,7 @@ const All = () => {
         .update({ request_status: "revision" })
         .eq("request_id", Number(`${selectedRequest?.request_id}`));
 
-      if (error) throw new Error();
+      if (error) throw error;
 
       setRequestList((prev) =>
         prev.map((request) => {
@@ -231,7 +231,7 @@ const All = () => {
         .update({ request_status: "rejected" })
         .eq("request_id", Number(`${selectedRequest?.request_id}`));
 
-      if (error) throw new Error();
+      if (error) throw error;
 
       setRequestList((prev) =>
         prev.map((request) => {
