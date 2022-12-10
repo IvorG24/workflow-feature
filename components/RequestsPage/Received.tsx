@@ -13,7 +13,7 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useEffect, useState } from "react";
-import styles from "./All.module.scss";
+import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
 
 const statusOptions: {

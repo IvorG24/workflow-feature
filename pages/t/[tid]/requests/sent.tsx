@@ -1,5 +1,6 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
+import Request from "@/components/RequestsPage/RequestsPage";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../../../_app";
 
@@ -11,7 +12,7 @@ const RequestsSentPage: NextPageWithLayout = () => {
         description="List of all Sent Requests"
         url="localhost:3000/requests"
       />
-      <h1>Requests Sent Page</h1>
+      <Request activeTab="sent" />
     </div>
   );
 };

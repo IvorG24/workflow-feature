@@ -1,3 +1,4 @@
+import CreateRequest from "@/components/CreateRequest/CreateRequest";
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
 import { ReactElement } from "react";
@@ -11,7 +12,8 @@ const CreateRequestPage: NextPageWithLayout = () => {
         description="Create Request Page"
         url="localhost:3000/requests/create"
       />
-      <h1>Create Request component here</h1>
+
+      <CreateRequest />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
 import Meta from "@/components/Meta/Meta";
+import Request from "@/components/Request/Request";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../../../_app";
 
@@ -8,7 +9,7 @@ const RequestPage: NextPageWithLayout = () => {
   return (
     <div>
       <Meta description="Specific Request" url="localhost:3000/requests/id" />
-      <h1>Request Page</h1>
+      <Request />
     </div>
   );
 };

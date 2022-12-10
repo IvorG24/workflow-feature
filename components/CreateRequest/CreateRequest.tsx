@@ -314,7 +314,7 @@ const CreateRequest = () => {
           is_draft: false,
         })
         .eq("request_id", draftId);
-      console.log(requestError);
+
       if (requestError) throw requestError;
 
       showNotification({
@@ -322,7 +322,7 @@ const CreateRequest = () => {
         message: "Request sent for approval",
         color: "green",
       });
-      router.push("/requests");
+      router.push(`/t/${router.query.tid}/requests/${router.query.formId}`);
     } catch {
       showNotification({
         title: "Error!",

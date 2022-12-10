@@ -33,7 +33,6 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useState } from "react";
-import styles from "./RequestTable.module.scss";
 
 const MARKS: Marks[] = [
   {
@@ -86,7 +85,7 @@ const RequestTable = ({
 
   const handleSetSelectedRequest = async (request: RequestType) => {
     if (width < 1200) {
-      router.push(`/requests/${request.request_id}`);
+      router.push(`/t/${router.query.tid}/requests/${request.request_id}`);
     } else {
       try {
         const { data: requestFields, error: requestFieldsError } =
@@ -113,7 +112,6 @@ const RequestTable = ({
     return (
       <tr
         key={request.request_id}
-        className={styles.row}
         onClick={() => handleSetSelectedRequest(request)}
       >
         <td>{request.request_id}</td>
@@ -142,7 +140,7 @@ const RequestTable = ({
 
   return (
     <Group align="flex-start">
-      <Table mt="xl" striped highlightOnHover className={styles.tableContainer}>
+      <Table mt="xl" striped highlightOnHover>
         <thead>
           <tr>
             <th>REF</th>
@@ -157,8 +155,8 @@ const RequestTable = ({
       </Table>
       {/* todo: convert into a component and move outside request table*/}
       {selectedRequest ? (
-        <Paper shadow="xl" className={styles.requestContainer}>
-          <Container m={0} p={0} className={styles.closeIcon}>
+        <Paper shadow="xl">
+          <Container m={0} p={0}>
             <ActionIcon onClick={() => setSelectedRequest(null)}>
               <Close />
             </ActionIcon>

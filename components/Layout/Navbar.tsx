@@ -1,7 +1,7 @@
 // todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
 import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
-import { Database } from "@/utils/types";
+import { Database, FormRow } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -11,7 +11,6 @@ import {
   Divider,
   Flex,
   Group,
-  Modal,
   Navbar as MantineNavbar,
   NavLink,
   ScrollArea,
@@ -20,6 +19,7 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
+import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -133,9 +133,9 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
   const user = useUser();
   const activeTeam = teamList[activeTeamIndex];
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [isCreatingRequest, setIsCreatingRequest] = useState(false);
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
-  const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
+  // const [isCreatingRequest, setIsCreatingRequest] = useState(false);
+  // const [selectedForm, setSelectedForm] = useState<FormRow | null>(null);
+  const [forms, setForms] = useState<FormRow[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
   const [isOpenRequest, setIsOpenRequest] = useState(false);
   const [isOpenReview, setIsOpenReview] = useState(false);
@@ -146,13 +146,21 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
     // TODO: Convert into a hook
     // todo: team_id
     const fetchForms = async () => {
-      const { data } = await supabase.from("form_table").select("*");
-      const forms = data?.map((form) => {
-        return { value: `${form.form_id}`, label: `${form.form_name}` };
-      });
-      if (forms !== undefined && forms.length !== 0) {
-        setForms(forms);
-        setSelectedForm(`${forms[0].value}`);
+      try {
+        const { data, error } = await supabase
+          .from("form_table")
+          .select("*")
+          .eq("team_id", router.query.tid);
+        if (error) throw error;
+
+        setForms(data);
+        // setSelectedForm(data[0]);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Failed to fetch Forms",
+          color: "red",
+        });
       }
     };
     fetchForms();
@@ -168,16 +176,16 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
     colorScheme === "dark" ? styles.colorLight : ""
   }`;
 
-  const handleProceed = () => {
-    router.push(
-      `/t/${activeTeam.team_id}/requests/create?formId=${selectedForm}`
-    );
-    setIsCreatingRequest(false);
-  };
+  // const handleProceed = () => {
+  //   router.push(
+  //     `/t/${activeTeam.team_id}/requests/create?formId=${selectedForm}`
+  //   );
+  //   setIsCreatingRequest(false);
+  // };
 
   return (
     <>
-      <Modal
+      {/* <Modal
         opened={isCreatingRequest}
         onClose={() => setIsCreatingRequest(false)}
         padding="xl"
@@ -198,7 +206,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             </Button>
           </Group>
         </Container>
-      </Modal>
+      </Modal> */}
       <MantineNavbar
         width={{ base: "250" }}
         className={styles.container}
@@ -351,7 +359,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
               }
               childrenOffset={28}
             >
-              {requestForms.map((form) => (
+              {forms.map((form) => (
                 <NavLink
                   key={form.form_id}
                   component="a"
@@ -364,7 +372,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                       onClick={(e) => {
                         e.preventDefault();
                         router.push(
-                          `/t/${activeTeam.team_id}/requests/create/${form.form_id}`
+                          `/t/${activeTeam.team_id}/requests/create?formId=${form.form_id}`
                         );
                       }}
                       aria-label="create a request"
