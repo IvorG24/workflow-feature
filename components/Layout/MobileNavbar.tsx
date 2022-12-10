@@ -8,20 +8,24 @@ import {
   Button,
   Container,
   Divider,
+  Flex,
   Group,
   Modal,
   Navbar as MantineNavbar,
   NavLink,
+  ScrollArea,
   Select,
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useHover } from "@mantine/hooks";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { MouseEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AddCircle,
+  ArrowBack,
   Dashboard,
   Description,
   EditDocument,
@@ -34,14 +38,17 @@ import {
 } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./MobileNavbar.module.scss";
+import { requestForms, reviewForms } from "./Navbar";
 
 const TEAMS = [
   {
+    id: 1,
     image: "",
     value: "Acme Corporation",
     label: "Acme Corporation",
   },
   {
+    id: 2,
     image: "",
     value: "Wonka Industries",
     label: "Wonka Industries",
@@ -58,7 +65,11 @@ const Navbar = () => {
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
-
+  const [activeNest, setActiveNest] = useState<string | null>(null);
+  const [isOpenRequest, setIsOpenRequest] = useState(false);
+  const [isOpenReview, setIsOpenReview] = useState(false);
+  const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
+  const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
   useEffect(() => {
     // TODO: Convert into a hook
     // todo: team_id
@@ -80,11 +91,6 @@ const Navbar = () => {
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
   }`;
-
-  const handleAddRequest = (e: MouseEvent) => {
-    e.preventDefault();
-    setIsCreatingRequest(true);
-  };
 
   const handleProceed = () => {
     router.push(`/requests/create?formId=${selectedForm}`);
@@ -161,62 +167,6 @@ const Navbar = () => {
         />
 
         <MantineNavbar.Section mt="lg">
-          <NavLink
-            component="a"
-            href="/dashboard"
-            label="Dashboard"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Dashboard />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            href="/requests"
-            label="Requests"
-            className={iconStyle}
-            icon={<EditDocument />}
-            rightSection={
-              <ActionIcon
-                variant="subtle"
-                component="button"
-                onClick={handleAddRequest}
-                className={`${styles.createRequestButton} ${
-                  colorScheme === "dark"
-                    ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                    : ""
-                }`}
-              >
-                <AddCircle />
-              </ActionIcon>
-            }
-          />
-          <NavLink
-            component="a"
-            href="/forms"
-            label="Forms"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Description />
-              </IconWrapper>
-            }
-          />
-          <NavLink
-            component="a"
-            href="/settings/members"
-            label="Members"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <GroupIcon />
-              </IconWrapper>
-            }
-          />
-        </MantineNavbar.Section>
-
-        <Divider mt="xs" />
-
-        <MantineNavbar.Section mt="lg">
           <Title order={2} size={14} weight={400} color="dimmed">
             Account
           </Title>
@@ -252,6 +202,198 @@ const Navbar = () => {
           />
         </MantineNavbar.Section>
 
+        <Divider mt="xs" />
+        <ScrollArea className={styles.navScroll}>
+          <MantineNavbar.Section mt="lg">
+            <NavLink
+              component="a"
+              href={`/t/${selectedTeam?.id}/dashboard`}
+              label="Dashboard"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <Dashboard />
+                </IconWrapper>
+              }
+            />
+            <NavLink
+              component="a"
+              href={`/t/${selectedTeam?.id}/requests`}
+              label="Requests"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <EditDocument />
+                </IconWrapper>
+              }
+            />
+            <NavLink
+              component="a"
+              label="Request Forms"
+              opened={isOpenRequest}
+              onClick={() => {
+                if (!addRequestHovered) {
+                  setActiveNest((v) => (v === "request" ? "" : "request"));
+                  setIsOpenRequest((v) => !v);
+                }
+              }}
+              icon={
+                <Flex align="center" gap={4}>
+                  <IconWrapper
+                    fontSize={10}
+                    color="gray"
+                    className={`${styles.arrowRight} ${
+                      activeNest === "request" && styles.arrowDown
+                    }`}
+                  >
+                    <ArrowBack />
+                  </IconWrapper>
+                  <IconWrapper className={iconStyle}>
+                    <Description />
+                  </IconWrapper>
+                </Flex>
+              }
+              disableRightSectionRotation
+              rightSection={
+                <Group ref={addRequestRef}>
+                  <ActionIcon
+                    variant="subtle"
+                    component="a"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/t/${selectedTeam?.id}/requests/create`);
+                    }}
+                    className={`${styles.createRequestButton} ${
+                      colorScheme === "dark"
+                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                        : ""
+                    }`}
+                  >
+                    <AddCircle />
+                  </ActionIcon>
+                </Group>
+              }
+              childrenOffset={28}
+            >
+              {requestForms.map((form) => (
+                <NavLink
+                  key={form.form_id}
+                  component="a"
+                  href={`/t/${selectedTeam?.id}/forms/${form.form_id}`}
+                  label={form.form_name}
+                  rightSection={
+                    <ActionIcon
+                      variant="subtle"
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(
+                          `/t/${selectedTeam?.id}/requests/create/${form.form_id}`
+                        );
+                      }}
+                      aria-label="create a request"
+                      className={`${styles.createRequestButton} ${
+                        colorScheme === "dark"
+                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                          : ""
+                      }`}
+                    >
+                      <AddCircle />
+                    </ActionIcon>
+                  }
+                />
+              ))}
+            </NavLink>
+
+            <NavLink
+              label="Review Forms"
+              component="a"
+              childrenOffset={28}
+              opened={isOpenReview}
+              onClick={() => {
+                if (!addReviewHovered) {
+                  setActiveNest((v) => (v === "review" ? "" : "review"));
+                  setIsOpenReview((v) => !v);
+                }
+              }}
+              icon={
+                <Flex align="center" gap={4}>
+                  <IconWrapper
+                    fontSize={10}
+                    color="gray"
+                    className={`${styles.arrowRight} ${
+                      activeNest === "review" && styles.arrowDown
+                    }`}
+                  >
+                    <ArrowBack />
+                  </IconWrapper>
+                  <IconWrapper className={iconStyle}>
+                    <Description />
+                  </IconWrapper>
+                </Flex>
+              }
+              disableRightSectionRotation
+              rightSection={
+                <Group ref={addReviewRef}>
+                  <ActionIcon
+                    variant="subtle"
+                    component="a"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/t/${selectedTeam?.id}/review/create`);
+                    }}
+                    className={`${styles.createRequestButton} ${
+                      colorScheme === "dark"
+                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                        : ""
+                    }`}
+                  >
+                    <AddCircle />
+                  </ActionIcon>
+                </Group>
+              }
+            >
+              {reviewForms.map((form) => (
+                <NavLink
+                  key={form.form_id}
+                  component="a"
+                  href={`/t/${selectedTeam?.id}/forms/${form.form_id}`}
+                  label={form.form_name}
+                  rightSection={
+                    <ActionIcon
+                      variant="subtle"
+                      component="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(
+                          `/t/${selectedTeam?.id}/review/create/${form.form_id}`
+                        );
+                      }}
+                      aria-label="create a review"
+                      className={`${styles.createRequestButton} ${
+                        colorScheme === "dark"
+                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                          : ""
+                      }`}
+                    >
+                      <AddCircle />
+                    </ActionIcon>
+                  }
+                />
+              ))}
+            </NavLink>
+
+            <NavLink
+              component="a"
+              // TODO: Commented out page route has no content. Kindly fix.
+              href={`/t/${selectedTeam?.id}/settings/members`}
+              label="Members"
+              icon={
+                <IconWrapper className={iconStyle}>
+                  <GroupIcon />
+                </IconWrapper>
+              }
+            />
+          </MantineNavbar.Section>
+        </ScrollArea>
         <MantineNavbar.Section className={styles.footer}>
           <NavLink
             component="a"

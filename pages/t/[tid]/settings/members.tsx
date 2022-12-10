@@ -11,7 +11,7 @@ const MemberSettingsPage: NextPageWithLayout = () => {
         description="Member Settings Page"
         url="localhost:3000/settings/members"
       />
-      <Setting activeTab="members" />
+      <Setting activeTab="member" />
     </div>
   );
 };
