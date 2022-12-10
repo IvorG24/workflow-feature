@@ -10,6 +10,13 @@ export type UserProfileTableInsert =
 export type UserProfileTableUpdate =
   Database["public"]["Tables"]["user_profile_table"]["Update"];
 
+export type FormRow = Database["public"]["Tables"]["form_table"]["Row"];
+export type FormInsert = Database["public"]["Tables"]["form_table"]["Insert"];
+export type FormUpdate = Database["public"]["Tables"]["form_table"]["Update"];
+
+export type ReviewRow = Database["public"]["Tables"]["review_table"]["Row"];
+export type ReviewInsert =
+  Database["public"]["Tables"]["review_table"]["Insert"];
 // team_table
 export type TeamTableRow = Database["public"]["Tables"]["team_table"]["Row"];
 export type TeamTableInsert =
@@ -63,6 +70,33 @@ export type RequestTableInsert =
 export type RequestTableUpdate =
   Database["public"]["Tables"]["request_table"]["Update"];
 
+export type ExpectedResponseType =
+  Database["public"]["Enums"]["expected_response_type"];
+
+export type RequestRow = Database["public"]["Tables"]["request_table"]["Row"];
+export type RequestInsert =
+  Database["public"]["Tables"]["request_table"]["Insert"];
+export type RequestUpdate =
+  Database["public"]["Tables"]["request_table"]["Update"];
+export type TeamMember = Database["public"]["Tables"]["team_role_table"]["Row"];
+
+export type FieldRow = Database["public"]["Tables"]["field_table"]["Row"];
+export type RequestResponseRow =
+  Database["public"]["Tables"]["request_response_table"]["Row"];
+
+export type UserProfileRow =
+  Database["public"]["Tables"]["user_profile_table"]["Row"];
+
+export type RequestType = RequestRow & { approver: UserProfileRow } & {
+  owner: UserProfileRow;
+};
+
+export type Marks = {
+  value: number;
+  label: string;
+};
+
+export type RequestFields = RequestResponseRow & { field: FieldRow };
 // request_response_table
 export type RequestResponseTableRow =
   Database["public"]["Tables"]["request_response_table"]["Row"];
@@ -75,5 +109,4 @@ export type RequestResponseTableUpdate =
 export type FieldTypeEnum = Database["public"]["Enums"]["field_type"];
 export type FormTypeEnum = Database["public"]["Enums"]["form_type"];
 export type RequestStatusEnum = Database["public"]["Enums"]["request_status"];
-export type ReviewTypeEnum = Database["public"]["Enums"]["review_type"];
 export type TeamRoleEnum = Database["public"]["Enums"]["team_role"];
