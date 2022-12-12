@@ -1,26 +1,26 @@
+import { FormRow } from "@/utils/types";
 import { Badge, Checkbox } from "@mantine/core";
-import { Form } from "./FormsPage";
 
 type Props = {
-  form: Form;
+  form: FormRow;
 };
 
 const FormsRow = ({ form }: Props) => {
   return (
-    <tr key={form.id}>
+    <tr key={form.form_id}>
       <td>
-        <Checkbox size="xs" label={form.id} />
+        <Checkbox size="xs" label={form.form_id} />
       </td>
-      <td>{form.title}</td>
+      <td>{form.form_name}</td>
       <td>
         <Badge
           radius="xs"
-          color={form.status.toLowerCase() === "active" ? "blue" : "gray"}
+          color={form.form_status?.toLowerCase() === "active" ? "blue" : "gray"}
         >
-          {form.status}
+          {form.form_status}
         </Badge>
       </td>
-      <td>{form.updated_at}</td>
+      <td>{new Date(`${form.form_created_at}`).toLocaleDateString()}</td>
     </tr>
   );
 };

@@ -1,4 +1,4 @@
-import type { Database } from "@/utils/types";
+import type { Database, FormRow } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -11,6 +11,7 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -18,12 +19,7 @@ import { AddCircle, Search } from "../Icon";
 import styles from "./FormsPage.module.scss";
 import FormsTable from "./FormsTable";
 
-export type Form = {
-  id: string;
-  title: string;
-  status: string;
-  updated_at: string;
-};
+
 
 const FormList = () => {
   const supabase = useSupabaseClient<Database>();
@@ -31,27 +27,22 @@ const FormList = () => {
   const [activePage, setPage] = useState(1);
   const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
-  const [formList, setFormList] = useState<Form[]>([]);
+  const [formList, setFormList] = useState<FormRow[]>([]);
   // const { tid } = router.query;
 
-  // todo: fetch forms backend
-  // todo: add actual filtering
   useEffect(() => {
     const fetchForms = async () => {
-      const { data } = await supabase
-        .from("form_name_table")
-        .select("*")
-        .order("form_name_id", { ascending: true });
-      if (data) {
-        const newForms = data.map((form) => {
-          return {
-            id: `${form.form_name_id}`,
-            title: `${form.form_name}`,
-            status: "Active",
-            updated_at: "February 5, 2022",
-          };
+      try {
+        // todo team_id
+        const { data, error } = await supabase.from("form_table").select("*");
+        if (error) throw error;
+        setFormList(data);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Failed to fetch Form List",
+          color: "red",
         });
-        setFormList(newForms);
       }
     };
 
