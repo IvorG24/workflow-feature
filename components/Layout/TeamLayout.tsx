@@ -71,24 +71,21 @@ const TeamLayout = ({ children }: Props) => {
         });
       }
     })();
-  }, [router, user]);
+  }, [router, user, supabaseClient]);
 
   return (
     <>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
-      {!isLoading && (
+      {isLoading ? (
+        <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      ) : null}
+      {!isLoading ? (
         <AppShell
-          navbar={
-            <Navbar
-              teamList={createdOrRetrievedUserTeamList}
-              activeTeamIndex={0}
-            />
-          } // don't use typecasting for tid
-          header={<MobileHeader />}
+          navbar={<Navbar teamList={createdOrRetrievedUserTeamList} />} // don't use typecasting for tid
+          header={<MobileHeader teamList={createdOrRetrievedUserTeamList}/>}
         >
           <main className={styles.childrenContainer}>{children}</main>
         </AppShell>
-      )}
+      ) : null}
     </>
   );
 };

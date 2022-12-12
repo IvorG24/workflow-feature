@@ -1,11 +1,16 @@
 // todo: create test for #61
+import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
 import { Burger, Container, Group, useMantineColorScheme } from "@mantine/core";
 import Image from "next/image";
 import { useState } from "react";
 import styles from "./MobileHeader.module.scss";
 import MobileNavbar from "./MobileNavbar";
 
-const MobileHeader = () => {
+type Props = {
+  teamList: CreateOrRetrieveUserTeamList;
+};
+
+const MobileHeader = ({ teamList }: Props) => {
   const { colorScheme } = useMantineColorScheme();
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -19,6 +24,7 @@ const MobileHeader = () => {
         <MobileNavbar
           opened={isOpen}
           onToggleOpened={() => setIsOpen((prev) => !prev)}
+          teamList={teamList}
         />
       </Container>
 

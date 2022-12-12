@@ -1,6 +1,7 @@
 // todo: close navbar when clicked outside
 import SelectItem from "@/components/SelectItem/SelectItem";
-import type { Database } from "@/utils/types";
+import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
+import type { Database, FormRow } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -12,7 +13,6 @@ import {
   Flex,
   Group,
   Menu,
-  Modal,
   Navbar as MantineNavbar,
   NavLink,
   ScrollArea,
@@ -22,7 +22,8 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { MouseEventHandler, useEffect, useState } from "react";
@@ -42,97 +43,64 @@ import {
 } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./MobileNavbar.module.scss";
-import { requestForms, reviewForms } from "./Navbar";
 
-const TEAMS = [
-  {
-    id: 1,
-    image: "",
-    value: "Acme Corporation",
-    label: "Acme Corporation",
-  },
-  {
-    id: 2,
-    image: "",
-    value: "Wonka Industries",
-    label: "Wonka Industries",
-  },
-];
-
-const Navbar = ({
-  opened,
-  onToggleOpened,
-}: {
+type Props = {
+  teamList: CreateOrRetrieveUserTeamList;
   opened: boolean;
   onToggleOpened: MouseEventHandler<HTMLButtonElement>;
-}) => {
+};
+
+const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
+  const user = useUser();
+  const [activeTeam, setActiveTeam] = useState(`${router.query.tid}`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [teamDropdownValue, setTeamDropdownValue] = useState<string | null>(
-    TEAMS[0].value
-  );
-  const [isCreatingRequest, setIsCreatingRequest] = useState(false);
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
-  const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
+  const [forms, setForms] = useState<FormRow[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
   const [isOpenRequest, setIsOpenRequest] = useState(false);
   const [isOpenReview, setIsOpenReview] = useState(false);
   const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
   const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
+
+  const requestForms = forms.filter((form) => form.form_type === "request");
+  const reviewForms = forms.filter((form) => form.form_type === "review");
+
   useEffect(() => {
     // TODO: Convert into a hook
-    // todo: team_id
     const fetchForms = async () => {
-      const { data } = await supabase.from("form_table").select("*");
-      const forms = data?.map((form) => {
-        return { value: `${form.form_id}`, label: `${form.form_name}` };
-      });
-      if (forms !== undefined && forms.length !== 0) {
-        setForms(forms);
-        setSelectedForm(`${forms[0].value}`);
+      try {
+        const { data, error } = await supabase
+          .from("form_table")
+          .select("*")
+          .eq("team_id", router.query.tid);
+        if (error) throw error;
+
+        setForms(data);
+        // setSelectedForm(data[0]);
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Failed to fetch Forms",
+          color: "red",
+        });
       }
     };
     fetchForms();
-  }, [supabase]);
+  }, [supabase, router.query.tid]);
 
-  const selectedTeam = TEAMS.find((team) => team.value === teamDropdownValue);
+  const teamOptions = teamList.map((team) => ({
+    value: team.team_id,
+    label: team.team_table.team_name as string, // todo: team_name should not be null in database
+    image: "", // todo: add logo column to team table in database
+  }));
 
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
   }`;
 
-  const handleProceed = () => {
-    router.push(`/requests/create?formId=${selectedForm}`);
-    setIsCreatingRequest(false);
-  };
-
   return (
     <>
-      <Modal
-        opened={isCreatingRequest}
-        onClose={() => setIsCreatingRequest(false)}
-        padding="xl"
-        centered
-      >
-        <Container>
-          <Title>Choose Form Type</Title>
-          <Select
-            mt="xl"
-            placeholder="Choose one"
-            data={forms}
-            value={selectedForm}
-            onChange={setSelectedForm}
-          />
-
-          <Group position="right">
-            <Button mt="xl" variant="subtle" onClick={handleProceed}>
-              {`Got to Next Page >`}
-            </Button>
-          </Group>
-        </Container>
-      </Modal>
-
       <MantineNavbar px="md" pb="lg" pt="xs" aria-label="sidebar navigation">
         <MantineNavbar.Section>
           <Group position="apart">
@@ -161,11 +129,14 @@ const Navbar = ({
         <Select
           mt="md"
           label="Team"
-          value={teamDropdownValue}
-          data={TEAMS}
+          value={activeTeam}
+          data={teamOptions}
           itemComponent={SelectItem}
-          onChange={(val) => setTeamDropdownValue(val)}
-          icon={<Avatar src={selectedTeam?.image} radius="xl" size="sm" />}
+          onChange={(val) => {
+            setActiveTeam(`${val}`);
+            router.push(`/t/${val}/dashboard`);
+          }}
+          icon={<Avatar src="" radius="xl" size="sm" />}
           size="md"
           styles={{
             label: {
@@ -215,7 +186,7 @@ const Navbar = ({
           <MantineNavbar.Section mt="lg">
             <NavLink
               component="a"
-              href={`/t/${selectedTeam?.id}/dashboard`}
+              href={`/t/${activeTeam}/dashboard`}
               label="Dashboard"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -225,7 +196,7 @@ const Navbar = ({
             />
             <NavLink
               component="a"
-              href={`/t/${selectedTeam?.id}/requests`}
+              href={`/t/${activeTeam}/requests`}
               label="Requests"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -267,7 +238,7 @@ const Navbar = ({
                     component="a"
                     onClick={(e) => {
                       e.preventDefault();
-                      router.push(`/t/${selectedTeam?.id}/requests/create`);
+                      router.push(`/t/${activeTeam}/requests/create`);
                     }}
                     className={`${styles.createRequestButton} ${
                       colorScheme === "dark"
@@ -285,7 +256,7 @@ const Navbar = ({
                 <NavLink
                   key={form.form_id}
                   component="a"
-                  href={`/t/${selectedTeam?.id}/forms/${form.form_id}`}
+                  href={`/t/${activeTeam}/forms/${form.form_id}`}
                   label={<Text lineClamp={1}>{form.form_name}</Text>}
                   rightSection={
                     <Group spacing={2}>
@@ -309,7 +280,7 @@ const Navbar = ({
                           <NavLink
                             label="Edit form"
                             component="a"
-                            href={`/t/${selectedTeam?.id}/form/edit/${form.form_id}`}
+                            href={`/t/${activeTeam}/form/edit/${form.form_id}`}
                             icon={
                               <IconWrapper>
                                 <EditDocument />
@@ -324,7 +295,7 @@ const Navbar = ({
                         onClick={(e) => {
                           e.preventDefault();
                           router.push(
-                            `/t/${selectedTeam?.id}/requests/create?formId=${form.form_id}`
+                            `/t/${activeTeam}/requests/create?formId=${form.form_id}`
                           );
                         }}
                         aria-label="create a request"
@@ -377,7 +348,7 @@ const Navbar = ({
                     component="a"
                     onClick={(e) => {
                       e.preventDefault();
-                      router.push(`/t/${selectedTeam?.id}/review/create`);
+                      router.push(`/t/${activeTeam}/review/create`);
                     }}
                     className={`${styles.createRequestButton} ${
                       colorScheme === "dark"
@@ -394,7 +365,7 @@ const Navbar = ({
                 <NavLink
                   key={form.form_id}
                   component="a"
-                  href={`/t/${selectedTeam?.id}/forms/${form.form_id}`}
+                  href={`/t/${activeTeam}/forms/${form.form_id}`}
                   label={<Text lineClamp={1}>{form.form_name}</Text>}
                   rightSection={
                     <Group spacing={2}>
@@ -418,7 +389,7 @@ const Navbar = ({
                           <NavLink
                             label="Edit form"
                             component="a"
-                            href={`/t/${selectedTeam?.id}/form/edit/${form.form_id}`}
+                            href={`/t/${activeTeam}/form/edit/${form.form_id}`}
                             icon={
                               <IconWrapper>
                                 <EditDocument />
@@ -433,7 +404,7 @@ const Navbar = ({
                         onClick={(e) => {
                           e.preventDefault();
                           router.push(
-                            `/t/${selectedTeam?.id}/review/create/${form.form_id}`
+                            `/t/${activeTeam}/review/create/${form.form_id}`
                           );
                         }}
                         aria-label="create a review"
@@ -454,7 +425,7 @@ const Navbar = ({
             <NavLink
               component="a"
               // TODO: Commented out page route has no content. Kindly fix.
-              href={`/t/${selectedTeam?.id}/settings/members`}
+              href={`/t/${activeTeam}/settings/members`}
               label="Members"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -467,7 +438,7 @@ const Navbar = ({
         <MantineNavbar.Section className={styles.footer}>
           <NavLink
             component="a"
-            href="/profile"
+            href={`/profiles/${user?.id}/bio`}
             label="Mary Joy Dumancal"
             description="View Profile"
             icon={

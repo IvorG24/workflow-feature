@@ -1,4 +1,9 @@
 import { Search } from "@/components/Icon";
+import {
+  requestResponse,
+  retrieveRequestFormByTeam,
+  retrieveRequestList,
+} from "@/utils/queries";
 import type { Database, RequestType } from "@/utils/types";
 import {
   ActionIcon,
@@ -12,6 +17,7 @@ import {
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
@@ -33,6 +39,7 @@ const REQUEST_PER_PAGE = 8;
 const All = () => {
   const supabase = useSupabaseClient<Database>();
   const user = useUser();
+  const router = useRouter();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -45,7 +52,9 @@ const All = () => {
   const [isApprover, setIsApprover] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
+  const [selectedForm, setSelectedForm] = useState<string | null>(
+    router.query.formId ? `${router.query.formId}` : null
+  );
 
   const fetchRequests = async (isSearch: boolean) => {
     try {
@@ -53,46 +62,25 @@ const All = () => {
       setIsLoading(true);
       const start = (activePage - 1) * REQUEST_PER_PAGE;
 
-      if (isSearch && search) {
-        console.log("TODO SEARCH");
-      } else {
-        // todo team_id
-        let query = supabase
-          .from("request_table")
-          .select(
-            "*, form: form_table_id(*), approver: approver_id(*), owner: requested_by(*)"
-          )
-          .eq("is_draft", false)
-          // .eq("form.team_id", null)
-          .range(start, start + REQUEST_PER_PAGE - 1);
-        let countQuery = supabase
-          .from("request_table")
-          .select("*")
-          .eq("is_draft", false);
-        // .eq("form.team_id", null);
+      const { requestList, requestCount } = await retrieveRequestList(
+        supabase,
+        start,
+        `${router.query.tid}`,
+        REQUEST_PER_PAGE,
+        selectedForm,
+        status,
+        search,
+        isSearch,
+      );
 
-        if (selectedForm) {
-          query = query.eq("form_table_id", selectedForm);
-          countQuery = countQuery.eq("form_table_id", selectedForm);
-        }
-        if (status) {
-          query = query.eq("request_status", status);
-          countQuery = countQuery.eq("request_status", status);
-        }
-
-        const { data: requestList, error: requestListError } = await query;
-        const { count: requestCount, error: requestCountError } =
-          await countQuery;
-        if (requestListError || requestCountError) throw requestListError;
-
-        const newRequestList = requestList as RequestType[];
-        setRequestList(newRequestList);
-        setRequestCount(Number(`${requestCount}`));
+      if (!isSearch) {
         setSearch("");
       }
+      setRequestList(requestList);
+      setRequestCount(Number(requestCount));
 
       setIsLoading(false);
-    } catch {
+    } catch (e) {
       showNotification({
         title: "Error!",
         message: "Failed to fetch Request List",
@@ -103,10 +91,11 @@ const All = () => {
 
   const fetchForms = async () => {
     try {
-      // todo team_id
-      const { data, error } = await supabase.from("form_table").select("*");
-      if (error) throw error;
-      const forms = data?.map((form) => {
+      const requestFormList = await retrieveRequestFormByTeam(
+        supabase,
+        `${router.query.tid}`
+      );
+      const forms = requestFormList?.map((form) => {
         return { value: `${form.form_id}`, label: `${form.form_name}` };
       });
       setForms(forms);
@@ -152,12 +141,11 @@ const All = () => {
   const handleApprove = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "approved" })
-        .eq("request_id", Number(`${selectedRequest?.request_id}`));
-
-      if (error) throw error;
+      await requestResponse(
+        supabase,
+        Number(selectedRequest?.request_id),
+        "approved"
+      );
 
       setRequestList((prev) =>
         prev.map((request) => {
@@ -190,12 +178,11 @@ const All = () => {
   const handleSendToRevision = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "revision" })
-        .eq("request_id", Number(`${selectedRequest?.request_id}`));
-
-      if (error) throw error;
+      await requestResponse(
+        supabase,
+        Number(selectedRequest?.request_id),
+        "revision"
+      );
 
       setRequestList((prev) =>
         prev.map((request) => {
@@ -228,12 +215,11 @@ const All = () => {
   const handleReject = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "rejected" })
-        .eq("request_id", Number(`${selectedRequest?.request_id}`));
-
-      if (error) throw error;
+      await requestResponse(
+        supabase,
+        Number(selectedRequest?.request_id),
+        "rejected"
+      );
 
       setRequestList((prev) =>
         prev.map((request) => {

@@ -1,6 +1,19 @@
+import {
+  fetchUserProfile,
+  retreivedRequestDraftByRequestId,
+  retrieveApproverListByTeam,
+  retrieveFormFieldList,
+  retrieveRequestDraftByForm,
+  retrieveRequestForm,
+  retrieveRequestResponse,
+  saveRequest,
+  saveRequestField,
+  updateRequest,
+  updateRequestReponse,
+} from "@/utils/queries";
 import { renderTooltip } from "@/utils/request";
-import type { Database, Marks, RequestRow } from "@/utils/types";
-import { FieldRow, FormRow, RequestResponseRow } from "@/utils/types";
+import type { Database, Marks, UserProfileRow } from "@/utils/types";
+import { FieldRow, FormRow } from "@/utils/types";
 import {
   Box,
   Button,
@@ -36,9 +49,6 @@ type RequestFieldsType = {
   behalf: string;
   description: string;
 };
-
-type RequestType = RequestRow & { form: FormRow };
-type RequestResponseType = RequestResponseRow & { field: FieldRow };
 
 const CreateRequest = () => {
   const MARKS: Marks[] = [
@@ -116,6 +126,7 @@ const CreateRequest = () => {
   });
 
   const resetState = () => {
+    setIsLoading(true);
     reset();
     setApprovers([]);
     setForm(null);
@@ -126,29 +137,25 @@ const CreateRequest = () => {
   useEffect(() => {
     if (!router.isReady) return;
     resetState();
-    setIsLoading(true);
-    // TODO add eq("team_id")
+
     const fetchApprovers = async () => {
       try {
-        // todo: fetch from team_role
-        const { data, error } = await supabase
-          .from("user_profile_table")
-          .select("*");
-        if (error) throw error;
-        // TODO remove current user if the current user is an admin
+        const retreivedApprovers = await retrieveApproverListByTeam(
+          supabase,
+          `${user?.id}`,
+          `${router.query.tid}`
+        );
 
-        const approvers = data.map((approver) => {
+        const approvers = retreivedApprovers.map((user) => {
+          const approver = user.approver as UserProfileRow;
           return {
             label: `${approver.full_name}`,
             value: `${approver.user_id}`,
           };
         });
 
-        const newApprovers = approvers.filter(
-          (approver) => approver.value !== user?.id
-        );
-        setApprovers(newApprovers);
-        setSelectedApprover(newApprovers[0].value);
+        setApprovers(approvers);
+        setSelectedApprover(approvers[0].value);
       } catch {
         showNotification({
           title: "Error!",
@@ -160,17 +167,14 @@ const CreateRequest = () => {
 
     const fetchRequest = async () => {
       try {
-        const { data, error } = await supabase
-          .from("request_table")
-          .select("*")
-          .eq("is_draft", true)
-          .eq("form_table_id", router.query.formId)
-          .eq("requested_by", user?.id)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        data ? fetchDraft(data.request_id) : handleFetchForm();
+        const retreivedRequestDraft = await retrieveRequestDraftByForm(
+          supabase,
+          `${router.query.formId}`,
+          `${user?.id}`
+        );
+        retreivedRequestDraft
+          ? fetchDraft(retreivedRequestDraft.request_id)
+          : handleFetchForm();
       } catch {
         showNotification({
           title: "Error!",
@@ -182,27 +186,21 @@ const CreateRequest = () => {
 
     const handleFetchForm = async () => {
       try {
-        const { data: form, error: formError } = await supabase
-          .from("form_table")
-          .select("*")
-          .eq("form_id", router.query.formId)
-          .single();
-
-        if (!form || formError) throw formError;
-
-        const { data: fields, error: fieldsError } = await supabase
-          .from("field_table")
-          .select("*")
-          .eq("form_table_id", form.form_id);
-
-        if (fieldsError) throw fieldsError;
+        const retrievedForm = await retrieveRequestForm(
+          supabase,
+          `${router.query.formId}`
+        );
+        const retreivedFormFieldList = await retrieveFormFieldList(
+          supabase,
+          `${router.query.formId}`
+        );
 
         setFields(
-          fields.map((field, index) => {
+          retreivedFormFieldList.map((field, index) => {
             return { ...field, response: "", responseId: index };
           })
         );
-        setForm(form);
+        setForm(retrievedForm);
       } catch {
         showNotification({
           title: "Error!",
@@ -215,39 +213,34 @@ const CreateRequest = () => {
     const fetchDraft = async (request_id: number) => {
       setDraftId(request_id);
       try {
-        const { data: request, error: requestError } = await supabase
-          .from("request_table")
-          .select("*, form: form_table_id(*)")
-          .eq("request_id", request_id)
-          .single();
-        const newRequest = request as RequestType;
+        const retrievedRequestDraft = await retreivedRequestDraftByRequestId(
+          supabase,
+          request_id
+        );
+        if (!retrievedRequestDraft) return;
 
-        if (!request || requestError) throw requestError;
+        setValue("title", `${retrievedRequestDraft.request_title}`);
+        setValue("description", `${retrievedRequestDraft.request_description}`);
+        setValue("behalf", `${retrievedRequestDraft.on_behalf_of}`);
 
-        setValue("title", `${request.request_title}`);
-        setValue("description", `${request.request_description}`);
-        setValue("behalf", `${request.on_behalf_of}`);
+        const retrievedRequestResponse = await retrieveRequestResponse(
+          supabase,
+          retrievedRequestDraft.request_id
+        );
 
-        const { data: requestFields, error: requestFieldsError } =
-          await supabase
-            .from("request_response_table")
-            .select("*, field: field_id(*)")
-            .eq("request_id", request.request_id);
-        const newRequestFields = requestFields as RequestResponseType[];
-
-        if (!request || requestFieldsError) throw requestFieldsError;
-
-        const fieldsWithResponse = newRequestFields.map((field, index) => {
-          return {
-            ...field.field,
-            response: `${field.response_value}`,
-            responseId: index,
-          };
-        });
+        const fieldsWithResponse = retrievedRequestResponse.map(
+          (field, index) => {
+            return {
+              ...field.field,
+              response: `${field.response_value}`,
+              responseId: index,
+            };
+          }
+        );
 
         setFields(fieldsWithResponse);
-        setForm(newRequest.form);
-        setSelectedApprover(request.approver_id);
+        setForm(retrievedRequestDraft.form);
+        setSelectedApprover(retrievedRequestDraft.approver_id);
       } catch {
         showNotification({
           title: "Error!",
@@ -259,13 +252,11 @@ const CreateRequest = () => {
 
     const fetchCurrentUser = async () => {
       try {
-        const { data, error } = await supabase
-          .from("user_profile_table")
-          .select("*")
-          .eq("user_id", user?.id)
-          .single();
-        if (!data || error) throw error;
-        setValue("requestor", `${data.full_name}`);
+        const fetchedUserProfile = await fetchUserProfile(
+          supabase,
+          `${user?.id}`
+        );
+        setValue("requestor", `${fetchedUserProfile.full_name}`);
       } catch {
         showNotification({
           title: "Error!",
@@ -292,37 +283,31 @@ const CreateRequest = () => {
         return {
           field_id: Number(field.field_id),
           response_value: field.response,
-          request_id: Number(`${draftId}`),
+          request_id: Number(draftId),
         };
       });
 
-      const { error: requestResponseError } = await supabase
-        .from("request_response_table")
-        .upsert(requestResponseList)
-        .eq("request_id", draftId);
+      await updateRequestReponse(
+        supabase,
+        requestResponseList,
+        Number(draftId)
+      );
 
-      if (requestResponseError) throw requestResponseError;
-
-      const { error: requestError } = await supabase
-        .from("request_table")
-        .update({
-          approver_id: selectedApprover,
-          request_created_at: `${new Date().toISOString()}`,
-          request_title: formData.title,
-          on_behalf_of: formData.behalf,
-          request_description: formData.description,
-          is_draft: false,
-        })
-        .eq("request_id", draftId);
-
-      if (requestError) throw requestError;
+      await updateRequest(
+        supabase,
+        `${selectedApprover}`,
+        formData,
+        Number(draftId)
+      );
 
       showNotification({
         title: "Success!",
         message: "Request sent for approval",
         color: "green",
       });
-      router.push(`/t/${router.query.tid}/requests/${router.query.formId}`);
+      router.push(
+        `/t/${router.query.tid}/requests?formId=${router.query.formId}`
+      );
     } catch {
       showNotification({
         title: "Error!",
@@ -336,34 +321,23 @@ const CreateRequest = () => {
     try {
       setIsCreating(true);
 
-      const { data: request, error: requestError } = await supabase
-        .from("request_table")
-        .insert({
-          approver_id: selectedApprover,
-          requested_by: user?.id,
-          form_table_id: form?.form_id,
-          request_title: formData.title,
-          on_behalf_of: formData.behalf,
-          request_description: formData.description,
-          is_draft: false,
-        })
-        .select()
-        .single();
-
-      if (requestError) throw requestError;
+      const savedRequest = await saveRequest(
+        supabase,
+        `${selectedApprover}`,
+        formData,
+        `${user?.id}`,
+        Number(router.query.formId)
+      );
 
       const requestResponse = fields.map((field) => {
         return {
           field_id: Number(field.field_id),
-          request_id: request.request_id,
+          request_id: savedRequest.request_id,
           response_value: field.response,
         };
       });
-      const { error: requestResponseError } = await supabase
-        .from("request_response_table")
-        .insert(requestResponse);
 
-      if (requestResponseError) throw requestResponseError;
+      await saveRequestField(supabase, requestResponse);
 
       showNotification({
         title: "Success!",
@@ -477,10 +451,7 @@ const CreateRequest = () => {
                     label={field.field_name}
                     withAsterisk={Boolean(field.is_required)}
                     onChange={(e) =>
-                      handleAnswer(
-                        Number(`${field.responseId}`),
-                        e.target.value
-                      )
+                      handleAnswer(Number(field.responseId), e.target.value)
                     }
                     value={field.response}
                   />,
@@ -493,7 +464,7 @@ const CreateRequest = () => {
                     label={field.field_name}
                     withAsterisk={Boolean(field.is_required)}
                     onChange={(e) =>
-                      handleAnswer(Number(`${field.responseId}`), `${e}`)
+                      handleAnswer(Number(field.responseId), `${e}`)
                     }
                     value={Number(field.response)}
                   />,
@@ -507,7 +478,7 @@ const CreateRequest = () => {
                     withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose date"}
                     onChange={(e) =>
-                      handleAnswer(Number(`${field.responseId}`), `${e}`)
+                      handleAnswer(Number(field.responseId), `${e}`)
                     }
                     defaultValue={
                       field.response ? new Date(field.response) : null
@@ -524,7 +495,7 @@ const CreateRequest = () => {
                     withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose a date range"}
                     onChange={(e) =>
-                      handleAnswer(Number(`${field.responseId}`), `${e}`)
+                      handleAnswer(Number(field.responseId), `${e}`)
                     }
                     defaultValue={
                       dates[0]
@@ -543,7 +514,7 @@ const CreateRequest = () => {
                     placeholder={"Choose time"}
                     format="12"
                     onChange={(e) =>
-                      handleAnswer(Number(`${field.responseId}`), `${e}`)
+                      handleAnswer(Number(field.responseId), `${e}`)
                     }
                     defaultValue={
                       field.response ? new Date(field.response) : null
@@ -568,7 +539,7 @@ const CreateRequest = () => {
                       max={5}
                       labelAlwaysOn={false}
                       onChange={(e) =>
-                        handleAnswer(Number(`${field.responseId}`), `${e}`)
+                        handleAnswer(Number(field.responseId), `${e}`)
                       }
                       value={Number(field.response)}
                     />
@@ -588,7 +559,7 @@ const CreateRequest = () => {
                     withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose multiple"}
                     onChange={(e) =>
-                      handleAnswer(Number(`${field.responseId}`), `${e}`)
+                      handleAnswer(Number(field.responseId), `${e}`)
                     }
                     value={field.response.split(",")}
                   />,
@@ -610,7 +581,7 @@ const CreateRequest = () => {
                     withAsterisk={Boolean(field.is_required)}
                     placeholder={"Choose one"}
                     onChange={(e) =>
-                      handleAnswer(Number(`${field.responseId}`), `${e}`)
+                      handleAnswer(Number(field.responseId), `${e}`)
                     }
                     value={field.response}
                   />,
