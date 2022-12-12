@@ -43,7 +43,7 @@ const TeamLayout = ({ children }: Props) => {
 
         setCreatedOrRetrievedUserTeamList(createdOrRetrievedUserTeamList);
 
-        // TODO: If user visits home page, redirecto to first team dashboard page for now.
+        // * If user visits home page, redirect to to first team dashboard page for now.
         if (router.pathname === "/") {
           await router.push(
             `/t/${createdOrRetrievedUserTeamList[0].team_id}/dashboard`

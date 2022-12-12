@@ -1,5 +1,5 @@
 // TODO: This is an MVP of notificaitons page only.
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import showNotification from "@/hooks/showNotifications";
 import { Database } from "@/utils/database.types";
@@ -76,7 +76,7 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+  return <TeamLayout>{page}</TeamLayout>;
 };
 
 export default Page;
