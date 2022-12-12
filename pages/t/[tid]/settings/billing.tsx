@@ -1,4 +1,4 @@
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import Setting from "@/components/Setting/Setting";
 import { ReactElement } from "react";
@@ -17,7 +17,7 @@ const BillingSettingsPage: NextPageWithLayout = () => {
 };
 
 BillingSettingsPage.getLayout = function getLayout(page: ReactElement) {
-  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+  return <TeamLayout>{page}</TeamLayout>;
 };
 
 export default BillingSettingsPage;

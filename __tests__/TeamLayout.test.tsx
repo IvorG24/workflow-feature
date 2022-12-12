@@ -1,9 +1,9 @@
 // Todo: convert into an integration test
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import TeamLayout from "@/components/Layout/TeamLayout";
 import { render, screen } from "@testing-library/react";
 
 const setup = () => {
-  render(<WorkspaceLayout>children</WorkspaceLayout>);
+  render(<TeamLayout>children</TeamLayout>);
 };
 
 jest.mock("@mantine/core", () => ({

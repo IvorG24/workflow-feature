@@ -1,5 +1,5 @@
 // this page was just used to test layout, you can delete it if you want
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import { Database } from "@/utils/database.types";
 import {
@@ -300,7 +300,7 @@ const CheatSheetPage: NextPageWithLayout = () => {
 };
 
 CheatSheetPage.getLayout = function getLayout(page: ReactElement) {
-  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+  return <TeamLayout>{page}</TeamLayout>;
 };
 
 export default CheatSheetPage;

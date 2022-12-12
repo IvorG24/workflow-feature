@@ -567,7 +567,10 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                 <Logout />
               </IconWrapper>
             }
-            onClick={async () => await supabase.auth.signOut()}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              await router.push("/sign-in");
+            }}
           >
             Logout
           </Button>
