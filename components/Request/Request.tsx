@@ -1,4 +1,9 @@
 // todo: create unit test
+import {
+  requestResponse,
+  retrieveRequest,
+  retrieveRequestResponse,
+} from "@/utils/queries";
 import { renderTooltip, setBadgeColor } from "@/utils/request";
 import type {
   Database,
@@ -81,36 +86,27 @@ const Request = () => {
 
     const fetchRequest = async () => {
       try {
-        const { data: requestRow, error: requestRowError } = await supabase
-          .from("request_table")
-          .select("*, owner: requested_by(*), approver: approver_id(*)")
-          .eq("request_id", router.query.id)
-          .single();
+        const retrievedRequest = await retrieveRequest(
+          supabase,
+          Number(router.query.id)
+        );
+        const requestFields = await retrieveRequestResponse(
+          supabase,
+          Number(router.query.id)
+        );
 
-        const newRequest = requestRow as RequestType;
-
-        if (requestRowError) throw requestRowError;
-
-        const { data: requestFields, error: requestFieldsError } =
-          await supabase
-            .from("request_response_table")
-            .select("*, field: field_id(*)")
-            .eq("request_id", router.query.id);
-
-        if (requestFieldsError) throw requestFieldsError;
-
-        setRequest(newRequest);
+        setRequest(retrievedRequest);
         setRequiredFields({
-          approval_status: `${newRequest.request_status}`,
-          request_title: `${newRequest.request_title}`,
-          request_description: `${newRequest.request_description}`,
-          on_behalf_of: `${newRequest.on_behalf_of}`,
-          requestedBy: `${newRequest.owner.full_name}`,
-          approverName: `${newRequest.approver.full_name}`,
-          created_at: `${newRequest.request_created_at}`,
-          approverId: `${newRequest.approver_id}`,
+          approval_status: `${retrievedRequest.request_status}`,
+          request_title: `${retrievedRequest.request_title}`,
+          request_description: `${retrievedRequest.request_description}`,
+          on_behalf_of: `${retrievedRequest.on_behalf_of}`,
+          requestedBy: `${retrievedRequest.owner.full_name}`,
+          approverName: `${retrievedRequest.approver.full_name}`,
+          created_at: `${retrievedRequest.request_created_at}`,
+          approverId: `${retrievedRequest.approver_id}`,
         });
-        setRequestFields(requestFields as RequestFields[]);
+        setRequestFields(requestFields);
         setIsFetchingRequest(false);
       } catch {
         showNotification({
@@ -138,19 +134,14 @@ const Request = () => {
   const handleApprove = async () => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "approved" })
-        .eq("request_id", Number(`${router.query.id}`));
-
-      if (error) throw error;
+      await requestResponse(supabase, Number(router.query.id), "approved");
 
       showNotification({
         title: "Success!",
         message: `You approved ${requiredFields?.request_title}`,
         color: "green",
       });
-      router.push("/requests");
+      router.push(`/t/${router.query.tid}/requests`);
     } catch {
       showNotification({
         title: "Error!",
@@ -164,12 +155,7 @@ const Request = () => {
   const handleSendToRevision = async () => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "revision" })
-        .eq("request_id", Number(`${router.query.id}`));
-
-      if (error) throw error;
+      await requestResponse(supabase, Number(router.query.id), "revision");
 
       showNotification({
         title: "Success!",
@@ -191,12 +177,7 @@ const Request = () => {
   const handleReject = async () => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "rejected" })
-        .eq("request_id", Number(`${router.query.id}`));
-
-      if (error) throw error;
+      await requestResponse(supabase, Number(router.query.id), "rejected");
 
       showNotification({
         title: "Success!",

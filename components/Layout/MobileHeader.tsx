@@ -1,4 +1,5 @@
 // todo: create test for #61
+import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
 import {
   Burger,
   Group,
@@ -10,7 +11,11 @@ import { useState } from "react";
 import styles from "./MobileHeader.module.scss";
 import MobileNavbar from "./MobileNavbar";
 
-const MobileHeader = () => {
+type Props = {
+  teamList: CreateOrRetrieveUserTeamList;
+};
+
+const MobileHeader = ({ teamList }: Props) => {
   const { colorScheme } = useMantineColorScheme();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -29,7 +34,7 @@ const MobileHeader = () => {
       >
         {(transitionStyles) => (
           <div style={transitionStyles} className={styles.modal}>
-            <MobileNavbar />
+            <MobileNavbar teamList={teamList} />
           </div>
         )}
       </Transition>

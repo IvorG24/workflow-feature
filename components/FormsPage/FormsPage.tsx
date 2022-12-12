@@ -13,30 +13,34 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { AddCircle, Search } from "../Icon";
 import styles from "./FormsPage.module.scss";
 import FormsTable from "./FormsTable";
 
-
+const FORMS_PER_PAGE = 8;
 
 const FormList = () => {
   const supabase = useSupabaseClient<Database>();
 
-  const [activePage, setPage] = useState(1);
+  const [activePage, setActivePage] = useState(1);
+  const [pageCount, setPageCount] = useState(0);
   const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
   const [formList, setFormList] = useState<FormRow[]>([]);
-  // const { tid } = router.query;
 
   useEffect(() => {
     const fetchForms = async () => {
       try {
-        // todo team_id
-        const { data, error } = await supabase.from("form_table").select("*");
+        const { data, error, count } = await supabase
+          .from("form_table")
+          .select("*")
+          .eq("team_id", router.query.tid);
         if (error) throw error;
         setFormList(data);
+        setPageCount(Number(count));
       } catch {
         showNotification({
           title: "Error!",
@@ -47,7 +51,7 @@ const FormList = () => {
     };
 
     fetchForms();
-  }, [supabase]);
+  }, [supabase, router.query.tid]);
 
   return (
     <Container p="md" fluid>
@@ -93,7 +97,7 @@ const FormList = () => {
           rightIcon={<AddCircle />}
           variant="subtle"
           // todo: temporary create form
-          onClick={() => router.push("/forms/build")}
+          onClick={() => router.push(`/t/${router.query.tid}/forms/build`)}
         >
           Create a Form
         </Button>
@@ -101,7 +105,11 @@ const FormList = () => {
 
       <FormsTable forms={formList} colorScheme={colorScheme} />
       <Flex justify="flex-end" mt="xl">
-        <Pagination page={activePage} onChange={setPage} total={20} />
+        <Pagination
+          page={activePage}
+          onChange={setActivePage}
+          total={ceil(pageCount / FORMS_PER_PAGE)}
+        />
       </Flex>
     </Container>
   );

@@ -40,101 +40,16 @@ import {
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./Navbar.module.scss";
 
-const formList = [
-  {
-    form_id: 1,
-    form_name: "Request Form 1",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "request",
-    form_priority: null,
-  },
-  {
-    form_id: 2,
-    form_name: "Request Form 2",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "request",
-    form_priority: null,
-  },
-  {
-    form_id: 3,
-    form_name: "Review Form 1",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "review",
-    form_priority: null,
-  },
-  {
-    form_id: 4,
-    form_name: "Review Form 2",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "review",
-    form_priority: null,
-  },
-  {
-    form_id: 5,
-    form_name: "Review Form 3",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "review",
-    form_priority: null,
-  },
-  {
-    form_id: 6,
-    form_name: "Review Form 4",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "review",
-    form_priority: null,
-  },
-  {
-    form_id: 7,
-    form_name: "Review Form 5",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "review",
-    form_priority: null,
-  },
-  {
-    form_id: 8,
-    form_name: "Review Form 6",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "review",
-    form_priority: null,
-  },
-  {
-    form_id: 9,
-    form_name: "Review Form 7",
-    form_owner: "34b93dce-ee49-4b42-b7d1-0ef1158b859c",
-    team_id: "16e81faa-6266-4efb-b697-0c86d28d6489",
-    form_type: "review",
-    form_priority: null,
-  },
-];
-
-export const requestForms = formList.filter(
-  (form) => form.form_type === "request"
-);
-export const reviewForms = formList.filter(
-  (form) => form.form_type === "review"
-);
-
 type Props = {
   teamList: CreateOrRetrieveUserTeamList;
-  activeTeamIndex: number;
 };
 
-const Navbar = ({ teamList, activeTeamIndex }: Props) => {
+const Navbar = ({ teamList }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const user = useUser();
-  const activeTeam = teamList[activeTeamIndex];
+  const [activeTeam, setActiveTeam] = useState(`${router.query.tid}`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  // const [isCreatingRequest, setIsCreatingRequest] = useState(false);
-  // const [selectedForm, setSelectedForm] = useState<FormRow | null>(null);
   const [forms, setForms] = useState<FormRow[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
   const [isOpenRequest, setIsOpenRequest] = useState(false);
@@ -142,9 +57,11 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
   const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
   const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
 
+  const requestForms = forms.filter((form) => form.form_type === "request");
+  const reviewForms = forms.filter((form) => form.form_type === "review");
+
   useEffect(() => {
     // TODO: Convert into a hook
-    // todo: team_id
     const fetchForms = async () => {
       try {
         const { data, error } = await supabase
@@ -164,7 +81,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
       }
     };
     fetchForms();
-  }, [supabase]);
+  }, [supabase, router.query.tid]);
 
   const teamOptions = teamList.map((team) => ({
     value: team.team_id,
@@ -176,37 +93,8 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
     colorScheme === "dark" ? styles.colorLight : ""
   }`;
 
-  // const handleProceed = () => {
-  //   router.push(
-  //     `/t/${activeTeam.team_id}/requests/create?formId=${selectedForm}`
-  //   );
-  //   setIsCreatingRequest(false);
-  // };
-
   return (
     <>
-      {/* <Modal
-        opened={isCreatingRequest}
-        onClose={() => setIsCreatingRequest(false)}
-        padding="xl"
-        centered
-      >
-        <Container>
-          <Title>Choose Form Type</Title>
-          <Select
-            mt="xl"
-            placeholder="Choose one"
-            data={forms}
-            value={selectedForm}
-            onChange={setSelectedForm}
-          />
-          <Group position="right">
-            <Button mt="xl" variant="subtle" onClick={handleProceed}>
-              {`Got to Next Page >`}
-            </Button>
-          </Group>
-        </Container>
-      </Modal> */}
       <MantineNavbar
         width={{ base: "250" }}
         className={styles.container}
@@ -238,10 +126,13 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
         <Select
           mt="md"
           label="Team"
-          value={activeTeam.team_id}
+          value={activeTeam}
           data={teamOptions}
           itemComponent={SelectItem}
-          onChange={(val) => router.push(`/t/${val}/dashboard`)}
+          onChange={(val) => {
+            setActiveTeam(`${val}`);
+            router.push(`/t/${val}/dashboard`);
+          }}
           icon={<Avatar src="" radius="xl" size="sm" />}
           size="md"
           styles={{
@@ -277,7 +168,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
 
           <NavLink
             component="a"
-            href={`/t/${activeTeam.team_id}/settings/general`}
+            href={`/t/${activeTeam}/settings/general`}
             label="Settings"
             icon={
               <IconWrapper className={iconStyle}>
@@ -293,7 +184,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
           <MantineNavbar.Section mt="lg">
             <NavLink
               component="a"
-              href={`/t/${activeTeam.team_id}/dashboard`}
+              href={`/t/${activeTeam}/dashboard`}
               label="Dashboard"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -303,7 +194,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             />
             <NavLink
               component="a"
-              href={`/t/${activeTeam.team_id}/requests`}
+              href={`/t/${activeTeam}/requests`}
               label="Requests"
               icon={
                 <IconWrapper className={iconStyle}>
@@ -345,7 +236,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                     component="a"
                     onClick={(e) => {
                       e.preventDefault();
-                      router.push(`/t/${activeTeam.team_id}/requests/build`);
+                      router.push(`/t/${activeTeam}/requests/build`);
                     }}
                     className={`${styles.createRequestButton} ${
                       colorScheme === "dark"
@@ -359,11 +250,11 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
               }
               childrenOffset={28}
             >
-              {forms.map((form) => (
+              {requestForms.map((form) => (
                 <NavLink
                   key={form.form_id}
                   component="a"
-                  href={`/t/${activeTeam.team_id}/forms/${form.form_id}`}
+                  href={`/t/${activeTeam}/requests?formId=${form.form_id}`}
                   label={form.form_name}
                   rightSection={
                     <ActionIcon
@@ -372,7 +263,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                       onClick={(e) => {
                         e.preventDefault();
                         router.push(
-                          `/t/${activeTeam.team_id}/requests/create?formId=${form.form_id}`
+                          `/t/${activeTeam}/requests/create?formId=${form.form_id}`
                         );
                       }}
                       aria-label="create a request"
@@ -424,7 +315,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                     component="a"
                     onClick={(e) => {
                       e.preventDefault();
-                      router.push(`/t/${activeTeam.team_id}/review/build`);
+                      router.push(`/t/${activeTeam}/review/build`);
                     }}
                     className={`${styles.createRequestButton} ${
                       colorScheme === "dark"
@@ -441,7 +332,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                 <NavLink
                   key={form.form_id}
                   component="a"
-                  href={`/t/${activeTeam.team_id}/forms/${form.form_id}`}
+                  href={`/t/${activeTeam}/forms/${form.form_id}`}
                   label={form.form_name}
                   rightSection={
                     <ActionIcon
@@ -450,7 +341,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                       onClick={(e) => {
                         e.preventDefault();
                         router.push(
-                          `/t/${activeTeam.team_id}/review/create/${form.form_id}`
+                          `/t/${activeTeam}/review/create/${form.form_id}`
                         );
                       }}
                       aria-label="create a review"
@@ -470,7 +361,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             <NavLink
               component="a"
               // TODO: Commented out page route has no content. Kindly fix.
-              href={`/t/${activeTeam.team_id}/settings/members`}
+              href={`/t/${activeTeam}/settings/members`}
               label="Members"
               icon={
                 <IconWrapper className={iconStyle}>
