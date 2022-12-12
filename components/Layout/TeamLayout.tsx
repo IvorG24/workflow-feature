@@ -33,10 +33,13 @@ const TeamLayout = ({ children }: Props) => {
         if (!router.isReady) return;
         if (!user) return;
 
-        const [_, createdOrRetrievedUserTeamList] = await Promise.all([
-          createOrRetrieveUser(supabaseClient, user),
-          createOrRetrieveUserTeamList(supabaseClient, user),
-        ]);
+        const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
+          await Promise.all([
+            createOrRetrieveUser(supabaseClient, user),
+            createOrRetrieveUserTeamList(supabaseClient, user),
+          ]);
+
+        console.log(createdOrRetrievedUser);
 
         setCreatedOrRetrievedUserTeamList(createdOrRetrievedUserTeamList);
 
