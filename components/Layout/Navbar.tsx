@@ -11,10 +11,12 @@ import {
   Divider,
   Flex,
   Group,
+  Menu,
   Navbar as MantineNavbar,
   NavLink,
   ScrollArea,
   Select,
+  Text,
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -29,6 +31,7 @@ import {
   ArrowBack,
   Dashboard,
   Description,
+  Dots,
   EditDocument,
   Group as GroupIcon,
   Logout,
@@ -358,33 +361,64 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                   </ActionIcon>
                 </Group>
               }
-              childrenOffset={28}
+              childrenOffset={15}
             >
               {forms.map((form) => (
                 <NavLink
                   key={form.form_id}
                   component="a"
                   href={`/t/${activeTeam.team_id}/forms/${form.form_id}`}
-                  label={form.form_name}
+                  label={<Text lineClamp={1}>{form.form_name}</Text>}
                   rightSection={
-                    <ActionIcon
-                      variant="subtle"
-                      component="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(
-                          `/t/${activeTeam.team_id}/requests/create?formId=${form.form_id}`
-                        );
-                      }}
-                      aria-label="create a request"
-                      className={`${styles.createRequestButton} ${
-                        colorScheme === "dark"
-                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                          : ""
-                      }`}
-                    >
-                      <AddCircle />
-                    </ActionIcon>
+                    <Group spacing={2}>
+                      <Menu shadow="md" width={200}>
+                        <Menu.Target>
+                          <ActionIcon
+                            variant="subtle"
+                            component="a"
+                            onClick={(e) => e.preventDefault()}
+                            aria-label="options menu"
+                            className={`${styles.createRequestButton} ${
+                              colorScheme === "dark"
+                                ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                : ""
+                            }`}
+                          >
+                            <Dots />
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <NavLink
+                            label="Edit form"
+                            component="a"
+                            href={`/t/${activeTeam.team_id}/form/edit/${form.form_id}`}
+                            icon={
+                              <IconWrapper>
+                                <EditDocument />
+                              </IconWrapper>
+                            }
+                          />
+                        </Menu.Dropdown>
+                      </Menu>
+                      <ActionIcon
+                        variant="subtle"
+                        component="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push(
+                            `/t/${activeTeam.team_id}/requests/create?formId=${form.form_id}`
+                          );
+                        }}
+                        aria-label="create a request"
+                        className={`${styles.createRequestButton} ${
+                          colorScheme === "dark"
+                            ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                            : ""
+                        }`}
+                      >
+                        <AddCircle />
+                      </ActionIcon>
+                    </Group>
                   }
                 />
               ))}
@@ -393,7 +427,7 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
             <NavLink
               label="Review Forms"
               component="a"
-              childrenOffset={28}
+              childrenOffset={15}
               opened={isOpenReview}
               onClick={() => {
                 if (!addReviewHovered) {
@@ -443,26 +477,57 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
                   key={form.form_id}
                   component="a"
                   href={`/t/${activeTeam.team_id}/forms/${form.form_id}`}
-                  label={form.form_name}
+                  label={<Text lineClamp={1}>{form.form_name}</Text>}
                   rightSection={
-                    <ActionIcon
-                      variant="subtle"
-                      component="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(
-                          `/t/${activeTeam.team_id}/review/create/${form.form_id}`
-                        );
-                      }}
-                      aria-label="create a review"
-                      className={`${styles.createRequestButton} ${
-                        colorScheme === "dark"
-                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                          : ""
-                      }`}
-                    >
-                      <AddCircle />
-                    </ActionIcon>
+                    <Group spacing={2}>
+                      <Menu shadow="md" width={200}>
+                        <Menu.Target>
+                          <ActionIcon
+                            variant="subtle"
+                            component="a"
+                            onClick={(e) => e.preventDefault()}
+                            aria-label="options menu"
+                            className={`${styles.createRequestButton} ${
+                              colorScheme === "dark"
+                                ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                : ""
+                            }`}
+                          >
+                            <Dots />
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <NavLink
+                            label="Edit form"
+                            component="a"
+                            href={`/t/${activeTeam.team_id}/form/edit/${form.form_id}`}
+                            icon={
+                              <IconWrapper>
+                                <EditDocument />
+                              </IconWrapper>
+                            }
+                          />
+                        </Menu.Dropdown>
+                      </Menu>
+                      <ActionIcon
+                        variant="subtle"
+                        component="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push(
+                            `/t/${activeTeam.team_id}/review/create/${form.form_id}`
+                          );
+                        }}
+                        aria-label="create a review"
+                        className={`${styles.createRequestButton} ${
+                          colorScheme === "dark"
+                            ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                            : ""
+                        }`}
+                      >
+                        <AddCircle />
+                      </ActionIcon>
+                    </Group>
                   }
                 />
               ))}

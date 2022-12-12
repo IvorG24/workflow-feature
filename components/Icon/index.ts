@@ -6,6 +6,7 @@ export { default as Check } from "./Check";
 export { default as Close } from "./Close";
 export { default as Dashboard } from "./Dashboard";
 export { default as Description } from "./Description";
+export { default as Dots } from "./Dots";
 export { default as EditDocument } from "./EditDocument";
 export { default as Edit } from "./Edit";
 export { default as Facebook } from "./Facebook";
