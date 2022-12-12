@@ -34,10 +34,13 @@ const WorkspaceLayout = ({ children }: Props) => {
           return;
         }
 
-        const [_, createdOrRetrievedUserTeamList] = await Promise.all([
-          createOrRetrieveUser(supabaseClient, user),
-          createOrRetrieveUserTeamList(supabaseClient, user),
-        ]);
+        const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
+          await Promise.all([
+            createOrRetrieveUser(supabaseClient, user),
+            createOrRetrieveUserTeamList(supabaseClient, user),
+          ]);
+
+        console.log(createdOrRetrievedUser);
 
         setCreatedOrRetrievedUserTeamList(createdOrRetrievedUserTeamList);
         setIsLoading(false);
