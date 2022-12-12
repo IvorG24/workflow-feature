@@ -70,8 +70,6 @@ export type RequestTableInsert =
 export type RequestTableUpdate =
   Database["public"]["Tables"]["request_table"]["Update"];
 
-export type ExpectedResponseType =
-  Database["public"]["Enums"]["expected_response_type"];
 
 export type RequestRow = Database["public"]["Tables"]["request_table"]["Row"];
 export type RequestInsert =
@@ -105,8 +103,34 @@ export type RequestResponseTableInsert =
 export type RequestResponseTableUpdate =
   Database["public"]["Tables"]["request_response_table"]["Update"];
 
+// team_invitation_table
+export type TeamInvitationTableRow =
+  Database["public"]["Tables"]["team_invitation_table"]["Row"];
+export type TeamInvitationTableInsert =
+  Database["public"]["Tables"]["team_invitation_table"]["Insert"];
+export type TeamInvitationTableUpdate =
+  Database["public"]["Tables"]["team_invitation_table"]["Update"];
+
+// user_notification_table
+export type UserNotificationTableRow =
+  Database["public"]["Tables"]["user_notification_table"]["Row"];
+export type UserNotificationTableInsert =
+  Database["public"]["Tables"]["user_notification_table"]["Insert"];
+export type UserNotificationTableUpdate =
+  Database["public"]["Tables"]["user_notification_table"]["Update"];
+
 // Enums
 export type FieldTypeEnum = Database["public"]["Enums"]["field_type"];
 export type FormTypeEnum = Database["public"]["Enums"]["form_type"];
 export type RequestStatusEnum = Database["public"]["Enums"]["request_status"];
 export type TeamRoleEnum = Database["public"]["Enums"]["team_role"];
+
+// Database Functions
+export type CheckIfInvitationIsValidArgs =
+  Database["public"]["Functions"]["check_if_invitation_is_valid"]["Args"];
+export type CheckIfInvitationIsValidReturns =
+  Database["public"]["Functions"]["check_if_invitation_is_valid"]["Returns"];
+export type GetUserIdListFromEmailListArgs =
+  Database["public"]["Functions"]["get_user_id_list_from_email_list"]["Args"];
+export type GetUserIdListFromEmailListReturns =
+  Database["public"]["Functions"]["get_user_id_list_from_email_list"]["Returns"];

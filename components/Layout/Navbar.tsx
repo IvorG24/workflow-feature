@@ -261,7 +261,8 @@ const Navbar = ({ teamList, activeTeamIndex }: Props) => {
 
           <Container fluid className={styles.notificationsButtonWrapper} p={0}>
             <NavLink
-              component="button"
+              component="a"
+              href={`/t/${activeTeam.team_id}/notifications`}
               label="Notifications"
               mt="xs"
               icon={
