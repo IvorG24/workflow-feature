@@ -6,15 +6,18 @@ import {
   ActionIcon,
   Avatar,
   Badge,
+  Burger,
   Button,
   Container,
   Divider,
   Flex,
   Group,
+  Menu,
   Navbar as MantineNavbar,
   NavLink,
   ScrollArea,
   Select,
+  Text,
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -23,12 +26,13 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import {
   AddCircle,
   ArrowBack,
   Dashboard,
   Description,
+  Dots,
   EditDocument,
   Group as GroupIcon,
   Logout,
@@ -42,9 +46,11 @@ import styles from "./MobileNavbar.module.scss";
 
 type Props = {
   teamList: CreateOrRetrieveUserTeamList;
+  opened: boolean;
+  onToggleOpened: MouseEventHandler<HTMLButtonElement>;
 };
 
-const Navbar = ({ teamList }: Props) => {
+const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const user = useUser();
@@ -95,13 +101,7 @@ const Navbar = ({ teamList }: Props) => {
 
   return (
     <>
-      <MantineNavbar
-        width={{ base: "250" }}
-        className={styles.container}
-        px="md"
-        py="lg"
-        aria-label="sidebar navigation"
-      >
+      <MantineNavbar px="md" pb="lg" pt="xs" aria-label="sidebar navigation">
         <MantineNavbar.Section>
           <Group position="apart">
             <Image
@@ -110,13 +110,17 @@ const Navbar = ({ teamList }: Props) => {
               width={147}
               height={52}
             />
-            <ActionIcon
-              variant="default"
-              onClick={() => toggleColorScheme()}
-              className={styles.darkModeToggler}
-            >
-              {colorScheme === "dark" ? <Sun /> : <Moon />}
-            </ActionIcon>
+
+            <Group mr={10}>
+              <ActionIcon
+                variant="default"
+                onClick={() => toggleColorScheme()}
+                className={styles.darkModeToggler}
+              >
+                {colorScheme === "dark" ? <Sun /> : <Moon />}
+              </ActionIcon>
+              <Burger opened={opened} onClick={onToggleOpened} />
+            </Group>
           </Group>
         </MantineNavbar.Section>
 
@@ -253,26 +257,57 @@ const Navbar = ({ teamList }: Props) => {
                   key={form.form_id}
                   component="a"
                   href={`/t/${activeTeam}/forms/${form.form_id}`}
-                  label={form.form_name}
+                  label={<Text lineClamp={1}>{form.form_name}</Text>}
                   rightSection={
-                    <ActionIcon
-                      variant="subtle"
-                      component="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(
-                          `/t/${activeTeam}/requests/create/${form.form_id}`
-                        );
-                      }}
-                      aria-label="create a request"
-                      className={`${styles.createRequestButton} ${
-                        colorScheme === "dark"
-                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                          : ""
-                      }`}
-                    >
-                      <AddCircle />
-                    </ActionIcon>
+                    <Group spacing={2}>
+                      <Menu shadow="md" width={200}>
+                        <Menu.Target>
+                          <ActionIcon
+                            variant="subtle"
+                            component="a"
+                            onClick={(e) => e.preventDefault()}
+                            aria-label="options menu"
+                            className={`${styles.createRequestButton} ${
+                              colorScheme === "dark"
+                                ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                : ""
+                            }`}
+                          >
+                            <Dots />
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <NavLink
+                            label="Edit form"
+                            component="a"
+                            href={`/t/${activeTeam}/form/edit/${form.form_id}`}
+                            icon={
+                              <IconWrapper>
+                                <EditDocument />
+                              </IconWrapper>
+                            }
+                          />
+                        </Menu.Dropdown>
+                      </Menu>
+                      <ActionIcon
+                        variant="subtle"
+                        component="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push(
+                            `/t/${activeTeam}/requests/create?formId=${form.form_id}`
+                          );
+                        }}
+                        aria-label="create a request"
+                        className={`${styles.createRequestButton} ${
+                          colorScheme === "dark"
+                            ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                            : ""
+                        }`}
+                      >
+                        <AddCircle />
+                      </ActionIcon>
+                    </Group>
                   }
                 />
               ))}
@@ -331,26 +366,57 @@ const Navbar = ({ teamList }: Props) => {
                   key={form.form_id}
                   component="a"
                   href={`/t/${activeTeam}/forms/${form.form_id}`}
-                  label={form.form_name}
+                  label={<Text lineClamp={1}>{form.form_name}</Text>}
                   rightSection={
-                    <ActionIcon
-                      variant="subtle"
-                      component="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(
-                          `/t/${activeTeam}/review/create/${form.form_id}`
-                        );
-                      }}
-                      aria-label="create a review"
-                      className={`${styles.createRequestButton} ${
-                        colorScheme === "dark"
-                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                          : ""
-                      }`}
-                    >
-                      <AddCircle />
-                    </ActionIcon>
+                    <Group spacing={2}>
+                      <Menu shadow="md" width={200}>
+                        <Menu.Target>
+                          <ActionIcon
+                            variant="subtle"
+                            component="a"
+                            onClick={(e) => e.preventDefault()}
+                            aria-label="options menu"
+                            className={`${styles.createRequestButton} ${
+                              colorScheme === "dark"
+                                ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                : ""
+                            }`}
+                          >
+                            <Dots />
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <NavLink
+                            label="Edit form"
+                            component="a"
+                            href={`/t/${activeTeam}/form/edit/${form.form_id}`}
+                            icon={
+                              <IconWrapper>
+                                <EditDocument />
+                              </IconWrapper>
+                            }
+                          />
+                        </Menu.Dropdown>
+                      </Menu>
+                      <ActionIcon
+                        variant="subtle"
+                        component="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push(
+                            `/t/${activeTeam}/review/create/${form.form_id}`
+                          );
+                        }}
+                        aria-label="create a review"
+                        className={`${styles.createRequestButton} ${
+                          colorScheme === "dark"
+                            ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                            : ""
+                        }`}
+                      >
+                        <AddCircle />
+                      </ActionIcon>
+                    </Group>
                   }
                 />
               ))}

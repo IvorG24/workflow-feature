@@ -1,5 +1,5 @@
 // this page was just used to test layout, you can delete it if you want
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../../_app";
@@ -18,7 +18,7 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+  return <TeamLayout>{page}</TeamLayout>;
 };
 
 export default Page;

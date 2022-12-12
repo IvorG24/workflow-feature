@@ -7,13 +7,16 @@ import { Database } from "./database.types";
 import {
   FieldRow,
   FormRow,
+  FormTypeEnum,
   RequestResponseRow,
   RequestRow,
   RequestStatusEnum,
   RequestType,
+  TeamInvitationTableRow,
   TeamRoleEnum,
   TeamRoleTableRow,
   TeamTableRow,
+  UserNotificationTableInsert,
   UserProfileTableRow,
 } from "./types";
 
@@ -84,7 +87,7 @@ export const retrieveUserTeamList = async (
   return retrievedUserTeamList as RetrieveUserTeamList;
 };
 // * Type here
-// TODO: I'll go back to this. For now, the typing works fine.
+// TODO: I'll go back to this. For now, the manual typing is safer.
 // ! This approach is faulty when foreign tables are included. Ask Choy.
 // export type RetrieveUserTeamList = Awaited<
 //   ReturnType<typeof retrieveUserTeamList>
@@ -182,15 +185,16 @@ export type FetchTeamMemberList = (TeamRoleTableRow & {
   user_profile_table: UserProfileTableRow;
 })[];
 
+// * Update role user in a team.
 export const updateTeamMemberRole = async (
   supabaseClient: SupabaseClient<Database>,
   newRole: TeamRoleEnum,
-  memberId: string
+  userId: string
 ) => {
   const { error: updateTeamMemberRoleError } = await supabaseClient
     .from("team_role_table")
     .update({ team_role: newRole })
-    .eq("user_id", memberId);
+    .eq("user_id", userId);
 
   if (updateTeamMemberRoleError) throw updateTeamMemberRoleError;
   return updateTeamMemberRoleError;
@@ -533,3 +537,164 @@ export const retrieveRequestFormByTeam = async (
 export type RetrievedRequestFormByTeam = Awaited<
   ReturnType<typeof retrieveRequestFormByTeam>
 >;
+// * Fetch notifications of a user in a team.
+// If no form_type is specified, all current user notifications will be returned regardless of form type.
+// If no team_id is specified, all current user notifications will be returned regardless of team id.
+export const fetchUserNotificationList = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  teamId?: string,
+  formType?: FormTypeEnum
+) => {
+  // https://supabase.com/docs/reference/javascript/using-filters#conditional-chaining
+  let query = supabaseClient
+    .from("user_notification_table")
+    .select()
+    .eq("user_id", userId);
+
+  if (teamId) {
+    query = query.eq("team_id", teamId);
+  }
+
+  if (formType) {
+    query = query.eq("form_type", formType);
+  }
+
+  query = query.order("created_at", { ascending: false });
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return data;
+};
+// * Type here
+export type FetchUserNotificationList = Awaited<
+  ReturnType<typeof fetchUserNotificationList>
+>;
+
+// * Create user notification in a team.
+export const createUserNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  notificationInsert: UserNotificationTableInsert[]
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_notification_table")
+    .insert(notificationInsert)
+    .select();
+  if (error) throw error;
+  return data;
+};
+// * Type here
+export type CreateUserNotification = Awaited<
+  ReturnType<typeof createUserNotification>
+>;
+
+// * Read user notification.
+export const readUserNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  notificationId: string
+) => {
+  const { error } = await supabaseClient
+    .from("user_notification_table")
+    .update({ is_read: true })
+    .eq("notification_id", notificationId);
+  if (error) throw error;
+  return error;
+};
+
+// * Accept user invitation using teamInvitationId.
+// Verify first if the invite_source is equal to the userId parameter.
+// If the invite_source is equal to the userId parameter, the invitation will be accepted.
+// This function will create a new team_role_table row.
+export const acceptTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamInvitationId: number,
+  user: User //* Pass const user = useUser(); here.
+) => {
+  // Fetch the team invitation.
+  const { data, error } = await supabaseClient
+    .from("team_invitation_table")
+    .select()
+    .eq("team_invitation_id", teamInvitationId)
+    .eq("invite_target", user.email)
+    .maybeSingle();
+
+  // Check if invitation is valid.
+  const { data: isInvitationValidData, error: isInvitationValidError } =
+    await supabaseClient.rpc("check_if_invitation_is_valid", {
+      invitation_id: teamInvitationId,
+    });
+
+  if (error || isInvitationValidError) throw error;
+  if (!data) throw new Error("Invitation not found"); // If invitation does not exist in database, throw error.
+  if (!isInvitationValidData) throw new Error("Invitation not valid"); // If invitation is already accepted or expired, throw error.
+
+  // Add the new member to the team with the role of member.
+  if (data) {
+    const { error: teamRoleError } = await supabaseClient
+      .from("team_role_table")
+      .insert({
+        team_id: data.team_id as string,
+        user_id: user.id,
+        team_role: "member",
+      })
+      .select();
+    if (teamRoleError) throw teamRoleError;
+  }
+};
+
+// * Create team invitations.
+export const createTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamId: string,
+  inviteSource: string,
+  inviteTargetList: string[] //* Array of user emails.
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_invitation_table")
+    .insert(
+      inviteTargetList.map((inviteTarget) => ({
+        team_id: teamId,
+        invite_source: inviteSource,
+        invite_target: inviteTarget,
+      }))
+    )
+    .select(`*, team_table(*)`);
+  if (error) throw error;
+  return data as CreateTeamInvitation;
+};
+// * Type here
+export type CreateTeamInvitation = (TeamInvitationTableRow & {
+  team_table: TeamTableRow;
+})[];
+
+// * Returns only user id list of registered users from an email list.
+export const getUserIdListFromEmailList = async (
+  supabaseClient: SupabaseClient<Database>,
+  emailList: string[]
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_user_id_list_from_email_list",
+    { email_list: emailList }
+  );
+
+  if (error) throw error;
+  if (!data) return [];
+
+  // Remove null elements.
+  const dataFiltered = data.filter((userIdWithEmail) => userIdWithEmail);
+  if (dataFiltered.length === 0) return [];
+
+  const dataRedefined = data as unknown as string[];
+
+  const userIdWithEmailList = dataRedefined.map((userIdWithEmail) => {
+    const [userId, userEmail] = userIdWithEmail.split(",");
+    return { userId, userEmail };
+  });
+
+  return userIdWithEmailList as GetUserIdListFromEmailList;
+};
+export type GetUserIdListFromEmailList = {
+  userId: string;
+  userEmail: string;
+}[];

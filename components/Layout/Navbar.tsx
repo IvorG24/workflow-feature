@@ -149,7 +149,8 @@ const Navbar = ({ teamList }: Props) => {
 
           <Container fluid className={styles.notificationsButtonWrapper} p={0}>
             <NavLink
-              component="button"
+              component="a"
+              href={`/t/${activeTeam}/notifications`}
               label="Notifications"
               mt="xs"
               icon={
@@ -248,7 +249,7 @@ const Navbar = ({ teamList }: Props) => {
                   </ActionIcon>
                 </Group>
               }
-              childrenOffset={28}
+              childrenOffset={15}
             >
               {requestForms.map((form) => (
                 <NavLink
@@ -283,7 +284,7 @@ const Navbar = ({ teamList }: Props) => {
             <NavLink
               label="Review Forms"
               component="a"
-              childrenOffset={28}
+              childrenOffset={15}
               opened={isOpenReview}
               onClick={() => {
                 if (!addReviewHovered) {
@@ -392,7 +393,10 @@ const Navbar = ({ teamList }: Props) => {
                 <Logout />
               </IconWrapper>
             }
-            onClick={async () => await supabase.auth.signOut()}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              await router.push("/sign-in");
+            }}
           >
             Logout
           </Button>
