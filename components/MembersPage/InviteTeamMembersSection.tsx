@@ -1,4 +1,14 @@
+import { Database } from "@/utils/database.types";
+import {
+  createTeamInvitation,
+  createUserNotification,
+  getUserIdListFromEmailList,
+} from "@/utils/queries";
+import { UserNotificationTableInsert } from "@/utils/types";
 import { Button, Flex, MultiSelect } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
@@ -23,11 +33,62 @@ const InviteTeamMembersSection = ({ members }: Props) => {
     setError,
     setValue,
     formState: { errors },
+    reset,
   } = useForm<{ emails: string[] }>();
+  const router = useRouter();
+  const supabaseClient = useSupabaseClient<Database>();
+  const user = useUser();
   const [emails, setEmails] = useState<{ value: string; label: string }[]>([]);
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log(data.emails);
+    try {
+      if (!user) throw new Error("User not found");
+      if (!router.query.tid) throw new Error("Team ID not found in URL");
+
+      // * Purpose: We create team invitation for all the user emails provided by user in the form.
+      const teamInvitationList = await createTeamInvitation(
+        supabaseClient,
+        router.query.tid as string,
+        user.id,
+        data.emails
+      );
+
+      // * Purpose: We remove emails of users that aren't registered yet to the app so we don't create in-app notification for them.
+      const userIdList = await getUserIdListFromEmailList(
+        supabaseClient,
+        data.emails
+      );
+      const filteredTeamInvitationList = teamInvitationList.filter(
+        (invitation) =>
+          userIdList
+            .map((user) => user.userEmail)
+            .includes(invitation.invite_target as string)
+      );
+
+      // * Purpose: We create in-app notification for users that are registered in the app.
+      const notificationInsertList: UserNotificationTableInsert[] =
+        filteredTeamInvitationList.map((invitation) => ({
+          notification_message: `You have been invited to join ${invitation.team_table.team_name}.`,
+          redirection_url: `/team-invitations/${invitation.team_invitation_id}`,
+          user_id: userIdList.find(
+            (user) => user.userEmail === invitation.invite_target
+          )?.userId,
+        }));
+      await createUserNotification(supabaseClient, notificationInsertList);
+
+      showNotification({
+        title: "Success!",
+        message: "Invitations sent successfully",
+        color: "green",
+      });
+      reset();
+    } catch {
+      showNotification({
+        title: "Error",
+        message: "Failed to send invites",
+        color: "red",
+      });
+    }
   });
 
   const emailExists = (newEmail: string) => {
