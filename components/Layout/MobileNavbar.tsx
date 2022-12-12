@@ -5,6 +5,7 @@ import {
   ActionIcon,
   Avatar,
   Badge,
+  Burger,
   Button,
   Container,
   Divider,
@@ -24,7 +25,7 @@ import { useHover } from "@mantine/hooks";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import {
   AddCircle,
   ArrowBack,
@@ -58,7 +59,13 @@ const TEAMS = [
   },
 ];
 
-const Navbar = () => {
+const Navbar = ({
+  opened,
+  onToggleOpened,
+}: {
+  opened: boolean;
+  onToggleOpened: MouseEventHandler<HTMLButtonElement>;
+}) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -126,13 +133,7 @@ const Navbar = () => {
         </Container>
       </Modal>
 
-      <MantineNavbar
-        width={{ base: "250" }}
-        className={styles.container}
-        px="md"
-        py="lg"
-        aria-label="sidebar navigation"
-      >
+      <MantineNavbar px="md" pb="lg" pt="xs" aria-label="sidebar navigation">
         <MantineNavbar.Section>
           <Group position="apart">
             <Image
@@ -141,13 +142,17 @@ const Navbar = () => {
               width={147}
               height={52}
             />
-            <ActionIcon
-              variant="default"
-              onClick={() => toggleColorScheme()}
-              className={styles.darkModeToggler}
-            >
-              {colorScheme === "dark" ? <Sun /> : <Moon />}
-            </ActionIcon>
+
+            <Group mr={10}>
+              <ActionIcon
+                variant="default"
+                onClick={() => toggleColorScheme()}
+                className={styles.darkModeToggler}
+              >
+                {colorScheme === "dark" ? <Sun /> : <Moon />}
+              </ActionIcon>
+              <Burger opened={opened} onClick={onToggleOpened} />
+            </Group>
           </Group>
         </MantineNavbar.Section>
 

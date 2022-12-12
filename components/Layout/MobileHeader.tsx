@@ -1,10 +1,5 @@
 // todo: create test for #61
-import {
-  Burger,
-  Group,
-  Transition,
-  useMantineColorScheme,
-} from "@mantine/core";
+import { Burger, Container, Group, useMantineColorScheme } from "@mantine/core";
 import Image from "next/image";
 import { useState } from "react";
 import styles from "./MobileHeader.module.scss";
@@ -13,7 +8,6 @@ import MobileNavbar from "./MobileNavbar";
 const MobileHeader = () => {
   const { colorScheme } = useMantineColorScheme();
   const [isOpen, setIsOpen] = useState(false);
-
   return (
     <Group
       position="apart"
@@ -21,18 +15,12 @@ const MobileHeader = () => {
         colorScheme === "light" ? styles.lightContainer : styles.darkContainer
       }`}
     >
-      <Transition
-        mounted={isOpen}
-        transition="slide-right"
-        duration={400}
-        timingFunction="ease"
-      >
-        {(transitionStyles) => (
-          <div style={transitionStyles} className={styles.modal}>
-            <MobileNavbar />
-          </div>
-        )}
-      </Transition>
+      <Container fluid w={0} className={isOpen ? styles.open : styles.close}>
+        <MobileNavbar
+          opened={isOpen}
+          onToggleOpened={() => setIsOpen((prev) => !prev)}
+        />
+      </Container>
 
       <Image
         src={`/image/logo-${colorScheme}.png`}
@@ -41,7 +29,11 @@ const MobileHeader = () => {
         height={52}
       />
 
-      <Burger opened={isOpen} onClick={() => setIsOpen((prev) => !prev)} />
+      <Burger
+        opened={isOpen}
+        onClick={() => setIsOpen((prev) => !prev)}
+        transitionDuration={0}
+      />
     </Group>
   );
 };
