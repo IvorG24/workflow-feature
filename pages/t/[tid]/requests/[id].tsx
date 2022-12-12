@@ -1,4 +1,4 @@
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import Request from "@/components/Request/Request";
 import { ReactElement } from "react";
@@ -15,7 +15,7 @@ const RequestPage: NextPageWithLayout = () => {
 };
 
 RequestPage.getLayout = function getLayout(page: ReactElement) {
-  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+  return <TeamLayout>{page}</TeamLayout>;
 };
 
 export default RequestPage;

@@ -1,4 +1,4 @@
-import WorkspaceLayout from "@/components/Layout/WorkspaceLayout";
+import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import { GetServerSideProps } from "next";
 import { ReactElement } from "react";
@@ -29,7 +29,7 @@ const CreateRequestForm: NextPageWithLayout = () => {
 };
 
 CreateRequestForm.getLayout = function getLayout(page: ReactElement) {
-  return <WorkspaceLayout>{page}</WorkspaceLayout>;
+  return <TeamLayout>{page}</TeamLayout>;
 };
 
 export default CreateRequestForm;
