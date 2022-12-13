@@ -2,7 +2,8 @@ import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
-// * I returened the user object only instead of the whole session object because I don't think we need the rest of the session object.
+// * I returned the user object only instead of the whole session object because I don't think we need the rest of the session object.
+// * isLoading is returned if we want to show a loading state while the session is being fetched.
 const useAuth = () => {
   const { supabaseClient, isLoading, session } = useSessionContext();
   const router = useRouter();

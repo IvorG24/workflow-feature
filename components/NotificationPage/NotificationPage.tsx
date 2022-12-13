@@ -1,57 +1,23 @@
-import { Badge, Box, Tabs, Text, Title } from "@mantine/core";
+import useFetchNotificationList from "@/hooks/useFetchNotificationList";
+import { Badge, Box, Tabs, Title } from "@mantine/core";
+import { useRouter } from "next/router";
 import NotificationItem from "./NotificationItem";
 
-// fetched data from database should be sorted by most recent
-const tempData = [
-  {
-    id: 1,
-    team_id: 1,
-    message: "Sed vel enim sit amet nunc viverra dapibus.",
-    created_at: "12/2/2022",
-  },
-  {
-    id: 2,
-    team_id: 2,
-    message: "Duis mattis egestas metus.",
-    created_at: "8/18/2022",
-  },
-  {
-    id: 3,
-    team_id: 3,
-    message:
-      "Fusce congue, diam id ornare imperdiet, sapien urna pretium nisl, ut volutpat sapien arcu sed augue. Aliquam erat volutpat.",
-    created_at: "7/18/2022",
-  },
-  {
-    id: 4,
-    team_id: 4,
-    message:
-      "Sed sagittis. Nam congue, risus semper porta volutpat, quam pede lobortis ligula, sit amet eleifend pede libero quis orci.",
-    created_at: "7/2/2022",
-  },
-  {
-    id: 5,
-    team_id: 5,
-    message:
-      "Nulla ac enim. In tempor, turpis nec euismod scelerisque, quam turpis adipiscing lorem, vitae mattis nibh ligula nec sem.",
-    created_at: "6/4/2022",
-  },
-  {
-    id: 6,
-    team_id: 6,
-    message:
-      "Aliquam sit amet diam in magna bibendum imperdiet. Nullam orci pede, venenatis non, sodales sed, tincidunt eu, felis.",
-    created_at: "10/16/2022",
-  },
-  {
-    id: 7,
-    team_id: 7,
-    message: "Aenean sit amet justo. Morbi ut odio.",
-    created_at: "11/25/2022",
-  },
-];
-
 const NotificationPage = () => {
+  const router = useRouter();
+  // ? Where will invitation notif be displayed? In General?
+  const { userNotificationList: general } = useFetchNotificationList(
+    router.query.tid as string
+  );
+  const { userNotificationList: request } = useFetchNotificationList(
+    router.query.tid as string,
+    "request"
+  );
+  const { userNotificationList: review } = useFetchNotificationList(
+    router.query.tid as string,
+    "review"
+  );
+
   return (
     <Box
       p="md"
@@ -69,42 +35,85 @@ const NotificationPage = () => {
           <Tabs.Tab
             value="general"
             rightSection={
-              <Badge
-                sx={{ width: 16, height: 16, pointerEvents: "none" }}
-                variant="filled"
-                size="xs"
-                p={0}
-              >
-                {tempData.length}
-              </Badge>
+              review.length > 0 && (
+                <Badge
+                  sx={{ width: 16, height: 16, pointerEvents: "none" }}
+                  variant="filled"
+                  size="xs"
+                  p={0}
+                >
+                  {general.length}
+                </Badge>
+              )
             }
             p="sm"
           >
             General
           </Tabs.Tab>
-          <Tabs.Tab value="reviews" p="sm">
-            Reviews
-          </Tabs.Tab>
-          <Tabs.Tab value="requests" p="sm">
+          <Tabs.Tab
+            value="requests"
+            rightSection={
+              review.length > 0 && (
+                <Badge
+                  sx={{ width: 16, height: 16, pointerEvents: "none" }}
+                  variant="filled"
+                  size="xs"
+                  p={0}
+                >
+                  {request.length}
+                </Badge>
+              )
+            }
+            p="sm"
+          >
             Requests
+          </Tabs.Tab>
+          <Tabs.Tab
+            value="reviews"
+            rightSection={
+              review.length > 0 && (
+                <Badge
+                  sx={{ width: 16, height: 16, pointerEvents: "none" }}
+                  variant="filled"
+                  size="xs"
+                  p={0}
+                >
+                  {review.length}
+                </Badge>
+              )
+            }
+            p="sm"
+          >
+            Reviews
           </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="general" pt="xs">
-          <Text color="blue" align="right" maw="500px">
+          {/* // TODO: Commenting this for now. */}
+          {/* <Text color="blue" align="right" maw="500px">
             Mark all as read
-          </Text>
-          {tempData.map((data) => (
-            <NotificationItem key={data.id} data={data} />
-          ))}
-        </Tabs.Panel>
-
-        <Tabs.Panel value="reviews" pt="xs">
-          Reviews notifications
+          </Text> */}
+          {general.length === 0 && "No new notifications"}
+          {general.length > 0 &&
+            general.map((data) => (
+              <NotificationItem key={data.notification_id} data={data} />
+            ))}
         </Tabs.Panel>
 
         <Tabs.Panel value="requests" pt="xs">
-          Requests notifications
+          {request.length === 0 && "No new notifications"}
+          {request.length > 0 &&
+            request.map((data) => (
+              <NotificationItem key={data.notification_id} data={data} />
+            ))}
+        </Tabs.Panel>
+
+        <Tabs.Panel value="reviews" pt="xs">
+          {review.length === 0 && "No new notifications"}
+          {review.length > 0 &&
+            review.map((data) => (
+              <NotificationItem key={data.notification_id} data={data} />
+            ))}
         </Tabs.Panel>
       </Tabs>
     </Box>
