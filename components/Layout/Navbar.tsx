@@ -207,11 +207,9 @@ const Navbar = ({ teamList }: Props) => {
               component="a"
               label="Request Forms"
               opened={isOpenRequest}
-              onClick={() => {
-                if (!addRequestHovered) {
-                  setActiveNest((v) => (v === "request" ? "" : "request"));
-                  setIsOpenRequest((v) => !v);
-                }
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(`/t/${activeTeam}/forms`);
               }}
               icon={
                 <Flex align="center" gap={4}>
@@ -221,6 +219,15 @@ const Navbar = ({ teamList }: Props) => {
                     className={`${styles.arrowRight} ${
                       activeNest === "request" && styles.arrowDown
                     }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!addRequestHovered) {
+                        setActiveNest((v) =>
+                          v === "request" ? "" : "request"
+                        );
+                        setIsOpenRequest((v) => !v);
+                      }
+                    }}
                   >
                     <ArrowBack />
                   </IconWrapper>
@@ -229,6 +236,7 @@ const Navbar = ({ teamList }: Props) => {
                   </IconWrapper>
                 </Flex>
               }
+              px="xs"
               disableRightSectionRotation
               rightSection={
                 <Group ref={addRequestRef}>
@@ -236,8 +244,8 @@ const Navbar = ({ teamList }: Props) => {
                     variant="subtle"
                     component="a"
                     onClick={(e) => {
-                      e.preventDefault();
-                      router.push(`/t/${activeTeam}/requests/build`);
+                      e.stopPropagation();
+                      router.push(`/t/${activeTeam}/forms/build`);
                     }}
                     className={`${styles.createRequestButton} ${
                       colorScheme === "dark"
@@ -253,6 +261,7 @@ const Navbar = ({ teamList }: Props) => {
             >
               {requestForms.map((form) => (
                 <NavLink
+                  px="xs"
                   key={form.form_id}
                   component="a"
                   href={`/t/${activeTeam}/requests?formId=${form.form_id}`}
@@ -286,12 +295,7 @@ const Navbar = ({ teamList }: Props) => {
               component="a"
               childrenOffset={15}
               opened={isOpenReview}
-              onClick={() => {
-                if (!addReviewHovered) {
-                  setActiveNest((v) => (v === "review" ? "" : "review"));
-                  setIsOpenReview((v) => !v);
-                }
-              }}
+              px="xs"
               icon={
                 <Flex align="center" gap={4}>
                   <IconWrapper
@@ -300,6 +304,12 @@ const Navbar = ({ teamList }: Props) => {
                     className={`${styles.arrowRight} ${
                       activeNest === "review" && styles.arrowDown
                     }`}
+                    onClick={() => {
+                      if (!addReviewHovered) {
+                        setActiveNest((v) => (v === "review" ? "" : "review"));
+                        setIsOpenReview((v) => !v);
+                      }
+                    }}
                   >
                     <ArrowBack />
                   </IconWrapper>
@@ -332,6 +342,7 @@ const Navbar = ({ teamList }: Props) => {
               {reviewForms.map((form) => (
                 <NavLink
                   key={form.form_id}
+                  px="xs"
                   component="a"
                   href={`/t/${activeTeam}/forms/${form.form_id}`}
                   label={form.form_name}
