@@ -79,7 +79,7 @@ const LineChart = ({ data }: { data: ChartData[] }) => {
   }, [chartData]);
 
   return (
-    <svg ref={svgRef} viewBox="0 0 600 300" width="40em">
+    <svg ref={svgRef} viewBox="0 0 600 300">
       <path d="" strokeWidth="1.5" />
     </svg>
   );

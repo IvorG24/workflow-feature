@@ -76,8 +76,8 @@ const RadarChart = ({ data }: { data: ChartData[] }) => {
         .attr("dy", shifts[index].y)
         .attr("x", x)
         .attr("y", y)
-        .attr("font-size", 15)
-        .attr("fill", colorScheme === "dark" ? "#eee" : "#7F8487");
+        .attr("font-size", 12)
+        .attr("fill", colorScheme === "dark" ? "#eee" : "black");
     }
     const allValues = chartData.map((data) => data.value);
     let path = "";
@@ -102,7 +102,7 @@ const RadarChart = ({ data }: { data: ChartData[] }) => {
     createChart();
   }, [chartData, colorScheme]);
 
-  return <svg ref={radarChartRef} viewBox="0 0 500 400" width="40em"></svg>;
+  return <svg ref={radarChartRef} viewBox="0 0 500 400"></svg>;
 };
 
 export default RadarChart;

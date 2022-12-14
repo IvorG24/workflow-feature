@@ -1,6 +1,5 @@
 // this page was just used to test layout, you can delete it if you want
 import DataAnalysis from "@/components/DataAnalysis/DataAnalysis";
-import IconWrapper from "@/components/IconWrapper/IconWrapper";
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import { Box } from "@mantine/core";
@@ -64,15 +63,9 @@ const Page: NextPageWithLayout = () => {
         url="localhost:3000/testpage"
       />
       <Box maw="800px">
-        <IconWrapper fontSize={70}>
-          <DataAnalysis data={tempData} />
-        </IconWrapper>
-        <IconWrapper fontSize={70}>
-          <DataAnalysis data={tempData} chartType="linechart" />
-        </IconWrapper>
-        <IconWrapper fontSize={70}>
-          <DataAnalysis data={tempData} chartType="radarchart" />
-        </IconWrapper>
+        <DataAnalysis data={tempData} />
+        <DataAnalysis data={tempData} chartType="line" />
+        <DataAnalysis data={tempData} chartType="radar" />
       </Box>
     </div>
   );

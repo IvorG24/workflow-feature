@@ -6,17 +6,17 @@ type Data = { label: string; value: number };
 
 type Props = {
   data: Data[];
-  chartType?: "barchart" | "linechart" | "radarchart";
+  chartType?: "bar" | "line" | "radar";
 };
 
-const DataAnalysis = ({ data, chartType = "barchart" }: Props) => {
+const DataAnalysis = ({ data, chartType = "bar" }: Props) => {
   const renderChart = (data: Data[], chartType: string) => {
     switch (chartType) {
-      case "barchart":
+      case "bar":
         return <BarChart data={data} />;
-      case "linechart":
+      case "line":
         return <LineChart data={data} />;
-      case "radarchart":
+      case "radar":
         return <RadarChart data={data} />;
 
       default:
