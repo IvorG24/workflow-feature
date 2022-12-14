@@ -100,13 +100,15 @@ export type RetrieveUserTeamList = (TeamRoleTableRow & {
 export const createUserTeam = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string,
-  teamName = "My Team"
+  teamName = "My Team",
+  teamLogo = ""
 ) => {
   const { data: createdTeam, error: createdTeamError } = await supabaseClient
     .from("team_table")
     .insert({
       team_name: teamName,
       user_id: userId,
+      team_logo: teamLogo,
     })
     .select()
     .single();
