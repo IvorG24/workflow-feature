@@ -11,6 +11,7 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
 import { NextPage } from "next/types";
 import { ReactElement, ReactNode, useState } from "react";
+import { UserProfileProvider } from "../contexts";
 import "../styles/globals.css";
 
 // #todo: implement better typing but I think it's okay because it's from the docs
@@ -55,7 +56,9 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           initialSession={pageProps.initialSession}
         >
           <NotificationsProvider position="top-center">
-            {getLayout(<Component {...pageProps} />)}
+            <UserProfileProvider>
+              {getLayout(<Component {...pageProps} />)}
+            </UserProfileProvider>
           </NotificationsProvider>
         </SessionContextProvider>
       </MantineProvider>

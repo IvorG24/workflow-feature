@@ -86,7 +86,9 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
         });
       }
     };
-    fetchForms();
+    if (router.query.tid !== undefined) {
+      fetchForms();
+    }
   }, [supabase, router.query.tid]);
 
   const teamOptions = teamList.map((team) => ({
@@ -94,6 +96,12 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
     label: team.team_table.team_name as string, // todo: team_name should not be null in database
     image: "", // todo: add logo column to team table in database
   }));
+
+  teamOptions.unshift({
+    value: "create",
+    label: "Create Team",
+    image: "",
+  });
 
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
@@ -129,7 +137,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
         <Select
           mt="md"
           label="Team"
-          value={activeTeam}
+          value={router.query.tid === undefined ? "create" : activeTeam}
           data={teamOptions}
           itemComponent={SelectItem}
           onChange={(val) => {
@@ -145,160 +153,107 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
           }}
         />
 
-        <MantineNavbar.Section mt="lg">
-          <Title order={2} size={14} weight={400} color="dimmed">
-            Account
-          </Title>
+        {router.query.tid !== undefined ? (
+          <>
+            <MantineNavbar.Section mt="lg">
+              <Title order={2} size={14} weight={400} color="dimmed">
+                Account
+              </Title>
 
-          <Container fluid className={styles.notificationsButtonWrapper} p={0}>
-            <NavLink
-              component="button"
-              label="Notifications"
-              mt="xs"
-              icon={
-                <IconWrapper className={iconStyle}>
-                  <Notifications />
-                </IconWrapper>
-              }
-            />
-            <Badge
-              className={styles.notificationsButtonWrapper__badge}
-              color="red"
-            >
-              1
-            </Badge>
-          </Container>
-
-          <NavLink
-            component="a"
-            href="/settings/general"
-            label="Settings"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Settings />
-              </IconWrapper>
-            }
-          />
-        </MantineNavbar.Section>
-
-        <Divider mt="xs" />
-        <ScrollArea className={styles.navScroll}>
-          <MantineNavbar.Section mt="lg">
-            <NavLink
-              component="a"
-              href={`/t/${activeTeam}/dashboard`}
-              label="Dashboard"
-              icon={
-                <IconWrapper className={iconStyle}>
-                  <Dashboard />
-                </IconWrapper>
-              }
-            />
-            <NavLink
-              component="a"
-              href={`/t/${activeTeam}/requests`}
-              label="Requests"
-              icon={
-                <IconWrapper className={iconStyle}>
-                  <EditDocument />
-                </IconWrapper>
-              }
-            />
-            <NavLink
-              component="a"
-              label="Request Forms"
-              opened={isOpenRequest}
-              onClick={() => {
-                if (!addRequestHovered) {
-                  setActiveNest((v) => (v === "request" ? "" : "request"));
-                  setIsOpenRequest((v) => !v);
-                }
-              }}
-              icon={
-                <Flex align="center" gap={4}>
-                  <IconWrapper
-                    fontSize={10}
-                    color="gray"
-                    className={`${styles.arrowRight} ${
-                      activeNest === "request" && styles.arrowDown
-                    }`}
-                  >
-                    <ArrowBack />
-                  </IconWrapper>
-                  <IconWrapper className={iconStyle}>
-                    <Description />
-                  </IconWrapper>
-                </Flex>
-              }
-              disableRightSectionRotation
-              rightSection={
-                <Group ref={addRequestRef}>
-                  <ActionIcon
-                    variant="subtle"
-                    component="a"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push(`/t/${activeTeam}/requests/create`);
-                    }}
-                    className={`${styles.createRequestButton} ${
-                      colorScheme === "dark"
-                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                        : ""
-                    }`}
-                  >
-                    <AddCircle />
-                  </ActionIcon>
-                </Group>
-              }
-              childrenOffset={28}
-            >
-              {requestForms.map((form) => (
+              <Container
+                fluid
+                className={styles.notificationsButtonWrapper}
+                p={0}
+              >
                 <NavLink
-                  key={form.form_id}
+                  component="button"
+                  label="Notifications"
+                  mt="xs"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <Notifications />
+                    </IconWrapper>
+                  }
+                />
+                <Badge
+                  className={styles.notificationsButtonWrapper__badge}
+                  color="red"
+                >
+                  1
+                </Badge>
+              </Container>
+
+              <NavLink
+                component="a"
+                href="/settings/general"
+                label="Settings"
+                icon={
+                  <IconWrapper className={iconStyle}>
+                    <Settings />
+                  </IconWrapper>
+                }
+              />
+            </MantineNavbar.Section>
+
+            <Divider mt="xs" />
+            <ScrollArea className={styles.navScroll}>
+              <MantineNavbar.Section mt="lg">
+                <NavLink
                   component="a"
-                  href={`/t/${activeTeam}/forms/${form.form_id}`}
-                  label={<Text lineClamp={1}>{form.form_name}</Text>}
+                  href={`/t/${activeTeam}/dashboard`}
+                  label="Dashboard"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <Dashboard />
+                    </IconWrapper>
+                  }
+                />
+                <NavLink
+                  component="a"
+                  href={`/t/${activeTeam}/requests`}
+                  label="Requests"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <EditDocument />
+                    </IconWrapper>
+                  }
+                />
+                <NavLink
+                  component="a"
+                  label="Request Forms"
+                  opened={isOpenRequest}
+                  onClick={() => {
+                    if (!addRequestHovered) {
+                      setActiveNest((v) => (v === "request" ? "" : "request"));
+                      setIsOpenRequest((v) => !v);
+                    }
+                  }}
+                  icon={
+                    <Flex align="center" gap={4}>
+                      <IconWrapper
+                        fontSize={10}
+                        color="gray"
+                        className={`${styles.arrowRight} ${
+                          activeNest === "request" && styles.arrowDown
+                        }`}
+                      >
+                        <ArrowBack />
+                      </IconWrapper>
+                      <IconWrapper className={iconStyle}>
+                        <Description />
+                      </IconWrapper>
+                    </Flex>
+                  }
+                  disableRightSectionRotation
                   rightSection={
-                    <Group spacing={2}>
-                      <Menu shadow="md" width={200}>
-                        <Menu.Target>
-                          <ActionIcon
-                            variant="subtle"
-                            component="a"
-                            onClick={(e) => e.preventDefault()}
-                            aria-label="options menu"
-                            className={`${styles.createRequestButton} ${
-                              colorScheme === "dark"
-                                ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                                : ""
-                            }`}
-                          >
-                            <Dots />
-                          </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          <NavLink
-                            label="Edit form"
-                            component="a"
-                            href={`/t/${activeTeam}/form/edit/${form.form_id}`}
-                            icon={
-                              <IconWrapper>
-                                <EditDocument />
-                              </IconWrapper>
-                            }
-                          />
-                        </Menu.Dropdown>
-                      </Menu>
+                    <Group ref={addRequestRef}>
                       <ActionIcon
                         variant="subtle"
-                        component="button"
+                        component="a"
                         onClick={(e) => {
                           e.preventDefault();
-                          router.push(
-                            `/t/${activeTeam}/requests/create?formId=${form.form_id}`
-                          );
+                          router.push(`/t/${activeTeam}/requests/create`);
                         }}
-                        aria-label="create a request"
                         className={`${styles.createRequestButton} ${
                           colorScheme === "dark"
                             ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
@@ -309,105 +264,106 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                       </ActionIcon>
                     </Group>
                   }
-                />
-              ))}
-            </NavLink>
-
-            <NavLink
-              label="Review Forms"
-              component="a"
-              childrenOffset={28}
-              opened={isOpenReview}
-              onClick={() => {
-                if (!addReviewHovered) {
-                  setActiveNest((v) => (v === "review" ? "" : "review"));
-                  setIsOpenReview((v) => !v);
-                }
-              }}
-              icon={
-                <Flex align="center" gap={4}>
-                  <IconWrapper
-                    fontSize={10}
-                    color="gray"
-                    className={`${styles.arrowRight} ${
-                      activeNest === "review" && styles.arrowDown
-                    }`}
-                  >
-                    <ArrowBack />
-                  </IconWrapper>
-                  <IconWrapper className={iconStyle}>
-                    <Description />
-                  </IconWrapper>
-                </Flex>
-              }
-              disableRightSectionRotation
-              rightSection={
-                <Group ref={addReviewRef}>
-                  <ActionIcon
-                    variant="subtle"
-                    component="a"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push(`/t/${activeTeam}/review/create`);
-                    }}
-                    className={`${styles.createRequestButton} ${
-                      colorScheme === "dark"
-                        ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                        : ""
-                    }`}
-                  >
-                    <AddCircle />
-                  </ActionIcon>
-                </Group>
-              }
-            >
-              {reviewForms.map((form) => (
-                <NavLink
-                  key={form.form_id}
-                  component="a"
-                  href={`/t/${activeTeam}/forms/${form.form_id}`}
-                  label={<Text lineClamp={1}>{form.form_name}</Text>}
-                  rightSection={
-                    <Group spacing={2}>
-                      <Menu shadow="md" width={200}>
-                        <Menu.Target>
+                  childrenOffset={28}
+                >
+                  {requestForms.map((form) => (
+                    <NavLink
+                      key={form.form_id}
+                      component="a"
+                      href={`/t/${activeTeam}/forms/${form.form_id}`}
+                      label={<Text lineClamp={1}>{form.form_name}</Text>}
+                      rightSection={
+                        <Group spacing={2}>
+                          <Menu shadow="md" width={200}>
+                            <Menu.Target>
+                              <ActionIcon
+                                variant="subtle"
+                                component="a"
+                                onClick={(e) => e.preventDefault()}
+                                aria-label="options menu"
+                                className={`${styles.createRequestButton} ${
+                                  colorScheme === "dark"
+                                    ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                    : ""
+                                }`}
+                              >
+                                <Dots />
+                              </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                              <NavLink
+                                label="Edit form"
+                                component="a"
+                                href={`/t/${activeTeam}/form/edit/${form.form_id}`}
+                                icon={
+                                  <IconWrapper>
+                                    <EditDocument />
+                                  </IconWrapper>
+                                }
+                              />
+                            </Menu.Dropdown>
+                          </Menu>
                           <ActionIcon
                             variant="subtle"
-                            component="a"
-                            onClick={(e) => e.preventDefault()}
-                            aria-label="options menu"
+                            component="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              router.push(
+                                `/t/${activeTeam}/requests/create?formId=${form.form_id}`
+                              );
+                            }}
+                            aria-label="create a request"
                             className={`${styles.createRequestButton} ${
                               colorScheme === "dark"
                                 ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                                 : ""
                             }`}
                           >
-                            <Dots />
+                            <AddCircle />
                           </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          <NavLink
-                            label="Edit form"
-                            component="a"
-                            href={`/t/${activeTeam}/form/edit/${form.form_id}`}
-                            icon={
-                              <IconWrapper>
-                                <EditDocument />
-                              </IconWrapper>
-                            }
-                          />
-                        </Menu.Dropdown>
-                      </Menu>
+                        </Group>
+                      }
+                    />
+                  ))}
+                </NavLink>
+
+                <NavLink
+                  label="Review Forms"
+                  component="a"
+                  childrenOffset={28}
+                  opened={isOpenReview}
+                  onClick={() => {
+                    if (!addReviewHovered) {
+                      setActiveNest((v) => (v === "review" ? "" : "review"));
+                      setIsOpenReview((v) => !v);
+                    }
+                  }}
+                  icon={
+                    <Flex align="center" gap={4}>
+                      <IconWrapper
+                        fontSize={10}
+                        color="gray"
+                        className={`${styles.arrowRight} ${
+                          activeNest === "review" && styles.arrowDown
+                        }`}
+                      >
+                        <ArrowBack />
+                      </IconWrapper>
+                      <IconWrapper className={iconStyle}>
+                        <Description />
+                      </IconWrapper>
+                    </Flex>
+                  }
+                  disableRightSectionRotation
+                  rightSection={
+                    <Group ref={addReviewRef}>
                       <ActionIcon
                         variant="subtle"
-                        component="button"
+                        component="a"
                         onClick={(e) => {
                           e.preventDefault();
-                          router.push(
-                            `/t/${activeTeam}/review/create/${form.form_id}`
-                          );
+                          router.push(`/t/${activeTeam}/review/create`);
                         }}
-                        aria-label="create a review"
                         className={`${styles.createRequestButton} ${
                           colorScheme === "dark"
                             ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
@@ -418,48 +374,108 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                       </ActionIcon>
                     </Group>
                   }
-                />
-              ))}
-            </NavLink>
+                >
+                  {reviewForms.map((form) => (
+                    <NavLink
+                      key={form.form_id}
+                      component="a"
+                      href={`/t/${activeTeam}/forms/${form.form_id}`}
+                      label={<Text lineClamp={1}>{form.form_name}</Text>}
+                      rightSection={
+                        <Group spacing={2}>
+                          <Menu shadow="md" width={200}>
+                            <Menu.Target>
+                              <ActionIcon
+                                variant="subtle"
+                                component="a"
+                                onClick={(e) => e.preventDefault()}
+                                aria-label="options menu"
+                                className={`${styles.createRequestButton} ${
+                                  colorScheme === "dark"
+                                    ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                    : ""
+                                }`}
+                              >
+                                <Dots />
+                              </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                              <NavLink
+                                label="Edit form"
+                                component="a"
+                                href={`/t/${activeTeam}/form/edit/${form.form_id}`}
+                                icon={
+                                  <IconWrapper>
+                                    <EditDocument />
+                                  </IconWrapper>
+                                }
+                              />
+                            </Menu.Dropdown>
+                          </Menu>
+                          <ActionIcon
+                            variant="subtle"
+                            component="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              router.push(
+                                `/t/${activeTeam}/review/create/${form.form_id}`
+                              );
+                            }}
+                            aria-label="create a review"
+                            className={`${styles.createRequestButton} ${
+                              colorScheme === "dark"
+                                ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                : ""
+                            }`}
+                          >
+                            <AddCircle />
+                          </ActionIcon>
+                        </Group>
+                      }
+                    />
+                  ))}
+                </NavLink>
 
-            <NavLink
-              component="a"
-              // TODO: Commented out page route has no content. Kindly fix.
-              href={`/t/${activeTeam}/settings/members`}
-              label="Members"
-              icon={
-                <IconWrapper className={iconStyle}>
-                  <GroupIcon />
-                </IconWrapper>
-              }
-            />
-          </MantineNavbar.Section>
-        </ScrollArea>
-        <MantineNavbar.Section className={styles.footer}>
-          <NavLink
-            component="a"
-            href={`/profiles/${user?.id}/bio`}
-            label="Mary Joy Dumancal"
-            description="View Profile"
-            icon={
-              <IconWrapper className={iconStyle}>
-                <Avatar radius="xl" />
-              </IconWrapper>
-            }
-          />
-          <Button
-            variant="light"
-            color="red"
-            fullWidth
-            leftIcon={
-              <IconWrapper className={styles.logoutButton__icon}>
-                <Logout />
-              </IconWrapper>
-            }
-          >
-            Logout
-          </Button>
-        </MantineNavbar.Section>
+                <NavLink
+                  component="a"
+                  // TODO: Commented out page route has no content. Kindly fix.
+                  href={`/t/${activeTeam}/settings/members`}
+                  label="Members"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <GroupIcon />
+                    </IconWrapper>
+                  }
+                />
+              </MantineNavbar.Section>
+            </ScrollArea>
+            <MantineNavbar.Section className={styles.footer}>
+              <NavLink
+                component="a"
+                href={`/profiles/${user?.id}/bio`}
+                label="Mary Joy Dumancal"
+                description="View Profile"
+                icon={
+                  <IconWrapper className={iconStyle}>
+                    <Avatar radius="xl" />
+                  </IconWrapper>
+                }
+              />
+              <Button
+                variant="light"
+                color="red"
+                fullWidth
+                leftIcon={
+                  <IconWrapper className={styles.logoutButton__icon}>
+                    <Logout />
+                  </IconWrapper>
+                }
+              >
+                Logout
+              </Button>
+            </MantineNavbar.Section>
+          </>
+        ) : null}
       </MantineNavbar>
     </>
   );
