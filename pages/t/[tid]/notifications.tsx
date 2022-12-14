@@ -7,46 +7,6 @@ import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 const Page: NextPageWithLayout = () => {
-  // const supabaseClient = useSupabaseClient<Database>();
-  // const user = useUser();
-  // const router = useRouter();
-  // const [userNotificationList, setUserNotificationList] =
-  //   useState<FetchUserNotificationList>([]);
-  // const rows = userNotificationList.map((notification) => (
-  //   <tr
-  //     key={notification.notification_id}
-  //     onClick={async () =>
-  //       await router.push(notification.redirection_url as string)
-  //     }
-  //   >
-  //     <td>{notification.notification_id}</td>
-  //     <td>{notification.notification_message}</td>
-  //     <td>{notification.redirection_url}</td>
-  //   </tr>
-  // ));
-
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       if (!router.isReady) return;
-  //       if (!user) return;
-
-  //       const userNotificationList = await fetchUserNotificationList(
-  //         supabaseClient,
-  //         // router.query.tid as string,
-  //         user.id
-  //       );
-  //       setUserNotificationList(userNotificationList);
-  //     } catch (e) {
-  //       showNotification({
-  //         message: "Failed to fetch notifications.",
-  //         state: "Danger",
-  //         title: "Error",
-  //       });
-  //     }
-  //   })();
-  // }, [router, user]);
-
   return (
     <div>
       <Meta
