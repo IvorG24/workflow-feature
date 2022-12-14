@@ -43,7 +43,7 @@ export default function TeamInvitationsPage() {
     })();
 
     setIsFetching(false);
-  }, [router]);
+  }, [router, supabaseClient, user]);
 
   // TODO: If error, change the display to an error page like how GitHub does it.
 
