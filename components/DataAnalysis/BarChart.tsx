@@ -106,6 +106,7 @@ const BarChart = ({ data }: BarChartProps) => {
         height + margin.bottom + margin.top
       }`}
       textAnchor="end"
+      width="40em"
     >
       <g transform={`translate(${margin.left}, 0)`}>
         {data.map(({ label, value }, idx) => {
