@@ -1,37 +1,70 @@
 // todo: create unit test
-import { PhotoCamera } from "@/components/Icon";
+import { Database } from "@/utils/database.types";
+import { FetchUserProfile, updateUserProfile } from "@/utils/queries";
 import {
   Avatar,
-  BackgroundImage,
   Button,
   Container,
-  FileButton,
+  FileInput,
   Flex,
+  Group,
   Stack,
-  Textarea,
   TextInput,
   Title,
 } from "@mantine/core";
-import { MouseEventHandler, useState } from "react";
+import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
+import {
+  Dispatch,
+  MouseEventHandler,
+  SetStateAction,
+  useRef,
+  useState,
+} from "react";
 import { useForm } from "react-hook-form";
-import validator from "validator";
-import styles from "./EditProfileForm.module.scss";
-import { User } from "./ProfilePage";
 
 type Props = {
-  user: User;
+  user: FetchUserProfile;
   onCancel: MouseEventHandler<HTMLButtonElement>;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
 };
 
-const EditProfileForm = ({ user, onCancel }: Props) => {
-  const { register, handleSubmit } = useForm();
-  // Todo: validate file input size
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [bgFile, setBGFile] = useState<File | null>(null);
+type Data = {
+  name: string;
+};
+
+const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
+  const supabase = useSupabaseClient<Database>();
+  const router = useRouter();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Data>();
+  const [avatar, setAvatar] = useState<Blob | MediaSource | null>(null);
+
+  const avatarInput = useRef<HTMLButtonElement>(null);
+
   const onSubmit = handleSubmit(async (data) => {
-    console.log(data);
-    console.log(avatarFile);
-    console.log(bgFile);
+    try {
+      setIsLoading(true);
+      await updateUserProfile(
+        supabase,
+        user.user_id,
+        data.name,
+        `${user.avatar_url}`
+      );
+      router.reload();
+    } catch {
+      setIsLoading(false);
+      showNotification({
+        title: "Error!",
+        message: "Failed to Create Team",
+        color: "red",
+      });
+    }
   });
 
   return (
@@ -41,61 +74,36 @@ const EditProfileForm = ({ user, onCancel }: Props) => {
       </Title>
       <form onSubmit={onSubmit}>
         <Stack>
-          <BackgroundImage className={styles.backgroundImage} src="" mb={50}>
-            <FileButton onChange={setBGFile} accept="image/png,image/jpeg">
-              {(props) => (
-                <Button
-                  variant="subtle"
-                  {...props}
-                  p={0}
-                  h={40}
-                  w={40}
-                  className={styles.centerIcon}
-                >
-                  <PhotoCamera />
-                </Button>
-              )}
-            </FileButton>
-          </BackgroundImage>
-          <Container mt={-100} ml={10} className={styles.avatarWrapper}>
-            <Avatar size={90} radius={45} src="" />
-            <FileButton onChange={setAvatarFile} accept="image/png,image/jpeg">
-              {(props) => (
-                <Button
-                  variant="subtle"
-                  {...props}
-                  p={0}
-                  h={40}
-                  w={40}
-                  className={styles.centerIcon}
-                >
-                  <PhotoCamera />
-                </Button>
-              )}
-            </FileButton>
-          </Container>
+          <Group position="center">
+            <FileInput
+              accept="image/png,image/jpeg"
+              display="none"
+              ref={avatarInput}
+              onChange={(e) => setAvatar(e)}
+            />
+            <Avatar
+              size={150}
+              radius={100}
+              onClick={() => avatarInput.current?.click()}
+              style={{ cursor: "pointer" }}
+              src={avatar ? URL.createObjectURL(avatar) : user.avatar_url}
+              alt="User avatar"
+            />
+          </Group>
           <TextInput
             label="Display Name"
-            {...register("name", { required: "Name is required" })}
-            value={user?.name}
-          />
-          <TextInput
-            label="Email"
-            {...register("email", {
-              required: "Email address is required",
-              validate: {
-                isEmail: (input) =>
-                  validator.isEmail(input) || "Email is invalid",
+            {...register("name", {
+              required: "Name is required",
+              minLength: {
+                value: 3,
+                message: "Name must be at least 3 characters",
               },
             })}
-            value={user?.email}
+            defaultValue={`${user?.full_name}`}
+            error={errors.name?.message}
           />
-          <TextInput
-            label="Profession"
-            {...register("profession", { required: "Profession is required" })}
-            value={user?.position}
-          />
-          <Textarea label="Bio" {...register("bio")} />
+          <TextInput label="Email" disabled defaultValue={`${user?.email}`} />
+
           <Flex justify="flex-end" gap="xs">
             <Button
               variant="outline"
