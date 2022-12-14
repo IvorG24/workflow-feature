@@ -78,8 +78,9 @@ const MembersTable = ({
                       "3px solid #4ac776"
                     }`,
                   }}
+                  style={{ cursor: "pointer" }}
                 />
-                <Box>
+                <Box style={{ cursor: "pointer" }}>
                   <Text fw="bold" color="dark">
                     {member.user_profile_table.full_name}
                   </Text>

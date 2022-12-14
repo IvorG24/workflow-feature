@@ -1,5 +1,10 @@
 import { Database } from "@/utils/database.types";
-import { createTeamInvitation, createUserTeam } from "@/utils/queries";
+import {
+  createTeamInvitation,
+  CreateUserTeam,
+  createUserTeam,
+  uploadTeamLogo,
+} from "@/utils/queries";
 import {
   Container,
   Flex,
@@ -10,6 +15,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import Compressor from "compressorjs";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
 import Step1 from "./Step1";
@@ -47,11 +53,34 @@ const CreateTeam = () => {
     }, 1000);
   };
 
+  const handleUpload = (team: CreateUserTeam) => {
+    return new Promise((resolve, reject) => {
+      new Compressor(teamLogo as File, {
+        quality: 0.6,
+        async success(result) {
+          resolve(await uploadTeamLogo(supabase, team.team_id, result));
+        },
+        error() {
+          reject(
+            showNotification({
+              title: "Error!",
+              message: "Failed to upload team icon",
+              color: "red",
+            })
+          );
+        },
+      });
+    });
+  };
+
   const handleCreateTeam = async (action: "skip" | "invite") => {
     setIsCreating(true);
-    // todo team logo bucket
+
     try {
-      const team = await createUserTeam(supabase, `${user?.id}`, teamName, "");
+      const team = await createUserTeam(supabase, `${user?.id}`, teamName);
+
+      await handleUpload(team);
+
       if (action === "invite" && members.length > 0) {
         await createTeamInvitation(
           supabase,
@@ -76,7 +105,17 @@ const CreateTeam = () => {
       <LoadingOverlay visible={isCreating} />
       <Title>Create Team</Title>
       <Flex wrap="wrap" align="stretch" justify="center" mt={50} gap={50}>
-        <Stepper active={active} onStepClick={setActive} orientation="vertical">
+        <Stepper
+          active={active}
+          onStepClick={(value) => {
+            if (!teamName) {
+              handleTeamName(teamName);
+            } else {
+              setActive(value);
+            }
+          }}
+          orientation="vertical"
+        >
           <Stepper.Step
             label="Team Details"
             description="Insert team name and logo."

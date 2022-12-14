@@ -1,43 +1,89 @@
 // this page was just used to test layout, you can delete it if you want
-import ItemList from "@/components/ItemList/ItemList";
+import DataAnalysis from "@/components/DataAnalysis/DataAnalysis";
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
+import { Box } from "@mantine/core";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "./_app";
 
-const itemData = [
+const tempData = [
   {
-    id: "a",
-    question: "What are the employee’s strongest points?",
-    response_type: "text",
-    required: true,
-    tooltip: "this is a tooltip",
+    label: "progressive",
+    value: 38,
   },
   {
-    id: "b",
-    question: "What are the employee’s weakest points?",
-    response_type: "text",
-    required: false,
-    tooltip: "this is a tooltip",
+    label: "digitized",
+    value: 22,
   },
   {
-    id: "c",
-    question:
-      "What can the employee do to be more effective  or make improvements?",
-    response_type: "text",
-    required: true,
-    tooltip: "this is a tooltip",
+    label: "tangible",
+    value: 10,
   },
   {
-    id: "d",
-    question: "What additional training would benefit the employee?",
-    response_type: "text",
-    required: true,
-    tooltip: "this is a tooltip",
+    label: "adaptive",
+    value: 29,
+  },
+  {
+    label: "open architecture",
+    value: 9,
+  },
+  {
+    label: "synergistic",
+    value: 34,
+  },
+  {
+    label: "user-friendly",
+    value: 29,
+  },
+  {
+    label: "disintermediate",
+    value: 27,
+  },
+  {
+    label: "portal",
+    value: 19,
+  },
+  {
+    label: "structure",
+    value: 20,
+  },
+  {
+    label: "up-sized",
+    value: 32,
+  },
+  {
+    label: "optimized",
+    value: 28,
+  },
+  {
+    label: "pricing structure",
+    value: 32,
+  },
+  {
+    label: "5th generation",
+    value: 37,
+  },
+  {
+    label: "versatile",
+    value: 5,
+  },
+  {
+    label: "multi-state",
+    value: 36,
+  },
+  {
+    label: "collaboration",
+    value: 35,
+  },
+  {
+    label: "interface",
+    value: 7,
+  },
+  {
+    label: "user-centric",
+    value: 16,
   },
 ];
-
-const itemOrder = ["a", "b", "c", "d"];
 
 const Page: NextPageWithLayout = () => {
   return (
@@ -47,7 +93,9 @@ const Page: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/testpage"
       />
-      <ItemList data={itemData} order={itemOrder} />
+      <Box maw="800px">
+        <DataAnalysis data={tempData} />
+      </Box>
     </div>
   );
 };
