@@ -1,4 +1,4 @@
-import { Text } from "@mantine/core";
+import BarChart from "./BarChart";
 
 type Data = { label: string; value: number };
 
@@ -11,10 +11,11 @@ const DataAnalysis = ({ data, chartType = "barchart" }: Props) => {
   const renderChart = (data: Data[], chartType: string) => {
     switch (chartType) {
       case "barchart":
-        // <BarChart data={data} />;
-        <Text>{chartType}</Text>;
-        console.log(data);
-        break;
+        return <BarChart data={data} />;
+      // case "linechart":
+      //   return <LineChart data={data} />;
+      // case "radarchart":
+      //   return <RadarChart data={data} />;
 
       default:
         break;

@@ -2,89 +2,86 @@
 import DataAnalysis from "@/components/DataAnalysis/DataAnalysis";
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
+import { Box } from "@mantine/core";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "./_app";
 
 const tempData = [
   {
-    label: "Open-source",
-    value: 19,
+    label: "progressive",
+    value: 38,
   },
   {
-    label: "knowledge base",
-    value: 16,
-  },
-  {
-    label: "capability",
-    value: 12,
-  },
-  {
-    label: "Multi-tiered",
+    label: "digitized",
     value: 22,
   },
   {
-    label: "Expanded",
-    value: 5,
+    label: "tangible",
+    value: 10,
   },
   {
-    label: "Enhanced",
-    value: 33,
-  },
-  {
-    label: "installation",
-    value: 28,
-  },
-  {
-    label: "circuit",
-    value: 8,
-  },
-  {
-    label: "zero administration",
-    value: 7,
-  },
-  {
-    label: "Pre-emptive",
-    value: 22,
-  },
-  {
-    label: "Phased",
-    value: 22,
-  },
-  {
-    label: "Organic",
-    value: 6,
-  },
-  {
-    label: "zero defect",
-    value: 4,
-  },
-  {
-    label: "Customer-focused",
-    value: 7,
-  },
-  {
-    label: "function",
-    value: 15,
-  },
-  {
-    label: "leading edge",
+    label: "adaptive",
     value: 29,
   },
   {
-    label: "Re-engineered",
-    value: 2,
+    label: "open architecture",
+    value: 9,
   },
   {
-    label: "didactic",
+    label: "synergistic",
+    value: 34,
+  },
+  {
+    label: "user-friendly",
+    value: 29,
+  },
+  {
+    label: "disintermediate",
+    value: 27,
+  },
+  {
+    label: "portal",
+    value: 19,
+  },
+  {
+    label: "structure",
+    value: 20,
+  },
+  {
+    label: "up-sized",
+    value: 32,
+  },
+  {
+    label: "optimized",
+    value: 28,
+  },
+  {
+    label: "pricing structure",
+    value: 32,
+  },
+  {
+    label: "5th generation",
+    value: 37,
+  },
+  {
+    label: "versatile",
+    value: 5,
+  },
+  {
+    label: "multi-state",
+    value: 36,
+  },
+  {
+    label: "collaboration",
     value: 35,
   },
   {
-    label: "forecast",
-    value: 23,
+    label: "interface",
+    value: 7,
   },
   {
-    label: "neutral",
-    value: 22,
+    label: "user-centric",
+    value: 16,
   },
 ];
 
@@ -96,7 +93,9 @@ const Page: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/testpage"
       />
-      <DataAnalysis data={tempData} />
+      <Box maw="800px">
+        <DataAnalysis data={tempData} />
+      </Box>
     </div>
   );
 };
