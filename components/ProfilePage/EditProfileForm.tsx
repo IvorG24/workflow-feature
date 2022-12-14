@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import Compressor from "compressorjs";
 import { useRouter } from "next/router";
 import {
   Dispatch,
@@ -47,21 +48,38 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
 
   const avatarInput = useRef<HTMLButtonElement>(null);
 
+  const handleUpload = (data: Data) => {
+    return new Promise((resolve, reject) => {
+      new Compressor(avatar as File, {
+        quality: 0.6,
+        async success(result) {
+          resolve(
+            await updateUserProfile(supabase, user.user_id, data.name, result)
+          );
+        },
+        error() {
+          reject(
+            showNotification({
+              title: "Error!",
+              message: "Failed to upload user profile avatar",
+              color: "red",
+            })
+          );
+        },
+      });
+    });
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       setIsLoading(true);
-      await updateUserProfile(
-        supabase,
-        user.user_id,
-        data.name,
-        `${user.avatar_url}`
-      );
+      await handleUpload(data);
       router.reload();
     } catch {
       setIsLoading(false);
       showNotification({
         title: "Error!",
-        message: "Failed to Create Team",
+        message: "Failed to Update Profile",
         color: "red",
       });
     }
