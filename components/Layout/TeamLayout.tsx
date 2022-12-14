@@ -32,22 +32,23 @@ const TeamLayout = ({ children }: Props) => {
     useState<CreateOrRetrieveUserTeamList>([]);
 
   const {
-    // state: { userProfile }, // * This is how to fetch state of context.
+    state: { userProfile }, // * This is how to fetch state of context.
     dispatchUserProfile,
   } = useUserProfileContext();
 
-  const handleSet = (createdOrRetrievedUser: CreatedOrRetrievedUser) => {
-    dispatchUserProfile({
-      type: UserProfileActionEnum.SET,
-      payload: {
-        userProfile: createdOrRetrievedUser,
-      },
-    });
-  };
-
+  // TODO: Will refactor this to a cleaner version.
   // ? Do I need to convert this to hook?
   useEffect(() => {
     (async () => {
+      const handleSet = (createdOrRetrievedUser: CreatedOrRetrievedUser) => {
+        dispatchUserProfile({
+          type: UserProfileActionEnum.SET,
+          payload: {
+            userProfile: createdOrRetrievedUser,
+          },
+        });
+      };
+
       try {
         if (!router.isReady) return;
         if (!user) return;
@@ -92,7 +93,7 @@ const TeamLayout = ({ children }: Props) => {
         });
       }
     })();
-  }, [router, user, supabaseClient]);
+  }, [router, user, supabaseClient, dispatchUserProfile]);
 
   return (
     <>
