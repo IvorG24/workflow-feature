@@ -6,9 +6,9 @@ import NotificationItem from "./NotificationItem";
 const NotificationPage = () => {
   const router = useRouter();
   // ? Where will invitation notif be displayed? In General?
-  const { userNotificationList: general } = useFetchNotificationList(
-    router.query.tid as string
-  );
+  const { userNotificationList: general } = useFetchNotificationList();
+  // * Commenting out tid so general will include all user notifications regardless of team.
+  // router.query.tid as string
   const { userNotificationList: request } = useFetchNotificationList(
     router.query.tid as string,
     "request"
