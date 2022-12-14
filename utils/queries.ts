@@ -700,3 +700,27 @@ export type GetUserIdListFromEmailList = {
   userId: string;
   userEmail: string;
 }[];
+
+// * Update user profile information.
+export const updateUserProfile = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  fullName: string,
+  avatar: string
+) => {
+  const { data: updatedUserProfile, error: updatedUserProfileError } =
+    await supabaseClient
+      .from("user_profile_table")
+      .update({
+        full_name: fullName,
+        avatar_url: avatar,
+      })
+      .eq("user_id", userId);
+
+  if (updatedUserProfileError) throw updatedUserProfileError;
+
+  return updatedUserProfile;
+};
+
+// * Type here
+export type UpdatedUserProfile = Awaited<ReturnType<typeof updateUserProfile>>;
