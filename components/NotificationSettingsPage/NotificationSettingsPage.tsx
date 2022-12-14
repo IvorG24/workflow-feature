@@ -6,7 +6,7 @@ const tempData = {
   email: false,
 };
 
-const NotificationsPage = () => {
+const NotificationSettingsPage = () => {
   const [workspaceInvitation, setWorkspaceInvitation] = useState(tempData);
   const [requestsApproval, setRequestsApproval] = useState(tempData);
   const [staledRequests, setStaledRequests] = useState(tempData);
@@ -127,4 +127,4 @@ const NotificationsPage = () => {
   );
 };
 
-export default NotificationsPage;
+export default NotificationSettingsPage;

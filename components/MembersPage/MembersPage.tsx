@@ -5,7 +5,7 @@ import {
   fetchTeamMemberList,
   updateTeamMemberRole,
 } from "@/utils/queries";
-import { TeamRoleEnum, UserProfileTableRow } from "@/utils/types";
+import { TeamRoleEnum } from "@/utils/types";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
@@ -15,13 +15,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import MembersTable from "./MembersTable";
 import SearchBar from "./SearchBar";
-
-export type TeamMember = {
-  team_id: string;
-  lock_account: boolean;
-  team_role: TeamRoleEnum;
-  user_profile_table: UserProfileTableRow;
-};
 
 const Member = () => {
   const router = useRouter();

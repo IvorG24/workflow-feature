@@ -5,7 +5,6 @@ import { Database, FormRow } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
-  Badge,
   Button,
   Container,
   Divider,
@@ -177,12 +176,13 @@ const Navbar = ({ teamList }: Props) => {
                     </IconWrapper>
                   }
                 />
-                <Badge
-                  className={styles.notificationsButtonWrapper__badge}
-                  color="red"
-                >
-                  1
-                </Badge>
+                {/* // TODO: Commenting this for now. */}
+                {/* <Badge
+              className={styles.notificationsButtonWrapper__badge}
+              color="red"
+            >
+              1
+            </Badge> */}
               </Container>
 
               <NavLink
