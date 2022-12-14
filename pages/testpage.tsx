@@ -1,43 +1,92 @@
 // this page was just used to test layout, you can delete it if you want
-import ItemList from "@/components/ItemList/ItemList";
+import DataAnalysis from "@/components/DataAnalysis/DataAnalysis";
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "./_app";
 
-const itemData = [
+const tempData = [
   {
-    id: "a",
-    question: "What are the employee’s strongest points?",
-    response_type: "text",
-    required: true,
-    tooltip: "this is a tooltip",
+    label: "Open-source",
+    value: 19,
   },
   {
-    id: "b",
-    question: "What are the employee’s weakest points?",
-    response_type: "text",
-    required: false,
-    tooltip: "this is a tooltip",
+    label: "knowledge base",
+    value: 16,
   },
   {
-    id: "c",
-    question:
-      "What can the employee do to be more effective  or make improvements?",
-    response_type: "text",
-    required: true,
-    tooltip: "this is a tooltip",
+    label: "capability",
+    value: 12,
   },
   {
-    id: "d",
-    question: "What additional training would benefit the employee?",
-    response_type: "text",
-    required: true,
-    tooltip: "this is a tooltip",
+    label: "Multi-tiered",
+    value: 22,
+  },
+  {
+    label: "Expanded",
+    value: 5,
+  },
+  {
+    label: "Enhanced",
+    value: 33,
+  },
+  {
+    label: "installation",
+    value: 28,
+  },
+  {
+    label: "circuit",
+    value: 8,
+  },
+  {
+    label: "zero administration",
+    value: 7,
+  },
+  {
+    label: "Pre-emptive",
+    value: 22,
+  },
+  {
+    label: "Phased",
+    value: 22,
+  },
+  {
+    label: "Organic",
+    value: 6,
+  },
+  {
+    label: "zero defect",
+    value: 4,
+  },
+  {
+    label: "Customer-focused",
+    value: 7,
+  },
+  {
+    label: "function",
+    value: 15,
+  },
+  {
+    label: "leading edge",
+    value: 29,
+  },
+  {
+    label: "Re-engineered",
+    value: 2,
+  },
+  {
+    label: "didactic",
+    value: 35,
+  },
+  {
+    label: "forecast",
+    value: 23,
+  },
+  {
+    label: "neutral",
+    value: 22,
   },
 ];
-
-const itemOrder = ["a", "b", "c", "d"];
 
 const Page: NextPageWithLayout = () => {
   return (
@@ -47,7 +96,7 @@ const Page: NextPageWithLayout = () => {
         // this is just a temporary url, canoncial url will be set in the future
         url="localhost:3000/testpage"
       />
-      <ItemList data={itemData} order={itemOrder} />
+      <DataAnalysis data={tempData} />
     </div>
   );
 };
