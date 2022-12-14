@@ -1,6 +1,11 @@
 // todo: create integration tests for this component
+import {
+  UserProfileActionEnum,
+  useUserProfileContext,
+} from "@/contexts/UserProfileContext";
 import { Database } from "@/utils/database.types";
 import {
+  CreatedOrRetrievedUser,
   createOrRetrieveUser,
   createOrRetrieveUserTeamList,
   CreateOrRetrieveUserTeamList,
@@ -26,6 +31,20 @@ const TeamLayout = ({ children }: Props) => {
   const [createdOrRetrievedUserTeamList, setCreatedOrRetrievedUserTeamList] =
     useState<CreateOrRetrieveUserTeamList>([]);
 
+  const {
+    state: { userProfile },
+    dispatchUserProfile,
+  } = useUserProfileContext();
+
+  const handleSet = (createdOrRetrievedUser: CreatedOrRetrievedUser) => {
+    dispatchUserProfile({
+      type: UserProfileActionEnum.SET,
+      payload: {
+        userProfile: createdOrRetrievedUser,
+      },
+    });
+  };
+
   // ? Do I need to convert this to hook?
   useEffect(() => {
     (async () => {
@@ -39,8 +58,10 @@ const TeamLayout = ({ children }: Props) => {
             createOrRetrieveUserTeamList(supabaseClient, user),
           ]);
 
-        console.log(createdOrRetrievedUser);
+        // * Set created or fetched user info to context.
+        handleSet(createdOrRetrievedUser);
 
+        // * Set created or fetched team list to state to be passed to our navbar.
         setCreatedOrRetrievedUserTeamList(createdOrRetrievedUserTeamList);
 
         // * If user visits home page, redirect to to first team dashboard page for now.
@@ -81,7 +102,7 @@ const TeamLayout = ({ children }: Props) => {
       {!isLoading ? (
         <AppShell
           navbar={<Navbar teamList={createdOrRetrievedUserTeamList} />} // don't use typecasting for tid
-          header={<MobileHeader teamList={createdOrRetrievedUserTeamList}/>}
+          header={<MobileHeader teamList={createdOrRetrievedUserTeamList} />}
         >
           <main className={styles.childrenContainer}>{children}</main>
         </AppShell>

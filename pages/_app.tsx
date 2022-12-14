@@ -10,7 +10,12 @@ import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
 import { NextPage } from "next/types";
-import { ReactElement, ReactNode, useState } from "react";
+import { ReactElement, ReactNode, useMemo, useReducer, useState } from "react";
+import {
+  UserProfileContext,
+  userProfileReducer,
+  UserProfileType,
+} from "../contexts";
 import "../styles/globals.css";
 
 // #todo: implement better typing but I think it's okay because it's from the docs
@@ -34,10 +39,17 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     getInitialValueInEffect: true,
   });
 
+  const [state, dispatchUserProfile] = useReducer<
+    typeof userProfileReducer,
+    UserProfileType["state"]
+  >(userProfileReducer, { userProfile: undefined }, (state) => state);
+
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value ?? (colorScheme === "dark" ? "light" : "dark"));
 
   const getLayout = Component.getLayout ?? ((page) => page);
+
+  const value = useMemo(() => ({ state, dispatchUserProfile }), [state]);
 
   return (
     <ColorSchemeProvider
@@ -55,7 +67,9 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           initialSession={pageProps.initialSession}
         >
           <NotificationsProvider position="top-center">
-            {getLayout(<Component {...pageProps} />)}
+            <UserProfileContext.Provider value={value}>
+              {getLayout(<Component {...pageProps} />)}
+            </UserProfileContext.Provider>
           </NotificationsProvider>
         </SessionContextProvider>
       </MantineProvider>
