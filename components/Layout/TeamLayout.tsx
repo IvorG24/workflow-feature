@@ -32,7 +32,7 @@ const TeamLayout = ({ children }: Props) => {
     useState<CreateOrRetrieveUserTeamList>([]);
 
   const {
-    state: { userProfile },
+    // state: { userProfile }, // * This is how to fetch state of context.
     dispatchUserProfile,
   } = useUserProfileContext();
 
