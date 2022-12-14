@@ -64,7 +64,9 @@ const Page: NextPageWithLayout = () => {
         url="localhost:3000/testpage"
       />
       <Box maw="800px">
-        <DataAnalysis data={tempData} />
+        <IconWrapper fontSize={70}>
+          <DataAnalysis data={tempData} />
+        </IconWrapper>
         <IconWrapper fontSize={70}>
           <DataAnalysis data={tempData} chartType="linechart" />
         </IconWrapper>

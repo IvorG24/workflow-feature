@@ -11,15 +11,6 @@ import {
 
 import { useEffect, useRef, useState } from "react";
 
-export type LineChartDataType = {
-  label?: string;
-  value: number;
-  dateTime: string;
-  borderColor?: string;
-  borderWidth?: number;
-  backgroundColor?: string;
-};
-
 type ChartData = {
   label: string;
   value: number;
@@ -43,7 +34,6 @@ const LineChart = ({ data }: { data: ChartData[] }) => {
     });
   };
   const [chartData] = useState<LineData[]>(optimizeData(data));
-
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
