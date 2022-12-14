@@ -76,19 +76,19 @@ const YAxis = ({ scale }: YAxisProps) => {
     }
   }, [scale]);
 
-  return <g ref={ref} />;
+  return <g ref={ref} transform={`translate(0,0)`} />;
 };
 
 const BarChart = ({ data }: BarChartProps) => {
-  const width = 700;
-  const height = 500;
   const margin = { top: 20, right: 20, bottom: 20, left: 150 };
+  const width = 700 - margin.left - margin.right;
+  const height = 500 - margin.bottom - margin.top;
 
   const xScale = scaleLinear()
-    .domain([0, Math.round(Math.max(...data.map((d) => d.value)) / 5) * 5])
-    .rangeRound([0, width]);
+    .domain([0, Math.round(Math.max(...data.map((d) => d.value)) / 5) * 5]) // round up maxDomain to nearest 5
+    .range([0, width]);
   const yScale = scaleBand()
-    .domain(data.map(({ label }) => label))
+    .domain(data.map((d) => d.label))
     .range([0, height])
     .padding(0.2);
 
