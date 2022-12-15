@@ -6,10 +6,12 @@ import { SupabaseClient, User } from "@supabase/supabase-js";
 import { Database } from "./database.types";
 import {
   FieldRow,
+  FieldTableRow,
   FieldTypeEnum,
   FormQuestion,
   FormRequest,
   FormRow,
+  FormTableRow,
   FormTypeEnum,
   RequestResponseRow,
   RequestRow,
@@ -748,7 +750,10 @@ export const fetchEmptyForm = async (
     (a, b) => priority.indexOf(a.field_id) - priority.indexOf(b.field_id)
   );
 
-  return { formTableRow, fieldTableRowList: sortedFieldTableRowList };
+  return {
+    formTableRow: formTableRow as FormTableRow | null,
+    fieldTableRowList: sortedFieldTableRowList as FieldTableRow[] | null,
+  };
 };
 // * Type here
 export type FetchEmptyForm = Awaited<ReturnType<typeof fetchEmptyForm>>;

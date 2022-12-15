@@ -1,8 +1,7 @@
-import * as React from "react";
-interface SVGRProps {
+type SVGRProps = {
   title?: string;
   titleId?: string;
-}
+};
 const SvgMaximize = ({ title, titleId }: SVGRProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
