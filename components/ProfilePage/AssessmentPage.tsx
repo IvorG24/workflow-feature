@@ -1,3 +1,4 @@
+import { setTimeDifference } from "@/utils/request";
 import {
   Avatar,
   Button,
@@ -9,7 +10,6 @@ import {
   Text,
 } from "@mantine/core";
 import { Assessment } from "./ProfilePage";
-import { setTimeDifference } from "./utils";
 
 type Props = {
   assessments: Assessment[];
