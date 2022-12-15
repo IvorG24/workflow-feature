@@ -67,7 +67,6 @@ export type RequestTableInsert =
 export type RequestTableUpdate =
   Database["public"]["Tables"]["request_table"]["Update"];
 
-  
 export type RequestRow = Database["public"]["Tables"]["request_table"]["Row"];
 export type RequestInsert =
   Database["public"]["Tables"]["request_table"]["Insert"];
@@ -115,6 +114,14 @@ export type UserNotificationTableInsert =
   Database["public"]["Tables"]["user_notification_table"]["Insert"];
 export type UserNotificationTableUpdate =
   Database["public"]["Tables"]["user_notification_table"]["Update"];
+
+// request_comment_table
+export type RequestCommentTableRow =
+  Database["public"]["Tables"]["request_comment_table"]["Row"];
+export type RequestCommentTableInsert =
+  Database["public"]["Tables"]["request_comment_table"]["Insert"];
+export type RequestCommentTableUpdate =
+  Database["public"]["Tables"]["request_comment_table"]["Update"];
 
 // Enums
 export type FieldTypeEnum = Database["public"]["Enums"]["field_type"];
