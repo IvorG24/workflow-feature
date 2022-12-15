@@ -37,7 +37,8 @@ const TeamLayout = ({ children }: Props) => {
     dispatchUserProfile,
   } = useUserProfileContext();
 
-  // Provide data for bottom navigation links
+  // Provide data for the bottom navigation links on the array
+  // { label: "Dashboard", href: "/dashboard", icon: <Dashboard /> } // * What the link object should have
   const bottomNavLinks: ILink[] = [];
 
   // TODO: Will refactor this to a cleaner version.
