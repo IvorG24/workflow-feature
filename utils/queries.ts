@@ -11,6 +11,7 @@ import {
   FormRequest,
   FormRow,
   FormTypeEnum,
+  RequestCommentTableRow,
   RequestResponseRow,
   RequestRow,
   RequestStatusEnum,
@@ -879,3 +880,82 @@ export const uploadTeamLogo = async (
 
 // * Type here
 export type UpdateTeamLogo = Awaited<ReturnType<typeof uploadTeamLogo>>;
+
+// * Add comment on request.
+export const retrieveRequestComments = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number
+) => {
+  const { data: requestComments, error: requestCommentsError } =
+    await supabaseClient
+      .from("request_comment_table")
+      .select("*, owner: request_comment_by_id(*)")
+      .eq("request_id", requestId)
+      .order("request_comment_created_at", { ascending: true });
+  if (requestCommentsError) throw requestCommentsError;
+  return requestComments as RetrievedRequestComments[];
+};
+
+// * Type here
+export type RetrievedRequestComments = RequestCommentTableRow & {
+  owner: UserProfileTableRow;
+};
+
+// * Add comment on request.
+export const createComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number,
+  comment: string,
+  userId: string
+) => {
+  const { data: createdComment, error: createdCommentError } =
+    await supabaseClient
+      .from("request_comment_table")
+      .insert({
+        request_comment: comment,
+        request_id: requestId,
+        request_comment_by_id: userId,
+      })
+      .select("*, owner: request_comment_by_id(*)")
+      .single();
+  if (createdCommentError) throw createdCommentError;
+  return createdComment as RetrievedRequestComments;
+};
+
+// * Type here
+export type CreateComment = Awaited<ReturnType<typeof createComment>>;
+
+// * Delete comment on request.
+export const deleteComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  comment_id: number
+) => {
+  const { error: deletedCommentError } = await supabaseClient
+    .from("request_comment_table")
+    .delete()
+    .eq("request_comment_id", comment_id);
+  if (deletedCommentError) throw deletedCommentError;
+};
+
+// * Type here
+export type DeletedComment = Awaited<ReturnType<typeof deleteComment>>;
+
+// * Edit comment on request.
+export const editComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  comment_id: number,
+  comment: string
+) => {
+  console.log(comment_id, comment);
+  const { error: editedCommentError } = await supabaseClient
+    .from("request_comment_table")
+    .update({
+      request_comment: comment,
+      request_comment_is_edited: true,
+    })
+    .eq("request_comment_id", comment_id);
+  if (editedCommentError) throw editedCommentError;
+};
+
+// * Type here
+export type EditedComment = Awaited<ReturnType<typeof editComment>>;
