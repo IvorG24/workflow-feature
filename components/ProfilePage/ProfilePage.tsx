@@ -7,7 +7,7 @@ import { FetchUserProfile, fetchUserProfile } from "@/utils/queries";
 // import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
 import {
   Avatar,
-  BackgroundImage,
+  Box,
   Button,
   Container,
   Flex,
@@ -19,11 +19,12 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useSessionContext } from "@supabase/auth-helpers-react";
+import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AssessmentPage from "./AssessmentPage";
 import Bio from "./BioPage";
+import EditProfileForm from "./EditProfileForm";
 // import data from "../../teams.json";
 // import EditProfileForm from "./EditProfileForm";
 import styles from "./ProfilePage.module.scss";
@@ -62,6 +63,7 @@ export type Assessment = {
 
 const Profile = () => {
   const router = useRouter();
+  const user = useUser();
   const { activeTab } = router.query;
   const { supabaseClient } = useSessionContext();
   const { pid } = router.query;
@@ -105,10 +107,19 @@ const Profile = () => {
       {!isLoading && (
         <Container fluid pt="xl">
           {/* todo: add default styling when no background image is available */}
-          <BackgroundImage className={styles.banner} src="" />
+          <Box
+            sx={(theme) => ({
+              backgroundColor:
+                theme.colorScheme === "dark"
+                  ? theme.colors.dark[4]
+                  : theme.colors.gray[2],
+              width: "100%",
+              height: "10rem",
+            })}
+          />
           <Flex align="flex-start" justify="space-between" wrap="wrap">
             <Group px={30} mt={-30}>
-              <Avatar size={200} radius={100} />
+              <Avatar size={200} radius={100} src={userProfile?.avatar_url} />
               <Stack spacing={0}>
                 <Title order={2}>{userProfile?.full_name}</Title>
                 {/* add position column to user profile */}
@@ -117,32 +128,34 @@ const Profile = () => {
                   <IconWrapper fontSize={20} color="dimmed">
                     <Mail />
                   </IconWrapper>
-                  {/* add email to user profile column */}
+                  <Text>{userProfile?.email}</Text>
                   <Text color="dimmed">&nbsp;</Text>
                 </Group>
               </Stack>
             </Group>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditProfileOpen(true)}
-              leftIcon={
-                <IconWrapper fontSize={16}>
-                  <Edit />
-                </IconWrapper>
-              }
-              sx={(theme) => ({
-                color:
-                  theme.colorScheme === "dark"
-                    ? theme.colors.dark[0]
-                    : theme.colors.dark[6],
-              })}
-              color="dark"
-              mt="md"
-              mr="md"
-            >
-              Edit Profile
-            </Button>
+            {userProfile?.user_id === user?.id ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditProfileOpen(true)}
+                leftIcon={
+                  <IconWrapper fontSize={16}>
+                    <Edit />
+                  </IconWrapper>
+                }
+                sx={(theme) => ({
+                  color:
+                    theme.colorScheme === "dark"
+                      ? theme.colors.dark[0]
+                      : theme.colors.dark[6],
+                })}
+                color="dark"
+                mt="md"
+                mr="md"
+              >
+                Edit Profile
+              </Button>
+            ) : null}
           </Flex>
 
           <Tabs
@@ -206,12 +219,13 @@ const Profile = () => {
             onClose={() => setIsEditProfileOpen(false)}
             size="lg"
           >
-            {/* {profile && (
-          <EditProfileForm
-            user={profile}
-            onCancel={() => setIsEditProfileOpen(false)}
-          />
-        )} */}
+            {userProfile && (
+              <EditProfileForm
+                user={userProfile}
+                onCancel={() => setIsEditProfileOpen(false)}
+                setIsLoading={setIsLoading}
+              />
+            )}
           </Modal>
         </Container>
       )}

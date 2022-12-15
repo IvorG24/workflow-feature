@@ -103,15 +103,13 @@ export type RetrieveUserTeamList = (TeamRoleTableRow & {
 export const createUserTeam = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string,
-  teamName = "My Team",
-  teamLogo = ""
+  teamName = "My Team"
 ) => {
   const { data: createdTeam, error: createdTeamError } = await supabaseClient
     .from("team_table")
     .insert({
       team_name: teamName,
       user_id: userId,
-      team_logo: teamLogo,
     })
     .select()
     .single();
@@ -798,3 +796,86 @@ export const saveReactDndRequestForm = async (
 };
 
 // * Request Form Builder end
+
+// * Update user profile information and upload user profile image if there's a new one.
+export const updateUserProfile = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  fullName: string,
+  avatar?: File | Blob | null
+) => {
+  if (avatar) {
+    const { error: uploadUserProfileError } = await supabaseClient.storage
+      .from("images")
+      .upload(`user-profile/${userId}`, avatar, { upsert: true });
+
+    if (uploadUserProfileError) throw uploadUserProfileError;
+
+    const { data: uploadedProfileImageUrl } = supabaseClient.storage
+      .from("images")
+      .getPublicUrl(`user-profile/${userId}`);
+
+    const {
+      data: updatedUserProfileImage,
+      error: updatedUserProfileImageError,
+    } = await supabaseClient
+      .from("user_profile_table")
+      .update({
+        full_name: fullName,
+        avatar_url: `${
+          uploadedProfileImageUrl.publicUrl
+        }?indicator=${new Date()}`,
+      })
+      .eq("user_id", userId);
+
+    if (updatedUserProfileImageError) throw updatedUserProfileImageError;
+
+    return updatedUserProfileImage;
+  } else {
+    const { data: updatedUserProfile, error: updatedUserProfileError } =
+      await supabaseClient
+        .from("user_profile_table")
+        .update({
+          full_name: fullName,
+        })
+        .eq("user_id", userId);
+
+    if (updatedUserProfileError) throw updatedUserProfileError;
+    return updatedUserProfile;
+  }
+};
+
+// * Type here
+export type UpdatedUserProfile = Awaited<ReturnType<typeof updateUserProfile>>;
+
+// * Upload and update team logo.
+export const uploadTeamLogo = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamId: string,
+  image: Blob | File
+) => {
+  const { error: uploadTeamLogoError } = await supabaseClient.storage
+    .from("images")
+    .upload(`team-logo/${teamId}`, image);
+
+  if (uploadTeamLogoError) throw uploadTeamLogoError;
+
+  const { data: uploadedTeamLogoUrl } = supabaseClient.storage
+    .from("images")
+    .getPublicUrl(`team-logo/${teamId}`);
+
+  const { data: updatedTeamLogo, error: updatedTeamLogoError } =
+    await supabaseClient
+      .from("team_table")
+      .update({
+        team_logo: uploadedTeamLogoUrl.publicUrl,
+      })
+      .eq("team_id", teamId);
+
+  if (updatedTeamLogoError) throw updatedTeamLogoError;
+
+  return updatedTeamLogo;
+};
+
+// * Type here
+export type UpdateTeamLogo = Awaited<ReturnType<typeof uploadTeamLogo>>;
