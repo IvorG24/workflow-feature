@@ -1,3 +1,4 @@
+import { setTimeDifference } from "@/utils/request";
 import {
   Avatar,
   Container,
@@ -9,7 +10,6 @@ import {
 } from "@mantine/core";
 import { Fragment } from "react";
 import { ReviewType } from "./ProfilePage";
-import { setTimeDifference } from "./utils";
 
 type Props = {
   reviews: ReviewType[];

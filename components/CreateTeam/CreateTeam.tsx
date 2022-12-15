@@ -79,7 +79,9 @@ const CreateTeam = () => {
     try {
       const team = await createUserTeam(supabase, `${user?.id}`, teamName);
 
-      await handleUpload(team);
+      if (teamLogo) {
+        await handleUpload(team);
+      }
 
       if (action === "invite" && members.length > 0) {
         await createTeamInvitation(
