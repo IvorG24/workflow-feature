@@ -6,6 +6,9 @@ import { SupabaseClient, User } from "@supabase/supabase-js";
 import { Database } from "./database.types";
 import {
   FieldRow,
+  FieldTypeEnum,
+  FormQuestion,
+  FormRequest,
   FormRow,
   FormTypeEnum,
   RequestResponseRow,
@@ -139,14 +142,17 @@ export const fetchTeamRequestFormList = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string
 ) => {
-  const { data: teamRequestFormList, error: teamRequestFormLIstError } =
-    await supabaseClient
-      .from("form_table")
-      .select()
-      .eq("team_id", teamId)
-      .eq("form_type", "request");
+  const {
+    data: teamRequestFormList,
+    error: teamRequestFormLIstError,
+    count,
+  } = await supabaseClient
+    .from("form_table")
+    .select()
+    .eq("team_id", teamId)
+    .eq("form_type", "request");
   if (teamRequestFormLIstError) throw teamRequestFormLIstError;
-  return teamRequestFormList;
+  return { teamRequestFormList, count };
 };
 // * Type here
 export type FetchTeamRequestFormList = Awaited<
@@ -700,3 +706,95 @@ export type GetUserIdListFromEmailList = {
   userId: string;
   userEmail: string;
 }[];
+
+// * Request Form Builder start
+
+// * Fetch empty form for users to fill out.
+// * After fetching form with this function, call mapEmptyFormToReactDndRequestForm() then pass to form builder component.
+export const fetchEmptyForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  formId: number
+) => {
+  const { data: formTableRow } = await supabaseClient
+    .from("form_table")
+    .select()
+    .eq("form_id", formId)
+    .single();
+
+  // Fetch fields of form
+  const { data: fieldTableRowList } = await supabaseClient
+    .from("field_table")
+    .select()
+    .eq("form_table_id", formId);
+
+  return { formTableRow, fieldTableRowList };
+};
+// * Type here
+export type FetchEmptyForm = Awaited<ReturnType<typeof fetchEmptyForm>>;
+
+export const mapEmptyFormToReactDndRequestForm = async ({
+  formTableRow,
+  fieldTableRowList,
+}: FetchEmptyForm) => {
+  if (!formTableRow) throw new Error("Form not found");
+  if (!fieldTableRowList) throw new Error("Fields not found");
+
+  // Map emptyForm to reactDndRequestForm of type FormRequest.
+  const reactDndRequestForm: FormRequest = { form_name: "", questions: [] };
+
+  // Map form name to react dnd.
+  reactDndRequestForm.form_name = formTableRow?.form_name as string;
+
+  // Map questions to react dnd.
+  fieldTableRowList.forEach((fieldTableRow) => {
+    const formQuestion: FormQuestion = {
+      data: {
+        question: fieldTableRow.field_name as string,
+        expected_response_type: fieldTableRow.field_type as string,
+      },
+      option: fieldTableRow.field_option?.map((option) => ({ value: option })),
+    };
+    reactDndRequestForm.questions.push(formQuestion);
+  });
+
+  return reactDndRequestForm;
+};
+
+// * Save built request form (react dnd) to database.
+export const saveReactDndRequestForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  formRequest: FormRequest,
+  userId: string,
+  teamId: string,
+  formType: FormTypeEnum
+) => {
+  // Insert form name to form_table.
+  const { data: formTableRow, error: formError } = await supabaseClient
+    .from("form_table")
+    .insert({
+      form_name: formRequest.form_name,
+      form_owner: userId,
+      team_id: teamId,
+      form_type: formType,
+    })
+    .select()
+    .single();
+
+  // Insert questions to field_table.
+  const { data: fieldTableRowList, error: fieldError } = await supabaseClient
+    .from("field_table")
+    .insert(
+      formRequest.questions.map((question) => ({
+        field_name: question.data.question,
+        field_type: question.data.expected_response_type as FieldTypeEnum,
+        field_option: question.option?.map((option) => option.value),
+        form_table_id: formTableRow?.form_id,
+      }))
+    )
+    .select();
+
+  if (formError || fieldError) throw formError || fieldError;
+  return { formTableRow, fieldTableRowList };
+};
+
+// * Request Form Builder end

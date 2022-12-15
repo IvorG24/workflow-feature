@@ -14,9 +14,6 @@ export type FormRow = Database["public"]["Tables"]["form_table"]["Row"];
 export type FormInsert = Database["public"]["Tables"]["form_table"]["Insert"];
 export type FormUpdate = Database["public"]["Tables"]["form_table"]["Update"];
 
-export type ReviewRow = Database["public"]["Tables"]["review_table"]["Row"];
-export type ReviewInsert =
-  Database["public"]["Tables"]["review_table"]["Insert"];
 // team_table
 export type TeamTableRow = Database["public"]["Tables"]["team_table"]["Row"];
 export type TeamTableInsert =
@@ -70,7 +67,7 @@ export type RequestTableInsert =
 export type RequestTableUpdate =
   Database["public"]["Tables"]["request_table"]["Update"];
 
-
+  
 export type RequestRow = Database["public"]["Tables"]["request_table"]["Row"];
 export type RequestInsert =
   Database["public"]["Tables"]["request_table"]["Insert"];
@@ -134,3 +131,19 @@ export type GetUserIdListFromEmailListArgs =
   Database["public"]["Functions"]["get_user_id_list_from_email_list"]["Args"];
 export type GetUserIdListFromEmailListReturns =
   Database["public"]["Functions"]["get_user_id_list_from_email_list"]["Returns"];
+
+// * Others
+
+// * Build Request Form
+export type QuestionRow = { question: string; expected_response_type: string };
+export type QuestionOption = {
+  value: string;
+};
+export type FormQuestion = {
+  data: QuestionRow;
+  option?: QuestionOption[];
+};
+export type FormRequest = {
+  form_name: string;
+  questions: FormQuestion[];
+};

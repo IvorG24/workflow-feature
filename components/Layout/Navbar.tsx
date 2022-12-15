@@ -1,7 +1,7 @@
 // todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
 import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
-import { Database, FormRow } from "@/utils/types";
+import { Database, FormTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -49,7 +49,7 @@ const Navbar = ({ teamList }: Props) => {
   const user = useUser();
   const [activeTeam, setActiveTeam] = useState(`${router.query.tid}`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [forms, setForms] = useState<FormRow[]>([]);
+  const [forms, setForms] = useState<FormTableRow[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
   const [isOpenRequest, setIsOpenRequest] = useState(false);
   const [isOpenReview, setIsOpenReview] = useState(false);

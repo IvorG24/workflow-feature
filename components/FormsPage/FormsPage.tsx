@@ -1,4 +1,4 @@
-import type { Database, FormRow } from "@/utils/types";
+import useFetchTeamRequestFormList from "@/hooks/useFetchTeamRequestFormList";
 import {
   ActionIcon,
   Button,
@@ -11,11 +11,9 @@ import {
   Title,
   useMantineColorScheme,
 } from "@mantine/core";
-import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AddCircle, Search } from "../Icon";
 import styles from "./FormsPage.module.scss";
 import FormsTable from "./FormsTable";
@@ -23,35 +21,13 @@ import FormsTable from "./FormsTable";
 const FORMS_PER_PAGE = 8;
 
 const FormList = () => {
-  const supabase = useSupabaseClient<Database>();
-
-  const [activePage, setActivePage] = useState(1);
-  const [pageCount, setPageCount] = useState(0);
-  const { colorScheme } = useMantineColorScheme();
   const router = useRouter();
-  const [formList, setFormList] = useState<FormRow[]>([]);
+  const [activePage, setActivePage] = useState(1);
+  const { colorScheme } = useMantineColorScheme();
 
-  useEffect(() => {
-    const fetchForms = async () => {
-      try {
-        const { data, error, count } = await supabase
-          .from("form_table")
-          .select("*")
-          .eq("team_id", router.query.tid);
-        if (error) throw error;
-        setFormList(data);
-        setPageCount(Number(count));
-      } catch {
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch Form List",
-          color: "red",
-        });
-      }
-    };
-
-    fetchForms();
-  }, [supabase, router.query.tid]);
+  const { teamRequestFormList } = useFetchTeamRequestFormList(
+    router.query.tid as string
+  );
 
   return (
     <Container p="md" fluid>
@@ -97,18 +73,23 @@ const FormList = () => {
           rightIcon={<AddCircle />}
           variant="subtle"
           // todo: temporary create form
-          onClick={() => router.push(`/t/${router.query.tid}/forms/build`)}
+          onClick={async () =>
+            await router.push(`/t/${router.query.tid}/forms/build`)
+          }
         >
           Create a Form
         </Button>
       </Group>
 
-      <FormsTable forms={formList} colorScheme={colorScheme} />
+      <FormsTable
+        formList={teamRequestFormList.teamRequestFormList}
+        colorScheme={colorScheme}
+      />
       <Flex justify="flex-end" mt="xl">
         <Pagination
           page={activePage}
           onChange={setActivePage}
-          total={ceil(pageCount / FORMS_PER_PAGE)}
+          total={ceil((teamRequestFormList.count as number) / FORMS_PER_PAGE)}
         />
       </Flex>
     </Container>

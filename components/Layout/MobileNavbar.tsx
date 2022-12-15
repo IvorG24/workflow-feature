@@ -1,7 +1,7 @@
 // todo: close navbar when clicked outside
 import SelectItem from "@/components/SelectItem/SelectItem";
 import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
-import type { Database, FormRow } from "@/utils/types";
+import type { Database, FormTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -56,7 +56,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
   const user = useUser();
   const [activeTeam, setActiveTeam] = useState(`${router.query.tid}`);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [forms, setForms] = useState<FormRow[]>([]);
+  const [forms, setForms] = useState<FormTableRow[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
   const [isOpenRequest, setIsOpenRequest] = useState(false);
   const [isOpenReview, setIsOpenReview] = useState(false);
