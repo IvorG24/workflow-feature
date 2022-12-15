@@ -6,10 +6,12 @@ import { SupabaseClient, User } from "@supabase/supabase-js";
 import { Database } from "./database.types";
 import {
   FieldRow,
+  FieldTableRow,
   FieldTypeEnum,
   FormQuestion,
   FormRequest,
   FormRow,
+  FormTableRow,
   FormTypeEnum,
   RequestCommentTableRow,
   RequestResponseRow,
@@ -277,15 +279,27 @@ export const retrieveFormFieldList = async (
   supabaseClient: SupabaseClient<Database>,
   formId: string
 ) => {
+  const { data: form, error: formError } = await supabaseClient
+    .from("form_table")
+    .select("form_priority")
+    .eq("form_id", formId)
+    .single();
+
+  if (formError) throw formError;
+
   const { data: formFieldList, error: formFieldListError } =
     await supabaseClient
       .from("field_table")
       .select("*")
-      .eq("form_table_id", formId);
+      .eq("form_table_id", formId)
+      .order("field_id", { ascending: false });
 
   if (formFieldListError) throw formFieldListError;
 
-  return formFieldList;
+  const priority = form.form_priority as number[];
+  return formFieldList.sort(
+    (a, b) => priority.indexOf(a.field_id) - priority.indexOf(b.field_id)
+  );
 };
 // * Type here
 export type RetrievedFormFields = Awaited<
@@ -476,15 +490,16 @@ export const retrieveRequestList = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "*, form: form_table_id(*), approver: approver_id(*), owner: requested_by(*)"
+      "*, form: form_table_id!inner(*), approver: approver_id(*), owner: requested_by(*)"
     )
     .eq("is_draft", false)
     .eq("form.team_id", teamId)
-    .range(start, start + requestPerPage - 1);
+    .range(start, start + requestPerPage - 1)
+    .order("request_created_at", { ascending: false });
 
   let countQuery = supabaseClient
     .from("request_table")
-    .select("*, form: form_table_id(*)")
+    .select("*, form: form_table_id!inner(*)")
     .eq("is_draft", false)
     .eq("form.team_id", teamId);
 
@@ -714,19 +729,32 @@ export const fetchEmptyForm = async (
   supabaseClient: SupabaseClient<Database>,
   formId: number
 ) => {
-  const { data: formTableRow } = await supabaseClient
+  const { data: formTableRow, error: formTableRowError } = await supabaseClient
     .from("form_table")
     .select()
     .eq("form_id", formId)
     .single();
 
-  // Fetch fields of form
-  const { data: fieldTableRowList } = await supabaseClient
-    .from("field_table")
-    .select()
-    .eq("form_table_id", formId);
+  if (formTableRowError) throw formTableRowError;
 
-  return { formTableRow, fieldTableRowList };
+  // Fetch fields of form
+  const { data: fieldTableRowList, error: fieldTableRowListError } =
+    await supabaseClient
+      .from("field_table")
+      .select()
+      .eq("form_table_id", formId);
+
+  if (fieldTableRowListError) throw fieldTableRowListError;
+
+  const priority = formTableRow.form_priority as number[];
+  const sortedFieldTableRowList = fieldTableRowList.sort(
+    (a, b) => priority.indexOf(a.field_id) - priority.indexOf(b.field_id)
+  );
+
+  return {
+    formTableRow: formTableRow as FormTableRow | null,
+    fieldTableRowList: sortedFieldTableRowList as FieldTableRow[] | null,
+  };
 };
 // * Type here
 export type FetchEmptyForm = Awaited<ReturnType<typeof fetchEmptyForm>>;
@@ -881,6 +909,29 @@ export const uploadTeamLogo = async (
 // * Type here
 export type UpdateTeamLogo = Awaited<ReturnType<typeof uploadTeamLogo>>;
 
+// * Fetch team owner and admins.
+export const retrieveTeamOwnerAndAdmins = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamId: string,
+  userId: string
+) => {
+  const { data: ownerAndAdminList, error: ownerAndAdminListError } =
+    await supabaseClient
+      .from("team_role_table")
+      .select("*")
+      .or(`team_role.eq.admin, team_role.eq.owner`)
+      .eq("team_id", teamId)
+      .neq("user_id", userId);
+
+  if (ownerAndAdminListError) throw ownerAndAdminListError;
+
+  return ownerAndAdminList;
+};
+
+// * Type here
+export type RetrievedTeamOwnerAndAdmins = Awaited<
+  ReturnType<typeof retrieveTeamOwnerAndAdmins>
+>;
 // * Add comment on request.
 export const retrieveRequestComments = async (
   supabaseClient: SupabaseClient<Database>,

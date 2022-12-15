@@ -1,6 +1,9 @@
 // todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
-import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
+import {
+  CreateOrRetrieveUserTeamList,
+  retrieveTeamOwnerAndAdmins,
+} from "@/utils/queries";
 import { Database, FormTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -99,6 +102,34 @@ const Navbar = ({ teamList }: Props) => {
   const iconStyle = `${styles.icon} ${
     colorScheme === "dark" ? styles.colorLight : ""
   }`;
+
+  const handlePushToCreateRequest = async (formId: number) => {
+    try {
+      const ownerAndAdminList = await retrieveTeamOwnerAndAdmins(
+        supabase,
+        `${router.query.tid}`,
+        `${user?.id}`
+      );
+
+      if (ownerAndAdminList.length > 1) {
+        router.push(`/t/${activeTeam}/requests/create?formId=${formId}`);
+      } else {
+        showNotification({
+          title: "Warning!",
+          message:
+            "This team doesn't have any possible approvers yet. Assign an admin first before creating a request",
+          color: "orange",
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      showNotification({
+        title: "Error!",
+        message: "Failed to fetch approvers",
+        color: "red",
+      });
+    }
+  };
 
   return (
     <>
@@ -290,9 +321,7 @@ const Navbar = ({ teamList }: Props) => {
                           component="button"
                           onClick={(e) => {
                             e.preventDefault();
-                            router.push(
-                              `/t/${activeTeam}/requests/create?formId=${form.form_id}`
-                            );
+                            handlePushToCreateRequest(form.form_id);
                           }}
                           aria-label="create a request"
                           className={`${styles.createRequestButton} ${
