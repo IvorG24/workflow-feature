@@ -345,7 +345,9 @@ const CreateRequest = () => {
         color: "green",
       });
 
-      router.push("/requests");
+      router.push(
+        `/t/${router.query.tid}/requests?formId=${router.query.formId}`
+      );
     } catch {
       showNotification({
         title: "Error!",
