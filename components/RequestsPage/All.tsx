@@ -70,7 +70,7 @@ const All = () => {
         selectedForm,
         status,
         search,
-        isSearch,
+        isSearch
       );
 
       if (!isSearch) {

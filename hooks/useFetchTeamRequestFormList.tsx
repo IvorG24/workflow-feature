@@ -2,10 +2,11 @@ import {
   fetchTeamRequestFormList,
   FetchTeamRequestFormList,
 } from "@/utils/queries";
+import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import showNotification from "./showNotifications";
+
 import useAuth from "./useAuth";
 
 const useFetchTeamRequestFormList = (teamId: string) => {
@@ -29,13 +30,13 @@ const useFetchTeamRequestFormList = (teamId: string) => {
       } catch (e) {
         console.error(e);
         showNotification({
-          message: "Failed to request form list.",
-          state: "Danger",
-          title: "Error",
+          title: "Error!",
+          message: "Failed to fetch forms",
+          color: "red",
         });
       }
     })();
-  }, [supabaseClient, user, router]);
+  }, [supabaseClient, user, router, teamId]);
 
   return { teamRequestFormList };
 };

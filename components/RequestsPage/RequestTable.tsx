@@ -1,4 +1,4 @@
-import { Close } from "@/components/Icon";
+import { Close, Maximize } from "@/components/Icon";
 import { renderTooltip, setBadgeColor } from "@/utils/request";
 import type {
   Database,
@@ -159,9 +159,20 @@ const RequestTable = ({
       {selectedRequest ? (
         <Paper shadow="xl" className={styles.requestContainer}>
           <Container m={0} p={0} className={styles.closeIcon}>
-            <ActionIcon onClick={() => setSelectedRequest(null)}>
-              <Close />
-            </ActionIcon>
+            <Group spacing={0}>
+              <ActionIcon
+                onClick={() =>
+                  router.push(
+                    `/t/${router.query.tid}/requests/${selectedRequest.request_id}`
+                  )
+                }
+              >
+                <Maximize />
+              </ActionIcon>
+              <ActionIcon onClick={() => setSelectedRequest(null)}>
+                <Close />
+              </ActionIcon>
+            </Group>
           </Container>
           <Group position="apart" grow>
             <Stack align="flex-start">
