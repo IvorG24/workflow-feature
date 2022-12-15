@@ -23,6 +23,7 @@ import {
   TeamRoleTableRow,
   TeamTableRow,
   UserNotificationTableInsert,
+  UserProfileRow,
   UserProfileTableRow,
 } from "./types";
 
@@ -44,9 +45,9 @@ export const createOrRetrieveUser = async (
     .from("user_profile_table")
     .insert({
       user_id: user.id,
-      username: "",
-      full_name: "",
-      avatar_url: "",
+      // username: "",
+      // full_name: "",
+      // avatar_url: "",
       email: user.email,
     })
     .select()
@@ -908,6 +909,43 @@ export const uploadTeamLogo = async (
 
 // * Type here
 export type UpdateTeamLogo = Awaited<ReturnType<typeof uploadTeamLogo>>;
+
+// * Check if user is already a member of the team.
+export const isUserAlreadyAMemberOfTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamInvitationId: string,
+  userId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_role_table")
+    .select()
+    .eq("team_id", teamInvitationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return !!data;
+};
+
+// * Fetch team invitation.
+export const fetchTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamInvitationId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_invitation_table")
+    .select(`*, team_table(*), source:invite_source(*)`)
+    .eq("team_invitation_id", teamInvitationId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data as FetchTeamInvitation;
+};
+// * Type here
+export type FetchTeamInvitation = TeamInvitationTableRow & {
+  team_table: TeamTableRow;
+  source: UserProfileRow;
+};
 
 // * Fetch team owner and admins.
 export const retrieveTeamOwnerAndAdmins = async (

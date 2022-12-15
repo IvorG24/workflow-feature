@@ -4,9 +4,15 @@ type Props = {
   teamName: string;
   teamLogo: string;
   inviteSource: string;
+  handleAcceptInvitation: () => void;
 };
 
-const AcceptInvitation = ({ teamName, teamLogo, inviteSource }: Props) => {
+const AcceptInvitation = ({
+  teamName,
+  teamLogo,
+  inviteSource,
+  handleAcceptInvitation,
+}: Props) => {
   return (
     <Container fluid p="xl" mt="xl">
       <Flex direction="column" justify="center" align="center" mt="xl">
@@ -15,7 +21,13 @@ const AcceptInvitation = ({ teamName, teamLogo, inviteSource }: Props) => {
         <Text size="xl" mt="sm">
           {inviteSource} invited you to {teamName}
         </Text>
-        <Button mt="xl" fullWidth maw={300} size="lg">
+        <Button
+          mt="xl"
+          fullWidth
+          maw={300}
+          size="lg"
+          onClick={handleAcceptInvitation}
+        >
           Accept Invite
         </Button>
       </Flex>

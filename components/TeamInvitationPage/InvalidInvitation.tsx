@@ -1,21 +1,25 @@
-import { Avatar, Button, Container, Flex, Text, Title } from "@mantine/core";
+import { Button, Container, Flex, Text, Title } from "@mantine/core";
+import { useRouter } from "next/router";
 
-type Props = {
-  teamName: string;
-  teamLogo: string;
-};
+const InvalidInvitation = () => {
+  const router = useRouter();
 
-const InvalidInvitation = ({ teamName, teamLogo }: Props) => {
   return (
     <Container fluid p="xl" mt="xl">
       <Flex direction="column" justify="center" align="center" mt="xl">
-        <Avatar src={teamLogo} size={200} radius={100} />
-        <Title mt="xl">{teamName}</Title>
+        {/* <Avatar src={teamLogo} size={200} radius={100} /> */}
+        <Title mt="xl">Failed to accept invite</Title>
         <Text size="xl" mt="sm">
           Invitation is invalid
         </Text>
-        <Button mt="xl" fullWidth maw={300} size="lg">
-          Continue
+        <Button
+          mt="xl"
+          fullWidth
+          maw={300}
+          size="lg"
+          onClick={() => router.push("/")}
+        >
+          Return to home
         </Button>
       </Flex>
     </Container>
