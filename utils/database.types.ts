@@ -96,32 +96,6 @@ export interface Database {
           request_comment_by_id?: string | null
         }
       }
-      request_comment_table: {
-        Row: {
-          request_comment_id: number
-          request_comment: string | null
-          request_comment_created_at: string | null
-          request_comment_is_edited: boolean | null
-          request_id: number | null
-          request_comment_by_id: string | null
-        }
-        Insert: {
-          request_comment_id?: never
-          request_comment?: string | null
-          request_comment_created_at?: string | null
-          request_comment_is_edited?: boolean | null
-          request_id?: number | null
-          request_comment_by_id?: string | null
-        }
-        Update: {
-          request_comment_id?: never
-          request_comment?: string | null
-          request_comment_created_at?: string | null
-          request_comment_is_edited?: boolean | null
-          request_id?: number | null
-          request_comment_by_id?: string | null
-        }
-      }
       request_response_table: {
         Row: {
           field_id: number
