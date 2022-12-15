@@ -1,5 +1,6 @@
 // todo: create unit test
 import {
+  getFileUrl,
   requestResponse,
   retrieveRequest,
   retrieveRequestResponse,
@@ -76,6 +77,7 @@ const Request = () => {
     approverName: "",
     approverId: "",
     created_at: "",
+    attachmentUrlList: [""],
   });
   const [requestFields, setRequestFields] = useState<RequestFields[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +98,17 @@ const Request = () => {
         );
 
         setRequest(retrievedRequest);
+
+        const attachmentList = retrievedRequest?.attachments
+          ? (retrievedRequest.attachments as never[])
+          : [];
+
+        const promises = attachmentList.map((attachment) => {
+          return getFileUrl(supabase, attachment, "request_attachments");
+        });
+
+        const attachmentUrlList = await Promise.all(promises);
+
         setRequiredFields({
           approval_status: `${retrievedRequest.request_status}`,
           request_title: `${retrievedRequest.request_title}`,
@@ -105,6 +118,7 @@ const Request = () => {
           approverName: `${retrievedRequest.approver.full_name}`,
           created_at: `${retrievedRequest.request_created_at}`,
           approverId: `${retrievedRequest.approver_id}`,
+          attachmentUrlList,
         });
         setRequestFields(requestFields);
         setIsFetchingRequest(false);
@@ -266,7 +280,32 @@ const Request = () => {
 
         <Stack mt="xl">
           <Title order={5}>Attachment</Title>
-          <Text>---</Text>
+          {requiredFields.attachmentUrlList.length === 0 && <Text>---</Text>}
+          {requiredFields.attachmentUrlList.map((attachmentUrl) => {
+            return (
+              // ! URL.createObjectURL does not work on Mantine Image component.
+              // <Image
+              //   fit="contain"
+              //   width={200}
+              //   height={80}
+              //   src={attachmentUrl.path}
+              // />
+              // * URL.createObjectURL works on Mantine Avatar component and HTML image tag only.
+              // <Avatar src={attachmentUrl} alt="Attachment Image" />
+              <a
+                key={attachmentUrl}
+                href={attachmentUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img
+                  src={attachmentUrl}
+                  alt="Attachment Image"
+                  style={{ height: 200, width: 200 }}
+                />
+              </a>
+            );
+          })}
 
           {isApprover ? (
             <Group mt="xl" position="right">

@@ -10,6 +10,7 @@ import {
   saveRequestField,
   updateRequest,
   updateRequestReponse,
+  uploadFile,
 } from "@/utils/queries";
 import { renderTooltip } from "@/utils/request";
 import type { Database, Marks, UserProfileRow } from "@/utils/types";
@@ -18,6 +19,7 @@ import {
   Box,
   Button,
   Container,
+  FileInput,
   Flex,
   Group,
   LoadingOverlay,
@@ -35,6 +37,7 @@ import {
 import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { IconUpload } from "@tabler/icons";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -105,6 +108,7 @@ const CreateRequest = () => {
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [draftId, setDraftId] = useState<number | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   useBeforeunload(() => {
     if (Boolean(draftId)) {
@@ -321,12 +325,25 @@ const CreateRequest = () => {
     try {
       setIsCreating(true);
 
+      let filepath;
+      // * Upload file first if existing so if upload failed, request won't be created.
+      if (file) {
+        const { path } = await uploadFile(
+          supabase,
+          file.name,
+          file,
+          "request_attachments"
+        );
+        filepath = path;
+      }
+
       const savedRequest = await saveRequest(
         supabase,
         `${selectedApprover}`,
         formData,
         `${user?.id}`,
-        Number(router.query.formId)
+        Number(router.query.formId),
+        filepath
       );
 
       const requestResponse = fields.map((field) => {
@@ -443,6 +460,14 @@ const CreateRequest = () => {
                 required: "Request Description is Required",
               })}
               error={errors.description?.message}
+            />
+            <FileInput
+              value={file}
+              onChange={setFile}
+              accept="image/png,image/jpeg,image/jpg"
+              label="Image Attachment"
+              placeholder="Select file"
+              icon={<IconUpload size={14} />}
             />
 
             {fields?.map((field) => {
@@ -591,7 +616,7 @@ const CreateRequest = () => {
                 );
               }
             })}
-
+            
             <Group position="right">
               <Button mt="xl" size="md" px={50} type="submit">
                 CREATE
