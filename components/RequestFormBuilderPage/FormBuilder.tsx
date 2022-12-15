@@ -95,7 +95,7 @@ const FormBuilder: FC<Props> = (props) => {
         title: "Form built",
         message: "You can now create requests with this form!",
       });
-      router.push("/forms");
+      router.push(`/t/${router.query.tid}/forms`);
     } catch (e) {
       setNotification("Error saving the form");
     }
