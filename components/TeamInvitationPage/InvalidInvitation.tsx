@@ -5,14 +5,14 @@ type Props = {
   teamLogo: string;
 };
 
-const SuccessInvitation = ({ teamName, teamLogo }: Props) => {
+const InvalidInvitation = ({ teamName, teamLogo }: Props) => {
   return (
     <Container fluid p="xl" mt="xl">
       <Flex direction="column" justify="center" align="center" mt="xl">
         <Avatar src={teamLogo} size={200} radius={100} />
         <Title mt="xl">{teamName}</Title>
         <Text size="xl" mt="sm">
-          Successfully joined {teamName}
+          Invitation is invalid
         </Text>
         <Button mt="xl" fullWidth maw={300} size="lg">
           Continue
@@ -22,4 +22,4 @@ const SuccessInvitation = ({ teamName, teamLogo }: Props) => {
   );
 };
 
-export default SuccessInvitation;
+export default InvalidInvitation;

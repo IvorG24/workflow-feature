@@ -1,5 +1,5 @@
 import Meta from "@/components/Meta/Meta";
-import SuccessInvitation from "@/components/TeamInvitationPage/SuccessInvitation";
+import AcceptInvitation from "@/components/TeamInvitationPage/AcceptInvitation";
 // import { Database } from "@/utils/database.types";
 // import { acceptTeamInvitation } from "@/utils/queries";
 // import { LoadingOverlay } from "@mantine/core";
@@ -62,9 +62,10 @@ export default function TeamInvitationsPage() {
       />
       {/* <LoadingOverlay visible={isFetching} overlayBlur={2} /> */}
       {/* {!isFetching && <h1>Team Invitations Page. Run logic here.</h1>} */}
-      <SuccessInvitation
+      <AcceptInvitation
         teamName={tempData.team_name}
         teamLogo={tempData.team_logo}
+        inviteSource={tempData.invite_source}
       />
     </>
   );
