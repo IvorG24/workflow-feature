@@ -13,35 +13,24 @@ const tempData = [
   },
   {
     label: "digitized",
-    value: 22,
+    value: 12,
   },
   {
     label: "tangible",
-    value: 10,
+    value: 85,
   },
   {
     label: "adaptive",
-    value: 29,
+    value: 57,
   },
-  {
-    label: "open architecture",
-    value: 9,
-  },
+
   {
     label: "synergistic",
-    value: 34,
-  },
-  {
-    label: "user-friendly",
-    value: 29,
-  },
-  {
-    label: "disintermediate",
-    value: 27,
+    value: 100,
   },
   {
     label: "portal",
-    value: 19,
+    value: 75,
   },
   {
     label: "structure",
@@ -49,39 +38,19 @@ const tempData = [
   },
   {
     label: "up-sized",
-    value: 32,
+    value: 48,
   },
   {
     label: "optimized",
-    value: 28,
-  },
-  {
-    label: "pricing structure",
-    value: 32,
-  },
-  {
-    label: "5th generation",
-    value: 37,
+    value: 88,
   },
   {
     label: "versatile",
-    value: 5,
-  },
-  {
-    label: "multi-state",
-    value: 36,
-  },
-  {
-    label: "collaboration",
-    value: 35,
+    value: 45,
   },
   {
     label: "interface",
-    value: 7,
-  },
-  {
-    label: "user-centric",
-    value: 16,
+    value: 32,
   },
 ];
 
@@ -95,6 +64,8 @@ const Page: NextPageWithLayout = () => {
       />
       <Box maw="800px">
         <DataAnalysis data={tempData} />
+        <DataAnalysis data={tempData} chartType="line" />
+        <DataAnalysis data={tempData} chartType="radar" />
       </Box>
     </div>
   );

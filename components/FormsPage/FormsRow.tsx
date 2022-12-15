@@ -1,8 +1,8 @@
-import { FormRow } from "@/utils/types";
+import { FormTableRow } from "@/utils/types";
 import { Badge, Checkbox } from "@mantine/core";
 
 type Props = {
-  form: FormRow;
+  form: FormTableRow;
 };
 
 const FormsRow = ({ form }: Props) => {
