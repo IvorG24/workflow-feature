@@ -402,7 +402,8 @@ export const saveRequest = async (
   selectedApprover: string,
   formData: RequestFieldsType,
   userId: string,
-  formId: number
+  formId: number,
+  attachmentFilePath?: string
 ) => {
   const { data: request, error: requestError } = await supabaseClient
     .from("request_table")
@@ -414,6 +415,7 @@ export const saveRequest = async (
       on_behalf_of: formData.behalf,
       request_description: formData.description,
       is_draft: false,
+      attachments: attachmentFilePath ? [attachmentFilePath] : [],
     })
     .select()
     .single();
@@ -532,6 +534,22 @@ export const retrieveRequestList = async (
   if (requestListError) throw requestListError;
   const { count: requestCount, error: requestCountError } = await countQuery;
   if (requestCountError) throw requestCountError;
+
+  // * Loop through request list and getFileUrl for each attachment.
+  for (let i = 0; i < requestList.length; i++) {
+    const request = requestList[i];
+    if (request.attachments) {
+      for (let j = 0; j < request.attachments.length; j++) {
+        const attachment = request.attachments[j];
+        const attachmentUrl = await getFileUrl(
+          supabaseClient,
+          attachment,
+          "request_attachments"
+        );
+        request.attachments[j] = attachmentUrl;
+      }
+    }
+  }
 
   return {
     requestList: requestList as RequestType[],
@@ -909,6 +927,83 @@ export const uploadTeamLogo = async (
 
 // * Type here
 export type UpdateTeamLogo = Awaited<ReturnType<typeof uploadTeamLogo>>;
+
+// * Get file URL from storage using filepath.
+// * See https://github.com/supabase/supabase/blob/master/examples/user-management/nextjs-ts-user-management/components/Avatar.tsx
+export async function getFileUrl(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .download(path);
+    if (error) throw error;
+
+    const url = URL.createObjectURL(data);
+
+    return url;
+  } catch (error) {
+    throw new Error("Error fetching file URL");
+  }
+}
+
+// * Get file as Blob
+// * Returns the filepath.
+export async function downloadFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .download(path);
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    throw new Error("Error downloading file");
+  }
+}
+
+// * Upload a file
+// * Returns the filepath.
+export async function uploadFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  file: File | Blob,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .upload(path, file);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw new Error("Error uploading file");
+  }
+}
+
+// * Replace an existing file
+export async function replaceFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  file: File | Blob,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .update(path, file);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw new Error("Error replacing file");
+  }
+}
 
 // * Check if user is already a member of the team.
 export const isUserAlreadyAMemberOfTeam = async (
