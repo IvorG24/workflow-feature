@@ -1,11 +1,15 @@
 import { Avatar, Button, Container, Flex, Text, Title } from "@mantine/core";
+import { useRouter } from "next/router";
 
 type Props = {
   teamName: string;
   teamLogo: string;
+  teamId: string;
 };
 
-const SuccessInvitation = ({ teamName, teamLogo }: Props) => {
+const SuccessInvitation = ({ teamName, teamLogo, teamId }: Props) => {
+  const router = useRouter();
+
   return (
     <Container fluid p="xl" mt="xl">
       <Flex direction="column" justify="center" align="center" mt="xl">
@@ -14,8 +18,14 @@ const SuccessInvitation = ({ teamName, teamLogo }: Props) => {
         <Text size="xl" mt="sm">
           Successfully joined {teamName}
         </Text>
-        <Button mt="xl" fullWidth maw={300} size="lg">
-          Continue
+        <Button
+          mt="xl"
+          fullWidth
+          maw={300}
+          size="lg"
+          onClick={() => router.push(`/t/${teamId}/dashboard`)}
+        >
+          Continue to team dashboard
         </Button>
       </Flex>
     </Container>
