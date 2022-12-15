@@ -207,7 +207,27 @@ const RequestTable = ({
           <Divider mt="xl" />
           <Stack mt="xl">
             <Title order={5}>Attachment</Title>
-            <Text>---</Text>
+            {!selectedRequest.attachments && <Text>---</Text>}
+            {selectedRequest.attachments &&
+              selectedRequest.attachments.length === 0 && <Text>---</Text>}
+            {selectedRequest.attachments &&
+              selectedRequest.attachments.map((attachmentUrl) => {
+                console.log(attachmentUrl);
+                return (
+                  <a
+                    key={attachmentUrl}
+                    href={attachmentUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <img
+                      src={attachmentUrl}
+                      alt="Attachment Image"
+                      style={{ height: 200, width: 200 }}
+                    />
+                  </a>
+                );
+              })}
           </Stack>
 
           {isApprover ? (
