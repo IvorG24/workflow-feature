@@ -15,6 +15,7 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
+import BottomNavigation, { ILink } from "./BottomNavigation";
 import MobileHeader from "./MobileHeader";
 import Navbar from "./Navbar";
 import styles from "./TeamLayout.module.scss";
@@ -35,6 +36,9 @@ const TeamLayout = ({ children }: Props) => {
     // state: { userProfile }, // * This is how to fetch state of context.
     dispatchUserProfile,
   } = useUserProfileContext();
+
+  // Provide data for bottom navigation links
+  const bottomNavLinks: ILink[] = [];
 
   // TODO: Will refactor this to a cleaner version.
   // ? Do I need to convert this to hook?
@@ -105,7 +109,12 @@ const TeamLayout = ({ children }: Props) => {
           navbar={<Navbar teamList={createdOrRetrievedUserTeamList} />} // don't use typecasting for tid
           header={<MobileHeader teamList={createdOrRetrievedUserTeamList} />}
         >
-          <main className={styles.childrenContainer}>{children}</main>
+          <main className={styles.childrenContainer}>
+            {children}
+            {bottomNavLinks.length > 0 && (
+              <BottomNavigation links={bottomNavLinks} />
+            )}
+          </main>
         </AppShell>
       ) : null}
     </>
