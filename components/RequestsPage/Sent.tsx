@@ -30,7 +30,6 @@ const statusOptions: {
   { value: "rejected", label: "Rejected" },
   { value: "revision", label: "Revision" },
   { value: "stale", label: "Stale" },
-  { value: "cancelled", label: "Cancelled" },
 ];
 
 const REQUEST_PER_PAGE = 8;

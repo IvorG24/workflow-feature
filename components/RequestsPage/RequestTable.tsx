@@ -83,8 +83,14 @@ type Props = {
   setSelectedRequest: Dispatch<SetStateAction<RequestType | null>>;
   isApprover: boolean;
   handleApprove: () => void;
-  handleSendToRevision: () => void;
+  // handleSendToRevision: () => void;
   handleReject: () => void;
+  handleDelete: () => void;
+  confirmationModal: (
+    action: string,
+    requestTitle: string,
+    confirmFunction: () => void
+  ) => void;
 };
 
 const RequestTable = ({
@@ -93,8 +99,10 @@ const RequestTable = ({
   setSelectedRequest,
   isApprover,
   handleApprove,
-  handleSendToRevision,
+  // handleSendToRevision,
   handleReject,
+  handleDelete,
+  confirmationModal,
 }: Props) => {
   const { width } = useViewportSize();
   const router = useRouter();
@@ -363,14 +371,63 @@ const RequestTable = ({
             <>
               <Divider mt="xl" />
               <Stack mt="xl">
-                <Button color="green" onClick={() => handleApprove()}>
+                <Button
+                  color="green"
+                  onClick={() =>
+                    confirmationModal(
+                      "approve",
+                      `${selectedRequest.request_title}`,
+                      handleApprove
+                    )
+                  }
+                >
                   Approve
                 </Button>
-                <Button color="dark" onClick={() => handleSendToRevision()}>
+                {/* <Button
+                  color="dark"
+                  onClick={() =>
+                    confirmationModal(
+                      "revise",
+                      `${selectedRequest.request_title}`,
+                      handleSendToRevision
+                    )
+                  }
+                >
                   Send For Revision
-                </Button>
-                <Button color="red" onClick={() => handleReject()}>
+                </Button> */}
+                <Button
+                  color="red"
+                  onClick={() =>
+                    confirmationModal(
+                      "reject",
+                      `${selectedRequest.request_title}`,
+                      handleReject
+                    )
+                  }
+                >
                   Reject
+                </Button>
+              </Stack>
+            </>
+          ) : null}
+
+          {selectedRequest.owner.user_id === user?.id &&
+          (selectedRequest.request_status === "pending" ||
+            selectedRequest.request_status === "stale") ? (
+            <>
+              <Divider mt="xl" />
+              <Stack mt="xl">
+                <Button
+                  color="dark"
+                  onClick={() =>
+                    confirmationModal(
+                      "delete",
+                      `${selectedRequest.request_title}`,
+                      handleDelete
+                    )
+                  }
+                >
+                  Delete
                 </Button>
               </Stack>
             </>
