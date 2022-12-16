@@ -1,9 +1,7 @@
 // todo: create unit tests for requests page and all of its sub components
 import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
-import All from "./All";
-import Received from "./Received";
-import Sent from "./Sent";
+import RequestList from "./RequestList";
 
 type Props = {
   activeTab: string;
@@ -11,17 +9,6 @@ type Props = {
 
 const RequestsPage = ({ activeTab }: Props) => {
   const router = useRouter();
-
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case "all":
-        return <All />;
-      case "sent":
-        return <Sent />;
-      case "received":
-        return <Received />;
-    }
-  };
 
   return (
     <Container px={8} py={16} fluid>
@@ -45,7 +32,7 @@ const RequestsPage = ({ activeTab }: Props) => {
       </Tabs>
 
       <Container fluid m={0} p={0}>
-        {renderActiveTab()}
+        <RequestList activeTab={activeTab} />
       </Container>
     </Container>
   );
