@@ -1,23 +1,19 @@
-// todo: create unit test
 import {
-  getFileUrl,
   createComment,
   deleteComment,
   editComment,
   requestResponse,
   RetrievedRequestComments,
-  retrieveRequest,
   retrieveRequestComments,
-  retrieveRequestResponse,
 } from "@/utils/queries";
-import { renderTooltip, setBadgeColor, setTimeDifference } from "@/utils/request";
-import type {
-  Database,
-  Marks,
-  RequestFields,
-  RequestType,
-} from "@/utils/types";
 import {
+  renderTooltip,
+  setBadgeColor,
+  setTimeDifference,
+} from "@/utils/request";
+import { Database, Marks, RequestFields, RequestType } from "@/utils/types";
+import {
+  ActionIcon,
   Avatar,
   Badge,
   Box,
@@ -43,10 +39,19 @@ import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
+import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { Dots } from "../Icon";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Close, Dots, Maximize } from "../Icon";
 import styles from "./Request.module.scss";
+
+type Props = {
+  view: "split" | "full";
+  selectedRequest: RequestType | null;
+  setSelectedRequest?: Dispatch<SetStateAction<RequestType | null>>;
+  setRequestList?: Dispatch<SetStateAction<RequestType[]>>;
+  setIsLoading?: Dispatch<SetStateAction<boolean>>;
+};
 
 const MARKS: Marks[] = [
   {
@@ -71,176 +76,70 @@ const MARKS: Marks[] = [
   },
 ];
 
-const Request = () => {
-  const supabase = useSupabaseClient<Database>();
+const Request = ({
+  view,
+  selectedRequest,
+  setSelectedRequest,
+  setRequestList,
+  setIsLoading,
+}: Props) => {
   const router = useRouter();
+  const supabase = useSupabaseClient<Database>();
   const user = useUser();
-  const [isFetchingRequest, setIsFetchingRequest] = useState(true);
-  const [request, setRequest] = useState<RequestType | null>(null);
-  const [requiredFields, setRequiredFields] = useState({
-    approval_status: "",
-    request_title: "",
-    request_description: "",
-    on_behalf_of: "",
-    requestedBy: "",
-    approverName: "",
-    approverId: "",
-    created_at: "",
-    attachmentUrlList: [""],
-  });
-  const [requestFields, setRequestFields] = useState<RequestFields[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRequestFields, setSelectedRequestFields] = useState<
+    RequestFields[]
+  >([]);
   const [comment, setComment] = useState("");
   const [commentList, setCommentList] = useState<RetrievedRequestComments[]>(
     []
   );
   const [editCommentId, setEditCommentId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
+  const [fullViewIsLoading, setFullViewIsLoading] = useState(false);
+
+  const isApprover =
+    (selectedRequest?.request_status === "stale" ||
+      selectedRequest?.request_status === "pending") &&
+    selectedRequest?.approver_id === user?.id;
 
   useEffect(() => {
-    if (!router.isReady) return;
-    setIsFetchingRequest(true);
-
-    const fetchRequest = async () => {
+    const fetchRequestFields = async () => {
       try {
-        const retrievedRequest = await retrieveRequest(
-          supabase,
-          Number(router.query.id)
-        );
-        const requestFields = await retrieveRequestResponse(
-          supabase,
-          Number(router.query.id)
-        );
+        const { data: requestFields, error: requestFieldsError } =
+          await supabase
+            .from("request_response_table")
+            .select("*, field: field_id(*)")
+            .eq("request_id", selectedRequest?.request_id);
 
-        setRequest(retrievedRequest);
+        if (requestFieldsError) throw requestFieldsError;
 
-        const attachmentList = retrievedRequest?.attachments
-          ? (retrievedRequest.attachments as never[])
-          : [];
-
-        const promises = attachmentList.map((attachment) => {
-          return getFileUrl(supabase, attachment, "request_attachments");
-        });
-
-        const attachmentUrlList = await Promise.all(promises);
-
-        setRequiredFields({
-          approval_status: `${retrievedRequest.request_status}`,
-          request_title: `${retrievedRequest.request_title}`,
-          request_description: `${retrievedRequest.request_description}`,
-          on_behalf_of: `${retrievedRequest.on_behalf_of}`,
-          requestedBy: `${retrievedRequest.owner.full_name}`,
-          approverName: `${retrievedRequest.approver.full_name}`,
-          created_at: `${retrievedRequest.request_created_at}`,
-          approverId: `${retrievedRequest.approver_id}`,
-          attachmentUrlList,
-        });
-        setRequestFields(requestFields);
-        setIsFetchingRequest(false);
+        setSelectedRequestFields(requestFields as unknown as RequestFields[]);
       } catch {
         showNotification({
           title: "Error!",
-          message: "Failed to fetch Request",
+          message: "Failed to fetch Request Fields",
           color: "red",
         });
       }
     };
-
     const fetchComments = async () => {
       const commentList = await retrieveRequestComments(
         supabase,
-        Number(router.query.id)
+        Number(selectedRequest?.request_id)
       );
       setCommentList(commentList);
     };
 
+    fetchRequestFields();
     fetchComments();
-    fetchRequest();
-  }, [supabase, router]);
-
-  let isApprover = false;
-  if (request) {
-    if (
-      (requiredFields.approval_status === "stale" ||
-        requiredFields.approval_status === "pending") &&
-      requiredFields.approverId === user?.id
-    ) {
-      isApprover = true;
-    }
-  }
-
-  const handleApprove = async () => {
-    try {
-      setIsLoading(true);
-      await requestResponse(supabase, Number(router.query.id), "approved");
-
-      showNotification({
-        title: "Success!",
-        message: `You approved ${requiredFields?.request_title}`,
-        color: "green",
-      });
-      router.push(`/t/${router.query.tid}/requests`);
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to approve ${requiredFields?.request_title}`,
-        color: "red",
-      });
-      setIsLoading(false);
-    }
-  };
-
-  const handleSendToRevision = async () => {
-    try {
-      setIsLoading(true);
-      await requestResponse(supabase, Number(router.query.id), "revision");
-
-      showNotification({
-        title: "Success!",
-        message: `${requiredFields?.request_title} is sent to Revision`,
-        color: "green",
-      });
-      router.push("/requests");
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `${requiredFields?.request_title} has failed to send to revision`,
-        color: "red",
-      });
-
-      setIsLoading(false);
-    }
-  };
-
-  const handleReject = async () => {
-    try {
-      setIsLoading(true);
-      await requestResponse(supabase, Number(router.query.id), "rejected");
-
-      showNotification({
-        title: "Success!",
-        message: `You rejected ${requiredFields?.request_title}`,
-        color: "green",
-      });
-      router.push("/requests");
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to reject ${requiredFields?.request_title}`,
-        color: "red",
-      });
-
-      setIsLoading(false);
-    }
-  };
-
+  }, [selectedRequest?.request_id, supabase]);
   const handleAddComment = async () => {
     if (!comment) return;
 
     try {
       const createdComment = await createComment(
         supabase,
-        Number(router.query.id),
+        Number(selectedRequest?.request_id),
         comment,
         `${user?.id}`
       );
@@ -315,95 +214,238 @@ const Request = () => {
     }
   };
 
+  const handleApprove = async () => {
+    setIsLoading && setIsLoading(true);
+    if (view === "full") {
+      setFullViewIsLoading(true);
+    }
+    try {
+      await requestResponse(
+        supabase,
+        Number(selectedRequest?.request_id),
+        "approved"
+      );
+
+      setRequestList &&
+        setRequestList((prev) =>
+          prev.map((request) => {
+            if (request.request_id === selectedRequest?.request_id) {
+              return {
+                ...request,
+                request_status: "approved",
+              };
+            } else {
+              return request;
+            }
+          })
+        );
+      setSelectedRequest && setSelectedRequest(null);
+      showNotification({
+        title: "Success!",
+        message: `You approved ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+      if (view === "full") {
+        router.push(`/t/${router.query.tid}/requests`);
+      }
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to approve ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+    }
+    setIsLoading && setIsLoading(false);
+    if (view === "full") {
+      setFullViewIsLoading(false);
+    }
+  };
+
+  // const handleSendToRevision = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     await requestResponse(
+  //       supabase,
+  //       Number(selectedRequest?.request_id),
+  //       "revision"
+  //     );
+
+  //     setRequestList((prev) =>
+  //       prev.map((request) => {
+  //         if (request.request_id === selectedRequest?.request_id) {
+  //           return {
+  //             ...request,
+  //             request_status: "revision",
+  //           };
+  //         } else {
+  //           return request;
+  //         }
+  //       })
+  //     );
+  //     setSelectedRequest(null);
+  //     showNotification({
+  //       title: "Success!",
+  //       message: `${selectedRequest?.request_title} is sent to revision`,
+  //       color: "green",
+  //     });
+  //   } catch {
+  //     showNotification({
+  //       title: "Error!",
+  //       message: `${selectedRequest?.request_title} has failed to send to revision `,
+  //       color: "red",
+  //     });
+  //   }
+  //   setIsLoading(false);
+  // };
+
+  const handleReject = async () => {
+    setIsLoading && setIsLoading(true);
+    if (view === "full") {
+      setFullViewIsLoading(true);
+    }
+    try {
+      await requestResponse(
+        supabase,
+        Number(selectedRequest?.request_id),
+        "rejected"
+      );
+
+      setRequestList &&
+        setRequestList((prev) =>
+          prev.map((request) => {
+            if (request.request_id === selectedRequest?.request_id) {
+              return {
+                ...request,
+                request_status: "rejected",
+              };
+            } else {
+              return request;
+            }
+          })
+        );
+      setSelectedRequest && setSelectedRequest(null);
+      showNotification({
+        title: "Success!",
+        message: `You rejected ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+      if (view === "full") {
+        router.push(`/t/${router.query.tid}/requests`);
+      }
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to reject ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+    }
+    setIsLoading && setIsLoading(false);
+    if (view === "full") {
+      setFullViewIsLoading(false);
+    }
+  };
+
   return (
-    <Container px={8} py={16} fluid>
-      <LoadingOverlay
-        visible={isLoading || isFetchingRequest}
-        overlayBlur={2}
-      />
-
-      <Stack>
-        <Flex
-          direction="row"
-          justify="space-between"
-          align="stretch"
-          wrap="wrap"
-          gap="xl"
-        >
-          <Stack className={styles.flex} mt={16}>
-            <Title order={4}>Request Title</Title>
-            <Text>{requiredFields.request_title}</Text>
-          </Stack>
-          <Stack className={styles.flex} mt={16}>
-            <Title order={4}>Request By</Title>
-            <Group>
-              <Avatar radius={100} />
-              <Text>{requiredFields.requestedBy}</Text>
-            </Group>
-          </Stack>
-          <Stack className={styles.flex} mt={16}>
-            <Title order={4}>Date Created</Title>
-            <Text>{requiredFields.created_at?.slice(0, 10)}</Text>
-          </Stack>
-          <Stack className={styles.flex} mt={16}>
-            <Title order={4}>Status</Title>
-            <Badge color={setBadgeColor(`${requiredFields.approval_status}`)}>
-              {startCase(`${requiredFields.approval_status}`)}
-            </Badge>
-          </Stack>
-        </Flex>
-        <Flex
-          direction="row"
-          justify="space-between"
-          align="stretch"
-          wrap="wrap"
-          gap="xl"
-          mt="lg"
-        >
-          <Stack className={styles.flex} mt={16}>
-            <Title order={4}> Request Description</Title>
-            <Text>{requiredFields.request_description}</Text>
-          </Stack>
-
-          <Stack className={styles.flex} mt={16}>
-            <Title order={4}>On Behalf Of</Title>
-            <Text>{requiredFields.on_behalf_of}</Text>
-          </Stack>
-        </Flex>
-
-        <Divider mt="xl" />
-
-        <Stack mt="xl">
-          <Title order={5}>Approver</Title>
-          <Group align="apart">
-            <Badge color={setBadgeColor(`${requiredFields.approval_status}`)} />
-            <Text>{requiredFields.approverName}</Text>
+    <Container
+      p={view === "full" ? "xl" : 0}
+      m={0}
+      className={styles.container}
+      fluid
+    >
+      <LoadingOverlay visible={fullViewIsLoading} overlayBlur={2} />
+      {view === "split" ? (
+        <Container m={0} p={0} className={styles.closeIcon}>
+          <Group spacing={0}>
+            <ActionIcon
+              onClick={() =>
+                router.push(
+                  `/t/${router.query.tid}/requests/${selectedRequest?.request_id}`
+                )
+              }
+            >
+              <Maximize />
+            </ActionIcon>
+            <ActionIcon
+              onClick={() => {
+                if (setSelectedRequest) {
+                  setSelectedRequest(null);
+                }
+              }}
+            >
+              <Close />
+            </ActionIcon>
+          </Group>
+        </Container>
+      ) : null}
+      <Group position="apart" grow>
+        <Stack align="flex-start">
+          <Title order={5}>Request Title</Title>
+          <Text>{selectedRequest?.request_title}</Text>
+        </Stack>
+        <Stack align="flex-start">
+          <Title order={5}>Requested By</Title>
+          <Group>
+            <Avatar radius={100} />
+            <Text>{selectedRequest?.owner.full_name}</Text>
           </Group>
         </Stack>
+      </Group>
+      <Group mt="xl" position="apart" grow>
+        <Stack align="flex-start">
+          <Title order={5}>Date Created</Title>
+          <Text>{selectedRequest?.request_created_at?.slice(0, 10)}</Text>
+        </Stack>
+        <Stack align="flex-start">
+          <Title order={5}>Status</Title>
+          <Badge color={setBadgeColor(`${selectedRequest?.request_status}`)}>
+            {startCase(`${selectedRequest?.request_status}`)}
+          </Badge>
+        </Stack>
+      </Group>
+      <Group mt="xl" position="apart" grow>
+        <Stack mt="xl" align="flex-start">
+          <Title order={5}>Request Description</Title>
+          <Text>{selectedRequest?.request_description}</Text>
+        </Stack>
+        <Stack align="flex-start">
+          <Title order={5}>On behalf of</Title>
+          <Text>
+            {selectedRequest?.on_behalf_of
+              ? selectedRequest.on_behalf_of
+              : "---"}
+          </Text>
+        </Stack>
+      </Group>
 
-        <Divider mt="xl" />
-
-        <Stack mt="xl">
-          <Title order={5}>Attachment</Title>
-          {requiredFields.attachmentUrlList.length === 0 && <Text>---</Text>}
-          {requiredFields.attachmentUrlList.map((attachmentUrl) => {
+      <Divider mt="xl" />
+      <Stack mt="xl">
+        <Title order={5}>Approver</Title>
+        <Group align="apart" grow>
+          <Group>
+            <Badge
+              color={setBadgeColor(`${selectedRequest?.request_status}`)}
+            />
+            <Text>{selectedRequest?.approver.full_name}</Text>
+          </Group>
+        </Group>
+      </Stack>
+      <Divider mt="xl" />
+      <Stack mt="xl">
+        <Title order={5}>Attachment</Title>
+        {!selectedRequest?.attachments && <Text>---</Text>}
+        {selectedRequest?.attachments &&
+          selectedRequest.attachments.length === 0 && <Text>---</Text>}
+        {selectedRequest?.attachments &&
+          selectedRequest?.attachments.map((attachmentUrl) => {
+            console.log(attachmentUrl);
             return (
-              // ! URL.createObjectURL does not work on Mantine Image component.
-              // <Image
-              //   fit="contain"
-              //   width={200}
-              //   height={80}
-              //   src={attachmentUrl.path}
-              // />
-              // * URL.createObjectURL works on Mantine Avatar component and HTML image tag only.
-              // <Avatar src={attachmentUrl} alt="Attachment Image" />
               <a
                 key={attachmentUrl}
                 href={attachmentUrl}
                 target="_blank"
                 rel="noreferrer"
               >
-                <img
+                <Image
                   src={attachmentUrl}
                   alt="Attachment Image"
                   style={{ height: 200, width: 200 }}
@@ -411,264 +453,275 @@ const Request = () => {
               </a>
             );
           })}
+      </Stack>
 
+      {isApprover ? (
+        <>
           <Divider mt="xl" />
-          <Title mt="xl" order={5}>
-            Request Fields
-          </Title>
+          <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
+            <Button
+              color="green"
+              onClick={() => handleApprove()}
+              fullWidth={view === "split"}
+              w={view === "full" ? 200 : ""}
+              size={view === "full" ? "md" : "sm"}
+            >
+              Approve
+            </Button>
+            {/* <Button
+              color="dark"
+              onClick={() => handleSendToRevision()}
+              fullWidth={view === "split"}
+            >
+              Send For Revision
+            </Button> */}
+            <Button
+              color="red"
+              onClick={() => handleReject()}
+              fullWidth={view === "split"}
+              w={view === "full" ? 200 : ""}
+              size={view === "full" ? "md" : "sm"}
+            >
+              Reject
+            </Button>
+          </Flex>
+        </>
+      ) : null}
 
-          {isApprover ? (
-            <Group mt="xl" position="right">
-              <Button color="green" onClick={() => handleApprove()} size="md">
-                Approve
-              </Button>
-              <Button
-                color="dark"
-                onClick={() => handleSendToRevision()}
-                size="md"
-              >
-                Send to Revision
-              </Button>
-              <Button color="red" onClick={() => handleReject()} size="md">
-                Reject
-              </Button>
-            </Group>
-          ) : null}
-        </Stack>
-        {requestFields?.map((field) => {
-          const fieldType = field.field.field_type;
-          const fieldLabel = field.field.field_name;
-          const fieldResponse = `${field.response_value}`;
-          const fieldOptions = field.field.field_option;
+      <Divider mt="xl" />
+      <Title mt="xl" order={5}>
+        Request Fields
+      </Title>
+      {selectedRequestFields?.map((field) => {
+        const fieldType = field.field.field_type;
+        const fieldLabel = field.field.field_name;
+        const fieldResponse = `${field.response_value}`;
+        const fieldOptions = field.field.field_option;
 
-          if (fieldType === "text" || fieldType === "email") {
-            return (
-              <Box key={field.field_id}>
-                {renderTooltip(
-                  <TextInput
-                    label={fieldLabel}
-                    withAsterisk={Boolean(field.field.is_required)}
-                    value={fieldResponse}
-                  />,
-                  `${field.field.field_tooltip}`
-                )}
-              </Box>
-            );
-          } else if (fieldType === "number") {
-            return (
-              <Box key={field.field_id}>
-                {renderTooltip(
-                  <NumberInput
-                    label={fieldLabel}
-                    withAsterisk={Boolean(field.field.is_required)}
-                    value={Number(fieldResponse)}
-                  />,
-                  `${field.field.field_tooltip}`
-                )}
-              </Box>
-            );
-          } else if (fieldType === "date") {
-            return (
-              <Box key={field.field_id}>
-                {renderTooltip(
-                  <DatePicker
-                    label={fieldLabel}
-                    withAsterisk={Boolean(field.field.is_required)}
-                    placeholder={"Choose date"}
-                    value={new Date(fieldResponse)}
-                  />,
-                  `${field.field.field_tooltip}`
-                )}
-              </Box>
-            );
-          } else if (fieldType === "daterange") {
-            return (
-              <Box key={field.field_id}>
-                {renderTooltip(
-                  <DateRangePicker
-                    label={fieldLabel}
-                    withAsterisk={Boolean(field.field.is_required)}
-                    placeholder={"Choose a date range"}
-                    value={[
-                      new Date(fieldResponse.split(",")[0]),
-                      new Date(fieldResponse.split(",")[1]),
-                    ]}
-                  />,
-                  `${field.field.field_tooltip}`
-                )}
-              </Box>
-            );
-          } else if (fieldType === "time") {
-            return (
-              <Box key={field.field_id}>
-                {renderTooltip(
-                  <TimeInput
-                    label={fieldLabel}
-                    withAsterisk={Boolean(field.field.is_required)}
-                    placeholder={"Choose time"}
-                    format="12"
-                    value={new Date(fieldResponse)}
-                  />,
-                  `${field.field.field_tooltip}`
-                )}
-              </Box>
-            );
-          } else if (fieldType === "slider") {
-            return (
-              <Box my="md" key={field.field_id}>
-                {renderTooltip(
-                  <Text component="label" color="dark">
-                    {fieldLabel}
-                  </Text>,
-                  `${field.field.field_tooltip}`
-                )}
-                <Slider
+        if (fieldType === "text" || fieldType === "email") {
+          return (
+            <Box key={field.field_id} py="sm">
+              {renderTooltip(
+                <TextInput
                   label={fieldLabel}
-                  placeholder={"Slide to choose value"}
-                  marks={MARKS}
-                  min={1}
-                  max={5}
-                  labelAlwaysOn={false}
+                  withAsterisk={Boolean(field.field.is_required)}
+                  value={`${field.response_value}`}
+                  readOnly
+                />,
+                `${field.field.field_tooltip}`
+              )}
+            </Box>
+          );
+        } else if (fieldType === "number") {
+          return (
+            <Box key={field.field_id} py="sm">
+              {renderTooltip(
+                <NumberInput
+                  label={fieldLabel}
+                  withAsterisk={Boolean(field.field.is_required)}
                   value={Number(fieldResponse)}
-                />
-              </Box>
-            );
-          } else if (fieldType === "multiple" && fieldOptions !== null) {
-            return renderTooltip(
-              <MultiSelect
-                key={field.field_id}
-                data={fieldOptions.map((option) => {
-                  return { value: `${option}`, label: `${option}` };
-                })}
+                  readOnly
+                />,
+                `${field.field.field_tooltip}`
+              )}
+            </Box>
+          );
+        } else if (fieldType === "date") {
+          return (
+            <Box key={field.field_id} py="sm">
+              {renderTooltip(
+                <DatePicker
+                  label={fieldLabel}
+                  withAsterisk={Boolean(field.field.is_required)}
+                  placeholder={"Choose date"}
+                  value={new Date(fieldResponse)}
+                  readOnly
+                />,
+                `${field.field.field_tooltip}`
+              )}
+            </Box>
+          );
+        } else if (fieldType === "daterange") {
+          return (
+            <Box key={field.field_id} py="sm">
+              {renderTooltip(
+                <DateRangePicker
+                  label={fieldLabel}
+                  withAsterisk={Boolean(field.field.is_required)}
+                  placeholder={"Choose a date range"}
+                  value={[
+                    new Date(fieldResponse.split(",")[0]),
+                    new Date(fieldResponse.split(",")[1]),
+                  ]}
+                  readOnly
+                />,
+                `${field.field.field_tooltip}`
+              )}
+            </Box>
+          );
+        } else if (fieldType === "time") {
+          return (
+            <Box key={field.field_id} py="sm">
+              {renderTooltip(
+                <TimeInput
+                  label={fieldLabel}
+                  withAsterisk={Boolean(field.field.is_required)}
+                  placeholder={"Choose time"}
+                  format="12"
+                  value={new Date(fieldResponse)}
+                />,
+                `${field.field.field_tooltip}`
+              )}
+            </Box>
+          );
+        } else if (fieldType === "slider") {
+          return (
+            <Box my="md" key={field.field_id} py="sm">
+              {renderTooltip(
+                <Text component="label" color="dark">
+                  {fieldLabel}
+                </Text>,
+                `${field.field.field_tooltip}`
+              )}
+              <Slider
                 label={fieldLabel}
-                withAsterisk={Boolean(field.field.is_required)}
-                placeholder={"Choose multiple"}
-                value={fieldResponse.split(",")}
-              />,
-              `${field.field.field_tooltip}`
-            );
-          } else if (fieldType === "select" && fieldOptions !== null) {
-            return renderTooltip(
-              <Select
-                key={field.field_id}
-                data={fieldOptions.map((option) => {
-                  return { value: `${option}`, label: `${option}` };
-                })}
-                searchable
-                clearable
-                label={fieldLabel}
-                withAsterisk={Boolean(field.field.is_required)}
-                placeholder={"Choose one"}
-                value={fieldResponse}
-              />,
-              `${field.field.field_tooltip}`
-            );
-          }
-        })}
-
-<Divider mt="xl" />
-          <Stack mt="xl">
-            <Title order={5}>Comments</Title>
-            <Paper withBorder p="xs">
-              <Textarea
-                placeholder="Type your comment here"
-                variant="unstyled"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                placeholder={"Slide to choose value"}
+                marks={MARKS}
+                min={1}
+                max={5}
+                labelAlwaysOn={false}
+                value={Number(fieldResponse)}
               />
-              <Group position="right" mt="xs">
-                <Button w={100} onClick={handleAddComment}>
-                  Send
-                </Button>
-              </Group>
-            </Paper>
-            {commentList.map((comment) => (
-              <Paper
-                shadow="sm"
-                key={comment.request_comment_id}
-                p="xl"
-                withBorder
-              >
-                <Flex gap="xs" wrap="wrap" align="center">
-                  <Avatar
-                    radius={100}
-                    src={comment.owner.avatar_url}
-                    size="sm"
-                  />
-                  <Text fw={500}>{comment.owner.full_name}</Text>
-                  {comment.request_comment_is_edited ? (
-                    <Text c="dimmed">(edited)</Text>
-                  ) : null}
-                  <Text c="dimmed">
-                    {setTimeDifference(
-                      new Date(`${comment.request_comment_created_at}`)
-                    )}
-                  </Text>
-                  {comment.request_comment_by_id === user?.id ? (
-                    <Popover position="bottom" shadow="md">
-                      <Popover.Target>
-                        <Button ml="auto" variant="subtle">
-                          <Dots />
-                        </Button>
-                      </Popover.Target>
-                      <Popover.Dropdown p={0}>
-                        <Flex>
-                          <Button
-                            radius={0}
-                            variant="subtle"
-                            onClick={() => {
-                              setNewComment(`${comment.request_comment}`);
-                              setEditCommentId(comment.request_comment_id);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Divider orientation="vertical" />
-                          <Button
-                            radius={0}
-                            variant="subtle"
-                            onClick={() =>
-                              handleDeleteComment(comment.request_comment_id)
-                            }
-                          >
-                            Delete
-                          </Button>
-                        </Flex>
-                      </Popover.Dropdown>
-                    </Popover>
-                  ) : null}
-                </Flex>
-                {comment.request_comment_id === editCommentId ? (
-                  <Paper withBorder p="xs" mt="sm">
-                    <Textarea
-                      placeholder="Type your new comment here"
-                      variant="unstyled"
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                    />
-                    <Group position="right" mt="xs" spacing={5}>
+            </Box>
+          );
+        } else if (fieldType === "multiple" && fieldOptions !== null) {
+          return renderTooltip(
+            <MultiSelect
+              key={field.field_id}
+              data={fieldOptions.map((option) => {
+                return { value: `${option}`, label: `${option}` };
+              })}
+              label={fieldLabel}
+              withAsterisk={Boolean(field.field.is_required)}
+              placeholder={"Choose multiple"}
+              value={fieldResponse.split(",")}
+              py="sm"
+            />,
+            `${field.field.field_tooltip}`
+          );
+        } else if (fieldType === "select" && fieldOptions !== null) {
+          return renderTooltip(
+            <Select
+              key={field.field_id}
+              data={fieldOptions.map((option) => {
+                return { value: `${option}`, label: `${option}` };
+              })}
+              searchable
+              clearable
+              label={fieldLabel}
+              withAsterisk={Boolean(field.field.is_required)}
+              placeholder={"Choose one"}
+              value={fieldResponse}
+              py="sm"
+            />,
+            `${field.field.field_tooltip}`
+          );
+        }
+      })}
+
+      <Divider mt="xl" />
+      <Stack mt="xl">
+        <Title order={5}>Comments</Title>
+        <Paper withBorder p="xs">
+          <Textarea
+            placeholder="Type your comment here"
+            variant="unstyled"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+          <Group position="right" mt="xs">
+            <Button w={100} onClick={handleAddComment}>
+              Send
+            </Button>
+          </Group>
+        </Paper>
+        {commentList.map((comment) => (
+          <Paper shadow="sm" key={comment.request_comment_id} p="xl" withBorder>
+            <Flex gap="xs" wrap="wrap" align="center">
+              <Avatar radius={100} src={comment.owner.avatar_url} size="sm" />
+              <Text fw={500}>{comment.owner.full_name}</Text>
+              {comment.request_comment_is_edited ? (
+                <Text c="dimmed">(edited)</Text>
+              ) : null}
+              <Text c="dimmed">
+                {setTimeDifference(
+                  new Date(`${comment.request_comment_created_at}`)
+                )}
+              </Text>
+              {comment.request_comment_by_id === user?.id ? (
+                <Popover position="bottom" shadow="md">
+                  <Popover.Target>
+                    <Button ml="auto" variant="subtle">
+                      <Dots />
+                    </Button>
+                  </Popover.Target>
+                  <Popover.Dropdown p={0}>
+                    <Flex>
                       <Button
-                        w={100}
+                        radius={0}
+                        variant="subtle"
                         onClick={() => {
-                          setEditCommentId(null);
-                          setNewComment("");
+                          setNewComment(`${comment.request_comment}`);
+                          setEditCommentId(comment.request_comment_id);
                         }}
-                        variant="outline"
                       >
-                        Cancel
+                        Edit
                       </Button>
-                      <Button w={100} onClick={handleEditComment}>
-                        Submit
+                      <Divider orientation="vertical" />
+                      <Button
+                        radius={0}
+                        variant="subtle"
+                        onClick={() =>
+                          handleDeleteComment(comment.request_comment_id)
+                        }
+                      >
+                        Delete
                       </Button>
-                    </Group>
-                  </Paper>
-                ) : null}
-                {comment.request_comment_id !== editCommentId ? (
-                  <Text mt="xs">{comment.request_comment}</Text>
-                ) : null}
+                    </Flex>
+                  </Popover.Dropdown>
+                </Popover>
+              ) : null}
+            </Flex>
+            {comment.request_comment_id === editCommentId ? (
+              <Paper withBorder p="xs" mt="sm">
+                <Textarea
+                  placeholder="Type your new comment here"
+                  variant="unstyled"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                />
+                <Group position="right" mt="xs" spacing={5}>
+                  <Button
+                    w={100}
+                    onClick={() => {
+                      setEditCommentId(null);
+                      setNewComment("");
+                    }}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                  <Button w={100} onClick={handleEditComment}>
+                    Submit
+                  </Button>
+                </Group>
               </Paper>
-            ))}
-          </Stack>
+            ) : null}
+            {comment.request_comment_id !== editCommentId ? (
+              <Text mt="xs">{comment.request_comment}</Text>
+            ) : null}
+          </Paper>
+        ))}
       </Stack>
     </Container>
   );
