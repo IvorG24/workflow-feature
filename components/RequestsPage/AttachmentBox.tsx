@@ -62,6 +62,7 @@ const AttachmentBox = ({
           <Grid.Col span={1}></Grid.Col>
           <Grid.Col span={3}>
             <ActionIcon
+              component="a"
               variant="filled"
               onClick={(e) => {
                 e.preventDefault();
