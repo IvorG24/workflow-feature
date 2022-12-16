@@ -1,5 +1,6 @@
 import { Search } from "@/components/Icon";
 import {
+  deleteRequest,
   retrieveRequestFormByTeam,
   retrieveRequestList,
 } from "@/utils/queries";
@@ -11,8 +12,10 @@ import {
   Pagination,
   Select,
   Stack,
+  Text,
   TextInput,
 } from "@mantine/core";
+import { openConfirmModal } from "@mantine/modals";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
@@ -170,43 +173,43 @@ const Received = () => {
     setIsLoading(false);
   };
 
-  const handleSendToRevision = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "revision" })
-        .eq("request_id", Number(selectedRequest?.request_id));
+  // const handleSendToRevision = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const { error } = await supabase
+  //       .from("request_table")
+  //       .update({ request_status: "revision" })
+  //       .eq("request_id", Number(selectedRequest?.request_id));
 
-      if (error) throw error;
+  //     if (error) throw error;
 
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              request_status: "revision",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `${selectedRequest?.request_title} is sent to revision`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `${selectedRequest?.request_title} has failed to send to revision `,
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
+  //     setRequestList((prev) =>
+  //       prev.map((request) => {
+  //         if (request.request_id === selectedRequest?.request_id) {
+  //           return {
+  //             ...request,
+  //             request_status: "revision",
+  //           };
+  //         } else {
+  //           return request;
+  //         }
+  //       })
+  //     );
+  //     setSelectedRequest(null);
+  //     showNotification({
+  //       title: "Success!",
+  //       message: `${selectedRequest?.request_title} is sent to revision`,
+  //       color: "green",
+  //     });
+  //   } catch {
+  //     showNotification({
+  //       title: "Error!",
+  //       message: `${selectedRequest?.request_title} has failed to send to revision `,
+  //       color: "red",
+  //     });
+  //   }
+  //   setIsLoading(false);
+  // };
 
   const handleReject = async () => {
     setIsLoading(true);
@@ -246,6 +249,48 @@ const Received = () => {
     setIsLoading(false);
   };
 
+  const handleDelete = async () => {
+    setIsLoading(true);
+    try {
+      await deleteRequest(supabase, Number(selectedRequest?.request_id));
+
+      setRequestList((prev) =>
+        prev.filter(
+          (request) => request.request_id !== selectedRequest?.request_id
+        )
+      );
+      setSelectedRequest(null);
+      showNotification({
+        title: "Success!",
+        message: `You deleted ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to delete ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+    }
+    setIsLoading(false);
+  };
+
+  const confirmationModal = (
+    action: string,
+    requestTitle: string,
+    confirmFunction: () => void
+  ) =>
+    openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to {action} the {requestTitle}?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: () => confirmFunction(),
+    });
+
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
@@ -282,8 +327,10 @@ const Received = () => {
         setSelectedRequest={setSelectedRequest}
         isApprover={isApprover}
         handleApprove={handleApprove}
-        handleSendToRevision={handleSendToRevision}
+        // handleSendToRevision={handleSendToRevision}
         handleReject={handleReject}
+        handleDelete={handleDelete}
+        confirmationModal={confirmationModal}
       />
       {requestCount / REQUEST_PER_PAGE > 1 ? (
         <Pagination
