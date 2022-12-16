@@ -45,8 +45,8 @@ export const createOrRetrieveUser = async (
     .from("user_profile_table")
     .insert({
       user_id: user.id,
-      // username: "",
-      // full_name: "",
+      username: user.email?.split("@")[0],
+      full_name: user.email?.split("@")[0],
       // avatar_url: "",
       email: user.email,
     })
