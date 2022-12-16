@@ -111,7 +111,7 @@ const Navbar = ({ teamList }: Props) => {
         `${user?.id}`
       );
 
-      if (ownerAndAdminList.length > 1) {
+      if (ownerAndAdminList.length > 0) {
         router.push(`/t/${activeTeam}/requests/create?formId=${formId}`);
       } else {
         showNotification({
