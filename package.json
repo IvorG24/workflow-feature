@@ -11,7 +11,7 @@
     "pre-commit:lint-test": "npx eslint \"__tests__/**\"  ",
     "pre-commit:style": "npx stylelint -f verbose \"**/*.module.scss\" --fix",
     "pre-commit:test": "jest",
-    "pre-push": "jest",
+    "pre-push": "jest && npm run build",
     "prepare": "husky install"
   },
   "dependencies": {
