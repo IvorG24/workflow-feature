@@ -6,11 +6,14 @@ import { SupabaseClient, User } from "@supabase/supabase-js";
 import { Database } from "./database.types";
 import {
   FieldRow,
+  FieldTableRow,
   FieldTypeEnum,
   FormQuestion,
   FormRequest,
   FormRow,
+  FormTableRow,
   FormTypeEnum,
+  RequestCommentTableRow,
   RequestResponseRow,
   RequestRow,
   RequestStatusEnum,
@@ -20,6 +23,7 @@ import {
   TeamRoleTableRow,
   TeamTableRow,
   UserNotificationTableInsert,
+  UserProfileRow,
   UserProfileTableRow,
 } from "./types";
 
@@ -41,9 +45,9 @@ export const createOrRetrieveUser = async (
     .from("user_profile_table")
     .insert({
       user_id: user.id,
-      username: "",
-      full_name: "",
-      avatar_url: "",
+      username: user.email?.split("@")[0],
+      full_name: user.email?.split("@")[0],
+      // avatar_url: "",
       email: user.email,
     })
     .select()
@@ -276,15 +280,27 @@ export const retrieveFormFieldList = async (
   supabaseClient: SupabaseClient<Database>,
   formId: string
 ) => {
+  const { data: form, error: formError } = await supabaseClient
+    .from("form_table")
+    .select("form_priority")
+    .eq("form_id", formId)
+    .single();
+
+  if (formError) throw formError;
+
   const { data: formFieldList, error: formFieldListError } =
     await supabaseClient
       .from("field_table")
       .select("*")
-      .eq("form_table_id", formId);
+      .eq("form_table_id", formId)
+      .order("field_id", { ascending: false });
 
   if (formFieldListError) throw formFieldListError;
 
-  return formFieldList;
+  const priority = form.form_priority as number[];
+  return formFieldList.sort(
+    (a, b) => priority.indexOf(a.field_id) - priority.indexOf(b.field_id)
+  );
 };
 // * Type here
 export type RetrievedFormFields = Awaited<
@@ -386,7 +402,8 @@ export const saveRequest = async (
   selectedApprover: string,
   formData: RequestFieldsType,
   userId: string,
-  formId: number
+  formId: number,
+  attachmentFilePath?: string
 ) => {
   const { data: request, error: requestError } = await supabaseClient
     .from("request_table")
@@ -398,6 +415,7 @@ export const saveRequest = async (
       on_behalf_of: formData.behalf,
       request_description: formData.description,
       is_draft: false,
+      attachments: attachmentFilePath ? [attachmentFilePath] : [],
     })
     .select()
     .single();
@@ -475,15 +493,16 @@ export const retrieveRequestList = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "*, form: form_table_id(*), approver: approver_id(*), owner: requested_by(*)"
+      "*, form: form_table_id!inner(*), approver: approver_id(*), owner: requested_by(*)"
     )
     .eq("is_draft", false)
     .eq("form.team_id", teamId)
-    .range(start, start + requestPerPage - 1);
+    .range(start, start + requestPerPage - 1)
+    .order("request_created_at", { ascending: false });
 
   let countQuery = supabaseClient
     .from("request_table")
-    .select("*, form: form_table_id(*)")
+    .select("*, form: form_table_id!inner(*)")
     .eq("is_draft", false)
     .eq("form.team_id", teamId);
 
@@ -515,6 +534,22 @@ export const retrieveRequestList = async (
   if (requestListError) throw requestListError;
   const { count: requestCount, error: requestCountError } = await countQuery;
   if (requestCountError) throw requestCountError;
+
+  // * Loop through request list and getFileUrl for each attachment.
+  for (let i = 0; i < requestList.length; i++) {
+    const request = requestList[i];
+    if (request.attachments) {
+      for (let j = 0; j < request.attachments.length; j++) {
+        const attachment = request.attachments[j];
+        const attachmentUrl = await getFileUrl(
+          supabaseClient,
+          attachment,
+          "request_attachments"
+        );
+        request.attachments[j] = attachmentUrl;
+      }
+    }
+  }
 
   return {
     requestList: requestList as RequestType[],
@@ -713,19 +748,32 @@ export const fetchEmptyForm = async (
   supabaseClient: SupabaseClient<Database>,
   formId: number
 ) => {
-  const { data: formTableRow } = await supabaseClient
+  const { data: formTableRow, error: formTableRowError } = await supabaseClient
     .from("form_table")
     .select()
     .eq("form_id", formId)
     .single();
 
-  // Fetch fields of form
-  const { data: fieldTableRowList } = await supabaseClient
-    .from("field_table")
-    .select()
-    .eq("form_table_id", formId);
+  if (formTableRowError) throw formTableRowError;
 
-  return { formTableRow, fieldTableRowList };
+  // Fetch fields of form
+  const { data: fieldTableRowList, error: fieldTableRowListError } =
+    await supabaseClient
+      .from("field_table")
+      .select()
+      .eq("form_table_id", formId);
+
+  if (fieldTableRowListError) throw fieldTableRowListError;
+
+  const priority = formTableRow.form_priority as number[];
+  const sortedFieldTableRowList = fieldTableRowList.sort(
+    (a, b) => priority.indexOf(a.field_id) - priority.indexOf(b.field_id)
+  );
+
+  return {
+    formTableRow: formTableRow as FormTableRow | null,
+    fieldTableRowList: sortedFieldTableRowList as FieldTableRow[] | null,
+  };
 };
 // * Type here
 export type FetchEmptyForm = Awaited<ReturnType<typeof fetchEmptyForm>>;
@@ -879,3 +927,219 @@ export const uploadTeamLogo = async (
 
 // * Type here
 export type UpdateTeamLogo = Awaited<ReturnType<typeof uploadTeamLogo>>;
+
+// * Get file URL from storage using filepath.
+// * See https://github.com/supabase/supabase/blob/master/examples/user-management/nextjs-ts-user-management/components/Avatar.tsx
+export async function getFileUrl(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .download(path);
+    if (error) throw error;
+
+    const url = URL.createObjectURL(data);
+
+    return url;
+  } catch (error) {
+    throw new Error("Error fetching file URL");
+  }
+}
+
+// * Get file as Blob
+// * Returns the filepath.
+export async function downloadFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .download(path);
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    throw new Error("Error downloading file");
+  }
+}
+
+// * Upload a file
+// * Returns the filepath.
+export async function uploadFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  file: File | Blob,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .upload(path, file);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw new Error("Error uploading file");
+  }
+}
+
+// * Replace an existing file
+export async function replaceFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  file: File | Blob,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .update(path, file);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw new Error("Error replacing file");
+  }
+}
+
+// * Check if user is already a member of the team.
+export const isUserAlreadyAMemberOfTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamInvitationId: string,
+  userId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_role_table")
+    .select()
+    .eq("team_id", teamInvitationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return !!data;
+};
+
+// * Fetch team invitation.
+export const fetchTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamInvitationId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_invitation_table")
+    .select(`*, team_table(*), source:invite_source(*)`)
+    .eq("team_invitation_id", teamInvitationId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data as FetchTeamInvitation;
+};
+// * Type here
+export type FetchTeamInvitation = TeamInvitationTableRow & {
+  team_table: TeamTableRow;
+  source: UserProfileRow;
+};
+
+// * Fetch team owner and admins.
+export const retrieveTeamOwnerAndAdmins = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamId: string,
+  userId: string
+) => {
+  const { data: ownerAndAdminList, error: ownerAndAdminListError } =
+    await supabaseClient
+      .from("team_role_table")
+      .select("*")
+      .or(`team_role.eq.admin, team_role.eq.owner`)
+      .eq("team_id", teamId)
+      .neq("user_id", userId);
+
+  if (ownerAndAdminListError) throw ownerAndAdminListError;
+
+  return ownerAndAdminList;
+};
+
+// * Type here
+export type RetrievedTeamOwnerAndAdmins = Awaited<
+  ReturnType<typeof retrieveTeamOwnerAndAdmins>
+>;
+// * Add comment on request.
+export const retrieveRequestComments = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number
+) => {
+  const { data: requestComments, error: requestCommentsError } =
+    await supabaseClient
+      .from("request_comment_table")
+      .select("*, owner: request_comment_by_id(*)")
+      .eq("request_id", requestId)
+      .order("request_comment_created_at", { ascending: true });
+  if (requestCommentsError) throw requestCommentsError;
+  return requestComments as RetrievedRequestComments[];
+};
+
+// * Type here
+export type RetrievedRequestComments = RequestCommentTableRow & {
+  owner: UserProfileTableRow;
+};
+
+// * Add comment on request.
+export const createComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number,
+  comment: string,
+  userId: string
+) => {
+  const { data: createdComment, error: createdCommentError } =
+    await supabaseClient
+      .from("request_comment_table")
+      .insert({
+        request_comment: comment,
+        request_id: requestId,
+        request_comment_by_id: userId,
+      })
+      .select("*, owner: request_comment_by_id(*)")
+      .single();
+  if (createdCommentError) throw createdCommentError;
+  return createdComment as RetrievedRequestComments;
+};
+
+// * Type here
+export type CreateComment = Awaited<ReturnType<typeof createComment>>;
+
+// * Delete comment on request.
+export const deleteComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  comment_id: number
+) => {
+  const { error: deletedCommentError } = await supabaseClient
+    .from("request_comment_table")
+    .delete()
+    .eq("request_comment_id", comment_id);
+  if (deletedCommentError) throw deletedCommentError;
+};
+
+// * Type here
+export type DeletedComment = Awaited<ReturnType<typeof deleteComment>>;
+
+// * Edit comment on request.
+export const editComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  comment_id: number,
+  comment: string
+) => {
+  console.log(comment_id, comment);
+  const { error: editedCommentError } = await supabaseClient
+    .from("request_comment_table")
+    .update({
+      request_comment: comment,
+      request_comment_is_edited: true,
+    })
+    .eq("request_comment_id", comment_id);
+  if (editedCommentError) throw editedCommentError;
+};
+
+// * Type here
+export type EditedComment = Awaited<ReturnType<typeof editComment>>;

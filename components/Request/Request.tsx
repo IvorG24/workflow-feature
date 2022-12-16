@@ -1,10 +1,16 @@
 // todo: create unit test
 import {
+  getFileUrl,
+  createComment,
+  deleteComment,
+  editComment,
   requestResponse,
+  RetrievedRequestComments,
   retrieveRequest,
+  retrieveRequestComments,
   retrieveRequestResponse,
 } from "@/utils/queries";
-import { renderTooltip, setBadgeColor } from "@/utils/request";
+import { renderTooltip, setBadgeColor, setTimeDifference } from "@/utils/request";
 import type {
   Database,
   Marks,
@@ -23,10 +29,13 @@ import {
   LoadingOverlay,
   MultiSelect,
   NumberInput,
+  Paper,
+  Popover,
   Select,
   Slider,
   Stack,
   Text,
+  Textarea,
   TextInput,
   Title,
 } from "@mantine/core";
@@ -36,6 +45,7 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { Dots } from "../Icon";
 import styles from "./Request.module.scss";
 
 const MARKS: Marks[] = [
@@ -76,9 +86,16 @@ const Request = () => {
     approverName: "",
     approverId: "",
     created_at: "",
+    attachmentUrlList: [""],
   });
   const [requestFields, setRequestFields] = useState<RequestFields[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [comment, setComment] = useState("");
+  const [commentList, setCommentList] = useState<RetrievedRequestComments[]>(
+    []
+  );
+  const [editCommentId, setEditCommentId] = useState<number | null>(null);
+  const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -96,6 +113,17 @@ const Request = () => {
         );
 
         setRequest(retrievedRequest);
+
+        const attachmentList = retrievedRequest?.attachments
+          ? (retrievedRequest.attachments as never[])
+          : [];
+
+        const promises = attachmentList.map((attachment) => {
+          return getFileUrl(supabase, attachment, "request_attachments");
+        });
+
+        const attachmentUrlList = await Promise.all(promises);
+
         setRequiredFields({
           approval_status: `${retrievedRequest.request_status}`,
           request_title: `${retrievedRequest.request_title}`,
@@ -105,6 +133,7 @@ const Request = () => {
           approverName: `${retrievedRequest.approver.full_name}`,
           created_at: `${retrievedRequest.request_created_at}`,
           approverId: `${retrievedRequest.approver_id}`,
+          attachmentUrlList,
         });
         setRequestFields(requestFields);
         setIsFetchingRequest(false);
@@ -117,6 +146,15 @@ const Request = () => {
       }
     };
 
+    const fetchComments = async () => {
+      const commentList = await retrieveRequestComments(
+        supabase,
+        Number(router.query.id)
+      );
+      setCommentList(commentList);
+    };
+
+    fetchComments();
     fetchRequest();
   }, [supabase, router]);
 
@@ -196,6 +234,87 @@ const Request = () => {
     }
   };
 
+  const handleAddComment = async () => {
+    if (!comment) return;
+
+    try {
+      const createdComment = await createComment(
+        supabase,
+        Number(router.query.id),
+        comment,
+        `${user?.id}`
+      );
+      setComment("");
+      setCommentList((prev) => [...prev, createdComment]);
+      showNotification({
+        title: "Success!",
+        message: "Comment created",
+        color: "green",
+      });
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: "Failed to create comment",
+        color: "red",
+      });
+    }
+  };
+
+  const handleDeleteComment = async (id: number) => {
+    try {
+      await deleteComment(supabase, id);
+      setCommentList((prev) =>
+        prev.filter((comment) => comment.request_comment_id !== id)
+      );
+      showNotification({
+        title: "Success!",
+        message: "Comment deleted",
+        color: "green",
+      });
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: "Failed to delete comment",
+        color: "red",
+      });
+    }
+  };
+
+  const handleEditComment = async () => {
+    if (!newComment) return;
+
+    try {
+      await editComment(supabase, Number(editCommentId), newComment);
+
+      setCommentList((prev) =>
+        prev.map((comment) => {
+          if (comment.request_comment_id === editCommentId) {
+            return {
+              ...comment,
+              request_comment: newComment,
+              request_comment_is_edited: true,
+            };
+          } else {
+            return comment;
+          }
+        })
+      );
+      setEditCommentId(null);
+      setNewComment("");
+      showNotification({
+        title: "Success!",
+        message: "Comment edited",
+        color: "green",
+      });
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: "Failed to edit comment",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <Container px={8} py={16} fluid>
       <LoadingOverlay
@@ -266,7 +385,37 @@ const Request = () => {
 
         <Stack mt="xl">
           <Title order={5}>Attachment</Title>
-          <Text>---</Text>
+          {requiredFields.attachmentUrlList.length === 0 && <Text>---</Text>}
+          {requiredFields.attachmentUrlList.map((attachmentUrl) => {
+            return (
+              // ! URL.createObjectURL does not work on Mantine Image component.
+              // <Image
+              //   fit="contain"
+              //   width={200}
+              //   height={80}
+              //   src={attachmentUrl.path}
+              // />
+              // * URL.createObjectURL works on Mantine Avatar component and HTML image tag only.
+              // <Avatar src={attachmentUrl} alt="Attachment Image" />
+              <a
+                key={attachmentUrl}
+                href={attachmentUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img
+                  src={attachmentUrl}
+                  alt="Attachment Image"
+                  style={{ height: 200, width: 200 }}
+                />
+              </a>
+            );
+          })}
+
+          <Divider mt="xl" />
+          <Title mt="xl" order={5}>
+            Request Fields
+          </Title>
 
           {isApprover ? (
             <Group mt="xl" position="right">
@@ -416,6 +565,110 @@ const Request = () => {
             );
           }
         })}
+
+<Divider mt="xl" />
+          <Stack mt="xl">
+            <Title order={5}>Comments</Title>
+            <Paper withBorder p="xs">
+              <Textarea
+                placeholder="Type your comment here"
+                variant="unstyled"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+              <Group position="right" mt="xs">
+                <Button w={100} onClick={handleAddComment}>
+                  Send
+                </Button>
+              </Group>
+            </Paper>
+            {commentList.map((comment) => (
+              <Paper
+                shadow="sm"
+                key={comment.request_comment_id}
+                p="xl"
+                withBorder
+              >
+                <Flex gap="xs" wrap="wrap" align="center">
+                  <Avatar
+                    radius={100}
+                    src={comment.owner.avatar_url}
+                    size="sm"
+                  />
+                  <Text fw={500}>{comment.owner.full_name}</Text>
+                  {comment.request_comment_is_edited ? (
+                    <Text c="dimmed">(edited)</Text>
+                  ) : null}
+                  <Text c="dimmed">
+                    {setTimeDifference(
+                      new Date(`${comment.request_comment_created_at}`)
+                    )}
+                  </Text>
+                  {comment.request_comment_by_id === user?.id ? (
+                    <Popover position="bottom" shadow="md">
+                      <Popover.Target>
+                        <Button ml="auto" variant="subtle">
+                          <Dots />
+                        </Button>
+                      </Popover.Target>
+                      <Popover.Dropdown p={0}>
+                        <Flex>
+                          <Button
+                            radius={0}
+                            variant="subtle"
+                            onClick={() => {
+                              setNewComment(`${comment.request_comment}`);
+                              setEditCommentId(comment.request_comment_id);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Divider orientation="vertical" />
+                          <Button
+                            radius={0}
+                            variant="subtle"
+                            onClick={() =>
+                              handleDeleteComment(comment.request_comment_id)
+                            }
+                          >
+                            Delete
+                          </Button>
+                        </Flex>
+                      </Popover.Dropdown>
+                    </Popover>
+                  ) : null}
+                </Flex>
+                {comment.request_comment_id === editCommentId ? (
+                  <Paper withBorder p="xs" mt="sm">
+                    <Textarea
+                      placeholder="Type your new comment here"
+                      variant="unstyled"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                    />
+                    <Group position="right" mt="xs" spacing={5}>
+                      <Button
+                        w={100}
+                        onClick={() => {
+                          setEditCommentId(null);
+                          setNewComment("");
+                        }}
+                        variant="outline"
+                      >
+                        Cancel
+                      </Button>
+                      <Button w={100} onClick={handleEditComment}>
+                        Submit
+                      </Button>
+                    </Group>
+                  </Paper>
+                ) : null}
+                {comment.request_comment_id !== editCommentId ? (
+                  <Text mt="xs">{comment.request_comment}</Text>
+                ) : null}
+              </Paper>
+            ))}
+          </Stack>
       </Stack>
     </Container>
   );

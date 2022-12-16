@@ -11,7 +11,6 @@ import {
   CreateOrRetrieveUserTeamList,
 } from "@/utils/queries";
 import { AppShell, LoadingOverlay } from "@mantine/core";
-import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
@@ -58,11 +57,18 @@ const TeamLayout = ({ children }: Props) => {
         if (!router.isReady) return;
         if (!user) return;
 
-        const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
-          await Promise.all([
-            createOrRetrieveUser(supabaseClient, user),
-            createOrRetrieveUserTeamList(supabaseClient, user),
-          ]);
+        // const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
+        //   await Promise.all([
+        //     createOrRetrieveUser(supabaseClient, user),
+        //     createOrRetrieveUserTeamList(supabaseClient, user),
+        //   ]);
+
+        const createdOrRetrievedUser = await createOrRetrieveUser(
+          supabaseClient,
+          user
+        );
+        const createdOrRetrievedUserTeamList =
+          await createOrRetrieveUserTeamList(supabaseClient, user);
 
         // * Set created or fetched user info to context.
         handleSet(createdOrRetrievedUser);
@@ -90,12 +96,13 @@ const TeamLayout = ({ children }: Props) => {
         }
 
         setIsLoading(false);
-      } catch {
-        showNotification({
-          title: "Error",
-          message: "Failed to create or retrieve user or team information",
-          color: "red",
-        });
+      } catch (e) {
+        console.error(e);
+        // showNotification({
+        //   title: "Error",
+        //   message: "Failed to create or retrieve user or team information",
+        //   color: "red",
+        // });
       }
     })();
   }, [router, user, supabaseClient, dispatchUserProfile]);

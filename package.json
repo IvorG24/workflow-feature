@@ -11,7 +11,7 @@
     "pre-commit:lint-test": "npx eslint \"__tests__/**\"  ",
     "pre-commit:style": "npx stylelint -f verbose \"**/*.module.scss\" --fix",
     "pre-commit:test": "jest",
-    "pre-push": "jest",
+    "pre-push": "jest && npm run build",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "@supabase/auth-helpers-react": "^0.3.1",
     "@supabase/auth-ui-react": "^0.2.2",
     "@supabase/supabase-js": "^2.0.4",
+    "@tabler/icons": "^1.117.0",
     "@testing-library/react": "^13.4.0",
     "axios": "^1.2.0",
     "compressorjs": "^1.1.1",
