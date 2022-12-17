@@ -347,7 +347,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                               <NavLink
                                 label="Edit form"
                                 component="a"
-                                href={`/t/${activeTeam}/form/edit/${form.form_id}`}
+                                href={`/t/${activeTeam}/forms/${form.form_id}/edit`}
                                 icon={
                                   <IconWrapper>
                                     <EditDocument />
