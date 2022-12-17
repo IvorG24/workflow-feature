@@ -505,7 +505,7 @@ export const retrieveRequestList = async (
   status: string | null,
   search: string,
   isSearch: boolean,
-  filter?: "all" | "sent" | "received",
+  filter?: string,
   userId?: string
 ) => {
   let query = supabaseClient

@@ -1,6 +1,7 @@
 import { Search } from "@/components/Icon";
 import {
   deleteRequest,
+  requestResponse,
   retrieveRequestFormByTeam,
   retrieveRequestList,
 } from "@/utils/queries";
@@ -37,7 +38,11 @@ const statusOptions: {
 
 const REQUEST_PER_PAGE = 8;
 
-const Sent = () => {
+type Props = {
+  activeTab: string;
+};
+
+const RequestList = ({ activeTab }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const user = useUser();
   const router = useRouter();
@@ -53,7 +58,9 @@ const Sent = () => {
   const [isApprover, setIsApprover] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
+  const [selectedForm, setSelectedForm] = useState<string | null>(
+    router.query.formId ? `${router.query.formId}` : null
+  );
 
   const fetchRequests = async (isSearch: boolean) => {
     try {
@@ -70,14 +77,18 @@ const Sent = () => {
         status,
         search,
         isSearch,
-        "sent",
+        activeTab,
         `${user?.id}`
       );
+
+      if (!isSearch) {
+        setSearch("");
+      }
       setRequestList(requestList);
       setRequestCount(Number(requestCount));
 
       setIsLoading(false);
-    } catch {
+    } catch (e) {
       showNotification({
         title: "Error!",
         message: "Failed to fetch Request List",
@@ -104,6 +115,7 @@ const Sent = () => {
       });
     }
   };
+
   // first load
   useEffect(() => {
     fetchRequests(false);
@@ -137,12 +149,11 @@ const Sent = () => {
   const handleApprove = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "approved" })
-        .eq("request_id", Number(selectedRequest?.request_id));
-
-      if (error) throw error;
+      await requestResponse(
+        supabase,
+        Number(selectedRequest?.request_id),
+        "approved"
+      );
 
       setRequestList((prev) =>
         prev.map((request) => {
@@ -175,12 +186,11 @@ const Sent = () => {
   // const handleSendToRevision = async () => {
   //   setIsLoading(true);
   //   try {
-  //     const { error } = await supabase
-  //       .from("request_table")
-  //       .update({ request_status: "revision" })
-  //       .eq("request_id", Number(selectedRequest?.request_id));
-
-  //     if (error) throw error;
+  //     await requestResponse(
+  //       supabase,
+  //       Number(selectedRequest?.request_id),
+  //       "revision"
+  //     );
 
   //     setRequestList((prev) =>
   //       prev.map((request) => {
@@ -213,12 +223,11 @@ const Sent = () => {
   const handleReject = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "rejected" })
-        .eq("request_id", Number(selectedRequest?.request_id));
-
-      if (error) throw error;
+      await requestResponse(
+        supabase,
+        Number(selectedRequest?.request_id),
+        "rejected"
+      );
 
       setRequestList((prev) =>
         prev.map((request) => {
@@ -343,4 +352,4 @@ const Sent = () => {
   );
 };
 
-export default Sent;
+export default RequestList;
