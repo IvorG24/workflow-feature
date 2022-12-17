@@ -817,6 +817,7 @@ export const mapEmptyFormToReactDndRequestForm = async ({
   fieldTableRowList.forEach((fieldTableRow) => {
     const formQuestion: FormQuestion = {
       fieldId: fieldTableRow.field_id as number,
+      isRequired: fieldTableRow.is_required as boolean,
       data: {
         question: fieldTableRow.field_name as string,
         expected_response_type: fieldTableRow.field_type as string,

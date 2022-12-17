@@ -148,6 +148,8 @@ export type QuestionOption = {
 };
 export type FormQuestion = {
   fieldId?: number;
+  isRequired: boolean;
+  fieldTooltip?: string;
   data: QuestionRow;
   option?: QuestionOption[];
 };
