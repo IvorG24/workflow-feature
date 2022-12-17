@@ -818,6 +818,7 @@ export const mapEmptyFormToReactDndRequestForm = async ({
     const formQuestion: FormQuestion = {
       fieldId: fieldTableRow.field_id as number,
       isRequired: fieldTableRow.is_required as boolean,
+      fieldTooltip: fieldTableRow.field_tooltip as string,
       data: {
         question: fieldTableRow.field_name as string,
         expected_response_type: fieldTableRow.field_type as string,
@@ -851,6 +852,7 @@ export const saveReactDndRequestForm = async (
     })
     .select()
     .single();
+  if (formError) throw formError;
 
   // Insert questions to field_table.
   const { data: fieldTableRowList, error: fieldError } = await supabaseClient
@@ -861,11 +863,24 @@ export const saveReactDndRequestForm = async (
         field_type: question.data.expected_response_type as FieldTypeEnum,
         field_option: question.option?.map((option) => option.value),
         form_table_id: formTableRow?.form_id,
+        is_required: question.isRequired,
+        field_tooltip: question.fieldTooltip,
       }))
     )
     .select();
+  if (fieldError) throw fieldError;
 
-  if (formError || fieldError) throw formError || fieldError;
+  // Update form priority order in form_table.
+  const { error: updateFormPriorityError } = await supabaseClient
+    .from("form_table")
+    .update({
+      form_priority: fieldTableRowList.map(
+        (fieldTableRow) => fieldTableRow.field_id
+      ),
+    })
+    .eq("form_id", formTableRow.form_id);
+  if (updateFormPriorityError) throw updateFormPriorityError;
+
   return { formTableRow, fieldTableRowList };
 };
 
