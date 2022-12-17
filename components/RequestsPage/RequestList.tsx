@@ -14,7 +14,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -30,14 +30,18 @@ const statusOptions: {
   { value: "rejected", label: "Rejected" },
   { value: "revision", label: "Revision" },
   { value: "stale", label: "Stale" },
-  { value: "cancelled", label: "Cancelled" },
 ];
 
 const REQUEST_PER_PAGE = 8;
 
-const All = () => {
+type Props = {
+  activeTab: string;
+};
+
+const RequestList = ({ activeTab }: Props) => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
+  const user = useUser();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -67,7 +71,9 @@ const All = () => {
         selectedForm,
         status,
         search,
-        isSearch
+        isSearch,
+        activeTab,
+        `${user?.id}`
       );
 
       if (!isSearch) {
@@ -158,7 +164,6 @@ const All = () => {
         setSelectedRequest={setSelectedRequest}
         setRequestList={setRequestList}
         setIsLoading={setIsLoading}
-        
       />
       {requestCount / REQUEST_PER_PAGE > 1 ? (
         <Pagination
@@ -172,4 +177,4 @@ const All = () => {
   );
 };
 
-export default All;
+export default RequestList;

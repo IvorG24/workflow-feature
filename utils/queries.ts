@@ -244,6 +244,7 @@ export const retrieveRequestDraftByForm = async (
     .eq("is_draft", true)
     .eq("form_table_id", formId)
     .eq("requested_by", userId)
+    .is("request_is_disabled", false)
     .maybeSingle();
 
   if (requestDraftError) throw requestDraftError;
@@ -316,6 +317,7 @@ export const retreivedRequestDraftByRequestId = async (
     .from("request_table")
     .select("*, form: form_table_id(*)")
     .eq("request_id", requestId)
+    .is("request_is_disabled", false)
     .single();
 
   if (requestDraftError) throw requestDraftError;
@@ -452,6 +454,7 @@ export const retrieveRequest = async (
   const { data: request, error: requestError } = await supabaseClient
     .from("request_table")
     .select("*, owner: requested_by(*), approver: approver_id(*)")
+    .is("request_is_disabled", false)
     .eq("request_id", requestId)
     .single();
 
@@ -477,6 +480,21 @@ export const requestResponse = async (
 // * Type here
 export type RequestResponse = Awaited<ReturnType<typeof requestResponse>>;
 
+// * ADelete request by request id.
+export const deleteRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number
+) => {
+  const { error: requestError } = await supabaseClient
+    .from("request_table")
+    .update({ request_is_disabled: true })
+    .eq("request_id", requestId);
+
+  if (requestError) throw requestError;
+};
+// * Type here
+export type DeletedRequest = Awaited<ReturnType<typeof deleteRequest>>;
+
 // * Approve, Reject, or Sent to Revision request by request id.
 export const retrieveRequestList = async (
   supabaseClient: SupabaseClient<Database>,
@@ -487,7 +505,7 @@ export const retrieveRequestList = async (
   status: string | null,
   search: string,
   isSearch: boolean,
-  filter?: "all" | "sent" | "received",
+  filter?: string,
   userId?: string
 ) => {
   let query = supabaseClient
@@ -497,12 +515,14 @@ export const retrieveRequestList = async (
     )
     .eq("is_draft", false)
     .eq("form.team_id", teamId)
+    .is("request_is_disabled", false)
     .range(start, start + requestPerPage - 1)
     .order("request_created_at", { ascending: false });
 
   let countQuery = supabaseClient
     .from("request_table")
     .select("*, form: form_table_id!inner(*)")
+    .is("request_is_disabled", false)
     .eq("is_draft", false)
     .eq("form.team_id", teamId);
 

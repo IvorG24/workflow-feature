@@ -5,6 +5,7 @@ import {
   MantineProvider,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import { ModalsProvider } from "@mantine/modals";
 import { NotificationsProvider } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
@@ -51,16 +52,18 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         withCSSVariables
         theme={{ colorScheme, ...getMantineTheme(colorScheme) }}
       >
-        <SessionContextProvider
-          supabaseClient={supabaseClient}
-          initialSession={pageProps.initialSession}
-        >
-          <NotificationsProvider position="top-center">
-            <UserProfileProvider>
-              {getLayout(<Component {...pageProps} />)}
-            </UserProfileProvider>
-          </NotificationsProvider>
-        </SessionContextProvider>
+        <ModalsProvider>
+          <SessionContextProvider
+            supabaseClient={supabaseClient}
+            initialSession={pageProps.initialSession}
+          >
+            <NotificationsProvider position="top-center">
+              <UserProfileProvider>
+                {getLayout(<Component {...pageProps} />)}
+              </UserProfileProvider>
+            </NotificationsProvider>
+          </SessionContextProvider>
+        </ModalsProvider>
       </MantineProvider>
     </ColorSchemeProvider>
   );
