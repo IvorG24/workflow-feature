@@ -30,18 +30,15 @@ const statusOptions: {
   { value: "rejected", label: "Rejected" },
   { value: "revision", label: "Revision" },
   { value: "stale", label: "Stale" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 const REQUEST_PER_PAGE = 8;
 
-type Props = {
-  activeTab: string;
-};
-
-const RequestList = ({ activeTab }: Props) => {
+const Sent = () => {
   const supabase = useSupabaseClient<Database>();
-  const router = useRouter();
   const user = useUser();
+  const router = useRouter();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -53,9 +50,7 @@ const RequestList = ({ activeTab }: Props) => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
-  const [selectedForm, setSelectedForm] = useState<string | null>(
-    router.query.formId ? `${router.query.formId}` : null
-  );
+  const [selectedForm, setSelectedForm] = useState<string | null>(null);
 
   const fetchRequests = async (isSearch: boolean) => {
     try {
@@ -72,18 +67,14 @@ const RequestList = ({ activeTab }: Props) => {
         status,
         search,
         isSearch,
-        activeTab,
+        "sent",
         `${user?.id}`
       );
-
-      if (!isSearch) {
-        setSearch("");
-      }
       setRequestList(requestList);
       setRequestCount(Number(requestCount));
 
       setIsLoading(false);
-    } catch (e) {
+    } catch {
       showNotification({
         title: "Error!",
         message: "Failed to fetch Request List",
@@ -110,7 +101,6 @@ const RequestList = ({ activeTab }: Props) => {
       });
     }
   };
-
   // first load
   useEffect(() => {
     fetchRequests(false);
@@ -162,8 +152,6 @@ const RequestList = ({ activeTab }: Props) => {
         requestList={requestList}
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
-        setRequestList={setRequestList}
-        setIsLoading={setIsLoading}
       />
       {requestCount / REQUEST_PER_PAGE > 1 ? (
         <Pagination
@@ -177,4 +165,4 @@ const RequestList = ({ activeTab }: Props) => {
   );
 };
 
-export default RequestList;
+export default Sent;
