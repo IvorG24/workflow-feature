@@ -2,7 +2,8 @@
 import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
 import { Burger, Container, Group, useMantineColorScheme } from "@mantine/core";
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import styles from "./MobileHeader.module.scss";
 import MobileNavbar from "./MobileNavbar";
 
@@ -13,6 +14,13 @@ type Props = {
 const MobileHeader = ({ teamList }: Props) => {
   const { colorScheme } = useMantineColorScheme();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+
+  // Close mobile navbar everytime user clicks on a link.
+  useEffect(() => {
+    setIsOpen(false);
+  }, [router.pathname]);
+
   return (
     <Group
       position="apart"
