@@ -5,7 +5,6 @@ import type { Database, FormTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
-  Badge,
   Burger,
   Button,
   Container,
@@ -30,7 +29,6 @@ import { MouseEventHandler, useEffect, useState } from "react";
 import {
   AddCircle,
   ArrowBack,
-  Dashboard,
   Description,
   Dots,
   EditDocument,
@@ -59,12 +57,12 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
   const [forms, setForms] = useState<FormTableRow[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
   const [isOpenRequest, setIsOpenRequest] = useState(false);
-  const [isOpenReview, setIsOpenReview] = useState(false);
+  // const [isOpenReview, setIsOpenReview] = useState(false);
   const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
-  const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
+  // const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
 
   const requestForms = forms.filter((form) => form.form_type === "request");
-  const reviewForms = forms.filter((form) => form.form_type === "review");
+  // const reviewForms = forms.filter((form) => form.form_type === "review");
 
   useEffect(() => {
     // TODO: Convert into a hook
