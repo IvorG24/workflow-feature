@@ -1,6 +1,10 @@
 // todo: close navbar when clicked outside
 import SelectItem from "@/components/SelectItem/SelectItem";
-import { CreateOrRetrieveUserTeamList } from "@/utils/queries";
+import { useUserProfileContext } from "@/contexts/UserProfileContext";
+import {
+  CreateOrRetrieveUserTeamList,
+  retrieveTeamOwnerAndAdmins,
+} from "@/utils/queries";
 import type { Database, FormTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -64,6 +68,10 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
   const requestForms = forms.filter((form) => form.form_type === "request");
   // const reviewForms = forms.filter((form) => form.form_type === "review");
 
+  const {
+    state: { userProfile },
+  } = useUserProfileContext();
+
   useEffect(() => {
     // TODO: Convert into a hook
     const fetchForms = async () => {
@@ -105,6 +113,34 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
     colorScheme === "dark" ? styles.colorLight : ""
   }`;
 
+  const handlePushToCreateRequest = async (formId: number) => {
+    try {
+      const ownerAndAdminList = await retrieveTeamOwnerAndAdmins(
+        supabase,
+        `${router.query.tid}`,
+        `${user?.id}`
+      );
+
+      if (ownerAndAdminList.length > 0) {
+        router.push(`/t/${activeTeam}/requests/create?formId=${formId}`);
+      } else {
+        showNotification({
+          title: "Warning!",
+          message:
+            "This team doesn't have any possible approvers yet. Assign an admin first before creating a request",
+          color: "orange",
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      showNotification({
+        title: "Error!",
+        message: "Failed to fetch approvers",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <>
       <MantineNavbar px="md" pb="lg" pt="xs" aria-label="sidebar navigation">
@@ -140,9 +176,13 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
           itemComponent={SelectItem}
           onChange={(val) => {
             setActiveTeam(`${val}`);
-            router.push(`/t/${val}/requests`);
+            if (val === "create") {
+              router.push(`/teams/create`);
+            } else {
+              router.push(`/t/${val}/requests`);
+            }
           }}
-          icon={<Avatar src="" radius="xl" size="sm" />}
+          icon={<Avatar src={activeTeam} radius="xl" size="sm" />}
           size="md"
           styles={{
             label: {
@@ -289,7 +329,10 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                               <ActionIcon
                                 variant="subtle"
                                 component="a"
-                                onClick={(e) => e.preventDefault()}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handlePushToCreateRequest(form.form_id);
+                                }}
                                 aria-label="options menu"
                                 className={`${styles.createRequestButton} ${
                                   colorScheme === "dark"
@@ -451,11 +494,11 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
               <NavLink
                 component="a"
                 href={`/profiles/${user?.id}/bio`}
-                label="Mary Joy Dumancal"
+                label={userProfile?.full_name}
                 description="View Profile"
                 icon={
                   <IconWrapper className={iconStyle}>
-                    <Avatar radius="xl" />
+                    <Avatar radius="xl" src={userProfile?.avatar_url} />
                   </IconWrapper>
                 }
               />
@@ -468,6 +511,10 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                     <Logout />
                   </IconWrapper>
                 }
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  await router.push("/sign-in");
+                }}
               >
                 Logout
               </Button>
