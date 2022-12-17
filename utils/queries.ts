@@ -244,7 +244,7 @@ export const retrieveRequestDraftByForm = async (
     .eq("is_draft", true)
     .eq("form_table_id", formId)
     .eq("requested_by", userId)
-    .eq("request_is_disabled", false)
+    .is("request_is_disabled", false)
     .maybeSingle();
 
   if (requestDraftError) throw requestDraftError;
@@ -317,7 +317,7 @@ export const retreivedRequestDraftByRequestId = async (
     .from("request_table")
     .select("*, form: form_table_id(*)")
     .eq("request_id", requestId)
-    .eq("request_is_disabled", false)
+    .is("request_is_disabled", false)
     .single();
 
   if (requestDraftError) throw requestDraftError;
@@ -454,7 +454,7 @@ export const retrieveRequest = async (
   const { data: request, error: requestError } = await supabaseClient
     .from("request_table")
     .select("*, owner: requested_by(*), approver: approver_id(*)")
-    .eq("request_is_disabled", false)
+    .is("request_is_disabled", false)
     .eq("request_id", requestId)
     .single();
 
@@ -515,14 +515,14 @@ export const retrieveRequestList = async (
     )
     .eq("is_draft", false)
     .eq("form.team_id", teamId)
-    .eq("request_is_disabled", false)
+    .is("request_is_disabled", false)
     .range(start, start + requestPerPage - 1)
     .order("request_created_at", { ascending: false });
 
   let countQuery = supabaseClient
     .from("request_table")
     .select("*, form: form_table_id!inner(*)")
-    .eq("request_is_disabled", false)
+    .is("request_is_disabled", false)
     .eq("is_draft", false)
     .eq("form.team_id", teamId);
 
