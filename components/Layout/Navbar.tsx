@@ -1,5 +1,6 @@
 // todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
+import { useUserProfileContext } from "@/contexts/UserProfileContext";
 import {
   CreateOrRetrieveUserTeamList,
   retrieveTeamOwnerAndAdmins,
@@ -62,6 +63,10 @@ const Navbar = ({ teamList }: Props) => {
   const requestForms = forms.filter((form) => form.form_type === "request");
   const reviewForms = forms.filter((form) => form.form_type === "review");
 
+  const {
+    state: { userProfile },
+  } = useUserProfileContext();
+
   useEffect(() => {
     // TODO: Convert into a hook
     const fetchForms = async () => {
@@ -111,7 +116,7 @@ const Navbar = ({ teamList }: Props) => {
         `${user?.id}`
       );
 
-      if (ownerAndAdminList.length > 1) {
+      if (ownerAndAdminList.length > 0) {
         router.push(`/t/${activeTeam}/requests/create?formId=${formId}`);
       } else {
         showNotification({
@@ -436,11 +441,11 @@ const Navbar = ({ teamList }: Props) => {
               <NavLink
                 component="a"
                 href={`/profiles/${user?.id}/bio`}
-                label="Alberto Linao"
+                label={userProfile?.full_name}
                 description="View Profile"
                 icon={
                   <IconWrapper className={iconStyle}>
-                    <Avatar radius="xl" />
+                    <Avatar radius="xl" src={userProfile?.avatar_url} />
                   </IconWrapper>
                 }
               />
