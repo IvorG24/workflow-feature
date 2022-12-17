@@ -53,9 +53,12 @@ const FormBuilder: FC<Props> = (props) => {
 
   const handleAppendQuestion = () => {
     appendQuestion({
+      isRequired: false,
+      fieldTooltip: "",
       data: {
         question: "",
         expected_response_type: "text",
+        
       },
       option: [],
     });

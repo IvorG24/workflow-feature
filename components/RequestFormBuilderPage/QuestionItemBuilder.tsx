@@ -2,7 +2,9 @@ import { EXPECTED_RESPONSE_TYPE_VALUE } from "@/utils/constants";
 import { FormRequest } from "@/utils/types";
 import {
   Center,
+  Checkbox,
   CloseButton,
+  Flex,
   Group,
   Paper,
   Select,
@@ -105,6 +107,31 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                   />
                 )}
               />
+              <Flex wrap="wrap" align="center" gap="md">
+                <TextInput
+                  aria-label="Tooltip"
+                  role="textbox"
+                  label="Tooltip"
+                  placeholder="Enter Tooltip Here"
+                  {...register(`questions.${questionIndex}.fieldTooltip`, {
+                    maxLength: {
+                      value: 100,
+                      message: "Tooltip must not exceed to 100 characters",
+                    },
+                  })}
+                  error={
+                    errors.questions?.[questionIndex]?.fieldTooltip?.message
+                  }
+                  miw={100}
+                  style={{ flex: 1 }}
+                />
+                <Checkbox
+                  aria-label="Required"
+                  label="Required"
+                  {...register(`questions.${questionIndex}.isRequired`)}
+                  pt={30}
+                />
+              </Flex>
               {isMultiOrSelect && (
                 <QuestionOptionsBuilder
                   control={control}
