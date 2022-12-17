@@ -142,7 +142,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
           itemComponent={SelectItem}
           onChange={(val) => {
             setActiveTeam(`${val}`);
-            router.push(`/t/${val}/dashboard`);
+            router.push(`/t/${val}/requests`);
           }}
           icon={<Avatar src="" radius="xl" size="sm" />}
           size="md"
@@ -166,8 +166,9 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                 p={0}
               >
                 <NavLink
-                  component="button"
+                  component="a"
                   label="Notifications"
+                  href={`/t/${activeTeam}/notifications`}
                   mt="xs"
                   icon={
                     <IconWrapper className={iconStyle}>
@@ -175,30 +176,50 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                     </IconWrapper>
                   }
                 />
-                <Badge
+                {/* <Badge
                   className={styles.notificationsButtonWrapper__badge}
                   color="red"
                 >
                   1
-                </Badge>
-              </Container>
+                </Badge> */}
 
-              <NavLink
-                component="a"
-                href="/settings/general"
-                label="Settings"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    <Settings />
-                  </IconWrapper>
-                }
-              />
+                <NavLink
+                  component="a"
+                  href={`/t/${activeTeam}/settings/general`}
+                  label="Settings"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <Settings />
+                    </IconWrapper>
+                  }
+                />
+                <NavLink
+                  component="a"
+                  href={`/t/${activeTeam}/settings/members`}
+                  label="Members"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <GroupIcon />
+                    </IconWrapper>
+                  }
+                />
+                <NavLink
+                  component="a"
+                  href={`/t/${activeTeam}/requests`}
+                  label="All Requests"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <EditDocument />
+                    </IconWrapper>
+                  }
+                />
+              </Container>
             </MantineNavbar.Section>
 
             <Divider mt="xs" />
             <ScrollArea className={styles.navScroll}>
               <MantineNavbar.Section mt="lg">
-                <NavLink
+                {/* <NavLink
                   component="a"
                   href={`/t/${activeTeam}/dashboard`}
                   label="Dashboard"
@@ -207,17 +228,8 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                       <Dashboard />
                     </IconWrapper>
                   }
-                />
-                <NavLink
-                  component="a"
-                  href={`/t/${activeTeam}/requests`}
-                  label="Requests"
-                  icon={
-                    <IconWrapper className={iconStyle}>
-                      <EditDocument />
-                    </IconWrapper>
-                  }
-                />
+                /> */}
+
                 <NavLink
                   component="a"
                   label="Request Forms"
@@ -327,7 +339,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                   ))}
                 </NavLink>
 
-                <NavLink
+                {/* <NavLink
                   label="Review Forms"
                   component="a"
                   childrenOffset={28}
@@ -434,19 +446,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                       }
                     />
                   ))}
-                </NavLink>
-
-                <NavLink
-                  component="a"
-                  // TODO: Commented out page route has no content. Kindly fix.
-                  href={`/t/${activeTeam}/settings/members`}
-                  label="Members"
-                  icon={
-                    <IconWrapper className={iconStyle}>
-                      <GroupIcon />
-                    </IconWrapper>
-                  }
-                />
+                </NavLink> */}
               </MantineNavbar.Section>
             </ScrollArea>
             <MantineNavbar.Section className={styles.footer}>
