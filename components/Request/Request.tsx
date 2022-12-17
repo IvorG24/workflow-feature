@@ -1,6 +1,7 @@
 import {
   createComment,
   deleteComment,
+  deleteRequest,
   editComment,
   requestResponse,
   RetrievedRequestComments,
@@ -36,6 +37,7 @@ import {
   Title,
 } from "@mantine/core";
 import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
+import { openConfirmModal } from "@mantine/modals";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
@@ -133,6 +135,7 @@ const Request = ({
     fetchRequestFields();
     fetchComments();
   }, [selectedRequest?.request_id, supabase]);
+
   const handleAddComment = async () => {
     if (!comment) return;
 
@@ -345,6 +348,58 @@ const Request = ({
     }
   };
 
+  const handleDelete = async () => {
+    setIsLoading && setIsLoading(true);
+    if (view === "full") {
+      setFullViewIsLoading(true);
+    }
+    try {
+      await deleteRequest(supabase, Number(selectedRequest?.request_id));
+
+      setRequestList &&
+        setRequestList((prev) =>
+          prev.filter(
+            (request) => request.request_id !== selectedRequest?.request_id
+          )
+        );
+      setSelectedRequest && setSelectedRequest(null);
+      showNotification({
+        title: "Success!",
+        message: `You deleted ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+      if (view === "full") {
+        router.push(`/t/${router.query.tid}/requests`);
+      }
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to delete ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+    }
+    setIsLoading && setIsLoading(false);
+    if (view === "full") {
+      setFullViewIsLoading(false);
+    }
+  };
+
+  const confirmationModal = (
+    action: string,
+    requestTitle: string,
+    confirmFunction: () => void
+  ) =>
+    openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to {action} the {requestTitle}?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: () => confirmFunction(),
+    });
+
   return (
     <Container
       p={view === "full" ? "xl" : 0}
@@ -461,7 +516,13 @@ const Request = ({
           <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
             <Button
               color="green"
-              onClick={() => handleApprove()}
+              onClick={() =>
+                confirmationModal(
+                  "approve",
+                  `${selectedRequest.request_title}`,
+                  handleApprove
+                )
+              }
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
@@ -477,12 +538,43 @@ const Request = ({
             </Button> */}
             <Button
               color="red"
-              onClick={() => handleReject()}
+              onClick={() =>
+                confirmationModal(
+                  "reject",
+                  `${selectedRequest.request_title}`,
+                  handleReject
+                )
+              }
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
             >
               Reject
+            </Button>
+          </Flex>
+        </>
+      ) : null}
+
+      {selectedRequest?.owner.user_id === user?.id &&
+      (selectedRequest?.request_status === "pending" ||
+        selectedRequest?.request_status === "stale") ? (
+        <>
+          <Divider mt="xl" />{" "}
+          <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
+            <Button
+              color="dark"
+              onClick={() =>
+                confirmationModal(
+                  "delete",
+                  `${selectedRequest.request_title}`,
+                  handleDelete
+                )
+              }
+              fullWidth={view === "split"}
+              w={view === "full" ? 200 : ""}
+              size={view === "full" ? "md" : "sm"}
+            >
+              Delete
             </Button>
           </Flex>
         </>
