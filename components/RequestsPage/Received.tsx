@@ -48,7 +48,6 @@ const Received = () => {
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
     null
   );
-  const [isApprover, setIsApprover] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -120,133 +119,6 @@ const Received = () => {
     fetchRequests(false);
   }, [activePage]);
 
-  useEffect(() => {
-    setIsApprover(false);
-    if (selectedRequest) {
-      if (
-        (selectedRequest.request_status === "stale" ||
-          selectedRequest.request_status === "pending") &&
-        selectedRequest.approver_id === user?.id
-      ) {
-        setIsApprover(true);
-      }
-    }
-  }, [selectedRequest, user]);
-
-  const handleApprove = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "approved" })
-        .eq("request_id", Number(selectedRequest?.request_id));
-
-      if (error) throw error;
-
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              request_status: "approved",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `You approved ${selectedRequest?.request_title}`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to approve ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
-  const handleSendToRevision = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "revision" })
-        .eq("request_id", Number(selectedRequest?.request_id));
-
-      if (error) throw error;
-
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              request_status: "revision",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `${selectedRequest?.request_title} is sent to revision`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `${selectedRequest?.request_title} has failed to send to revision `,
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
-  const handleReject = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("request_table")
-        .update({ request_status: "rejected" })
-        .eq("request_id", Number(selectedRequest?.request_id));
-
-      if (error) throw error;
-
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              request_status: "rejected",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `You rejected ${selectedRequest?.request_title}`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to reject ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
@@ -281,10 +153,6 @@ const Received = () => {
         requestList={requestList}
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
-        isApprover={isApprover}
-        handleApprove={handleApprove}
-        handleSendToRevision={handleSendToRevision}
-        handleReject={handleReject}
       />
       {requestCount / REQUEST_PER_PAGE > 1 ? (
         <Pagination

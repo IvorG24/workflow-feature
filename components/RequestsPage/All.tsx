@@ -1,6 +1,5 @@
 import { Search } from "@/components/Icon";
 import {
-  requestResponse,
   retrieveRequestFormByTeam,
   retrieveRequestList,
 } from "@/utils/queries";
@@ -15,7 +14,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -38,7 +37,6 @@ const REQUEST_PER_PAGE = 8;
 
 const All = () => {
   const supabase = useSupabaseClient<Database>();
-  const user = useUser();
   const router = useRouter();
 
   const [search, setSearch] = useState("");
@@ -49,7 +47,6 @@ const All = () => {
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
     null
   );
-  const [isApprover, setIsApprover] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
   const [selectedForm, setSelectedForm] = useState<string | null>(
@@ -125,130 +122,6 @@ const All = () => {
     fetchRequests(false);
   }, [activePage]);
 
-  useEffect(() => {
-    setIsApprover(false);
-    if (selectedRequest) {
-      if (
-        (selectedRequest.request_status === "stale" ||
-          selectedRequest.request_status === "pending") &&
-        selectedRequest.approver_id === user?.id
-      ) {
-        setIsApprover(true);
-      }
-    }
-  }, [selectedRequest, user]);
-
-  const handleApprove = async () => {
-    setIsLoading(true);
-    try {
-      await requestResponse(
-        supabase,
-        Number(selectedRequest?.request_id),
-        "approved"
-      );
-
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              request_status: "approved",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `You approved ${selectedRequest?.request_title}`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to approve ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
-  const handleSendToRevision = async () => {
-    setIsLoading(true);
-    try {
-      await requestResponse(
-        supabase,
-        Number(selectedRequest?.request_id),
-        "revision"
-      );
-
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              request_status: "revision",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `${selectedRequest?.request_title} is sent to revision`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `${selectedRequest?.request_title} has failed to send to revision `,
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
-  const handleReject = async () => {
-    setIsLoading(true);
-    try {
-      await requestResponse(
-        supabase,
-        Number(selectedRequest?.request_id),
-        "rejected"
-      );
-
-      setRequestList((prev) =>
-        prev.map((request) => {
-          if (request.request_id === selectedRequest?.request_id) {
-            return {
-              ...request,
-              request_status: "rejected",
-            };
-          } else {
-            return request;
-          }
-        })
-      );
-      setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `You rejected ${selectedRequest?.request_title}`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to reject ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
@@ -283,10 +156,9 @@ const All = () => {
         requestList={requestList}
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
-        isApprover={isApprover}
-        handleApprove={handleApprove}
-        handleSendToRevision={handleSendToRevision}
-        handleReject={handleReject}
+        setRequestList={setRequestList}
+        setIsLoading={setIsLoading}
+        
       />
       {requestCount / REQUEST_PER_PAGE > 1 ? (
         <Pagination
