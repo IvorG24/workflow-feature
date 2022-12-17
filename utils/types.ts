@@ -147,10 +147,12 @@ export type QuestionOption = {
   value: string;
 };
 export type FormQuestion = {
+  fieldId?: number;
   data: QuestionRow;
   option?: QuestionOption[];
 };
 export type FormRequest = {
+  form_id?: number;
   form_name: string;
   questions: FormQuestion[];
 };
