@@ -4,10 +4,13 @@ import FormPreview from "@/components/RequestFormBuilderPage/FormPreview";
 import { FormRequest } from "@/utils/types";
 import { Box, Container, Grid, Title } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { FC } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
-const RequestFormBuilderPage: FC = () => {
+const RequestFormBuilderPage = ({
+  form_id,
+  form_name,
+  questions,
+}: FormRequest) => {
   /* @fetchQuestion will set as default value on useForm whenever the user click on existing form,
    dummy fetched Data for reusablity of component and to simulate the flow,
     this comment will be remove once approved on preview, Will set this component if state for action is creation or edit
@@ -23,7 +26,7 @@ const RequestFormBuilderPage: FC = () => {
    **/
 
   const { control, register, handleSubmit, getValues } = useForm<FormRequest>({
-    defaultValues: { form_name: "", questions: [] },
+    defaultValues: { form_id, form_name, questions },
   });
 
   const watchForm = useWatch({ control });

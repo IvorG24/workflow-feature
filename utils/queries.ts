@@ -772,9 +772,10 @@ export const fetchEmptyForm = async (
     .from("form_table")
     .select()
     .eq("form_id", formId)
-    .single();
+    .maybeSingle();
 
   if (formTableRowError) throw formTableRowError;
+  if (!formTableRow) return formTableRow;
 
   // Fetch fields of form
   const { data: fieldTableRowList, error: fieldTableRowListError } =
@@ -801,7 +802,7 @@ export type FetchEmptyForm = Awaited<ReturnType<typeof fetchEmptyForm>>;
 export const mapEmptyFormToReactDndRequestForm = async ({
   formTableRow,
   fieldTableRowList,
-}: FetchEmptyForm) => {
+}: NonNullable<FetchEmptyForm>) => {
   if (!formTableRow) throw new Error("Form not found");
   if (!fieldTableRowList) throw new Error("Fields not found");
 
@@ -809,16 +810,20 @@ export const mapEmptyFormToReactDndRequestForm = async ({
   const reactDndRequestForm: FormRequest = { form_name: "", questions: [] };
 
   // Map form name to react dnd.
+  reactDndRequestForm.form_id = formTableRow?.form_id as number;
   reactDndRequestForm.form_name = formTableRow?.form_name as string;
 
   // Map questions to react dnd.
   fieldTableRowList.forEach((fieldTableRow) => {
     const formQuestion: FormQuestion = {
+      fieldId: fieldTableRow.field_id as number,
       data: {
         question: fieldTableRow.field_name as string,
         expected_response_type: fieldTableRow.field_type as string,
       },
-      option: fieldTableRow.field_option?.map((option) => ({ value: option })),
+      option: fieldTableRow?.field_option
+        ? fieldTableRow.field_option.map((option) => ({ value: option }))
+        : [],
     };
     reactDndRequestForm.questions.push(formQuestion);
   });
@@ -861,6 +866,19 @@ export const saveReactDndRequestForm = async (
 
   if (formError || fieldError) throw formError || fieldError;
   return { formTableRow, fieldTableRowList };
+};
+
+// * Update form priority order in form_table.
+export const updateFormPriority = async (
+  supabaseClient: SupabaseClient<Database>,
+  formId: number,
+  priority: number[]
+) => {
+  const { error } = await supabaseClient
+    .from("form_table")
+    .update({ form_priority: priority })
+    .eq("form_id", formId);
+  if (error) throw error;
 };
 
 // * Request Form Builder end

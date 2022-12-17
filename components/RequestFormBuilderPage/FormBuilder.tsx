@@ -1,6 +1,6 @@
 import { AddCircle } from "@/components/Icon";
 import { Database } from "@/utils/database.types";
-import { saveReactDndRequestForm } from "@/utils/queries";
+import { saveReactDndRequestForm, updateFormPriority } from "@/utils/queries";
 import { FormRequest } from "@/utils/types";
 import {
   Box,
@@ -78,10 +78,7 @@ const FormBuilder: FC<Props> = (props) => {
 
   const handleSaveFormRequest = async () => {
     try {
-      const { form_name, questions } = getValues();
-
-      console.log("form_name", JSON.stringify(form_name));
-      console.log("questions", JSON.stringify(questions));
+      // const { form_name, questions } = getValues();
 
       await saveReactDndRequestForm(
         supabaseClient,
@@ -101,6 +98,29 @@ const FormBuilder: FC<Props> = (props) => {
     }
   };
 
+  const handleUpdateFormPriority = async () => {
+    try {
+      const { form_id, questions } = getValues();
+      // Get new priority.
+      const priority = questions
+        ? questions.map((question) => question.fieldId)
+        : [];
+
+      await updateFormPriority(
+        supabaseClient,
+        Number(form_id),
+        priority as number[]
+      );
+
+      showNotification({
+        title: "Form order updated",
+        message: "Questions will now be displayed using the new order!",
+      });
+    } catch (e) {
+      setNotification("Error updating form priority");
+    }
+  };
+
   return (
     <>
       {notification && (
@@ -115,8 +135,10 @@ const FormBuilder: FC<Props> = (props) => {
       )}
       <form
         role="form"
-        aria-label="Create Request Form"
-        onSubmit={handleSubmit(handleSaveFormRequest)}
+        aria-label="Create or Edit Request Form"
+        onSubmit={handleSubmit(
+          getValues().form_id ? handleUpdateFormPriority : handleSaveFormRequest
+        )}
       >
         <Stack>
           <Paper withBorder shadow="sm" p="md">
