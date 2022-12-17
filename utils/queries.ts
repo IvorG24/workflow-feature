@@ -854,14 +854,14 @@ export const updateUserProfile = async (
 ) => {
   if (avatar) {
     const { error: uploadUserProfileError } = await supabaseClient.storage
-      .from("images")
-      .upload(`user-profile/${userId}`, avatar, { upsert: true });
+      .from("user_profile_image")
+      .upload(`${userId}`, avatar, { upsert: true });
 
     if (uploadUserProfileError) throw uploadUserProfileError;
 
     const { data: uploadedProfileImageUrl } = supabaseClient.storage
-      .from("images")
-      .getPublicUrl(`user-profile/${userId}`);
+      .from("user_profile_image")
+      .getPublicUrl(`${userId}`);
 
     const {
       data: updatedUserProfileImage,
@@ -903,14 +903,14 @@ export const uploadTeamLogo = async (
   image: Blob | File
 ) => {
   const { error: uploadTeamLogoError } = await supabaseClient.storage
-    .from("images")
-    .upload(`team-logo/${teamId}`, image);
+    .from("team_logo")
+    .upload(`${teamId}`, image);
 
   if (uploadTeamLogoError) throw uploadTeamLogoError;
 
   const { data: uploadedTeamLogoUrl } = supabaseClient.storage
-    .from("images")
-    .getPublicUrl(`team-logo/${teamId}`);
+    .from("team_logo")
+    .getPublicUrl(`${teamId}`);
 
   const { data: updatedTeamLogo, error: updatedTeamLogoError } =
     await supabaseClient
