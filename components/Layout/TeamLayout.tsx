@@ -90,7 +90,7 @@ const TeamLayout = ({ children }: Props) => {
           );
           if (!teamExists) {
             await router.push(
-              `/t/${createdOrRetrievedUserTeamList[0].team_id}/dashboard`
+              `/t/${createdOrRetrievedUserTeamList[0].team_id}/requests`
             );
           }
         }

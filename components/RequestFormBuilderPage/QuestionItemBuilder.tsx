@@ -18,6 +18,7 @@ import { Draggable } from "react-beautiful-dnd";
 import {
   Control,
   Controller,
+  UseFormGetValues,
   UseFormRegister,
   useFormState,
   useWatch,
@@ -29,10 +30,13 @@ type Props = {
   register: UseFormRegister<FormRequest>;
   control: Control<FormRequest>;
   handleRemoveQuestion: (index: number) => void;
+  getValues: UseFormGetValues<FormRequest>;
 };
 
 const QuestionItemBuilder: FC<Props> = (props) => {
-  const { register, control, questionIndex, handleRemoveQuestion } = props;
+  const { register, control, questionIndex, handleRemoveQuestion, getValues } =
+    props;
+  const isInEditmode = getValues().form_id ? true : false;
 
   const { errors } = useFormState({ control });
 
@@ -84,6 +88,7 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                 error={
                   errors.questions?.[questionIndex]?.data?.question?.message
                 }
+                disabled={isInEditmode}
               />
               <Controller
                 control={control}
@@ -104,9 +109,11 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                       errors.questions?.[questionIndex]?.data
                         ?.expected_response_type?.message
                     }
+                    disabled={isInEditmode}
                   />
                 )}
               />
+              {/* // TODO: Add this to editable. */}
               <Flex wrap="wrap" align="center" gap="md">
                 <TextInput
                   aria-label="Tooltip"
@@ -136,17 +143,20 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                 <QuestionOptionsBuilder
                   control={control}
                   questionIndex={questionIndex}
+                  getValues={getValues}
                 />
               )}
             </Stack>
-            <CloseButton
-              aria-label="Delete Question"
-              role="button"
-              size="sm"
-              variant="filled"
-              color="red"
-              onClick={() => handleRemoveQuestion(questionIndex)}
-            />
+            {!isInEditmode && (
+              <CloseButton
+                aria-label="Delete Question"
+                role="button"
+                size="sm"
+                variant="filled"
+                color="red"
+                onClick={() => handleRemoveQuestion(questionIndex)}
+              />
+            )}
           </Group>
         </Paper>
       )}

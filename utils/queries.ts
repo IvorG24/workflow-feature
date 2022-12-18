@@ -871,7 +871,7 @@ export const saveReactDndRequestForm = async (
   if (fieldError) throw fieldError;
 
   // Update form priority order in form_table.
-  const { error: updateFormPriorityError } = await supabaseClient
+  const { error: updateFormError } = await supabaseClient
     .from("form_table")
     .update({
       form_priority: fieldTableRowList.map(
@@ -879,22 +879,41 @@ export const saveReactDndRequestForm = async (
       ),
     })
     .eq("form_id", formTableRow.form_id);
-  if (updateFormPriorityError) throw updateFormPriorityError;
+  if (updateFormError) throw updateFormError;
 
   return { formTableRow, fieldTableRowList };
 };
 
 // * Update form priority order in form_table.
-export const updateFormPriority = async (
+export const updateForm = async (
   supabaseClient: SupabaseClient<Database>,
   formId: number,
-  priority: number[]
+  questionList: FormQuestion[]
 ) => {
-  const { error } = await supabaseClient
+  // Update priority.
+  const newPriority = (
+    questionList ? questionList.map((question) => question.fieldId) : []
+  ) as number[];
+
+  const { error: updaFormPriorityError } = await supabaseClient
     .from("form_table")
-    .update({ form_priority: priority })
+    .update({ form_priority: newPriority })
     .eq("form_id", formId);
-  if (error) throw error;
+  if (updaFormPriorityError) throw updaFormPriorityError;
+
+  // Update field_tooltip and is_required by building promises.
+  const promises = questionList.map((question) =>
+    supabaseClient
+      .from("field_table")
+      .update({
+        field_tooltip: question.fieldTooltip,
+        is_required: question.isRequired,
+      })
+      .eq("field_id", question.fieldId)
+  );
+
+  // Update all fields.
+  await Promise.all(promises);
 };
 
 // * Request Form Builder end

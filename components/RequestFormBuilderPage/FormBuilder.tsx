@@ -1,6 +1,6 @@
 import { AddCircle } from "@/components/Icon";
 import { Database } from "@/utils/database.types";
-import { saveReactDndRequestForm, updateFormPriority } from "@/utils/queries";
+import { saveReactDndRequestForm, updateForm } from "@/utils/queries";
 import { FormRequest } from "@/utils/types";
 import {
   Box,
@@ -38,6 +38,7 @@ const FormBuilder: FC<Props> = (props) => {
   const router = useRouter();
 
   const { register, control, handleSubmit, getValues } = props;
+  const isInEditMode = getValues().form_id ? true : false;
   const [notification, setNotification] = useState("");
 
   const { errors, isSubmitting } = useFormState({ control });
@@ -58,7 +59,6 @@ const FormBuilder: FC<Props> = (props) => {
       data: {
         question: "",
         expected_response_type: "text",
-        
       },
       option: [],
     });
@@ -101,19 +101,12 @@ const FormBuilder: FC<Props> = (props) => {
     }
   };
 
-  const handleUpdateFormPriority = async () => {
+  const handleUpdateForm = async () => {
     try {
       const { form_id, questions } = getValues();
-      // Get new priority.
-      const priority = questions
-        ? questions.map((question) => question.fieldId)
-        : [];
+     
 
-      await updateFormPriority(
-        supabaseClient,
-        Number(form_id),
-        priority as number[]
-      );
+      await updateForm(supabaseClient, Number(form_id),  questions);
 
       showNotification({
         title: "Form order updated",
@@ -140,7 +133,7 @@ const FormBuilder: FC<Props> = (props) => {
         role="form"
         aria-label="Create or Edit Request Form"
         onSubmit={handleSubmit(
-          getValues().form_id ? handleUpdateFormPriority : handleSaveFormRequest
+          isInEditMode ? handleUpdateForm : handleSaveFormRequest
         )}
       >
         <Stack>
@@ -158,6 +151,7 @@ const FormBuilder: FC<Props> = (props) => {
                 required: "Form name is required",
               })}
               error={errors.form_name?.message}
+              disabled={isInEditMode}
             />
           </Paper>
           <DragDropContext onDragEnd={handleOnDragEnd}>
@@ -175,6 +169,7 @@ const FormBuilder: FC<Props> = (props) => {
                       control={control}
                       questionIndex={index}
                       handleRemoveQuestion={handleRemoveQuestion}
+                      getValues={getValues}
                     />
                   ))}
                   {provided.placeholder}
@@ -182,23 +177,27 @@ const FormBuilder: FC<Props> = (props) => {
               )}
             </Droppable>
           </DragDropContext>
-          <Button
-            role="button"
-            aria-label="Add Question"
-            variant="outline"
-            disabled={isSubmitting ? true : false}
-            onClick={handleAppendQuestion}
-          >
-            <AddCircle />
-            &nbsp;Add Question
-          </Button>
+
+          {!isInEditMode && (
+            <Button
+              role="button"
+              aria-label="Add Question"
+              variant="outline"
+              disabled={isSubmitting ? true : false}
+              onClick={handleAppendQuestion}
+            >
+              <AddCircle />
+              &nbsp;Add Question
+            </Button>
+          )}
+
           <Button
             aria-label="Save"
             role="button"
             type="submit"
             loading={isSubmitting}
           >
-            Save
+            {`${isInEditMode ? "Update" : "Save"}`}
           </Button>
         </Stack>
       </form>
