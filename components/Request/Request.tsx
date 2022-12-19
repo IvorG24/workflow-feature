@@ -41,7 +41,6 @@ import { openConfirmModal } from "@mantine/modals";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Close, Dots, Maximize } from "../Icon";
@@ -492,7 +491,6 @@ const Request = ({
           selectedRequest.attachments.length === 0 && <Text>---</Text>}
         {selectedRequest?.attachments &&
           selectedRequest?.attachments.map((attachmentUrl) => {
-            console.log(attachmentUrl);
             return (
               <a
                 key={attachmentUrl}
@@ -500,7 +498,7 @@ const Request = ({
                 target="_blank"
                 rel="noreferrer"
               >
-                <Image
+                <img
                   src={attachmentUrl}
                   alt="Attachment Image"
                   style={{ height: 200, width: 200 }}
