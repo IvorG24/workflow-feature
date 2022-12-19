@@ -10,26 +10,43 @@ import {
   createOrRetrieveUserTeamList,
   CreateOrRetrieveUserTeamList,
 } from "@/utils/queries";
-import { AppShell, LoadingOverlay } from "@mantine/core";
+import {
+  ActionIcon,
+  AppShell,
+  Burger,
+  Container,
+  Flex,
+  Footer,
+  Group,
+  Header as MantineHeader,
+  LoadingOverlay,
+  MediaQuery,
+  // Navbar,
+  useMantineColorScheme,
+} from "@mantine/core";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
+import SvgMoon from "../Icon/Moon";
+import SvgSun from "../Icon/Sun";
 import BottomNavigation, { ILink } from "./BottomNavigation";
-import MobileHeader from "./MobileHeader";
 import Navbar from "./Navbar";
-import styles from "./TeamLayout.module.scss";
 
 type Props = {
   children: ReactNode;
 };
 
 const TeamLayout = ({ children }: Props) => {
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const router = useRouter();
   const user = useUser();
   const [isLoading, setIsLoading] = useState(true);
   const supabaseClient = useSupabaseClient<Database>();
   const [createdOrRetrievedUserTeamList, setCreatedOrRetrievedUserTeamList] =
     useState<CreateOrRetrieveUserTeamList>([]);
+
+  const [openNavbar, setOpenNavbar] = useState(false);
 
   const {
     // state: { userProfile }, // * This is how to fetch state of context.
@@ -114,15 +131,54 @@ const TeamLayout = ({ children }: Props) => {
       ) : null}
       {!isLoading ? (
         <AppShell
-          navbar={<Navbar teamList={createdOrRetrievedUserTeamList} />} // don't use typecasting for tid
-          header={<MobileHeader teamList={createdOrRetrievedUserTeamList} />}
+          navbarOffsetBreakpoint="sm"
+          navbar={
+            <Navbar
+              openNavbar={openNavbar}
+              teamList={createdOrRetrievedUserTeamList}
+            />
+          }
+          footer={
+            <MediaQuery largerThan="sm" styles={{ display: "none" }}>
+              <Footer height={60} p="md">
+                {bottomNavLinks.length > 0 && (
+                  <BottomNavigation links={bottomNavLinks} />
+                )}
+              </Footer>
+            </MediaQuery>
+          }
+          header={
+            <MantineHeader height={{ base: 60 }} p="sm">
+              <Flex justify="space-between" align="center" h="100%" py="md">
+                <Group>
+                  <Image
+                    src={`/image/logo-${colorScheme}.png`}
+                    alt="logo"
+                    width={147}
+                    height={52}
+                  />
+                  <ActionIcon
+                    variant="default"
+                    onClick={() => toggleColorScheme()}
+                    aria-label="toggle dark mode"
+                  >
+                    {colorScheme === "dark" ? <SvgSun /> : <SvgMoon />}
+                  </ActionIcon>
+                </Group>
+                <MediaQuery largerThan="sm" styles={{ display: "none" }}>
+                  <Burger
+                    opened={openNavbar}
+                    onClick={() => setOpenNavbar((prev) => !prev)}
+                    size="sm"
+                  />
+                </MediaQuery>
+              </Flex>
+            </MantineHeader>
+          }
         >
-          <main className={styles.childrenContainer}>
+          <Container p={0} fluid>
             {children}
-            {bottomNavLinks.length > 0 && (
-              <BottomNavigation links={bottomNavLinks} />
-            )}
-          </main>
+          </Container>
         </AppShell>
       ) : null}
     </>
