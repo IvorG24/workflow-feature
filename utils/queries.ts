@@ -1016,7 +1016,9 @@ export async function getFileUrl(
 
     const url = URL.createObjectURL(data);
 
-    return url;
+    // return url;
+    // TODO: Return the filepath|filetype|url. Change this MCP.
+    return `${path}|${data.type}|${url}`;
   } catch (error) {
     throw new Error("Error fetching file URL");
   }
