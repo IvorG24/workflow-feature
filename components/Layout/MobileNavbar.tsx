@@ -302,7 +302,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                         component="a"
                         onClick={(e) => {
                           e.preventDefault();
-                          router.push(`/t/${activeTeam}/requests/create`);
+                          router.push(`/t/${activeTeam}/forms/build`);
                         }}
                         className={`${styles.createRequestButton} ${
                           colorScheme === "dark"
@@ -320,7 +320,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                     <NavLink
                       key={form.form_id}
                       component="a"
-                      href={`/t/${activeTeam}/forms/${form.form_id}`}
+                      href={`/t/${activeTeam}/requests?formId=${form.form_id}`}
                       label={<Text lineClamp={1}>{form.form_name}</Text>}
                       rightSection={
                         <Group spacing={2}>
@@ -331,7 +331,6 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                                 component="a"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  handlePushToCreateRequest(form.form_id);
                                 }}
                                 aria-label="options menu"
                                 className={`${styles.createRequestButton} ${
@@ -361,9 +360,7 @@ const Navbar = ({ teamList, opened, onToggleOpened }: Props) => {
                             component="button"
                             onClick={(e) => {
                               e.preventDefault();
-                              router.push(
-                                `/t/${activeTeam}/requests/create?formId=${form.form_id}`
-                              );
+                              handlePushToCreateRequest(form.form_id);
                             }}
                             aria-label="create a request"
                             className={`${styles.createRequestButton} ${
