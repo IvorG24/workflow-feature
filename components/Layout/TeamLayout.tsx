@@ -11,26 +11,17 @@ import {
   CreateOrRetrieveUserTeamList,
 } from "@/utils/queries";
 import {
-  ActionIcon,
   AppShell,
-  Burger,
   Container,
-  Flex,
   Footer,
-  Group,
-  Header as MantineHeader,
   LoadingOverlay,
   MediaQuery,
-  // Navbar,
-  useMantineColorScheme,
 } from "@mantine/core";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
-import SvgMoon from "../Icon/Moon";
-import SvgSun from "../Icon/Sun";
 import BottomNavigation, { ILink } from "./BottomNavigation";
+import Header from "./Header";
 import Navbar from "./Navbar";
 
 type Props = {
@@ -38,7 +29,6 @@ type Props = {
 };
 
 const TeamLayout = ({ children }: Props) => {
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const router = useRouter();
   const user = useUser();
   const [isLoading, setIsLoading] = useState(true);
@@ -148,32 +138,33 @@ const TeamLayout = ({ children }: Props) => {
             </MediaQuery>
           }
           header={
-            <MantineHeader height={{ base: 60 }} p="sm">
-              <Flex justify="space-between" align="center" h="100%" py="md">
-                <Group>
-                  <Image
-                    src={`/image/logo-${colorScheme}.png`}
-                    alt="logo"
-                    width={147}
-                    height={52}
-                  />
-                  <ActionIcon
-                    variant="default"
-                    onClick={() => toggleColorScheme()}
-                    aria-label="toggle dark mode"
-                  >
-                    {colorScheme === "dark" ? <SvgSun /> : <SvgMoon />}
-                  </ActionIcon>
-                </Group>
-                <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-                  <Burger
-                    opened={openNavbar}
-                    onClick={() => setOpenNavbar((prev) => !prev)}
-                    size="sm"
-                  />
-                </MediaQuery>
-              </Flex>
-            </MantineHeader>
+            <Header openNavbar={openNavbar} setOpenNavbar={setOpenNavbar} />
+            // <MantineHeader height={{ base: 60 }} p="sm">
+            //   <Flex justify="space-between" align="center" h="100%" py="md">
+            //     <Group>
+            //       <Image
+            //         src={`/image/logo-${colorScheme}.png`}
+            //         alt="logo"
+            //         width={147}
+            //         height={52}
+            //       />
+            //       <ActionIcon
+            //         variant="default"
+            //         onClick={() => toggleColorScheme()}
+            //         aria-label="toggle dark mode"
+            //       >
+            //         {colorScheme === "dark" ? <SvgSun /> : <SvgMoon />}
+            //       </ActionIcon>
+            //     </Group>
+            //     <MediaQuery largerThan="sm" styles={{ display: "none" }}>
+            //       <Burger
+            //         opened={openNavbar}
+            //         onClick={() => setOpenNavbar((prev) => !prev)}
+            //         size="sm"
+            //       />
+            //     </MediaQuery>
+            //   </Flex>
+            // </MantineHeader>
           }
         >
           <Container p={0} fluid>
