@@ -490,7 +490,8 @@ const Request = ({
         {selectedRequest?.attachments &&
           selectedRequest.attachments.length === 0 && <Text>---</Text>}
         {selectedRequest?.attachments &&
-          selectedRequest?.attachments.map((attachmentUrl) => {
+          selectedRequest?.attachments.map((attachment) => {
+            const attachmentUrl = attachment.split("|").pop();
             return (
               <a
                 key={attachmentUrl}
