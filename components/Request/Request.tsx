@@ -1,10 +1,10 @@
 import {
+  RetrievedRequestComments,
   createComment,
   deleteComment,
   deleteRequest,
   editComment,
   requestResponse,
-  RetrievedRequestComments,
   retrieveRequestComments,
 } from "@/utils/queries";
 import {
@@ -32,8 +32,8 @@ import {
   Slider,
   Stack,
   Text,
-  Textarea,
   TextInput,
+  Textarea,
   Title,
 } from "@mantine/core";
 import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
@@ -44,7 +44,9 @@ import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Close, Dots, Maximize } from "../Icon";
+import AttachmentPill from "../RequestsPage/AttachmentPill";
 import styles from "./Request.module.scss";
+import AttachmentBox from "../RequestsPage/AttachmentBox";
 
 type Props = {
   view: "split" | "full";
@@ -490,21 +492,29 @@ const Request = ({
         {selectedRequest?.attachments &&
           selectedRequest.attachments.length === 0 && <Text>---</Text>}
         {selectedRequest?.attachments &&
-          selectedRequest?.attachments.map((attachment) => {
-            const attachmentUrl = attachment.split("|").pop();
+          selectedRequest?.attachments.map((attachment, idx) => {
+            const attachmentUrl = attachment.split("|");
+            const mockFileSize = "234 KB";
+            const mockFile = "file";
+
             return (
-              <a
-                key={attachmentUrl}
-                href={attachmentUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src={attachmentUrl}
-                  alt="Attachment Image"
-                  style={{ height: 200, width: 200 }}
-                />
-              </a>
+              <Group key={idx}>
+                {view === "split" ? (
+                  <AttachmentPill
+                    filename={attachmentUrl[0]}
+                    fileType={attachmentUrl[1]}
+                    fileUrl={attachmentUrl[2]}
+                  />
+                ) : (
+                  <AttachmentBox
+                    filename={attachmentUrl[0]}
+                    fileType={attachmentUrl[1]}
+                    fileUrl={attachmentUrl[2]}
+                    file={mockFile}
+                    fileSize={mockFileSize}
+                  />
+                )}
+              </Group>
             );
           })}
       </Stack>
