@@ -1,6 +1,14 @@
 import { setBadgeColor } from "@/utils/request";
 import type { RequestType } from "@/utils/types";
-import { Avatar, Badge, Group, Paper, Table } from "@mantine/core";
+import {
+  Avatar,
+  Badge,
+  Container,
+  Group,
+  Paper,
+  ScrollArea,
+  Table,
+} from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
@@ -66,33 +74,40 @@ const RequestTable = ({
   });
 
   return (
-    <Group align="flex-start">
-      <Table mt="xl" striped highlightOnHover className={styles.tableContainer}>
-        <thead>
-          <tr>
-            <th>REF</th>
-            <th>Request Title</th>
-            <th>Status</th>
-            <th>Last Updated</th>
-            <th>Requested By</th>
-            <th>Approvers</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
-      {/* todo: convert into a component and move outside request table*/}
-      {selectedRequest ? (
-        <Paper shadow="xl" className={styles.requestContainer}>
-          <Request
-            view="split"
-            selectedRequest={selectedRequest}
-            setSelectedRequest={setSelectedRequest}
-            setRequestList={setRequestList}
-            setIsLoading={setIsLoading}
-          />
-        </Paper>
-      ) : null}
-    </Group>
+    <ScrollArea type="scroll">
+      <Container fluid m={0} p={0}>
+        <Table
+          mt="xl"
+          striped
+          highlightOnHover
+          className={styles.tableContainer}
+        >
+          <thead>
+            <tr>
+              <th>REF</th>
+              <th>Request Title</th>
+              <th>Status</th>
+              <th>Last Updated</th>
+              <th>Requested By</th>
+              <th>Approvers</th>
+            </tr>
+          </thead>
+          <tbody>{rows}</tbody>
+        </Table>
+        {/* todo: convert into a component and move outside request table*/}
+        {selectedRequest ? (
+          <Paper shadow="xl" className={styles.requestContainer}>
+            <Request
+              view="split"
+              selectedRequest={selectedRequest}
+              setSelectedRequest={setSelectedRequest}
+              setRequestList={setRequestList}
+              setIsLoading={setIsLoading}
+            />
+          </Paper>
+        ) : null}
+      </Container>
+    </ScrollArea>
   );
 };
 
