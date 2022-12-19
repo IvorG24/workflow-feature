@@ -130,7 +130,7 @@ const TeamLayout = ({ children }: Props) => {
           }
           footer={
             <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-              <Footer height={60} p="md">
+              <Footer height="auto" p="md" withBorder={false}>
                 {bottomNavLinks.length > 0 && (
                   <BottomNavigation links={bottomNavLinks} />
                 )}
