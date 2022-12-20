@@ -21,7 +21,7 @@ import {
 } from "@mantine/core";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useUserProfileContext } from "pages/t/[tid]/profiles/[pid]/[activeTab]";
+import { useUserProfileContext } from "pages/profiles/[pid]/[activeTab]";
 import { useEffect, useState } from "react";
 import AssessmentPage from "./AssessmentPage";
 import Bio from "./BioPage";
@@ -76,7 +76,7 @@ const Profile = () => {
   // const [userProfile, setUserProfile] = useState<FetchUserProfile>();
 
   const userProfile = useUserProfileContext();
-
+  console.log(userProfile);
   useEffect(() => {
     if (userProfile !== null) {
       return setIsLoading(false);
