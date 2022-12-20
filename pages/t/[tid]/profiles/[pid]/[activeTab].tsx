@@ -13,10 +13,9 @@ type Props = {
   profile_data: UserProfileTableRow;
 };
 
-const ProfilePage = ({ profile_data }: Props) => {
-  console.log(profile_data);
+const ProfilePage = (props: Props) => {
   return (
-    <MemberProfileContext.Provider value={profile_data}>
+    <MemberProfileContext.Provider value={props.profile_data}>
       <Meta
         description="Profile Page for every Team Members"
         url="localhost:3000/profiles/id"
@@ -33,7 +32,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     supabase,
     ctx.params?.pid as string
   );
-  console.log(profile_data);
+
   return {
     props: {
       profile_data,
