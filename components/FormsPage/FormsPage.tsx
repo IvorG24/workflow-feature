@@ -1,4 +1,4 @@
-import useFetchTeamRequestFormList from "@/hooks/useFetchTeamRequestFormList";
+import { FetchTeamRequestFormList } from "@/utils/queries";
 import {
   ActionIcon,
   Button,
@@ -18,16 +18,16 @@ import { AddCircle, Search } from "../Icon";
 import styles from "./FormsPage.module.scss";
 import FormsTable from "./FormsTable";
 
+type Props = {
+  teamRequestFormList: FetchTeamRequestFormList;
+};
+
 const FORMS_PER_PAGE = 8;
 
-const FormList = () => {
+const FormList = ({ teamRequestFormList }: Props) => {
   const router = useRouter();
   const [activePage, setActivePage] = useState(1);
   const { colorScheme } = useMantineColorScheme();
-
-  const { teamRequestFormList } = useFetchTeamRequestFormList(
-    router.query.tid as string
-  );
 
   return (
     <Container p="md" fluid>
