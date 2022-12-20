@@ -23,7 +23,7 @@ const Member = () => {
   const [searchBarValue, setSearchBarValue] = useState("");
   const [memberList, setMemberList] = useState<FetchTeamMemberList>([]);
   const [authUserRole, setAuthUserRole] = useState<string>("");
-  const rolesOrder = ["owner", "admin", "member"];
+  const rolesOrder = ["owner", "admin", "purchaser", "member"];
 
   const fetchTeamMembers = useCallback(async () => {
     try {
@@ -158,7 +158,7 @@ const sortMemberList = (members: FetchTeamMemberList) => {
   });
 
   // todo: update member roles to match team_role
-  const rolesOrder = ["owner", "admin", "manager", "member"];
+  const rolesOrder = ["owner", "admin", "purchaser", "member"];
 
   members.sort((a, b) => {
     const indexA = rolesOrder.indexOf(a.team_role as string);

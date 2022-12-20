@@ -3,6 +3,7 @@ import {
   deleteComment,
   deleteRequest,
   editComment,
+  markAsPurchasedRequest,
   requestResponse,
   RetrievedRequestComments,
   retrieveRequestComments,
@@ -102,6 +103,16 @@ const Request = ({
     (selectedRequest?.request_status === "stale" ||
       selectedRequest?.request_status === "pending") &&
     selectedRequest?.approver_id === user?.id;
+
+  const isPurchaser =
+    selectedRequest?.request_status === "approved" &&
+    selectedRequest?.purchaser_id === user?.id &&
+    selectedRequest?.request_is_purchased !== true;
+
+  const isOwner =
+    selectedRequest?.owner.user_id === user?.id &&
+    (selectedRequest?.request_status === "pending" ||
+      selectedRequest?.request_status === "stale");
 
   useEffect(() => {
     const fetchRequestFields = async () => {
@@ -383,6 +394,53 @@ const Request = ({
     }
   };
 
+  const handlePurchase = async () => {
+    setIsLoading && setIsLoading(true);
+    if (view === "full") {
+      setFullViewIsLoading(true);
+    }
+    try {
+      await markAsPurchasedRequest(
+        supabase,
+        Number(selectedRequest?.request_id)
+      );
+
+      setRequestList &&
+        setRequestList((prev) =>
+          prev.map((request) => {
+            if (request.request_id === selectedRequest?.request_id) {
+              return {
+                ...request,
+                request_is_purchased: true,
+              };
+            } else {
+              return request;
+            }
+          })
+        );
+
+      setSelectedRequest && setSelectedRequest(null);
+      showNotification({
+        title: "Success!",
+        message: `You mark as purchased ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+      if (view === "full") {
+        router.push(`/t/${router.query.tid}/requests`);
+      }
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to mark as purchased ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+    }
+    setIsLoading && setIsLoading(false);
+    if (view === "full") {
+      setFullViewIsLoading(false);
+    }
+  };
+
   const confirmationModal = (
     action: string,
     requestTitle: string,
@@ -472,17 +530,34 @@ const Request = ({
       </Group>
 
       <Divider mt="xl" />
-      <Stack mt="xl">
-        <Title order={5}>Approver</Title>
-        <Group align="apart" grow>
-          <Group>
-            <Badge
-              color={setBadgeColor(`${selectedRequest?.request_status}`)}
-            />
-            <Text>{selectedRequest?.approver.full_name}</Text>
+      <Group mt="xl" position="apart" grow>
+        <Stack>
+          <Title order={5}>Approver</Title>
+          <Group align="apart" grow>
+            <Group>
+              <Badge
+                color={setBadgeColor(`${selectedRequest?.request_status}`)}
+              />
+              <Text>{selectedRequest?.approver.full_name}</Text>
+            </Group>
           </Group>
-        </Group>
-      </Stack>
+        </Stack>
+        {selectedRequest?.purchaser ? (
+          <Stack>
+            <Title order={5}>Purchaser</Title>
+            <Group align="apart" grow>
+              <Group>
+                <Badge
+                  color={
+                    selectedRequest?.request_is_purchased ? "green" : "blue"
+                  }
+                />
+                <Text>{selectedRequest?.purchaser.full_name}</Text>
+              </Group>
+            </Group>
+          </Stack>
+        ) : null}
+      </Group>
       <Divider mt="xl" />
       <Stack mt="xl">
         <Title order={5}>Attachment</Title>
@@ -554,9 +629,7 @@ const Request = ({
         </>
       ) : null}
 
-      {selectedRequest?.owner.user_id === user?.id &&
-      (selectedRequest?.request_status === "pending" ||
-        selectedRequest?.request_status === "stale") ? (
+      {isOwner ? (
         <>
           <Divider mt="xl" />{" "}
           <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
@@ -574,6 +647,28 @@ const Request = ({
               size={view === "full" ? "md" : "sm"}
             >
               Delete
+            </Button>
+          </Flex>
+        </>
+      ) : null}
+
+      {isPurchaser ? (
+        <>
+          <Divider mt="xl" />{" "}
+          <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
+            <Button
+              onClick={() =>
+                confirmationModal(
+                  "mark as purchased",
+                  `${selectedRequest.request_title}`,
+                  handlePurchase
+                )
+              }
+              fullWidth={view === "split"}
+              w={view === "full" ? 200 : ""}
+              size={view === "full" ? "md" : "sm"}
+            >
+              Mark as Purchased
             </Button>
           </Flex>
         </>

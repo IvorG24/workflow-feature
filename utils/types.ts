@@ -83,7 +83,7 @@ export type UserProfileRow =
 
 export type RequestType = RequestRow & { approver: UserProfileRow } & {
   owner: UserProfileRow;
-};
+} & { purchaser: UserProfileRow };
 
 export type Marks = {
   value: number;
