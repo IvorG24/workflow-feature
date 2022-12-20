@@ -2,7 +2,7 @@
 // todo: fix mobile view
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import IconWrapper from "@/components/IconWrapper/IconWrapper";
-import { FetchUserProfile, fetchUserProfile } from "@/utils/queries";
+// import { FetchUserProfile, fetchUserProfile } from "@/utils/queries";
 // import EmployeeReviewForm from "@/components/ProfilePage/EmployeeReviewForm";
 // import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
 import {
@@ -19,8 +19,9 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
+import { useUserProfileContext } from "pages/t/[tid]/profiles/[pid]/[activeTab]";
 import { useEffect, useState } from "react";
 import AssessmentPage from "./AssessmentPage";
 import Bio from "./BioPage";
@@ -65,7 +66,6 @@ const Profile = () => {
   const router = useRouter();
   const user = useUser();
   const { activeTab } = router.query;
-  const { supabaseClient } = useSessionContext();
   const { pid } = router.query;
   const [isLoading, setIsLoading] = useState(true);
 
@@ -73,15 +73,15 @@ const Profile = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   // const [reviews, setReviews] = useState<ReviewType[]>([]);
   // const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [userProfile, setUserProfile] = useState<FetchUserProfile>();
+  // const [userProfile, setUserProfile] = useState<FetchUserProfile>();
+
+  const userProfile = useUserProfileContext();
 
   useEffect(() => {
-    (async () => {
-      const data = await fetchUserProfile(supabaseClient, pid as string);
-      setUserProfile(data);
-      setIsLoading(false);
-    })();
-  }, [supabaseClient, pid]);
+    if (userProfile !== null) {
+      return setIsLoading(false);
+    }
+  }, [userProfile]);
 
   // const handleCreateReview = (review: CreateReview) => {
   //   const newReview = {
