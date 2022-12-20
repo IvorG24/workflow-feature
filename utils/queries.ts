@@ -468,9 +468,7 @@ export const retrieveRequest = async (
 ) => {
   const { data: request, error: requestError } = await supabaseClient
     .from("request_table")
-    .select(
-      "*, owner: requested_by(*), approver: approver_id(*), form: form_table_id(form_section_names, form_section_split)"
-    )
+    .select("*, owner: requested_by(*), approver: approver_id(*)")
     .is("request_is_disabled", false)
     .eq("request_id", requestId)
     .single();
@@ -858,7 +856,6 @@ export const saveReactDndRequestForm = async (
   teamId: string,
   formType: FormTypeEnum
 ) => {
-
   // Insert form name to form_table.
   const { data: formTableRow, error: formError } = await supabaseClient
     .from("form_table")
