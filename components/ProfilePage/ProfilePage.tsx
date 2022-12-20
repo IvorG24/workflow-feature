@@ -76,7 +76,7 @@ const Profile = () => {
   // const [userProfile, setUserProfile] = useState<FetchUserProfile>();
 
   const userProfile = useUserProfileContext();
-  console.log(userProfile);
+
   useEffect(() => {
     if (userProfile !== null) {
       return setIsLoading(false);
