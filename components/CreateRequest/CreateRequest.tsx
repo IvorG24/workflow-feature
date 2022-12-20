@@ -19,6 +19,7 @@ import {
   Box,
   Button,
   Container,
+  Divider,
   FileInput,
   Flex,
   Group,
@@ -229,7 +230,8 @@ const CreateRequest = () => {
 
         const retrievedRequestResponse = await retrieveRequestResponse(
           supabase,
-          retrievedRequestDraft.request_id
+          retrievedRequestDraft.request_id,
+          Number(router.query.formId)
         );
 
         const fieldsWithResponse = retrievedRequestResponse.map(
@@ -471,7 +473,18 @@ const CreateRequest = () => {
             />
 
             {fields?.map((field) => {
-              if (field.field_type === "text" || field.field_type === "email") {
+              if (field.field_type === "section") {
+                return (
+                  <Divider
+                    key={field.field_id}
+                    label={field.field_name}
+                    labelPosition="center"
+                  />
+                );
+              } else if (
+                field.field_type === "text" ||
+                field.field_type === "email"
+              ) {
                 return renderTooltip(
                   <TextInput
                     key={field.field_id}

@@ -6,6 +6,7 @@ import {
   requestResponse,
   RetrievedRequestComments,
   retrieveRequestComments,
+  retrieveRequestResponse,
 } from "@/utils/queries";
 import {
   renderTooltip,
@@ -107,13 +108,11 @@ const Request = ({
   useEffect(() => {
     const fetchRequestFields = async () => {
       try {
-        const { data: requestFields, error: requestFieldsError } =
-          await supabase
-            .from("request_response_table")
-            .select("*, field: field_id(*)")
-            .eq("request_id", selectedRequest?.request_id);
-
-        if (requestFieldsError) throw requestFieldsError;
+        const requestFields = await retrieveRequestResponse(
+          supabase,
+          Number(selectedRequest?.request_id),
+          Number(selectedRequest?.form_table_id)
+        );
 
         setSelectedRequestFields(requestFields as unknown as RequestFields[]);
       } catch {
@@ -492,7 +491,6 @@ const Request = ({
           selectedRequest.attachments.length === 0 && <Text>---</Text>}
         {selectedRequest?.attachments &&
           selectedRequest?.attachments.map((attachmentUrl) => {
-            console.log(attachmentUrl);
             return (
               <a
                 key={attachmentUrl}
@@ -590,7 +588,16 @@ const Request = ({
         const fieldResponse = `${field.response_value}`;
         const fieldOptions = field.field.field_option;
 
-        if (fieldType === "text" || fieldType === "email") {
+        if (fieldType === "section") {
+          return (
+            <Divider
+              key={field.field_id}
+              label={fieldLabel}
+              labelPosition="center"
+              mt="xl"
+            />
+          );
+        } else if (fieldType === "text" || fieldType === "email") {
           return (
             <Box key={field.field_id} py="sm">
               {renderTooltip(
