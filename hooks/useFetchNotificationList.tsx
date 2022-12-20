@@ -29,6 +29,7 @@ const useFetchNotificationList = (teamId?: string, formType?: FormTypeEnum) => {
           formType
         );
         setUserNotificationList(userNotificationList);
+        console.log(userNotificationList);
       } catch (e) {
         console.error(e);
         showNotification({
