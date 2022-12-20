@@ -1,6 +1,6 @@
 import { setBadgeColor } from "@/utils/request";
 import type { RequestType } from "@/utils/types";
-import { Avatar, Badge, Group, Paper, Table } from "@mantine/core";
+import { Avatar, Badge, Group, Paper, ScrollArea, Table } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
@@ -67,19 +67,26 @@ const RequestTable = ({
 
   return (
     <Group align="flex-start">
-      <Table mt="xl" striped highlightOnHover className={styles.tableContainer}>
-        <thead>
-          <tr>
-            <th>REF</th>
-            <th>Request Title</th>
-            <th>Status</th>
-            <th>Last Updated</th>
-            <th>Requested By</th>
-            <th>Approvers</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
+      <ScrollArea type="scroll">
+        <Table
+          mt="xl"
+          striped
+          highlightOnHover
+          className={styles.tableContainer}
+        >
+          <thead>
+            <tr>
+              <th>REF</th>
+              <th>Request Title</th>
+              <th>Status</th>
+              <th>Last Updated</th>
+              <th>Requested By</th>
+              <th>Approvers</th>
+            </tr>
+          </thead>
+          <tbody>{rows}</tbody>
+        </Table>
+      </ScrollArea>
       {/* todo: convert into a component and move outside request table*/}
       {selectedRequest ? (
         <Paper shadow="xl" className={styles.requestContainer}>

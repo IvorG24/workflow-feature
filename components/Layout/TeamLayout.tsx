@@ -10,14 +10,19 @@ import {
   createOrRetrieveUserTeamList,
   CreateOrRetrieveUserTeamList,
 } from "@/utils/queries";
-import { AppShell, LoadingOverlay } from "@mantine/core";
+import {
+  AppShell,
+  Container,
+  Footer,
+  LoadingOverlay,
+  MediaQuery,
+} from "@mantine/core";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
 import BottomNavigation, { ILink } from "./BottomNavigation";
-import MobileHeader from "./MobileHeader";
+import Header from "./Header";
 import Navbar from "./Navbar";
-import styles from "./TeamLayout.module.scss";
 
 type Props = {
   children: ReactNode;
@@ -30,6 +35,8 @@ const TeamLayout = ({ children }: Props) => {
   const supabaseClient = useSupabaseClient<Database>();
   const [createdOrRetrievedUserTeamList, setCreatedOrRetrievedUserTeamList] =
     useState<CreateOrRetrieveUserTeamList>([]);
+
+  const [openNavbar, setOpenNavbar] = useState(false);
 
   const {
     // state: { userProfile }, // * This is how to fetch state of context.
@@ -114,15 +121,29 @@ const TeamLayout = ({ children }: Props) => {
       ) : null}
       {!isLoading ? (
         <AppShell
-          navbar={<Navbar teamList={createdOrRetrievedUserTeamList} />} // don't use typecasting for tid
-          header={<MobileHeader teamList={createdOrRetrievedUserTeamList} />}
+          navbarOffsetBreakpoint="sm"
+          navbar={
+            <Navbar
+              openNavbar={openNavbar}
+              teamList={createdOrRetrievedUserTeamList}
+            />
+          }
+          footer={
+            <MediaQuery largerThan="sm" styles={{ display: "none" }}>
+              <Footer height="auto" p="md" withBorder={false}>
+                {bottomNavLinks.length > 0 && (
+                  <BottomNavigation links={bottomNavLinks} />
+                )}
+              </Footer>
+            </MediaQuery>
+          }
+          header={
+            <Header openNavbar={openNavbar} setOpenNavbar={setOpenNavbar} />
+          }
         >
-          <main className={styles.childrenContainer}>
+          <Container p={0} fluid>
             {children}
-            {bottomNavLinks.length > 0 && (
-              <BottomNavigation links={bottomNavLinks} />
-            )}
-          </main>
+          </Container>
         </AppShell>
       ) : null}
     </>
