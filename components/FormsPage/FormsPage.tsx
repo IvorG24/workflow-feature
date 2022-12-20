@@ -16,7 +16,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { AddCircle, Search } from "../Icon";
 import styles from "./FormsPage.module.scss";
-import FormsTable from "./FormsTable";
+import FormList from "./FormList";
 
 type Props = {
   teamRequestFormList: FetchTeamRequestFormList;
@@ -24,7 +24,7 @@ type Props = {
 
 const FORMS_PER_PAGE = 8;
 
-const FormList = ({ teamRequestFormList }: Props) => {
+const FormsPage = ({ teamRequestFormList }: Props) => {
   const router = useRouter();
   const [activePage, setActivePage] = useState(1);
   const { colorScheme } = useMantineColorScheme();
@@ -81,7 +81,7 @@ const FormList = ({ teamRequestFormList }: Props) => {
         </Button>
       </Group>
 
-      <FormsTable
+      <FormList
         formList={teamRequestFormList.teamRequestFormList}
         colorScheme={colorScheme}
       />
@@ -96,4 +96,4 @@ const FormList = ({ teamRequestFormList }: Props) => {
   );
 };
 
-export default FormList;
+export default FormsPage;

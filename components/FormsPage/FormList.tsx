@@ -3,14 +3,14 @@
 import Table from "@/components/Table/Table";
 import { FetchTeamRequestFormList } from "@/utils/queries";
 import { Checkbox, Text } from "@mantine/core";
-import FormsRow from "./FormsRow";
+import FormsRow from "./FormCard";
 
 type Props = {
   colorScheme: "light" | "dark";
   formList: FetchTeamRequestFormList["teamRequestFormList"];
 };
 
-const FormsTable = ({ formList }: Props) => {
+const FormList = ({ formList }: Props) => {
   return (
     <Table mt="lg">
       <thead>
@@ -32,4 +32,4 @@ const FormsTable = ({ formList }: Props) => {
   );
 };
 
-export default FormsTable;
+export default FormList;

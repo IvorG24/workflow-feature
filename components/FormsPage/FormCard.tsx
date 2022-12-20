@@ -6,7 +6,7 @@ type Props = {
   form: FormTableRow;
 };
 
-const FormsRow = ({ form }: Props) => {
+const FormCard = ({ form }: Props) => {
   const router = useRouter();
   return (
     <tr
@@ -33,4 +33,4 @@ const FormsRow = ({ form }: Props) => {
   );
 };
 
-export default FormsRow;
+export default FormCard;
