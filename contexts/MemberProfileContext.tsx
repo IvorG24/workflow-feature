@@ -1,6 +1,6 @@
 import { UserProfileTableRow } from "@/utils/types";
 import { createContext } from "react";
 
-export const MemberProfileContext = createContext<UserProfileTableRow | null>(
-  null
-);
+const MemberProfileContext = createContext<UserProfileTableRow | null>(null);
+
+export default MemberProfileContext;

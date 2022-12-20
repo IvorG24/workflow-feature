@@ -1,65 +1,70 @@
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import Request from "@/components/RequestsPage/RequestsPage";
-import { ReactElement } from "react";
-import type { NextPageWithLayout } from "../../../_app";
+import RequestListContext from "@/contexts/RequestListContext";
+import { RetrievedRequestList, retrieveRequestList } from "@/utils/queries";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 
-const RequestsPage: NextPageWithLayout = () => {
+import { GetServerSidePropsContext } from "next";
+import { NextPageWithLayout } from "pages/_app";
+import { ReactElement } from "react";
+
+type Props = {
+  requestList: RetrievedRequestList["requestList"];
+  requestCount: number;
+};
+
+const RequestsPage: NextPageWithLayout<Props> = (props) => {
   // todo: fix meta tags
   return (
-    <div>
+    <RequestListContext.Provider value={props}>
       <Meta description="List of all Requests" url="localhost:3000/requests" />
-      <Request activeTab="all" />
-    </div>
+      <Request />
+    </RequestListContext.Provider>
   );
 };
 
-// export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
-//   const supabase = createServerSupabaseClient<Database>(ctx);
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabase = createServerSupabaseClient(ctx);
 
-//   const {
-//     data: { user },
-//   } = await supabase.auth.getUser();
+  const {
+    tid: teamId,
+    page: activePage,
+    form: form,
+    search_query: searchQuery,
+    active_tab: activeTab,
+  } = ctx.query;
+  const request_per_page = 8;
+  const start = (Number(activePage) - 1) * request_per_page;
+  const selectedForm = form === undefined ? null : (form as string);
 
-//   const {
-//     page: activePage,
-//     form_type,
-//     status,
-//     search_query,
-//     is_search,
-//     filter,
-//   } = ctx.query;
-//   const boolean_is_search = is_search === "true";
-//   const request_per_page = 8;
-//   const start = (Number(activePage) - 1) * request_per_page;
+  const search = searchQuery === undefined ? "" : (searchQuery as string);
+  const isSearch = searchQuery ? true : false;
 
-//   console.log(ctx.query);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-//   const request_list = await retrieveRequestList(
-//     supabase,
-//     start,
-//     ctx.query.tid as string,
-//     request_per_page,
-//     form_type as string,
-//     status as string,
-//     search_query as string,
-//     boolean_is_search,
-//     filter as string,
-//     user?.id
-//   );
+  const { requestList, requestCount } = await retrieveRequestList(
+    supabase,
+    start,
+    `${teamId}`,
+    request_per_page,
+    selectedForm,
+    null,
+    search,
+    isSearch,
+    activeTab as string,
+    user?.id
+  );
 
-//   // const { data: request_list, error } = await supabase
-//   //   .from("request_table")
-//   //   .select("*");
-
-//   console.log(request_list);
-
-//   return {
-//     props: {
-//       request_list,
-//     },
-//   };
-// };
+  return {
+    props: {
+      requestList,
+      requestCount,
+    },
+  };
+};
 
 RequestsPage.getLayout = function getLayout(page: ReactElement) {
   return <TeamLayout>{page}</TeamLayout>;

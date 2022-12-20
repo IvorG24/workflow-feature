@@ -27,7 +27,7 @@ import Bio from "./BioPage";
 import EditProfileForm from "./EditProfileForm";
 // import data from "../../teams.json";
 // import EditProfileForm from "./EditProfileForm";
-import { MemberProfileContext } from "@/contexts/MemberProfileContext";
+import MemberProfileContext from "@/contexts/MemberProfileContext";
 import styles from "./ProfilePage.module.scss";
 import ProfileReviewsPage from "./ReviewsPage";
 

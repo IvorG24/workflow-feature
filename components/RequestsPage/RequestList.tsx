@@ -1,8 +1,5 @@
-import { Search } from "@/components/Icon";
-import {
-  retrieveRequestFormByTeam,
-  retrieveRequestList,
-} from "@/utils/queries";
+import RequestListContext from "@/contexts/RequestListContext";
+import { retrieveRequestFormByTeam } from "@/utils/queries";
 import type { Database, RequestType } from "@/utils/types";
 import {
   ActionIcon,
@@ -14,10 +11,11 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import SvgSearch from "../Icon/Search";
 import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
 
@@ -34,20 +32,17 @@ const statusOptions: {
 
 const REQUEST_PER_PAGE = 8;
 
-type Props = {
-  activeTab: string;
-};
-
-const RequestList = ({ activeTab }: Props) => {
+const RequestList = () => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
-  const user = useUser();
-
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | null>(null);
-  const [requestList, setRequestList] = useState<RequestType[]>([]);
+
+  const requestContext = useContext(RequestListContext);
+  // const [requestList, setRequestList] = useState<RequestType[]>([]);
+  const requestList = requestContext?.requestList;
+  const requestCount = Number(requestContext?.requestCount);
   const [activePage, setActivePage] = useState(1);
-  const [requestCount, setRequestCount] = useState(0);
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
     null
   );
@@ -57,39 +52,29 @@ const RequestList = ({ activeTab }: Props) => {
     router.query.formId ? `${router.query.formId}` : null
   );
 
-  const fetchRequests = async (isSearch: boolean) => {
-    try {
-      setSelectedRequest(null);
-      setIsLoading(true);
-      const start = (activePage - 1) * REQUEST_PER_PAGE;
+  // useEffect(() => {
+  //   try {
+  //     if (requestContext?.requestList) {
+  //       setRequestList(requestContext.requestList);
+  //       setIsLoading(false);
+  //     }
+  //   } catch (error) {
+  //     showNotification({
+  //       title: "Error!",
+  //       message: "Failed to fetch Request List",
+  //       color: "red",
+  //     });
+  //   }
+  // }, [requestContext]);
 
-      const { requestList, requestCount } = await retrieveRequestList(
-        supabase,
-        start,
-        `${router.query.tid}`,
-        REQUEST_PER_PAGE,
-        selectedForm,
-        status,
-        search,
-        isSearch,
-        activeTab,
-        `${user?.id}`
-      );
+  const handleSearch = () => {
+    const { tid, active_tab: activeTab } = router.query;
 
-      if (!isSearch) {
-        setSearch("");
-      }
-      setRequestList(requestList);
-      setRequestCount(Number(requestCount));
+    router.push(
+      `/t/${tid}/requests?active_tab=${activeTab}&page=${activePage}&search_query=${search}`
+    );
 
-      setIsLoading(false);
-    } catch (e) {
-      showNotification({
-        title: "Error!",
-        message: "Failed to fetch Request List",
-        color: "red",
-      });
-    }
+    return;
   };
 
   const fetchForms = async () => {
@@ -113,19 +98,19 @@ const RequestList = ({ activeTab }: Props) => {
 
   // first load
   useEffect(() => {
-    fetchRequests(false);
+    // fetchRequests(false);
     fetchForms();
   }, [supabase]);
 
   // filter
   useEffect(() => {
     setActivePage(1);
-    fetchRequests(false);
+    // fetchRequests(false);
   }, [selectedForm, status]);
 
   // change page
   useEffect(() => {
-    fetchRequests(false);
+    // fetchRequests(false);
   }, [activePage]);
 
   // todo: add eslint to show error for `mt={"xl"}`
@@ -138,8 +123,8 @@ const RequestList = ({ activeTab }: Props) => {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search"
           rightSection={
-            <ActionIcon onClick={() => fetchRequests(true)}>
-              <Search />
+            <ActionIcon onClick={handleSearch}>
+              <SvgSearch />
             </ActionIcon>
           }
         />
@@ -159,10 +144,10 @@ const RequestList = ({ activeTab }: Props) => {
         />
       </Group>
       <RequestTable
-        requestList={requestList}
+        requestList={requestList as RequestType[]}
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
-        setRequestList={setRequestList}
+        // setRequestList={setRequestList}
         setIsLoading={setIsLoading}
       />
       {requestCount / REQUEST_PER_PAGE > 1 ? (
