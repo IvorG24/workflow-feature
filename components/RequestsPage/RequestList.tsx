@@ -1,5 +1,4 @@
 import RequestListContext from "@/contexts/RequestListContext";
-import { retrieveRequestFormByTeam } from "@/utils/queries";
 import type { Database, RequestType } from "@/utils/types";
 import {
   ActionIcon,
@@ -7,14 +6,14 @@ import {
   LoadingOverlay,
   Pagination,
   Select,
+  SelectItem,
   Stack,
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import SvgSearch from "../Icon/Search";
 import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
@@ -33,85 +32,89 @@ const statusOptions: {
 const REQUEST_PER_PAGE = 8;
 
 const RequestList = () => {
-  const supabase = useSupabaseClient<Database>();
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
-
   const requestContext = useContext(RequestListContext);
-  // const [requestList, setRequestList] = useState<RequestType[]>([]);
-  const requestList = requestContext?.requestList;
+  const [requestList, setRequestList] = useState<RequestType[]>([]);
   const requestCount = Number(requestContext?.requestCount);
+  const forms = requestContext?.forms;
+  const [isLoading, setIsLoading] = useState(false);
+  const [search, setSearch] = useState<string>("");
+  const [status, setStatus] = useState<string | null>(null);
   const [activePage, setActivePage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
     null
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
   const [selectedForm, setSelectedForm] = useState<string | null>(
     router.query.formId ? `${router.query.formId}` : null
   );
 
-  // useEffect(() => {
-  //   try {
-  //     if (requestContext?.requestList) {
-  //       setRequestList(requestContext.requestList);
-  //       setIsLoading(false);
-  //     }
-  //   } catch (error) {
-  //     showNotification({
-  //       title: "Error!",
-  //       message: "Failed to fetch Request List",
-  //       color: "red",
-  //     });
-  //   }
-  // }, [requestContext]);
+  const handleSearch = useCallback(
+    (search: string) => {
+      setIsLoading(true);
+      setSearch(search);
+      router.replace({ query: { ...router.query, search_query: search } });
+    },
+    [router]
+  );
 
-  const handleSearch = () => {
-    const { tid, active_tab: activeTab } = router.query;
+  // !!! need to test if this will work on a mobile phone
+  const handleSearchOnKeyUp = (e: {
+    key: string;
+    currentTarget: { value: string };
+  }) => {
+    const search = e.currentTarget.value;
 
-    router.push(
-      `/t/${tid}/requests?active_tab=${activeTab}&page=${activePage}&search_query=${search}`
-    );
-
-    return;
-  };
-
-  const fetchForms = async () => {
-    try {
-      const requestFormList = await retrieveRequestFormByTeam(
-        supabase,
-        `${router.query.tid}`
-      );
-      const forms = requestFormList?.map((form) => {
-        return { value: `${form.form_id}`, label: `${form.form_name}` };
-      });
-      setForms(forms);
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: "Failed to fetch Form List",
-        color: "red",
-      });
+    if (e.key === "Enter") {
+      handleSearch(search);
+    }
+    if (e.key === "Backspace" && search === "") {
+      setSearch("");
+      handleSearch(search);
     }
   };
 
-  // first load
-  useEffect(() => {
-    // fetchRequests(false);
-    fetchForms();
-  }, [supabase]);
+  const handleFilterBySelectedForm = useCallback(
+    (selectedForm: string | null) => {
+      setIsLoading(true);
+      setSelectedForm(selectedForm);
+      if (selectedForm) {
+        router.replace({ query: { ...router.query, form: selectedForm } });
+      } else {
+        router.push(
+          `/t/${router.query.tid}/requests?active_tab=all&page=${activePage}`
+        );
+      }
+    },
+    [router, activePage]
+  );
 
-  // filter
-  useEffect(() => {
-    setActivePage(1);
-    // fetchRequests(false);
-  }, [selectedForm, status]);
+  const handleFilterByStatus = useCallback(
+    (status: string | null) => {
+      setIsLoading(true);
+      setStatus(status);
+      if (status) {
+        router.replace({ query: { ...router.query, status: status } });
+      } else {
+        router.push(
+          `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`
+        );
+      }
+    },
+    [router, activePage]
+  );
 
-  // change page
   useEffect(() => {
-    // fetchRequests(false);
-  }, [activePage]);
+    try {
+      setRequestList(requestContext?.requestList as RequestType[]);
+      setIsLoading(false);
+    } catch (error) {
+      showNotification({
+        title: "Error!",
+        message: "Failed to fetch Request List",
+        color: "red",
+      });
+    }
+  }, [requestContext]);
 
   // todo: add eslint to show error for `mt={"xl"}`
   return (
@@ -120,34 +123,35 @@ const RequestList = () => {
       <Group mt="xl">
         <TextInput
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.currentTarget.value)}
           placeholder="Search"
           rightSection={
-            <ActionIcon onClick={handleSearch}>
+            <ActionIcon onClick={() => handleSearch(search)}>
               <SvgSearch />
             </ActionIcon>
           }
+          onKeyUp={handleSearchOnKeyUp}
         />
         <Select
           clearable
           placeholder="Form Type"
-          data={forms}
+          data={forms as (string | SelectItem)[]}
           value={selectedForm}
-          onChange={setSelectedForm}
+          onChange={handleFilterBySelectedForm}
         />
         <Select
           clearable
           placeholder="Status"
           data={statusOptions}
           value={status}
-          onChange={setStatus}
+          onChange={handleFilterByStatus}
         />
       </Group>
       <RequestTable
         requestList={requestList as RequestType[]}
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
-        // setRequestList={setRequestList}
+        setRequestList={setRequestList}
         setIsLoading={setIsLoading}
       />
       {requestCount / REQUEST_PER_PAGE > 1 ? (

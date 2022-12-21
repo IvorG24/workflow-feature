@@ -2,19 +2,18 @@ import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import Request from "@/components/RequestsPage/RequestsPage";
 import RequestListContext from "@/contexts/RequestListContext";
-import { RetrievedRequestList, retrieveRequestList } from "@/utils/queries";
+import {
+  retrieveRequestFormByTeam,
+  retrieveRequestList,
+} from "@/utils/queries";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 
+import { RequestProps } from "@/contexts/RequestListContext";
 import { GetServerSidePropsContext } from "next";
 import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
-type Props = {
-  requestList: RetrievedRequestList["requestList"];
-  requestCount: number;
-};
-
-const RequestsPage: NextPageWithLayout<Props> = (props) => {
+const RequestsPage: NextPageWithLayout<RequestProps> = (props) => {
   // todo: fix meta tags
   return (
     <RequestListContext.Provider value={props}>
@@ -33,10 +32,12 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     form: form,
     search_query: searchQuery,
     active_tab: activeTab,
+    status,
   } = ctx.query;
   const request_per_page = 8;
   const start = (Number(activePage) - 1) * request_per_page;
-  const selectedForm = form === undefined ? null : (form as string);
+  const selectedForm = form ? null : (form as string);
+  const formStatus = status ? status : "";
 
   const search = searchQuery === undefined ? "" : (searchQuery as string);
   const isSearch = searchQuery ? true : false;
@@ -51,17 +52,25 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     `${teamId}`,
     request_per_page,
     selectedForm,
-    null,
+    formStatus as string,
     search,
     isSearch,
     activeTab as string,
     user?.id
   );
 
+  const requestFormList = await retrieveRequestFormByTeam(
+    supabase,
+    `${teamId}`
+  );
+  const forms = requestFormList?.map((form) => {
+    return { value: `${form.form_id}`, label: `${form.form_name}` };
+  });
   return {
     props: {
       requestList,
       requestCount,
+      forms,
     },
   };
 };

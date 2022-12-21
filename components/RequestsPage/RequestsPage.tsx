@@ -13,9 +13,12 @@ const RequestsPage = () => {
       <Tabs
         value={router.query.active_tab as string}
         onTabChange={(value) =>
-          router.push(
-            `/t/${router.query.tid}/requests?active_tab=${value}&page=1`
-          )
+          // router.push(
+          //   `/t/${router.query.tid}/requests?active_tab=${value}&page=1`
+          // )
+          router.replace({
+            query: { ...router.query, active_tab: value, page: "1" },
+          })
         }
         mt={50}
       >

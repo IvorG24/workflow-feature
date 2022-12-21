@@ -1,6 +1,12 @@
-import { RetrievedRequestList } from "@/utils/queries";
+import { RequestType } from "@/utils/types";
 import { createContext } from "react";
 
-const RequestListContext = createContext<RetrievedRequestList | null>(null);
+export type RequestProps = {
+  requestList: RequestType[];
+  requestCount: number;
+  forms: { value: string; label: string }[];
+};
+
+const RequestListContext = createContext<RequestProps | null>(null);
 
 export default RequestListContext;
