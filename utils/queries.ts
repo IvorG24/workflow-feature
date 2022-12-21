@@ -581,7 +581,7 @@ export const retrieveRequestList = async (
 
   let countQuery = supabaseClient
     .from("request_table")
-    .select("*, form: form_table_id!inner(*)")
+    .select("*, form: form_table_id!inner(*)", { count: "exact" })
     .is("request_is_disabled", false)
     .eq("is_draft", false)
     .eq("form.team_id", teamId);

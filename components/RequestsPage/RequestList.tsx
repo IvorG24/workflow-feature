@@ -35,7 +35,7 @@ const RequestList = () => {
   const router = useRouter();
   const requestContext = useContext(RequestListContext);
   const [requestList, setRequestList] = useState<RequestType[]>([]);
-  const requestCount = Number(requestContext?.requestCount);
+  const [requestCount, setRequestCount] = useState(0);
   const forms = requestContext?.forms;
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState<string>("");
@@ -106,6 +106,7 @@ const RequestList = () => {
   useEffect(() => {
     try {
       setRequestList(requestContext?.requestList as RequestType[]);
+      setRequestCount(Number(requestContext?.requestCount));
       setIsLoading(false);
     } catch (error) {
       showNotification({
@@ -122,7 +123,6 @@ const RequestList = () => {
     setSelectedForm(null);
     setStatus(null);
   }, [router.query.tid]);
-
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
@@ -161,7 +161,8 @@ const RequestList = () => {
         setRequestList={setRequestList}
         setIsLoading={setIsLoading}
       />
-      {requestCount / REQUEST_PER_PAGE > 1 ? (
+
+      {ceil(requestCount / REQUEST_PER_PAGE) >= 1 ? (
         <Pagination
           className={styles.pagination}
           page={activePage}
