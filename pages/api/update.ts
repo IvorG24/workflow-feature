@@ -11,7 +11,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (req.method === "POST") {
     console.log("UPDATE");
-    const { answers, requestId, formData, approver } = req.body;
+    const { answers, requestId, formData, approver, purchaser } = req.body;
     const newAnswers = answers as (FieldRow & {
       response: string;
       responseId: number | null;
@@ -22,6 +22,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .from("request_table")
         .update({
           approver_id: approver,
+          purchaser_id: purchaser,
           request_title: formData.title,
           on_behalf_of: formData.behalf,
           request_description: formData.description,
