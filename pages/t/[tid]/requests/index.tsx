@@ -33,13 +33,14 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     page: activePage,
     form: form,
     search_query: searchQuery,
-    active_tab: activeTab,
+    active_tab,
     status,
   } = ctx.query;
   const request_per_page = 8;
   const start = (Number(activePage) - 1) * request_per_page;
   const selectedForm = form ? (form as string) : null;
   const formStatus = status ? status : "";
+  const activeTab = active_tab !== "all" ? active_tab : false;
 
   const search = searchQuery === undefined ? "" : (searchQuery as string);
   const isSearch = searchQuery ? true : false;
@@ -60,7 +61,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     activeTab as string,
     user?.id
   );
-
   const requestFormList = await retrieveRequestFormByTeam(
     supabase,
     `${teamId}`

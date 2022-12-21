@@ -116,6 +116,13 @@ const RequestList = () => {
     }
   }, [requestContext]);
 
+  // reset filters when team_id changes
+  useEffect(() => {
+    setSearch("");
+    setSelectedForm(null);
+    setStatus(null);
+  }, [router.query.tid]);
+
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>

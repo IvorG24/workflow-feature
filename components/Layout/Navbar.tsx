@@ -152,7 +152,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
           if (val === "create") {
             router.push(`/teams/create`);
           } else {
-            router.push(`/t/${val}/requests`);
+            router.push(`/t/${val}/requests?active_tab=all&page=1`);
           }
         }}
         icon={<Avatar src={activeTeam} radius="xl" size="sm" />}
