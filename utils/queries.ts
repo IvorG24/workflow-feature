@@ -352,7 +352,8 @@ export type RetrievedRequestDraftByRequestId = RequestRow & { form: FormRow };
 // * Retrieve request response by request id.
 export const retrieveRequestResponse = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number
+  requestId: number,
+  formId: number
 ) => {
   const { data: requestResponse, error: requestResponseError } =
     await supabaseClient
@@ -362,7 +363,21 @@ export const retrieveRequestResponse = async (
 
   if (requestResponseError) throw requestResponseError;
 
-  return requestResponse as RetrievedRequestReponse[];
+  const { data: form, error: formError } = await supabaseClient
+    .from("form_table")
+    .select("form_priority")
+    .eq("form_id", formId)
+    .single();
+
+  if (formError) throw formError;
+
+  const priority = form.form_priority as number[];
+
+  const sortedResponse = requestResponse.sort((a, b) => {
+    return priority.indexOf(a.field_id) - priority.indexOf(b.field_id);
+  });
+
+  return sortedResponse as RetrievedRequestReponse[];
 };
 // * Type here
 export type RetrievedRequestReponse = RequestResponseRow & { field: FieldRow };
@@ -1250,7 +1265,6 @@ export const editComment = async (
   comment_id: number,
   comment: string
 ) => {
-  console.log(comment_id, comment);
   const { error: editedCommentError } = await supabaseClient
     .from("request_comment_table")
     .update({
