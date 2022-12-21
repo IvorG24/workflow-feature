@@ -1,3 +1,5 @@
+// TODO: Redirect '/requests' to '/requests?active_tab=all&page=1'
+
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import Request from "@/components/RequestsPage/RequestsPage";
@@ -36,7 +38,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   } = ctx.query;
   const request_per_page = 8;
   const start = (Number(activePage) - 1) * request_per_page;
-  const selectedForm = form ? null : (form as string);
+  const selectedForm = form ? (form as string) : null;
   const formStatus = status ? status : "";
 
   const search = searchQuery === undefined ? "" : (searchQuery as string);
