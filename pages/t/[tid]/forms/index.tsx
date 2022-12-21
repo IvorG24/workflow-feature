@@ -21,26 +21,26 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
     const teamRequestFormList = await fetchTeamRequestFormList(
       supabase,
-      ctx.params?.tid
+      ctx.params?.tid as string
     );
 
     return {
       props: {
-        teamRequestFormList,
+        formList: teamRequestFormList,
       },
     };
   } catch (error) {
     return {
-      props: { teamRequestFormList: null },
+      props: { formList: null },
     };
   }
 };
 
 type Props = {
-  teamRequestFormList: FetchTeamRequestFormList;
+  formList: FetchTeamRequestFormList;
 };
 
-const Forms: NextPageWithLayout = ({ teamRequestFormList }: Props) => {
+const Forms: NextPageWithLayout<Props> = ({ formList }) => {
   return (
     <div>
       {/* todo: fix meta tags */}
@@ -48,7 +48,7 @@ const Forms: NextPageWithLayout = ({ teamRequestFormList }: Props) => {
         description="Forms Page for every form"
         url="localhost:3000/forms"
       />
-      <FormsPage teamRequestFormList={teamRequestFormList} />
+      <FormsPage teamRequestFormList={formList} />
     </div>
   );
 };

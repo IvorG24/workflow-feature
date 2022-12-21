@@ -25,6 +25,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       data: { session },
     } = await supabase.auth.getSession();
 
+    if (!session) throw new Error("Not authorized");
+
     const teamInvitation = await fetchTeamInvitation(
       supabase,
       ctx.params?.id as unknown as string
