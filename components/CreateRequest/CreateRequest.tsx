@@ -3,6 +3,7 @@ import {
   retreivedRequestDraftByRequestId,
   retrieveApproverListByTeam,
   retrieveFormFieldList,
+  retrievePurchaserListByTeam,
   retrieveRequestDraftByForm,
   retrieveRequestForm,
   retrieveRequestResponse,
@@ -19,6 +20,7 @@ import {
   Box,
   Button,
   Container,
+  Divider,
   FileInput,
   Flex,
   Group,
@@ -98,7 +100,13 @@ const CreateRequest = () => {
   });
 
   const [selectedApprover, setSelectedApprover] = useState<string | null>(null);
+  const [selectedPurchaser, setSelectedPurchaser] = useState<string | null>(
+    null
+  );
   const [approvers, setApprovers] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [purchasers, setPurchasers] = useState<
     { label: string; value: string }[]
   >([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -117,6 +125,7 @@ const CreateRequest = () => {
         requestId: draftId,
         formData: getValues(),
         approver: selectedApprover,
+        purchaser: selectedPurchaser,
       });
     } else {
       axios.post("/api/insert", {
@@ -124,6 +133,7 @@ const CreateRequest = () => {
         formId: router.query.formId,
         userId: user?.id,
         approver: selectedApprover,
+        purchaser: selectedPurchaser,
         answers: fields,
       });
     }
@@ -133,6 +143,7 @@ const CreateRequest = () => {
     setIsLoading(true);
     reset();
     setApprovers([]);
+    setPurchasers([]);
     setForm(null);
     setFields([]);
     setDraftId(null);
@@ -150,6 +161,12 @@ const CreateRequest = () => {
           `${router.query.tid}`
         );
 
+        const retreivedPurchasers = await retrievePurchaserListByTeam(
+          supabase,
+          `${user?.id}`,
+          `${router.query.tid}`
+        );
+
         const approvers = retreivedApprovers.map((user) => {
           const approver = user.approver as UserProfileRow;
           return {
@@ -158,7 +175,16 @@ const CreateRequest = () => {
           };
         });
 
+        const purchasers = retreivedPurchasers.map((user) => {
+          const purchaser = user.purchaser as UserProfileRow;
+          return {
+            label: `${purchaser.full_name}`,
+            value: `${purchaser.user_id}`,
+          };
+        });
+
         setApprovers(approvers);
+        setPurchasers(purchasers);
         setSelectedApprover(approvers[0].value);
       } catch {
         showNotification({
@@ -229,7 +255,8 @@ const CreateRequest = () => {
 
         const retrievedRequestResponse = await retrieveRequestResponse(
           supabase,
-          retrievedRequestDraft.request_id
+          retrievedRequestDraft.request_id,
+          Number(router.query.formId)
         );
 
         const fieldsWithResponse = retrievedRequestResponse.map(
@@ -300,6 +327,7 @@ const CreateRequest = () => {
       await updateRequest(
         supabase,
         `${selectedApprover}`,
+        selectedPurchaser,
         formData,
         Number(draftId)
       );
@@ -340,6 +368,7 @@ const CreateRequest = () => {
       const savedRequest = await saveRequest(
         supabase,
         `${selectedApprover}`,
+        selectedPurchaser,
         formData,
         `${user?.id}`,
         Number(router.query.formId),
@@ -434,21 +463,32 @@ const CreateRequest = () => {
               />
             </Flex>
             <Flex gap="xl" wrap="wrap">
-              <TextInput
-                label="Request Title"
-                className={styles.flex3}
-                miw={220}
-                withAsterisk
-                {...register("title", {
-                  required: "Title is Required",
-                })}
-                error={errors.title?.message}
-              />
-              <TextInput
-                label="On Behalf Of"
+              <Flex gap="xl" wrap="wrap" className={styles.flex3}>
+                <TextInput
+                  label="Request Title"
+                  className={styles.flex3}
+                  miw={220}
+                  withAsterisk
+                  {...register("title", {
+                    required: "Title is Required",
+                  })}
+                  error={errors.title?.message}
+                />
+                <TextInput
+                  label="On Behalf Of"
+                  className={styles.flex1}
+                  miw={220}
+                  {...register("behalf")}
+                />
+              </Flex>
+              <Select
+                label="Purchaser"
+                data={purchasers}
                 className={styles.flex2}
                 miw={220}
-                {...register("behalf")}
+                value={selectedPurchaser}
+                onChange={setSelectedPurchaser}
+                clearable
               />
             </Flex>
             <Textarea
@@ -471,7 +511,18 @@ const CreateRequest = () => {
             />
 
             {fields?.map((field) => {
-              if (field.field_type === "text" || field.field_type === "email") {
+              if (field.field_type === "section") {
+                return (
+                  <Divider
+                    key={field.field_id}
+                    label={field.field_name}
+                    labelPosition="center"
+                  />
+                );
+              } else if (
+                field.field_type === "text" ||
+                field.field_type === "email"
+              ) {
                 return renderTooltip(
                   <TextInput
                     key={field.field_id}

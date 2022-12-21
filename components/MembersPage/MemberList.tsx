@@ -99,7 +99,7 @@ const MemberList = ({
                 data={[
                   { value: "owner", label: "Owner" },
                   { value: "admin", label: "Admin" },
-                  // { value: "manager", label: "Manager" },
+                  { value: "purchaser", label: "Purchaser" },
                   { value: "member", label: "Member" },
                 ]}
                 radius={4}

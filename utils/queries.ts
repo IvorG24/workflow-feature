@@ -232,6 +232,28 @@ export type RetreivedApproverList = Awaited<
   ReturnType<typeof retrieveApproverListByTeam>
 >;
 
+// * Retrieve purchaser list by team.
+export const retrievePurchaserListByTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  teamId: string
+) => {
+  const { data: approverList, error: approverListError } = await supabaseClient
+    .from("team_role_table")
+    .select("*, purchaser: user_id(*)")
+    .eq("team_role", "purchaser")
+    .eq("team_id", teamId)
+    .neq("user_id", userId);
+
+  if (approverListError) throw approverListError;
+
+  return approverList;
+};
+// * Type here
+export type RetreivedPurchaserList = Awaited<
+  ReturnType<typeof retrievePurchaserListByTeam>
+>;
+
 // * Retrieve request draft by form.
 export const retrieveRequestDraftByForm = async (
   supabaseClient: SupabaseClient<Database>,
@@ -330,7 +352,8 @@ export type RetrievedRequestDraftByRequestId = RequestRow & { form: FormRow };
 // * Retrieve request response by request id.
 export const retrieveRequestResponse = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number
+  requestId: number,
+  formId: number
 ) => {
   const { data: requestResponse, error: requestResponseError } =
     await supabaseClient
@@ -340,7 +363,21 @@ export const retrieveRequestResponse = async (
 
   if (requestResponseError) throw requestResponseError;
 
-  return requestResponse as RetrievedRequestReponse[];
+  const { data: form, error: formError } = await supabaseClient
+    .from("form_table")
+    .select("form_priority")
+    .eq("form_id", formId)
+    .single();
+
+  if (formError) throw formError;
+
+  const priority = form.form_priority as number[];
+
+  const sortedResponse = requestResponse.sort((a, b) => {
+    return priority.indexOf(a.field_id) - priority.indexOf(b.field_id);
+  });
+
+  return sortedResponse as RetrievedRequestReponse[];
 };
 // * Type here
 export type RetrievedRequestReponse = RequestResponseRow & { field: FieldRow };
@@ -378,6 +415,7 @@ type RequestFieldsType = {
 export const updateRequest = async (
   supabaseClient: SupabaseClient<Database>,
   selectedApprover: string,
+  selectedPurchaser: string | null,
   formData: RequestFieldsType,
   draftId: number
 ) => {
@@ -390,6 +428,7 @@ export const updateRequest = async (
       on_behalf_of: formData.behalf,
       request_description: formData.description,
       is_draft: false,
+      purchaser_id: selectedPurchaser,
     })
     .eq("request_id", draftId);
 
@@ -402,6 +441,7 @@ export type UpdateRequest = Awaited<ReturnType<typeof updateRequest>>;
 export const saveRequest = async (
   supabaseClient: SupabaseClient<Database>,
   selectedApprover: string,
+  selectedPurchaser: string | null,
   formData: RequestFieldsType,
   userId: string,
   formId: number,
@@ -417,6 +457,7 @@ export const saveRequest = async (
       on_behalf_of: formData.behalf,
       request_description: formData.description,
       is_draft: false,
+      purchaser_id: selectedPurchaser,
       attachments: attachmentFilePath ? [attachmentFilePath] : [],
     })
     .select()
@@ -453,7 +494,9 @@ export const retrieveRequest = async (
 ) => {
   const { data: request, error: requestError } = await supabaseClient
     .from("request_table")
-    .select("*, owner: requested_by(*), approver: approver_id(*)")
+    .select(
+      "*, owner: requested_by(*), approver: approver_id(*), purchaser: purchaser_id(*)"
+    )
     .is("request_is_disabled", false)
     .eq("request_id", requestId)
     .single();
@@ -480,7 +523,7 @@ export const requestResponse = async (
 // * Type here
 export type RequestResponse = Awaited<ReturnType<typeof requestResponse>>;
 
-// * ADelete request by request id.
+// * Delete request by request id.
 export const deleteRequest = async (
   supabaseClient: SupabaseClient<Database>,
   requestId: number
@@ -494,6 +537,23 @@ export const deleteRequest = async (
 };
 // * Type here
 export type DeletedRequest = Awaited<ReturnType<typeof deleteRequest>>;
+
+// * Mark as purchased request by request id.
+export const markAsPurchasedRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number
+) => {
+  const { error: requestError } = await supabaseClient
+    .from("request_table")
+    .update({ request_is_purchased: true })
+    .eq("request_id", requestId);
+
+  if (requestError) throw requestError;
+};
+// * Type here
+export type MarkAsPurchasedRequest = Awaited<
+  ReturnType<typeof markAsPurchasedRequest>
+>;
 
 // * Approve, Reject, or Sent to Revision request by request id.
 export const retrieveRequestList = async (
@@ -511,7 +571,7 @@ export const retrieveRequestList = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "*, form: form_table_id!inner(*), approver: approver_id(*), owner: requested_by(*)"
+      "*, form: form_table_id!inner(*), approver: approver_id(*), owner: requested_by(*), purchaser: purchaser_id(*)"
     )
     .eq("is_draft", false)
     .eq("form.team_id", teamId)
@@ -1205,7 +1265,6 @@ export const editComment = async (
   comment_id: number,
   comment: string
 ) => {
-  console.log(comment_id, comment);
   const { error: editedCommentError } = await supabaseClient
     .from("request_comment_table")
     .update({
