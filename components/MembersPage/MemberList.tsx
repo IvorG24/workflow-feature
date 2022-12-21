@@ -1,11 +1,11 @@
 // todo: create unit test
 import {
-  Avatar as MantineAvatar,
   Box,
   Button,
   Flex,
   Grid,
   Group,
+  Avatar as MantineAvatar,
   Pagination,
   Select,
   Stack,
@@ -31,7 +31,7 @@ type Props = {
   ) => void;
 };
 
-const MembersTable = ({
+const MemberList = ({
   memberList,
   authUser,
   authUserRole,
@@ -81,9 +81,7 @@ const MembersTable = ({
                   style={{ cursor: "pointer" }}
                 />
                 <Box style={{ cursor: "pointer" }}>
-                  <Text fw="bold" color="dark">
-                    {member.user_profile_table.full_name}
-                  </Text>
+                  <Text fw="bold">{member.user_profile_table.full_name}</Text>
                   <Text fz="xs">{member.user_profile_table.email}</Text>
                 </Box>
               </Group>
@@ -142,4 +140,4 @@ const MembersTable = ({
   );
 };
 
-export default MembersTable;
+export default MemberList;
