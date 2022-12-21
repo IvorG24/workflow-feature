@@ -11,7 +11,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (req.method === "POST") {
     console.log("INSERT");
-    const { formData, formId, userId, approver, answers } = req.body;
+    const { formData, formId, userId, approver, purchaser, answers } = req.body;
     const newAnswers = answers as (FieldRow & {
       response: string;
       responseId: number | null;
@@ -22,6 +22,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .from("request_table")
         .insert({
           approver_id: approver,
+          purchaser_id: purchaser,
           requested_by: userId,
           form_table_id: formId,
           request_title: formData.title,
