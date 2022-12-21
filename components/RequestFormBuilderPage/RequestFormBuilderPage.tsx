@@ -24,7 +24,7 @@ const RequestFormBuilderPage = ({
     dummyDataPriorityIndex
   );
    **/
-  
+
   const { control, register, handleSubmit, getValues } = useForm<FormRequest>({
     defaultValues: { form_id, form_name, questions },
   });

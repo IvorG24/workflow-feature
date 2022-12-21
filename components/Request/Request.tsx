@@ -3,9 +3,11 @@ import {
   deleteComment,
   deleteRequest,
   editComment,
+  markAsPurchasedRequest,
   requestResponse,
   RetrievedRequestComments,
   retrieveRequestComments,
+  retrieveRequestResponse,
 } from "@/utils/queries";
 import {
   renderTooltip,
@@ -41,10 +43,11 @@ import { openConfirmModal } from "@mantine/modals";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Close, Dots, Maximize } from "../Icon";
+import AttachmentBox from "../RequestsPage/AttachmentBox";
+import AttachmentPill from "../RequestsPage/AttachmentPill";
 import styles from "./Request.module.scss";
 
 type Props = {
@@ -104,16 +107,24 @@ const Request = ({
       selectedRequest?.request_status === "pending") &&
     selectedRequest?.approver_id === user?.id;
 
+  const isPurchaser =
+    selectedRequest?.request_status === "approved" &&
+    selectedRequest?.purchaser_id === user?.id &&
+    selectedRequest?.request_is_purchased !== true;
+
+  const isOwner =
+    selectedRequest?.owner.user_id === user?.id &&
+    (selectedRequest?.request_status === "pending" ||
+      selectedRequest?.request_status === "stale");
+
   useEffect(() => {
     const fetchRequestFields = async () => {
       try {
-        const { data: requestFields, error: requestFieldsError } =
-          await supabase
-            .from("request_response_table")
-            .select("*, field: field_id(*)")
-            .eq("request_id", selectedRequest?.request_id);
-
-        if (requestFieldsError) throw requestFieldsError;
+        const requestFields = await retrieveRequestResponse(
+          supabase,
+          Number(selectedRequest?.request_id),
+          Number(selectedRequest?.form_table_id)
+        );
 
         setSelectedRequestFields(requestFields as unknown as RequestFields[]);
       } catch {
@@ -384,6 +395,53 @@ const Request = ({
     }
   };
 
+  const handlePurchase = async () => {
+    setIsLoading && setIsLoading(true);
+    if (view === "full") {
+      setFullViewIsLoading(true);
+    }
+    try {
+      await markAsPurchasedRequest(
+        supabase,
+        Number(selectedRequest?.request_id)
+      );
+
+      setRequestList &&
+        setRequestList((prev) =>
+          prev.map((request) => {
+            if (request.request_id === selectedRequest?.request_id) {
+              return {
+                ...request,
+                request_is_purchased: true,
+              };
+            } else {
+              return request;
+            }
+          })
+        );
+
+      setSelectedRequest && setSelectedRequest(null);
+      showNotification({
+        title: "Success!",
+        message: `You mark as purchased ${selectedRequest?.request_title}`,
+        color: "green",
+      });
+      if (view === "full") {
+        router.push(`/t/${router.query.tid}/requests`);
+      }
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to mark as purchased ${selectedRequest?.request_title}`,
+        color: "red",
+      });
+    }
+    setIsLoading && setIsLoading(false);
+    if (view === "full") {
+      setFullViewIsLoading(false);
+    }
+  };
+
   const confirmationModal = (
     action: string,
     requestTitle: string,
@@ -473,17 +531,34 @@ const Request = ({
       </Group>
 
       <Divider mt="xl" />
-      <Stack mt="xl">
-        <Title order={5}>Approver</Title>
-        <Group align="apart" grow>
-          <Group>
-            <Badge
-              color={setBadgeColor(`${selectedRequest?.request_status}`)}
-            />
-            <Text>{selectedRequest?.approver.full_name}</Text>
+      <Group mt="xl" position="apart" grow>
+        <Stack>
+          <Title order={5}>Approver</Title>
+          <Group align="apart" grow>
+            <Group>
+              <Badge
+                color={setBadgeColor(`${selectedRequest?.request_status}`)}
+              />
+              <Text>{selectedRequest?.approver.full_name}</Text>
+            </Group>
           </Group>
-        </Group>
-      </Stack>
+        </Stack>
+        {selectedRequest?.purchaser ? (
+          <Stack>
+            <Title order={5}>Purchaser</Title>
+            <Group align="apart" grow>
+              <Group>
+                <Badge
+                  color={
+                    selectedRequest?.request_is_purchased ? "green" : "blue"
+                  }
+                />
+                <Text>{selectedRequest?.purchaser.full_name}</Text>
+              </Group>
+            </Group>
+          </Stack>
+        ) : null}
+      </Group>
       <Divider mt="xl" />
       <Stack mt="xl">
         <Title order={5}>Attachment</Title>
@@ -491,21 +566,29 @@ const Request = ({
         {selectedRequest?.attachments &&
           selectedRequest.attachments.length === 0 && <Text>---</Text>}
         {selectedRequest?.attachments &&
-          selectedRequest?.attachments.map((attachment) => {
-            const attachmentUrl = attachment.split("|").pop();
+          selectedRequest?.attachments.map((attachment, idx) => {
+            const attachmentUrl = attachment.split("|");
+            const mockFileSize = "234 KB";
+            const mockFile = "file";
+
             return (
-              <a
-                key={attachmentUrl}
-                href={attachmentUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Image
-                  src={attachmentUrl as string}
-                  alt="Attachment Image"
-                  style={{ height: 200, width: 200 }}
-                />
-              </a>
+              <Group key={idx}>
+                {view === "split" ? (
+                  <AttachmentPill
+                    filename={attachmentUrl[0]}
+                    fileType={attachmentUrl[1]}
+                    fileUrl={attachmentUrl[2]}
+                  />
+                ) : (
+                  <AttachmentBox
+                    filename={attachmentUrl[0]}
+                    fileType={attachmentUrl[1]}
+                    fileUrl={attachmentUrl[2]}
+                    file={mockFile}
+                    fileSize={mockFileSize}
+                  />
+                )}
+              </Group>
             );
           })}
       </Stack>
@@ -555,9 +638,7 @@ const Request = ({
         </>
       ) : null}
 
-      {selectedRequest?.owner.user_id === user?.id &&
-      (selectedRequest?.request_status === "pending" ||
-        selectedRequest?.request_status === "stale") ? (
+      {isOwner ? (
         <>
           <Divider mt="xl" />{" "}
           <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
@@ -580,6 +661,28 @@ const Request = ({
         </>
       ) : null}
 
+      {isPurchaser ? (
+        <>
+          <Divider mt="xl" />{" "}
+          <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
+            <Button
+              onClick={() =>
+                confirmationModal(
+                  "mark as purchased",
+                  `${selectedRequest.request_title}`,
+                  handlePurchase
+                )
+              }
+              fullWidth={view === "split"}
+              w={view === "full" ? 200 : ""}
+              size={view === "full" ? "md" : "sm"}
+            >
+              Mark as Purchased
+            </Button>
+          </Flex>
+        </>
+      ) : null}
+
       <Divider mt="xl" />
       <Title mt="xl" order={5}>
         Request Fields
@@ -590,7 +693,16 @@ const Request = ({
         const fieldResponse = `${field.response_value}`;
         const fieldOptions = field.field.field_option;
 
-        if (fieldType === "text" || fieldType === "email") {
+        if (fieldType === "section") {
+          return (
+            <Divider
+              key={field.field_id}
+              label={fieldLabel}
+              labelPosition="center"
+              mt="xl"
+            />
+          );
+        } else if (fieldType === "text" || fieldType === "email") {
           return (
             <Box key={field.field_id} py="sm">
               {renderTooltip(

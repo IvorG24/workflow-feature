@@ -64,6 +64,18 @@ const FormBuilder: FC<Props> = (props) => {
     });
   };
 
+  const handleAppendSection = () => {
+    appendQuestion({
+      isRequired: false,
+      fieldTooltip: "",
+      data: {
+        question: "",
+        expected_response_type: "section",
+      },
+      option: [],
+    });
+  };
+
   const handleRemoveQuestion = useCallback(
     async (questionIndex: number) => {
       removeQuestion(questionIndex);
@@ -79,7 +91,52 @@ const FormBuilder: FC<Props> = (props) => {
     moveQuestion(source, destination);
   };
 
+  const verify = (list: boolean[]) => {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i] === true && list[i + 1] === true) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const sectionConditions = () => {
+    const isSectionList = getValues().questions.map(
+      (question) => question.data.expected_response_type === "section"
+    );
+
+    if (!isSectionList) return false;
+    if (isSectionList.length === 0) return false;
+
+    if (!isSectionList[0]) {
+      showNotification({
+        title: "Invalid",
+        message: "A question field must be under a section",
+        color: "orange",
+      });
+      return false;
+    } else if (isSectionList[isSectionList.length - 1]) {
+      showNotification({
+        title: "Invalid",
+        message: "All sections must have at least one question",
+        color: "orange",
+      });
+      return false;
+    } else if (!verify(isSectionList as unknown as boolean[])) {
+      showNotification({
+        title: "Invalid",
+        message: "All sections must have at least one question",
+        color: "orange",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSaveFormRequest = async () => {
+    if (!sectionConditions()) return;
+
     try {
       // const { form_name, questions } = getValues();
 
@@ -97,16 +154,17 @@ const FormBuilder: FC<Props> = (props) => {
       });
       router.push(`/t/${router.query.tid}/forms`);
     } catch (e) {
+      console.log("ERROR", e);
       setNotification("Error saving the form");
     }
   };
 
   const handleUpdateForm = async () => {
+    if (!sectionConditions()) return;
     try {
       const { form_id, questions } = getValues();
-     
 
-      await updateForm(supabaseClient, Number(form_id),  questions);
+      await updateForm(supabaseClient, Number(form_id), questions);
 
       showNotification({
         title: "Form order updated",
@@ -179,16 +237,28 @@ const FormBuilder: FC<Props> = (props) => {
           </DragDropContext>
 
           {!isInEditMode && (
-            <Button
-              role="button"
-              aria-label="Add Question"
-              variant="outline"
-              disabled={isSubmitting ? true : false}
-              onClick={handleAppendQuestion}
-            >
-              <AddCircle />
-              &nbsp;Add Question
-            </Button>
+            <>
+              <Button
+                role="button"
+                aria-label="Add Section"
+                variant="outline"
+                disabled={isSubmitting ? true : false}
+                onClick={handleAppendSection}
+              >
+                <AddCircle />
+                &nbsp;Add Section
+              </Button>
+              <Button
+                role="button"
+                aria-label="Add Question"
+                variant="outline"
+                disabled={isSubmitting ? true : false}
+                onClick={handleAppendQuestion}
+              >
+                <AddCircle />
+                &nbsp;Add Question
+              </Button>
+            </>
           )}
 
           <Button

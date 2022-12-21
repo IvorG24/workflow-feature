@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Badge,
   Grid,
   Paper,
@@ -7,14 +6,13 @@ import {
   Tooltip,
   UnstyledButton,
 } from "@mantine/core";
-import { Download } from "../Icon";
 
 type Props = {
   filename: string;
   fileUrl: string;
   fileType: string;
   fileSize: string;
-  file: Blob;
+  file: Blob | string;
 };
 
 const AttachmentBox = ({
@@ -22,12 +20,12 @@ const AttachmentBox = ({
   fileUrl,
   fileType,
   fileSize,
-  file,
-}: Props) => {
-  const handDownloadFile = () => {
-    console.log(file);
-    alert("Download file triggered");
-  };
+}: // file,
+Props) => {
+  // const handDownloadFile = () => {
+  //   console.log(file);
+  //   alert("Download file triggered");
+  // };
   return (
     <UnstyledButton component="a" href={fileUrl} aria-label={filename}>
       <Paper
@@ -39,13 +37,20 @@ const AttachmentBox = ({
         mah={120}
         mih={120}
       >
-        <Grid columns={4}>
-          <Grid.Col span={1}>
-            <Badge variant="filled" color="blue" p={1} radius="xs" miw={30}>
+        <Grid columns={6}>
+          <Grid.Col span={2}>
+            <Badge
+              variant="filled"
+              color="blue"
+              p={1}
+              radius="xs"
+              miw={30}
+              maw={55}
+            >
               {fileType}
             </Badge>
           </Grid.Col>
-          <Grid.Col span={3} mih={70}>
+          <Grid.Col span={4} mih={70}>
             <Tooltip
               label={filename}
               openDelay={1500}
@@ -59,9 +64,9 @@ const AttachmentBox = ({
 
             <Text size="xs">{fileSize}</Text>
           </Grid.Col>
-          <Grid.Col span={1}></Grid.Col>
-          <Grid.Col span={3}>
-            <ActionIcon
+          <Grid.Col span={2}></Grid.Col>
+          <Grid.Col span={4}>
+            {/* <ActionIcon
               component="a"
               variant="filled"
               onClick={(e) => {
@@ -70,7 +75,7 @@ const AttachmentBox = ({
               }}
             >
               <Download />
-            </ActionIcon>
+            </ActionIcon> */}
           </Grid.Col>
         </Grid>
       </Paper>

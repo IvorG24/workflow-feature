@@ -1,6 +1,7 @@
 import { FormQuestion } from "@/utils/types";
 import {
   Box,
+  Divider,
   MultiSelect,
   NumberInput,
   Select,
@@ -70,6 +71,10 @@ const QuestionPreview: FC<Props> = (props) => {
       return element;
     }
   };
+
+  if (data.expected_response_type === "section") {
+    return <Divider label={data.question} labelPosition="center" />;
+  }
 
   if (data.expected_response_type === "text") {
     return (
