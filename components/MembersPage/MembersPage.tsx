@@ -1,41 +1,34 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
 import {
-  FetchTeamMemberList,
-  fetchTeamMemberList,
-  updateTeamMemberRole,
-} from "@/utils/queries";
+  MemberListActionEnum,
+  useMemberListContext,
+} from "@/contexts/MemberListContext";
+import { FetchTeamMemberList, updateTeamMemberRole } from "@/utils/queries";
 import { TeamRoleEnum } from "@/utils/types";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
-import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
-import MembersTable from "./MembersTable";
+import MemberList from "./MemberList";
 import SearchBar from "./SearchBar";
 
 const Member = () => {
-  const router = useRouter();
   const user = useUser();
   const { supabaseClient } = useSessionContext();
+  const {
+    state: { memberList: memberListContextValue },
+    dispatchMemberList,
+  } = useMemberListContext();
+
   const [searchBarValue, setSearchBarValue] = useState("");
-  const [memberList, setMemberList] = useState<FetchTeamMemberList>([]);
+  const [memberList, setMemberList] = useState<FetchTeamMemberList>(
+    memberListContextValue as FetchTeamMemberList
+  );
   const [authUserRole, setAuthUserRole] = useState<string>("");
   const rolesOrder = ["owner", "admin", "purchaser", "member"];
-
-  const fetchTeamMembers = useCallback(async () => {
-    try {
-      const fetchedMemberList = await fetchTeamMemberList(
-        supabaseClient,
-        `${router.query.tid}`
-      );
-      setMemberList(fetchedMemberList as FetchTeamMemberList);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [router, supabaseClient]);
 
   // sort A-Z and Owner > Admin > Member
   const sortedMemberList = useMemo(
@@ -87,7 +80,20 @@ const Member = () => {
           message: `Member role updated.`,
           color: "green",
         });
-        fetchTeamMembers();
+        const updatedMemberList = memberList.map((member) => {
+          if (member.user_id === memberId) {
+            return {
+              ...member,
+              team_role: newRole,
+            };
+          } else return member;
+        });
+        dispatchMemberList({
+          type: MemberListActionEnum.SET,
+          payload: {
+            memberList: updatedMemberList,
+          },
+        });
       }
     } catch (error) {
       console.log(error);
@@ -95,8 +101,8 @@ const Member = () => {
   };
 
   useEffect(() => {
-    fetchTeamMembers();
-  }, [fetchTeamMembers]);
+    setMemberList(memberListContextValue as FetchTeamMemberList);
+  }, [memberListContextValue]);
 
   useEffect(() => {
     if (user) {
@@ -121,7 +127,7 @@ const Member = () => {
             value={searchBarValue}
             numberOfMembers={memberList.length}
           />
-          <MembersTable
+          <MemberList
             authUserRole={authUserRole}
             authUser={user}
             memberList={filterMemberList}

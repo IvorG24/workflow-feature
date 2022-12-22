@@ -12,7 +12,7 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
 import { NextPage } from "next/types";
 import { ReactElement, ReactNode, useState } from "react";
-import { UserProfileProvider } from "../contexts";
+import { MemberListProvider, UserProfileProvider } from "../contexts";
 import "../styles/globals.css";
 
 // #todo: implement better typing but I think it's okay because it's from the docs
@@ -59,7 +59,9 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           >
             <NotificationsProvider position="top-center">
               <UserProfileProvider>
-                {getLayout(<Component {...pageProps} />)}
+                <MemberListProvider>
+                  {getLayout(<Component {...pageProps} />)}
+                </MemberListProvider>
               </UserProfileProvider>
             </NotificationsProvider>
           </SessionContextProvider>

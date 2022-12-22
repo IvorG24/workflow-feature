@@ -12,51 +12,68 @@ import {
   isUserAlreadyAMemberOfTeam,
 } from "@/utils/queries";
 import { LoadingOverlay } from "@mantine/core";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { User, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-export default function TeamInvitationsPage() {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const supabase = createServerSupabaseClient(ctx);
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) throw new Error("Not authorized");
+
+    const teamInvitation = await fetchTeamInvitation(
+      supabase,
+      ctx.params?.id as unknown as string
+    );
+
+    const isAlreadyMember = await isUserAlreadyAMemberOfTeam(
+      supabase,
+      teamInvitation?.team_id as string,
+      session.user.id as string
+    );
+
+    return {
+      props: {
+        isInvalidInitial: false,
+        teamInvitation,
+        isAlreadyMember,
+      },
+    };
+  } catch (error) {
+    return {
+      props: {
+        isInvalidInitial: true,
+        teamInvitation: null,
+        isAlreadyMember: false,
+      },
+    };
+  }
+};
+
+type Props = {
+  isInvalidInitial: boolean;
+  teamInvitation: FetchTeamInvitation | null;
+  isAlreadyMember: boolean;
+};
+
+export default function TeamInvitationsPage({
+  teamInvitation,
+  isAlreadyMember,
+  isInvalidInitial,
+}: Props) {
   const router = useRouter();
   const { user } = useAuth();
   const supabaseClient = useSupabaseClient<Database>();
   const [isChecking, setIsChecking] = useState(true);
-  const [isInvalid, setIsInvalid] = useState(false);
-  const [isAlreadyMember, setIsAlreadyMember] = useState(false);
+  const [isInvalid, setIsInvalid] = useState(isInvalidInitial);
+
   const [isSuccessful, setIsSuccessful] = useState(false);
-  const [teamInvitation, setTeamInvitation] = useState<FetchTeamInvitation>();
-
-  // * When invite target visits this page, he/she accepts the invitation and will be included in the team if the invitation is valid. Example, the visitor is indeed the target of this invitation.
-  useEffect(() => {
-    (async () => {
-      try {
-        if (!router.isReady) return;
-        if (!user) return;
-
-        const teamInvitation = await fetchTeamInvitation(
-          supabaseClient,
-          router.query.id as unknown as string
-        );
-        setTeamInvitation(teamInvitation);
-
-        const isAlreadyMember = await isUserAlreadyAMemberOfTeam(
-          supabaseClient,
-          teamInvitation?.team_id as string,
-          user?.id as string
-        );
-
-        if (isAlreadyMember) {
-          setIsAlreadyMember(true);
-          return;
-        }
-      } catch (e) {
-        console.error(e);
-        setIsInvalid(true);
-      } finally {
-        setIsChecking(false);
-      }
-    })();
-  }, [router, supabaseClient, user]);
 
   const handleAcceptInvitation = async () => {
     try {
