@@ -681,7 +681,7 @@ export const fetchUserNotificationList = async (
     query = query.eq("form_type", formType);
   }
 
-  query = query.order("created_at", { ascending: false });
+  query = query.order("notification_id", { ascending: false });
 
   const { data, error } = await query;
 
