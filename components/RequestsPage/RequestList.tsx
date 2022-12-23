@@ -1,8 +1,4 @@
-import { Search } from "@/components/Icon";
-import {
-  retrieveRequestFormByTeam,
-  retrieveRequestList,
-} from "@/utils/queries";
+import RequestListContext from "@/contexts/RequestListContext";
 import type { Database, RequestType } from "@/utils/types";
 import {
   ActionIcon,
@@ -10,14 +6,15 @@ import {
   LoadingOverlay,
   Pagination,
   Select,
+  SelectItem,
   Stack,
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
+import SvgSearch from "../Icon/Search";
 import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
 
@@ -34,100 +31,98 @@ const statusOptions: {
 
 const REQUEST_PER_PAGE = 8;
 
-type Props = {
-  activeTab: string;
-};
-
-const RequestList = ({ activeTab }: Props) => {
-  const supabase = useSupabaseClient<Database>();
+const RequestList = () => {
   const router = useRouter();
-  const user = useUser();
-
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
+  const requestContext = useContext(RequestListContext);
   const [requestList, setRequestList] = useState<RequestType[]>([]);
-  const [activePage, setActivePage] = useState(1);
   const [requestCount, setRequestCount] = useState(0);
+  const forms = requestContext?.forms;
+  const [isLoading, setIsLoading] = useState(false);
+  const [search, setSearch] = useState<string>("");
+  const [status, setStatus] = useState<string | null>(null);
+  const [activePage, setActivePage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
     null
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [forms, setForms] = useState<{ value: string; label: string }[]>([]);
   const [selectedForm, setSelectedForm] = useState<string | null>(
     router.query.formId ? `${router.query.formId}` : null
   );
 
-  const fetchRequests = async (isSearch: boolean) => {
-    try {
-      setSelectedRequest(null);
+  const handleSearch = useCallback(
+    (search: string) => {
       setIsLoading(true);
-      const start = (activePage - 1) * REQUEST_PER_PAGE;
+      setSearch(search);
+      router.replace({ query: { ...router.query, search_query: search } });
+    },
+    [router]
+  );
 
-      const { requestList, requestCount } = await retrieveRequestList(
-        supabase,
-        start,
-        `${router.query.tid}`,
-        REQUEST_PER_PAGE,
-        selectedForm,
-        status,
-        search,
-        isSearch,
-        activeTab,
-        `${user?.id}`
-      );
+  // !!! need to test if this will work on a mobile phone
+  const handleSearchOnKeyUp = (e: {
+    key: string;
+    currentTarget: { value: string };
+  }) => {
+    const search = e.currentTarget.value;
 
-      if (!isSearch) {
-        setSearch("");
+    if (e.key === "Enter") {
+      handleSearch(search);
+    }
+    if (e.key === "Backspace" && search === "") {
+      setSearch("");
+      handleSearch(search);
+    }
+  };
+
+  const handleFilterBySelectedForm = useCallback(
+    (selectedForm: string | null) => {
+      setIsLoading(true);
+      setSelectedForm(selectedForm);
+      if (selectedForm) {
+        router.replace({ query: { ...router.query, form: selectedForm } });
+      } else {
+        router.push(
+          `/t/${router.query.tid}/requests?active_tab=all&page=${activePage}`
+        );
       }
-      setRequestList(requestList);
-      setRequestCount(Number(requestCount));
+    },
+    [router, activePage]
+  );
 
+  const handleFilterByStatus = useCallback(
+    (status: string | null) => {
+      setIsLoading(true);
+      setStatus(status);
+      if (status) {
+        router.replace({ query: { ...router.query, status: status } });
+      } else {
+        router.push(
+          `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`
+        );
+      }
+    },
+    [router, activePage]
+  );
+
+  useEffect(() => {
+    try {
+      setRequestList(requestContext?.requestList as RequestType[]);
+      setRequestCount(Number(requestContext?.requestCount));
       setIsLoading(false);
-    } catch (e) {
+    } catch (error) {
       showNotification({
         title: "Error!",
         message: "Failed to fetch Request List",
         color: "red",
       });
     }
-  };
+  }, [requestContext]);
 
-  const fetchForms = async () => {
-    try {
-      const requestFormList = await retrieveRequestFormByTeam(
-        supabase,
-        `${router.query.tid}`
-      );
-      const forms = requestFormList?.map((form) => {
-        return { value: `${form.form_id}`, label: `${form.form_name}` };
-      });
-      setForms(forms);
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: "Failed to fetch Form List",
-        color: "red",
-      });
-    }
-  };
-
-  // first load
+  // reset filters when team_id changes
   useEffect(() => {
-    fetchRequests(false);
-    fetchForms();
-  }, [supabase]);
-
-  // filter
-  useEffect(() => {
-    setActivePage(1);
-    fetchRequests(false);
-  }, [selectedForm, status]);
-
-  // change page
-  useEffect(() => {
-    fetchRequests(false);
-  }, [activePage]);
-
+    setSearch("");
+    setSelectedForm(null);
+    setStatus(null);
+  }, [router.query.tid]);
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
@@ -135,37 +130,39 @@ const RequestList = ({ activeTab }: Props) => {
       <Group mt="xl">
         <TextInput
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.currentTarget.value)}
           placeholder="Search"
           rightSection={
-            <ActionIcon onClick={() => fetchRequests(true)}>
-              <Search />
+            <ActionIcon onClick={() => handleSearch(search)}>
+              <SvgSearch />
             </ActionIcon>
           }
+          onKeyUp={handleSearchOnKeyUp}
         />
         <Select
           clearable
           placeholder="Form Type"
-          data={forms}
+          data={forms as (string | SelectItem)[]}
           value={selectedForm}
-          onChange={setSelectedForm}
+          onChange={handleFilterBySelectedForm}
         />
         <Select
           clearable
           placeholder="Status"
           data={statusOptions}
           value={status}
-          onChange={setStatus}
+          onChange={handleFilterByStatus}
         />
       </Group>
       <RequestTable
-        requestList={requestList}
+        requestList={requestList as RequestType[]}
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
         setRequestList={setRequestList}
         setIsLoading={setIsLoading}
       />
-      {requestCount / REQUEST_PER_PAGE > 1 ? (
+
+      {ceil(requestCount / REQUEST_PER_PAGE) >= 1 ? (
         <Pagination
           className={styles.pagination}
           page={activePage}

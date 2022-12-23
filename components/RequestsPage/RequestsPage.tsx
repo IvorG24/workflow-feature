@@ -3,11 +3,7 @@ import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import RequestList from "./RequestList";
 
-type Props = {
-  activeTab: string;
-};
-
-const RequestsPage = ({ activeTab }: Props) => {
+const RequestsPage = () => {
   const router = useRouter();
 
   return (
@@ -15,13 +11,12 @@ const RequestsPage = ({ activeTab }: Props) => {
       <Title>Requests</Title>
 
       <Tabs
-        value={activeTab}
+        value={router.query.active_tab as string}
         onTabChange={(value) =>
-          router.push(
-            `/t/${router.query.tid}/requests/${value === "all" ? "" : value}`
-          )
+          router.replace({
+            query: { ...router.query, active_tab: value, page: "1" },
+          })
         }
-        defaultValue={activeTab}
         mt={50}
       >
         <Tabs.List>
@@ -32,7 +27,7 @@ const RequestsPage = ({ activeTab }: Props) => {
       </Tabs>
 
       <Container fluid m={0} p={0}>
-        <RequestList activeTab={activeTab} />
+        <RequestList />
       </Container>
     </Container>
   );

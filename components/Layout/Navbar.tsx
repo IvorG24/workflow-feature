@@ -152,7 +152,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
           if (val === "create") {
             router.push(`/teams/create`);
           } else {
-            router.push(`/t/${val}/requests`);
+            router.push(`/t/${val}/dashboard`);
           }
         }}
         icon={<Avatar src={activeTeam} radius="xl" size="sm" />}
@@ -228,7 +228,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
               />
               <NavLink
                 component="a"
-                href={`/t/${activeTeam}/requests`}
+                href={`/t/${activeTeam}/requests?active_tab=all&page=1`}
                 label="All Requests"
                 icon={
                   <IconWrapper className={iconStyle}>
@@ -414,7 +414,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
           <MantineNavbar.Section mt="auto">
             <NavLink
               component="a"
-              href={`/profiles/${user?.id}/bio`}
+              href={`/t/${router.query.tid}/profiles/${user?.id}/bio`}
               label={userProfile?.full_name}
               description="View Profile"
               icon={

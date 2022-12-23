@@ -1,11 +1,11 @@
 import {
-  RetrievedRequestComments,
   createComment,
   deleteComment,
   deleteRequest,
   editComment,
   markAsPurchasedRequest,
   requestResponse,
+  RetrievedRequestComments,
   retrieveRequestComments,
   retrieveRequestResponse,
 } from "@/utils/queries";
@@ -34,8 +34,8 @@ import {
   Slider,
   Stack,
   Text,
-  TextInput,
   Textarea,
+  TextInput,
   Title,
 } from "@mantine/core";
 import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
@@ -46,9 +46,9 @@ import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Close, Dots, Maximize } from "../Icon";
+import AttachmentBox from "../RequestsPage/AttachmentBox";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
 import styles from "./Request.module.scss";
-import AttachmentBox from "../RequestsPage/AttachmentBox";
 
 type Props = {
   view: "split" | "full";

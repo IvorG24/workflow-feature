@@ -2,7 +2,6 @@
 // todo: fix mobile view
 import { AddCircle, Edit, Mail } from "@/components/Icon";
 import IconWrapper from "@/components/IconWrapper/IconWrapper";
-import { FetchUserProfile, fetchUserProfile } from "@/utils/queries";
 // import EmployeeReviewForm from "@/components/ProfilePage/EmployeeReviewForm";
 // import PeerReviewForm from "@/components/ProfilePage/PeerReviewForm";
 import {
@@ -19,14 +18,16 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+
+import { useContext, useEffect, useState } from "react";
 import AssessmentPage from "./AssessmentPage";
 import Bio from "./BioPage";
 import EditProfileForm from "./EditProfileForm";
 // import data from "../../teams.json";
 // import EditProfileForm from "./EditProfileForm";
+import MemberProfileContext from "@/contexts/MemberProfileContext";
 import styles from "./ProfilePage.module.scss";
 import ProfileReviewsPage from "./ReviewsPage";
 
@@ -65,23 +66,20 @@ const Profile = () => {
   const router = useRouter();
   const user = useUser();
   const { activeTab } = router.query;
-  const { supabaseClient } = useSessionContext();
-  const { pid } = router.query;
   const [isLoading, setIsLoading] = useState(true);
 
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   // const [reviews, setReviews] = useState<ReviewType[]>([]);
   // const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [userProfile, setUserProfile] = useState<FetchUserProfile>();
+
+  const userProfile = useContext(MemberProfileContext);
 
   useEffect(() => {
-    (async () => {
-      const data = await fetchUserProfile(supabaseClient, pid as string);
-      setUserProfile(data);
-      setIsLoading(false);
-    })();
-  }, [supabaseClient, pid]);
+    if (userProfile !== null) {
+      return setIsLoading(false);
+    }
+  }, [userProfile]);
 
   // const handleCreateReview = (review: CreateReview) => {
   //   const newReview = {
@@ -160,7 +158,11 @@ const Profile = () => {
 
           <Tabs
             value={router.query.activeTab as string}
-            onTabChange={(value) => router.push(`/profiles/${pid}/${value}`)}
+            onTabChange={(value) =>
+              router.push(
+                `/t/${router.query.tid}/profiles/${userProfile?.user_id}/${value}`
+              )
+            }
             mt={30}
           >
             <Group>
