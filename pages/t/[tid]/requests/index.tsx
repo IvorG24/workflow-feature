@@ -2,13 +2,15 @@
 
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
-import Request from "@/components/RequestsPage/RequestsPage";
+import RequestList from "@/components/RequestsPage/RequestList";
 import RequestListContext from "@/contexts/RequestListContext";
 import {
   retrieveRequestFormByTeam,
   retrieveRequestList,
 } from "@/utils/queries";
+import { Container, Tabs, Title } from "@mantine/core";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
 
 import { RequestProps } from "@/contexts/RequestListContext";
 import { GetServerSidePropsContext } from "next";
@@ -16,11 +18,35 @@ import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 const RequestsPage: NextPageWithLayout<RequestProps> = (props) => {
+  console.log(props);
+  const router = useRouter();
   // todo: fix meta tags
   return (
     <RequestListContext.Provider value={props}>
       <Meta description="List of all Requests" url="localhost:3000/requests" />
-      <Request />
+      <Container px={8} py={16} fluid>
+        <Title>Requests</Title>
+
+        <Tabs
+          value={router.query.active_tab as string}
+          onTabChange={(value) =>
+            router.replace({
+              query: { ...router.query, active_tab: value, page: "1" },
+            })
+          }
+          mt={50}
+        >
+          <Tabs.List>
+            <Tabs.Tab value="all">All</Tabs.Tab>
+            <Tabs.Tab value="sent">Sent</Tabs.Tab>
+            <Tabs.Tab value="received">Received</Tabs.Tab>
+          </Tabs.List>
+        </Tabs>
+
+        <Container fluid m={0} p={0}>
+          <RequestList />
+        </Container>
+      </Container>
     </RequestListContext.Provider>
   );
 };

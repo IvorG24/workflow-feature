@@ -15,7 +15,6 @@ import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import SvgSearch from "../Icon/Search";
-import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
 
 const statusOptions: {
@@ -164,7 +163,7 @@ const RequestList = () => {
 
       {ceil(requestCount / REQUEST_PER_PAGE) >= 1 ? (
         <Pagination
-          className={styles.pagination}
+          sx={{ alignSelf: "flex-end" }}
           page={activePage}
           onChange={setActivePage}
           total={ceil(requestCount / REQUEST_PER_PAGE)}
