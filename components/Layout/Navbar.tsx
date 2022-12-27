@@ -197,6 +197,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <Notifications />
                   </IconWrapper>
                 }
+                data-cy="navbar-notifications"
               />
               {/* // TODO: Commenting this for now. */}
               {/* <Badge
@@ -215,6 +216,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <Settings />
                   </IconWrapper>
                 }
+                data-cy="navbar-settings"
               />
               <NavLink
                 component="a"
@@ -235,6 +237,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <EditDocument />
                   </IconWrapper>
                 }
+                data-cy="navbar-requests"
               />
             </Container>
           </MantineNavbar.Section>
@@ -422,6 +425,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                   <Avatar radius="xl" src={userProfile?.avatar_url} />
                 </IconWrapper>
               }
+              data-cy="navbar-profiles"
             />
             <Button
               variant="light"
