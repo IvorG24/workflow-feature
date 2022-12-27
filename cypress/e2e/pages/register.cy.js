@@ -1,3 +1,4 @@
+// todo: add test for mismatch password and confirm password validation
 describe("User Registration Flow", () => {
   beforeEach(() => {
     cy.visit("http://localhost:3000/register");
