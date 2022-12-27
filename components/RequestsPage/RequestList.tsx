@@ -105,30 +105,25 @@ const RequestList = () => {
     [router, activePage]
   );
 
-  // * Loop through request list and getFileUrl for each attachment.
-  useEffect(() => {
-    (async () => {
-      const requests = requestContext?.requestList as RequestType[];
-      for (const request of requests) {
-        if (request.attachments) {
-          for (let j = 0; j < request.attachments.length; j++) {
-            const attachment = request.attachments[j];
-            const attachmentUrl = await getFileUrl(
-              supabaseClient,
-              attachment,
-              "request_attachments"
-            );
-            request.attachments[j] = attachmentUrl;
-          }
-        }
-        return request;
-      }
-      setRequestList(requests);
-    })();
-  }, [requestContext?.requestList, supabaseClient]);
-
   useEffect(() => {
     try {
+      // * Loop through request list and getFileUrl for each attachment.
+      (async () => {
+        const requestListWithFileUrl =
+          requestContext?.requestList as RequestType[];
+        for (const requestItem of requestListWithFileUrl) {
+          const attachmentList = requestItem.attachments
+            ? requestItem.attachments
+            : [];
+          const attachmentUrlList = await Promise.all(
+            attachmentList.map((path) =>
+              getFileUrl(supabaseClient, path, "request_attachments")
+            )
+          );
+          requestItem.attachments = attachmentUrlList;
+        }
+        setRequestList(requestListWithFileUrl);
+      })();
       setRequestCount(Number(requestContext?.requestCount));
       setIsLoading(false);
     } catch (error) {
@@ -138,7 +133,7 @@ const RequestList = () => {
         color: "red",
       });
     }
-  }, [requestContext]);
+  }, [requestContext, supabaseClient]);
 
   // reset filters when team_id changes
   useEffect(() => {

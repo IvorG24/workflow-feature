@@ -95,8 +95,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     return { value: `${form.form_id}`, label: `${form.form_name}` };
   });
 
-  console.log(requestList);
-
   return {
     props: {
       requestList,
