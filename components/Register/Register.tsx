@@ -83,6 +83,7 @@ const Register = () => {
           color="red"
           className={styles.notification}
           onClose={() => setNotification(null)}
+          data-cy="register-notification"
         >
           {notification}
         </Notification>
@@ -109,6 +110,7 @@ const Register = () => {
                   },
                 })}
                 error={errors.email?.message}
+                data-cy="register-input-email"
               />
               <TextInput
                 label="Password"
@@ -121,6 +123,7 @@ const Register = () => {
                   },
                 })}
                 error={errors.password?.message}
+                data-cy="register-input-password"
               />
               <TextInput
                 label="Confirm Password"
@@ -129,6 +132,7 @@ const Register = () => {
                   required: "Confirm Password is required",
                 })}
                 error={errors.confirmPassword?.message}
+                data-cy="register-input-confirmPassword"
               />
             </>
             <Button
@@ -136,6 +140,7 @@ const Register = () => {
               type="submit"
               color="green"
               aria-label="register with email and password"
+              data-cy="register-submit"
             >
               Register
             </Button>
