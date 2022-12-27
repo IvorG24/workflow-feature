@@ -1,4 +1,5 @@
 import RequestListContext from "@/contexts/RequestListContext";
+import { getFileUrl } from "@/utils/queries";
 import type { Database, RequestType } from "@/utils/types";
 import {
   ActionIcon,
@@ -11,11 +12,11 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import SvgSearch from "../Icon/Search";
-import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
 
 const statusOptions: {
@@ -33,6 +34,7 @@ const REQUEST_PER_PAGE = 8;
 
 const RequestList = () => {
   const router = useRouter();
+  const supabaseClient = useSupabaseClient<Database>();
   const requestContext = useContext(RequestListContext);
   const [requestList, setRequestList] = useState<RequestType[]>([]);
   const [requestCount, setRequestCount] = useState(0);
@@ -105,7 +107,23 @@ const RequestList = () => {
 
   useEffect(() => {
     try {
-      setRequestList(requestContext?.requestList as RequestType[]);
+      // * Loop through request list and getFileUrl for each attachment.
+      (async () => {
+        const requestListWithFileUrl =
+          requestContext?.requestList as RequestType[];
+        for (const requestItem of requestListWithFileUrl) {
+          const attachmentList = requestItem.attachments
+            ? requestItem.attachments
+            : [];
+          const attachmentUrlList = await Promise.all(
+            attachmentList.map((path) =>
+              getFileUrl(supabaseClient, path, "request_attachments")
+            )
+          );
+          requestItem.attachments = attachmentUrlList;
+        }
+        setRequestList(requestListWithFileUrl);
+      })();
       setRequestCount(Number(requestContext?.requestCount));
       setIsLoading(false);
     } catch (error) {
@@ -115,7 +133,7 @@ const RequestList = () => {
         color: "red",
       });
     }
-  }, [requestContext]);
+  }, [requestContext, supabaseClient]);
 
   // reset filters when team_id changes
   useEffect(() => {
@@ -123,6 +141,12 @@ const RequestList = () => {
     setSelectedForm(null);
     setStatus(null);
   }, [router.query.tid]);
+
+  // set Form Type based on route query
+  useEffect(() => {
+    setSelectedForm(router.query.form as string);
+  }, [router.query.form]);
+
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
@@ -164,7 +188,7 @@ const RequestList = () => {
 
       {ceil(requestCount / REQUEST_PER_PAGE) >= 1 ? (
         <Pagination
-          className={styles.pagination}
+          sx={{ alignSelf: "flex-end" }}
           page={activePage}
           onChange={setActivePage}
           total={ceil(requestCount / REQUEST_PER_PAGE)}
