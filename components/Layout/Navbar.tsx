@@ -304,7 +304,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     px="xs"
                     key={form.form_id}
                     component="a"
-                    href={`/t/${activeTeam}/requests?formId=${form.form_id}`}
+                    href={`/t/${activeTeam}/requests?active_tab=all&page=1&form=${form.form_id}`}
                     label={form.form_name}
                     rightSection={
                       <ActionIcon

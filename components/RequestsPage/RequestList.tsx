@@ -122,6 +122,12 @@ const RequestList = () => {
     setSelectedForm(null);
     setStatus(null);
   }, [router.query.tid]);
+
+  // set Form Type based on route query
+  useEffect(() => {
+    setSelectedForm(router.query.form as string);
+  }, [router.query.form]);
+
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
