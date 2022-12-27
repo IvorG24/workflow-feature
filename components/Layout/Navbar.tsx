@@ -436,6 +436,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                 await supabase.auth.signOut();
                 await router.push("/sign-in");
               }}
+              data-cy="navbar-logout"
             >
               Logout
             </Button>
