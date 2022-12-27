@@ -18,8 +18,8 @@ import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 const RequestsPage: NextPageWithLayout<RequestProps> = (props) => {
-  console.log(props);
   const router = useRouter();
+
   // todo: fix meta tags
   return (
     <RequestListContext.Provider value={props}>
@@ -94,6 +94,9 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const forms = requestFormList?.map((form) => {
     return { value: `${form.form_id}`, label: `${form.form_name}` };
   });
+
+  console.log(requestList);
+
   return {
     props: {
       requestList,

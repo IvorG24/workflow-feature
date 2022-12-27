@@ -1,4 +1,5 @@
 import RequestListContext from "@/contexts/RequestListContext";
+import { getFileUrl } from "@/utils/queries";
 import type { Database, RequestType } from "@/utils/types";
 import {
   ActionIcon,
@@ -11,6 +12,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -32,6 +34,7 @@ const REQUEST_PER_PAGE = 8;
 
 const RequestList = () => {
   const router = useRouter();
+  const supabaseClient = useSupabaseClient<Database>();
   const requestContext = useContext(RequestListContext);
   const [requestList, setRequestList] = useState<RequestType[]>([]);
   const [requestCount, setRequestCount] = useState(0);
@@ -102,9 +105,30 @@ const RequestList = () => {
     [router, activePage]
   );
 
+  // * Loop through request list and getFileUrl for each attachment.
+  useEffect(() => {
+    (async () => {
+      const requests = requestContext?.requestList as RequestType[];
+      for (const request of requests) {
+        if (request.attachments) {
+          for (let j = 0; j < request.attachments.length; j++) {
+            const attachment = request.attachments[j];
+            const attachmentUrl = await getFileUrl(
+              supabaseClient,
+              attachment,
+              "request_attachments"
+            );
+            request.attachments[j] = attachmentUrl;
+          }
+        }
+        return request;
+      }
+      setRequestList(requests);
+    })();
+  }, [requestContext?.requestList, supabaseClient]);
+
   useEffect(() => {
     try {
-      setRequestList(requestContext?.requestList as RequestType[]);
       setRequestCount(Number(requestContext?.requestCount));
       setIsLoading(false);
     } catch (error) {

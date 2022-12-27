@@ -615,22 +615,6 @@ export const retrieveRequestList = async (
   const { count: requestCount, error: requestCountError } = await countQuery;
   if (requestCountError) throw requestCountError;
 
-  // * Loop through request list and getFileUrl for each attachment.
-  for (let i = 0; i < requestList.length; i++) {
-    const request = requestList[i];
-    if (request.attachments) {
-      for (let j = 0; j < request.attachments.length; j++) {
-        const attachment = request.attachments[j];
-        const attachmentUrl = await getFileUrl(
-          supabaseClient,
-          attachment,
-          "request_attachments"
-        );
-        request.attachments[j] = attachmentUrl;
-      }
-    }
-  }
-
   return {
     requestList: requestList as RequestType[],
     requestCount,
