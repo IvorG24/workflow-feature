@@ -70,7 +70,7 @@ export default function TeamInvitationsPage({
   const router = useRouter();
   const { user } = useAuth();
   const supabaseClient = useSupabaseClient<Database>();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
   const [isInvalid, setIsInvalid] = useState(isInvalidInitial);
 
   const [isSuccessful, setIsSuccessful] = useState(false);
