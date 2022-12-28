@@ -162,6 +162,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
             fontSize: "14px",
           },
         }}
+        data-cy="navbar-select-teams"
       />
 
       {router.query.tid !== undefined ? (
