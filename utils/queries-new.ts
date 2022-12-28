@@ -13,6 +13,8 @@ import {
   RequestStatus,
   ResponseList,
   TeamMemberRole,
+  TeamMemberTableInsert,
+  TeamTableInsert,
   TeamTableUpdate,
   UserProfileTableUpdate,
 } from "./types-new";
@@ -59,6 +61,7 @@ import {
 // ✅ Generate lookup table for request attachment url list.
 // ✅ Generate lookup table for team member avatar url list.
 // ✅ Generate lookup table for user team logo url list.
+// ✅ Create team.
 
 // - Create or retrieve a user profile.
 export async function createOrRetrieveUserProfile(
@@ -1077,4 +1080,50 @@ export const getUserTeamLogoUrlList = async (
   });
 
   return userTeamLogoUrlList;
+};
+
+// Create team.
+
+// Parameters:
+// - userId: string
+// - teamInsertInput: TeamTableInsert
+// - teamMemberInsertInput: TeamMemberTableInsert
+
+// Related tables:
+// - team_table
+// - team_member_table
+// - team_role_table
+
+// Steps:
+// 1. Insert into team_table.
+// 2. Insert into team_member_table as team owner.
+
+export const createTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  teamInsertInput: TeamTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_table")
+    .insert(teamInsertInput)
+    .select()
+    .single();
+  if (error) throw error;
+  if (!data) throw new Error("Team not created.");
+
+  const teamId = data.team_id;
+
+  const teamMemberInsertInput: TeamMemberTableInsert = {
+    team_member_team_id: teamId,
+    team_member_user_id: userId,
+    team_member_member_role_id: "owner",
+  };
+  const { data: data2, error: error2 } = await supabaseClient
+    .from("team_member_table")
+    .insert(teamMemberInsertInput)
+    .single();
+  if (error2) throw error2;
+  if (!data2) throw new Error("Team member not created.");
+
+  return teamId;
 };
