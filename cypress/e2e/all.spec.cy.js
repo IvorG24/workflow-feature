@@ -1,4 +1,4 @@
-import "./features/forms.cy";
+import "./features/form.cy.js";
 import "./features/navbar.cy";
 import "./features/register.cy";
 import "./features/request.cy";
