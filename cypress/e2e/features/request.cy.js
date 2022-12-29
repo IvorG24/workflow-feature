@@ -1,7 +1,6 @@
 describe("Requests", () => {
   beforeEach(() => {
     cy.visit("http://localhost:3000/sign-in");
-    cy.url().should("include", "/sign-in");
     cy.get("[data-cy='signin-input-email']").type("sejidi1552@irebah.com");
     cy.get("[data-cy='signin-input-password']").type("test123123");
     cy.get("[data-cy='signin-submit']").click();

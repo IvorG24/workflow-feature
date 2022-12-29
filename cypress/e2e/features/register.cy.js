@@ -2,7 +2,6 @@
 describe("Register", () => {
   beforeEach(() => {
     cy.visit("http://localhost:3000/register");
-    cy.url().should("include", "/register");
   });
   it("Input fields should have required property", () => {
     cy.get("input").should("have.prop", "required");
