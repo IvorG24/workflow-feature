@@ -1,9 +1,11 @@
+import { userEmail, userPassword } from "../../support/e2e";
+
 describe("Team", () => {
   beforeEach(() => {
     cy.visit("http://localhost:3000/sign-in");
     // User should be an owner/admin of a team
-    cy.get("[data-cy='signin-input-email']").type("nojam38531@khaxan.com");
-    cy.get("[data-cy='signin-input-password']").type("test123123");
+    cy.get("[data-cy='signin-input-email']").type(userEmail);
+    cy.get("[data-cy='signin-input-password']").type(userPassword);
     cy.get("[data-cy='signin-submit']").click();
     cy.wait(2000);
   });
