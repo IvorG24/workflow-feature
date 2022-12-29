@@ -17,6 +17,7 @@ describe("Requests", () => {
     cy.get("[data-cy='request-title']").type("TEST");
     cy.get("[data-cy='request-description']").type("Lorem ipsum");
     cy.get("[data-cy='request-submit']").click();
+    cy.wait(2000);
     cy.contains("TEST");
   });
 });
