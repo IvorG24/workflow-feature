@@ -228,6 +228,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <GroupIcon />
                   </IconWrapper>
                 }
+                data-cy="navbar-members"
               />
               <NavLink
                 component="a"
