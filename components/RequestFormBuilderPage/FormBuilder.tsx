@@ -210,6 +210,7 @@ const FormBuilder: FC<Props> = (props) => {
               })}
               error={errors.form_name?.message}
               disabled={isInEditMode}
+              data-cy="formBuilder-formName"
             />
           </Paper>
           <DragDropContext onDragEnd={handleOnDragEnd}>
@@ -244,6 +245,7 @@ const FormBuilder: FC<Props> = (props) => {
                 variant="outline"
                 disabled={isSubmitting ? true : false}
                 onClick={handleAppendSection}
+                data-cy="formBuilder-addSection"
               >
                 <AddCircle />
                 &nbsp;Add Section
@@ -254,6 +256,7 @@ const FormBuilder: FC<Props> = (props) => {
                 variant="outline"
                 disabled={isSubmitting ? true : false}
                 onClick={handleAppendQuestion}
+                data-cy="formBuilder-addQuestion"
               >
                 <AddCircle />
                 &nbsp;Add Question
@@ -266,6 +269,7 @@ const FormBuilder: FC<Props> = (props) => {
             role="button"
             type="submit"
             loading={isSubmitting}
+            data-cy="formBuilder-saveForm"
           >
             {`${isInEditMode ? "Update" : "Save"}`}
           </Button>

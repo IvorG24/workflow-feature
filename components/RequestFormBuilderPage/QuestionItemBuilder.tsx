@@ -102,6 +102,7 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                       errors.questions?.[questionIndex]?.data?.question?.message
                     }
                     disabled={isInEditmode}
+                    data-cy="formBuilder-question"
                   />
                   <Controller
                     control={control}
@@ -208,6 +209,7 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                       errors.questions?.[questionIndex]?.data?.question?.message
                     }
                     disabled={isInEditmode}
+                    data-cy="formBuilder-sectionLabel"
                   />
                 </Stack>
                 {!isInEditmode && (

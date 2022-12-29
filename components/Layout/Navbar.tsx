@@ -297,6 +297,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                           ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                           : ""
                       }`}
+                      data-cy="navbar-createForm"
                     >
                       <AddCircle />
                     </ActionIcon>
