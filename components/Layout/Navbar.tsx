@@ -273,6 +273,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                           setIsOpenRequest((v) => !v);
                         }
                       }}
+                      data-cy="navbar-forms-dropdown"
                     >
                       <ArrowBack />
                     </IconWrapper>
@@ -326,6 +327,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                             ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                             : ""
                         }`}
+                        data-cy="navbar-createRequest"
                       >
                         <AddCircle />
                       </ActionIcon>

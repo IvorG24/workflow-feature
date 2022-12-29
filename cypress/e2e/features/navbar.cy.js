@@ -1,4 +1,4 @@
-describe("Test Navbar Links", () => {
+describe("Navbar", () => {
   beforeEach(() => {
     cy.visit("http://localhost:3000/sign-in");
     cy.url().should("include", "/sign-in");

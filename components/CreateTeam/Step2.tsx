@@ -46,7 +46,7 @@ const Step1 = ({
         }}
         w="100%"
         error={emailError}
-        data-cy="createTeam-select-members"
+        data-cy="team-select-members"
       />
       <Flex align="center" justify="center" gap="xl">
         <Button variant="subtle" mr="auto" onClick={() => setActive(0)}>
@@ -65,7 +65,7 @@ const Step1 = ({
             size="md"
             w={150}
             onClick={() => handleCreateTeam("invite")}
-            data-cy="createTeam-submit"
+            data-cy="team-submit"
           >
             Done
           </Button>

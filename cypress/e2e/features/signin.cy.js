@@ -1,4 +1,4 @@
-describe("User Sign In Flow", () => {
+describe("Signin", () => {
   beforeEach(() => {
     cy.visit("http://localhost:3000/sign-in");
     cy.url().should("include", "/sign-in");
