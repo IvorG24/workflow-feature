@@ -9,6 +9,8 @@ describe("Requests", () => {
   });
   it("Create Request", () => {
     cy.get("[data-cy='navbar-select-teams']").click();
+    // Select a team in which the login user is a Member or Purchaser
+    // This is to avoid getting the warning "This team doesn't have any possible approvers yet."
     cy.contains("ABC TEAM").click();
     cy.wait(2000);
     cy.get("[data-cy='navbar-forms-dropdown']").click();
