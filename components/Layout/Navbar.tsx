@@ -162,6 +162,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
             fontSize: "14px",
           },
         }}
+        data-cy="navbar-select-teams"
       />
 
       {router.query.tid !== undefined ? (
@@ -197,6 +198,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <Notifications />
                   </IconWrapper>
                 }
+                data-cy="navbar-notifications"
               />
               {/* // TODO: Commenting this for now. */}
               {/* <Badge
@@ -215,6 +217,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <Settings />
                   </IconWrapper>
                 }
+                data-cy="navbar-settings"
               />
               <NavLink
                 component="a"
@@ -225,6 +228,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <GroupIcon />
                   </IconWrapper>
                 }
+                data-cy="navbar-members"
               />
               <NavLink
                 component="a"
@@ -235,6 +239,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                     <EditDocument />
                   </IconWrapper>
                 }
+                data-cy="navbar-requests"
               />
             </Container>
           </MantineNavbar.Section>
@@ -268,6 +273,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                           setIsOpenRequest((v) => !v);
                         }
                       }}
+                      data-cy="navbar-forms-dropdown"
                     >
                       <ArrowBack />
                     </IconWrapper>
@@ -292,6 +298,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                           ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                           : ""
                       }`}
+                      data-cy="navbar-createForm"
                     >
                       <AddCircle />
                     </ActionIcon>
@@ -320,6 +327,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                             ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                             : ""
                         }`}
+                        data-cy="navbar-createRequest"
                       >
                         <AddCircle />
                       </ActionIcon>
@@ -422,6 +430,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                   <Avatar radius="xl" src={userProfile?.avatar_url} />
                 </IconWrapper>
               }
+              data-cy="navbar-profiles"
             />
             <Button
               variant="light"
@@ -436,6 +445,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                 await supabase.auth.signOut();
                 await router.push("/sign-in");
               }}
+              data-cy="navbar-logout"
             >
               Logout
             </Button>

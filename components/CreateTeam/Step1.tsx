@@ -62,6 +62,7 @@ const Step1 = ({
         value={teamName}
         onChange={(e) => handleTeamName(e.target.value)}
         error={teamNameError}
+        data-cy="team-name"
       />
       <Group position="right" w="100%">
         <Button
@@ -74,6 +75,7 @@ const Step1 = ({
               setActive(1);
             }
           }}
+          data-cy="team-submit"
         >
           Next
         </Button>
