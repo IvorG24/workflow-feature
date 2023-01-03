@@ -3,19 +3,27 @@
 // * Refrences: https://supabase.com/docs/reference/javascript/typescript-support#type-hints
 
 import { SupabaseClient, User } from "@supabase/supabase-js";
-import { Database } from "./database.types-new";
 import { getFileUrl } from "./file";
 import {
   ApproverList,
+  Database,
   FieldIdResponseKeyValue,
   FormRequest,
+  InvitationTableInsert,
+  NotificationTableInsert,
+  RequestFieldType,
+  RequestFormFactViewRow,
+  RequestRequestApproverViewRow,
   RequestRequestTableUpdate,
   RequestStatus,
   ResponseList,
+  TeamInvitationTableInsert,
   TeamMemberRole,
   TeamMemberTableInsert,
+  TeamMemberViewRow,
   TeamTableInsert,
   TeamTableUpdate,
+  TeamUserNotificationTableInsert,
   UserProfileTableUpdate,
 } from "./types-new";
 
@@ -33,8 +41,7 @@ import {
 // ✅ Create team invitation.
 // ✅ Accept team invitation.
 // ✅ Update team member role.
-// ✅ Get team user notification list.
-// ✅ Read team user notification.
+// ✅ Read notification.
 // ✅ Build form template.
 // ✅ Update form template order.
 // ✅ Update user profile (Uploading should happen outside this function. New filepath is the only one that should be passed here.).
@@ -62,12 +69,19 @@ import {
 // ✅ Generate lookup table for team member avatar url list.
 // ✅ Generate lookup table for user team logo url list.
 // ✅ Create team.
+// ✅ Get notification list.
+// ✅ Create notification.
+// ✅ Get user id list from email list.
+// ✅ Is user a member of a team.
+// ✅ Get a user profile.
+// ✅ Map GetFormTemplate to FormRequest.
+// ✅ Get request comment list.
 
 // - Create or retrieve a user profile.
-export async function createOrRetrieveUserProfile(
+export const createOrRetrieveUserProfile = async (
   supabaseClient: SupabaseClient<Database>,
   user: User
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("user_profile_table")
     .select()
@@ -91,79 +105,82 @@ export async function createOrRetrieveUserProfile(
     if (error) throw error;
     if (data) return data;
   }
-}
+};
+export type CreateOrRetrieveUserProfile = Awaited<
+  ReturnType<typeof createOrRetrieveUserProfile>
+>;
 
 // - Create or retrieve a user team list.
-export async function createOrRetrieveUserTeamList(
+export const createOrRetrieveUserTeamList = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
     .eq("user_id", userId)
-    .maybeSingle();
+    .order("team_member_id", { ascending: false });
 
   if (error) throw error;
-  if (data) return data;
+  if (data && data.length > 0) return data;
 
-  if (!data) {
-    const { data: teamData, error } = await supabaseClient
-      .from("team_table")
-      .insert({
-        team_name: "My Team",
-      })
+  const { data: teamData, error: teamError } = await supabaseClient
+    .from("team_table")
+    .insert({
+      team_name: `my team ${userId}`,
+    })
+    .select()
+    .single();
+
+  if (teamError) throw teamError;
+  if (!teamData) throw new Error("No default team created.");
+
+  const { error: insertError } = await supabaseClient
+    .from("team_member_table")
+    .insert({
+      team_member_team_id: teamData.team_id,
+      team_member_user_id: userId,
+      team_member_member_role_id: "owner",
+    });
+
+  if (insertError) throw insertError;
+
+  const { data: teamMemberViewData, error: teamMemberViewError } =
+    await supabaseClient
+      .from("team_member_view")
       .select()
-      .single();
-
-    if (error) throw error;
-    if (data) {
-      const { error: insertError } = await supabaseClient
-        .from("team_member_table")
-        .insert({
-          team_member_team_id: teamData.team_id,
-          user_id: userId,
-          member_role_id: "owner",
-        });
-
-      if (insertError) throw insertError;
-
-      const { data, error } = await supabaseClient
-        .from("team_member_view")
-        .select()
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (error) throw error;
-      if (data) return data;
-    }
-  }
-}
+      .eq("user_id", userId)
+      .order("team_member_id", { ascending: false });
+  if (teamMemberViewError) throw teamMemberViewError;
+  if (teamMemberViewData) return teamMemberViewData;
+};
 export type CreateOrRetrieveUserTeamList = Awaited<
   ReturnType<typeof createOrRetrieveUserTeamList>
 >;
 
 // - Get current user team list.
-export async function getCurrentUserTeamList(
+export const getCurrentUserTeamList = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("team_member_id", { ascending: false });
 
   if (error) throw error;
   if (data) return data;
-}
+};
 export type GetCurrentUserTeamList = Awaited<
   ReturnType<typeof getCurrentUserTeamList>
 >;
 
 // - Get a team.
-export async function getTeam(
+export const getTeam = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
@@ -171,15 +188,15 @@ export async function getTeam(
 
   if (error) throw error;
   if (data) return data;
-}
+};
 export type GetTeam = Awaited<ReturnType<typeof getTeam>>;
 
 // - Get team approver list.
 // Approver if TeamMemberRole is "owner", "admin" or "approver".
-export async function getTeamApproverList(
+export const getTeamApproverList = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
@@ -188,17 +205,17 @@ export async function getTeamApproverList(
 
   if (error) throw error;
   if (data) return data;
-}
+};
 export type GetTeamApproverList = Awaited<
   ReturnType<typeof getTeamApproverList>
 >;
 
 // - Get team purchaser list.
 // Purchaser if TeamMemberRole is "purchaser".
-export async function getTeamPurchaserList(
+export const getTeamPurchaserList = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
@@ -207,17 +224,17 @@ export async function getTeamPurchaserList(
 
   if (error) throw error;
   if (data) return data;
-}
+};
 export type GetTeamPurchaserList = Awaited<
   ReturnType<typeof getTeamPurchaserList>
 >;
 
 // - Get team owner.
 // Owner if TeamMemberRole is "owner".
-export async function getTeamOwner(
+export const getTeamOwner = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
@@ -227,14 +244,14 @@ export async function getTeamOwner(
 
   if (error) throw error;
   if (data) return data;
-}
+};
 
 // - Get team admin list.
 // Admin if TeamMemberRole is "owner" or "admin".
-export async function getTeamAdminList(
+export const getTeamAdminList = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string
-) {
+) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
@@ -243,7 +260,7 @@ export async function getTeamAdminList(
 
   if (error) throw error;
   if (data) return data;
-}
+};
 
 // - Get form template list of a team.
 export const getTeamFormTemplateList = async (
@@ -264,7 +281,7 @@ export type GetTeamFormTemplateList = Awaited<
 // - Get form template.
 export const getFormTemplate = async (
   supabaseClient: SupabaseClient<Database>,
-  formTemplateId: string
+  formTemplateId: number
 ) => {
   const { data, error } = await supabaseClient
     .from("request_form_template_view")
@@ -275,12 +292,92 @@ export const getFormTemplate = async (
   if (data) return data;
 };
 export type GetFormTemplate = Awaited<ReturnType<typeof getFormTemplate>>;
+
+// Map GetFormTemplate (From database view) to FormRequest (React DND).
+export const mapFormTemplateToReactDndFormRequest = (
+  formTemplate: NonNullable<GetFormTemplate>
+) => {
+  let formRequest: FormRequest;
+
+  const order = formTemplate[0].order_field_id_list as number[];
+
+  // Sort formTemplate by form_fact_field_id and order.
+  formTemplate.sort((a, b) => {
+    if (
+      order.indexOf(a.form_fact_field_id as number) <
+      order.indexOf(b.form_fact_field_id as number)
+    )
+      return -1;
+    if (
+      order.indexOf(a.form_fact_field_id as number) >
+      order.indexOf(b.form_fact_field_id as number)
+    )
+      return 1;
+    return 0;
+  });
+
+  if (formTemplate && formTemplate.length > 0) {
+    formRequest = {
+      form_id: formTemplate[0].form_fact_form_id as number,
+      form_name: formTemplate[0].form_name as string,
+      questions: formTemplate.map((formTemplateItem) => {
+        return {
+          fieldId: formTemplateItem.form_fact_field_id as number,
+          isRequired: formTemplateItem.field_is_required as boolean,
+          fieldTooltip: formTemplateItem.field_tooltip as string,
+          data: {
+            question: formTemplateItem.field_name as string,
+            expected_response_type:
+              formTemplateItem.request_field_type as RequestFieldType,
+          },
+          option: formTemplateItem.field_options
+            ? formTemplateItem.field_options.map((optionItem) => {
+                return {
+                  value: optionItem,
+                };
+              })
+            : undefined,
+        };
+      }),
+    };
+  } else {
+    formRequest = {
+      form_name: "",
+      questions: [],
+    };
+  }
+
+  return formRequest;
+};
+
 // - Get request list of a team.
+export type GetTeamRequestListParams = {
+  teamId: string;
+  userId: string;
+  pageSize?: number;
+  pageNumber?: number;
+  formId?: number;
+  requestStatus?: RequestStatus;
+  keyword?: string;
+  direction?: "received" | "sent";
+};
+
 export const getTeamRequestList = async (
   supabaseClient: SupabaseClient<Database>,
-  teamId: string
+  params: GetTeamRequestListParams
 ) => {
-  const { data, error } = await supabaseClient
+  const {
+    userId,
+    formId,
+    requestStatus,
+    keyword,
+    direction,
+    teamId,
+    pageSize,
+    pageNumber,
+  } = params;
+
+  let query = supabaseClient
     .from("request_form_fact_view")
     .select()
     .eq("team_id", teamId)
@@ -289,8 +386,73 @@ export const getTeamRequestList = async (
     .not("request_is_draft", "is", true)
     .not("request_is_disabled", "is", true);
 
+  if (formId) {
+    query = query.eq("form_fact_form_id", formId);
+  }
+
+  if (keyword) {
+    query = query.or(
+      `response_value.ilike.%${keyword}%, request_title.ilike.%${keyword}%, request_description.ilike.%${keyword}%`
+    );
+  }
+
+  if (
+    requestStatus === "approved" ||
+    requestStatus === "rejected" ||
+    requestStatus === "purchased" ||
+    requestStatus === "pending"
+  ) {
+    const { data, error } = await supabaseClient
+      .from("request_request_approver_view")
+      .select("request_id")
+      .eq("request_request_approver_user_id", userId)
+      .eq("request_approver_request_status_id", requestStatus)
+      .is("request_is_disabled", false);
+
+    if (error) throw error;
+
+    if (!data) return [];
+    if (data && data.length === 0) return [];
+
+    const requestIdList = data.map((request) => request.request_id);
+
+    query = query.in("form_fact_request_id", requestIdList);
+  }
+
+  if (direction === "sent") {
+    query = query.eq("form_fact_user_id", userId);
+  }
+
+  if (direction === "received") {
+    // Query from request_request_approver_table where userId === rerequest_request_approver_user_id
+
+    const { data, error } = await supabaseClient
+      .from("request_request_approver_view")
+      .select("request_id")
+      .eq("request_request_approver_user_id", userId)
+      .is("request_is_disabled", false);
+
+    if (error) throw error;
+
+    if (!data) return [];
+    if (data && data.length === 0) return [];
+
+    const receivedRequestIdList = data.map((request) => request.request_id);
+
+    query = query.in("form_fact_request_id", receivedRequestIdList);
+  }
+
+  if (pageSize && pageNumber) {
+    query = query.range(pageNumber, pageNumber + pageSize - 1);
+  }
+
+  const { data, error } = await query.order("form_fact_request_id", {
+    ascending: false,
+  });
+
   if (error) throw error;
-  if (data) return data;
+
+  return data;
 };
 export type GetTeamRequestList = Awaited<ReturnType<typeof getTeamRequestList>>;
 // - Get a request.
@@ -345,33 +507,39 @@ export type GetTeamInvitationList = Awaited<
 export const createTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string,
-  user: User,
-  targetEmail: string
+  userId: string,
+  targetEmail: string[]
 ) => {
+  const invitationInsertInput: InvitationTableInsert[] = targetEmail.map(
+    (email) => ({
+      invitation_target_email: email,
+    })
+  );
   const { data: invitationData, error } = await supabaseClient
     .from("invitation_table")
-    .insert({
-      invitation_target_email: targetEmail,
-    })
-    .select()
-    .single();
+    .insert(invitationInsertInput)
+    .select();
   if (error) throw error;
   if (invitationData) {
+    const teamInvitationInsertInput: TeamInvitationTableInsert[] =
+      invitationData.map((invitation) => ({
+        team_invitation_created_by: userId,
+        team_invitation_team_id: teamId,
+        team_invitation_invitation_id: invitation.invitation_id,
+      }));
     const { error } = await supabaseClient
       .from("team_invitation_table")
-      .insert({
-        team_invitation_created_by: user.id,
-        team_invitation_team_id: teamId,
-        team_invitation_invitation_id: invitationData.invitation_id,
-      });
+      .insert(teamInvitationInsertInput);
     if (error) throw error;
   }
+
+  return invitationData;
 };
 
 // - Accept team invitation.
 export const acceptTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
-  teamInvitationId: string,
+  teamInvitationId: number,
   user: User
 ) => {
   // Check first using team_invitation_view if the invitation is valid.
@@ -391,13 +559,6 @@ export const acceptTeamInvitation = async (
     });
 
     if (error) throw error;
-
-    const { error: updateInvitationError } = await supabaseClient
-      .from("invitation_table")
-      .update({ invitation_is_accepted: true })
-      .eq("invitation_id", invitationData.team_invitation_invitation_id);
-
-    if (updateInvitationError) throw updateInvitationError;
   }
 };
 
@@ -428,27 +589,35 @@ export const updateTeamMemberRole = async (
   if (error) throw error;
 };
 
-// - Get team user notification list.
-export const getTeamUserNotificationList = async (
+// - Get notification list.
+export const getNotificationList = async (
   supabaseClient: SupabaseClient<Database>,
-  teamId: string,
-  userId: string
+  userId: string,
+  teamId?: string
 ) => {
-  const { data, error } = await supabaseClient
+  let query = supabaseClient
     .from("team_user_notification_view")
     .select()
-    .eq("team_id", teamId)
     .eq("user_id", userId);
+
+  if (teamId) {
+    query = query.eq("team_user_notification_team_id", teamId);
+  } else {
+    query = query.is("team_user_notification_team_id", null);
+  }
+  query.order("team_user_notification_id", { ascending: false });
+
+  const { data, error } = await query;
 
   if (error) throw error;
   if (data) return data;
 };
-export type GetTeamUserNotificationList = Awaited<
-  ReturnType<typeof getTeamUserNotificationList>
+export type GetNotificationList = Awaited<
+  ReturnType<typeof getNotificationList>
 >;
 
-// - Read team user notification.
-export const readTeamUserNotification = async (
+// - Read notification.
+export const readNotification = async (
   supabaseClient: SupabaseClient<Database>,
   notificationId: string
 ) => {
@@ -473,7 +642,7 @@ export const readTeamUserNotification = async (
 // 2. Update order_field_id_list using order_id from Step 1.
 export const updateFormTemplateOrder = async (
   supabaseClient: SupabaseClient<Database>,
-  formTemplateId: string,
+  formTemplateId: number,
   order: number[]
 ) => {
   const { data: orderIdData, error } = await supabaseClient
@@ -532,6 +701,7 @@ export const createRequestComment = async (
       });
     if (insertCommentError) throw insertCommentError;
   }
+  return commentData.comment_id;
 };
 
 // - Update request comment.
@@ -944,7 +1114,7 @@ export const getTeamMemberRole = async (
 
 export const getRequestAttachmentUrlList = async (
   supabaseClient: SupabaseClient<Database>,
-  requestIdList: string[]
+  requestIdList: number[]
 ) => {
   const { data, error } = await supabaseClient
     .from("request_request_table")
@@ -952,6 +1122,7 @@ export const getRequestAttachmentUrlList = async (
     .in("request_id", requestIdList);
   if (error) throw error;
   if (!data || data.length === 0) throw new Error("Request not found.");
+
   const requestAttachmentUrlList: { [requestId: string]: string[] } = {};
 
   // Same as above but use Promise.all to speed up the process.
@@ -964,7 +1135,7 @@ export const getRequestAttachmentUrlList = async (
         const promise = getFileUrl(
           supabaseClient,
           filepath,
-          "request_attachments"
+          "request-attachments"
         );
         promises.push(promise);
       }
@@ -983,6 +1154,9 @@ export const getRequestAttachmentUrlList = async (
   }
   return requestAttachmentUrlList;
 };
+export type GetRequestAttachmentUrlList = Awaited<
+  ReturnType<typeof getRequestAttachmentUrlList>
+>;
 
 // Generate lookup table for team member avatar url list.
 
@@ -1007,22 +1181,25 @@ export const getTeamMemberAvatarUrlList = async (
     .in("team_id", teamIdList);
   if (error) throw error;
   if (!data || data.length === 0) throw new Error("Team member not found.");
-  const teamMemberAvatarUrlList: { [userId: string]: string } = {};
+  const teamMemberAvatarUrlList: { [userId: string]: string | null } = {};
 
   // Same as above but use Promise.all to speed up the process.
   const promises = [];
   for (const teamMember of data) {
-    const { user_id, user_avatar_filepath } = teamMember;
+    const { user_avatar_filepath } = teamMember;
     if (user_avatar_filepath) {
       const promise = getFileUrl(
         supabaseClient,
         user_avatar_filepath,
-        "user_avatars"
+        "user-profile-images"
       );
       promises.push(promise);
+    } else {
+      promises.push(null);
     }
   }
   const urlList = await Promise.all(promises);
+
   data.map((teamMember, i) => {
     const { user_id, user_avatar_filepath } = teamMember;
     if (user_avatar_filepath) {
@@ -1032,8 +1209,11 @@ export const getTeamMemberAvatarUrlList = async (
 
   return teamMemberAvatarUrlList;
 };
+export type GetTeamMemberAvatarUrlList = Awaited<
+  ReturnType<typeof getTeamMemberAvatarUrlList>
+>;
 
-// Generate lookup table for user team logo url list.
+// Generate lookup table for team logo url list.
 
 // Parameters:
 // - userId: string
@@ -1044,43 +1224,137 @@ export const getTeamMemberAvatarUrlList = async (
 // Steps:
 // 1. Get teams where user is a member.
 // 2. Per team, call getFileUrl to get the url of the team logo.
-// 3. Generate lookup table for user team logo url list. e.g.  { teamId: url }
+// 3. Generate lookup table for team logo url list. e.g.  { teamId: url }
 
-export const getUserTeamLogoUrlList = async (
+export const getTeamLogoUrlList = async (
   supabaseClient: SupabaseClient<Database>,
-  userId: string
+  teamIdList: string[]
 ) => {
   const { data, error } = await supabaseClient
-    .from("team_member_view")
+    .from("team_table")
     .select("team_id, team_logo_filepath")
-    .eq("user_id", userId);
+    .in("team_id", teamIdList);
   if (error) throw error;
-  if (!data || data.length === 0) throw new Error("User not part of any team.");
-  const userTeamLogoUrlList: { [teamId: string]: string } = {};
+  if (!data || data.length === 0) throw new Error("Team not found.");
+  const teamLogoUrlList: { [teamId: string]: string } = {};
 
+  // Same as above but use Promise.all to speed up the process.
   const promises = [];
   for (const team of data) {
-    const { team_logo_filepath } = team;
+    const { team_id, team_logo_filepath } = team;
     if (team_logo_filepath) {
       const promise = getFileUrl(
         supabaseClient,
         team_logo_filepath,
-        "team_logos"
+        "team-logos"
       );
       promises.push(promise);
     }
   }
   const urlList = await Promise.all(promises);
-
   data.map((team, i) => {
     const { team_id, team_logo_filepath } = team;
     if (team_logo_filepath) {
-      userTeamLogoUrlList[team_id as string] = urlList[i];
+      teamLogoUrlList[team_id as string] = urlList[i];
     }
   });
-
-  return userTeamLogoUrlList;
+  return teamLogoUrlList;
 };
+export type GetTeamLogoUrlList = Awaited<ReturnType<typeof getTeamLogoUrlList>>;
+
+// Get request approver list with is_approveer and is_purchaser key appended.
+// Steps:
+// 1. Fetch rows from request_request_approver_view.
+// 1. Per request, check which team the request belongs to.
+// 1. Per request, check what role the user has in the team from the team_member_view.
+// 1. Append is_approver and is_purchaser key to the request approver.
+// If the user has team role of owner or admin, then set is_approver to true.
+// If the user has team role of purchaser, then set is_purchaser to true.
+// . Return the request approver list.
+export const getRequestApproverList = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestIdList: number[]
+) => {
+  const promises = [];
+  const promise1 = supabaseClient
+    .from("request_request_approver_view")
+    .select()
+    .in("request_approver_request_id", requestIdList)
+    .not("request_is_draft", "is", true)
+    .not("request_is_disabled", "is", true);
+
+  const promise2 = supabaseClient
+    .from("request_form_fact_view")
+    .select()
+    .in("form_fact_request_id", requestIdList);
+
+  promises.push(promise1, promise2);
+  const [requestApproverView, formFactView] = await Promise.all(promises);
+
+  if (requestApproverView.error) throw requestApproverView.error;
+  if (formFactView.error) throw formFactView.error;
+
+  const teamIdList = (
+    formFactView.data as unknown as RequestFormFactViewRow[]
+  ).map((row) => row.team_id);
+
+  // Distinct by team id.
+  const distinctTeamIdList = teamIdList.filter(
+    (item, index) => teamIdList.indexOf(item) === index
+  );
+
+  const { data: teamMemberViewData, error: teamMemberViewError } =
+    await supabaseClient
+      .from("team_member_view")
+      .select()
+      .in("team_id", distinctTeamIdList);
+  if (teamMemberViewError) throw teamMemberViewError;
+
+  const requestApproverList: (RequestRequestApproverViewRow & {
+    is_approver: boolean;
+    is_purchaser: boolean;
+  })[] = [];
+
+  // Per requestApproverView.data, check if the user is an approver or purchaser.
+  // If user is an owner or admin, then is_approver is true.
+  // If user is a purchaser, then is_purchaser is true.
+  (requestApproverView.data as RequestRequestApproverViewRow[]).forEach(
+    (requestApproverRow) => {
+      const { user_id, request_id } = requestApproverRow;
+      // Get team id using request_id from formFactView.
+      const formFactViewRow = (
+        formFactView.data as RequestFormFactViewRow[]
+      ).find((row) => row.request_id === request_id);
+
+      const teamMemberViewRow = (
+        teamMemberViewData as TeamMemberViewRow[]
+      ).find(
+        (row) =>
+          row.team_id === formFactViewRow?.team_id && row.user_id === user_id
+      );
+      if (!teamMemberViewRow) {
+        throw new Error(
+          "Approver of the request is not a part of the team the request belongs to."
+        );
+      }
+      const { member_role_id } = teamMemberViewRow;
+      const isApprover =
+        member_role_id === "owner" || member_role_id === "admin";
+      const isPurchaser = member_role_id === "purchaser";
+
+      requestApproverList.push({
+        ...requestApproverRow,
+        is_approver: isApprover,
+        is_purchaser: isPurchaser,
+      });
+    }
+  );
+
+  return requestApproverList;
+};
+export type GetRequestApproverList = Awaited<
+  ReturnType<typeof getRequestApproverList>
+>;
 
 // Create team.
 
@@ -1121,9 +1395,147 @@ export const createTeam = async (
   const { data: data2, error: error2 } = await supabaseClient
     .from("team_member_table")
     .insert(teamMemberInsertInput)
+    .select()
     .single();
   if (error2) throw error2;
   if (!data2) throw new Error("Team member not created.");
 
   return teamId;
 };
+export type CreateTeam = Awaited<ReturnType<typeof createTeam>>;
+
+// - Create notification.
+// Create notification for each user in userIdList.
+export const createNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  notificationInsertInput: NotificationTableInsert,
+  teamId?: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("notification_table")
+    .insert(notificationInsertInput)
+    .select()
+    .single();
+  if (error) throw error;
+  if (!data) throw new Error("Notification not created.");
+
+  const notificationId = data.notification_id;
+
+  const teamUserNotificationInsertInput: TeamUserNotificationTableInsert = {
+    team_user_notification_user_id: userId,
+    team_user_notification_notification_id: notificationId,
+  };
+  if (teamId) {
+    teamUserNotificationInsertInput.team_user_notification_team_id = teamId;
+  }
+
+  const { data: data2, error: error2 } = await supabaseClient
+    .from("team_user_notification_table")
+    .insert(teamUserNotificationInsertInput)
+    .select()
+    .single();
+  if (error2) throw error2;
+  if (!data2) throw new Error("Team user notification not created.");
+
+  return notificationId;
+};
+export type CreateNotification = Awaited<ReturnType<typeof createNotification>>;
+
+// * Returns only user id list of registered users from an email list.
+export const getUserIdListFromEmailList = async (
+  supabaseClient: SupabaseClient<Database>,
+  emailList: string[]
+) => {
+  try {
+    const { data, error } = await supabaseClient.rpc(
+      "get_user_id_list_from_email_list",
+      { email_list: emailList }
+    );
+
+    if (error) throw error;
+    if (!data) return [];
+
+    // Remove null elements.
+    const dataFiltered = data.filter((userIdWithEmail) => userIdWithEmail);
+    if (dataFiltered.length === 0) return [];
+
+    const dataRedefined = dataFiltered as unknown as string[];
+
+    const userIdWithEmailList = dataRedefined.map((userIdWithEmail) => {
+      const [userId, userEmail] = userIdWithEmail.split(",");
+      return { userId, userEmail };
+    });
+
+    return userIdWithEmailList as GetUserIdListFromEmailList;
+  } catch (e) {
+    console.error(e);
+  }
+};
+export type GetUserIdListFromEmailList = {
+  userId: string;
+  userEmail: string;
+}[];
+
+// - Is user a member of team.
+// - Use team_member_view.
+export const isUserMemberOfTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  teamId: string
+) => {
+  console.log("isUserMemberOfTeam", userId, teamId);
+
+  const { data, error } = await supabaseClient
+    .from("team_member_view")
+    .select()
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return false;
+
+  return true;
+};
+
+// - Get a user profile.
+// Related tables:
+// - user_profile_table
+export const getUserProfile = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_profile_table")
+    .select()
+    .eq("user_id", userId)
+    .single();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return data;
+};
+export type GetUserProfile = Awaited<ReturnType<typeof getUserProfile>>;
+
+// - Get request comment list.
+export const getRequestCommentList = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number[]
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_request_user_comment_view")
+    .select()
+    .in("request_id", requestId)
+    .not("request_is_draft", "is", true)
+    .not("request_is_disabled", "is", true);
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return data;
+};
+export type GetRequestCommentList = Awaited<
+  ReturnType<typeof getRequestCommentList>
+>;

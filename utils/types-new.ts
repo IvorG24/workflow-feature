@@ -249,3 +249,6 @@ export type FieldIdResponseKeyValue = { [key: string]: string };
 
 // Update Request Draft
 export type ResponseList = { response_id: number; response_value: string }[];
+
+// Notifications
+export type NotificationType = "user" | "team";
