@@ -18,6 +18,7 @@ const InvalidInvitation = () => {
           maw={300}
           size="lg"
           onClick={() => router.push("/")}
+          data-cy="invitation-button"
         >
           Return to home
         </Button>
