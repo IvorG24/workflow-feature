@@ -260,7 +260,7 @@ const Request = ({
         color: "green",
       });
       if (view === "full") {
-        router.push(`/t/${router.query.tid}/requests`);
+        router.back();
       }
     } catch {
       showNotification({
@@ -344,7 +344,7 @@ const Request = ({
         color: "green",
       });
       if (view === "full") {
-        router.push(`/t/${router.query.tid}/requests`);
+        router.back();
       }
     } catch {
       showNotification({
@@ -380,7 +380,7 @@ const Request = ({
         color: "green",
       });
       if (view === "full") {
-        router.push(`/t/${router.query.tid}/requests`);
+        router.push(`/t/${router.query.tid}/requests?active_tab=all&page=1`);
       }
     } catch {
       showNotification({
@@ -609,6 +609,7 @@ const Request = ({
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-approve"
             >
               Approve
             </Button>
@@ -631,6 +632,7 @@ const Request = ({
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-reject"
             >
               Reject
             </Button>
@@ -654,6 +656,7 @@ const Request = ({
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-delete"
             >
               Delete
             </Button>
