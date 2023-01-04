@@ -845,9 +845,14 @@ const Request = ({
             variant="unstyled"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
+            data-cy="request-input-comment"
           />
           <Group position="right" mt="xs">
-            <Button w={100} onClick={handleAddComment}>
+            <Button
+              w={100}
+              onClick={handleAddComment}
+              data-cy="request-submit-comment"
+            >
               Send
             </Button>
           </Group>
@@ -868,7 +873,11 @@ const Request = ({
               {comment.request_comment_by_id === user?.id ? (
                 <Popover position="bottom" shadow="md">
                   <Popover.Target>
-                    <Button ml="auto" variant="subtle">
+                    <Button
+                      ml="auto"
+                      variant="subtle"
+                      data-cy="request-comment-options"
+                    >
                       <Dots />
                     </Button>
                   </Popover.Target>
@@ -881,6 +890,7 @@ const Request = ({
                           setNewComment(`${comment.request_comment}`);
                           setEditCommentId(comment.request_comment_id);
                         }}
+                        data-cy="request-edit-comment"
                       >
                         Edit
                       </Button>
@@ -891,6 +901,7 @@ const Request = ({
                         onClick={() =>
                           handleDeleteComment(comment.request_comment_id)
                         }
+                        data-cy="request-delete-comment"
                       >
                         Delete
                       </Button>
@@ -900,12 +911,13 @@ const Request = ({
               ) : null}
             </Flex>
             {comment.request_comment_id === editCommentId ? (
-              <Paper withBorder p="xs" mt="sm">
+              <Paper withBorder p="xs" mt="sm" data-cy="request-comment">
                 <Textarea
                   placeholder="Type your new comment here"
                   variant="unstyled"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
+                  data-cy="request-input-edit-comment"
                 />
                 <Group position="right" mt="xs" spacing={5}>
                   <Button
@@ -918,7 +930,11 @@ const Request = ({
                   >
                     Cancel
                   </Button>
-                  <Button w={100} onClick={handleEditComment}>
+                  <Button
+                    w={100}
+                    onClick={handleEditComment}
+                    data-cy="request-submit-edited-comment"
+                  >
                     Submit
                   </Button>
                 </Group>
