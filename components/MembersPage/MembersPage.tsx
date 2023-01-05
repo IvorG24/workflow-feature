@@ -1,31 +1,29 @@
 // todo: create unit tests
 // todo: improve mobile responsiveness and improve layout
-import {
-  MemberListActionEnum,
-  useMemberListContext,
-} from "@/contexts/MemberListContext";
-import { FetchTeamMemberList, updateTeamMemberRole } from "@/utils/queries";
-import { TeamRoleEnum } from "@/utils/types";
+import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import { GetTeam, updateTeamMemberRole } from "@/utils/queries-new";
+import { TeamMemberRole } from "@/utils/types-new";
 import { Divider, Grid, Stack, Text, Title } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSessionContext, useUser } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useMemo, useState } from "react";
 import InviteTeamMembersSection from "./InviteTeamMembersSection";
 import MemberList from "./MemberList";
 import SearchBar from "./SearchBar";
 
 const Member = () => {
   const user = useUser();
+  const router = useRouter();
+
   const { supabaseClient } = useSessionContext();
-  const {
-    state: { memberList: memberListContextValue },
-    dispatchMemberList,
-  } = useMemberListContext();
+
+  const memberListContextValue = useContext(ActiveTeamContext);
 
   const [searchBarValue, setSearchBarValue] = useState("");
-  const [memberList, setMemberList] = useState<FetchTeamMemberList>(
-    memberListContextValue as FetchTeamMemberList
+  const [memberList, setMemberList] = useState<GetTeam>(
+    memberListContextValue as GetTeam
   );
   const [authUserRole, setAuthUserRole] = useState<string>("");
   const rolesOrder = ["owner", "admin", "purchaser", "member"];
@@ -36,17 +34,19 @@ const Member = () => {
     [memberList]
   );
 
-  const filterMemberList = sortedMemberList.filter((member) => {
-    const memberName = member.user_profile_table.full_name;
-    if (memberName) {
-      return lowerCase(memberName).includes(searchBarValue);
-    }
-  });
+  const filterMemberList =
+    sortedMemberList &&
+    sortedMemberList.filter((member) => {
+      const memberName = `${member.username}`;
+      if (memberName) {
+        return lowerCase(memberName).includes(searchBarValue);
+      }
+    });
 
   const handleUpdateMemberRole = async (
     memberId: string,
-    memberRole: TeamRoleEnum,
-    newRole: TeamRoleEnum
+    memberRole: TeamMemberRole,
+    newRole: TeamMemberRole
   ) => {
     const authUserRoleIndex = rolesOrder.indexOf(authUserRole);
     const newRoleIndex = rolesOrder.indexOf(newRole);
@@ -68,47 +68,50 @@ const Member = () => {
     }
 
     try {
-      const updateError = await updateTeamMemberRole(
+      await updateTeamMemberRole(
         supabaseClient,
-        newRole,
-        memberId
+        `${router.query.tid}`,
+        memberId,
+        newRole
       );
-      console.log(updateError);
-      if (updateError === null) {
-        showNotification({
-          title: "Success!",
-          message: `Member role updated.`,
-          color: "green",
-        });
-        const updatedMemberList = memberList.map((member) => {
+
+      showNotification({
+        title: "Success!",
+        message: `Member role updated.`,
+        color: "green",
+      });
+      const updatedMemberList =
+        memberList &&
+        memberList.map((member) => {
           if (member.user_id === memberId) {
             return {
               ...member,
-              team_role: newRole,
+              team_member_member_role_id: newRole,
+              member_role_id: newRole,
             };
           } else return member;
         });
-        dispatchMemberList({
-          type: MemberListActionEnum.SET,
-          payload: {
-            memberList: updatedMemberList,
-          },
-        });
-      }
+      // dispatchMemberList({
+      //   type: MemberListActionEnum.SET,
+      //   payload: {
+      //     memberList: updatedMemberList,
+      //   },
+      // });
+      router.replace(router.asPath);
     } catch (error) {
       console.log(error);
     }
   };
 
   useEffect(() => {
-    setMemberList(memberListContextValue as FetchTeamMemberList);
+    setMemberList(memberListContextValue as GetTeam);
   }, [memberListContextValue]);
 
   useEffect(() => {
     if (user) {
-      const userRole = memberList.find(
-        (member) => member.user_profile_table.user_id === user.id
-      )?.team_role;
+      const userRole =
+        memberList &&
+        memberList.find((member) => member.user_id === user.id)?.member_role_id;
 
       userRole !== undefined && setAuthUserRole(userRole as string);
     }
@@ -125,7 +128,7 @@ const Member = () => {
           <SearchBar
             setSearchBarValue={setSearchBarValue}
             value={searchBarValue}
-            numberOfMembers={memberList.length}
+            numberOfMembers={memberList?.length || 0}
           />
           <MemberList
             authUserRole={authUserRole}
@@ -153,24 +156,26 @@ const Member = () => {
   );
 };
 
-const sortMemberList = (members: FetchTeamMemberList) => {
-  members.sort((a, b) => {
-    const nameA = a.user_profile_table.full_name;
-    const nameB = b.user_profile_table.full_name;
-    if (nameA !== null && nameB !== null) {
-      return nameA < nameB ? -1 : 1;
-    }
-    return 0;
-  });
+const sortMemberList = (members: GetTeam) => {
+  members &&
+    members.sort((a, b) => {
+      const nameA = `${a.username}`;
+      const nameB = `${b.username}`;
+      if (nameA !== null && nameB !== null) {
+        return nameA < nameB ? -1 : 1;
+      }
+      return 0;
+    });
 
   // todo: update member roles to match team_role
   const rolesOrder = ["owner", "admin", "purchaser", "member"];
 
-  members.sort((a, b) => {
-    const indexA = rolesOrder.indexOf(a.team_role as string);
-    const indexB = rolesOrder.indexOf(b.team_role as string);
-    return indexA - indexB;
-  });
+  members &&
+    members.sort((a, b) => {
+      const indexA = rolesOrder.indexOf(a.member_role_id as string);
+      const indexB = rolesOrder.indexOf(b.member_role_id as string);
+      return indexA - indexB;
+    });
   return members;
 };
 

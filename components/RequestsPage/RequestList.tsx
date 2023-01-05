@@ -1,31 +1,30 @@
+import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import RequestListContext from "@/contexts/RequestListContext";
-import type { Database, RequestType } from "@/utils/types";
+import { RequestStatus } from "@/utils/types-new";
 import {
   ActionIcon,
   Group,
-  LoadingOverlay,
   Pagination,
   Select,
   SelectItem,
   Stack,
   TextInput,
 } from "@mantine/core";
-import { showNotification } from "@mantine/notifications";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import SvgSearch from "../Icon/Search";
 import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
 
 const statusOptions: {
-  value: Database["public"]["Enums"]["request_status"];
+  value: RequestStatus;
   label: string;
 }[] = [
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
-  { value: "revision", label: "Revision" },
+  { value: "purchased", label: "Purchased" },
   { value: "stale", label: "Stale" },
 ];
 
@@ -33,26 +32,28 @@ const REQUEST_PER_PAGE = 8;
 
 const RequestList = () => {
   const router = useRouter();
-  const requestContext = useContext(RequestListContext);
-  const [requestList, setRequestList] = useState<RequestType[]>([]);
-  const [requestCount, setRequestCount] = useState(0);
-  const forms = requestContext?.forms;
-  const [isLoading, setIsLoading] = useState(false);
+  const requestListContext = useContext(RequestListContext);
+  const { requestIdList, requestList, requestListCount } =
+    requestListContext || {};
+
+  const activeTeamFormList = useContext(ActiveTeamFormListContext);
+  const formList = activeTeamFormList?.map((form) => ({
+    value: `${form.form_id}`,
+    label: `${form.form_name}`,
+  }));
+
   const [search, setSearch] = useState<string>("");
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(`${router.query.status}`);
   const [activePage, setActivePage] = useState(1);
-  const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
-    null
-  );
+
   const [selectedForm, setSelectedForm] = useState<string | null>(
-    router.query.formId ? `${router.query.formId}` : null
+    router.query.form ? `${router.query.form}` : null
   );
 
   const handleSearch = useCallback(
     (search: string) => {
-      setIsLoading(true);
       setSearch(search);
-      router.replace({ query: { ...router.query, search_query: search } });
+      router.push({ query: { ...router.query, search_query: search } });
     },
     [router]
   );
@@ -75,10 +76,9 @@ const RequestList = () => {
 
   const handleFilterBySelectedForm = useCallback(
     (selectedForm: string | null) => {
-      setIsLoading(true);
       setSelectedForm(selectedForm);
       if (selectedForm) {
-        router.replace({ query: { ...router.query, form: selectedForm } });
+        router.push({ query: { ...router.query, form: selectedForm } });
       } else {
         router.push(
           `/t/${router.query.tid}/requests?active_tab=all&page=${activePage}`
@@ -90,10 +90,9 @@ const RequestList = () => {
 
   const handleFilterByStatus = useCallback(
     (status: string | null) => {
-      setIsLoading(true);
       setStatus(status);
       if (status) {
-        router.replace({ query: { ...router.query, status: status } });
+        router.push({ query: { ...router.query, status: status } });
       } else {
         router.push(
           `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`
@@ -103,30 +102,20 @@ const RequestList = () => {
     [router, activePage]
   );
 
-  useEffect(() => {
-    try {
-      setRequestList(requestContext?.requestList as RequestType[]);
-      setRequestCount(Number(requestContext?.requestCount));
-      setIsLoading(false);
-    } catch (error) {
-      showNotification({
-        title: "Error!",
-        message: "Failed to fetch Request List",
-        color: "red",
-      });
-    }
-  }, [requestContext]);
+  const handlePagination = (activePage: number) => {
+    setActivePage(activePage);
+    router.replace({ query: { ...router.query, page: activePage } });
+  };
 
   // reset filters when team_id changes
-  useEffect(() => {
-    setSearch("");
-    setSelectedForm(null);
-    setStatus(null);
-  }, [router.query.tid]);
+  // useEffect(() => {
+  //   setSearch("");
+  //   setSelectedForm(null);
+  //   setStatus(null);
+  // }, [router.query.tid]);
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
       <Group mt="xl">
         <TextInput
           value={search}
@@ -142,7 +131,7 @@ const RequestList = () => {
         <Select
           clearable
           placeholder="Form Type"
-          data={forms as (string | SelectItem)[]}
+          data={formList as (string | SelectItem)[]}
           value={selectedForm}
           onChange={handleFilterBySelectedForm}
         />
@@ -154,20 +143,14 @@ const RequestList = () => {
           onChange={handleFilterByStatus}
         />
       </Group>
-      <RequestTable
-        requestList={requestList as RequestType[]}
-        selectedRequest={selectedRequest}
-        setSelectedRequest={setSelectedRequest}
-        setRequestList={setRequestList}
-        setIsLoading={setIsLoading}
-      />
+      <RequestTable />
 
-      {ceil(requestCount / REQUEST_PER_PAGE) >= 1 ? (
+      {ceil((requestListCount as number) / REQUEST_PER_PAGE) >= 1 ? (
         <Pagination
           className={styles.pagination}
           page={activePage}
-          onChange={setActivePage}
-          total={ceil(requestCount / REQUEST_PER_PAGE)}
+          onChange={handlePagination}
+          total={ceil((requestListCount as number) / REQUEST_PER_PAGE)}
         />
       ) : null}
     </Stack>

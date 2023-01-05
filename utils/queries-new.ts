@@ -8,13 +8,13 @@ import {
   ApproverList,
   Database,
   FieldIdResponseKeyValue,
+  FormQuestion,
   FormRequest,
   InvitationTableInsert,
   NotificationTableInsert,
   RequestFieldType,
   RequestFormFactViewRow,
   RequestRequestApproverViewRow,
-  RequestRequestTableUpdate,
   RequestStatus,
   ResponseList,
   TeamInvitationTableInsert,
@@ -76,6 +76,8 @@ import {
 // ✅ Get a user profile.
 // ✅ Map GetFormTemplate to FormRequest.
 // ✅ Get request comment list.
+// ✅ Get request main status list.
+// ✅ Transform request to React Dnd.
 
 // - Create or retrieve a user profile.
 export const createOrRetrieveUserProfile = async (
@@ -287,14 +289,13 @@ export const getFormTemplate = async (
     .from("request_form_template_view")
     .select()
     .eq("form_fact_form_id", formTemplateId);
-
   if (error) throw error;
   if (data) return data;
 };
 export type GetFormTemplate = Awaited<ReturnType<typeof getFormTemplate>>;
 
-// Map GetFormTemplate (From database view) to FormRequest (React DND).
-export const mapFormTemplateToReactDndFormRequest = (
+// Transform GetFormTemplate (From database view) to FormRequest (React DND).
+export const transformFormTemplateToReactDndFormRequest = (
   formTemplate: NonNullable<GetFormTemplate>
 ) => {
   let formRequest: FormRequest;
@@ -349,6 +350,9 @@ export const mapFormTemplateToReactDndFormRequest = (
 
   return formRequest;
 };
+export type TransformFormTemplateToReactDndFormRequest = ReturnType<
+  typeof transformFormTemplateToReactDndFormRequest
+>;
 
 // - Get request list of a team.
 export type GetTeamRequestListParams = {
@@ -396,27 +400,8 @@ export const getTeamRequestList = async (
     );
   }
 
-  if (
-    requestStatus === "approved" ||
-    requestStatus === "rejected" ||
-    requestStatus === "purchased" ||
-    requestStatus === "pending"
-  ) {
-    const { data, error } = await supabaseClient
-      .from("request_request_approver_view")
-      .select("request_id")
-      .eq("request_request_approver_user_id", userId)
-      .eq("request_approver_request_status_id", requestStatus)
-      .is("request_is_disabled", false);
-
-    if (error) throw error;
-
-    if (!data) return [];
-    if (data && data.length === 0) return [];
-
-    const requestIdList = data.map((request) => request.request_id);
-
-    query = query.in("form_fact_request_id", requestIdList);
+  if (requestStatus) {
+    query = query.eq("form_fact_request_status_id", requestStatus);
   }
 
   if (direction === "sent") {
@@ -429,7 +414,7 @@ export const getTeamRequestList = async (
     const { data, error } = await supabaseClient
       .from("request_request_approver_view")
       .select("request_id")
-      .eq("request_request_approver_user_id", userId)
+      .eq("request_approver_user_id", userId)
       .is("request_is_disabled", false);
 
     if (error) throw error;
@@ -455,20 +440,58 @@ export const getTeamRequestList = async (
   return data;
 };
 export type GetTeamRequestList = Awaited<ReturnType<typeof getTeamRequestList>>;
+
 // - Get a request.
 export const getRequest = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: string
+  requestId: number
 ) => {
   const { data, error } = await supabaseClient
     .from("request_form_fact_view")
     .select()
-    .eq("request_id", requestId);
+    .eq("request_id", requestId)
+    .is("request_is_draft", false)
+    .is("request_is_disabled", false);
 
   if (error) throw error;
   if (data) return data;
 };
 export type GetRequest = Awaited<ReturnType<typeof getRequest>>;
+
+// - transformRequestToReactDnd
+export const transformRequestToReactDnd = (
+  request: GetRequest
+): FormRequest => {
+  const formRequest: FormRequest = {
+    form_name: request && request[0].form_name ? request[0].form_name : "",
+    questions: request
+      ? request.map((formTemplateItem) => {
+          return {
+            fieldId: formTemplateItem.field_id as number,
+            isRequired: formTemplateItem.field_is_required as boolean,
+            fieldTooltip: formTemplateItem.field_tooltip as string,
+            data: {
+              question: formTemplateItem.field_name as string,
+              expected_response_type:
+                formTemplateItem.request_field_type as RequestFieldType,
+            },
+            option: formTemplateItem.field_options
+              ? formTemplateItem.field_options.map((optionItem) => {
+                  return {
+                    value: optionItem,
+                  };
+                })
+              : undefined,
+          };
+        })
+      : [],
+  };
+
+  return formRequest;
+};
+export type TransformRequestToReactDnd = ReturnType<
+  typeof transformRequestToReactDnd
+>;
 
 // - Get a team invitation.
 export const getTeamInvitation = async (
@@ -563,17 +586,6 @@ export const acceptTeamInvitation = async (
 };
 
 // - Update a team member role.
-
-// Parameters:
-// - teamId: string
-// - userId: string
-// - role: TeamMemberRole
-
-// Related tables:
-// - team_member_table
-
-// Steps:
-// 1. Update team_member_role to role.
 export const updateTeamMemberRole = async (
   supabaseClient: SupabaseClient<Database>,
   teamId: string,
@@ -630,55 +642,46 @@ export const readNotification = async (
 };
 
 // - Update form template order.
-
-// Related tables:
-// - request_order_table
-// - request_order_table columns: order_field_id_list.
-// - request_form_fact_table
-// - request_form_fact_table columns: form_fact_user_id, form_fact_team_id, form_fact_field_id, form_fact_response_id, form_fact_order_id, form_fact_request_id, form_fact_form_id.
-
-// Steps:
-// 1. Get order_id using formTemplateId from request_form_fact_table.
-// 2. Update order_field_id_list using order_id from Step 1.
-export const updateFormTemplateOrder = async (
+export const updateFormTemplate = async (
   supabaseClient: SupabaseClient<Database>,
   formTemplateId: number,
-  order: number[]
+  questionList: FormQuestion[]
 ) => {
-  const { data: orderIdData, error } = await supabaseClient
-    .from("request_form_fact_table")
-    .select("form_fact_order_id")
-    .eq("form_fact_form_id", formTemplateId)
-    .limit(1)
-    .single();
-  if (error) throw error;
-  if (orderIdData) {
-    const { error: updateOrderError } = await supabaseClient
-      .from("request_order_table")
-      .update({ order_field_id_list: order })
-      .eq("order_id", orderIdData.form_fact_order_id);
-    if (updateOrderError) throw updateOrderError;
+  try {
+    const order = questionList.map((question) => question.fieldId as number);
+
+    const { data: orderIdData, error } = await supabaseClient
+      .from("request_form_fact_table")
+      .select("form_fact_order_id")
+      .eq("form_fact_form_id", formTemplateId)
+      .limit(1)
+      .single();
+    if (error) throw error;
+    if (orderIdData) {
+      const { error: updateOrderError } = await supabaseClient
+        .from("request_order_table")
+        .update({ order_field_id_list: order })
+        .eq("order_id", orderIdData.form_fact_order_id);
+      if (updateOrderError) throw updateOrderError;
+    }
+    // Loop per question and update the tooltip using Promise.all.
+    const promises = questionList.map((question) =>
+      supabaseClient
+        .from("request_field_table")
+        .update({
+          field_tooltip: question.fieldTooltip,
+          field_is_required: question.isRequired,
+        })
+        .eq("field_id", question.fieldId)
+    );
+    const resultList = await Promise.all(promises);
+    console.log("resultList", JSON.stringify(resultList, null, 2));
+  } catch {
+    throw new Error("Error updating form template.");
   }
 };
 
 // - Create request comment.
-
-// Parameters:
-// - commentContent: string
-// - userId: string
-// - requestId: string
-
-// Related tables:
-// - request_request_user_comment_table
-// - request_request_user_comment_table columns: user_request_comment_user_id, user_request_comment_request_id, user_request_comment_comment_id.
-// - request_comment_table
-// - request_comment_table columns: comment_content, comment_is_edited.
-// - request_request_table
-
-// Steps:
-// 1. Insert comment_content to request_comment_table.
-// 2. Get comment_id from Step 1.
-// 3. Insert user_request_comment_request_id to request_request_user_comment_table using comment_id from Step 2. Get user_request_comment_user_id from function parameter. Get user_request_comment_request_id from function parameter.
 export const createRequestComment = async (
   supabaseClient: SupabaseClient<Database>,
   commentContent: string,
@@ -705,25 +708,10 @@ export const createRequestComment = async (
 };
 
 // - Update request comment.
-// Parameters:
-// - commentContent: string
-// - commentId: string
-
-// Related tables:
-// - request_comment_table
-// - request_comment_table columns: comment_content, comment_is_edited, comment_last_updated.
-
-// Related PostgreSQL database functions:
-// - get_current_date()
-
-// Steps:
-// 1. Get current date from database using get_current_date function.
-// 2. Do the following:
-// - Update comment_content, comment_is_edited, and comment_last_updated.
 export const updateRequestComment = async (
   supabaseClient: SupabaseClient<Database>,
   commentContent: string,
-  commentId: string
+  commentId: number
 ) => {
   const { data: currentDateData, error } = await supabaseClient
     .rpc("get_current_date")
@@ -756,7 +744,7 @@ export const updateRequestComment = async (
 // 1. Update comment_is_disabled to true.
 export const deleteRequestComment = async (
   supabaseClient: SupabaseClient<Database>,
-  commentId: string
+  commentId: number
 ) => {
   const { error } = await supabaseClient
     .from("request_comment_table")
@@ -788,7 +776,7 @@ export const deleteRequestComment = async (
 // }
 export const getRequestStatus = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: string
+  requestId: number
 ) => {
   const { data, error } = await supabaseClient
     .from("request_request_approver_view")
@@ -838,7 +826,7 @@ export const getRequestStatus = async (
 // 2. Update request_is_disabled to true.
 export const deletePendingRequest = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: string
+  requestId: number
 ) => {
   const request = await getRequestStatus(supabaseClient, requestId);
   if (request?.status === "pending") {
@@ -871,46 +859,48 @@ export const deletePendingRequest = async (
 // 3. Update request_approver_last_updated to current date using the get_current_date function.
 export const updateRequestStatus = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: string,
+  requestId: number,
   status: RequestStatus,
   userId: string
 ) => {
-  const { data, error } = await supabaseClient
-    .from("request_request_approver_view")
-    .select()
-    .eq("request_approver_request_id", requestId)
-    .eq("request_approver_user_id", userId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) throw new Error("User is not an approver of the request.");
-  const { data: currentDateData, error: currentDateError } =
-    await supabaseClient.rpc("get_current_date").select().single();
-  if (currentDateError) throw currentDateError;
-  if (currentDateData) {
-    const { error: updateRequestStatusError } = await supabaseClient
-      .from("request_request_approver_table")
-      .update({
-        request_approver_request_status_id: status,
-        request_approver_last_updated: currentDateData,
-      })
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_approver_view")
+      .select()
       .eq("request_approver_request_id", requestId)
-      .eq("request_approver_user_id", userId);
-    if (updateRequestStatusError) throw updateRequestStatusError;
+      .eq("request_approver_user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("User is not an approver of the request.");
+    const { data: currentDateData, error: currentDateError } =
+      await supabaseClient.rpc("get_current_date").select().single();
+    if (currentDateError) throw currentDateError;
+    if (currentDateData) {
+      const { error: updateRequestStatusError } = await supabaseClient
+        .from("request_request_approver_table")
+        .update({
+          request_approver_request_status_id: status,
+          request_approver_status_last_updated: currentDateData,
+        })
+        .eq("request_approver_request_id", requestId)
+        .eq("request_approver_user_id", userId);
+      if (updateRequestStatusError) throw updateRequestStatusError;
+    }
+
+    const { error: updateRequestMainStatusError } = await supabaseClient
+      .from("request_form_fact_table")
+      .update({
+        form_fact_request_status_id: status,
+      })
+      .eq("form_fact_request_id", requestId);
+    if (updateRequestMainStatusError) throw updateRequestMainStatusError;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
 };
 
 // - Update user profile
-// If a key is not provided, it will not be updated.
-
-// Parameters:
-// userProfileUpdateInput: UserProfileTableUpdate
-
-// Related tables:
-// - user_profile_table
-
-// Steps:
-// 1. Update user_profile_table using userProfileUpdateInput.
-
 export const updateUserProfile = async (
   supabaseClient: SupabaseClient<Database>,
   userProfileUpdateInput: UserProfileTableUpdate
@@ -923,16 +913,6 @@ export const updateUserProfile = async (
 };
 
 // - Update team information
-// If a key is not provided, it will not be updated.
-
-// Parameters:
-// teamUpdateInput: TeamTableUpdate
-
-// Related tables:
-// - team_table
-
-// Steps:
-// 1. Update team_table using teamUpdateInput.
 export const updateTeam = async (
   supabaseClient: SupabaseClient<Database>,
   teamUpdateInput: TeamTableUpdate
@@ -945,17 +925,6 @@ export const updateTeam = async (
 };
 
 // - Save request draft.
-
-// Parameters:
-// - requestId: string
-
-// Related tables:
-// - request_request_table
-// - request_request_table columns: request_is_draft.
-
-// Steps:
-// 1. Verify first if request is a draft using request_request_table.request_is_draft.
-// 2. Update request_is_draft to false.
 export const saveRequestDraft = async (
   supabaseClient: SupabaseClient<Database>,
   requestId: string
@@ -976,18 +945,6 @@ export const saveRequestDraft = async (
 };
 
 // - Build form template.
-
-// Parameters:
-// - reactDndFormTemplate: FormRequest
-// - userId: string
-// - teamId: string
-
-// Related database functions:
-// - build_form_template;
-
-// Steps:
-// 1. Call build_form_template function.
-
 export const buildFormTemplate = async (
   supabaseClient: SupabaseClient<Database>,
   reactDndFormTemplate: FormRequest,
@@ -1006,30 +963,26 @@ export const buildFormTemplate = async (
 };
 
 // - Create request.
-
-// Parameters:
-//  form_id: number;
-//  user_id: string;
-//  team_id: string;
-//  request: RequestTableUpdate;
-//  approver_list: ApproverList;
-//  response_list: FieldIdResponseKeyValue;
-
-// Related database functions:
-// - create_request;
-
-// Steps:
-// 1. Call create_request function.
-
+export type CreateRequestParams = {
+  formId: number;
+  userId: string;
+  teamId: string;
+  request: {
+    request_title: string;
+    request_description: string;
+    request_on_behalf_of: string;
+    request_is_draft: boolean;
+  };
+  responseList: FieldIdResponseKeyValue;
+  approverList: ApproverList;
+};
 export const createRequest = async (
   supabaseClient: SupabaseClient<Database>,
-  formId: number,
-  userId: string,
-  teamId: string,
-  request: Omit<RequestRequestTableUpdate, "request_id">,
-  approverList: ApproverList,
-  responseList: FieldIdResponseKeyValue
+  createRequestParams: CreateRequestParams
 ) => {
+  const { formId, userId, teamId, request, responseList, approverList } =
+    createRequestParams;
+
   const { data, error } = await supabaseClient
     .rpc("create_request", {
       form_id: formId,
@@ -1039,22 +992,14 @@ export const createRequest = async (
       approver_list: approverList,
       response_list: responseList,
     })
-    .select();
+    .select()
+    .single();
   if (error) throw error;
   return data;
 };
+export type CreateRequest = number;
 
 // - Update request draft.
-
-// Parameters:
-// - requestId: number
-// - responseList: ResponseList
-
-// Related database functions:
-// - update_request_draft
-
-// Steps:
-// 1. Call update_request_draft function.
 
 export const updateRequestDraft = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1072,17 +1017,6 @@ export const updateRequestDraft = async (
 };
 
 // - Get Team Member role of a user in a team.
-
-// Parameters:
-// - userId: string
-// - teamId: string
-
-// Related views:
-// - team_member_view
-
-// Steps:
-// 1. Get team_member_view using userId and teamId.
-
 export const getTeamMemberRole = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string,
@@ -1100,18 +1034,6 @@ export const getTeamMemberRole = async (
 };
 
 // Generate lookup table for request attachment url list.
-
-// Parameters:
-// - requestIdList: string[]
-
-// Related tables:
-// - request_request_table
-
-// Steps:
-// 1. Get request_request_table using requestIdList.
-// 2. Per request_request_table row, loop through request_attachment_filepath_list and call getFileUrl to get the url of the file.
-// 3. Generate lookup table for request attachment url list. e.g. { requestId: [url1, url2] }
-
 export const getRequestAttachmentUrlList = async (
   supabaseClient: SupabaseClient<Database>,
   requestIdList: number[]
@@ -1121,7 +1043,7 @@ export const getRequestAttachmentUrlList = async (
     .select("request_id, request_attachment_filepath_list")
     .in("request_id", requestIdList);
   if (error) throw error;
-  if (!data || data.length === 0) throw new Error("Request not found.");
+  // if (!data || data.length === 0) throw new Error("Request not found.");
 
   const requestAttachmentUrlList: { [requestId: string]: string[] } = {};
 
@@ -1159,18 +1081,6 @@ export type GetRequestAttachmentUrlList = Awaited<
 >;
 
 // Generate lookup table for team member avatar url list.
-
-// Parameters:
-// - teamIdList: string[]
-
-// Related views:
-// - team_member_view
-
-// Steps:
-// 1. Get team_member_view using teamIdList.
-// 2. Per team_member_view row, call getFileUrl to get the url of the file.
-// 3. Generate lookup table for team member avatar url list. e.g.  { userId: url }
-
 export const getTeamMemberAvatarUrlList = async (
   supabaseClient: SupabaseClient<Database>,
   teamIdList: string[]
@@ -1181,6 +1091,7 @@ export const getTeamMemberAvatarUrlList = async (
     .in("team_id", teamIdList);
   if (error) throw error;
   if (!data || data.length === 0) throw new Error("Team member not found.");
+
   const teamMemberAvatarUrlList: { [userId: string]: string | null } = {};
 
   // Same as above but use Promise.all to speed up the process.
@@ -1214,18 +1125,6 @@ export type GetTeamMemberAvatarUrlList = Awaited<
 >;
 
 // Generate lookup table for team logo url list.
-
-// Parameters:
-// - userId: string
-
-// Related views:
-// - team_member_view
-
-// Steps:
-// 1. Get teams where user is a member.
-// 2. Per team, call getFileUrl to get the url of the team logo.
-// 3. Generate lookup table for team logo url list. e.g.  { teamId: url }
-
 export const getTeamLogoUrlList = async (
   supabaseClient: SupabaseClient<Database>,
   teamIdList: string[]
@@ -1263,14 +1162,6 @@ export const getTeamLogoUrlList = async (
 export type GetTeamLogoUrlList = Awaited<ReturnType<typeof getTeamLogoUrlList>>;
 
 // Get request approver list with is_approveer and is_purchaser key appended.
-// Steps:
-// 1. Fetch rows from request_request_approver_view.
-// 1. Per request, check which team the request belongs to.
-// 1. Per request, check what role the user has in the team from the team_member_view.
-// 1. Append is_approver and is_purchaser key to the request approver.
-// If the user has team role of owner or admin, then set is_approver to true.
-// If the user has team role of purchaser, then set is_purchaser to true.
-// . Return the request approver list.
 export const getRequestApproverList = async (
   supabaseClient: SupabaseClient<Database>,
   requestIdList: number[]
@@ -1337,6 +1228,7 @@ export const getRequestApproverList = async (
           "Approver of the request is not a part of the team the request belongs to."
         );
       }
+
       const { member_role_id } = teamMemberViewRow;
       const isApprover =
         member_role_id === "owner" || member_role_id === "admin";
@@ -1357,21 +1249,6 @@ export type GetRequestApproverList = Awaited<
 >;
 
 // Create team.
-
-// Parameters:
-// - userId: string
-// - teamInsertInput: TeamTableInsert
-// - teamMemberInsertInput: TeamMemberTableInsert
-
-// Related tables:
-// - team_table
-// - team_member_table
-// - team_role_table
-
-// Steps:
-// 1. Insert into team_table.
-// 2. Insert into team_member_table as team owner.
-
 export const createTeam = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string,
@@ -1484,8 +1361,6 @@ export const isUserMemberOfTeam = async (
   userId: string,
   teamId: string
 ) => {
-  console.log("isUserMemberOfTeam", userId, teamId);
-
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
@@ -1500,8 +1375,6 @@ export const isUserMemberOfTeam = async (
 };
 
 // - Get a user profile.
-// Related tables:
-// - user_profile_table
 export const getUserProfile = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string
@@ -1528,8 +1401,9 @@ export const getRequestCommentList = async (
     .from("request_request_user_comment_view")
     .select()
     .in("request_id", requestId)
-    .not("request_is_draft", "is", true)
-    .not("request_is_disabled", "is", true);
+    .is("comment_is_disabled", false)
+    .is("request_is_draft", false)
+    .is("request_is_disabled", false);
 
   if (error) throw error;
   if (!data) return null;
@@ -1539,3 +1413,77 @@ export const getRequestCommentList = async (
 export type GetRequestCommentList = Awaited<
   ReturnType<typeof getRequestCommentList>
 >;
+
+// Get request main status list.
+// Get a request's main status using GetRequestApproverList
+// export const getRequestMainStatusList = async (
+//   supabaseClient: SupabaseClient<Database>,
+//   approverList: GetRequestApproverList
+// ) => {
+//   const requestList = distinctByKey(approverList, "request_id");
+
+//   // Get server date using get_current_date.
+//   const today = await getCurrentDate(supabaseClient);
+
+//   const requestMainStatusList = requestList.reduce(
+//     (requestMainStatusList, request) => {
+//       const requestId = request.request_id;
+
+//       const requestApproverList = approverList.filter(
+//         (requestApprover) => requestApprover.request_id === requestId
+//       );
+//       const isRejected = requestApproverList.some(
+//         (requestApprover) =>
+//           requestApprover.request_approver_request_status_id === "rejected"
+//       );
+//       const isApproved = requestApproverList.some(
+//         (requestApprover) =>
+//           requestApprover.request_approver_request_status_id === "approved"
+//       );
+//       const isPurchased = requestApproverList.some(
+//         (requestApprover) =>
+//           requestApprover.request_approver_request_status_id === "purchased"
+//       );
+//       const isPending = !isRejected && !isApproved && !isPurchased;
+//       // const isStale = isPending && isPast5WorkingDays(requestApproverList);
+//       // Use date-fns addBusinessDays to add 5 working days to the request date created.
+//       // If the current date is past the date created + 5 working days, then the request is stale.
+//       const staleDate = addBusinessDays(
+//         new Date(request.request_date_created as string),
+//         5
+//       );
+
+//       const isStale = isPending && isAfter(today, staleDate);
+
+//       let requestMainStatus: RequestStatus = "pending";
+
+//       if (isRejected) requestMainStatus = "rejected";
+//       if (isApproved) requestMainStatus = "approved";
+//       if (isPurchased) requestMainStatus = "purchased";
+//       if (isStale) requestMainStatus = "stale";
+
+//       if (requestId) {
+//         requestMainStatusList[requestId] = requestMainStatus;
+//       }
+//       return requestMainStatusList;
+//     },
+//     {} as { [requestId: string]: RequestStatus }
+//   );
+//   return requestMainStatusList;
+// };
+// export type GetRequestMainStatusList = Awaited<
+//   ReturnType<typeof getRequestMainStatusList>
+// >;
+
+export const getCurrentDate = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_current_date")
+    .select()
+    .single();
+  if (error) throw error;
+  if (!data) throw error;
+  return new Date(data);
+};
+export type GetCurrentDate = Awaited<ReturnType<typeof getCurrentDate>>;

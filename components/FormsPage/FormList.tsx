@@ -1,13 +1,13 @@
 // todo:fix tables on mobile
 // todo: create unit test
 import Table from "@/components/Table/Table";
-import { FetchTeamRequestFormList } from "@/utils/queries";
+import { GetTeamFormTemplateList } from "@/utils/queries-new";
 import { Checkbox, Text } from "@mantine/core";
 import FormsRow from "./FormCard";
 
 type Props = {
   colorScheme: "light" | "dark";
-  formList: FetchTeamRequestFormList["teamRequestFormList"];
+  formList: NonNullable<GetTeamFormTemplateList>;
 };
 
 const FormList = ({ formList }: Props) => {

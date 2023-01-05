@@ -1,10 +1,6 @@
 import { Database } from "@/utils/database.types";
-import {
-  createTeamInvitation,
-  CreateUserTeam,
-  createUserTeam,
-  uploadTeamLogo,
-} from "@/utils/queries";
+import { CreateUserTeam, uploadTeamLogo } from "@/utils/queries";
+import { createTeam } from "@/utils/queries-new";
 import {
   Container,
   Flex,
@@ -77,22 +73,26 @@ const CreateTeam = () => {
     setIsCreating(true);
 
     try {
-      const team = await createUserTeam(supabase, `${user?.id}`, teamName);
+      // const team = await createUserTeam(supabase, `${user?.id}`, teamName);
+      const teamId = await createTeam(supabase, user?.id as string, {
+        team_name: teamName,
+      });
 
-      if (teamLogo) {
-        await handleUpload(team);
-      }
+      // if (teamLogo) {
+      //   await handleUpload(team);
+      // }
 
-      if (action === "invite" && members.length > 0) {
-        await createTeamInvitation(
-          supabase,
-          team.team_id,
-          `${user?.id}`,
-          members
-        );
-      }
-      router.push(`/t/${team.team_id}/dashboard`);
-    } catch {
+      // if (action === "invite" && members.length > 0) {
+      //   await createTeamInvitation(
+      //     supabase,
+      //     team.team_id,
+      //     `${user?.id}`,
+      //     members
+      //   );
+      // }
+      router.push(`/t/${teamId}/dashboard`);
+    } catch (e) {
+      console.error(e);
       setIsCreating(false);
       showNotification({
         title: "Error!",

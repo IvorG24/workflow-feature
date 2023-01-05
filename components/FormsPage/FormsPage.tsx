@@ -1,4 +1,4 @@
-import { FetchTeamRequestFormList } from "@/utils/queries";
+import { GetTeamFormTemplateList } from "@/utils/queries-new";
 import {
   ActionIcon,
   Button,
@@ -15,11 +15,11 @@ import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { AddCircle, Search } from "../Icon";
-import styles from "./FormsPage.module.scss";
 import FormList from "./FormList";
+import styles from "./FormsPage.module.scss";
 
 type Props = {
-  teamRequestFormList: FetchTeamRequestFormList;
+  teamRequestFormList: NonNullable<GetTeamFormTemplateList>;
 };
 
 const FORMS_PER_PAGE = 8;
@@ -81,15 +81,12 @@ const FormsPage = ({ teamRequestFormList }: Props) => {
         </Button>
       </Group>
 
-      <FormList
-        formList={teamRequestFormList.teamRequestFormList}
-        colorScheme={colorScheme}
-      />
+      <FormList formList={teamRequestFormList} colorScheme={colorScheme} />
       <Flex justify="flex-end" mt="xl">
         <Pagination
           page={activePage}
           onChange={setActivePage}
-          total={ceil((teamRequestFormList.count as number) / FORMS_PER_PAGE)}
+          total={ceil((teamRequestFormList.length as number) / FORMS_PER_PAGE)}
         />
       </Flex>
     </Container>

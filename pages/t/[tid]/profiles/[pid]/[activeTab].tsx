@@ -3,15 +3,14 @@ import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import Profile from "@/components/ProfilePage/ProfilePage";
 import MemberProfileContext from "@/contexts/MemberProfileContext";
-import { fetchUserProfile } from "@/utils/queries";
-import { UserProfileTableRow } from "@/utils/types";
+import { getUserProfile, GetUserProfile } from "@/utils/queries-new";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext } from "next";
 import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 type Props = {
-  profile_data: UserProfileTableRow;
+  profile_data: GetUserProfile;
 };
 
 const ProfilePage: NextPageWithLayout<Props> = (props) => {
@@ -27,17 +26,12 @@ const ProfilePage: NextPageWithLayout<Props> = (props) => {
 };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabaseClient = createServerSupabaseClient(ctx);
 
-  const profile_data = await fetchUserProfile(
-    supabase,
+  const profile_data = await getUserProfile(
+    supabaseClient,
     ctx.params?.pid as string
   );
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  console.log(session);
 
   return {
     props: {

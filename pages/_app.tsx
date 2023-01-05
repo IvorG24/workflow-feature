@@ -1,4 +1,19 @@
+import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
+import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
+import CurrentUserTeamListContext from "@/contexts/CurrentUserTeamListContext";
 import getMantineTheme from "@/utils/getMantineTheme";
+import { distinctByKey } from "@/utils/object";
+import {
+  createOrRetrieveUserProfile,
+  CreateOrRetrieveUserProfile,
+  createOrRetrieveUserTeamList,
+  CreateOrRetrieveUserTeamList,
+  getTeam,
+  GetTeam,
+  GetTeamFormTemplateList,
+  getTeamFormTemplateList,
+} from "@/utils/queries-new";
 import {
   ColorScheme,
   ColorSchemeProvider,
@@ -10,9 +25,9 @@ import { NotificationsProvider } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import type { AppProps } from "next/app";
+import { useRouter } from "next/router";
 import { NextPage } from "next/types";
-import { ReactElement, ReactNode, useState } from "react";
-import { MemberListProvider, UserProfileProvider } from "../contexts";
+import { ReactElement, ReactNode, useEffect, useState } from "react";
 import "../styles/globals.css";
 
 // #todo: implement better typing but I think it's okay because it's from the docs
@@ -41,6 +56,49 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
 
   const getLayout = Component.getLayout ?? ((page) => page);
 
+  const router = useRouter();
+  const [userProfile, setUserProfile] = useState<CreateOrRetrieveUserProfile>();
+  const [teamList, setTeamList] = useState<CreateOrRetrieveUserTeamList>();
+  const [activeTeam, setActiveTeam] = useState<GetTeam>();
+  const [formTemplateList, setFormTemplateList] =
+    useState<GetTeamFormTemplateList>();
+
+  useEffect(() => {
+    (async () => {
+      if (!router.isReady) return;
+
+      console.log("_app triggered", new Date());
+
+      const user = (await supabaseClient.auth.getUser()).data.user;
+      if (!user) return;
+
+      const promises = [
+        createOrRetrieveUserProfile(supabaseClient, user),
+        createOrRetrieveUserTeamList(supabaseClient, user.id),
+      ];
+
+      const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
+        await Promise.all(promises);
+
+      setUserProfile(createdOrRetrievedUser as CreateOrRetrieveUserProfile);
+      setTeamList(
+        createdOrRetrievedUserTeamList as CreateOrRetrieveUserTeamList
+      );
+      if (router.query.tid) {
+        const promises = [
+          getTeam(supabaseClient, router.query.tid as string),
+          getTeamFormTemplateList(supabaseClient, router.query.tid as string),
+        ];
+        const [team, formTemplateList] = await Promise.all(promises);
+        setActiveTeam(team as GetTeam);
+        const formList = formTemplateList as GetTeamFormTemplateList;
+        const distinct =
+          formList && distinctByKey(formList, "form_fact_form_id");
+        setFormTemplateList(distinct as GetTeamFormTemplateList);
+      }
+    })();
+  }, [router]);
+
   return (
     <ColorSchemeProvider
       colorScheme={colorScheme}
@@ -58,11 +116,17 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             initialSession={pageProps.initialSession}
           >
             <NotificationsProvider position="top-center">
-              <UserProfileProvider>
-                <MemberListProvider>
-                  {getLayout(<Component {...pageProps} />)}
-                </MemberListProvider>
-              </UserProfileProvider>
+              <CurrentUserProfileContext.Provider value={userProfile}>
+                <CurrentUserTeamListContext.Provider value={teamList}>
+                  <ActiveTeamContext.Provider value={activeTeam}>
+                    <ActiveTeamFormListContext.Provider
+                      value={formTemplateList}
+                    >
+                      {getLayout(<Component {...pageProps} />)}
+                    </ActiveTeamFormListContext.Provider>
+                  </ActiveTeamContext.Provider>
+                </CurrentUserTeamListContext.Provider>
+              </CurrentUserProfileContext.Provider>
             </NotificationsProvider>
           </SessionContextProvider>
         </ModalsProvider>

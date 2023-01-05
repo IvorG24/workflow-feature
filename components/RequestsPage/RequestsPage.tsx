@@ -3,7 +3,7 @@ import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 import RequestList from "./RequestList";
 
-const RequestsPage = () => {
+const RequestListPage = () => {
   const router = useRouter();
 
   return (
@@ -33,4 +33,4 @@ const RequestsPage = () => {
   );
 };
 
-export default RequestsPage;
+export default RequestListPage;

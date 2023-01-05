@@ -1,11 +1,11 @@
 // todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
-import { useUserProfileContext } from "@/contexts/UserProfileContext";
-import {
-  CreateOrRetrieveUserTeamList,
-  retrieveTeamOwnerAndAdmins,
-} from "@/utils/queries";
-import { Database, FormTableRow } from "@/utils/types";
+import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
+import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
+import CurrentUserTeamListContext from "@/contexts/CurrentUserTeamListContext";
+import { getTeamApproverList } from "@/utils/queries-new";
+import { Database } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -25,75 +25,42 @@ import { useHover } from "@mantine/hooks";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import {
   AddCircle,
   ArrowBack,
+  Dashboard,
   Description,
   EditDocument,
   Group as GroupIcon,
   Logout,
   Notifications,
-  Settings,
 } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./Navbar.module.scss";
 
 type Props = {
-  teamList: CreateOrRetrieveUserTeamList;
   openNavbar: boolean;
 };
 
-const Navbar = ({ teamList, openNavbar }: Props) => {
+const Navbar = ({ openNavbar }: Props) => {
+  const teamList = useContext(CurrentUserTeamListContext) || [];
+  const team = useContext(ActiveTeamContext);
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const user = useUser();
-  const [activeTeam, setActiveTeam] = useState(`${router.query.tid}`);
   const { colorScheme } = useMantineColorScheme();
-  const [forms, setForms] = useState<FormTableRow[]>([]);
   const [activeNest, setActiveNest] = useState<string | null>(null);
   const [isOpenRequest, setIsOpenRequest] = useState(false);
 
-  // const [isOpenReview, setIsOpenReview] = useState(false);
   const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
-  // const { hovered: addReviewHovered, ref: addReviewRef } = useHover();
-
-  const requestForms = forms.filter((form) => form.form_type === "request");
-  // const reviewForms = forms.filter((form) => form.form_type === "review");
-
-  const {
-    state: { userProfile },
-  } = useUserProfileContext();
-
-  useEffect(() => {
-    // TODO: Convert into a hook
-    const fetchForms = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("form_table")
-          .select("*")
-          .eq("team_id", router.query.tid);
-        if (error) throw error;
-
-        setForms(data);
-        setActiveTeam(`${router.query.tid}`);
-      } catch {
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch Forms",
-          color: "red",
-        });
-      }
-    };
-    if (router.query.tid !== undefined) {
-      fetchForms();
-    }
-  }, [supabase, router.query.tid]);
+  const userProfile = useContext(CurrentUserProfileContext);
+  const formList = useContext(ActiveTeamFormListContext);
 
   const teamOptions = teamList.map((team) => ({
-    value: team.team_id,
-    label: `${team.team_table.team_name}`,
-    image: team.team_table.team_logo,
+    value: team.team_id as string,
+    label: team.team_name as string,
+    image: team.team_logo_filepath,
   }));
 
   teamOptions.unshift({
@@ -108,14 +75,15 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
 
   const handlePushToCreateRequest = async (formId: number) => {
     try {
-      const ownerAndAdminList = await retrieveTeamOwnerAndAdmins(
+      const teamApproverList = await getTeamApproverList(
         supabase,
-        `${router.query.tid}`,
-        `${user?.id}`
+        `${router.query.tid}`
       );
 
-      if (ownerAndAdminList.length > 0) {
-        router.push(`/t/${activeTeam}/requests/create?formId=${formId}`);
+      if (teamApproverList && teamApproverList.length > 0) {
+        router.push(
+          `/t/${router.query.tid as string}/requests/create?formId=${formId}`
+        );
       } else {
         showNotification({
           title: "Warning!",
@@ -144,18 +112,17 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
     >
       <Select
         label="Team"
-        value={router.query.tid === undefined ? "create" : activeTeam}
+        value={(router.query.tid as string) || "create"}
         data={teamOptions}
         itemComponent={SelectItem}
         onChange={(val) => {
-          setActiveTeam(`${val}`);
           if (val === "create") {
             router.push(`/teams/create`);
           } else {
             router.push(`/t/${val}/dashboard`);
           }
         }}
-        icon={<Avatar src={activeTeam} radius="xl" size="sm" />}
+        icon={<Avatar src={router.query.tid as string} radius="xl" size="sm" />}
         size="md"
         styles={{
           label: {
@@ -176,26 +143,30 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
               className={styles.notificationsButtonWrapper}
               p={0}
             >
-              {/* <NavLink
-                  component="a"
-                  href={`/t/${activeTeam}/dashboard`}
-                  label="Dashboard"
-                  mt="xs"
-                  icon={
-                    <IconWrapper className={iconStyle}>
-                      <Dashboard />
-                    </IconWrapper>
-                  }
-                /> */}
+              <NavLink
+                component="a"
+                onClick={() =>
+                  router.push(`/t/${router.query.tid as string}/dashboard`)
+                }
+                label="Dashboard"
+                mt="xs"
+                icon={
+                  <IconWrapper className={iconStyle}>
+                    <Dashboard />
+                  </IconWrapper>
+                }
+              />
 
               <NavLink
                 component="a"
-                href={`/t/${activeTeam}/notifications`}
                 label="Notifications"
                 icon={
                   <IconWrapper className={iconStyle}>
                     <Notifications />
                   </IconWrapper>
+                }
+                onClick={() =>
+                  router.push(`/t/${router.query.tid as string}/notifications`)
                 }
               />
               {/* // TODO: Commenting this for now. */}
@@ -206,34 +177,45 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
               1
             </Badge> */}
 
-              <NavLink
+              {/* <NavLink
                 component="a"
-                href={`/t/${activeTeam}/settings/general`}
+                // href={`/t/${router.query.tid as string}/settings/general`}
                 label="Settings"
                 icon={
                   <IconWrapper className={iconStyle}>
                     <Settings />
                   </IconWrapper>
                 }
-              />
+                onClick={() => router.push(`/t/${router.query.tid as string}/settings/general`)}
+              /> */}
               <NavLink
                 component="a"
-                href={`/t/${activeTeam}/settings/members`}
                 label="Members"
                 icon={
                   <IconWrapper className={iconStyle}>
                     <GroupIcon />
                   </IconWrapper>
                 }
+                onClick={() =>
+                  router.push(
+                    `/t/${router.query.tid as string}/settings/members`
+                  )
+                }
               />
               <NavLink
                 component="a"
-                href={`/t/${activeTeam}/requests?active_tab=all&page=1`}
                 label="All Requests"
                 icon={
                   <IconWrapper className={iconStyle}>
                     <EditDocument />
                   </IconWrapper>
+                }
+                onClick={() =>
+                  router.push(
+                    `/t/${
+                      router.query.tid as string
+                    }/requests?active_tab=all&page=1`
+                  )
                 }
               />
             </Container>
@@ -249,7 +231,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                 opened={isOpenRequest}
                 onClick={(e) => {
                   e.preventDefault();
-                  router.push(`/t/${activeTeam}/forms`);
+                  router.push(`/t/${router.query.tid as string}/forms`);
                 }}
                 icon={
                   <Flex align="center" gap={4}>
@@ -285,7 +267,9 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                       component="a"
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/t/${activeTeam}/forms/build`);
+                        router.push(
+                          `/t/${router.query.tid as string}/forms/build`
+                        );
                       }}
                       className={`${styles.createRequestButton} ${
                         colorScheme === "dark"
@@ -299,33 +283,41 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                 }
                 childrenOffset={15}
               >
-                {requestForms.map((form) => (
-                  <NavLink
-                    px="xs"
-                    key={form.form_id}
-                    component="a"
-                    href={`/t/${activeTeam}/requests?formId=${form.form_id}`}
-                    label={form.form_name}
-                    rightSection={
-                      <ActionIcon
-                        variant="subtle"
-                        component="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handlePushToCreateRequest(form.form_id);
-                        }}
-                        aria-label="create a request"
-                        className={`${styles.createRequestButton} ${
-                          colorScheme === "dark"
-                            ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                            : ""
-                        }`}
-                      >
-                        <AddCircle />
-                      </ActionIcon>
-                    }
-                  />
-                ))}
+                {formList &&
+                  formList.map((form) => (
+                    <NavLink
+                      px="xs"
+                      key={form.form_id}
+                      component="a"
+                      // href={`/t/${router.query.tid as string}/requests?active_tab=all&page=1&form=${form.form_id}`}
+                      onClick={() =>
+                        router.push(
+                          `/t/${
+                            router.query.tid as string
+                          }/requests?active_tab=all&page=1&form=${form.form_id}`
+                        )
+                      }
+                      label={form.form_name}
+                      rightSection={
+                        <ActionIcon
+                          variant="subtle"
+                          component="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePushToCreateRequest(form.form_id as number);
+                          }}
+                          aria-label="create a request"
+                          className={`${styles.createRequestButton} ${
+                            colorScheme === "dark"
+                              ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                              : ""
+                          }`}
+                        >
+                          <AddCircle />
+                        </ActionIcon>
+                      }
+                    />
+                  ))}
               </NavLink>
 
               {/* <NavLink
@@ -366,7 +358,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                         component="a"
                         onClick={(e) => {
                           e.preventDefault();
-                          router.push(`/t/${activeTeam}/review/build`);
+                          router.push(`/t/${router.query.tid as string}/review/build`);
                         }}
                         className={`${styles.createRequestButton} ${
                           colorScheme === "dark"
@@ -384,7 +376,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                       key={form.form_id}
                       px="xs"
                       component="a"
-                      href={`/t/${activeTeam}/forms/${form.form_id}`}
+                      href={`/t/${router.query.tid as string}/forms/${form.form_id}`}
                       label={form.form_name}
                       rightSection={
                         <ActionIcon
@@ -393,7 +385,7 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
                           onClick={(e) => {
                             e.preventDefault();
                             router.push(
-                              `/t/${activeTeam}/review/create/${form.form_id}`
+                              `/t/${router.query.tid as string}/review/create/${form.form_id}`
                             );
                           }}
                           aria-label="create a review"
@@ -414,12 +406,15 @@ const Navbar = ({ teamList, openNavbar }: Props) => {
           <MantineNavbar.Section mt="auto">
             <NavLink
               component="a"
-              href={`/t/${router.query.tid}/profiles/${user?.id}/bio`}
-              label={userProfile?.full_name}
+              // href={`/t/${router.query.tid}/profiles/${user?.id}/bio`}
+              onClick={() =>
+                router.push(`/t/${router.query.tid}/profiles/${user?.id}/bio`)
+              }
+              label={userProfile?.user_first_name}
               description="View Profile"
               icon={
                 <IconWrapper className={iconStyle}>
-                  <Avatar radius="xl" src={userProfile?.avatar_url} />
+                  <Avatar radius="xl" src={userProfile?.user_avatar_filepath} />
                 </IconWrapper>
               }
             />

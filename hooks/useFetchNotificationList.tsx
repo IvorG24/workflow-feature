@@ -1,37 +1,33 @@
-import {
-  fetchUserNotificationList,
-  FetchUserNotificationList,
-} from "@/utils/queries";
-import { FormTypeEnum } from "@/utils/types";
+import { GetNotificationList, getNotificationList } from "@/utils/queries-new";
+import { NotificationType } from "@/utils/types-new";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import showNotification from "./showNotifications";
-import useAuth from "./useAuth";
 
-const useFetchNotificationList = (teamId?: string, formType?: FormTypeEnum) => {
-  const { user } = useAuth();
+const useFetchNotificationList = (
+  userId: string,
+  teamId?: string
+) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  const [userNotificationList, setUserNotificationList] =
-    useState<FetchUserNotificationList>([]);
+  const [notificationList, setNotificationList] = useState<GetNotificationList>(
+    []
+  );
 
   useEffect(() => {
     (async () => {
       try {
         if (!router.isReady) return;
-        if (!user) return;
 
-        const userNotificationList = await fetchUserNotificationList(
+        const notificationList = await getNotificationList(
           supabaseClient,
-          user.id,
-          teamId,
-          formType
+          userId,
+          teamId
         );
-        setUserNotificationList(userNotificationList);
-        console.log(userNotificationList);
-      } catch (e) {
-        console.error(e);
+
+        setNotificationList(notificationList);
+      } catch {
         showNotification({
           message: "Failed to fetch notifications.",
           state: "Danger",
@@ -39,9 +35,9 @@ const useFetchNotificationList = (teamId?: string, formType?: FormTypeEnum) => {
         });
       }
     })();
-  }, [supabaseClient, user, router]);
+  }, [supabaseClient, router]);
 
-  return { userNotificationList };
+  return { notificationList };
 };
 
 export default useFetchNotificationList;

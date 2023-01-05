@@ -219,7 +219,12 @@ export type TeamMemberRole =
   | "approver"
   | "member"
   | "purchaser";
-export type RequestStatus = "pending" | "approved" | "rejected" | "purchased";
+export type RequestStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "purchased"
+  | "stale";
 
 // Build Form Template
 export type QuestionRow = { question: string; expected_response_type: string };

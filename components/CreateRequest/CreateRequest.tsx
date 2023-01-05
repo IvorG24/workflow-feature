@@ -1,21 +1,13 @@
+import CreateRequestContext from "@/contexts/CreateRequestContext";
+import { uploadFile } from "@/utils/file";
 import {
-  fetchUserProfile,
-  retreivedRequestDraftByRequestId,
-  retrieveApproverListByTeam,
-  retrieveFormFieldList,
-  retrievePurchaserListByTeam,
-  retrieveRequestDraftByForm,
-  retrieveRequestForm,
-  retrieveRequestResponse,
-  saveRequest,
-  saveRequestField,
-  updateRequest,
-  updateRequestReponse,
-  uploadFile,
-} from "@/utils/queries";
+  createRequest,
+  CreateRequestParams,
+  GetFormTemplate,
+} from "@/utils/queries-new";
 import { renderTooltip } from "@/utils/request";
-import type { Database, Marks, UserProfileRow } from "@/utils/types";
-import { FieldRow, FormRow } from "@/utils/types";
+import type { Database, Marks } from "@/utils/types";
+import { FormRow } from "@/utils/types";
 import {
   Box,
   Button,
@@ -40,10 +32,8 @@ import { DatePicker, DateRangePicker, TimeInput } from "@mantine/dates";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconUpload } from "@tabler/icons";
-import axios from "axios";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { useBeforeunload } from "react-beforeunload";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./CreateRequest.module.scss";
 
@@ -81,71 +71,66 @@ const CreateRequest = () => {
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const user = useUser();
+  const createRequestContext = useContext(CreateRequestContext);
+  const { formTemplate, purchaserList, approverList, currentUserProfile } =
+    createRequestContext || {};
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    getValues,
-    setValue,
     reset,
   } = useForm<RequestFieldsType>({
     defaultValues: {
       title: "",
       behalf: "",
       description: "",
-      requestor: "",
+      requestor: currentUserProfile?.username || "",
       date: `${new Date().toLocaleDateString()}`,
     },
   });
 
-  const [selectedApprover, setSelectedApprover] = useState<string | null>(null);
+  const [selectedApprover, setSelectedApprover] = useState<string | null>(
+    approverList && approverList[0]?.value ? approverList[0].value : null
+  );
   const [selectedPurchaser, setSelectedPurchaser] = useState<string | null>(
     null
   );
-  const [approvers, setApprovers] = useState<
-    { label: string; value: string }[]
-  >([]);
-  const [purchasers, setPurchasers] = useState<
-    { label: string; value: string }[]
-  >([]);
+
   const [isCreating, setIsCreating] = useState(false);
   const [form, setForm] = useState<FormRow | null>(null);
-  const [fields, setFields] = useState<
-    (FieldRow & { response: string; responseId: number | null })[]
-  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [draftId, setDraftId] = useState<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [newFields, setNewFields] = useState<GetFormTemplate | null>(
+    formTemplate
+  );
 
-  useBeforeunload(() => {
-    if (Boolean(draftId)) {
-      axios.post("/api/update", {
-        answers: fields,
-        requestId: draftId,
-        formData: getValues(),
-        approver: selectedApprover,
-        purchaser: selectedPurchaser,
-      });
-    } else {
-      axios.post("/api/insert", {
-        formData: getValues(),
-        formId: router.query.formId,
-        userId: user?.id,
-        approver: selectedApprover,
-        purchaser: selectedPurchaser,
-        answers: fields,
-      });
-    }
-  });
+  // useBeforeunload(() => {
+  //   if (Boolean(draftId)) {
+  //     axios.post("/api/update", {
+  //       answers: fields,
+  //       requestId: draftId,
+  //       formData: getValues(),
+  //       approver: selectedApprover,
+  //       purchaser: selectedPurchaser,
+  //     });
+  //   } else {
+  //     axios.post("/api/insert", {
+  //       formData: getValues(),
+  //       formId: router.query.formId,
+  //       userId: user?.id,
+  //       approver: selectedApprover,
+  //       purchaser: selectedPurchaser,
+  //       answers: fields,
+  //     });
+  //   }
+  // });
 
   const resetState = () => {
     setIsLoading(true);
     reset();
-    setApprovers([]);
-    setPurchasers([]);
     setForm(null);
-    setFields([]);
     setDraftId(null);
   };
 
@@ -153,153 +138,48 @@ const CreateRequest = () => {
     if (!router.isReady) return;
     resetState();
 
-    const fetchApprovers = async () => {
-      try {
-        const retreivedApprovers = await retrieveApproverListByTeam(
-          supabase,
-          `${user?.id}`,
-          `${router.query.tid}`
-        );
+    // const fetchDraft = async (request_id: number) => {
+    //   setDraftId(request_id);
+    //   try {
+    //     const retrievedRequestDraft = await retreivedRequestDraftByRequestId(
+    //       supabase,
+    //       request_id
+    //     );
+    //     if (!retrievedRequestDraft) return;
 
-        const retreivedPurchasers = await retrievePurchaserListByTeam(
-          supabase,
-          `${user?.id}`,
-          `${router.query.tid}`
-        );
+    //     setValue("title", `${retrievedRequestDraft.request_title}`);
+    //     setValue("description", `${retrievedRequestDraft.request_description}`);
+    //     setValue("behalf", `${retrievedRequestDraft.on_behalf_of}`);
 
-        const approvers = retreivedApprovers.map((user) => {
-          const approver = user.approver as UserProfileRow;
-          return {
-            label: `${approver.full_name}`,
-            value: `${approver.user_id}`,
-          };
-        });
+    //     const retrievedRequestResponse = await retrieveRequestResponse(
+    //       supabase,
+    //       retrievedRequestDraft.request_id,
+    //       Number(router.query.formId)
+    //     );
 
-        const purchasers = retreivedPurchasers.map((user) => {
-          const purchaser = user.purchaser as UserProfileRow;
-          return {
-            label: `${purchaser.full_name}`,
-            value: `${purchaser.user_id}`,
-          };
-        });
+    //     const fieldsWithResponse = retrievedRequestResponse.map(
+    //       (field, index) => {
+    //         return {
+    //           ...field.field,
+    //           response: `${field.response_value}`,
+    //           responseId: index,
+    //         };
+    //       }
+    //     );
 
-        setApprovers(approvers);
-        setPurchasers(purchasers);
-        setSelectedApprover(approvers[0].value);
-      } catch {
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch Approvers",
-          color: "red",
-        });
-      }
-    };
+    //     // setFields(fieldsWithResponse);
+    //     // setForm(retrievedRequestDraft.form);
+    //     // setSelectedApprover(retrievedRequestDraft.approver_id);
+    //   } catch {
+    //     showNotification({
+    //       title: "Error!",
+    //       message: "Failed to fetch Request Draft",
+    //       color: "red",
+    //     });
+    //   }
+    // };
 
-    const fetchRequest = async () => {
-      try {
-        const retreivedRequestDraft = await retrieveRequestDraftByForm(
-          supabase,
-          `${router.query.formId}`,
-          `${user?.id}`
-        );
-        retreivedRequestDraft
-          ? fetchDraft(retreivedRequestDraft.request_id)
-          : handleFetchForm();
-      } catch {
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch Request",
-          color: "red",
-        });
-      }
-    };
-
-    const handleFetchForm = async () => {
-      try {
-        const retrievedForm = await retrieveRequestForm(
-          supabase,
-          `${router.query.formId}`
-        );
-        const retreivedFormFieldList = await retrieveFormFieldList(
-          supabase,
-          `${router.query.formId}`
-        );
-
-        setFields(
-          retreivedFormFieldList.map((field, index) => {
-            return { ...field, response: "", responseId: index };
-          })
-        );
-        setForm(retrievedForm);
-      } catch {
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch Form",
-          color: "red",
-        });
-      }
-    };
-
-    const fetchDraft = async (request_id: number) => {
-      setDraftId(request_id);
-      try {
-        const retrievedRequestDraft = await retreivedRequestDraftByRequestId(
-          supabase,
-          request_id
-        );
-        if (!retrievedRequestDraft) return;
-
-        setValue("title", `${retrievedRequestDraft.request_title}`);
-        setValue("description", `${retrievedRequestDraft.request_description}`);
-        setValue("behalf", `${retrievedRequestDraft.on_behalf_of}`);
-
-        const retrievedRequestResponse = await retrieveRequestResponse(
-          supabase,
-          retrievedRequestDraft.request_id,
-          Number(router.query.formId)
-        );
-
-        const fieldsWithResponse = retrievedRequestResponse.map(
-          (field, index) => {
-            return {
-              ...field.field,
-              response: `${field.response_value}`,
-              responseId: index,
-            };
-          }
-        );
-
-        setFields(fieldsWithResponse);
-        setForm(retrievedRequestDraft.form);
-        setSelectedApprover(retrievedRequestDraft.approver_id);
-      } catch {
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch Request Draft",
-          color: "red",
-        });
-      }
-    };
-
-    const fetchCurrentUser = async () => {
-      try {
-        const fetchedUserProfile = await fetchUserProfile(
-          supabase,
-          `${user?.id}`
-        );
-        setValue("requestor", `${fetchedUserProfile.full_name}`);
-      } catch {
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch Current User",
-          color: "red",
-        });
-      }
-    };
-
-    fetchCurrentUser();
-    fetchApprovers();
-    fetchRequest();
+    // fetchRequest();
     setIsLoading(false);
   }, [supabase, router, user]);
 
@@ -310,27 +190,27 @@ const CreateRequest = () => {
   const handleUpdate = async (formData: RequestFieldsType) => {
     setIsCreating(true);
     try {
-      const requestResponseList = fields.map((field) => {
-        return {
-          field_id: Number(field.field_id),
-          response_value: field.response,
-          request_id: Number(draftId),
-        };
-      });
+      // const requestResponseList = fields.map((field) => {
+      //   return {
+      //     field_id: Number(field.field_id),
+      //     response_value: field.response,
+      //     request_id: Number(draftId),
+      //   };
+      // });
 
-      await updateRequestReponse(
-        supabase,
-        requestResponseList,
-        Number(draftId)
-      );
+      // await updateRequestReponse(
+      //   supabase,
+      //   requestResponseList,
+      //   Number(draftId)
+      // );
 
-      await updateRequest(
-        supabase,
-        `${selectedApprover}`,
-        selectedPurchaser,
-        formData,
-        Number(draftId)
-      );
+      // await updateRequest(
+      //   supabase,
+      //   `${selectedApprover}`,
+      //   selectedPurchaser,
+      //   formData,
+      //   Number(draftId)
+      // );
 
       showNotification({
         title: "Success!",
@@ -351,6 +231,14 @@ const CreateRequest = () => {
 
   const handleSave = async (formData: RequestFieldsType) => {
     try {
+      if (!selectedApprover) {
+        showNotification({
+          title: "Error!",
+          message: "Please select an approver",
+          color: "red",
+        });
+        return;
+      }
       setIsCreating(true);
 
       let filepath;
@@ -360,34 +248,71 @@ const CreateRequest = () => {
           supabase,
           file.name,
           file,
-          "request_attachments"
+          "request-attachments"
         );
         filepath = path;
       }
 
-      const savedRequest = await saveRequest(
-        supabase,
-        `${selectedApprover}`,
-        selectedPurchaser,
-        formData,
-        `${user?.id}`,
-        Number(router.query.formId),
-        filepath
-      );
+      // const savedRequest = await saveRequest(
+      //   supabase,
+      //   `${selectedApprover}`,
+      //   selectedPurchaser,
+      //   formData,
+      //   `${user?.id}`,
+      //   Number(router.query.formId),
+      //   filepath
+      // );
 
-      const requestResponse = fields.map((field) => {
-        return {
-          field_id: Number(field.field_id),
-          request_id: savedRequest.request_id,
-          response_value: field.response,
-        };
-      });
+      // const requestResponse = fields.map((field) => {
+      //   return {
+      //     field_id: Number(field.field_id),
+      //     request_id: savedRequest.request_id,
+      //     response_value: field.response,
+      //   };
+      // });
 
-      await saveRequestField(supabase, requestResponse);
+      // await saveRequestField(supabase, requestResponse);
+
+      const approverList: CreateRequestParams["approverList"] = [];
+      if (selectedApprover) {
+        approverList.push({
+          user_id: selectedApprover,
+          request_status_id: "pending",
+        });
+      }
+      if (selectedPurchaser) {
+        approverList.push({
+          user_id: selectedPurchaser,
+          request_status_id: "pending",
+        });
+      }
+
+      const responseList: CreateRequestParams["responseList"] = {};
+
+      newFields &&
+        newFields.forEach((field) => {
+          responseList[`${field.field_id}`] = field.response_value || "";
+        });
+
+      const createRequestParams: CreateRequestParams = {
+        formId: Number(router.query.formId),
+        userId: user?.id as string,
+        teamId: router.query.tid as string,
+        request: {
+          request_title: formData.title,
+          request_description: formData.description,
+          request_on_behalf_of: formData.behalf,
+          request_is_draft: false,
+        },
+        approverList,
+        responseList,
+      };
+
+      const requestId = await createRequest(supabase, createRequestParams);
 
       showNotification({
         title: "Success!",
-        message: "Request Created",
+        message: `Request Created: ${requestId}`,
         color: "green",
       });
 
@@ -401,22 +326,26 @@ const CreateRequest = () => {
         color: "red",
       });
       setIsCreating(false);
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleAnswer = (questionId: number, value: string) => {
-    setFields((prev) => {
-      return prev.map((answer) => {
-        if (questionId === answer.responseId) {
-          return {
-            ...answer,
-            responseId: questionId,
-            response: value,
-          };
-        } else {
-          return answer;
-        }
-      });
+  const handleAnswer = (fieldId: number, value: string) => {
+    // Update the input field.
+    setNewFields((prev) => {
+      return (
+        prev &&
+        prev.map((field) => {
+          if (Number(field.field_id) === fieldId) {
+            return {
+              ...field,
+              response_value: value,
+            };
+          }
+          return field;
+        })
+      );
     });
   };
 
@@ -454,7 +383,7 @@ const CreateRequest = () => {
               </Flex>
               <Select
                 label="Approver"
-                data={approvers}
+                data={approverList || []}
                 className={styles.flex2}
                 miw={220}
                 withAsterisk
@@ -483,7 +412,7 @@ const CreateRequest = () => {
               </Flex>
               <Select
                 label="Purchaser"
-                data={purchasers}
+                data={purchaserList || []}
                 className={styles.flex2}
                 miw={220}
                 value={selectedPurchaser}
@@ -510,163 +439,175 @@ const CreateRequest = () => {
               icon={<IconUpload size={14} />}
             />
 
-            {fields?.map((field) => {
-              if (field.field_type === "section") {
-                return (
-                  <Divider
-                    key={field.field_id}
-                    label={field.field_name}
-                    labelPosition="center"
-                  />
-                );
-              } else if (
-                field.field_type === "text" ||
-                field.field_type === "email"
-              ) {
-                return renderTooltip(
-                  <TextInput
-                    key={field.field_id}
-                    label={field.field_name}
-                    withAsterisk={Boolean(field.is_required)}
-                    onChange={(e) =>
-                      handleAnswer(Number(field.responseId), e.target.value)
-                    }
-                    value={field.response}
-                  />,
-                  `${field.field_tooltip}`
-                );
-              } else if (field.field_type === "number") {
-                return renderTooltip(
-                  <NumberInput
-                    key={field.field_id}
-                    label={field.field_name}
-                    withAsterisk={Boolean(field.is_required)}
-                    onChange={(e) =>
-                      handleAnswer(Number(field.responseId), `${e}`)
-                    }
-                    value={Number(field.response)}
-                  />,
-                  `${field.field_tooltip}`
-                );
-              } else if (field.field_type === "date") {
-                return renderTooltip(
-                  <DatePicker
-                    key={field.field_id}
-                    label={field.field_name}
-                    withAsterisk={Boolean(field.is_required)}
-                    placeholder={"Choose date"}
-                    onChange={(e) =>
-                      handleAnswer(Number(field.responseId), `${e}`)
-                    }
-                    defaultValue={
-                      field.response ? new Date(field.response) : null
-                    }
-                  />,
-                  `${field.field_tooltip}`
-                );
-              } else if (field.field_type === "daterange") {
-                const dates = field.response.split(",");
-                return renderTooltip(
-                  <DateRangePicker
-                    key={field.field_id}
-                    label={field.field_name}
-                    withAsterisk={Boolean(field.is_required)}
-                    placeholder={"Choose a date range"}
-                    onChange={(e) =>
-                      handleAnswer(Number(field.responseId), `${e}`)
-                    }
-                    defaultValue={
-                      dates[0]
-                        ? [new Date(dates[0]), new Date(dates[1])]
-                        : [null, null]
-                    }
-                  />,
-                  `${field.field_tooltip}`
-                );
-              } else if (field.field_type === "time") {
-                return renderTooltip(
-                  <TimeInput
-                    key={field.field_id}
-                    label={field.field_name}
-                    withAsterisk={Boolean(field.is_required)}
-                    placeholder={"Choose time"}
-                    format="12"
-                    onChange={(e) =>
-                      handleAnswer(Number(field.responseId), `${e}`)
-                    }
-                    defaultValue={
-                      field.response ? new Date(field.response) : null
-                    }
-                  />,
-                  `${field.field_tooltip}`
-                );
-              } else if (field.field_type === "slider") {
-                return (
-                  <Box my="md" key={field.field_id}>
-                    {renderTooltip(
-                      <Text component="label" color="dark">
-                        {field.field_name}
-                      </Text>,
-                      `${field.field_tooltip}`
-                    )}
-                    <Slider
+            {/* // TODO: Loop per form fact view because form fat view are basically field list. */}
+            {newFields &&
+              newFields.map((field) => {
+                if (field.request_field_type === "section") {
+                  return (
+                    <Divider
+                      key={field.field_id}
                       label={field.field_name}
-                      placeholder={"Slide to choose value"}
-                      marks={MARKS}
-                      min={1}
-                      max={5}
-                      labelAlwaysOn={false}
-                      onChange={(e) =>
-                        handleAnswer(Number(field.responseId), `${e}`)
-                      }
-                      value={Number(field.response)}
+                      labelPosition="center"
                     />
-                  </Box>
-                );
-              } else if (
-                field.field_type === "multiple" &&
-                field.field_option !== null
-              ) {
-                return renderTooltip(
-                  <MultiSelect
-                    key={field.field_id}
-                    data={field.field_option.map((option) => {
-                      return { value: `${option}`, label: `${option}` };
-                    })}
-                    label={field.field_name}
-                    withAsterisk={Boolean(field.is_required)}
-                    placeholder={"Choose multiple"}
-                    onChange={(e) =>
-                      handleAnswer(Number(field.responseId), `${e}`)
-                    }
-                    value={field.response.split(",")}
-                  />,
-                  `${field.field_tooltip}`
-                );
-              } else if (
-                field.field_type === "select" &&
-                field.field_option !== null
-              ) {
-                return renderTooltip(
-                  <Select
-                    key={field.field_id}
-                    data={field.field_option.map((option) => {
-                      return { value: `${option}`, label: `${option}` };
-                    })}
-                    searchable
-                    clearable
-                    label={field.field_name}
-                    withAsterisk={Boolean(field.is_required)}
-                    placeholder={"Choose one"}
-                    onChange={(e) =>
-                      handleAnswer(Number(field.responseId), `${e}`)
-                    }
-                    value={field.response}
-                  />,
-                  `${field.field_tooltip}`
-                );
-              }
-            })}
+                  );
+                } else if (
+                  field.request_field_type === "text" ||
+                  field.request_field_type === "email"
+                ) {
+                  return renderTooltip(
+                    <TextInput
+                      key={field.field_id}
+                      label={field.field_name}
+                      withAsterisk={Boolean(field.field_is_required)}
+                      onChange={(e) =>
+                        handleAnswer(Number(field.field_id), e.target.value)
+                      }
+                      value={field.response_value || ""}
+                    />,
+                    `${field.field_tooltip}`
+                  );
+                } else if (field.request_field_type === "number") {
+                  return renderTooltip(
+                    <NumberInput
+                      key={field.field_id}
+                      label={field.field_name}
+                      withAsterisk={Boolean(field.field_is_required)}
+                      onChange={(e) =>
+                        handleAnswer(Number(field.field_id), `${e}`)
+                      }
+                      value={Number(field.response_value)}
+                    />,
+                    `${field.field_tooltip}`
+                  );
+                } else if (field.request_field_type === "date") {
+                  return renderTooltip(
+                    <DatePicker
+                      key={field.field_id}
+                      label={field.field_name}
+                      withAsterisk={Boolean(field.field_is_required)}
+                      placeholder={"Choose date"}
+                      onChange={(e) =>
+                        handleAnswer(Number(field.field_id), `${e}`)
+                      }
+                      defaultValue={
+                        field.response_value
+                          ? new Date(field.response_value)
+                          : null
+                      }
+                    />,
+                    `${field.field_tooltip}`
+                  );
+                } else if (field.request_field_type === "daterange") {
+                  const dates = field.response_value
+                    ? field.response_value.split(",")
+                    : ["", ""];
+                  return renderTooltip(
+                    <DateRangePicker
+                      key={field.field_id}
+                      label={field.field_name}
+                      withAsterisk={Boolean(field.field_is_required)}
+                      placeholder={"Choose a date range"}
+                      onChange={(e) =>
+                        handleAnswer(Number(field.field_id), `${e}`)
+                      }
+                      defaultValue={
+                        dates[0]
+                          ? [new Date(dates[0]), new Date(dates[1])]
+                          : [null, null]
+                      }
+                    />,
+                    `${field.field_tooltip}`
+                  );
+                } else if (field.request_field_type === "time") {
+                  return renderTooltip(
+                    <TimeInput
+                      key={field.field_id}
+                      label={field.field_name}
+                      withAsterisk={Boolean(field.field_is_required)}
+                      placeholder={"Choose time"}
+                      format="12"
+                      onChange={(e) =>
+                        handleAnswer(Number(field.field_id), `${e}`)
+                      }
+                      defaultValue={
+                        field.response_value
+                          ? new Date(field.response_value)
+                          : null
+                      }
+                    />,
+                    `${field.field_tooltip}`
+                  );
+                } else if (field.request_field_type === "slider") {
+                  return (
+                    <Box my="md" key={field.field_id}>
+                      {renderTooltip(
+                        <Text component="label" color="dark">
+                          {field.field_name}
+                        </Text>,
+                        `${field.field_tooltip}`
+                      )}
+                      <Slider
+                        label={field.field_name}
+                        placeholder={"Slide to choose value"}
+                        marks={MARKS}
+                        min={1}
+                        max={5}
+                        labelAlwaysOn={false}
+                        onChange={(e) =>
+                          handleAnswer(Number(field.field_id), `${e}`)
+                        }
+                        value={Number(field.response_value)}
+                      />
+                    </Box>
+                  );
+                } else if (
+                  field.request_field_type === "multiple" &&
+                  field.field_options !== null
+                ) {
+                  return renderTooltip(
+                    <MultiSelect
+                      key={field.field_id}
+                      data={field.field_options.map((option) => {
+                        return { value: `${option}`, label: `${option}` };
+                      })}
+                      label={field.field_name}
+                      withAsterisk={Boolean(field.field_is_required)}
+                      placeholder={"Choose multiple"}
+                      onChange={(e) =>
+                        handleAnswer(Number(field.field_id), `${e}`)
+                      }
+                      value={
+                        field.response_value
+                          ? field.response_value.split(",")
+                          : []
+                      }
+                    />,
+                    `${field.field_tooltip}`
+                  );
+                } else if (
+                  field.request_field_type === "select" &&
+                  field.field_options !== null
+                ) {
+                  return renderTooltip(
+                    <Select
+                      key={field.field_id}
+                      data={field.field_options.map((option) => {
+                        return { value: `${option}`, label: `${option}` };
+                      })}
+                      searchable
+                      clearable
+                      label={field.field_name}
+                      withAsterisk={Boolean(field.field_is_required)}
+                      placeholder={"Choose one"}
+                      onChange={(e) =>
+                        handleAnswer(Number(field.field_id), `${e}`)
+                      }
+                      value={field.response_value}
+                    />,
+                    `${field.field_tooltip}`
+                  );
+                }
+              })}
 
             <Group position="right">
               <Button mt="xl" size="md" px={50} type="submit">
