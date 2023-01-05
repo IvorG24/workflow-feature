@@ -105,6 +105,11 @@ const RequestList = () => {
     [router, activePage]
   );
 
+  const handlePagination = (activePage: number) => {
+    setActivePage(activePage);
+    router.replace({ query: { ...router.query, page: activePage } });
+  };
+
   useEffect(() => {
     try {
       // * Loop through request list and getFileUrl for each attachment.
@@ -191,7 +196,7 @@ const RequestList = () => {
         <Pagination
           sx={{ alignSelf: "flex-end" }}
           page={activePage}
-          onChange={setActivePage}
+          onChange={handlePagination}
           total={ceil(requestCount / REQUEST_PER_PAGE)}
         />
       ) : null}
