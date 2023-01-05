@@ -181,6 +181,7 @@ const RequestList = () => {
           data={statusOptions}
           value={status}
           onChange={handleFilterByStatus}
+          data-cy="request-select-status"
         />
       </Group>
       <RequestTable

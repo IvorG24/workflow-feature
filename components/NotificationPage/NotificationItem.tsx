@@ -29,10 +29,13 @@ const NotificationItem = ({ data }: Props) => {
         if (data.redirection_url) await router.push(data.redirection_url);
       }}
       className={classes.container}
+      data-cy="notification-item"
     >
       <Group position="apart">
         <Box w="80%">
-          <Text size="sm">{data.notification_message}</Text>
+          <Text size="sm" data-cy="notification-message">
+            {data.notification_message}
+          </Text>
           <Text size="xs" color="dimmed">
             {month} {date.getDate()}
           </Text>

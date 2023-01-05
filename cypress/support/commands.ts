@@ -1,5 +1,36 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* eslint-disable @typescript-eslint/no-namespace */
 /// <reference types="cypress" />
+
 export {};
+
+type User = {
+  email: string;
+  password: string;
+};
+
+Cypress.Commands.add("loginViaUi", (user: User) => {
+  cy.visit("http://localhost:3000/sign-in");
+  cy.get("[data-cy='signin-input-email']").type(user.email);
+  cy.get("[data-cy='signin-input-password']").type(user.password);
+  cy.get("[data-cy='signin-submit']").click();
+  cy.wait(2000);
+});
+
+Cypress.Commands.add("selectTeam", (team: string) => {
+  cy.get("[data-cy='navbar-select-teams']").click();
+  cy.contains(team).click();
+  cy.wait(1000);
+});
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      loginViaUi(user: User): Chainable<void>;
+      selectTeam(team: string): Chainable<void>;
+    }
+  }
+}
 // ***********************************************
 // This example commands.ts shows you how to
 // create various custom commands and overwrite

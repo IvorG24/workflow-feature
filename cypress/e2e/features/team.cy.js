@@ -1,28 +1,28 @@
-import { userEmail, userPassword } from "../../support/e2e";
+import { user } from "../../support/e2e";
+
+const invitedUser = {
+  email: "sejidi1552@irebah.com",
+  password: "test123123",
+};
+
+const teamName = "TEST 002 TEAM";
 
 describe("Team", () => {
-  beforeEach(() => {
-    cy.visit("http://localhost:3000/sign-in");
-    // User should be an owner/admin of a team
-    cy.get("[data-cy='signin-input-email']").type(userEmail);
-    cy.get("[data-cy='signin-input-password']").type(userPassword);
-    cy.get("[data-cy='signin-submit']").click();
-    cy.wait(2000);
-  });
   it("Create a Team, and update a Member Role", () => {
+    cy.loginViaUi(user);
     cy.get("[data-cy='navbar-select-teams']").as("selectTeam").click();
     cy.contains("Create Team").click();
     cy.url().should("include", "/teams/create");
     cy.get("input").should("have.prop", "required");
     // Step 1 - Add Team Name
-    cy.get("[data-cy='team-name']").type("XYZ TEAM");
+    cy.get("[data-cy='team-name']").type(teamName);
     cy.get("[data-cy='team-submit']").click();
     // Step 2 - Invite Members
-    cy.get("[data-cy='team-select-members']").type("johndoe@gmail.com");
+    cy.get("[data-cy='team-select-members']").type(invitedUser.email);
     cy.contains("+ Invite").click();
     cy.get("[data-cy='team-submit']").click();
     cy.get("@selectTeam").click();
-    cy.contains("XYZ TEAM");
+    cy.contains(teamName);
     cy.wait(500);
 
     // Update a member role. The selected team should have atleast Member role
@@ -49,5 +49,16 @@ describe("Team", () => {
     cy.get("@lastSelectRole").click();
     cy.get("@mantineSelectItem").contains("Member").click();
     cy.get("@lastSelectRole").should("have.value", "Member");
+  });
+  it("Accept an Invite", () => {
+    cy.loginViaUi(invitedUser);
+    cy.get("[data-cy='navbar-notifications']").click();
+    cy.get("[data-cy='notification-message']")
+      .contains("invited")
+      .first()
+      .click();
+    cy.url().should("include", "/team-invitations");
+    cy.get("[data-cy='invitation-button']").click();
+    cy.contains(teamName);
   });
 });

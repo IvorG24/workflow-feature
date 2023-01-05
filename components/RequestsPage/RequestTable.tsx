@@ -43,7 +43,7 @@ const RequestTable = ({
       >
         <td>{request.request_id}</td>
         <td>{request.request_title}</td>
-        <td>
+        <td data-cy="request-status">
           <Badge color={setBadgeColor(`${request.request_status}`)}>
             {startCase(`${request.request_status}`)}
           </Badge>
