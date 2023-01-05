@@ -218,7 +218,7 @@ const CreateRequest = () => {
         color: "green",
       });
       router.push(
-        `/t/${router.query.tid}/requests?formId=${router.query.formId}`
+        `/t/${router.query.tid}/requests?active_tab=all&page=1&form=${router.query.formId}`
       );
     } catch {
       showNotification({
@@ -319,7 +319,7 @@ const CreateRequest = () => {
       });
 
       router.push(
-        `/t/${router.query.tid}/requests?formId=${router.query.formId}`
+        `/t/${router.query.tid}/requests?active_tab=all&page=1&form=${router.query.formId}`
       );
     } catch {
       showNotification({
@@ -404,6 +404,7 @@ const CreateRequest = () => {
                     required: "Title is Required",
                   })}
                   error={errors.title?.message}
+                  data-cy="request-title"
                 />
                 <TextInput
                   label="On Behalf Of"
@@ -431,6 +432,7 @@ const CreateRequest = () => {
                 required: "Request Description is Required",
               })}
               error={errors.description?.message}
+              data-cy="request-description"
             />
             <FileInput
               value={file}
@@ -612,7 +614,13 @@ const CreateRequest = () => {
               })}
 
             <Group position="right">
-              <Button mt="xl" size="md" px={50} type="submit">
+              <Button
+                mt="xl"
+                size="md"
+                px={50}
+                type="submit"
+                data-cy="request-submit"
+              >
                 CREATE
               </Button>
             </Group>

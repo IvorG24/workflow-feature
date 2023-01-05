@@ -27,6 +27,7 @@ const AcceptInvitation = ({
           maw={300}
           size="lg"
           onClick={handleAcceptInvitation}
+          data-cy="invitation-button"
         >
           Accept Invite
         </Button>

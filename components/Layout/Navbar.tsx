@@ -127,6 +127,7 @@ const Navbar = ({ openNavbar }: Props) => {
             fontSize: "14px",
           },
         }}
+        data-cy="navbar-select-teams"
       />
 
       {router.query.tid !== undefined ? (
@@ -248,6 +249,7 @@ const Navbar = ({ openNavbar }: Props) => {
                           setIsOpenRequest((v) => !v);
                         }
                       }}
+                      data-cy="navbar-forms-dropdown"
                     >
                       <ArrowBack />
                     </IconWrapper>
@@ -274,6 +276,7 @@ const Navbar = ({ openNavbar }: Props) => {
                           ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                           : ""
                       }`}
+                      data-cy="navbar-createForm"
                     >
                       <AddCircle />
                     </ActionIcon>
@@ -415,6 +418,7 @@ const Navbar = ({ openNavbar }: Props) => {
                   <Avatar radius="xl" src={userProfile?.user_avatar_filepath} />
                 </IconWrapper>
               }
+              data-cy="navbar-profiles"
             />
             <Button
               variant="light"
@@ -429,6 +433,7 @@ const Navbar = ({ openNavbar }: Props) => {
                 await supabase.auth.signOut();
                 await router.push("/sign-in");
               }}
+              data-cy="navbar-logout"
             >
               Logout
             </Button>

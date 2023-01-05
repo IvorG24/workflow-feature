@@ -504,6 +504,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-approve"
             >
               Approve
             </Button>
@@ -519,6 +520,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-reject"
             >
               Reject
             </Button>
@@ -542,6 +544,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-delete"
             >
               Delete
             </Button>
@@ -732,9 +735,14 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
             variant="unstyled"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
+            data-cy="request-input-comment"
           />
           <Group position="right" mt="xs">
-            <Button w={100} onClick={handleAddComment}>
+            <Button
+              w={100}
+              onClick={handleAddComment}
+              data-cy="request-submit-comment"
+            >
               Send
             </Button>
           </Group>

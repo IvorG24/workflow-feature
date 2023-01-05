@@ -192,6 +192,7 @@ const FormBuilder: FC<Props> = (props) => {
           color="red"
           onClose={() => setNotification("")}
           mb="md"
+          data-cy="form-error-notification"
         >
           {notification}
         </Notification>
@@ -219,6 +220,7 @@ const FormBuilder: FC<Props> = (props) => {
               })}
               error={errors.form_name?.message}
               disabled={isInEditMode}
+              data-cy="form-name"
             />
           </Paper>
           <DragDropContext onDragEnd={handleOnDragEnd}>
@@ -253,6 +255,7 @@ const FormBuilder: FC<Props> = (props) => {
                 variant="outline"
                 disabled={isSubmitting ? true : false}
                 onClick={handleAppendSection}
+                data-cy="add-section"
               >
                 <AddCircle />
                 &nbsp;Add Section
@@ -263,6 +266,7 @@ const FormBuilder: FC<Props> = (props) => {
                 variant="outline"
                 disabled={isSubmitting ? true : false}
                 onClick={handleAppendQuestion}
+                data-cy="add-question"
               >
                 <AddCircle />
                 &nbsp;Add Question
@@ -275,6 +279,7 @@ const FormBuilder: FC<Props> = (props) => {
             role="button"
             type="submit"
             loading={isSubmitting}
+            data-cy="form-submit"
           >
             {`${isInEditMode ? "Update" : "Save"}`}
           </Button>

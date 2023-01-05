@@ -122,6 +122,7 @@ const MemberList = ({
                     ? true
                     : false
                 }
+                data-cy="memberList-select-role"
               />
             </Grid.Col>
             <Grid.Col order={2} orderXs={3} span={1} offsetXs={1}>

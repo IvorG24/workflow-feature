@@ -5,6 +5,7 @@ import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestsPage/RequestsPage";
 import RequestListContext from "@/contexts/RequestListContext";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
 
 import { RequestProps } from "@/contexts/RequestListContext";
 import { distinctByKey } from "@/utils/object";
@@ -19,6 +20,8 @@ import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 const RequestsPage: NextPageWithLayout<RequestProps> = (props) => {
+  const router = useRouter();
+
   // todo: fix meta tags
   return (
     <RequestListContext.Provider value={props}>

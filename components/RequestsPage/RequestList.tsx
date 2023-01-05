@@ -14,7 +14,6 @@ import { ceil } from "lodash";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useState } from "react";
 import SvgSearch from "../Icon/Search";
-import styles from "./RequestsPage.module.scss";
 import RequestTable from "./RequestTable";
 
 const statusOptions: {
@@ -106,6 +105,11 @@ const RequestList = () => {
     router.replace({ query: { ...router.query, page: activePage } });
   };
 
+  const handlePagination = (activePage: number) => {
+    setActivePage(activePage);
+    router.replace({ query: { ...router.query, page: activePage } });
+  };
+
   // reset filters when team_id changes
   // useEffect(() => {
   //   setSearch("");
@@ -140,13 +144,14 @@ const RequestList = () => {
           data={statusOptions}
           value={status}
           onChange={handleFilterByStatus}
+          data-cy="request-select-status"
         />
       </Group>
       <RequestTable />
 
       {ceil((requestListCount as number) / REQUEST_PER_PAGE) >= 1 ? (
         <Pagination
-          className={styles.pagination}
+          sx={{ alignSelf: "flex-end" }}
           page={activePage}
           onChange={handlePagination}
           total={ceil((requestListCount as number) / REQUEST_PER_PAGE)}

@@ -31,6 +31,7 @@ const NotificationItem = ({ data }: Props) => {
           await router.push(data.notification_redirect_url);
       }}
       className={classes.container}
+      data-cy="notification-item"
     >
       <Group position="apart">
         <Box w="80%">

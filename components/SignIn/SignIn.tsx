@@ -105,6 +105,7 @@ const SignIn = () => {
                   },
                 })}
                 error={errors.email?.message}
+                data-cy="signin-input-email"
               />
               <TextInput
                 label="Password"
@@ -117,6 +118,7 @@ const SignIn = () => {
                   },
                 })}
                 error={errors.password?.message}
+                data-cy="signin-input-password"
               />
             </>
             <Button
@@ -124,6 +126,7 @@ const SignIn = () => {
               type="submit"
               color="green"
               aria-label="sign in with email and password"
+              data-cy="signin-submit"
             >
               Sign In
             </Button>
@@ -174,7 +177,7 @@ const SignIn = () => {
 
         <Flex gap={5} justify="center" align="center" mt="lg">
           <Text>Do not have an account yet?</Text>
-          <Link href="/register">
+          <Link href="/register" data-cy="signin-link-register">
             <Text color="green">Register</Text>
           </Link>
         </Flex>
