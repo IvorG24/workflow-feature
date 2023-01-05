@@ -1,5 +1,4 @@
 import { Database } from "@/utils/database.types";
-import { CreateUserTeam, uploadTeamLogo } from "@/utils/queries";
 import { createTeam } from "@/utils/queries-new";
 import {
   Container,
@@ -11,7 +10,6 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import Compressor from "compressorjs";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
 import Step1 from "./Step1";
@@ -49,25 +47,25 @@ const CreateTeam = () => {
     }, 1000);
   };
 
-  const handleUpload = (team: CreateUserTeam) => {
-    return new Promise((resolve, reject) => {
-      new Compressor(teamLogo as File, {
-        quality: 0.6,
-        async success(result) {
-          resolve(await uploadTeamLogo(supabase, team.team_id, result));
-        },
-        error() {
-          reject(
-            showNotification({
-              title: "Error!",
-              message: "Failed to upload team icon",
-              color: "red",
-            })
-          );
-        },
-      });
-    });
-  };
+  // const handleUpload = (team: CreateUserTeam) => {
+  //   return new Promise((resolve, reject) => {
+  //     new Compressor(teamLogo as File, {
+  //       quality: 0.6,
+  //       async success(result) {
+  //         resolve(await uploadTeamLogo(supabase, team.team_id, result));
+  //       },
+  //       error() {
+  //         reject(
+  //           showNotification({
+  //             title: "Error!",
+  //             message: "Failed to upload team icon",
+  //             color: "red",
+  //           })
+  //         );
+  //       },
+  //     });
+  //   });
+  // };
 
   const handleCreateTeam = async (action: "skip" | "invite") => {
     setIsCreating(true);
@@ -77,6 +75,7 @@ const CreateTeam = () => {
       const teamId = await createTeam(supabase, user?.id as string, {
         team_name: teamName,
       });
+      console.log(action);
 
       // if (teamLogo) {
       //   await handleUpload(team);

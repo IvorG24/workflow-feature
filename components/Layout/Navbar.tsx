@@ -1,6 +1,5 @@
 // todo: add team logo property to databas
 import SelectItem from "@/components/SelectItem/SelectItem";
-import ActiveTeamContext from "@/contexts/ActiveTeamContext";
 import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import CurrentUserTeamListContext from "@/contexts/CurrentUserTeamListContext";
@@ -45,7 +44,6 @@ type Props = {
 
 const Navbar = ({ openNavbar }: Props) => {
   const teamList = useContext(CurrentUserTeamListContext) || [];
-  const team = useContext(ActiveTeamContext);
   const supabase = useSupabaseClient<Database>();
   const router = useRouter();
   const user = useUser();

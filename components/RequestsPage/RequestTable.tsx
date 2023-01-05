@@ -17,12 +17,8 @@ const RequestTable = () => {
   );
   const requestListContext = useContext(RequestListContext);
 
-  const {
-    requestIdList,
-    requestList,
-    requestListCount,
-    requestApproverList,
-  } = requestListContext || {};
+  const { requestIdList, requestList, requestApproverList } =
+    requestListContext || {};
 
   const handleSetSelectedRequest = async (requestId: number) => {
     if (!requestList) {

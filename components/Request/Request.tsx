@@ -462,7 +462,6 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         {!attachments && <Text>---</Text>}
         {attachments &&
           attachments.map((attachment, idx) => {
-            const attachmentUrl = attachment.url;
             // const mockFileSize = "234 KB";
             const mockFileSize = "";
             const mockFile = "file";

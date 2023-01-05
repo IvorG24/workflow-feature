@@ -80,23 +80,7 @@ const Member = () => {
         message: `Member role updated.`,
         color: "green",
       });
-      const updatedMemberList =
-        memberList &&
-        memberList.map((member) => {
-          if (member.user_id === memberId) {
-            return {
-              ...member,
-              team_member_member_role_id: newRole,
-              member_role_id: newRole,
-            };
-          } else return member;
-        });
-      // dispatchMemberList({
-      //   type: MemberListActionEnum.SET,
-      //   payload: {
-      //     memberList: updatedMemberList,
-      //   },
-      // });
+
       router.replace(router.asPath);
     } catch (error) {
       console.log(error);

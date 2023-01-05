@@ -1,6 +1,7 @@
 import { GetNotificationList } from "@/utils/queries-new";
 import { Box, Button, createStyles, Group, Stack, Text } from "@mantine/core";
 import { useRouter } from "next/router";
+import { NonUndefined } from "react-hook-form";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
 // * https://mantine.dev/styles/create-styles/#:~:text=js%20library.%20We-,recommend,-using%20createStyles%20to
@@ -11,7 +12,7 @@ const useStyles = createStyles(() => ({
 }));
 
 type Props = {
-  data: GetNotificationList[0];
+  data: NonUndefined<GetNotificationList>[0];
 };
 
 const NotificationItem = ({ data }: Props) => {

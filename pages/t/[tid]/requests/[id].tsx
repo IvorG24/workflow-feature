@@ -42,10 +42,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
   const { id: requestId } = ctx.query;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const request = await getRequest(supabase, Number(requestId));
 
   const requestList = request;

@@ -1,5 +1,4 @@
 import CreateRequestContext from "@/contexts/CreateRequestContext";
-import { uploadFile } from "@/utils/file";
 import {
   createRequest,
   CreateRequestParams,
@@ -189,6 +188,7 @@ const CreateRequest = () => {
 
   const handleUpdate = async (formData: RequestFieldsType) => {
     setIsCreating(true);
+    console.log(formData);
     try {
       // const requestResponseList = fields.map((field) => {
       //   return {
@@ -226,6 +226,8 @@ const CreateRequest = () => {
         message: "Failed to Save Request",
         color: "red",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -241,17 +243,17 @@ const CreateRequest = () => {
       }
       setIsCreating(true);
 
-      let filepath;
-      // * Upload file first if existing so if upload failed, request won't be created.
-      if (file) {
-        const { path } = await uploadFile(
-          supabase,
-          file.name,
-          file,
-          "request-attachments"
-        );
-        filepath = path;
-      }
+      // let filepath;
+      // // * Upload file first if existing so if upload failed, request won't be created.
+      // if (file) {
+      //   const { path } = await uploadFile(
+      //     supabase,
+      //     file.name,
+      //     file,
+      //     "request-attachments"
+      //   );
+      //   filepath = path;
+      // }
 
       // const savedRequest = await saveRequest(
       //   supabase,

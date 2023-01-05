@@ -33,8 +33,7 @@ const REQUEST_PER_PAGE = 8;
 const RequestList = () => {
   const router = useRouter();
   const requestListContext = useContext(RequestListContext);
-  const { requestIdList, requestList, requestListCount } =
-    requestListContext || {};
+  const { requestListCount } = requestListContext || {};
 
   const activeTeamFormList = useContext(ActiveTeamFormListContext);
   const formList = activeTeamFormList?.map((form) => ({
