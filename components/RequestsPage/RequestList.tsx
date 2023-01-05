@@ -105,11 +105,6 @@ const RequestList = () => {
     router.replace({ query: { ...router.query, page: activePage } });
   };
 
-  const handlePagination = (activePage: number) => {
-    setActivePage(activePage);
-    router.replace({ query: { ...router.query, page: activePage } });
-  };
-
   // reset filters when team_id changes
   // useEffect(() => {
   //   setSearch("");
