@@ -1,10 +1,11 @@
 import FormsPage from "@/components/FormsPage/FormsPage";
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
+import { distinctByKey } from "@/utils/object";
 import {
-  FetchTeamRequestFormList,
-  fetchTeamRequestFormList,
-} from "@/utils/queries";
+  getTeamFormTemplateList,
+  GetTeamFormTemplateList,
+} from "@/utils/queries-new";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 import { ReactElement } from "react";
@@ -19,14 +20,19 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
     if (!session) throw new Error("Not authorized");
 
-    const teamRequestFormList = await fetchTeamRequestFormList(
+    const teamRequestFormList = await getTeamFormTemplateList(
       supabase,
       ctx.params?.tid as string
     );
 
+    // Make teamRequestFormList distinct by form_fact_form_id.
+    const distinctFormList =
+      teamRequestFormList &&
+      distinctByKey(teamRequestFormList, "form_fact_form_id");
+
     return {
       props: {
-        formList: teamRequestFormList,
+        formList: distinctFormList,
       },
     };
   } catch (error) {
@@ -37,7 +43,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 
 type Props = {
-  formList: FetchTeamRequestFormList;
+  formList: NonNullable<GetTeamFormTemplateList>;
 };
 
 const Forms: NextPageWithLayout<Props> = ({ formList }) => {

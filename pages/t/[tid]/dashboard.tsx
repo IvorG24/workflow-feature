@@ -13,6 +13,10 @@ const Page: NextPageWithLayout = () => {
         url="localhost:3000/testpage"
       />
       <h1>Team Dashboard page</h1>
+      {/* <button onClick={() => handleFetch(router.query.tid as string, user?.id)}>
+        Fetch
+      </button>
+      <button onClick={() => createComment()}>Create Comment</button> */}
     </div>
   );
 };

@@ -1,10 +1,16 @@
-import { RequestType } from "@/utils/types";
+import {
+  GetRequestApproverList,
+  GetRequestCommentList,
+  GetTeamRequestList,
+} from "@/utils/queries-new";
 import { createContext } from "react";
 
 export type RequestProps = {
-  requestList: RequestType[];
-  requestCount: number;
-  forms: { value: string; label: string }[];
+  requestIdList: number[];
+  requestList: GetTeamRequestList;
+  requestListCount: number;
+  requestApproverList: GetRequestApproverList;
+  requestCommentList: GetRequestCommentList;
 };
 
 const RequestListContext = createContext<RequestProps | null>(null);

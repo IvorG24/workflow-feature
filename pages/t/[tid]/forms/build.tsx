@@ -1,8 +1,19 @@
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import RequestFormBuilderPage from "@/components/RequestFormBuilderPage/RequestFormBuilderPage";
+import { GetServerSideProps } from "next";
 import { ReactElement } from "react";
+import { resetServerContext } from "react-beautiful-dnd";
 import type { NextPageWithLayout } from "../../../_app";
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  resetServerContext();
+  return {
+    props: {
+      data: [],
+    },
+  };
+};
 
 const RequestFormBuilder: NextPageWithLayout = () => {
   return (

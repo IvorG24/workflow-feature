@@ -117,16 +117,22 @@ const Profile = () => {
           />
           <Flex align="flex-start" justify="space-between" wrap="wrap">
             <Group px={30} mt={-30}>
-              <Avatar size={200} radius={100} src={userProfile?.avatar_url} />
+              <Avatar
+                size={200}
+                radius={100}
+                src={userProfile?.user_avatar_filepath}
+              />
               <Stack spacing={0}>
-                <Title order={2}>{userProfile?.full_name}</Title>
+                <Title
+                  order={2}
+                >{`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}</Title>
                 {/* add position column to user profile */}
                 <Text></Text>
                 <Group align="center" mt="xs" spacing={4}>
                   <IconWrapper fontSize={20} color="dimmed">
                     <Mail />
                   </IconWrapper>
-                  <Text>{userProfile?.email}</Text>
+                  <Text>{userProfile?.user_email}</Text>
                   <Text color="dimmed">&nbsp;</Text>
                 </Group>
               </Stack>

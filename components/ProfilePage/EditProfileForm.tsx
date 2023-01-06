@@ -1,6 +1,6 @@
 // todo: create unit test
 import { Database } from "@/utils/database.types";
-import { FetchUserProfile, updateUserProfile } from "@/utils/queries";
+import { GetUserProfile, updateUserProfile } from "@/utils/queries-new";
 import {
   Avatar,
   Button,
@@ -14,7 +14,6 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import Compressor from "compressorjs";
 import { useRouter } from "next/router";
 import {
   Dispatch,
@@ -26,17 +25,17 @@ import {
 import { useForm } from "react-hook-form";
 
 type Props = {
-  user: FetchUserProfile;
+  user: NonNullable<GetUserProfile>;
   onCancel: MouseEventHandler<HTMLButtonElement>;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
 };
 
 type Data = {
-  name: string;
+  username: string;
 };
 
 const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
-  const supabase = useSupabaseClient<Database>();
+  const supabaseClient = useSupabaseClient<Database>();
   const router = useRouter();
 
   const {
@@ -48,32 +47,38 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
 
   const avatarInput = useRef<HTMLButtonElement>(null);
 
-  const handleUpload = (data: Data) => {
-    return new Promise((resolve, reject) => {
-      new Compressor(avatar as File, {
-        quality: 0.6,
-        async success(result) {
-          resolve(
-            await updateUserProfile(supabase, user.user_id, data.name, result)
-          );
-        },
-        error() {
-          reject(
-            showNotification({
-              title: "Error!",
-              message: "Failed to upload user profile avatar",
-              color: "red",
-            })
-          );
-        },
-      });
-    });
-  };
+  // const handleUpload = (data: Data) => {
+  //   return new Promise((resolve, reject) => {
+  //     new Compressor(avatar as File, {
+  //       quality: 0.6,
+  //       async success(result) {
+  //         resolve(
+  //           await updateUserProfile(supabaseClient, user.user_id, data.username, result)
+  //         );
+  //       },
+  //       error() {
+  //         reject(
+  //           showNotification({
+  //             title: "Error!",
+  //             message: "Failed to upload user profile avatar",
+  //             color: "red",
+  //           })
+  //         );
+  //       },
+  //     });
+  //   });
+  // };
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       setIsLoading(true);
-      await handleUpload(data);
+      // await handleUpload(data);
+
+      await updateUserProfile(supabaseClient, {
+        username: data.username,
+        user_id: user.user_id,
+      });
+
       router.reload();
     } catch {
       setIsLoading(false);
@@ -104,23 +109,29 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
               radius={100}
               onClick={() => avatarInput.current?.click()}
               style={{ cursor: "pointer" }}
-              src={avatar ? URL.createObjectURL(avatar) : user.avatar_url}
+              src={
+                avatar ? URL.createObjectURL(avatar) : user.user_avatar_filepath
+              }
               alt="User avatar"
             />
           </Group>
           <TextInput
             label="Display Name"
-            {...register("name", {
+            {...register("username", {
               required: "Name is required",
               minLength: {
                 value: 3,
                 message: "Name must be at least 3 characters",
               },
             })}
-            defaultValue={`${user?.full_name}`}
-            error={errors.name?.message}
+            defaultValue={`${user?.username}`}
+            error={errors.username?.message}
           />
-          <TextInput label="Email" disabled defaultValue={`${user?.email}`} />
+          <TextInput
+            label="Email"
+            disabled
+            defaultValue={`${user?.user_email}`}
+          />
 
           <Flex justify="flex-end" gap="xs">
             <Button

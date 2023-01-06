@@ -1,22 +1,26 @@
 import useFetchNotificationList from "@/hooks/useFetchNotificationList";
 import { Badge, Box, Tabs, Title } from "@mantine/core";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import NotificationItem from "./NotificationItem";
 
 const NotificationPage = () => {
   const router = useRouter();
-  // ? Where will invitation notif be displayed? In General?
-  const { userNotificationList: general } = useFetchNotificationList();
-  // * Commenting out tid so general will include all user notifications regardless of team.
+  const user = useUser();
+
+  const { notificationList: userAccount } = useFetchNotificationList(
+    user?.id as string
+  );
+  // * Commenting out tid so userAccount will include all user notifications regardless of team.
   // router.query.tid as string
-  const { userNotificationList: request } = useFetchNotificationList(
-    router.query.tid as string,
-    "request"
+  const { notificationList: team } = useFetchNotificationList(
+    user?.id as string,
+    router.query.tid as string
   );
-  const { userNotificationList: review } = useFetchNotificationList(
-    router.query.tid as string,
-    "review"
-  );
+  // const { userNotificationList: review } = useFetchNotificationList(
+  //   router.query.tid as string,
+  //   "review"
+  // );
 
   return (
     <Box
@@ -30,45 +34,48 @@ const NotificationPage = () => {
       mih="700px"
     >
       <Title order={3}>Notifications</Title>
-      <Tabs defaultValue="general" mt="md">
+      <Tabs defaultValue="userAccount" mt="md">
         <Tabs.List grow position="apart">
           <Tabs.Tab
-            value="general"
+            value="userAccount"
             rightSection={
-              review.length > 0 && (
+              userAccount &&
+              userAccount.length > 0 && (
                 <Badge
                   sx={{ width: 16, height: 16, pointerEvents: "none" }}
                   variant="filled"
                   size="xs"
                   p={0}
                 >
-                  {general.length}
+                  {userAccount.length}
                 </Badge>
               )
             }
             p="sm"
           >
-            General
+            User Account
           </Tabs.Tab>
           <Tabs.Tab
-            value="requests"
+            value="team"
             rightSection={
-              review.length > 0 && (
+              team &&
+              team.length > 0 && (
                 <Badge
                   sx={{ width: 16, height: 16, pointerEvents: "none" }}
                   variant="filled"
                   size="xs"
                   p={0}
                 >
-                  {request.length}
+                  {team.length}
                 </Badge>
               )
             }
             p="sm"
           >
-            Requests
+            Team
           </Tabs.Tab>
-          <Tabs.Tab
+          {/* // TODO: Archived. */}
+          {/* <Tabs.Tab
             value="reviews"
             rightSection={
               review.length > 0 && (
@@ -85,36 +92,38 @@ const NotificationPage = () => {
             p="sm"
           >
             Reviews
-          </Tabs.Tab>
+          </Tabs.Tab> */}
         </Tabs.List>
 
-        <Tabs.Panel value="general" pt="xs">
+        <Tabs.Panel value="userAccount" pt="xs">
           {/* // TODO: Commenting this for now. */}
           {/* <Text color="blue" align="right" maw="500px">
             Mark all as read
           </Text> */}
-          {general.length === 0 && "No new notifications"}
-          {general.length > 0 &&
-            general.map((data) => (
+          {userAccount && userAccount.length === 0 && "No new notifications"}
+          {userAccount &&
+            userAccount.length > 0 &&
+            userAccount.map((data) => (
               <NotificationItem key={data.notification_id} data={data} />
             ))}
         </Tabs.Panel>
 
-        <Tabs.Panel value="requests" pt="xs">
-          {request.length === 0 && "No new notifications"}
-          {request.length > 0 &&
-            request.map((data) => (
+        <Tabs.Panel value="team" pt="xs">
+          {team && team.length === 0 && "No new notifications"}
+          {team &&
+            team.length > 0 &&
+            team.map((data) => (
               <NotificationItem key={data.notification_id} data={data} />
             ))}
         </Tabs.Panel>
 
-        <Tabs.Panel value="reviews" pt="xs">
+        {/* <Tabs.Panel value="reviews" pt="xs">
           {review.length === 0 && "No new notifications"}
           {review.length > 0 &&
             review.map((data) => (
               <NotificationItem key={data.notification_id} data={data} />
             ))}
-        </Tabs.Panel>
+        </Tabs.Panel> */}
       </Tabs>
     </Box>
   );

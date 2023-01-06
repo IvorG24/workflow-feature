@@ -1,63 +1,74 @@
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
-import Request from "@/components/Request/Request";
-import { getFileUrl, retrieveRequest } from "@/utils/queries";
-import { Database, RequestType } from "@/utils/types";
+import RequestListContext from "@/contexts/RequestListContext";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { GetServerSideProps } from "next";
-import { ReactElement, useEffect, useState } from "react";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
+import Request from "@/components/Request/Request";
+import { RequestProps } from "@/contexts/RequestListContext";
+import {
+  getRequest,
+  getRequestApproverList,
+  getRequestCommentList,
+} from "@/utils/queries-new";
+import { GetServerSidePropsContext } from "next";
+import { NextPageWithLayout } from "pages/_app";
+import { ReactElement, useState } from "react";
 
-  const selectedRequest = await retrieveRequest(
-    supabase,
-    Number(ctx.params?.id)
+const RequestPage: NextPageWithLayout<RequestProps> = (props) => {
+  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
+    props.requestIdList[0]
   );
-
-  return {
-    props: { selectedRequest },
-  };
-};
-
-type Props = {
-  selectedRequest: RequestType;
-};
-
-const RequestPage = ({ selectedRequest }: Props) => {
-  // todo: fix meta tags
-  const supabaseClient = useSupabaseClient<Database>();
-  const [
-    selectedRequestWithAttachmentUrl,
-    setSelectedRequestWithAttachmentUrl,
-  ] = useState<RequestType>(selectedRequest);
-
-  // TODO: Supabase download function for attachments does not work on server side so I will be converting the url here for now on fetch.
-  useEffect(() => {
-    (async () => {
-      // convert selectRequest.attachments to url with getFileUrl.
-      const attachmentList = selectedRequest?.attachments
-        ? selectedRequest.attachments
-        : [];
-      const promiseList = attachmentList.map((path) =>
-        getFileUrl(supabaseClient, path, "request_attachments")
-      );
-      const attachmentUrlList = await Promise.all(promiseList);
-      setSelectedRequestWithAttachmentUrl({
-        ...selectedRequest,
-        attachments: attachmentUrlList,
-      });
-    })();
-  }, [selectedRequest]);
-
   return (
-    <div>
+    <RequestListContext.Provider value={props}>
       <Meta description="Specific Request" url="localhost:3000/requests/id" />
       {/* <Request view="full" selectedRequest={selectedRequest} /> */}
-      <Request view="full" selectedRequest={selectedRequestWithAttachmentUrl} />
-    </div>
+      {/* <Request view="full" selectedRequest={selectedRequestWithAttachmentUrl} /> */}
+      <Request
+        view="full"
+        selectedRequestId={Number(selectedRequestId)}
+        setSelectedRequestId={setSelectedRequestId}
+      />
+      {/* <Request
+        view="split"
+        selectedRequestId={selectedRequestId}
+        setSelectedRequestId={setSelectedRequestId}
+      /> */}
+    </RequestListContext.Provider>
   );
+};
+
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabase = createServerSupabaseClient(ctx);
+
+  const { id: requestId } = ctx.query;
+
+  const request = await getRequest(supabase, Number(requestId));
+
+  const requestList = request;
+  const requestIdList = [request && request[0].form_fact_request_id];
+  const requestListCount = 1;
+  const formList = [
+    {
+      value: request && request[0].form_id,
+      label: request && request[0].form_name,
+    },
+  ];
+
+  const [requestApproverList, requestCommentList] = await Promise.all([
+    getRequestApproverList(supabase, requestIdList as number[]),
+    getRequestCommentList(supabase, requestIdList as number[]),
+  ]);
+
+  return {
+    props: {
+      requestIdList,
+      requestList,
+      requestListCount,
+      formList,
+      requestApproverList,
+      requestCommentList,
+    },
+  };
 };
 
 RequestPage.getLayout = function getLayout(page: ReactElement) {

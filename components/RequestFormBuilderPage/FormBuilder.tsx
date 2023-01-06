@@ -1,6 +1,6 @@
 import { AddCircle } from "@/components/Icon";
 import { Database } from "@/utils/database.types";
-import { saveReactDndRequestForm, updateForm } from "@/utils/queries";
+import { buildFormTemplate, updateFormTemplate } from "@/utils/queries-new";
 import { FormRequest } from "@/utils/types";
 import {
   Box,
@@ -140,12 +140,19 @@ const FormBuilder: FC<Props> = (props) => {
     try {
       // const { form_name, questions } = getValues();
 
-      await saveReactDndRequestForm(
+      // await saveReactDndRequestForm(
+      //   supabaseClient,
+      //   getValues(),
+      //   user?.id as string,
+      //   router.query.tid as string,
+      //   "request"
+      // );
+
+      await buildFormTemplate(
         supabaseClient,
         getValues(),
         user?.id as string,
-        router.query.tid as string,
-        "request"
+        router.query.tid as string
       );
 
       showNotification({
@@ -164,7 +171,9 @@ const FormBuilder: FC<Props> = (props) => {
     try {
       const { form_id, questions } = getValues();
 
-      await updateForm(supabaseClient, Number(form_id), questions);
+      console.log(questions, JSON.stringify(questions, null, 2));
+
+      await updateFormTemplate(supabaseClient, Number(form_id), questions);
 
       showNotification({
         title: "Form order updated",
