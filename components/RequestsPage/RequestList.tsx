@@ -86,19 +86,16 @@ const RequestList = () => {
     [router, activePage]
   );
 
-  const handleFilterByStatus = useCallback(
-    (status: string | null) => {
-      setStatus(status);
-      if (status) {
-        router.push({ query: { ...router.query, status: status } });
-      } else {
-        router.push(
-          `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`
-        );
-      }
-    },
-    [router, activePage]
-  );
+  const handleFilterByStatus = (status: string | null) => {
+    setStatus(status);
+    if (status) {
+      router.push({ query: { ...router.query, status: status } });
+    } else {
+      router.push(
+        `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`
+      );
+    }
+  };
 
   const handlePagination = (activePage: number) => {
     setActivePage(activePage);
