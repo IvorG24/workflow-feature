@@ -123,7 +123,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
           getRequestCommentList(supabaseClient, selectedRequestId),
         ]);
         if (!data) throw new Error("Request not found");
-       
+
         setRequest(data);
         setAttachmentUrlList(data2);
         setCommentList(data3);
@@ -209,7 +209,12 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       );
 
       setComment("");
-      setCommentList((prev) => [...prev, createdComment]);
+      setCommentList((prev) => {
+        const newCommentList = [...prev];
+        newCommentList.push(createdComment as GetRequestCommentList[0]);
+        return newCommentList;
+      });
+
       showNotification({
         title: "Success!",
         message: "Comment created",
@@ -256,13 +261,13 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         editCommentId as number
       );
 
-      setCommentList((prev) => {
-        return prev.map((comment) =>
-          comment.comment_id === updatedComment?.comment_id
-            ? updatedComment
-            : comment
-        );
-      });
+      const newCommentList = commentList.map((comment) =>
+        comment.comment_id === updatedComment?.comment_id
+          ? updatedComment
+          : comment
+      );
+
+      setCommentList(() => newCommentList as GetRequestCommentList);
 
       setEditCommentId(null);
       setNewComment("");
