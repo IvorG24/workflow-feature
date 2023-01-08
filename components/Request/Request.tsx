@@ -1,13 +1,17 @@
+import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import RequestContext from "@/contexts/RequestContext";
 import RequestListContext from "@/contexts/RequestListContext";
 import { editComment } from "@/utils/queries";
 import {
   createRequestComment,
   deletePendingRequest,
   deleteRequestComment,
-  GetRequestAttachmentUrlList,
-  getRequestAttachmentUrlList,
-  GetTeamMemberAvatarUrlList,
-  getTeamMemberAvatarUrlList,
+  GetRequest,
+  getRequest,
+  getRequestCommentList,
+  GetRequestCommentList,
+  GetRequestWithAttachmentUrlList,
+  getRequestWithAttachmentUrlList,
   updateRequestComment,
   updateRequestStatus,
 } from "@/utils/queries-new";
@@ -17,6 +21,7 @@ import {
   setTimeDifference,
 } from "@/utils/request";
 import { Marks } from "@/utils/types";
+import { RequestStatus, TeamMemberRole } from "@/utils/types-new";
 import {
   ActionIcon,
   Avatar,
@@ -27,6 +32,7 @@ import {
   Divider,
   Flex,
   Group,
+  LoadingOverlay,
   MultiSelect,
   NumberInput,
   Paper,
@@ -54,7 +60,7 @@ import styles from "./Request.module.scss";
 type Props = {
   view: "split" | "full";
   selectedRequestId: number;
-  setSelectedRequestId: (requestId: number | null) => void;
+  setSelectedRequestId?: (requestId: number | null) => void;
 };
 
 const MARKS: Marks[] = [
@@ -82,52 +88,100 @@ const MARKS: Marks[] = [
 
 const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const router = useRouter();
-  const requestListContex = useContext(RequestListContext);
+  const requestListContext = useContext(RequestListContext);
+  const requestContext = useContext(RequestContext);
+  const activeTeamContext = useContext(ActiveTeamContext);
+  const { requestList, setRequestList } = requestListContext;
   const {
-    requestIdList,
-    requestList,
-    requestCommentList,
-    requestApproverList,
-  } = requestListContex || {};
+    request: requestProps,
+    setRequest: setRequestProps,
+    setRequestWithApproverList: setRequestWithApproverListProps,
+  } = requestContext;
+  const requestWithApproverList =
+    view === "full"
+      ? requestContext.requestWithApproverList
+      : requestListContext.requestWithApproverList;
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const [comment, setComment] = useState("");
   const [editCommentId, setEditCommentId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
   const [attachmentUrlList, setAttachmentUrlList] =
-    useState<GetRequestAttachmentUrlList | null>(null);
-  const [avatarUrlList, setavatarUrlList] =
-    useState<GetTeamMemberAvatarUrlList | null>(null);
+    useState<GetRequestWithAttachmentUrlList>();
+  const [request, setRequest] = useState<GetRequest>(requestProps);
+  const [commentList, setCommentList] = useState<GetRequestCommentList>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      if (!router.isReady) return;
-      if (!requestIdList) return;
-      if (requestIdList && requestIdList.length === 0) return;
+      try {
+        if (!router.isReady) return;
 
-      const data = await getRequestAttachmentUrlList(
-        supabaseClient,
-        requestIdList as number[]
-      );
-
-      const data2 = await getTeamMemberAvatarUrlList(supabaseClient, [
-        router.query.tid as string,
-      ]);
-
-      setAttachmentUrlList(data);
-
-      setavatarUrlList(data2);
+        const [data, data2, data3] = await Promise.all([
+          getRequest(supabaseClient, selectedRequestId),
+          getRequestWithAttachmentUrlList(supabaseClient, selectedRequestId),
+          getRequestCommentList(supabaseClient, selectedRequestId),
+        ]);
+        if (!data) throw new Error("Request not found");
+       
+        setRequest(data);
+        setAttachmentUrlList(data2);
+        setCommentList(data3);
+      } catch (error) {
+        console.error(error);
+        showNotification({
+          title: "Error!",
+          message: "Failed to fetch request information",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     })();
-  }, [router]);
+  }, [router, selectedRequestId]);
 
-  const request =
-    view === "full"
-      ? requestList
-      : requestList?.filter(
-          (request) => request.request_id === selectedRequestId
-        );
+  if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
 
+  const title = request?.[0]?.request_title;
+  const description = request?.[0]?.request_description;
+  const requestedBy = request?.[0]?.username;
+  const dateCreated = request?.[0]?.request_date_created;
+  const onBehalfOf = request?.[0]?.request_on_behalf_of;
   const order = request && request[0].order_field_id_list;
+  const attachments =
+    request &&
+    request[0]?.request_attachment_filepath_list &&
+    request[0].request_attachment_filepath_list.map((filepath, i) => {
+      return {
+        filepath,
+        url: attachmentUrlList ? attachmentUrlList[i] : null,
+      };
+    });
+  const userIdRoleDictionary = activeTeamContext.reduce(
+    (acc, member) => ({
+      ...acc,
+      [`${member.user_id}`]: member.member_role_id,
+    }),
+    {}
+  ) as { [key: string]: TeamMemberRole };
+  const approverList = requestWithApproverList[selectedRequestId.toString()];
+  const approverIdWithStatus = approverList.find((approver) => {
+    const isApprover =
+      userIdRoleDictionary[approver.approver_id] === "owner" ||
+      userIdRoleDictionary[approver.approver_id] === "admin";
+    return isApprover;
+  });
+  const purchaserIdWithStatus = approverList.find((approver) => {
+    const isPurchaser =
+      userIdRoleDictionary[approver.approver_id] === "purchaser";
+    return isPurchaser;
+  });
+  const approver = activeTeamContext.find(
+    (member) => member.user_id === approverIdWithStatus?.approver_id
+  );
+  const purchaser = activeTeamContext.find(
+    (member) => member.user_id === purchaserIdWithStatus?.approver_id
+  );
 
   request &&
     request.sort((a, b) => {
@@ -138,44 +192,16 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       );
     });
 
-  const attachments =
-    request &&
-    request[0]?.request_attachment_filepath_list &&
-    request[0].request_attachment_filepath_list.map((filepath, i) => {
-      return {
-        filepath,
-        url: attachmentUrlList?.[selectedRequestId]?.[i],
-      };
-    });
-
-  // Loookup comment list of the selected request.
-  const commentList =
-    requestCommentList &&
-    requestCommentList.filter(
-      (comment) => comment.request_id === selectedRequestId
-    );
-
-  // Loookup approvers list of the selected request.
-  const approverList =
-    requestApproverList &&
-    requestApproverList.filter(
-      (approver) => approver.request_id === selectedRequestId
-    );
-
-  const approver = approverList?.find((approver) => approver.is_approver);
-  const purchaser = approverList?.find((approver) => approver.is_purchaser);
-
   const currentUserIsOwner = request?.[0]?.user_id === user?.id;
   const currentUserIsApprover = approver?.user_id === user?.id;
   const currentUserIsPurchaser = purchaser?.user_id === user?.id;
-
   const status = request?.[0]?.form_fact_request_status_id;
 
   const handleAddComment = async () => {
     if (!comment) return;
     if (!request) return;
     try {
-      await createRequestComment(
+      const createdComment = await createRequestComment(
         supabaseClient,
         comment,
         user?.id as string,
@@ -183,7 +209,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       );
 
       setComment("");
-      router.replace(router.asPath);
+      setCommentList((prev) => [...prev, createdComment]);
       showNotification({
         title: "Success!",
         message: "Comment created",
@@ -201,7 +227,10 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const handleDeleteComment = async (commentId: number) => {
     try {
       await deleteRequestComment(supabaseClient, commentId);
-      router.replace(router.asPath);
+
+      setCommentList((prev) =>
+        prev.filter((comment) => comment.comment_id !== commentId)
+      );
       showNotification({
         title: "Success!",
         message: "Comment deleted",
@@ -221,12 +250,23 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       if (!newComment) return;
       if (!editComment) return;
 
-      await updateRequestComment(
+      const updatedComment = await updateRequestComment(
         supabaseClient,
         newComment,
         editCommentId as number
       );
-      router.replace(router.asPath);
+
+      setCommentList((prev) => {
+        return prev.map((comment) =>
+          comment.comment_id === updatedComment?.comment_id
+            ? updatedComment
+            : comment
+        );
+      });
+
+      setEditCommentId(null);
+      setNewComment("");
+
       showNotification({
         title: "Success!",
         message: "Comment edited",
@@ -241,48 +281,60 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
     }
   };
 
-  const handleApprove = async () => {
+  const handleUpdateStatus = async (newStatus: RequestStatus) => {
     try {
       await updateRequestStatus(
         supabaseClient,
         selectedRequestId,
-        "approved",
+        newStatus,
         user?.id as string
       );
 
-      showNotification({
-        title: "Success!",
-        message: `You approved ${request && request[0].request_title}`,
-        color: "green",
-      });
-      router.replace(router.asPath);
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to approve ${request && request[0].request_title}`,
-        color: "red",
-      });
-    }
-  };
-  const handleReject = async () => {
-    try {
-      await updateRequestStatus(
-        supabaseClient,
-        selectedRequestId,
-        "rejected",
-        user?.id as string
+      setRequest(
+        request?.map((request) => ({
+          ...request,
+          form_fact_request_status_id: newStatus,
+          request_status_id: newStatus,
+        }))
       );
+      // if (setRequestWithApproverListProps)
+      //   setRequestWithApproverListProps((prev) => {
+      //     return prev[selectedRequestId.toString()].map((approver) => {
+      //       if (approver.approver_id === user?.id) {
+      //         return { ...approver, status: "approved" };
+      //       } else {
+      //         return approver;
+      //       }
+      //     });
+      //   });
+      if (view !== "full") {
+        if (setRequestList)
+          setRequestList((prev) => {
+            return prev.map((request) => {
+              if (request.request_id === selectedRequestId) {
+                return {
+                  ...request,
+                  form_fact_request_status_id: newStatus,
+                  request_status_id: newStatus,
+                };
+              } else {
+                return request;
+              }
+            });
+          });
+      }
 
       showNotification({
         title: "Success!",
-        message: `You rejected ${request && request[0].request_title}`,
+        message: `You ${newStatus} ${request && request[0].request_title}`,
         color: "green",
       });
-      router.replace(router.asPath);
     } catch {
       showNotification({
         title: "Error!",
-        message: `Failed to reject ${request && request[0].request_title}`,
+        message: `Failed to update status of ${
+          request && request[0].request_title
+        }`,
         color: "red",
       });
     }
@@ -305,7 +357,16 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       if (view === "full") {
         router.push(`/t/${router.query.tid}/requests`);
       } else {
-        router.replace(router.asPath);
+        if (setRequestList) {
+          setRequestList((prev) => {
+            return prev.filter(
+              (request) => request.request_id !== selectedRequestId
+            );
+          });
+          setSelectedRequestId && setSelectedRequestId(null);
+        } else {
+          router.replace(router.asPath);
+        }
       }
     } catch {
       showNotification({
@@ -316,37 +377,10 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
     }
   };
 
-  const handlePurchase = async () => {
-    try {
-      await updateRequestStatus(
-        supabaseClient,
-        selectedRequestId,
-        "purchased",
-        user?.id as string
-      );
-      router.replace(router.asPath);
-      showNotification({
-        title: "Success!",
-        message: `You marked as purchased ${
-          request && request[0].request_title
-        }`,
-        color: "green",
-      });
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to mark as purchased ${
-          request && request[0].request_title
-        }`,
-        color: "red",
-      });
-    }
-  };
-
   const confirmationModal = (
     action: string,
     requestTitle: string,
-    confirmFunction: () => void
+    confirmFunction: () => Promise<void>
   ) =>
     openConfirmModal({
       title: "Please confirm your action",
@@ -394,22 +428,20 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       <Group position="apart" grow>
         <Stack align="flex-start">
           <Title order={5}>Request Title</Title>
-          <Text>{request && request[0].request_title}</Text>
+          <Text>{title}</Text>
         </Stack>
         <Stack align="flex-start">
           <Title order={5}>Requested By</Title>
           <Group>
             <Avatar radius={100} />
-            <Text>{request && request[0].username}</Text>
+            <Text>{requestedBy}</Text>
           </Group>
         </Stack>
       </Group>
       <Group mt="xl" position="apart" grow>
         <Stack align="flex-start">
           <Title order={5}>Date Created</Title>
-          <Text>
-            {request && request[0].request_date_created?.slice(0, 10)}
-          </Text>
+          <Text>{dateCreated?.slice(0, 10)}</Text>
         </Stack>
         <Stack align="flex-start">
           <Title order={5}>Status</Title>
@@ -421,11 +453,11 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       <Group mt="xl" position="apart" grow>
         <Stack mt="xl" align="flex-start">
           <Title order={5}>Request Description</Title>
-          <Text>{request && request[0].request_description}</Text>
+          <Text>{description}</Text>
         </Stack>
         <Stack align="flex-start">
           <Title order={5}>On behalf of</Title>
-          <Text>{(request && request[0].request_on_behalf_of) || "---"}</Text>
+          <Text>{onBehalfOf || "---"}</Text>
         </Stack>
       </Group>
 
@@ -437,7 +469,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
             <Group>
               <Badge
                 color={setBadgeColor(
-                  `${approver?.request_approver_request_status_id}`
+                  approverIdWithStatus?.approver_status || "pending"
                 )}
               />
               <Text>{approver?.username}</Text>
@@ -463,6 +495,9 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         {attachments &&
           attachments.map((attachment, idx) => {
             // const mockFileSize = "234 KB";
+            const filePath = attachment.filepath;
+            const fileUrl = attachment.url as string;
+            const fileType = attachment.filepath.split(".").pop() as string;
             const mockFileSize = "";
             const mockFile = "file";
 
@@ -470,17 +505,17 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               <Group key={idx}>
                 {view === "split" ? (
                   <AttachmentPill
-                    filename={attachment.filepath}
-                    fileType={attachment.filepath.split(".").pop() as string}
-                    fileUrl={attachment.url as string}
+                    filename={filePath}
+                    fileType={fileType}
+                    fileUrl={fileUrl}
                   />
                 ) : (
                   <AttachmentBox
-                    filename={attachment.filepath}
-                    fileType={attachment.filepath.split(".").pop() as string}
-                    fileUrl={attachment.url as string}
                     file={mockFile}
                     fileSize={mockFileSize}
+                    filename={filePath}
+                    fileType={fileType}
+                    fileUrl={fileUrl}
                   />
                 )}
               </Group>
@@ -498,7 +533,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
                 confirmationModal(
                   "approve",
                   `${request && request[0].request_title}`,
-                  handleApprove
+                  () => handleUpdateStatus("approved")
                 )
               }
               fullWidth={view === "split"}
@@ -514,7 +549,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
                 confirmationModal(
                   "reject",
                   `${request && request[0].request_title}`,
-                  handleReject
+                  () => handleUpdateStatus("rejected")
                 )
               }
               fullWidth={view === "split"}
@@ -561,7 +596,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
                 confirmationModal(
                   "mark as purchased",
                   `${request && request[0].request_title}`,
-                  handlePurchase
+                  () => handleUpdateStatus("purchased")
                 )
               }
               fullWidth={view === "split"}
@@ -753,9 +788,9 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               <Flex gap="xs" wrap="wrap" align="center">
                 <Avatar
                   radius={100}
-                  src={
-                    avatarUrlList && avatarUrlList[comment.user_id as string]
-                  }
+                  // src={
+                  //   avatarUrlList && avatarUrlList[comment.user_id as string]
+                  // }
                   size="sm"
                 />
                 <Text fw={500}>{comment.username}</Text>

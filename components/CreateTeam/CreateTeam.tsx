@@ -75,7 +75,6 @@ const CreateTeam = () => {
       const teamId = await createTeam(supabase, user?.id as string, {
         team_name: teamName,
       });
-      console.log(action);
 
       // if (teamLogo) {
       //   await handleUpload(team);

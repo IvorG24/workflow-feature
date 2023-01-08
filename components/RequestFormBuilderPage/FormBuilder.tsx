@@ -171,8 +171,6 @@ const FormBuilder: FC<Props> = (props) => {
     try {
       const { form_id, questions } = getValues();
 
-      console.log(questions, JSON.stringify(questions, null, 2));
-
       await updateFormTemplate(supabaseClient, Number(form_id), questions);
 
       showNotification({

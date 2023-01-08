@@ -3,7 +3,6 @@ import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import CurrentUserTeamListContext from "@/contexts/CurrentUserTeamListContext";
 import getMantineTheme from "@/utils/getMantineTheme";
-import { distinctByKey } from "@/utils/object";
 import {
   createOrRetrieveUserProfile,
   CreateOrRetrieveUserProfile,
@@ -17,6 +16,7 @@ import {
 import {
   ColorScheme,
   ColorSchemeProvider,
+  LoadingOverlay,
   MantineProvider,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -57,47 +57,53 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const getLayout = Component.getLayout ?? ((page) => page);
 
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<CreateOrRetrieveUserProfile>();
-  const [teamList, setTeamList] = useState<CreateOrRetrieveUserTeamList>();
-  const [activeTeam, setActiveTeam] = useState<GetTeam>();
+  const [teamList, setTeamList] = useState<CreateOrRetrieveUserTeamList>([]);
+  const [activeTeam, setActiveTeam] = useState<GetTeam>([]);
   const [formTemplateList, setFormTemplateList] =
     useState<GetTeamFormTemplateList>();
 
   useEffect(() => {
     (async () => {
-      if (!router.isReady) return;
+      try {
+        setIsLoading(true);
 
-      console.log("_app triggered", new Date());
+        const user = (await supabaseClient.auth.getUser()).data.user;
+        if (!user) return;
 
-      const user = (await supabaseClient.auth.getUser()).data.user;
-      if (!user) return;
-
-      const promises = [
-        createOrRetrieveUserProfile(supabaseClient, user),
-        createOrRetrieveUserTeamList(supabaseClient, user.id),
-      ];
-
-      const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
-        await Promise.all(promises);
-
-      setUserProfile(createdOrRetrievedUser as CreateOrRetrieveUserProfile);
-      setTeamList(
-        createdOrRetrievedUserTeamList as CreateOrRetrieveUserTeamList
-      );
-      if (router.query.tid) {
         const promises = [
-          getTeam(supabaseClient, router.query.tid as string),
-          getTeamFormTemplateList(supabaseClient, router.query.tid as string),
+          createOrRetrieveUserProfile(supabaseClient, user),
+          createOrRetrieveUserTeamList(supabaseClient, user.id),
         ];
-        const [team, formTemplateList] = await Promise.all(promises);
-        setActiveTeam(team as GetTeam);
-        const formList = formTemplateList as GetTeamFormTemplateList;
-        const distinct =
-          formList && distinctByKey(formList, "form_fact_form_id");
-        setFormTemplateList(distinct as GetTeamFormTemplateList);
+
+        const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
+          await Promise.all(promises);
+
+        setUserProfile(createdOrRetrievedUser as CreateOrRetrieveUserProfile);
+        setTeamList(
+          createdOrRetrievedUserTeamList as CreateOrRetrieveUserTeamList
+        );
+
+        if (router.query.tid) {
+          const promises = [
+            getTeam(supabaseClient, router.query.tid as string),
+            getTeamFormTemplateList(supabaseClient, router.query.tid as string),
+          ];
+
+          const [team, formTemplateList] = await Promise.all(promises);
+
+          setActiveTeam(team as GetTeam);
+          setFormTemplateList(formTemplateList as GetTeamFormTemplateList);
+        }
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
       }
     })();
-  }, [router]);
+  }, [router.query.tid]);
+
+  if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
 
   return (
     <ColorSchemeProvider

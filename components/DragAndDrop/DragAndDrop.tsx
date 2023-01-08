@@ -63,8 +63,6 @@ function ItemList({
     // take order of id's in modified tempArr
     const arrOfIds = tempArr.map((item) => item.id);
     setOrderArr(arrOfIds);
-    console.log(orderArr);
-    console.log(cardData);
   };
   return (
     <>
@@ -72,7 +70,6 @@ function ItemList({
         <DragDropContext onDragEnd={handleOnDragEnd}>
           <Droppable droppableId="items">
             {(provided) => {
-              console.log(cardData);
               return (
                 <ol {...provided.droppableProps} ref={provided.innerRef}>
                   {cardData.map((item, idx) => {

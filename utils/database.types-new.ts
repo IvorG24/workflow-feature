@@ -449,6 +449,54 @@ export interface Database {
           request_status_id: string | null
         }
       }
+      request_form_template_distinct_view: {
+        Row: {
+          form_fact_id: number | null
+          form_fact_user_id: string | null
+          form_fact_team_id: string | null
+          form_fact_field_id: number | null
+          form_fact_response_id: number | null
+          form_fact_order_id: number | null
+          form_fact_request_id: number | null
+          form_fact_form_id: number | null
+          form_fact_request_status_id: string | null
+          user_id: string | null
+          user_created_at: string | null
+          username: string | null
+          user_first_name: string | null
+          user_last_name: string | null
+          user_avatar_filepath: string | null
+          user_email: string | null
+          team_id: string | null
+          team_name: string | null
+          team_logo_filepath: string | null
+          order_id: number | null
+          order_field_id_list: number[] | null
+          order_last_updated: string | null
+          form_id: number | null
+          form_name: string | null
+          form_created_at: string | null
+          field_id: number | null
+          field_name: string | null
+          request_field_type:
+            | Database["public"]["Enums"]["request_field_type"]
+            | null
+          field_options: string[] | null
+          field_tooltip: string | null
+          field_is_required: boolean | null
+          response_id: number | null
+          response_value: string | null
+          request_id: number | null
+          request_date_created: string | null
+          request_title: string | null
+          request_description: string | null
+          request_on_behalf_of: string | null
+          request_is_draft: boolean | null
+          request_attachment_filepath_list: string[] | null
+          request_is_disabled: boolean | null
+          request_status_id: string | null
+        }
+      }
       request_form_template_view: {
         Row: {
           form_fact_id: number | null
@@ -494,6 +542,13 @@ export interface Database {
           request_is_draft: boolean | null
           request_attachment_filepath_list: string[] | null
           request_is_disabled: boolean | null
+          request_status_id: string | null
+        }
+      }
+      request_request_approver_status_view: {
+        Row: {
+          request_id: number | null
+          approvers: Json | null
         }
       }
       request_request_approver_view: {
@@ -510,6 +565,54 @@ export interface Database {
           user_last_name: string | null
           user_avatar_filepath: string | null
           user_email: string | null
+          request_id: number | null
+          request_date_created: string | null
+          request_title: string | null
+          request_description: string | null
+          request_on_behalf_of: string | null
+          request_is_draft: boolean | null
+          request_attachment_filepath_list: string[] | null
+          request_is_disabled: boolean | null
+          request_status_id: string | null
+        }
+      }
+      request_request_distinct_view: {
+        Row: {
+          form_fact_id: number | null
+          form_fact_user_id: string | null
+          form_fact_team_id: string | null
+          form_fact_field_id: number | null
+          form_fact_response_id: number | null
+          form_fact_order_id: number | null
+          form_fact_request_id: number | null
+          form_fact_form_id: number | null
+          form_fact_request_status_id: string | null
+          user_id: string | null
+          user_created_at: string | null
+          username: string | null
+          user_first_name: string | null
+          user_last_name: string | null
+          user_avatar_filepath: string | null
+          user_email: string | null
+          team_id: string | null
+          team_name: string | null
+          team_logo_filepath: string | null
+          order_id: number | null
+          order_field_id_list: number[] | null
+          order_last_updated: string | null
+          form_id: number | null
+          form_name: string | null
+          form_created_at: string | null
+          field_id: number | null
+          field_name: string | null
+          request_field_type:
+            | Database["public"]["Enums"]["request_field_type"]
+            | null
+          field_options: string[] | null
+          field_tooltip: string | null
+          field_is_required: boolean | null
+          response_id: number | null
+          response_value: string | null
           request_id: number | null
           request_date_created: string | null
           request_title: string | null
@@ -548,6 +651,54 @@ export interface Database {
           comment_is_edited: boolean | null
           comment_last_updated: string | null
           comment_is_disabled: boolean | null
+        }
+      }
+      request_request_view: {
+        Row: {
+          form_fact_id: number | null
+          form_fact_user_id: string | null
+          form_fact_team_id: string | null
+          form_fact_field_id: number | null
+          form_fact_response_id: number | null
+          form_fact_order_id: number | null
+          form_fact_request_id: number | null
+          form_fact_form_id: number | null
+          form_fact_request_status_id: string | null
+          user_id: string | null
+          user_created_at: string | null
+          username: string | null
+          user_first_name: string | null
+          user_last_name: string | null
+          user_avatar_filepath: string | null
+          user_email: string | null
+          team_id: string | null
+          team_name: string | null
+          team_logo_filepath: string | null
+          order_id: number | null
+          order_field_id_list: number[] | null
+          order_last_updated: string | null
+          form_id: number | null
+          form_name: string | null
+          form_created_at: string | null
+          field_id: number | null
+          field_name: string | null
+          request_field_type:
+            | Database["public"]["Enums"]["request_field_type"]
+            | null
+          field_options: string[] | null
+          field_tooltip: string | null
+          field_is_required: boolean | null
+          response_id: number | null
+          response_value: string | null
+          request_id: number | null
+          request_date_created: string | null
+          request_title: string | null
+          request_description: string | null
+          request_on_behalf_of: string | null
+          request_is_draft: boolean | null
+          request_attachment_filepath_list: string[] | null
+          request_is_disabled: boolean | null
+          request_status_id: string | null
         }
       }
       team_invitation_view: {

@@ -1,7 +1,6 @@
 import FormsPage from "@/components/FormsPage/FormsPage";
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
-import { distinctByKey } from "@/utils/object";
 import {
   getTeamFormTemplateList,
   GetTeamFormTemplateList,
@@ -25,14 +24,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       ctx.params?.tid as string
     );
 
-    // Make teamRequestFormList distinct by form_fact_form_id.
-    const distinctFormList =
-      teamRequestFormList &&
-      distinctByKey(teamRequestFormList, "form_fact_form_id");
-
     return {
       props: {
-        formList: distinctFormList,
+        formList: teamRequestFormList,
       },
     };
   } catch (error) {

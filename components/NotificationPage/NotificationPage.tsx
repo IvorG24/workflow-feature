@@ -1,26 +1,11 @@
-import useFetchNotificationList from "@/hooks/useFetchNotificationList";
+import NotificationListContext from "@/contexts/NotificationListContext";
 import { Badge, Box, Tabs, Title } from "@mantine/core";
-import { useUser } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
+import { NextPage } from "next";
+import { useContext } from "react";
 import NotificationItem from "./NotificationItem";
 
-const NotificationPage = () => {
-  const router = useRouter();
-  const user = useUser();
-
-  const { notificationList: userAccount } = useFetchNotificationList(
-    user?.id as string
-  );
-  // * Commenting out tid so userAccount will include all user notifications regardless of team.
-  // router.query.tid as string
-  const { notificationList: team } = useFetchNotificationList(
-    user?.id as string,
-    router.query.tid as string
-  );
-  // const { userNotificationList: review } = useFetchNotificationList(
-  //   router.query.tid as string,
-  //   "review"
-  // );
+const NotificationPage: NextPage = () => {
+  const { userAccount, team } = useContext(NotificationListContext);
 
   return (
     <Box

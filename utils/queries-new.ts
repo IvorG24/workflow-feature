@@ -154,7 +154,7 @@ export const createOrRetrieveUserTeamList = async (
       .eq("user_id", userId)
       .order("team_member_id", { ascending: false });
   if (teamMemberViewError) throw teamMemberViewError;
-  if (teamMemberViewData) return teamMemberViewData;
+  return teamMemberViewData || [];
 };
 export type CreateOrRetrieveUserTeamList = Awaited<
   ReturnType<typeof createOrRetrieveUserTeamList>
@@ -189,7 +189,7 @@ export const getTeam = async (
     .eq("team_id", teamId);
 
   if (error) throw error;
-  if (data) return data;
+  return data || [];
 };
 export type GetTeam = Awaited<ReturnType<typeof getTeam>>;
 
@@ -270,7 +270,7 @@ export const getTeamFormTemplateList = async (
   teamId: string
 ) => {
   const { data, error } = await supabaseClient
-    .from("request_form_template_view")
+    .from("request_form_template_distinct_view")
     .select()
     .eq("team_id", teamId);
 
@@ -354,107 +354,87 @@ export type TransformFormTemplateToReactDndFormRequest = ReturnType<
   typeof transformFormTemplateToReactDndFormRequest
 >;
 
-// - Get request list of a team.
-export type GetTeamRequestListParams = {
-  teamId: string;
-  userId: string;
-  pageSize?: number;
-  pageNumber?: number;
-  formId?: number;
-  requestStatus?: RequestStatus;
-  keyword?: string;
-  direction?: "received" | "sent";
-};
-
 export const getTeamRequestList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: GetTeamRequestListParams
+  teamId: string
 ) => {
-  const {
-    userId,
-    formId,
-    requestStatus,
-    keyword,
-    direction,
-    teamId,
-    pageSize,
-    pageNumber,
-  } = params;
-
-  let query = supabaseClient
-    .from("request_form_fact_view")
-    .select()
-    .eq("team_id", teamId)
-    .not("request_id", "is", null)
-    .not("response_id", "is", null)
-    .not("request_is_draft", "is", true)
-    .not("request_is_disabled", "is", true);
-
-  if (formId) {
-    query = query.eq("form_fact_form_id", formId);
-  }
-
-  if (keyword) {
-    query = query.or(
-      `response_value.ilike.%${keyword}%, request_title.ilike.%${keyword}%, request_description.ilike.%${keyword}%`
-    );
-  }
-
-  if (requestStatus) {
-    query = query.eq("form_fact_request_status_id", requestStatus);
-  }
-
-  if (direction === "sent") {
-    query = query.eq("form_fact_user_id", userId);
-  }
-
-  if (direction === "received") {
-    // Query from request_request_approver_table where userId === rerequest_request_approver_user_id
-
+  try {
     const { data, error } = await supabaseClient
-      .from("request_request_approver_view")
-      .select("request_id")
-      .eq("request_approver_user_id", userId)
-      .is("request_is_disabled", false);
-
+      .from("request_request_distinct_view")
+      .select()
+      .eq("team_id", teamId)
+      .is("request_is_draft", false)
+      .is("request_is_disabled", false)
+      .order("request_id", { ascending: false });
     if (error) throw error;
-
-    if (!data) return [];
-    if (data && data.length === 0) return [];
-
-    const receivedRequestIdList = data.map((request) => request.request_id);
-
-    query = query.in("form_fact_request_id", receivedRequestIdList);
+    return data || [];
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  if (pageSize && pageNumber) {
-    query = query.range(pageNumber, pageNumber + pageSize - 1);
-  }
-
-  const { data, error } = await query.order("form_fact_request_id", {
-    ascending: false,
-  });
-
-  if (error) throw error;
-
-  return data;
 };
 export type GetTeamRequestList = Awaited<ReturnType<typeof getTeamRequestList>>;
+
+export const getRequestWithApproverList = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number[]
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_approver_status_view")
+      .select()
+      .in("request_id", requestId);
+
+    if (error) throw error;
+    if (!data) return {};
+
+    // Sample data above:
+    //  {
+    //   "request_id": 29,
+    //   "approvers": [
+    //     {
+    //       "approver_id": "182e6b49-fed7-42f7-a864-fafe439e4bf6",
+    //       "approver_status": "pending"
+    //     }
+    //   ]
+    // },
+    const result: GetRequestWithApproverList = {};
+    data.map(({ request_id, approvers }) => {
+      result[request_id?.toString() || ""] =
+        approvers as RequestWithApproverList;
+    });
+    return result;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type RequestWithApproverList = {
+  approver_id: string;
+  approver_status: RequestStatus;
+}[];
+export type GetRequestWithApproverList = {
+  [key: string]: RequestWithApproverList;
+};
 
 // - Get a request.
 export const getRequest = async (
   supabaseClient: SupabaseClient<Database>,
   requestId: number
 ) => {
-  const { data, error } = await supabaseClient
-    .from("request_form_fact_view")
-    .select()
-    .eq("request_id", requestId)
-    .is("request_is_draft", false)
-    .is("request_is_disabled", false);
-
-  if (error) throw error;
-  if (data) return data;
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_form_fact_view")
+      .select()
+      .eq("request_id", requestId)
+      .is("request_is_draft", false)
+      .is("request_is_disabled", false);
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
 export type GetRequest = Awaited<ReturnType<typeof getRequest>>;
 
@@ -607,22 +587,27 @@ export const getNotificationList = async (
   userId: string,
   teamId?: string
 ) => {
-  let query = supabaseClient
-    .from("team_user_notification_view")
-    .select()
-    .eq("user_id", userId);
+  try {
+    let query = supabaseClient
+      .from("team_user_notification_view")
+      .select()
+      .eq("user_id", userId);
 
-  if (teamId) {
-    query = query.eq("team_user_notification_team_id", teamId);
-  } else {
-    query = query.is("team_user_notification_team_id", null);
+    if (teamId) {
+      query = query.eq("team_user_notification_team_id", teamId);
+    } else {
+      query = query.is("team_user_notification_team_id", null);
+    }
+    query.order("team_user_notification_id", { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    if (data) return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-  query.order("team_user_notification_id", { ascending: false });
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-  if (data) return data;
 };
 export type GetNotificationList = Awaited<
   ReturnType<typeof getNotificationList>
@@ -675,7 +660,6 @@ export const updateFormTemplate = async (
         .eq("field_id", question.fieldId)
     );
     const resultList = await Promise.all(promises);
-    console.log("resultList", JSON.stringify(resultList, null, 2));
   } catch {
     throw new Error("Error updating form template.");
   }
@@ -704,7 +688,7 @@ export const createRequestComment = async (
       });
     if (insertCommentError) throw insertCommentError;
   }
-  return commentData.comment_id;
+  return commentData;
 };
 
 // - Update request comment.
@@ -719,15 +703,19 @@ export const updateRequestComment = async (
     .single();
   if (error) throw error;
   if (currentDateData) {
-    const { error: updateCommentError } = await supabaseClient
-      .from("request_comment_table")
-      .update({
-        comment_content: commentContent,
-        comment_is_edited: true,
-        comment_last_updated: currentDateData,
-      })
-      .eq("comment_id", commentId);
+    const { data: updatedComment, error: updateCommentError } =
+      await supabaseClient
+        .from("request_comment_table")
+        .update({
+          comment_content: commentContent,
+          comment_is_edited: true,
+          comment_last_updated: currentDateData,
+        })
+        .eq("comment_id", commentId)
+        .select()
+        .single();
     if (updateCommentError) throw updateCommentError;
+    return updatedComment;
   }
 };
 
@@ -1034,50 +1022,38 @@ export const getTeamMemberRole = async (
 };
 
 // Generate lookup table for request attachment url list.
-export const getRequestAttachmentUrlList = async (
+export const getRequestWithAttachmentUrlList = async (
   supabaseClient: SupabaseClient<Database>,
-  requestIdList: number[]
+  requestId: number
 ) => {
-  const { data, error } = await supabaseClient
-    .from("request_request_table")
-    .select("request_id, request_attachment_filepath_list")
-    .in("request_id", requestIdList);
-  if (error) throw error;
-  // if (!data || data.length === 0) throw new Error("Request not found.");
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_table")
+      .select("request_id, request_attachment_filepath_list")
+      .eq("request_id", requestId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return [];
+    const { request_attachment_filepath_list } = data;
+    if (!request_attachment_filepath_list) return [];
 
-  const requestAttachmentUrlList: { [requestId: string]: string[] } = {};
-
-  // Same as above but use Promise.all to speed up the process.
-  const promises = [];
-  for (const request of data) {
-    const { request_id, request_attachment_filepath_list } = request;
-    if (request_attachment_filepath_list) {
-      const urlList: string[] = [];
-      for (const filepath of request_attachment_filepath_list) {
-        const promise = getFileUrl(
-          supabaseClient,
-          filepath,
-          "request-attachments"
-        );
-        promises.push(promise);
+    // Loop through request_attachment_filepath_list and download the file with getFileUrl().
+    const promises = request_attachment_filepath_list.map(
+      (filepath: string) => {
+        if (!filepath) return null;
+        return getFileUrl(supabaseClient, filepath, "request-attachments");
       }
-      requestAttachmentUrlList[request_id] = urlList;
-    }
-  }
-  const urlList = await Promise.all(promises);
+    );
+    const requestAttachmentUrlList = await Promise.all(promises);
 
-  let i = 0;
-  for (const request of data) {
-    const { request_id, request_attachment_filepath_list } = request;
-    if (request_attachment_filepath_list) {
-      requestAttachmentUrlList[request_id] =
-        request_attachment_filepath_list.map((_) => urlList[i++]);
-    }
+    return requestAttachmentUrlList;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-  return requestAttachmentUrlList;
 };
-export type GetRequestAttachmentUrlList = Awaited<
-  ReturnType<typeof getRequestAttachmentUrlList>
+export type GetRequestWithAttachmentUrlList = Awaited<
+  ReturnType<typeof getRequestWithAttachmentUrlList>
 >;
 
 // Generate lookup table for team member avatar url list.
@@ -1395,20 +1371,19 @@ export type GetUserProfile = Awaited<ReturnType<typeof getUserProfile>>;
 // - Get request comment list.
 export const getRequestCommentList = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number[]
+  requestId: number
 ) => {
   const { data, error } = await supabaseClient
     .from("request_request_user_comment_view")
     .select()
-    .in("request_id", requestId)
+    .eq("request_id", requestId)
     .is("comment_is_disabled", false)
     .is("request_is_draft", false)
-    .is("request_is_disabled", false);
+    .is("request_is_disabled", false)
+    .order("comment_id", { ascending: true });
 
   if (error) throw error;
-  if (!data) return null;
-
-  return data;
+  return data || [];
 };
 export type GetRequestCommentList = Awaited<
   ReturnType<typeof getRequestCommentList>
