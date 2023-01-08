@@ -91,12 +91,8 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const requestListContext = useContext(RequestListContext);
   const requestContext = useContext(RequestContext);
   const activeTeamContext = useContext(ActiveTeamContext);
-  const { requestList, setRequestList } = requestListContext;
-  const {
-    request: requestProps,
-    setRequest: setRequestProps,
-    setRequestWithApproverList: setRequestWithApproverListProps,
-  } = requestContext;
+  const { setRequestList } = requestListContext;
+  const { request: requestProps } = requestContext;
   const requestWithApproverList =
     view === "full"
       ? requestContext.requestWithApproverList
@@ -138,7 +134,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         setIsLoading(false);
       }
     })();
-  }, [router, selectedRequestId]);
+  }, [router, selectedRequestId, supabaseClient]);
 
   if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
 

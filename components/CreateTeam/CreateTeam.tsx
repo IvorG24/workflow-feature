@@ -69,7 +69,7 @@ const CreateTeam = () => {
 
   const handleCreateTeam = async (action: "skip" | "invite") => {
     setIsCreating(true);
-
+    console.log(action);
     try {
       // const team = await createUserTeam(supabase, `${user?.id}`, teamName);
       const teamId = await createTeam(supabase, user?.id as string, {

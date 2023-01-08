@@ -10,8 +10,6 @@ import { NextPageWithLayout } from "pages/_app";
 import { ReactElement, useState } from "react";
 
 const RequestPage: NextPageWithLayout<RequestProps> = (props) => {
-  if (!props.request) return <h1>Request not found</h1>;
-
   const [requestProps, setRequestProps] = useState(props.request);
   const [requestWithApproverListProps, setRequestWithApproverListProps] =
     useState(props.requestWithApproverList);

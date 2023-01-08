@@ -63,6 +63,7 @@ function ItemList({
     // take order of id's in modified tempArr
     const arrOfIds = tempArr.map((item) => item.id);
     setOrderArr(arrOfIds);
+    console.log(orderArr);
   };
   return (
     <>
