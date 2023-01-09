@@ -13,11 +13,12 @@ import {
 } from "@mantine/core";
 
 import SvgArrowDropDown from "@/components/Icon/ArrowDropDown";
+import FileUrlListContext from "@/contexts/FileUrlListContext";
 import { GetTeam } from "@/utils/queries-new";
 import { TeamMemberRole } from "@/utils/types-new";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
 type Props = {
@@ -42,6 +43,7 @@ const MemberList = ({
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 7;
   const totalPages = Math.ceil(memberList.length / pageSize);
+  const fileUrlListContext = useContext(FileUrlListContext);
 
   const paginate = (array: GetTeam, page_size: number, page_number: number) => {
     return array
@@ -65,7 +67,9 @@ const MemberList = ({
                 <MantineAvatar
                   size={40}
                   radius={40}
-                  src={member.user_avatar_filepath}
+                  src={
+                    fileUrlListContext?.avatarUrlList[member.user_id as string]
+                  }
                   alt={`${member.username}'s Formsly Avatar`}
                   sx={{
                     border: `${

@@ -1,4 +1,5 @@
 import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import FileUrlListContext from "@/contexts/FileUrlListContext";
 import RequestContext from "@/contexts/RequestContext";
 import RequestListContext from "@/contexts/RequestListContext";
 import { editComment } from "@/utils/queries";
@@ -91,6 +92,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const requestListContext = useContext(RequestListContext);
   const requestContext = useContext(RequestContext);
   const activeTeamContext = useContext(ActiveTeamContext);
+  const fileUrlListContext = useContext(FileUrlListContext);
   const { setRequestList } = requestListContext;
   const { request: requestProps } = requestContext;
   const requestWithApproverList =
@@ -141,6 +143,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const title = request?.[0]?.request_title;
   const description = request?.[0]?.request_description;
   const requestedBy = request?.[0]?.username;
+  const requestedById = request?.[0]?.user_id;
   const dateCreated = request?.[0]?.request_date_created;
   const onBehalfOf = request?.[0]?.request_on_behalf_of;
   const order = request && request[0].order_field_id_list;
@@ -434,7 +437,10 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         <Stack align="flex-start">
           <Title order={5}>Requested By</Title>
           <Group>
-            <Avatar radius={100} />
+            <Avatar
+              radius={100}
+              src={fileUrlListContext?.avatarUrlList[requestedById as string]}
+            />
             <Text>{requestedBy}</Text>
           </Group>
         </Stack>
@@ -789,9 +795,11 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               <Flex gap="xs" wrap="wrap" align="center">
                 <Avatar
                   radius={100}
-                  // src={
-                  //   avatarUrlList && avatarUrlList[comment.user_id as string]
-                  // }
+                  src={
+                    fileUrlListContext?.avatarUrlList[
+                      comment.user_request_comment_user_id as string
+                    ]
+                  }
                   size="sm"
                 />
                 <Text fw={500}>{comment.username}</Text>
