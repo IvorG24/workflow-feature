@@ -27,6 +27,17 @@ const ProfilePage: NextPageWithLayout<Props> = (props) => {
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabaseClient = createServerSupabaseClient(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
 
   const profile_data = await getUserProfile(
     supabaseClient,

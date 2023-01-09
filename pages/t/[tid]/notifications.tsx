@@ -32,9 +32,20 @@ const Page: NextPageWithLayout<NotificationPageProps> = (props) => {
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabaseClient = createServerSupabaseClient(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
 
-  const user = await supabaseClient.auth.getUser();
-  const userId = user.data.user?.id;
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
+  const user = session.user;
+  const userId = user.id;
 
   if (!userId) {
     return {

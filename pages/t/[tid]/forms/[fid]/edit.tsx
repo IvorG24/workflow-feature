@@ -13,8 +13,20 @@ import { ReactElement } from "react";
 import { resetServerContext } from "react-beautiful-dnd";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  resetServerContext();
   const supabaseClient = createServerSupabaseClient<Database>(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
+  resetServerContext();
   const { fid } = ctx.query;
 
   const formTempalte = await getFormTemplate(supabaseClient, Number(fid));

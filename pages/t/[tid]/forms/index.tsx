@@ -11,16 +11,27 @@ import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../../../_app";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabaseClient = createServerSupabaseClient(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
   try {
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await supabaseClient.auth.getSession();
 
     if (!session) throw new Error("Not authorized");
 
     const teamRequestFormList = await getTeamFormTemplateList(
-      supabase,
+      supabaseClient,
       ctx.params?.tid as string
     );
 

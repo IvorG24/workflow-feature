@@ -19,21 +19,33 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabaseClient = createServerSupabaseClient(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
   try {
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await supabaseClient.auth.getSession();
 
     if (!session) throw new Error("Not authorized");
 
     const teamInvitation = await getTeamInvitation(
-      supabase,
+      supabaseClient,
       ctx.params?.id as unknown as string
     );
 
     const isAlreadyMember = await isUserMemberOfTeam(
-      supabase,
+      supabaseClient,
       session.user.id as string,
       teamInvitation?.team_id as string
     );

@@ -27,12 +27,20 @@ const CreateRequestPage: NextPageWithLayout<CreateRequestProps> = (props) => {
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabaseClient = createServerSupabaseClient(ctx);
-  resetServerContext();
-
   const {
-    data: { user },
-  } = await supabaseClient.auth.getUser();
+    data: { session },
+  } = await supabaseClient.auth.getSession();
 
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
+  resetServerContext();
+  const user = session.user;
   const { tid: teamId, formId } = ctx.query;
 
   const [formTemplate, teamMemberList, currentUserProfile] = await Promise.all([
@@ -57,7 +65,9 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     teamMemberList
       .filter(
         (member) =>
-          (member.member_role_id === "owner" || member.member_role_id === "admin") && member.user_id !== user?.id
+          (member.member_role_id === "owner" ||
+            member.member_role_id === "admin") &&
+          member.user_id !== user?.id
       )
       .map((approver) => ({
         label: approver.username,
@@ -75,8 +85,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
         label: purchaser.username,
         value: purchaser.user_id,
       }));
-
-  
 
   return {
     props: {
