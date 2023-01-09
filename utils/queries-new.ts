@@ -960,6 +960,7 @@ export type CreateRequestParams = {
     request_description: string;
     request_on_behalf_of: string;
     request_is_draft: boolean;
+    request_attachment_filepath_list: string[];
   };
   responseList: FieldIdResponseKeyValue;
   approverList: ApproverList;
@@ -1041,7 +1042,7 @@ export const getRequestWithAttachmentUrlList = async (
     const promises = request_attachment_filepath_list.map(
       (filepath: string) => {
         if (!filepath) return null;
-        return getFileUrl(supabaseClient, filepath, "request-attachments");
+        return getFileUrl(supabaseClient, filepath, "request_attachments");
       }
     );
     const requestAttachmentUrlList = await Promise.all(promises);
@@ -1121,7 +1122,7 @@ export const getTeamLogoUrlList = async (
       const promise = getFileUrl(
         supabaseClient,
         team_logo_filepath,
-        "team-logos"
+        "team_logos"
       );
       promises.push(promise);
     }

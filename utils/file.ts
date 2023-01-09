@@ -17,8 +17,9 @@ export async function getFileUrl(
     const url = URL.createObjectURL(data);
 
     return url;
-  } catch {
-    throw new Error("Error fetching file URL");
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
 }
 
@@ -37,7 +38,8 @@ export async function downloadFile(
 
     return data;
   } catch (error) {
-    throw new Error("Error downloading file");
+    console.error(error);
+    throw error;
   }
 }
 
@@ -56,7 +58,8 @@ export async function uploadFile(
     if (error) throw error;
     return data;
   } catch (error) {
-    throw new Error("Error uploading file");
+    console.error(error);
+    throw error;
   }
 }
 
@@ -74,6 +77,7 @@ export async function replaceFile(
     if (error) throw error;
     return data;
   } catch (error) {
-    throw new Error("Error replacing file");
+    console.error(error);
+    throw error;
   }
 }
