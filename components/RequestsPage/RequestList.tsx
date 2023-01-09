@@ -27,20 +27,25 @@ const statusOptions: {
   { value: "stale", label: "Stale" },
 ];
 
-const REQUEST_PER_PAGE = 8;
+export const REQUEST_PER_PAGE = 7;
 
 const RequestList = () => {
   const router = useRouter();
   const requestListContext = useContext(RequestListContext);
-  const { requestListCount } = requestListContext || {};
+  const { requestList } = requestListContext;
+  const requestListCount = requestList.length;
 
   const activeTeamFormList = useContext(ActiveTeamFormListContext);
-  const formList = activeTeamFormList?.map((form) => ({
-    value: `${form.form_id}`,
-    label: `${form.form_name}`,
-  }));
+  const formList = activeTeamFormList
+    ? activeTeamFormList.map((form) => ({
+        value: `${form.form_id}`,
+        label: `${form.form_name}`,
+      }))
+    : [];
 
-  const [search, setSearch] = useState<string>("");
+  const [search, setSearch] = useState<string>(
+    router.query.search_query ? `${router.query.search_query}` : ""
+  );
   const [status, setStatus] = useState<string | null>(`${router.query.status}`);
   const [activePage, setActivePage] = useState(1);
 
@@ -51,7 +56,11 @@ const RequestList = () => {
   const handleSearch = useCallback(
     (search: string) => {
       setSearch(search);
-      router.push({ query: { ...router.query, search_query: search } });
+      router.push(
+        { query: { ...router.query, search_query: search } },
+        undefined,
+        { shallow: true }
+      );
     },
     [router]
   );
@@ -62,10 +71,12 @@ const RequestList = () => {
     currentTarget: { value: string };
   }) => {
     const search = e.currentTarget.value;
+    handleSearch(search);
 
-    if (e.key === "Enter") {
-      handleSearch(search);
-    }
+    // if (e.key === "Enter") {
+    //   handleSearch(search);
+    // }
+
     if (e.key === "Backspace" && search === "") {
       setSearch("");
       handleSearch(search);
@@ -76,10 +87,16 @@ const RequestList = () => {
     (selectedForm: string | null) => {
       setSelectedForm(selectedForm);
       if (selectedForm) {
-        router.push({ query: { ...router.query, form: selectedForm } });
+        router.push(
+          { query: { ...router.query, form: selectedForm } },
+          undefined,
+          { shallow: true }
+        );
       } else {
         router.push(
-          `/t/${router.query.tid}/requests?active_tab=all&page=${activePage}`
+          `/t/${router.query.tid}/requests?active_tab=all&page=${activePage}`,
+          undefined,
+          { shallow: true }
         );
       }
     },
@@ -89,25 +106,29 @@ const RequestList = () => {
   const handleFilterByStatus = (status: string | null) => {
     setStatus(status);
     if (status) {
-      router.push({ query: { ...router.query, status: status } });
+      router.push({ query: { ...router.query, status: status } }, undefined, {
+        shallow: true,
+      });
     } else {
       router.push(
-        `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`
+        `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`,
+        undefined,
+        { shallow: true }
       );
     }
   };
 
   const handlePagination = (activePage: number) => {
     setActivePage(activePage);
-    router.replace({ query: { ...router.query, page: activePage } });
+    router.push(
+      {
+        query: { ...router.query, page: activePage },
+      },
+      undefined,
+      { shallow: true }
+    );
   };
 
-  // reset filters when team_id changes
-  // useEffect(() => {
-  //   setSearch("");
-  //   setSelectedForm(null);
-  //   setStatus(null);
-  // }, [router.query.tid]);
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
@@ -152,5 +173,4 @@ const RequestList = () => {
     </Stack>
   );
 };
-
 export default RequestList;

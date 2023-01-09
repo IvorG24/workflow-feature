@@ -1,72 +1,63 @@
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
-import RequestListContext from "@/contexts/RequestListContext";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 
 import Request from "@/components/Request/Request";
-import { RequestProps } from "@/contexts/RequestListContext";
-import {
-  getRequest,
-  getRequestApproverList,
-  getRequestCommentList,
-} from "@/utils/queries-new";
+import RequestContext, { RequestProps } from "@/contexts/RequestContext";
+import { getRequest, getRequestWithApproverList } from "@/utils/queries-new";
 import { GetServerSidePropsContext } from "next";
 import { NextPageWithLayout } from "pages/_app";
 import { ReactElement, useState } from "react";
 
 const RequestPage: NextPageWithLayout<RequestProps> = (props) => {
-  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
-    props.requestIdList[0]
-  );
+  const [requestProps, setRequestProps] = useState(props.request);
+  const [requestWithApproverListProps, setRequestWithApproverListProps] =
+    useState(props.requestWithApproverList);
+
   return (
-    <RequestListContext.Provider value={props}>
+    <RequestContext.Provider
+      value={{
+        request: requestProps,
+        requestWithApproverList: requestWithApproverListProps,
+        setRequest: setRequestProps,
+        setRequestWithApproverList: setRequestWithApproverListProps,
+      }}
+    >
       <Meta description="Specific Request" url="localhost:3000/requests/id" />
       {/* <Request view="full" selectedRequest={selectedRequest} /> */}
       {/* <Request view="full" selectedRequest={selectedRequestWithAttachmentUrl} /> */}
       <Request
         view="full"
-        selectedRequestId={Number(selectedRequestId)}
-        setSelectedRequestId={setSelectedRequestId}
+        selectedRequestId={Number(props.request[0].request_id)}
       />
       {/* <Request
         view="split"
         selectedRequestId={selectedRequestId}
         setSelectedRequestId={setSelectedRequestId}
       /> */}
-    </RequestListContext.Provider>
+    </RequestContext.Provider>
   );
 };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabaseClient = createServerSupabaseClient(ctx);
 
   const { id: requestId } = ctx.query;
 
-  const request = await getRequest(supabase, Number(requestId));
+  const request = await getRequest(supabaseClient, Number(requestId));
+  if (!request) return { notFound: true };
+  if (request.length === 0) return { notFound: true };
 
-  const requestList = request;
-  const requestIdList = [request && request[0].form_fact_request_id];
-  const requestListCount = 1;
-  const formList = [
-    {
-      value: request && request[0].form_id,
-      label: request && request[0].form_name,
-    },
-  ];
-
-  const [requestApproverList, requestCommentList] = await Promise.all([
-    getRequestApproverList(supabase, requestIdList as number[]),
-    getRequestCommentList(supabase, requestIdList as number[]),
-  ]);
+  const requestIdList = [request[0].request_id];
+  const requestWithApproverList = await getRequestWithApproverList(
+    supabaseClient,
+    requestIdList as number[]
+  );
 
   return {
     props: {
-      requestIdList,
-      requestList,
-      requestListCount,
-      formList,
-      requestApproverList,
-      requestCommentList,
+      request,
+      requestWithApproverList,
     },
   };
 };

@@ -1,18 +1,21 @@
 import {
-  GetRequestApproverList,
-  GetRequestCommentList,
+  GetRequestWithApproverList,
   GetTeamRequestList,
 } from "@/utils/queries-new";
 import { createContext } from "react";
 
-export type RequestProps = {
-  requestIdList: number[];
+export type RequestListProps = {
   requestList: GetTeamRequestList;
-  requestListCount: number;
-  requestApproverList: GetRequestApproverList;
-  requestCommentList: GetRequestCommentList;
+  requestWithApproverList: GetRequestWithApproverList;
+  setRequestList?: React.Dispatch<React.SetStateAction<GetTeamRequestList>>;
+  setRequestWithApproverList?: React.Dispatch<
+    React.SetStateAction<GetRequestWithApproverList>
+  >;
 };
 
-const RequestListContext = createContext<RequestProps | null>(null);
+const RequestListContext = createContext<RequestListProps>({
+  requestList: [],
+  requestWithApproverList: {},
+} as RequestListProps);
 
 export default RequestListContext;
