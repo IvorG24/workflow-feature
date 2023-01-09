@@ -12,18 +12,18 @@ export interface Database {
       invitation_table: {
         Row: {
           invitation_id: number
-          invitation_date_created: string | null
           invitation_target_email: string | null
+          invitation_date_created: string | null
         }
         Insert: {
           invitation_id?: never
-          invitation_date_created?: string | null
           invitation_target_email?: string | null
+          invitation_date_created?: string | null
         }
         Update: {
           invitation_id?: never
-          invitation_date_created?: string | null
           invitation_target_email?: string | null
+          invitation_date_created?: string | null
         }
       }
       member_role_table: {
@@ -40,49 +40,49 @@ export interface Database {
       notification_table: {
         Row: {
           notification_id: number
-          notification_date_created: string | null
           notification_content: string | null
-          notification_is_read: boolean | null
           notification_redirect_url: string | null
+          notification_date_created: string | null
+          notification_is_read: boolean | null
         }
         Insert: {
           notification_id?: never
-          notification_date_created?: string | null
           notification_content?: string | null
-          notification_is_read?: boolean | null
           notification_redirect_url?: string | null
+          notification_date_created?: string | null
+          notification_is_read?: boolean | null
         }
         Update: {
           notification_id?: never
-          notification_date_created?: string | null
           notification_content?: string | null
-          notification_is_read?: boolean | null
           notification_redirect_url?: string | null
+          notification_date_created?: string | null
+          notification_is_read?: boolean | null
         }
       }
       request_comment_table: {
         Row: {
           comment_id: number
-          comment_date_created: string | null
           comment_content: string | null
-          comment_is_edited: boolean | null
           comment_last_updated: string | null
+          comment_date_created: string | null
+          comment_is_edited: boolean | null
           comment_is_disabled: boolean | null
         }
         Insert: {
           comment_id?: never
-          comment_date_created?: string | null
           comment_content?: string | null
-          comment_is_edited?: boolean | null
           comment_last_updated?: string | null
+          comment_date_created?: string | null
+          comment_is_edited?: boolean | null
           comment_is_disabled?: boolean | null
         }
         Update: {
           comment_id?: never
-          comment_date_created?: string | null
           comment_content?: string | null
-          comment_is_edited?: boolean | null
           comment_last_updated?: string | null
+          comment_date_created?: string | null
+          comment_is_edited?: boolean | null
           comment_is_disabled?: boolean | null
         }
       }
@@ -192,53 +192,53 @@ export interface Database {
           request_approver_id: number
           request_approver_request_id: number | null
           request_approver_user_id: string | null
-          request_approver_request_status_id: string | null
           request_approver_status_last_updated: string | null
+          request_approver_request_status_id: string | null
         }
         Insert: {
           request_approver_id?: never
           request_approver_request_id?: number | null
           request_approver_user_id?: string | null
-          request_approver_request_status_id?: string | null
           request_approver_status_last_updated?: string | null
+          request_approver_request_status_id?: string | null
         }
         Update: {
           request_approver_id?: never
           request_approver_request_id?: number | null
           request_approver_user_id?: string | null
-          request_approver_request_status_id?: string | null
           request_approver_status_last_updated?: string | null
+          request_approver_request_status_id?: string | null
         }
       }
       request_request_table: {
         Row: {
           request_id: number
-          request_date_created: string | null
           request_title: string | null
           request_description: string | null
           request_on_behalf_of: string | null
-          request_is_draft: boolean | null
           request_attachment_filepath_list: string[] | null
+          request_date_created: string | null
+          request_is_draft: boolean | null
           request_is_disabled: boolean | null
         }
         Insert: {
           request_id?: never
-          request_date_created?: string | null
           request_title?: string | null
           request_description?: string | null
           request_on_behalf_of?: string | null
-          request_is_draft?: boolean | null
           request_attachment_filepath_list?: string[] | null
+          request_date_created?: string | null
+          request_is_draft?: boolean | null
           request_is_disabled?: boolean | null
         }
         Update: {
           request_id?: never
-          request_date_created?: string | null
           request_title?: string | null
           request_description?: string | null
           request_on_behalf_of?: string | null
-          request_is_draft?: boolean | null
           request_attachment_filepath_list?: string[] | null
+          request_date_created?: string | null
+          request_is_draft?: boolean | null
           request_is_disabled?: boolean | null
         }
       }
@@ -335,19 +335,19 @@ export interface Database {
       }
       team_table: {
         Row: {
-          team_id: string
           team_name: string | null
           team_logo_filepath: string | null
+          team_id: string
         }
         Insert: {
-          team_id?: string
           team_name?: string | null
           team_logo_filepath?: string | null
+          team_id?: string
         }
         Update: {
-          team_id?: string
           team_name?: string | null
           team_logo_filepath?: string | null
+          team_id?: string
         }
       }
       team_user_notification_table: {
@@ -373,30 +373,30 @@ export interface Database {
       user_profile_table: {
         Row: {
           user_id: string
-          user_created_at: string | null
           username: string | null
           user_first_name: string | null
           user_last_name: string | null
           user_avatar_filepath: string | null
           user_email: string | null
+          user_created_at: string | null
         }
         Insert: {
           user_id: string
-          user_created_at?: string | null
           username?: string | null
           user_first_name?: string | null
           user_last_name?: string | null
           user_avatar_filepath?: string | null
           user_email?: string | null
+          user_created_at?: string | null
         }
         Update: {
           user_id?: string
-          user_created_at?: string | null
           username?: string | null
           user_first_name?: string | null
           user_last_name?: string | null
           user_avatar_filepath?: string | null
           user_email?: string | null
+          user_created_at?: string | null
         }
       }
     }

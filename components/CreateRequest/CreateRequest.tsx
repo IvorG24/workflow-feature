@@ -1,4 +1,5 @@
 import CreateRequestContext from "@/contexts/CreateRequestContext";
+import { uploadFile } from "@/utils/file";
 import {
   createRequest,
   CreateRequestParams,
@@ -243,17 +244,17 @@ const CreateRequest = () => {
       }
       setIsCreating(true);
 
-      // let filepath;
-      // // * Upload file first if existing so if upload failed, request won't be created.
-      // if (file) {
-      //   const { path } = await uploadFile(
-      //     supabase,
-      //     file.name,
-      //     file,
-      //     "request-attachments"
-      //   );
-      //   filepath = path;
-      // }
+      let filepath;
+      // Call the uploadFile function first so that if the attachment upload fails, the request will not be created.
+      if (file) {
+        const { path } = await uploadFile(
+          supabase,
+          file.name,
+          file,
+          "request_attachments"
+        );
+        filepath = path;
+      }
 
       // const savedRequest = await saveRequest(
       //   supabase,
@@ -305,6 +306,7 @@ const CreateRequest = () => {
           request_description: formData.description,
           request_on_behalf_of: formData.behalf,
           request_is_draft: false,
+          request_attachment_filepath_list: filepath ? [filepath] : [],
         },
         approverList,
         responseList,
