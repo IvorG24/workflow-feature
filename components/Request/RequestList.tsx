@@ -173,6 +173,7 @@ const RequestList = () => {
           <Paper shadow="xs" p="sm">
             <Checkbox.Group value={checked} onChange={setChecked}>
               <Stack spacing="xs" w="100%">
+                {/* replace with context data */}
                 {tempData.map((data) => (
                   <Box
                     key={data.request_id}
