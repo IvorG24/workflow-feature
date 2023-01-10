@@ -2,104 +2,152 @@
 
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
-import RequestList from "@/components/RequestsPage/RequestList";
+import RequestListPage from "@/components/RequestsPage/RequestsPage";
 import RequestListContext from "@/contexts/RequestListContext";
-import {
-  retrieveRequestFormByTeam,
-  retrieveRequestList,
-} from "@/utils/queries";
-import { Container, Tabs, Title } from "@mantine/core";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 
-import { RequestProps } from "@/contexts/RequestListContext";
+import { RequestListProps } from "@/contexts/RequestListContext";
+import {
+  getRequestWithApproverList,
+  getTeamRequestList,
+} from "@/utils/queries-new";
+import { useUser } from "@supabase/auth-helpers-react";
 import { GetServerSidePropsContext } from "next";
+import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
-import { ReactElement } from "react";
+import { ReactElement, useEffect, useState } from "react";
 
-const RequestsPage: NextPageWithLayout<RequestProps> = (props) => {
+const filterRequestList = (
+  requestList: RequestListProps["requestList"],
+  queryParams: Record<string, string | string[] | undefined>,
+  userId: string,
+  approverList: RequestListProps["requestWithApproverList"]
+) => {
+  // http://localhost:3000/t/3bb6c9bf-d9e6-47a1-88d4-ca60917857eb/requests?active_tab=sent&page=1&form=1&status=approved&search_query=fe
+  // Get all the query parameters from the URL.
+  const { active_tab, form, status, search_query } = queryParams;
+
+  let filteredRequestList = requestList;
+
+  if (active_tab) {
+    filteredRequestList = filteredRequestList.filter((request) => {
+      if (active_tab === "sent") {
+        return request.form_fact_user_id === userId;
+      } else if (active_tab === "received") {
+        return approverList[request.request_id || ""].find(
+          (approver) => approver.approver_id === userId
+        );
+      } else {
+        return true;
+      }
+    });
+  }
+  if (form) {
+    filteredRequestList = filteredRequestList.filter(
+      (request) => request.form_id === Number(form)
+    );
+  }
+  if (status) {
+    filteredRequestList = filteredRequestList.filter(
+      (request) => request.form_fact_request_status_id === status
+    );
+  }
+  if (search_query) {
+    filteredRequestList = filteredRequestList.filter((request) => {
+      const searchString = [
+        request.user_first_name,
+        request.user_last_name,
+        request.username,
+        request.request_title,
+        request.request_description,
+        request.request_on_behalf_of,
+        request.request_id,
+      ]
+        .filter((e) => e)
+        .join(" ")
+        .toLowerCase();
+
+      return searchString.includes(search_query.toString().toLowerCase());
+    });
+  }
+
+  return filteredRequestList;
+};
+
+const RequestsPage: NextPageWithLayout<RequestListProps> = (props) => {
   const router = useRouter();
+  const user = useUser();
+  const [requestListProps, setRequestListProps] = useState(
+    filterRequestList(
+      props.requestList,
+      router.query,
+      user?.id as string,
+      props.requestWithApproverList
+    )
+  );
+  const [requestWithApproverListProps, setRequestWithApproverListProps] =
+    useState(props.requestWithApproverList);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (!user?.id) return;
+
+    setRequestListProps(
+      filterRequestList(
+        props.requestList,
+        router.query,
+        user.id,
+        props.requestWithApproverList
+      )
+    );
+  }, [router.query]);
 
   // todo: fix meta tags
   return (
-    <RequestListContext.Provider value={props}>
+    <RequestListContext.Provider
+      value={{
+        requestList: requestListProps,
+        requestWithApproverList: requestWithApproverListProps,
+        setRequestList: setRequestListProps,
+        setRequestWithApproverList: setRequestWithApproverListProps,
+      }}
+    >
       <Meta description="List of all Requests" url="localhost:3000/requests" />
-      <Container px={8} py={16} fluid>
-        <Title>Requests</Title>
-
-        <Tabs
-          value={router.query.active_tab as string}
-          onTabChange={(value) =>
-            router.replace({
-              query: { ...router.query, active_tab: value, page: "1" },
-            })
-          }
-          mt={50}
-        >
-          <Tabs.List>
-            <Tabs.Tab value="all">All</Tabs.Tab>
-            <Tabs.Tab value="sent">Sent</Tabs.Tab>
-            <Tabs.Tab value="received">Received</Tabs.Tab>
-          </Tabs.List>
-        </Tabs>
-
-        <Container fluid m={0} p={0}>
-          <RequestList />
-        </Container>
-      </Container>
+      <RequestListPage />
     </RequestListContext.Provider>
   );
 };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
-  const supabase = createServerSupabaseClient(ctx);
-
+  const supabaseClient = createServerSupabaseClient(ctx);
   const {
-    tid: teamId,
-    page: activePage,
-    form: form,
-    search_query: searchQuery,
-    active_tab,
-    status,
-  } = ctx.query;
-  const request_per_page = 8;
-  const start = (Number(activePage) - 1) * request_per_page;
-  const selectedForm = form ? (form as string) : null;
-  const formStatus = status ? status : "";
-  const activeTab = active_tab !== "all" ? active_tab : false;
+    data: { session },
+  } = await supabaseClient.auth.getSession();
 
-  const search = searchQuery === undefined ? "" : (searchQuery as string);
-  const isSearch = searchQuery ? true : false;
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { tid: teamId } = ctx.query;
 
-  const { requestList, requestCount } = await retrieveRequestList(
-    supabase,
-    start,
-    `${teamId}`,
-    request_per_page,
-    selectedForm,
-    formStatus as string,
-    search,
-    isSearch,
-    activeTab as string,
-    user?.id
+  const requestList = await getTeamRequestList(
+    supabaseClient,
+    teamId as string
   );
-  const requestFormList = await retrieveRequestFormByTeam(
-    supabase,
-    `${teamId}`
+  const requestIdList = requestList.map((request) => request.request_id);
+  const requestWithApproverList = await getRequestWithApproverList(
+    supabaseClient,
+    requestIdList as number[]
   );
-  const forms = requestFormList?.map((form) => {
-    return { value: `${form.form_id}`, label: `${form.form_name}` };
-  });
 
   return {
     props: {
       requestList,
-      requestCount,
-      forms,
+      requestWithApproverList,
     },
   };
 };

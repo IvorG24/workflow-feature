@@ -2,25 +2,36 @@ import FormsPage from "@/components/FormsPage/FormsPage";
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import {
-  FetchTeamRequestFormList,
-  fetchTeamRequestFormList,
-} from "@/utils/queries";
+  getTeamFormTemplateList,
+  GetTeamFormTemplateList,
+} from "@/utils/queries-new";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../../../_app";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabaseClient = createServerSupabaseClient(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
   try {
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await supabaseClient.auth.getSession();
 
     if (!session) throw new Error("Not authorized");
 
-    const teamRequestFormList = await fetchTeamRequestFormList(
-      supabase,
+    const teamRequestFormList = await getTeamFormTemplateList(
+      supabaseClient,
       ctx.params?.tid as string
     );
 
@@ -37,7 +48,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 
 type Props = {
-  formList: FetchTeamRequestFormList;
+  formList: NonNullable<GetTeamFormTemplateList>;
 };
 
 const Forms: NextPageWithLayout<Props> = ({ formList }) => {

@@ -1,9 +1,9 @@
-import { FormTableRow } from "@/utils/types";
+import { GetTeamFormTemplateList } from "@/utils/queries-new";
 import { Badge, Checkbox } from "@mantine/core";
 import { useRouter } from "next/router";
 
 type Props = {
-  form: FormTableRow;
+  form: NonNullable<GetTeamFormTemplateList>[0];
 };
 
 const FormCard = ({ form }: Props) => {
@@ -23,9 +23,12 @@ const FormCard = ({ form }: Props) => {
       <td>
         <Badge
           radius="xs"
-          color={form.form_status?.toLowerCase() === "active" ? "blue" : "gray"}
+          // TODO: Archived form status.
+          // color={form.form_status?.toLowerCase() === "active" ? "blue" : "gray"}
+          color={"blue"}
         >
-          {form.form_status}
+          {/* {form.form_status} */}
+          Active
         </Badge>
       </td>
       <td>{new Date(`${form.form_created_at}`).toLocaleDateString()}</td>

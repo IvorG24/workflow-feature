@@ -1,59 +1,13 @@
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import Setting from "@/components/Setting/Setting";
-import {
-  MemberListActionEnum,
-  useMemberListContext,
-} from "@/contexts/MemberListContext";
-
-import { FetchTeamMemberList, fetchTeamMemberList } from "@/utils/queries";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { GetServerSideProps } from "next";
-import { ReactElement, useEffect } from "react";
+import { GetServerSidePropsContext } from "next";
+
+import { ReactElement } from "react";
 import type { NextPageWithLayout } from "../../../_app";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) throw new Error("Not authorized");
-    const fetchedMemberList = await fetchTeamMemberList(
-      supabase,
-      `${ctx.query.tid}`
-    );
-    return {
-      props: {
-        memberList: fetchedMemberList,
-      },
-    };
-  } catch (error) {
-    return {
-      props: {
-        memberList: null,
-      },
-    };
-  }
-};
-
-type Props = {
-  memberList: FetchTeamMemberList;
-};
-
-const MemberSettingsPage: NextPageWithLayout<Props> = ({ memberList }) => {
-  const { dispatchMemberList } = useMemberListContext();
-
-  useEffect(() => {
-    dispatchMemberList({
-      type: MemberListActionEnum.SET,
-      payload: {
-        memberList,
-      },
-    });
-  }, [memberList]);
-
+const MemberSettingsPage: NextPageWithLayout = () => {
   return (
     <div>
       <Meta
@@ -63,6 +17,25 @@ const MemberSettingsPage: NextPageWithLayout<Props> = ({ memberList }) => {
       <Setting activeTab="members" />
     </div>
   );
+};
+
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabaseClient = createServerSupabaseClient(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
+  return {
+    props: {},
+  };
 };
 
 MemberSettingsPage.getLayout = function getLayout(page: ReactElement) {

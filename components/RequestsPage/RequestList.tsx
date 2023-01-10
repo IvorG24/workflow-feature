@@ -1,60 +1,66 @@
+import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import RequestListContext from "@/contexts/RequestListContext";
-import { getFileUrl } from "@/utils/queries";
-import type { Database, RequestType } from "@/utils/types";
+import { RequestStatus } from "@/utils/types-new";
 import {
   ActionIcon,
   Group,
-  LoadingOverlay,
   Pagination,
   Select,
   SelectItem,
   Stack,
   TextInput,
 } from "@mantine/core";
-import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ceil } from "lodash";
 import { useRouter } from "next/router";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import SvgSearch from "../Icon/Search";
 import RequestTable from "./RequestTable";
 
 const statusOptions: {
-  value: Database["public"]["Enums"]["request_status"];
+  value: RequestStatus;
   label: string;
 }[] = [
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
-  { value: "revision", label: "Revision" },
+  { value: "purchased", label: "Purchased" },
   { value: "stale", label: "Stale" },
 ];
 
-const REQUEST_PER_PAGE = 8;
+export const REQUEST_PER_PAGE = 7;
 
 const RequestList = () => {
   const router = useRouter();
-  const supabaseClient = useSupabaseClient<Database>();
-  const requestContext = useContext(RequestListContext);
-  const [requestList, setRequestList] = useState<RequestType[]>([]);
-  const [requestCount, setRequestCount] = useState(0);
-  const forms = requestContext?.forms;
-  const [isLoading, setIsLoading] = useState(false);
-  const [search, setSearch] = useState<string>("");
-  const [status, setStatus] = useState<string | null>(null);
-  const [activePage, setActivePage] = useState(1);
-  const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(
-    null
+  const requestListContext = useContext(RequestListContext);
+  const { requestList } = requestListContext;
+  const requestListCount = requestList.length;
+
+  const activeTeamFormList = useContext(ActiveTeamFormListContext);
+  const formList = activeTeamFormList
+    ? activeTeamFormList.map((form) => ({
+        value: `${form.form_id}`,
+        label: `${form.form_name}`,
+      }))
+    : [];
+
+  const [search, setSearch] = useState<string>(
+    router.query.search_query ? `${router.query.search_query}` : ""
   );
+  const [status, setStatus] = useState<string | null>(`${router.query.status}`);
+  const [activePage, setActivePage] = useState(1);
+
   const [selectedForm, setSelectedForm] = useState<string | null>(
-    router.query.formId ? `${router.query.formId}` : null
+    router.query.form ? `${router.query.form}` : null
   );
 
   const handleSearch = useCallback(
     (search: string) => {
-      setIsLoading(true);
       setSearch(search);
-      router.replace({ query: { ...router.query, search_query: search } });
+      router.push(
+        { query: { ...router.query, search_query: search } },
+        undefined,
+        { shallow: true }
+      );
     },
     [router]
   );
@@ -65,10 +71,12 @@ const RequestList = () => {
     currentTarget: { value: string };
   }) => {
     const search = e.currentTarget.value;
+    handleSearch(search);
 
-    if (e.key === "Enter") {
-      handleSearch(search);
-    }
+    // if (e.key === "Enter") {
+    //   handleSearch(search);
+    // }
+
     if (e.key === "Backspace" && search === "") {
       setSearch("");
       handleSearch(search);
@@ -77,85 +85,53 @@ const RequestList = () => {
 
   const handleFilterBySelectedForm = useCallback(
     (selectedForm: string | null) => {
-      setIsLoading(true);
       setSelectedForm(selectedForm);
       if (selectedForm) {
-        router.replace({ query: { ...router.query, form: selectedForm } });
+        router.push(
+          { query: { ...router.query, form: selectedForm } },
+          undefined,
+          { shallow: true }
+        );
       } else {
         router.push(
-          `/t/${router.query.tid}/requests?active_tab=all&page=${activePage}`
+          `/t/${router.query.tid}/requests?active_tab=all&page=${activePage}`,
+          undefined,
+          { shallow: true }
         );
       }
     },
     [router, activePage]
   );
 
-  const handleFilterByStatus = useCallback(
-    (status: string | null) => {
-      setIsLoading(true);
-      setStatus(status);
-      if (status) {
-        router.replace({ query: { ...router.query, status: status } });
-      } else {
-        router.push(
-          `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`
-        );
-      }
-    },
-    [router, activePage]
-  );
+  const handleFilterByStatus = (status: string | null) => {
+    setStatus(status);
+    if (status) {
+      router.push({ query: { ...router.query, status: status } }, undefined, {
+        shallow: true,
+      });
+    } else {
+      router.push(
+        `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${activePage}`,
+        undefined,
+        { shallow: true }
+      );
+    }
+  };
 
   const handlePagination = (activePage: number) => {
     setActivePage(activePage);
-    router.replace({ query: { ...router.query, page: activePage } });
+    router.push(
+      {
+        query: { ...router.query, page: activePage },
+      },
+      undefined,
+      { shallow: true }
+    );
   };
-
-  useEffect(() => {
-    try {
-      // * Loop through request list and getFileUrl for each attachment.
-      (async () => {
-        const requestListWithFileUrl =
-          requestContext?.requestList as RequestType[];
-        for (const requestItem of requestListWithFileUrl) {
-          const attachmentList = requestItem.attachments
-            ? requestItem.attachments
-            : [];
-          const attachmentUrlList = await Promise.all(
-            attachmentList.map((path) =>
-              getFileUrl(supabaseClient, path, "request_attachments")
-            )
-          );
-          requestItem.attachments = attachmentUrlList;
-        }
-        setRequestList(requestListWithFileUrl);
-      })();
-      setRequestCount(Number(requestContext?.requestCount));
-      setIsLoading(false);
-    } catch (error) {
-      showNotification({
-        title: "Error!",
-        message: "Failed to fetch Request List",
-        color: "red",
-      });
-    }
-  }, [requestContext, supabaseClient]);
-
-  // reset filters when team_id changes
-  useEffect(() => {
-    setSearch("");
-    setSelectedForm(null);
-    setStatus(null);
-  }, [router.query.tid]);
-
-  // set Form Type based on route query
-  useEffect(() => {
-    setSelectedForm(router.query.form as string);
-  }, [router.query.form]);
 
   // todo: add eslint to show error for `mt={"xl"}`
   return (
     <Stack>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
       <Group mt="xl">
         <TextInput
           value={search}
@@ -171,7 +147,7 @@ const RequestList = () => {
         <Select
           clearable
           placeholder="Form Type"
-          data={forms as (string | SelectItem)[]}
+          data={formList as (string | SelectItem)[]}
           value={selectedForm}
           onChange={handleFilterBySelectedForm}
         />
@@ -181,26 +157,20 @@ const RequestList = () => {
           data={statusOptions}
           value={status}
           onChange={handleFilterByStatus}
+          data-cy="request-select-status"
         />
       </Group>
-      <RequestTable
-        requestList={requestList as RequestType[]}
-        selectedRequest={selectedRequest}
-        setSelectedRequest={setSelectedRequest}
-        setRequestList={setRequestList}
-        setIsLoading={setIsLoading}
-      />
+      <RequestTable />
 
-      {ceil(requestCount / REQUEST_PER_PAGE) >= 1 ? (
+      {ceil((requestListCount as number) / REQUEST_PER_PAGE) >= 1 ? (
         <Pagination
           sx={{ alignSelf: "flex-end" }}
           page={activePage}
           onChange={handlePagination}
-          total={ceil(requestCount / REQUEST_PER_PAGE)}
+          total={ceil((requestListCount as number) / REQUEST_PER_PAGE)}
         />
       ) : null}
     </Stack>
   );
 };
-
 export default RequestList;

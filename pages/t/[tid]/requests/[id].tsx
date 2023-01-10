@@ -1,63 +1,76 @@
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
-import Request from "@/components/Request/Request";
-import { getFileUrl, retrieveRequest } from "@/utils/queries";
-import { Database, RequestType } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { GetServerSideProps } from "next";
-import { ReactElement, useEffect, useState } from "react";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
+import Request from "@/components/Request/Request";
+import RequestContext, { RequestProps } from "@/contexts/RequestContext";
+import { getRequest, getRequestWithApproverList } from "@/utils/queries-new";
+import { GetServerSidePropsContext } from "next";
+import { NextPageWithLayout } from "pages/_app";
+import { ReactElement, useState } from "react";
 
-  const selectedRequest = await retrieveRequest(
-    supabase,
-    Number(ctx.params?.id)
+const RequestPage: NextPageWithLayout<RequestProps> = (props) => {
+  const [requestProps, setRequestProps] = useState(props.request);
+  const [requestWithApproverListProps, setRequestWithApproverListProps] =
+    useState(props.requestWithApproverList);
+
+  return (
+    <RequestContext.Provider
+      value={{
+        request: requestProps,
+        requestWithApproverList: requestWithApproverListProps,
+        setRequest: setRequestProps,
+        setRequestWithApproverList: setRequestWithApproverListProps,
+      }}
+    >
+      <Meta description="Specific Request" url="localhost:3000/requests/id" />
+      {/* <Request view="full" selectedRequest={selectedRequest} /> */}
+      {/* <Request view="full" selectedRequest={selectedRequestWithAttachmentUrl} /> */}
+      <Request
+        view="full"
+        selectedRequestId={Number(props.request[0].request_id)}
+      />
+      {/* <Request
+        view="split"
+        selectedRequestId={selectedRequestId}
+        setSelectedRequestId={setSelectedRequestId}
+      /> */}
+    </RequestContext.Provider>
+  );
+};
+
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabaseClient = createServerSupabaseClient(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
+  const { id: requestId } = ctx.query;
+
+  const request = await getRequest(supabaseClient, Number(requestId));
+  if (!request) return { notFound: true };
+  if (request.length === 0) return { notFound: true };
+
+  const requestIdList = [request[0].request_id];
+  const requestWithApproverList = await getRequestWithApproverList(
+    supabaseClient,
+    requestIdList as number[]
   );
 
   return {
-    props: { selectedRequest },
+    props: {
+      request,
+      requestWithApproverList,
+    },
   };
-};
-
-type Props = {
-  selectedRequest: RequestType;
-};
-
-const RequestPage = ({ selectedRequest }: Props) => {
-  // todo: fix meta tags
-  const supabaseClient = useSupabaseClient<Database>();
-  const [
-    selectedRequestWithAttachmentUrl,
-    setSelectedRequestWithAttachmentUrl,
-  ] = useState<RequestType>(selectedRequest);
-
-  // TODO: Supabase download function for attachments does not work on server side so I will be converting the url here for now on fetch.
-  useEffect(() => {
-    (async () => {
-      // convert selectRequest.attachments to url with getFileUrl.
-      const attachmentList = selectedRequest?.attachments
-        ? selectedRequest.attachments
-        : [];
-      const promiseList = attachmentList.map((path) =>
-        getFileUrl(supabaseClient, path, "request_attachments")
-      );
-      const attachmentUrlList = await Promise.all(promiseList);
-      setSelectedRequestWithAttachmentUrl({
-        ...selectedRequest,
-        attachments: attachmentUrlList,
-      });
-    })();
-  }, [selectedRequest]);
-
-  return (
-    <div>
-      <Meta description="Specific Request" url="localhost:3000/requests/id" />
-      {/* <Request view="full" selectedRequest={selectedRequest} /> */}
-      <Request view="full" selectedRequest={selectedRequestWithAttachmentUrl} />
-    </div>
-  );
 };
 
 RequestPage.getLayout = function getLayout(page: ReactElement) {

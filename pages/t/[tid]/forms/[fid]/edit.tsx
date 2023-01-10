@@ -3,9 +3,9 @@ import Meta from "@/components/Meta/Meta";
 import RequestFormBuilderPage from "@/components/RequestFormBuilderPage/RequestFormBuilderPage";
 import { Database } from "@/utils/database.types";
 import {
-  fetchEmptyForm,
-  mapEmptyFormToReactDndRequestForm,
-} from "@/utils/queries";
+  getFormTemplate,
+  transformFormTemplateToReactDndFormRequest,
+} from "@/utils/queries-new";
 import { FormRequest } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
@@ -13,17 +13,39 @@ import { ReactElement } from "react";
 import { resetServerContext } from "react-beautiful-dnd";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  resetServerContext();
   const supabaseClient = createServerSupabaseClient<Database>(ctx);
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session)
+    return {
+      redirect: {
+        destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
+  resetServerContext();
   const { fid } = ctx.query;
 
-  const emptyForm = await fetchEmptyForm(supabaseClient, Number(fid));
-  if (!emptyForm) return { notFound: true };
+  const formTempalte = await getFormTemplate(supabaseClient, Number(fid));
 
-  const emptyReactDndRequestForm = await mapEmptyFormToReactDndRequestForm({
-    formTableRow: emptyForm.formTableRow,
-    fieldTableRowList: emptyForm.fieldTableRowList,
+  if (!formTempalte) return { notFound: true };
+
+  const emptyReactDndRequestForm =
+    await transformFormTemplateToReactDndFormRequest(formTempalte);
+
+  const order = formTempalte && formTempalte[0].order_field_id_list;
+
+  emptyReactDndRequestForm.questions.sort((a, b) => {
+    if (!order) return 0;
+    return (
+      order.indexOf(a.fieldId as number) - order.indexOf(b.fieldId as number)
+    );
   });
+
+  // Sort emptyReactDndRequestForm.question using order variable above.
 
   return {
     props: {

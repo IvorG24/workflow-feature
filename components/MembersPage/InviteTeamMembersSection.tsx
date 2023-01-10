@@ -1,10 +1,11 @@
 import { Database } from "@/utils/database.types";
 import {
+  createNotification,
   createTeamInvitation,
-  createUserNotification,
+  getTeam,
   getUserIdListFromEmailList,
-} from "@/utils/queries";
-import { UserNotificationTableInsert } from "@/utils/types";
+} from "@/utils/queries-new";
+import { NotificationTableInsert } from "@/utils/types-new";
 import { Button, Flex, MultiSelect } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
@@ -54,27 +55,49 @@ const InviteTeamMembersSection = ({ members }: Props) => {
       );
 
       // * Purpose: We remove emails of users that aren't registered yet to the app so we don't create in-app notification for them.
-      const userIdList = await getUserIdListFromEmailList(
+      const userIdWithEmailList = await getUserIdListFromEmailList(
         supabaseClient,
         data.emails
       );
-      const filteredTeamInvitationList = teamInvitationList.filter(
-        (invitation) =>
-          userIdList
-            .map((user) => user.userEmail)
-            .includes(invitation.invite_target as string)
+
+      if (!userIdWithEmailList) return;
+
+      // Check if email is in userIdWithEmailList. e.g. userIdWithEmailList { userId: "123", userEmail: "dw@dwda.com" }
+      const existingUserIdWithEmailList = userIdWithEmailList.filter(
+        (userIdWithEmail) => {
+          return data.emails.includes(userIdWithEmail.userEmail);
+        }
       );
 
       // * Purpose: We create in-app notification for users that are registered in the app.
-      const notificationInsertList: UserNotificationTableInsert[] =
-        filteredTeamInvitationList.map((invitation) => ({
-          notification_message: `You have been invited to join ${invitation.team_table.team_name}.`,
-          redirection_url: `/team-invitations/${invitation.team_invitation_id}`,
-          user_id: userIdList.find(
-            (user) => user.userEmail === invitation.invite_target
-          )?.userId,
-        }));
-      await createUserNotification(supabaseClient, notificationInsertList);
+      // * Use createNotification() function to create notification for each user.
+      // * Use Promise.all() to create notification for all users at the same time.
+
+      // Get team name.
+      const team = await getTeam(supabaseClient, router.query.tid as string);
+      const teamName = team && team[0].team_name;
+
+      const promises = existingUserIdWithEmailList.map(
+        ({ userId, userEmail }) => {
+          // Get the created invitation from teamInvitationList that matches the userEmail.
+          const teamInvitation = teamInvitationList.find(
+            (teamInvitation) =>
+              teamInvitation.invitation_target_email === userEmail
+          );
+          const notificationInsertInput: NotificationTableInsert = {
+            notification_content: `${user.email} has invited you to join their team ${teamName}.`,
+            notification_redirect_url: `/team-invitations/${teamInvitation?.invitation_id}`,
+          };
+
+          return createNotification(
+            supabaseClient,
+            userId,
+            notificationInsertInput
+          );
+        }
+      );
+
+      await Promise.all(promises);
 
       showNotification({
         title: "Success!",
@@ -82,7 +105,8 @@ const InviteTeamMembersSection = ({ members }: Props) => {
         color: "green",
       });
       reset();
-    } catch {
+    } catch (error) {
+      console.error(error);
       showNotification({
         title: "Error",
         message: "Failed to send invites",

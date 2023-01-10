@@ -1,20 +1,28 @@
+import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import FileUrlListContext from "@/contexts/FileUrlListContext";
+import RequestContext from "@/contexts/RequestContext";
+import RequestListContext from "@/contexts/RequestListContext";
+import { editComment } from "@/utils/queries";
 import {
-  createComment,
-  deleteComment,
-  deleteRequest,
-  editComment,
-  markAsPurchasedRequest,
-  requestResponse,
-  RetrievedRequestComments,
-  retrieveRequestComments,
-  retrieveRequestResponse,
-} from "@/utils/queries";
+  createRequestComment,
+  deletePendingRequest,
+  deleteRequestComment,
+  GetRequest,
+  getRequest,
+  getRequestCommentList,
+  GetRequestCommentList,
+  GetRequestWithAttachmentUrlList,
+  getRequestWithAttachmentUrlList,
+  updateRequestComment,
+  updateRequestStatus,
+} from "@/utils/queries-new";
 import {
   renderTooltip,
   setBadgeColor,
   setTimeDifference,
 } from "@/utils/request";
-import { Database, Marks, RequestFields, RequestType } from "@/utils/types";
+import { Marks } from "@/utils/types";
+import { RequestStatus, TeamMemberRole } from "@/utils/types-new";
 import {
   ActionIcon,
   Avatar,
@@ -44,7 +52,7 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Close, Dots, Maximize } from "../Icon";
 import AttachmentBox from "../RequestsPage/AttachmentBox";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
@@ -52,10 +60,8 @@ import styles from "./Request.module.scss";
 
 type Props = {
   view: "split" | "full";
-  selectedRequest: RequestType | null;
-  setSelectedRequest?: Dispatch<SetStateAction<RequestType | null>>;
-  setRequestList?: Dispatch<SetStateAction<RequestType[]>>;
-  setIsLoading?: Dispatch<SetStateAction<boolean>>;
+  selectedRequestId: number;
+  setSelectedRequestId?: (requestId: number | null) => void;
 };
 
 const MARKS: Marks[] = [
@@ -81,84 +87,133 @@ const MARKS: Marks[] = [
   },
 ];
 
-const Request = ({
-  view,
-  selectedRequest,
-  setSelectedRequest,
-  setRequestList,
-  setIsLoading,
-}: Props) => {
+const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const router = useRouter();
-  const supabase = useSupabaseClient<Database>();
+  const requestListContext = useContext(RequestListContext);
+  const requestContext = useContext(RequestContext);
+  const activeTeamContext = useContext(ActiveTeamContext);
+  const fileUrlListContext = useContext(FileUrlListContext);
+  const { setRequestList } = requestListContext;
+  const { request: requestProps } = requestContext;
+  const requestWithApproverList =
+    view === "full"
+      ? requestContext.requestWithApproverList
+      : requestListContext.requestWithApproverList;
   const user = useUser();
-  const [selectedRequestFields, setSelectedRequestFields] = useState<
-    RequestFields[]
-  >([]);
+  const supabaseClient = useSupabaseClient();
   const [comment, setComment] = useState("");
-  const [commentList, setCommentList] = useState<RetrievedRequestComments[]>(
-    []
-  );
   const [editCommentId, setEditCommentId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
-  const [fullViewIsLoading, setFullViewIsLoading] = useState(false);
-
-  const isApprover =
-    (selectedRequest?.request_status === "stale" ||
-      selectedRequest?.request_status === "pending") &&
-    selectedRequest?.approver_id === user?.id;
-
-  const isPurchaser =
-    selectedRequest?.request_status === "approved" &&
-    selectedRequest?.purchaser_id === user?.id &&
-    selectedRequest?.request_is_purchased !== true;
-
-  const isOwner =
-    selectedRequest?.owner.user_id === user?.id &&
-    (selectedRequest?.request_status === "pending" ||
-      selectedRequest?.request_status === "stale");
+  const [attachmentUrlList, setAttachmentUrlList] =
+    useState<GetRequestWithAttachmentUrlList>();
+  const [request, setRequest] = useState<GetRequest>(requestProps);
+  const [commentList, setCommentList] = useState<GetRequestCommentList>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRequestFields = async () => {
+    (async () => {
       try {
-        const requestFields = await retrieveRequestResponse(
-          supabase,
-          Number(selectedRequest?.request_id),
-          Number(selectedRequest?.form_table_id)
-        );
+        if (!router.isReady) return;
 
-        setSelectedRequestFields(requestFields as unknown as RequestFields[]);
-      } catch {
+        const [data, data2, data3] = await Promise.all([
+          getRequest(supabaseClient, selectedRequestId),
+          getRequestWithAttachmentUrlList(supabaseClient, selectedRequestId),
+          getRequestCommentList(supabaseClient, selectedRequestId),
+        ]);
+        if (!data) throw new Error("Request not found");
+
+        setRequest(data);
+        setAttachmentUrlList(data2);
+        setCommentList(data3);
+      } catch (error) {
+        console.error(error);
         showNotification({
           title: "Error!",
-          message: "Failed to fetch Request Fields",
+          message: "Failed to fetch request information",
           color: "red",
         });
+      } finally {
+        setIsLoading(false);
       }
-    };
-    const fetchComments = async () => {
-      const commentList = await retrieveRequestComments(
-        supabase,
-        Number(selectedRequest?.request_id)
-      );
-      setCommentList(commentList);
-    };
+    })();
+  }, [router, selectedRequestId, supabaseClient]);
 
-    fetchRequestFields();
-    fetchComments();
-  }, [selectedRequest?.request_id, supabase]);
+  if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
+
+  const title = request?.[0]?.request_title;
+  const description = request?.[0]?.request_description;
+  const requestedBy = request?.[0]?.username;
+  const requestedById = request?.[0]?.user_id;
+  const dateCreated = request?.[0]?.request_date_created;
+  const onBehalfOf = request?.[0]?.request_on_behalf_of;
+  const order = request && request[0].order_field_id_list;
+  const attachments =
+    request &&
+    request[0]?.request_attachment_filepath_list &&
+    request[0].request_attachment_filepath_list.map((filepath, i) => {
+      return {
+        filepath,
+        url: attachmentUrlList ? attachmentUrlList[i] : null,
+      };
+    });
+  const userIdRoleDictionary = activeTeamContext.reduce(
+    (acc, member) => ({
+      ...acc,
+      [`${member.user_id}`]: member.member_role_id,
+    }),
+    {}
+  ) as { [key: string]: TeamMemberRole };
+  const approverList = requestWithApproverList[selectedRequestId.toString()];
+  const approverIdWithStatus = approverList.find((approver) => {
+    const isApprover =
+      userIdRoleDictionary[approver.approver_id] === "owner" ||
+      userIdRoleDictionary[approver.approver_id] === "admin";
+    return isApprover;
+  });
+  const purchaserIdWithStatus = approverList.find((approver) => {
+    const isPurchaser =
+      userIdRoleDictionary[approver.approver_id] === "purchaser";
+    return isPurchaser;
+  });
+  const approver = activeTeamContext.find(
+    (member) => member.user_id === approverIdWithStatus?.approver_id
+  );
+  const purchaser = activeTeamContext.find(
+    (member) => member.user_id === purchaserIdWithStatus?.approver_id
+  );
+
+  request &&
+    request.sort((a, b) => {
+      if (!order) return 0;
+      return (
+        order.indexOf(a.field_id as number) -
+        order.indexOf(b.field_id as number)
+      );
+    });
+
+  const currentUserIsOwner = request?.[0]?.user_id === user?.id;
+  const currentUserIsApprover = approver?.user_id === user?.id;
+  const currentUserIsPurchaser = purchaser?.user_id === user?.id;
+  const status = request?.[0]?.form_fact_request_status_id;
 
   const handleAddComment = async () => {
     if (!comment) return;
-
+    if (!request) return;
     try {
-      const createdComment = await createComment(
-        supabase,
-        Number(selectedRequest?.request_id),
+      const createdComment = await createRequestComment(
+        supabaseClient,
         comment,
-        `${user?.id}`
+        user?.id as string,
+        request[0].request_id as number
       );
+
       setComment("");
-      setCommentList((prev) => [...prev, createdComment]);
+      setCommentList((prev) => {
+        const newCommentList = [...prev];
+        newCommentList.push(createdComment as GetRequestCommentList[0]);
+        return newCommentList;
+      });
+
       showNotification({
         title: "Success!",
         message: "Comment created",
@@ -173,11 +228,12 @@ const Request = ({
     }
   };
 
-  const handleDeleteComment = async (id: number) => {
+  const handleDeleteComment = async (commentId: number) => {
     try {
-      await deleteComment(supabase, id);
+      await deleteRequestComment(supabaseClient, commentId);
+
       setCommentList((prev) =>
-        prev.filter((comment) => comment.request_comment_id !== id)
+        prev.filter((comment) => comment.comment_id !== commentId)
       );
       showNotification({
         title: "Success!",
@@ -194,26 +250,27 @@ const Request = ({
   };
 
   const handleEditComment = async () => {
-    if (!newComment) return;
-
     try {
-      await editComment(supabase, Number(editCommentId), newComment);
+      if (!newComment) return;
+      if (!editComment) return;
 
-      setCommentList((prev) =>
-        prev.map((comment) => {
-          if (comment.request_comment_id === editCommentId) {
-            return {
-              ...comment,
-              request_comment: newComment,
-              request_comment_is_edited: true,
-            };
-          } else {
-            return comment;
-          }
-        })
+      const updatedComment = await updateRequestComment(
+        supabaseClient,
+        newComment,
+        editCommentId as number
       );
+
+      const newCommentList = commentList.map((comment) =>
+        comment.comment_id === updatedComment?.comment_id
+          ? updatedComment
+          : comment
+      );
+
+      setCommentList(() => newCommentList as GetRequestCommentList);
+
       setEditCommentId(null);
       setNewComment("");
+
       showNotification({
         title: "Success!",
         message: "Comment edited",
@@ -228,224 +285,106 @@ const Request = ({
     }
   };
 
-  const handleApprove = async () => {
-    setIsLoading && setIsLoading(true);
-    if (view === "full") {
-      setFullViewIsLoading(true);
-    }
+  const handleUpdateStatus = async (newStatus: RequestStatus) => {
     try {
-      await requestResponse(
-        supabase,
-        Number(selectedRequest?.request_id),
-        "approved"
+      await updateRequestStatus(
+        supabaseClient,
+        selectedRequestId,
+        newStatus,
+        user?.id as string
       );
 
-      setRequestList &&
-        setRequestList((prev) =>
-          prev.map((request) => {
-            if (request.request_id === selectedRequest?.request_id) {
-              return {
-                ...request,
-                request_status: "approved",
-              };
-            } else {
-              return request;
-            }
-          })
-        );
-      setSelectedRequest && setSelectedRequest(null);
+      setRequest(
+        request?.map((request) => ({
+          ...request,
+          form_fact_request_status_id: newStatus,
+          request_status_id: newStatus,
+        }))
+      );
+      // if (setRequestWithApproverListProps)
+      //   setRequestWithApproverListProps((prev) => {
+      //     return prev[selectedRequestId.toString()].map((approver) => {
+      //       if (approver.approver_id === user?.id) {
+      //         return { ...approver, status: "approved" };
+      //       } else {
+      //         return approver;
+      //       }
+      //     });
+      //   });
+      if (view !== "full") {
+        if (setRequestList)
+          setRequestList((prev) => {
+            return prev.map((request) => {
+              if (request.request_id === selectedRequestId) {
+                return {
+                  ...request,
+                  form_fact_request_status_id: newStatus,
+                  request_status_id: newStatus,
+                };
+              } else {
+                return request;
+              }
+            });
+          });
+      }
+
       showNotification({
         title: "Success!",
-        message: `You approved ${selectedRequest?.request_title}`,
+        message: `You ${newStatus} ${request && request[0].request_title}`,
         color: "green",
       });
-      if (view === "full") {
-        router.push(`/t/${router.query.tid}/requests`);
-      }
     } catch {
       showNotification({
         title: "Error!",
-        message: `Failed to approve ${selectedRequest?.request_title}`,
+        message: `Failed to update status of ${
+          request && request[0].request_title
+        }`,
         color: "red",
       });
-    }
-    setIsLoading && setIsLoading(false);
-    if (view === "full") {
-      setFullViewIsLoading(false);
-    }
-  };
-
-  // const handleSendToRevision = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     await requestResponse(
-  //       supabase,
-  //       Number(selectedRequest?.request_id),
-  //       "revision"
-  //     );
-
-  //     setRequestList((prev) =>
-  //       prev.map((request) => {
-  //         if (request.request_id === selectedRequest?.request_id) {
-  //           return {
-  //             ...request,
-  //             request_status: "revision",
-  //           };
-  //         } else {
-  //           return request;
-  //         }
-  //       })
-  //     );
-  //     setSelectedRequest(null);
-  //     showNotification({
-  //       title: "Success!",
-  //       message: `${selectedRequest?.request_title} is sent to revision`,
-  //       color: "green",
-  //     });
-  //   } catch {
-  //     showNotification({
-  //       title: "Error!",
-  //       message: `${selectedRequest?.request_title} has failed to send to revision `,
-  //       color: "red",
-  //     });
-  //   }
-  //   setIsLoading(false);
-  // };
-
-  const handleReject = async () => {
-    setIsLoading && setIsLoading(true);
-    if (view === "full") {
-      setFullViewIsLoading(true);
-    }
-    try {
-      await requestResponse(
-        supabase,
-        Number(selectedRequest?.request_id),
-        "rejected"
-      );
-
-      setRequestList &&
-        setRequestList((prev) =>
-          prev.map((request) => {
-            if (request.request_id === selectedRequest?.request_id) {
-              return {
-                ...request,
-                request_status: "rejected",
-              };
-            } else {
-              return request;
-            }
-          })
-        );
-      setSelectedRequest && setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `You rejected ${selectedRequest?.request_title}`,
-        color: "green",
-      });
-      if (view === "full") {
-        router.push(`/t/${router.query.tid}/requests`);
-      }
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to reject ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-    }
-    setIsLoading && setIsLoading(false);
-    if (view === "full") {
-      setFullViewIsLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    setIsLoading && setIsLoading(true);
-    if (view === "full") {
-      setFullViewIsLoading(true);
-    }
     try {
-      await deleteRequest(supabase, Number(selectedRequest?.request_id));
+      if (!request) throw Error("No request found");
 
-      setRequestList &&
-        setRequestList((prev) =>
-          prev.filter(
-            (request) => request.request_id !== selectedRequest?.request_id
-          )
-        );
-      setSelectedRequest && setSelectedRequest(null);
-      showNotification({
-        title: "Success!",
-        message: `You deleted ${selectedRequest?.request_title}`,
-        color: "green",
-      });
-      if (view === "full") {
-        router.push(`/t/${router.query.tid}/requests`);
-      }
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: `Failed to delete ${selectedRequest?.request_title}`,
-        color: "red",
-      });
-    }
-    setIsLoading && setIsLoading(false);
-    if (view === "full") {
-      setFullViewIsLoading(false);
-    }
-  };
-
-  const handlePurchase = async () => {
-    setIsLoading && setIsLoading(true);
-    if (view === "full") {
-      setFullViewIsLoading(true);
-    }
-    try {
-      await markAsPurchasedRequest(
-        supabase,
-        Number(selectedRequest?.request_id)
+      await deletePendingRequest(
+        supabaseClient,
+        request[0].request_id as number
       );
 
-      setRequestList &&
-        setRequestList((prev) =>
-          prev.map((request) => {
-            if (request.request_id === selectedRequest?.request_id) {
-              return {
-                ...request,
-                request_is_purchased: true,
-              };
-            } else {
-              return request;
-            }
-          })
-        );
-
-      setSelectedRequest && setSelectedRequest(null);
       showNotification({
         title: "Success!",
-        message: `You mark as purchased ${selectedRequest?.request_title}`,
+        message: `You deleted ${request && request[0].request_title}`,
         color: "green",
       });
       if (view === "full") {
         router.push(`/t/${router.query.tid}/requests`);
+      } else {
+        if (setRequestList) {
+          setRequestList((prev) => {
+            return prev.filter(
+              (request) => request.request_id !== selectedRequestId
+            );
+          });
+          setSelectedRequestId && setSelectedRequestId(null);
+        } else {
+          router.replace(router.asPath);
+        }
       }
     } catch {
       showNotification({
         title: "Error!",
-        message: `Failed to mark as purchased ${selectedRequest?.request_title}`,
+        message: `Failed to delete ${request && request[0].request_title}`,
         color: "red",
       });
-    }
-    setIsLoading && setIsLoading(false);
-    if (view === "full") {
-      setFullViewIsLoading(false);
     }
   };
 
   const confirmationModal = (
     action: string,
     requestTitle: string,
-    confirmFunction: () => void
+    confirmFunction: () => Promise<void>
   ) =>
     openConfirmModal({
       title: "Please confirm your action",
@@ -458,6 +397,7 @@ const Request = ({
       onConfirm: () => confirmFunction(),
     });
 
+  // isLoading && <LoadingOverlay visible={isLoading} overlayBlur={2} />;
   return (
     <Container
       p={view === "full" ? "xl" : 0}
@@ -465,14 +405,13 @@ const Request = ({
       className={styles.container}
       fluid
     >
-      <LoadingOverlay visible={fullViewIsLoading} overlayBlur={2} />
       {view === "split" ? (
         <Container m={0} p={0} className={styles.closeIcon}>
           <Group spacing={0}>
             <ActionIcon
               onClick={() =>
                 router.push(
-                  `/t/${router.query.tid}/requests/${selectedRequest?.request_id}`
+                  `/t/${router.query.tid}/requests/${selectedRequestId}`
                 )
               }
             >
@@ -480,8 +419,8 @@ const Request = ({
             </ActionIcon>
             <ActionIcon
               onClick={() => {
-                if (setSelectedRequest) {
-                  setSelectedRequest(null);
+                if (setSelectedRequestId) {
+                  setSelectedRequestId(null);
                 }
               }}
             >
@@ -493,40 +432,39 @@ const Request = ({
       <Group position="apart" grow>
         <Stack align="flex-start">
           <Title order={5}>Request Title</Title>
-          <Text>{selectedRequest?.request_title}</Text>
+          <Text>{title}</Text>
         </Stack>
         <Stack align="flex-start">
           <Title order={5}>Requested By</Title>
           <Group>
-            <Avatar radius={100} />
-            <Text>{selectedRequest?.owner.full_name}</Text>
+            <Avatar
+              radius={100}
+              src={fileUrlListContext?.avatarUrlList[requestedById as string]}
+            />
+            <Text>{requestedBy}</Text>
           </Group>
         </Stack>
       </Group>
       <Group mt="xl" position="apart" grow>
         <Stack align="flex-start">
           <Title order={5}>Date Created</Title>
-          <Text>{selectedRequest?.request_created_at?.slice(0, 10)}</Text>
+          <Text>{dateCreated?.slice(0, 10)}</Text>
         </Stack>
         <Stack align="flex-start">
           <Title order={5}>Status</Title>
-          <Badge color={setBadgeColor(`${selectedRequest?.request_status}`)}>
-            {startCase(`${selectedRequest?.request_status}`)}
+          <Badge color={setBadgeColor(`${status}`)}>
+            {startCase(`${status}`)}
           </Badge>
         </Stack>
       </Group>
       <Group mt="xl" position="apart" grow>
         <Stack mt="xl" align="flex-start">
           <Title order={5}>Request Description</Title>
-          <Text>{selectedRequest?.request_description}</Text>
+          <Text>{description}</Text>
         </Stack>
         <Stack align="flex-start">
           <Title order={5}>On behalf of</Title>
-          <Text>
-            {selectedRequest?.on_behalf_of
-              ? selectedRequest.on_behalf_of
-              : "---"}
-          </Text>
+          <Text>{onBehalfOf || "---"}</Text>
         </Stack>
       </Group>
 
@@ -537,23 +475,21 @@ const Request = ({
           <Group align="apart" grow>
             <Group>
               <Badge
-                color={setBadgeColor(`${selectedRequest?.request_status}`)}
+                color={setBadgeColor(
+                  approverIdWithStatus?.approver_status || "pending"
+                )}
               />
-              <Text>{selectedRequest?.approver.full_name}</Text>
+              <Text>{approver?.username}</Text>
             </Group>
           </Group>
         </Stack>
-        {selectedRequest?.purchaser ? (
+        {purchaser ? (
           <Stack>
             <Title order={5}>Purchaser</Title>
             <Group align="apart" grow>
               <Group>
-                <Badge
-                  color={
-                    selectedRequest?.request_is_purchased ? "green" : "blue"
-                  }
-                />
-                <Text>{selectedRequest?.purchaser.full_name}</Text>
+                <Badge color={status === "purchased" ? "green" : "blue"} />
+                <Text>{purchaser.username}</Text>
               </Group>
             </Group>
           </Stack>
@@ -562,30 +498,31 @@ const Request = ({
       <Divider mt="xl" />
       <Stack mt="xl">
         <Title order={5}>Attachment</Title>
-        {!selectedRequest?.attachments && <Text>---</Text>}
-        {selectedRequest?.attachments &&
-          selectedRequest.attachments.length === 0 && <Text>---</Text>}
-        {selectedRequest?.attachments &&
-          selectedRequest?.attachments.map((attachment, idx) => {
-            const attachmentUrl = attachment.split("|");
-            const mockFileSize = "234 KB";
+        {!attachments && <Text>---</Text>}
+        {attachments &&
+          attachments.map((attachment, idx) => {
+            // const mockFileSize = "234 KB";
+            const filePath = attachment.filepath;
+            const fileUrl = attachment.url as string;
+            const fileType = attachment.filepath.split(".").pop() as string;
+            const mockFileSize = "";
             const mockFile = "file";
 
             return (
               <Group key={idx}>
                 {view === "split" ? (
                   <AttachmentPill
-                    filename={attachmentUrl[0]}
-                    fileType={attachmentUrl[1]}
-                    fileUrl={attachmentUrl[2]}
+                    filename={filePath}
+                    fileType={fileType}
+                    fileUrl={fileUrl}
                   />
                 ) : (
                   <AttachmentBox
-                    filename={attachmentUrl[0]}
-                    fileType={attachmentUrl[1]}
-                    fileUrl={attachmentUrl[2]}
                     file={mockFile}
                     fileSize={mockFileSize}
+                    filename={filePath}
+                    fileType={fileType}
+                    fileUrl={fileUrl}
                   />
                 )}
               </Group>
@@ -593,7 +530,7 @@ const Request = ({
           })}
       </Stack>
 
-      {isApprover ? (
+      {currentUserIsApprover && status === "pending" ? (
         <>
           <Divider mt="xl" />
           <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
@@ -602,35 +539,30 @@ const Request = ({
               onClick={() =>
                 confirmationModal(
                   "approve",
-                  `${selectedRequest.request_title}`,
-                  handleApprove
+                  `${request && request[0].request_title}`,
+                  () => handleUpdateStatus("approved")
                 )
               }
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-approve"
             >
               Approve
             </Button>
-            {/* <Button
-              color="dark"
-              onClick={() => handleSendToRevision()}
-              fullWidth={view === "split"}
-            >
-              Send For Revision
-            </Button> */}
             <Button
               color="red"
               onClick={() =>
                 confirmationModal(
                   "reject",
-                  `${selectedRequest.request_title}`,
-                  handleReject
+                  `${request && request[0].request_title}`,
+                  () => handleUpdateStatus("rejected")
                 )
               }
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-reject"
             >
               Reject
             </Button>
@@ -638,7 +570,7 @@ const Request = ({
         </>
       ) : null}
 
-      {isOwner ? (
+      {currentUserIsOwner && status === "pending" ? (
         <>
           <Divider mt="xl" />{" "}
           <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
@@ -647,13 +579,14 @@ const Request = ({
               onClick={() =>
                 confirmationModal(
                   "delete",
-                  `${selectedRequest.request_title}`,
+                  `${request && request[0].request_title}`,
                   handleDelete
                 )
               }
               fullWidth={view === "split"}
               w={view === "full" ? 200 : ""}
               size={view === "full" ? "md" : "sm"}
+              data-cy="request-delete"
             >
               Delete
             </Button>
@@ -661,7 +594,7 @@ const Request = ({
         </>
       ) : null}
 
-      {isPurchaser ? (
+      {currentUserIsPurchaser && status === "approved" ? (
         <>
           <Divider mt="xl" />{" "}
           <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
@@ -669,8 +602,8 @@ const Request = ({
               onClick={() =>
                 confirmationModal(
                   "mark as purchased",
-                  `${selectedRequest.request_title}`,
-                  handlePurchase
+                  `${request && request[0].request_title}`,
+                  () => handleUpdateStatus("purchased")
                 )
               }
               fullWidth={view === "split"}
@@ -687,11 +620,11 @@ const Request = ({
       <Title mt="xl" order={5}>
         Request Fields
       </Title>
-      {selectedRequestFields?.map((field) => {
-        const fieldType = field.field.field_type;
-        const fieldLabel = field.field.field_name;
+      {request?.map((field) => {
+        const fieldType = field.request_field_type;
+        const fieldLabel = field.field_name;
         const fieldResponse = `${field.response_value}`;
-        const fieldOptions = field.field.field_option;
+        const fieldOptions = field.field_options;
 
         if (fieldType === "section") {
           return (
@@ -708,11 +641,11 @@ const Request = ({
               {renderTooltip(
                 <TextInput
                   label={fieldLabel}
-                  withAsterisk={Boolean(field.field.is_required)}
+                  withAsterisk={Boolean(field.field_is_required)}
                   value={`${field.response_value}`}
                   readOnly
                 />,
-                `${field.field.field_tooltip}`
+                `${field.field_tooltip}`
               )}
             </Box>
           );
@@ -722,11 +655,11 @@ const Request = ({
               {renderTooltip(
                 <NumberInput
                   label={fieldLabel}
-                  withAsterisk={Boolean(field.field.is_required)}
+                  withAsterisk={Boolean(field.field_is_required)}
                   value={Number(fieldResponse)}
                   readOnly
                 />,
-                `${field.field.field_tooltip}`
+                `${field.field_tooltip}`
               )}
             </Box>
           );
@@ -736,12 +669,12 @@ const Request = ({
               {renderTooltip(
                 <DatePicker
                   label={fieldLabel}
-                  withAsterisk={Boolean(field.field.is_required)}
+                  withAsterisk={Boolean(field.field_is_required)}
                   placeholder={"Choose date"}
                   value={new Date(fieldResponse)}
                   readOnly
                 />,
-                `${field.field.field_tooltip}`
+                `${field.field_tooltip}`
               )}
             </Box>
           );
@@ -751,7 +684,7 @@ const Request = ({
               {renderTooltip(
                 <DateRangePicker
                   label={fieldLabel}
-                  withAsterisk={Boolean(field.field.is_required)}
+                  withAsterisk={Boolean(field.field_is_required)}
                   placeholder={"Choose a date range"}
                   value={[
                     new Date(fieldResponse.split(",")[0]),
@@ -759,7 +692,7 @@ const Request = ({
                   ]}
                   readOnly
                 />,
-                `${field.field.field_tooltip}`
+                `${field.field_tooltip}`
               )}
             </Box>
           );
@@ -769,12 +702,12 @@ const Request = ({
               {renderTooltip(
                 <TimeInput
                   label={fieldLabel}
-                  withAsterisk={Boolean(field.field.is_required)}
+                  withAsterisk={Boolean(field.field_is_required)}
                   placeholder={"Choose time"}
                   format="12"
                   value={new Date(fieldResponse)}
                 />,
-                `${field.field.field_tooltip}`
+                `${field.field_tooltip}`
               )}
             </Box>
           );
@@ -785,7 +718,7 @@ const Request = ({
                 <Text component="label" color="dark">
                   {fieldLabel}
                 </Text>,
-                `${field.field.field_tooltip}`
+                `${field.field_tooltip}`
               )}
               <Slider
                 label={fieldLabel}
@@ -806,12 +739,12 @@ const Request = ({
                 return { value: `${option}`, label: `${option}` };
               })}
               label={fieldLabel}
-              withAsterisk={Boolean(field.field.is_required)}
+              withAsterisk={Boolean(field.field_is_required)}
               placeholder={"Choose multiple"}
               value={fieldResponse.split(",")}
               py="sm"
             />,
-            `${field.field.field_tooltip}`
+            `${field.field_tooltip}`
           );
         } else if (fieldType === "select" && fieldOptions !== null) {
           return renderTooltip(
@@ -823,15 +756,17 @@ const Request = ({
               searchable
               clearable
               label={fieldLabel}
-              withAsterisk={Boolean(field.field.is_required)}
+              withAsterisk={Boolean(field.field_is_required)}
               placeholder={"Choose one"}
               value={fieldResponse}
               py="sm"
             />,
-            `${field.field.field_tooltip}`
+            `${field.field_tooltip}`
           );
         }
       })}
+
+      {/* fields and comments na now */}
 
       <Divider mt="xl" />
       <Stack mt="xl">
@@ -842,90 +777,104 @@ const Request = ({
             variant="unstyled"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
+            data-cy="request-input-comment"
           />
           <Group position="right" mt="xs">
-            <Button w={100} onClick={handleAddComment}>
+            <Button
+              w={100}
+              onClick={handleAddComment}
+              data-cy="request-submit-comment"
+            >
               Send
             </Button>
           </Group>
         </Paper>
-        {commentList.map((comment) => (
-          <Paper shadow="sm" key={comment.request_comment_id} p="xl" withBorder>
-            <Flex gap="xs" wrap="wrap" align="center">
-              <Avatar radius={100} src={comment.owner.avatar_url} size="sm" />
-              <Text fw={500}>{comment.owner.full_name}</Text>
-              {comment.request_comment_is_edited ? (
-                <Text c="dimmed">(edited)</Text>
-              ) : null}
-              <Text c="dimmed">
-                {setTimeDifference(
-                  new Date(`${comment.request_comment_created_at}`)
-                )}
-              </Text>
-              {comment.request_comment_by_id === user?.id ? (
-                <Popover position="bottom" shadow="md">
-                  <Popover.Target>
-                    <Button ml="auto" variant="subtle">
-                      <Dots />
-                    </Button>
-                  </Popover.Target>
-                  <Popover.Dropdown p={0}>
-                    <Flex>
-                      <Button
-                        radius={0}
-                        variant="subtle"
-                        onClick={() => {
-                          setNewComment(`${comment.request_comment}`);
-                          setEditCommentId(comment.request_comment_id);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Divider orientation="vertical" />
-                      <Button
-                        radius={0}
-                        variant="subtle"
-                        onClick={() =>
-                          handleDeleteComment(comment.request_comment_id)
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </Flex>
-                  </Popover.Dropdown>
-                </Popover>
-              ) : null}
-            </Flex>
-            {comment.request_comment_id === editCommentId ? (
-              <Paper withBorder p="xs" mt="sm">
-                <Textarea
-                  placeholder="Type your new comment here"
-                  variant="unstyled"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+        {commentList &&
+          commentList.map((comment) => (
+            <Paper shadow="sm" key={comment.comment_id} p="xl" withBorder>
+              <Flex gap="xs" wrap="wrap" align="center">
+                <Avatar
+                  radius={100}
+                  src={
+                    fileUrlListContext?.avatarUrlList[
+                      comment.user_request_comment_user_id as string
+                    ]
+                  }
+                  size="sm"
                 />
-                <Group position="right" mt="xs" spacing={5}>
-                  <Button
-                    w={100}
-                    onClick={() => {
-                      setEditCommentId(null);
-                      setNewComment("");
-                    }}
-                    variant="outline"
-                  >
-                    Cancel
-                  </Button>
-                  <Button w={100} onClick={handleEditComment}>
-                    Submit
-                  </Button>
-                </Group>
-              </Paper>
-            ) : null}
-            {comment.request_comment_id !== editCommentId ? (
-              <Text mt="xs">{comment.request_comment}</Text>
-            ) : null}
-          </Paper>
-        ))}
+                <Text fw={500}>{comment.username}</Text>
+                {comment.comment_is_edited ? (
+                  <Text c="dimmed">(edited)</Text>
+                ) : null}
+                <Text c="dimmed">
+                  {setTimeDifference(
+                    new Date(`${comment.comment_date_created}`)
+                  )}
+                </Text>
+                {comment.user_id === user?.id ? (
+                  <Popover position="bottom" shadow="md">
+                    <Popover.Target>
+                      <Button ml="auto" variant="subtle">
+                        <Dots />
+                      </Button>
+                    </Popover.Target>
+                    <Popover.Dropdown p={0}>
+                      <Flex>
+                        <Button
+                          radius={0}
+                          variant="subtle"
+                          onClick={() => {
+                            setNewComment(`${comment.comment_content}`);
+                            setEditCommentId(comment.comment_id);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Divider orientation="vertical" />
+                        <Button
+                          radius={0}
+                          variant="subtle"
+                          onClick={() =>
+                            handleDeleteComment(comment.comment_id as number)
+                          }
+                        >
+                          Delete
+                        </Button>
+                      </Flex>
+                    </Popover.Dropdown>
+                  </Popover>
+                ) : null}
+              </Flex>
+              {comment.comment_id === editCommentId ? (
+                <Paper withBorder p="xs" mt="sm">
+                  <Textarea
+                    placeholder="Type your new comment here"
+                    variant="unstyled"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                  />
+                  <Group position="right" mt="xs" spacing={5}>
+                    <Button
+                      w={100}
+                      onClick={() => {
+                        setEditCommentId(null);
+                        setNewComment("");
+                      }}
+                      variant="outline"
+                    >
+                      Cancel
+                    </Button>
+                    <Button w={100} onClick={handleEditComment}>
+                      Submit
+                    </Button>
+                  </Group>
+                </Paper>
+              ) : null}
+              {comment.comment_id !== editCommentId ? (
+                <Text mt="xs">{comment.comment_content}</Text>
+              ) : null}
+            </Paper>
+          ))}
       </Stack>
     </Container>
   );

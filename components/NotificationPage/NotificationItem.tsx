@@ -1,6 +1,7 @@
-import { FetchUserNotificationList } from "@/utils/queries";
+import { GetNotificationList } from "@/utils/queries-new";
 import { Box, Button, createStyles, Group, Stack, Text } from "@mantine/core";
 import { useRouter } from "next/router";
+import { NonUndefined } from "react-hook-form";
 import SvgMoreHoriz from "../Icon/MoreHoriz";
 
 // * https://mantine.dev/styles/create-styles/#:~:text=js%20library.%20We-,recommend,-using%20createStyles%20to
@@ -11,13 +12,13 @@ const useStyles = createStyles(() => ({
 }));
 
 type Props = {
-  data: FetchUserNotificationList[0];
+  data: NonUndefined<GetNotificationList>[0];
 };
 
 const NotificationItem = ({ data }: Props) => {
   const router = useRouter();
   const { classes } = useStyles();
-  const date = new Date(data.created_at as string);
+  const date = new Date(data.notification_date_created as string);
   const month = date.toLocaleString("default", { month: "short" });
 
   return (
@@ -26,13 +27,15 @@ const NotificationItem = ({ data }: Props) => {
       py="sm"
       sx={{ borderBottom: "1px solid #E9E9E9" }}
       onClick={async () => {
-        if (data.redirection_url) await router.push(data.redirection_url);
+        if (data.notification_redirect_url)
+          await router.push(data.notification_redirect_url);
       }}
       className={classes.container}
+      data-cy="notification-item"
     >
       <Group position="apart">
         <Box w="80%">
-          <Text size="sm">{data.notification_message}</Text>
+          <Text size="sm">{data.notification_content}</Text>
           <Text size="xs" color="dimmed">
             {month} {date.getDate()}
           </Text>
