@@ -1,5 +1,12 @@
 import { Database } from "@/utils/database.types";
-import { createTeam } from "@/utils/queries-new";
+import { uploadFile } from "@/utils/file";
+import {
+  createNotification,
+  createTeam,
+  createTeamInvitation,
+  getUserIdListFromEmailList,
+} from "@/utils/queries-new";
+import { NotificationTableInsert } from "@/utils/types-new";
 import {
   Container,
   Flex,
@@ -26,7 +33,7 @@ const CreateTeam = () => {
   const [teamNameError, setTeamNameError] = useState("");
   const [members, setMembers] = useState<string[]>([]);
   const [emailError, setEmailError] = useState("");
-  const [teamLogo, setTeamLogo] = useState<Blob | MediaSource | null>(null);
+  const [teamLogo, setTeamLogo] = useState<File | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const logoInput = useRef<HTMLButtonElement>(null);
@@ -68,27 +75,91 @@ const CreateTeam = () => {
   // };
 
   const handleCreateTeam = async (action: "skip" | "invite") => {
-    setIsCreating(true);
-    console.log(action);
     try {
-      // const team = await createUserTeam(supabase, `${user?.id}`, teamName);
-      const teamId = await createTeam(supabase, user?.id as string, {
+      setIsCreating(true);
+      console.log(action);
+      let filepath;
+      // Call the uploadFile function first so that if the team logo upload fails, the team will not be created.
+      if (teamLogo) {
+        const { path } = await uploadFile(
+          supabase,
+          teamLogo.name,
+          teamLogo,
+          "team_logos"
+        );
+        filepath = path;
+      }
+
+      const createdTeam = await createTeam(supabase, user?.id as string, {
         team_name: teamName,
+        team_logo_filepath: filepath,
       });
 
-      // if (teamLogo) {
-      //   await handleUpload(team);
-      // }
+      if (action === "invite" && members.length > 0) {
+        const teamInvitationList = await createTeamInvitation(
+          supabase,
+          createdTeam.team_id,
+          `${user?.id}`,
+          members
+        );
+        console.log(
+          "🚀 ~ file: CreateTeam.tsx:106 ~ handleCreateTeam ~ teamInvitationList",
+          teamInvitationList
+        );
 
-      // if (action === "invite" && members.length > 0) {
-      //   await createTeamInvitation(
-      //     supabase,
-      //     team.team_id,
-      //     `${user?.id}`,
-      //     members
-      //   );
-      // }
-      router.push(`/t/${teamId}/dashboard`);
+        // * Purpose: We remove emails of users that aren't registered yet to the app so we don't create in-app notification for them.
+        const userIdWithEmailList = await getUserIdListFromEmailList(
+          supabase,
+          members
+        );
+        console.log(
+          "🚀 ~ file: CreateTeam.tsx:112 ~ handleCreateTeam ~ userIdWithEmailList",
+          userIdWithEmailList
+        );
+
+        if (!userIdWithEmailList) return;
+
+        // Check if email is in userIdWithEmailList. e.g. userIdWithEmailList { userId: "123", userEmail: "dw@dwda.com" }
+        const existingUserIdWithEmailList = userIdWithEmailList.filter(
+          (userIdWithEmail) => {
+            return members.includes(userIdWithEmail.userEmail);
+          }
+        );
+        console.log(
+          "🚀 ~ file: CreateTeam.tsx:121 ~ handleCreateTeam ~ existingUserIdWithEmailList",
+          existingUserIdWithEmailList
+        );
+
+        // * Purpose: We create in-app notification for users that are registered in the app.
+        // * Use createNotification() function to create notification for each user.
+        // * Use Promise.all() to create notification for all users at the same time.
+
+        const teamName = createdTeam.team_name;
+
+        const promises = existingUserIdWithEmailList.map(
+          ({ userId, userEmail }) => {
+            // Get the created invitation from teamInvitationList that matches the userEmail.
+            const teamInvitation = teamInvitationList.find(
+              (teamInvitation) =>
+                teamInvitation.invitation_target_email === userEmail
+            );
+            const notificationInsertInput: NotificationTableInsert = {
+              notification_content: `${user?.email} has invited you to join their team ${teamName}.`,
+              notification_redirect_url: `/team-invitations/${teamInvitation?.invitation_id}`,
+            };
+
+            return createNotification(
+              supabase,
+              userId,
+              notificationInsertInput
+            );
+          }
+        );
+
+        await Promise.all(promises);
+      }
+
+      router.push(`/t/${createdTeam.team_id}/dashboard`);
     } catch (e) {
       console.error(e);
       setIsCreating(false);

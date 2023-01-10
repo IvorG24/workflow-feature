@@ -1,5 +1,7 @@
 // todo: create unit test
+import FileUrlListContext from "@/contexts/FileUrlListContext";
 import { Database } from "@/utils/database.types";
+import { uploadFile } from "@/utils/file";
 import { GetUserProfile, updateUserProfile } from "@/utils/queries-new";
 import {
   Avatar,
@@ -19,6 +21,7 @@ import {
   Dispatch,
   MouseEventHandler,
   SetStateAction,
+  useContext,
   useRef,
   useState,
 } from "react";
@@ -43,9 +46,11 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
     handleSubmit,
     formState: { errors },
   } = useForm<Data>();
-  const [avatar, setAvatar] = useState<Blob | MediaSource | null>(null);
+  const [avatar, setAvatar] = useState<File | null>(null);
 
   const avatarInput = useRef<HTMLButtonElement>(null);
+
+  const fileUrlListContext = useContext(FileUrlListContext);
 
   // const handleUpload = (data: Data) => {
   //   return new Promise((resolve, reject) => {
@@ -72,11 +77,23 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setIsLoading(true);
-      // await handleUpload(data);
+      let filepath;
+
+      // Call the uploadFile function first so that if the team logo upload fails, the team will not be created.
+      if (avatar) {
+        const { path } = await uploadFile(
+          supabaseClient,
+          avatar.name,
+          avatar,
+          "avatars"
+        );
+        filepath = path;
+      }
 
       await updateUserProfile(supabaseClient, {
         username: data.username,
         user_id: user.user_id,
+        user_avatar_filepath: filepath,
       });
 
       router.reload();
@@ -110,7 +127,9 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
               onClick={() => avatarInput.current?.click()}
               style={{ cursor: "pointer" }}
               src={
-                avatar ? URL.createObjectURL(avatar) : user.user_avatar_filepath
+                avatar
+                  ? URL.createObjectURL(avatar)
+                  : fileUrlListContext?.avatarUrlList[user.user_id as string]
               }
               alt="User avatar"
             />

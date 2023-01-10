@@ -105,7 +105,8 @@ const InviteTeamMembersSection = ({ members }: Props) => {
         color: "green",
       });
       reset();
-    } catch {
+    } catch (error) {
+      console.error(error);
       showNotification({
         title: "Error",
         message: "Failed to send invites",

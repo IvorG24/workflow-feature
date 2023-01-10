@@ -2,6 +2,7 @@ import ActiveTeamContext from "@/contexts/ActiveTeamContext";
 import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import CurrentUserTeamListContext from "@/contexts/CurrentUserTeamListContext";
+import FileUrlListContext, { FileUrlList } from "@/contexts/FileUrlListContext";
 import getMantineTheme from "@/utils/getMantineTheme";
 import {
   createOrRetrieveUserProfile,
@@ -12,6 +13,10 @@ import {
   GetTeam,
   GetTeamFormTemplateList,
   getTeamFormTemplateList,
+  GetTeamLogoUrlList,
+  getTeamLogoUrlList,
+  GetTeamMemberAvatarUrlList,
+  getTeamMemberAvatarUrlList,
 } from "@/utils/queries-new";
 import {
   ColorScheme,
@@ -63,6 +68,10 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const [activeTeam, setActiveTeam] = useState<GetTeam>([]);
   const [formTemplateList, setFormTemplateList] =
     useState<GetTeamFormTemplateList>();
+  const [fileUrlList, setFileUrlList] = useState<FileUrlList>({
+    avatarUrlList: {},
+    teamLogoUrlList: {},
+  });
 
   useEffect(() => {
     (async () => {
@@ -97,11 +106,36 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           setFormTemplateList(formTemplateList as GetTeamFormTemplateList);
         }
       } catch (error) {
+        console.error(error);
       } finally {
         setIsLoading(false);
       }
     })();
   }, [router.query.tid]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (teamList.length === 0) return;
+        if (activeTeam.length === 0) return;
+
+        const teamIdList = teamList.map((team) => team.team_id);
+        const teamId = activeTeam[0].team_id;
+
+        const [teamLogoUrlList, avatarUrlList] = await Promise.all([
+          getTeamLogoUrlList(supabaseClient, teamIdList as string[]),
+          getTeamMemberAvatarUrlList(supabaseClient, teamId as string),
+        ]);
+
+        setFileUrlList({
+          teamLogoUrlList: teamLogoUrlList as GetTeamLogoUrlList,
+          avatarUrlList: avatarUrlList as GetTeamMemberAvatarUrlList,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [activeTeam, teamList]);
 
   if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
 
@@ -128,7 +162,9 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
                     <ActiveTeamFormListContext.Provider
                       value={formTemplateList}
                     >
-                      {getLayout(<Component {...pageProps} />)}
+                      <FileUrlListContext.Provider value={fileUrlList}>
+                        {getLayout(<Component {...pageProps} />)}
+                      </FileUrlListContext.Provider>
                     </ActiveTeamFormListContext.Provider>
                   </ActiveTeamContext.Provider>
                 </CurrentUserTeamListContext.Provider>

@@ -19,7 +19,7 @@ type Props = {
   setActive: Dispatch<SetStateAction<number>>;
   logoInput: MutableRefObject<HTMLButtonElement | null>;
   teamLogo: Blob | MediaSource | null;
-  setTeamLogo: Dispatch<SetStateAction<Blob | MediaSource | null>>;
+  setTeamLogo: Dispatch<SetStateAction<File | null>>;
 };
 
 const Step1 = ({

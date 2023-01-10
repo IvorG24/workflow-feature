@@ -27,6 +27,7 @@ import Bio from "./BioPage";
 import EditProfileForm from "./EditProfileForm";
 // import data from "../../teams.json";
 // import EditProfileForm from "./EditProfileForm";
+import FileUrlListContext from "@/contexts/FileUrlListContext";
 import MemberProfileContext from "@/contexts/MemberProfileContext";
 import styles from "./ProfilePage.module.scss";
 import ProfileReviewsPage from "./ReviewsPage";
@@ -72,6 +73,8 @@ const Profile = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   // const [reviews, setReviews] = useState<ReviewType[]>([]);
   // const [assessments, setAssessments] = useState<Assessment[]>([]);
+
+  const fileUrlListContext = useContext(FileUrlListContext);
 
   const userProfile = useContext(MemberProfileContext);
 
@@ -120,7 +123,11 @@ const Profile = () => {
               <Avatar
                 size={200}
                 radius={100}
-                src={userProfile?.user_avatar_filepath}
+                src={
+                  fileUrlListContext?.avatarUrlList[
+                    userProfile?.user_id as string
+                  ]
+                }
               />
               <Stack spacing={0}>
                 <Title

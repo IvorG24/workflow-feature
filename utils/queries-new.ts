@@ -1060,12 +1060,12 @@ export type GetRequestWithAttachmentUrlList = Awaited<
 // Generate lookup table for team member avatar url list.
 export const getTeamMemberAvatarUrlList = async (
   supabaseClient: SupabaseClient<Database>,
-  teamIdList: string[]
+  teamId: string
 ) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select("user_id, user_avatar_filepath")
-    .in("team_id", teamIdList);
+    .eq("team_id", teamId);
   if (error) throw error;
   if (!data || data.length === 0) throw new Error("Team member not found.");
 
@@ -1079,11 +1079,11 @@ export const getTeamMemberAvatarUrlList = async (
       const promise = getFileUrl(
         supabaseClient,
         user_avatar_filepath,
-        "user-profile-images"
+        "avatars"
       );
       promises.push(promise);
     } else {
-      promises.push(null);
+      promises.push("");
     }
   }
   const urlList = await Promise.all(promises);
@@ -1095,7 +1095,7 @@ export const getTeamMemberAvatarUrlList = async (
     }
   });
 
-  return teamMemberAvatarUrlList;
+  return teamMemberAvatarUrlList as { [userId: string]: string | null };
 };
 export type GetTeamMemberAvatarUrlList = Awaited<
   ReturnType<typeof getTeamMemberAvatarUrlList>
@@ -1111,6 +1111,7 @@ export const getTeamLogoUrlList = async (
     .select("team_id, team_logo_filepath")
     .in("team_id", teamIdList);
   if (error) throw error;
+
   if (!data || data.length === 0) throw new Error("Team not found.");
   const teamLogoUrlList: { [teamId: string]: string } = {};
 
@@ -1125,6 +1126,8 @@ export const getTeamLogoUrlList = async (
         "team_logos"
       );
       promises.push(promise);
+    } else {
+      promises.push("");
     }
   }
   const urlList = await Promise.all(promises);
@@ -1254,7 +1257,7 @@ export const createTeam = async (
   if (error2) throw error2;
   if (!data2) throw new Error("Team member not created.");
 
-  return teamId;
+  return data;
 };
 export type CreateTeam = Awaited<ReturnType<typeof createTeam>>;
 

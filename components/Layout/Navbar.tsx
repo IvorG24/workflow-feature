@@ -3,6 +3,7 @@ import SelectItem from "@/components/SelectItem/SelectItem";
 import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import CurrentUserTeamListContext from "@/contexts/CurrentUserTeamListContext";
+import FileUrlListContext from "@/contexts/FileUrlListContext";
 import { getTeamApproverList } from "@/utils/queries-new";
 import { Database } from "@/utils/types";
 import {
@@ -54,11 +55,12 @@ const Navbar = ({ openNavbar }: Props) => {
   const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
   const userProfile = useContext(CurrentUserProfileContext);
   const formList = useContext(ActiveTeamFormListContext);
+  const fileUrlListContext = useContext(FileUrlListContext);
 
   const teamOptions = teamList.map((team) => ({
     value: team.team_id as string,
     label: team.team_name as string,
-    image: team.team_logo_filepath,
+    image: fileUrlListContext?.teamLogoUrlList[team.team_id as string],
   }));
 
   teamOptions.unshift({
@@ -120,7 +122,15 @@ const Navbar = ({ openNavbar }: Props) => {
             router.push(`/t/${val}/dashboard`);
           }
         }}
-        icon={<Avatar src={router.query.tid as string} radius="xl" size="sm" />}
+        icon={
+          <Avatar
+            src={
+              fileUrlListContext?.teamLogoUrlList[router.query.tid as string]
+            }
+            radius="xl"
+            size="sm"
+          />
+        }
         size="md"
         styles={{
           label: {
@@ -415,7 +425,14 @@ const Navbar = ({ openNavbar }: Props) => {
               description="View Profile"
               icon={
                 <IconWrapper className={iconStyle}>
-                  <Avatar radius="xl" src={userProfile?.user_avatar_filepath} />
+                  <Avatar
+                    radius="xl"
+                    src={
+                      fileUrlListContext?.avatarUrlList[
+                        userProfile?.user_id as string
+                      ]
+                    }
+                  />
                 </IconWrapper>
               }
               data-cy="navbar-profiles"

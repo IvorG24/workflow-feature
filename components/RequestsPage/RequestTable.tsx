@@ -1,4 +1,5 @@
 import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import FileUrlListContext from "@/contexts/FileUrlListContext";
 import RequestListContext from "@/contexts/RequestListContext";
 import { setBadgeColor } from "@/utils/request";
 import { TeamMemberRole } from "@/utils/types-new";
@@ -19,6 +20,7 @@ const RequestTable = () => {
   );
   const requestListContext = useContext(RequestListContext);
   const activeTeamContext = useContext(ActiveTeamContext);
+  const fileUrlListContext = useContext(FileUrlListContext);
   const userIdRoleDictionary = activeTeamContext.reduce(
     (acc, member) => ({
       ...acc,
@@ -87,14 +89,22 @@ const RequestTable = () => {
         <td>{request.request_date_created?.slice(0, 10)}</td>
         <td>
           <Group>
-            <Avatar radius={100} />
+            <Avatar
+              radius={100}
+              src={fileUrlListContext?.avatarUrlList[request.user_id as string]}
+            />
             {request.username}
           </Group>
         </td>
         {approver && (
           <td>
             <Group>
-              <Avatar radius={100} />
+              <Avatar
+                radius={100}
+                src={
+                  fileUrlListContext?.avatarUrlList[approver.user_id as string]
+                }
+              />
               {approver.username}
             </Group>
           </td>
