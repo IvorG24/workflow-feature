@@ -1,3 +1,4 @@
+import { GetTeamRequestList } from "@/utils/queries-new";
 import {
   Badge,
   Box,
@@ -12,6 +13,7 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { useState } from "react";
+import RequestFilter from "./RequestFilter";
 import RequestItem from "./RequestItem";
 
 // replace with context data
@@ -156,7 +158,7 @@ const tempData = [
 const RequestList = () => {
   const [checked, setChecked] = useState<string[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<
-    typeof tempData[] | null
+    GetTeamRequestList[0] | null
   >(null);
   // pagination
   const [activePage, setActivePage] = useState(1);
@@ -164,92 +166,92 @@ const RequestList = () => {
   const isMobile = useMediaQuery("(max-width: 700px)");
 
   return (
-    <Grid>
-      <Grid.Col span="auto" p="0">
-        <Paper shadow="xs" p="sm">
-          <Checkbox.Group value={checked} onChange={setChecked}>
-            <Stack spacing="xs" w="100%">
-              {tempData.map((data) => (
-                <Box
-                  key={data.request_id}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    borderBottom: "1px solid #E9E9E9",
-                  }}
-                  pb="sm"
-                >
-                  <Checkbox value={data.request_title} />
+    <Box>
+      <RequestFilter />
+      <Grid mt="sm">
+        <Grid.Col span="auto" p="0">
+          <Paper shadow="xs" p="sm">
+            <Checkbox.Group value={checked} onChange={setChecked}>
+              <Stack spacing="xs" w="100%">
+                {tempData.map((data) => (
                   <Box
-                    ml="sm"
-                    onClick={() => {
-                      setSelectedRequest(data);
+                    key={data.request_id}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      borderBottom: "1px solid #E9E9E9",
                     }}
+                    pb="sm"
                   >
-                    <Text fw={500}>{data.request_title}</Text>
-                    <Text c="dimmed" lineClamp={1}>
-                      {data.request_description}
-                    </Text>
-                    <Text c="dimmed" fz="xs">
-                      {data.request_date_created.slice(0, 10)}
-                    </Text>
+                    <Checkbox value={data.request_title} />
+                    <Box
+                      ml="sm"
+                      onClick={() => {
+                        setSelectedRequest(data as GetTeamRequestList[0]);
+                      }}
+                    >
+                      <Text fw={500}>{data.request_title}</Text>
+                      <Text c="dimmed" lineClamp={1}>
+                        {data.request_description}
+                      </Text>
+                      <Text c="dimmed" fz="xs">
+                        {data.request_date_created.slice(0, 10)}
+                      </Text>
+                    </Box>
+                    <Badge
+                      size="sm"
+                      variant="filled"
+                      color="blue"
+                      w="100%"
+                      maw="80px"
+                    >
+                      {data.request_status_id}
+                    </Badge>
                   </Box>
-                  <Badge
-                    size="sm"
-                    variant="filled"
-                    color="blue"
-                    w="100%"
-                    maw="80px"
-                  >
-                    {data.request_status_id}
-                  </Badge>
-                </Box>
-              ))}
-            </Stack>
-          </Checkbox.Group>
-          {/* change the total to the correct number of pages */}
-          <Center>
-            <Pagination
-              page={activePage}
-              onChange={setActivePage}
-              total={tempData.length}
-              mt="sm"
-              size="sm"
-            />
-          </Center>
-        </Paper>
-      </Grid.Col>
-      {selectedRequest ? (
-        isMobile ? (
-          <Modal
-            opened={isMobile}
-            withCloseButton={false}
-            fullScreen
-            padding={0}
-            // linter error if onClose prop is removed
-            onClose={function (): void {
-              throw new Error("Function not implemented.");
-            }}
-          >
-            <Box p="md">
-              <RequestItem
-                request={selectedRequest}
-                setSelectedRequest={setSelectedRequest}
+                ))}
+              </Stack>
+            </Checkbox.Group>
+            {/* change the total to the correct number of pages */}
+            <Center>
+              <Pagination
+                page={activePage}
+                onChange={setActivePage}
+                total={tempData.length}
+                mt="sm"
+                size="sm"
               />
-            </Box>
-          </Modal>
-        ) : (
-          <Grid.Col span={6} pt="0">
-            <Paper shadow="xs" p="md">
-              <RequestItem
-                request={selectedRequest}
-                setSelectedRequest={setSelectedRequest}
-              />
-            </Paper>
-          </Grid.Col>
-        )
-      ) : null}
-    </Grid>
+            </Center>
+          </Paper>
+        </Grid.Col>
+        {selectedRequest ? (
+          isMobile ? (
+            <Modal
+              opened={isMobile}
+              withCloseButton={false}
+              fullScreen
+              padding={0}
+              onClose={() => setSelectedRequest(null)}
+            >
+              <Box p="md">
+                <RequestItem
+                  request={selectedRequest}
+                  setSelectedRequest={setSelectedRequest}
+                />
+              </Box>
+            </Modal>
+          ) : (
+            <Grid.Col span={6} pt="0">
+              <Paper shadow="xs" p="md">
+                <RequestItem
+                  request={selectedRequest}
+                  setSelectedRequest={setSelectedRequest}
+                />
+              </Paper>
+            </Grid.Col>
+          )
+        ) : null}
+      </Grid>
+    </Box>
   );
 };
 

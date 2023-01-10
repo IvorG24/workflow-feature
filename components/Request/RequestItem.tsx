@@ -1,3 +1,4 @@
+import { GetTeamRequestList } from "@/utils/queries-new";
 import {
   Avatar,
   Box,
@@ -10,9 +11,15 @@ import {
   Title,
 } from "@mantine/core";
 import { IconDotsVertical } from "@tabler/icons";
+import { Dispatch, SetStateAction } from "react";
 import RequestComment from "./RequestComment";
 
-const RequestItem = ({ request, setSelectedRequest }) => {
+type Props = {
+  request: GetTeamRequestList[0];
+  setSelectedRequest: Dispatch<SetStateAction<GetTeamRequestList[0] | null>>;
+};
+
+const RequestItem = ({ request, setSelectedRequest }: Props) => {
   return (
     <Box>
       <Group position="apart">
@@ -28,7 +35,7 @@ const RequestItem = ({ request, setSelectedRequest }) => {
           <Box>
             <Text fw={500}>{request.username}</Text>
             <Text fz="xs" c="dimmed">
-              {request.request_date_created.slice(0, 10)}
+              {request.request_date_created?.slice(0, 10)}
             </Text>
           </Box>
         </Group>
