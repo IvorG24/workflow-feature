@@ -4,6 +4,7 @@ import {
   Box,
   Center,
   Checkbox,
+  Flex,
   Grid,
   Modal,
   Pagination,
@@ -169,7 +170,7 @@ const RequestList = () => {
     <Box>
       <RequestFilter />
       <Grid mt="sm">
-        <Grid.Col span="auto" xl={6} p="0">
+        <Grid.Col span="auto" p="0">
           <Paper shadow="xs" p="sm">
             <Checkbox.Group value={checked} onChange={setChecked}>
               <Stack spacing="xs" w="100%">
@@ -184,21 +185,22 @@ const RequestList = () => {
                     }}
                     pb="sm"
                   >
-                    <Checkbox value={data.request_title} />
-                    <Box
-                      ml="sm"
-                      onClick={() => {
-                        setSelectedRequest(data as GetTeamRequestList[0]);
-                      }}
-                    >
-                      <Text fw={500}>{data.request_title}</Text>
-                      <Text c="dimmed" lineClamp={1}>
-                        {data.request_description}
-                      </Text>
-                      <Text c="dimmed" fz="xs">
-                        {data.request_date_created.slice(0, 10)}
-                      </Text>
-                    </Box>
+                    <Flex gap="sm">
+                      <Checkbox value={data.request_title} />
+                      <Box
+                        onClick={() => {
+                          setSelectedRequest(data as GetTeamRequestList[0]);
+                        }}
+                      >
+                        <Text fw={500}>{data.request_title}</Text>
+                        <Text c="dimmed" lineClamp={1}>
+                          {data.request_description}
+                        </Text>
+                        <Text c="dimmed" fz="xs">
+                          {data.request_date_created.slice(0, 10)}
+                        </Text>
+                      </Box>
+                    </Flex>
                     <Badge
                       size="sm"
                       variant="filled"
