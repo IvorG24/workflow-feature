@@ -5,18 +5,17 @@ import SvgSearch from "../Icon/Search";
 const statusOptions: {
   value: RequestStatus;
   label: string;
-  group: string;
 }[] = [
-  { value: "pending", label: "Pending", group: "Status" },
-  { value: "approved", label: "Approved", group: "Status" },
-  { value: "rejected", label: "Rejected", group: "Status" },
-  { value: "purchased", label: "Purchased", group: "Status" },
-  { value: "stale", label: "Stale", group: "Status" },
+  { value: "pending", label: "Pending" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+  { value: "purchased", label: "Purchased" },
+  { value: "stale", label: "Stale" },
 ];
 
 const RequestFilter = () => {
   return (
-    <SimpleGrid cols={3} mt="sm">
+    <SimpleGrid cols={3} mt="sm" maw={400}>
       <TextInput
         //   value={search}
         //   onChange={(e) => setSearch(e.currentTarget.value)}

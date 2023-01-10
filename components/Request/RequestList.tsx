@@ -169,7 +169,7 @@ const RequestList = () => {
     <Box>
       <RequestFilter />
       <Grid mt="sm">
-        <Grid.Col span="auto" p="0">
+        <Grid.Col span="auto" xl={6} p="0">
           <Paper shadow="xs" p="sm">
             <Checkbox.Group value={checked} onChange={setChecked}>
               <Stack spacing="xs" w="100%">
