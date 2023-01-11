@@ -417,11 +417,10 @@ const Navbar = ({ openNavbar }: Props) => {
           <MantineNavbar.Section mt="auto">
             <NavLink
               component="a"
-              // href={`/t/${router.query.tid}/profiles/${user?.id}/bio`}
               onClick={() =>
                 router.push(`/t/${router.query.tid}/profiles/${user?.id}/bio`)
               }
-              label={userProfile?.user_first_name}
+              label={userProfile?.username}
               description="View Profile"
               icon={
                 <IconWrapper className={iconStyle}>

@@ -76,6 +76,8 @@ import {
 // ✅ Get request main status list.
 // ✅ Transform request to React Dnd.
 // ✅ Get request draft of a form.
+// ✅ Get user by username.
+// ✅ Get team by team_name.
 
 // - Create or retrieve a user profile.
 export const createOrRetrieveUserProfile = async (
@@ -95,9 +97,7 @@ export const createOrRetrieveUserProfile = async (
       .insert({
         user_id: user.id,
         user_email: user.email,
-        username: user.email?.split("@")[0],
-        user_first_name: user.email?.split("@")[0],
-        user_last_name: user.email?.split("@")[0],
+        username: user.email,
       })
       .select()
       .single();
@@ -113,12 +113,12 @@ export type CreateOrRetrieveUserProfile = Awaited<
 // - Create or retrieve a user team list.
 export const createOrRetrieveUserTeamList = async (
   supabaseClient: SupabaseClient<Database>,
-  userId: string
+  user: User
 ) => {
   const { data, error } = await supabaseClient
     .from("team_member_view")
     .select()
-    .eq("user_id", userId)
+    .eq("user_id", user.id)
     .order("team_member_id", { ascending: false });
 
   if (error) throw error;
@@ -127,7 +127,7 @@ export const createOrRetrieveUserTeamList = async (
   const { data: teamData, error: teamError } = await supabaseClient
     .from("team_table")
     .insert({
-      team_name: `my team ${userId}`,
+      team_name: `${user.email}'s team`.toLowerCase(),
     })
     .select()
     .single();
@@ -139,7 +139,7 @@ export const createOrRetrieveUserTeamList = async (
     .from("team_member_table")
     .insert({
       team_member_team_id: teamData.team_id,
-      team_member_user_id: userId,
+      team_member_user_id: user.id,
       team_member_member_role_id: "owner",
     });
 
@@ -149,7 +149,7 @@ export const createOrRetrieveUserTeamList = async (
     await supabaseClient
       .from("team_member_view")
       .select()
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .order("team_member_id", { ascending: false });
   if (teamMemberViewError) throw teamMemberViewError;
   return teamMemberViewData || [];
@@ -907,11 +907,12 @@ export const updateUserProfile = async (
   supabaseClient: SupabaseClient<Database>,
   userProfileUpdateInput: UserProfileTableUpdate
 ) => {
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("user_profile_table")
     .update(userProfileUpdateInput)
     .eq("user_id", userProfileUpdateInput.user_id);
   if (error) throw error;
+  return data;
 };
 
 // - Update team information
@@ -1436,3 +1437,45 @@ export const getCurrentDate = async (
   return new Date(data);
 };
 export type GetCurrentDate = Awaited<ReturnType<typeof getCurrentDate>>;
+
+// Get user by username.
+export const getUserByUsername = async (
+  supabaseClient: SupabaseClient<Database>,
+  username: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("user_profile_table")
+      .select()
+      .eq("username", username)
+      .maybeSingle();
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetUserByUsername = Awaited<ReturnType<typeof getUserByUsername>>;
+
+// Get team by team_name.
+export const getTeamByTeamName = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamName: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("team_table")
+      .select()
+      .eq("team_name", teamName)
+      .maybeSingle();
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetTeamByTeamName = Awaited<ReturnType<typeof getTeamByTeamName>>;

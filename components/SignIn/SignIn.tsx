@@ -4,6 +4,7 @@ import {
   Container,
   Divider,
   Flex,
+  LoadingOverlay,
   Notification,
   Stack,
   Text,
@@ -36,6 +37,7 @@ const SignIn = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>();
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -48,7 +50,8 @@ const SignIn = () => {
         setNotification(error.message);
         throw error;
       }
-      await router.push("/");
+      // router.push("/");
+      window.location.href = "/";
     } catch (e) {
       console.error(e);
     }
@@ -56,6 +59,8 @@ const SignIn = () => {
 
   const signInWithProvider = async (provider: Provider) => {
     try {
+      setIsLoading(true);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
       });
@@ -68,8 +73,11 @@ const SignIn = () => {
     } catch (e) {
       setNotification("Failed to sign in.");
       console.error(e);
+      await router.push("/sign-in");
     }
   };
+
+  if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
 
   return (
     <>

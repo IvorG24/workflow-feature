@@ -4,6 +4,7 @@ import {
   createNotification,
   createTeam,
   createTeamInvitation,
+  getTeamByTeamName,
   getUserIdListFromEmailList,
 } from "@/utils/queries-new";
 import { NotificationTableInsert } from "@/utils/types-new";
@@ -38,7 +39,7 @@ const CreateTeam = () => {
 
   const logoInput = useRef<HTMLButtonElement>(null);
 
-  const handleTeamName = (value: string) => {
+  const handleTeamName = async (value: string) => {
     setTeamNameError("");
     setIsChecking(true);
     setTeamName(value);
@@ -49,9 +50,17 @@ const CreateTeam = () => {
     } else if (value.length > 254) {
       setTeamNameError("Team name must be less than 254 characters");
     }
-    setTimeout(function () {
+    // setTimeout(function () {
+    //   setIsChecking(false);
+    // }, 1000);
+
+    getTeamByTeamName(supabase, value).then((team) => {
+      const isTeamNameTaken = !!team;
+      if (isTeamNameTaken) {
+        setTeamNameError(`${value} team name is already taken`);
+      }
       setIsChecking(false);
-    }, 1000);
+    });
   };
 
   // const handleUpload = (team: CreateUserTeam) => {
@@ -77,7 +86,7 @@ const CreateTeam = () => {
   const handleCreateTeam = async (action: "skip" | "invite") => {
     try {
       setIsCreating(true);
-      console.log(action);
+
       let filepath;
       // Call the uploadFile function first so that if the team logo upload fails, the team will not be created.
       if (teamLogo) {
@@ -91,7 +100,7 @@ const CreateTeam = () => {
       }
 
       const createdTeam = await createTeam(supabase, user?.id as string, {
-        team_name: teamName,
+        team_name: teamName.toLowerCase(),
         team_logo_filepath: filepath,
       });
 
@@ -102,19 +111,11 @@ const CreateTeam = () => {
           `${user?.id}`,
           members
         );
-        console.log(
-          "🚀 ~ file: CreateTeam.tsx:106 ~ handleCreateTeam ~ teamInvitationList",
-          teamInvitationList
-        );
 
         // * Purpose: We remove emails of users that aren't registered yet to the app so we don't create in-app notification for them.
         const userIdWithEmailList = await getUserIdListFromEmailList(
           supabase,
           members
-        );
-        console.log(
-          "🚀 ~ file: CreateTeam.tsx:112 ~ handleCreateTeam ~ userIdWithEmailList",
-          userIdWithEmailList
         );
 
         if (!userIdWithEmailList) return;
@@ -124,10 +125,6 @@ const CreateTeam = () => {
           (userIdWithEmail) => {
             return members.includes(userIdWithEmail.userEmail);
           }
-        );
-        console.log(
-          "🚀 ~ file: CreateTeam.tsx:121 ~ handleCreateTeam ~ existingUserIdWithEmailList",
-          existingUserIdWithEmailList
         );
 
         // * Purpose: We create in-app notification for users that are registered in the app.
