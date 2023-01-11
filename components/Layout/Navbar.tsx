@@ -220,7 +220,11 @@ const Navbar = ({ openNavbar }: Props) => {
                   </IconWrapper>
                 }
                 onClick={() =>
-                  router.push(`/t/${router.query.tid as string}/requests`)
+                  router.push(
+                    `/t/${
+                      router.query.tid as string
+                    }/requests?active_tab=all&page=1`
+                  )
                 }
               />
             </Container>

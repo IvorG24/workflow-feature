@@ -1,25 +1,42 @@
-// this page was just used to test layout, you can delete it if you want
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import RequestList from "@/components/Request/RequestList";
-import { ReactElement } from "react";
-import type { NextPageWithLayout } from "./_app";
 
-const Page: NextPageWithLayout = () => {
+import { RequestListProps } from "@/contexts/RequestListContext";
+import { Tabs } from "@mantine/core";
+import { NextPageWithLayout } from "pages/_app";
+import { ReactElement } from "react";
+
+const RequestsPage: NextPageWithLayout<RequestListProps> = () => {
+  // todo: fix meta tags
   return (
-    <div>
-      <Meta
-        description="Test page used for testing layout"
-        // this is just a temporary url, canoncial url will be set in the future
-        url="localhost:3000/testpage"
-      />
-      <RequestList />
-    </div>
+    <>
+      <Meta description="List of all Requests" url="localhost:3000/requests" />
+      <Tabs variant="pills" defaultValue="all">
+        <Tabs.List>
+          <Tabs.Tab value="all">All</Tabs.Tab>
+          <Tabs.Tab value="sent">Sent</Tabs.Tab>
+          <Tabs.Tab value="received">Received</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="all" pt="xs">
+          <RequestList />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="sent" pt="xs">
+          Sent tab content
+        </Tabs.Panel>
+
+        <Tabs.Panel value="received" pt="xs">
+          Received tab content
+        </Tabs.Panel>
+      </Tabs>
+    </>
   );
 };
 
-Page.getLayout = function getLayout(page: ReactElement) {
+RequestsPage.getLayout = function getLayout(page: ReactElement) {
   return <TeamLayout>{page}</TeamLayout>;
 };
 
-export default Page;
+export default RequestsPage;
