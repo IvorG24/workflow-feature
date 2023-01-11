@@ -1,14 +1,19 @@
+import ActiveTeamContext from "@/contexts/ActiveTeamContext";
 import CreateRequestContext from "@/contexts/CreateRequestContext";
+import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import { uploadFile } from "@/utils/file";
 import {
   createRequest,
   CreateRequestParams,
   GetFormTemplate,
+  updateRequestDraft,
+  UpdateRequestDraftInput,
 } from "@/utils/queries-new";
-import { renderTooltip } from "@/utils/request";
+import { renderTooltip, setBadgeColor } from "@/utils/request";
 import type { Database, Marks } from "@/utils/types";
-import { FormRow } from "@/utils/types";
+import { ResponseList } from "@/utils/types-new";
 import {
+  Badge,
   Box,
   Button,
   Container,
@@ -34,6 +39,7 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconUpload } from "@tabler/icons";
 import { useRouter } from "next/router";
 import { useContext, useEffect, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { useForm } from "react-hook-form";
 import styles from "./CreateRequest.module.scss";
 
@@ -72,163 +78,240 @@ const CreateRequest = () => {
   const router = useRouter();
   const user = useUser();
   const createRequestContext = useContext(CreateRequestContext);
-  const { formTemplate, purchaserList, approverList, currentUserProfile } =
-    createRequestContext || {};
+  const { teamMemberList, approverIdList, purchaserIdList } =
+    useContext(ActiveTeamContext);
+  const currentUserProfileContext = useContext(CurrentUserProfileContext);
+
+  const currentUserProfile = currentUserProfileContext;
+  const { formTemplate } = createRequestContext || {};
+
+  const formName = (formTemplate && formTemplate[0].form_name) || "";
+  const requestTitle = (formTemplate && formTemplate[0].request_title) || "";
+  const requestDescription =
+    (formTemplate && formTemplate[0].request_description) || "";
+  const requestOnBehalfOf =
+    (formTemplate && formTemplate[0].request_on_behalf_of) || "";
+  const requestedBy = currentUserProfile?.username || "";
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    getValues,
+    setValue,
   } = useForm<RequestFieldsType>({
     defaultValues: {
-      title: "",
-      behalf: "",
-      description: "",
-      requestor: currentUserProfile?.username || "",
+      title: requestTitle,
+      behalf: requestOnBehalfOf,
+      description: requestDescription,
+      requestor: requestedBy,
       date: `${new Date().toLocaleDateString()}`,
     },
   });
 
-  const [selectedApprover, setSelectedApprover] = useState<string | null>(
-    approverList && approverList[0]?.value ? approverList[0].value : null
-  );
-  const [selectedPurchaser, setSelectedPurchaser] = useState<string | null>(
-    null
-  );
+  // Sample value of approverList
+  // {
+  //   label: "John Doe",
+  //   value: "1",
+  // }
+  const approverList =
+    teamMemberList
+      .filter((approver) => approverIdList.includes(approver.user_id as string))
+      .map((approver) => ({
+        label: approver.username,
+        value: approver.user_id,
+      })) || [];
+
+  const purchaserList =
+    teamMemberList
+      .filter((approver) =>
+        purchaserIdList.includes(approver.user_id as string)
+      )
+      .map((approver) => ({
+        label: approver.username,
+        value: approver.user_id,
+      })) || [];
+
+  const approverId = createRequestContext?.approverList.find((approver) =>
+    approverIdList.includes(approver.user_id as string)
+  )?.user_id;
+
+  const purchaserId = createRequestContext?.approverList.find((approver) =>
+    purchaserIdList.includes(approver.user_id as string)
+  )?.user_id;
+
+  const [selectedApprover, setSelectedApprover] = useState<string | null>();
+  const [selectedPurchaser, setSelectedPurchaser] = useState<string | null>();
 
   const [isCreating, setIsCreating] = useState(false);
-  const [form, setForm] = useState<FormRow | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [draftId, setDraftId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [newFields, setNewFields] = useState<GetFormTemplate | null>(
-    formTemplate
+  const [newFields, setNewFields] = useState<GetFormTemplate | null>();
+  const [isDraft, setIsDraft] = useState(
+    formTemplate && formTemplate[0].request_is_draft
   );
 
-  // useBeforeunload(() => {
-  //   if (Boolean(draftId)) {
-  //     axios.post("/api/update", {
-  //       answers: fields,
-  //       requestId: draftId,
-  //       formData: getValues(),
-  //       approver: selectedApprover,
-  //       purchaser: selectedPurchaser,
-  //     });
-  //   } else {
-  //     axios.post("/api/insert", {
-  //       formData: getValues(),
-  //       formId: router.query.formId,
-  //       userId: user?.id,
-  //       approver: selectedApprover,
-  //       purchaser: selectedPurchaser,
-  //       answers: fields,
-  //     });
-  //   }
-  // });
-
-  const resetState = () => {
-    setIsLoading(true);
-    reset();
-    setForm(null);
-    setDraftId(null);
-  };
+  useBeforeunload(() => {
+    if (isDraft) {
+      handleUpdateDraft();
+    } else {
+      handleCreateDraft();
+    }
+  });
 
   useEffect(() => {
     if (!router.isReady) return;
-    resetState();
-
-    // const fetchDraft = async (request_id: number) => {
-    //   setDraftId(request_id);
-    //   try {
-    //     const retrievedRequestDraft = await retreivedRequestDraftByRequestId(
-    //       supabase,
-    //       request_id
-    //     );
-    //     if (!retrievedRequestDraft) return;
-
-    //     setValue("title", `${retrievedRequestDraft.request_title}`);
-    //     setValue("description", `${retrievedRequestDraft.request_description}`);
-    //     setValue("behalf", `${retrievedRequestDraft.on_behalf_of}`);
-
-    //     const retrievedRequestResponse = await retrieveRequestResponse(
-    //       supabase,
-    //       retrievedRequestDraft.request_id,
-    //       Number(router.query.formId)
-    //     );
-
-    //     const fieldsWithResponse = retrievedRequestResponse.map(
-    //       (field, index) => {
-    //         return {
-    //           ...field.field,
-    //           response: `${field.response_value}`,
-    //           responseId: index,
-    //         };
-    //       }
-    //     );
-
-    //     // setFields(fieldsWithResponse);
-    //     // setForm(retrievedRequestDraft.form);
-    //     // setSelectedApprover(retrievedRequestDraft.approver_id);
-    //   } catch {
-    //     showNotification({
-    //       title: "Error!",
-    //       message: "Failed to fetch Request Draft",
-    //       color: "red",
-    //     });
-    //   }
-    // };
-
-    // fetchRequest();
+    setIsLoading(true);
+    reset();
+    setNewFields(formTemplate);
+    setSelectedApprover(approverId || null);
+    setSelectedPurchaser(purchaserId || null);
+    const isDraft = formTemplate && formTemplate[0].request_is_draft;
+    if (isDraft) {
+      setValue("title", requestTitle);
+      setValue("behalf", requestOnBehalfOf);
+      setValue("description", requestDescription);
+      setValue("requestor", requestedBy);
+      setValue("date", `${new Date().toLocaleDateString()}`);
+      setIsDraft(true);
+    }
     setIsLoading(false);
-  }, [supabase, router, user]);
+  }, [router]);
 
   const onSubmit = handleSubmit((formData) =>
-    draftId ? handleUpdate(formData) : handleSave(formData)
+    isDraft ? handleUpdateDraft(false) : handleSave(formData)
   );
 
-  const handleUpdate = async (formData: RequestFieldsType) => {
-    setIsCreating(true);
-    console.log(formData);
+  const handleUpdateDraft = async (isDraft = true) => {
+    let filepath;
+    if (!isDraft) {
+      if (!selectedApprover) {
+        showNotification({
+          title: "Error!",
+          message: "Please select an approver",
+          color: "red",
+        });
+        return;
+      }
+      setIsCreating(true);
+      // Call the uploadFile function first so that if the attachment upload fails, the request will not be created.
+      if (file) {
+        const { path } = await uploadFile(
+          supabase,
+          file.name,
+          file,
+          "request_attachments"
+        );
+        filepath = path;
+      }
+    }
+
+    const formData = getValues();
     try {
-      // const requestResponseList = fields.map((field) => {
-      //   return {
-      //     field_id: Number(field.field_id),
-      //     response_value: field.response,
-      //     request_id: Number(draftId),
-      //   };
-      // });
+      const approverList: CreateRequestParams["approverList"] = [];
+      if (selectedApprover) {
+        approverList.push({
+          user_id: selectedApprover,
+          request_status_id: "pending",
+        });
+      }
+      if (selectedPurchaser) {
+        approverList.push({
+          user_id: selectedPurchaser,
+          request_status_id: "pending",
+        });
+      }
 
-      // await updateRequestReponse(
-      //   supabase,
-      //   requestResponseList,
-      //   Number(draftId)
-      // );
+      const responseList: ResponseList = {};
 
-      // await updateRequest(
-      //   supabase,
-      //   `${selectedApprover}`,
-      //   selectedPurchaser,
-      //   formData,
-      //   Number(draftId)
-      // );
+      newFields &&
+        newFields.forEach((field) => {
+          if (field.response_value)
+            responseList[`${field.response_id}`] = field.response_value;
+        });
 
-      showNotification({
-        title: "Success!",
-        message: "Request sent for approval",
-        color: "green",
-      });
-      router.push(
-        `/t/${router.query.tid}/requests?active_tab=all&page=1&form=${router.query.formId}`
+      const requestId = formTemplate && formTemplate[0].request_id;
+
+      if (!requestId) throw new Error("Request ID is not defined");
+      const requestInput: UpdateRequestDraftInput = {
+        request_id: requestId,
+        request_is_draft: isDraft,
+        request_title: formData.title,
+        request_description: formData.description,
+        request_on_behalf_of: formData.behalf,
+        request_attachment_filepath_list: filepath ? [filepath] : [],
+      };
+      await updateRequestDraft(
+        supabase,
+        requestInput,
+        responseList,
+        approverList
       );
-    } catch {
-      showNotification({
-        title: "Error!",
-        message: "Failed to Save Request",
-        color: "red",
-      });
+      if (!isDraft)
+        await router.push(
+          `/t/${
+            router.query.tid as string
+          }/requests?active_tab=all&page=1&form=${
+            formTemplate && formTemplate[0].form_id
+          }`
+        );
+    } catch (error) {
+      console.error(error);
+      if (!isDraft)
+        showNotification({
+          title: "error",
+          message: "Error creating request",
+        });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleCreateDraft = async () => {
+    const formData = getValues();
+    try {
+      const approverList: CreateRequestParams["approverList"] = [];
+      if (selectedApprover) {
+        approverList.push({
+          user_id: selectedApprover,
+          request_status_id: "pending",
+        });
+      }
+      if (selectedPurchaser) {
+        approverList.push({
+          user_id: selectedPurchaser,
+          request_status_id: "pending",
+        });
+      }
+
+      const responseList: CreateRequestParams["responseList"] = {};
+
+      newFields &&
+        newFields.forEach((field) => {
+          responseList[`${field.field_id}`] = field.response_value || "";
+        });
+
+      const createRequestParams: CreateRequestParams = {
+        formId: Number(router.query.formId),
+        userId: user?.id as string,
+        teamId: router.query.tid as string,
+        request: {
+          request_title: formData.title,
+          request_description: formData.description,
+          request_on_behalf_of: formData.behalf,
+          request_is_draft: true,
+          request_attachment_filepath_list: [],
+        },
+        approverList,
+        responseList,
+      };
+
+      await createRequest(supabase, createRequestParams);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -242,6 +325,7 @@ const CreateRequest = () => {
         });
         return;
       }
+      
       setIsCreating(true);
 
       let filepath;
@@ -255,26 +339,6 @@ const CreateRequest = () => {
         );
         filepath = path;
       }
-
-      // const savedRequest = await saveRequest(
-      //   supabase,
-      //   `${selectedApprover}`,
-      //   selectedPurchaser,
-      //   formData,
-      //   `${user?.id}`,
-      //   Number(router.query.formId),
-      //   filepath
-      // );
-
-      // const requestResponse = fields.map((field) => {
-      //   return {
-      //     field_id: Number(field.field_id),
-      //     request_id: savedRequest.request_id,
-      //     response_value: field.response,
-      //   };
-      // });
-
-      // await saveRequestField(supabase, requestResponse);
 
       const approverList: CreateRequestParams["approverList"] = [];
       if (selectedApprover) {
@@ -356,7 +420,8 @@ const CreateRequest = () => {
   return (
     <Container m={0} px={8} py={16} fluid>
       <LoadingOverlay visible={isCreating || isLoading} />
-      <Title>Create {form?.form_name}</Title>
+      <Title>Create {formName}</Title>
+      {isDraft && <Badge color={setBadgeColor("approved")}>Draft</Badge>}
       <Paper shadow="xl" radius={8} mt={32} px={32} py={48}>
         <form onSubmit={onSubmit}>
           <Stack>
@@ -387,7 +452,12 @@ const CreateRequest = () => {
               </Flex>
               <Select
                 label="Approver"
-                data={approverList || []}
+                data={
+                  approverList as {
+                    label: string;
+                    value: string;
+                  }[]
+                }
                 className={styles.flex2}
                 miw={220}
                 withAsterisk
@@ -417,7 +487,12 @@ const CreateRequest = () => {
               </Flex>
               <Select
                 label="Purchaser"
-                data={purchaserList || []}
+                data={
+                  purchaserList as {
+                    label: string;
+                    value: string;
+                  }[]
+                }
                 className={styles.flex2}
                 miw={220}
                 value={selectedPurchaser}
