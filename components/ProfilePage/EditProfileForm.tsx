@@ -35,6 +35,8 @@ type Props = {
 
 type Data = {
   username: string;
+  firstName: string;
+  lastName: string;
 };
 
 const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
@@ -94,6 +96,8 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
         username: data.username,
         user_id: user.user_id,
         user_avatar_filepath: filepath,
+        user_first_name: data.firstName,
+        user_last_name: data.lastName,
       });
 
       router.reload();
@@ -137,21 +141,44 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
           <TextInput
             label="Display Name"
             {...register("username", {
-              required: "Name is required",
+              required: "Display name is required",
               minLength: {
                 value: 3,
-                message: "Name must be at least 3 characters",
+                message: "Display name must be at least 3 characters",
               },
             })}
             defaultValue={`${user?.username}`}
             error={errors.username?.message}
           />
           <TextInput
+            label="First Name"
+            {...register("firstName", {
+              required: "First name is required",
+              minLength: {
+                value: 2,
+                message: "First name must be at least 2 characters",
+              },
+            })}
+            defaultValue={`${user?.user_first_name}`}
+            error={errors.firstName?.message}
+          />
+          <TextInput
+            label="Last Name"
+            {...register("lastName", {
+              required: "Last name is required",
+              minLength: {
+                value: 2,
+                message: "Last name must be at least 2 characters",
+              },
+            })}
+            defaultValue={`${user?.user_last_name}`}
+            error={errors.lastName?.message}
+          />
+          <TextInput
             label="Email"
             disabled
             defaultValue={`${user?.user_email}`}
           />
-
           <Flex justify="flex-end" gap="xs">
             <Button
               variant="outline"
