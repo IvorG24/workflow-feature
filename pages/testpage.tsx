@@ -8,7 +8,6 @@ import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 const RequestsPage: NextPageWithLayout<RequestListProps> = () => {
-  // todo: fix meta tags
   return (
     <>
       <Meta description="List of all Requests" url="localhost:3000/requests" />
