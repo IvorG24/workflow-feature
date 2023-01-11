@@ -23,7 +23,6 @@ import {
 import {
   ColorScheme,
   ColorSchemeProvider,
-  LoadingOverlay,
   MantineProvider,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -64,7 +63,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const getLayout = Component.getLayout ?? ((page) => page);
 
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<CreateOrRetrieveUserProfile>();
   const [teamList, setTeamList] = useState<CreateOrRetrieveUserTeamList>([]);
   const [activeTeam, setActiveTeam] = useState<ActiveTeamProps>({
@@ -82,14 +81,14 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useEffect(() => {
     (async () => {
       try {
-        setIsLoading(true);
+        // setIsLoading(true);
 
         const user = (await supabaseClient.auth.getUser()).data.user;
         if (!user) return;
 
         const promises = [
           createOrRetrieveUserProfile(supabaseClient, user),
-          createOrRetrieveUserTeamList(supabaseClient, user.id),
+          createOrRetrieveUserTeamList(supabaseClient, user),
         ];
 
         const [createdOrRetrievedUser, createdOrRetrievedUserTeamList] =
@@ -130,9 +129,10 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         }
       } catch (error) {
         console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
+      } 
+      // finally {
+      //   setIsLoading(false);
+      // }
     })();
   }, [router.query.tid]);
 
@@ -160,7 +160,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     })();
   }, [activeTeam, teamList]);
 
-  if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
+  // if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
 
   return (
     <ColorSchemeProvider

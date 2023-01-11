@@ -78,6 +78,9 @@ const Profile = () => {
 
   const userProfile = useContext(MemberProfileContext);
 
+  const noFirstAndLastName =
+    !userProfile?.user_first_name && !userProfile?.user_last_name;
+
   useEffect(() => {
     if (userProfile !== null) {
       return setIsLoading(false);
@@ -130,11 +133,14 @@ const Profile = () => {
                 }
               />
               <Stack spacing={0}>
-                <Title
-                  order={2}
-                >{`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}</Title>
+                {!noFirstAndLastName && (
+                  <Title
+                    order={2}
+                  >{`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}</Title>
+                )}
+                {noFirstAndLastName && <Title order={2}>No name</Title>}
                 {/* add position column to user profile */}
-                <Text></Text>
+                <Text>{userProfile?.username}</Text>
                 <Group align="center" mt="xs" spacing={4}>
                   <IconWrapper fontSize={20} color="dimmed">
                     <Mail />

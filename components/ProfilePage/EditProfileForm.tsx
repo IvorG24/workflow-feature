@@ -2,7 +2,11 @@
 import FileUrlListContext from "@/contexts/FileUrlListContext";
 import { Database } from "@/utils/database.types";
 import { uploadFile } from "@/utils/file";
-import { GetUserProfile, updateUserProfile } from "@/utils/queries-new";
+import {
+  getUserByUsername,
+  GetUserProfile,
+  updateUserProfile,
+} from "@/utils/queries-new";
 import {
   Avatar,
   Button,
@@ -54,6 +58,8 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
 
   const fileUrlListContext = useContext(FileUrlListContext);
 
+  const [usernameError, setUsernameError] = useState("");
+
   // const handleUpload = (data: Data) => {
   //   return new Promise((resolve, reject) => {
   //     new Compressor(avatar as File, {
@@ -78,7 +84,16 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      const isUsernameTaken = !!(await getUserByUsername(
+        supabaseClient,
+        data.username
+      ));
+      if (isUsernameTaken) {
+        setUsernameError(`${data.username} username is already taken.`);
+        return;
+      }
       setIsLoading(true);
+
       let filepath;
 
       // Call the uploadFile function first so that if the team logo upload fails, the team will not be created.
@@ -102,12 +117,13 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
 
       router.reload();
     } catch {
-      setIsLoading(false);
       showNotification({
         title: "Error!",
         message: "Failed to Update Profile",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   });
 
@@ -148,7 +164,7 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
               },
             })}
             defaultValue={`${user?.username}`}
-            error={errors.username?.message}
+            error={usernameError}
           />
           <TextInput
             label="First Name"
