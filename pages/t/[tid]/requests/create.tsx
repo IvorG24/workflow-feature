@@ -4,7 +4,12 @@ import Meta from "@/components/Meta/Meta";
 import CreateRequestContext, {
   CreateRequestProps,
 } from "@/contexts/CreateRequestContext";
-import { getFormTemplate, getTeam, getUserProfile } from "@/utils/queries-new";
+import {
+  getFormTemplate,
+  GetRequestApproverList,
+  getRequestApproverList,
+  getRequestDraft,
+} from "@/utils/queries-new";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext } from "next";
 import { ReactElement } from "react";
@@ -41,13 +46,15 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
   resetServerContext();
   const user = session.user;
-  const { tid: teamId, formId } = ctx.query;
+  const { formId } = ctx.query;
 
-  const [formTemplate, teamMemberList, currentUserProfile] = await Promise.all([
+  const [template, requestDraft] = await Promise.all([
     getFormTemplate(supabaseClient, Number(formId)),
-    getTeam(supabaseClient, teamId as string),
-    getUserProfile(supabaseClient, user?.id as string),
+    getRequestDraft(supabaseClient, Number(formId), user?.id as string),
   ]);
+
+  const hasDraft = requestDraft && requestDraft.length > 0;
+  const formTemplate = hasDraft ? requestDraft : template;
 
   const order = formTemplate && formTemplate[0].order_field_id_list;
 
@@ -60,38 +67,20 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       );
     });
 
-  const approverList =
-    teamMemberList &&
-    teamMemberList
-      .filter(
-        (member) =>
-          (member.member_role_id === "owner" ||
-            member.member_role_id === "admin") &&
-          member.user_id !== user?.id
-      )
-      .map((approver) => ({
-        label: approver.username,
-        value: approver.user_id,
-      }));
-
-  const purchaserList =
-    teamMemberList &&
-    teamMemberList
-      .filter(
-        (member) =>
-          member.member_role_id === "purchaser" && member.user_id !== user?.id
-      )
-      .map((purchaser) => ({
-        label: purchaser.username,
-        value: purchaser.user_id,
-      }));
+  let approverList = [] as GetRequestApproverList;
+  if (hasDraft) {
+    const requestId = requestDraft && requestDraft[0].request_id;
+    approverList = await getRequestApproverList(
+      supabaseClient,
+      requestId as number
+    );
+  }
 
   return {
     props: {
       formTemplate,
-      purchaserList,
+      isDraft: hasDraft,
       approverList,
-      currentUserProfile,
     },
   };
 };

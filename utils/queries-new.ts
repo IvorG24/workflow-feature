@@ -13,14 +13,11 @@ import {
   InvitationTableInsert,
   NotificationTableInsert,
   RequestFieldType,
-  RequestFormFactViewRow,
-  RequestRequestApproverViewRow,
   RequestStatus,
   ResponseList,
   TeamInvitationTableInsert,
   TeamMemberRole,
   TeamMemberTableInsert,
-  TeamMemberViewRow,
   TeamTableInsert,
   TeamTableUpdate,
   TeamUserNotificationTableInsert,
@@ -78,6 +75,7 @@ import {
 // ✅ Get request comment list.
 // ✅ Get request main status list.
 // ✅ Transform request to React Dnd.
+// ✅ Get request draft of a form.
 
 // - Create or retrieve a user profile.
 export const createOrRetrieveUserProfile = async (
@@ -293,6 +291,22 @@ export const getFormTemplate = async (
   if (data) return data;
 };
 export type GetFormTemplate = Awaited<ReturnType<typeof getFormTemplate>>;
+
+// Get request draft of a form.
+export const getRequestDraft = async (
+  supabaseClient: SupabaseClient<Database>,
+  formTemplateId: number,
+  userId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_request_draft_view")
+    .select()
+    .eq("form_fact_form_id", formTemplateId)
+    .eq("form_fact_user_id", userId);
+  if (error) throw error;
+  if (data) return data;
+};
+export type GetRequestDraft = Awaited<ReturnType<typeof getRequestDraft>>;
 
 // Transform GetFormTemplate (From database view) to FormRequest (React DND).
 export const transformFormTemplateToReactDndFormRequest = (
@@ -989,20 +1003,42 @@ export const createRequest = async (
 export type CreateRequest = number;
 
 // - Update request draft.
-
+export type UpdateRequestDraftInput = {
+  request_id: number;
+  request_title: string;
+  request_description: string;
+  request_on_behalf_of: string;
+  request_is_draft: boolean;
+  request_attachment_filepath_list: string[];
+};
+// -- Sameple request
+// -- {
+// --   "request_id" : 23
+// --   "request_title": "Sample Request Title",
+// --   "request_description": "Sample Request Description",
+// --   "request_on_behalf_of": "Sample Request On Behalf Of",
+// --   "request_is_draft": false,
+// -- }
+// CREATE FUNCTION update_request_draft(request_input JSON, response_list JSON, approver_list JSON)
 export const updateRequestDraft = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number,
-  responseList: ResponseList
+  requestInput: UpdateRequestDraftInput,
+  responseList: ResponseList,
+  approverList: ApproverList
 ) => {
-  const { data, error } = await supabaseClient
-    .rpc("update_request_draft", {
-      request_id: requestId,
-      response_list: responseList,
-    })
-    .select();
-  if (error) throw error;
-  return data;
+  try {
+    const { data, error } = await supabaseClient
+      .rpc("update_request_draft", {
+        request_input: requestInput,
+        response_list: responseList,
+        approver_list: approverList,
+      })
+      .select();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 // - Get Team Member role of a user in a team.
@@ -1144,85 +1180,19 @@ export type GetTeamLogoUrlList = Awaited<ReturnType<typeof getTeamLogoUrlList>>;
 // Get request approver list with is_approveer and is_purchaser key appended.
 export const getRequestApproverList = async (
   supabaseClient: SupabaseClient<Database>,
-  requestIdList: number[]
+  requestId: number
 ) => {
-  const promises = [];
-  const promise1 = supabaseClient
-    .from("request_request_approver_view")
-    .select()
-    .in("request_approver_request_id", requestIdList)
-    .not("request_is_draft", "is", true)
-    .not("request_is_disabled", "is", true);
-
-  const promise2 = supabaseClient
-    .from("request_form_fact_view")
-    .select()
-    .in("form_fact_request_id", requestIdList);
-
-  promises.push(promise1, promise2);
-  const [requestApproverView, formFactView] = await Promise.all(promises);
-
-  if (requestApproverView.error) throw requestApproverView.error;
-  if (formFactView.error) throw formFactView.error;
-
-  const teamIdList = (
-    formFactView.data as unknown as RequestFormFactViewRow[]
-  ).map((row) => row.team_id);
-
-  // Distinct by team id.
-  const distinctTeamIdList = teamIdList.filter(
-    (item, index) => teamIdList.indexOf(item) === index
-  );
-
-  const { data: teamMemberViewData, error: teamMemberViewError } =
-    await supabaseClient
-      .from("team_member_view")
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_approver_view")
       .select()
-      .in("team_id", distinctTeamIdList);
-  if (teamMemberViewError) throw teamMemberViewError;
-
-  const requestApproverList: (RequestRequestApproverViewRow & {
-    is_approver: boolean;
-    is_purchaser: boolean;
-  })[] = [];
-
-  // Per requestApproverView.data, check if the user is an approver or purchaser.
-  // If user is an owner or admin, then is_approver is true.
-  // If user is a purchaser, then is_purchaser is true.
-  (requestApproverView.data as RequestRequestApproverViewRow[]).forEach(
-    (requestApproverRow) => {
-      const { user_id, request_id } = requestApproverRow;
-      // Get team id using request_id from formFactView.
-      const formFactViewRow = (
-        formFactView.data as RequestFormFactViewRow[]
-      ).find((row) => row.request_id === request_id);
-
-      const teamMemberViewRow = (
-        teamMemberViewData as TeamMemberViewRow[]
-      ).find(
-        (row) =>
-          row.team_id === formFactViewRow?.team_id && row.user_id === user_id
-      );
-      if (!teamMemberViewRow) {
-        throw new Error(
-          "Approver of the request is not a part of the team the request belongs to."
-        );
-      }
-
-      const { member_role_id } = teamMemberViewRow;
-      const isApprover =
-        member_role_id === "owner" || member_role_id === "admin";
-      const isPurchaser = member_role_id === "purchaser";
-
-      requestApproverList.push({
-        ...requestApproverRow,
-        is_approver: isApprover,
-        is_purchaser: isPurchaser,
-      });
-    }
-  );
-
-  return requestApproverList;
+      .eq("request_approver_request_id", requestId);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
 export type GetRequestApproverList = Awaited<
   ReturnType<typeof getRequestApproverList>
