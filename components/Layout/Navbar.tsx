@@ -59,7 +59,7 @@ const Navbar = ({ openNavbar }: Props) => {
 
   const teamOptions = teamList.map((team) => ({
     value: team.team_id as string,
-    label: team.team_name as string,
+    label: (team.team_name as string).toUpperCase(),
     image: fileUrlListContext?.teamLogoUrlList[team.team_id as string],
   }));
 
