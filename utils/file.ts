@@ -52,9 +52,11 @@ export async function uploadFile(
   bucket: string
 ) {
   try {
+    const time = new Date().getTime();
+    const prefixedPath = `${time}-${path}`;
     const { data, error } = await supabaseClient.storage
       .from(bucket)
-      .upload(path, file);
+      .upload(prefixedPath, file);
     if (error) throw error;
     return data;
   } catch (error) {

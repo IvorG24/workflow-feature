@@ -19,9 +19,9 @@ const RequestTable = () => {
     null
   );
   const requestListContext = useContext(RequestListContext);
-  const activeTeamContext = useContext(ActiveTeamContext);
+  const { teamMemberList } = useContext(ActiveTeamContext);
   const fileUrlListContext = useContext(FileUrlListContext);
-  const userIdRoleDictionary = activeTeamContext.reduce(
+  const userIdRoleDictionary = teamMemberList.reduce(
     (acc, member) => ({
       ...acc,
       [`${member.user_id}`]: member.member_role_id,
@@ -67,7 +67,7 @@ const RequestTable = () => {
         userIdRoleDictionary[approver.approver_id] === "admin";
       return isApprover;
     });
-    const approver = activeTeamContext.find(
+    const approver = teamMemberList.find(
       (member) => member.user_id === approverIdWithStatus?.approver_id
     );
 

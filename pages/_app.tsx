@@ -1,4 +1,6 @@
-import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import ActiveTeamContext, {
+  ActiveTeamProps,
+} from "@/contexts/ActiveTeamContext";
 import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import CurrentUserTeamListContext from "@/contexts/CurrentUserTeamListContext";
@@ -65,7 +67,11 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<CreateOrRetrieveUserProfile>();
   const [teamList, setTeamList] = useState<CreateOrRetrieveUserTeamList>([]);
-  const [activeTeam, setActiveTeam] = useState<GetTeam>([]);
+  const [activeTeam, setActiveTeam] = useState<ActiveTeamProps>({
+    teamMemberList: [],
+    approverIdList: [],
+    purchaserIdList: [],
+  });
   const [formTemplateList, setFormTemplateList] =
     useState<GetTeamFormTemplateList>();
   const [fileUrlList, setFileUrlList] = useState<FileUrlList>({
@@ -102,7 +108,24 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
 
           const [team, formTemplateList] = await Promise.all(promises);
 
-          setActiveTeam(team as GetTeam);
+          if (!team) return router.push("/");
+          if (team && team.length === 0) return router.push("/");
+
+          const activeTeam = {
+            teamMemberList: team as GetTeam,
+            approverIdList: (team as GetTeam)
+              .filter(
+                (member) =>
+                  member.member_role_id === "owner" ||
+                  member.member_role_id === "admin"
+              )
+              .map((member) => member.user_id),
+            purchaserIdList: (team as GetTeam)
+              .filter((member) => member.member_role_id === "purchaser")
+              .map((member) => member.user_id),
+          };
+
+          setActiveTeam(activeTeam as ActiveTeamProps);
           setFormTemplateList(formTemplateList as GetTeamFormTemplateList);
         }
       } catch (error) {
@@ -117,10 +140,10 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     (async () => {
       try {
         if (teamList.length === 0) return;
-        if (activeTeam.length === 0) return;
+        if (activeTeam.teamMemberList.length === 0) return;
 
         const teamIdList = teamList.map((team) => team.team_id);
-        const teamId = activeTeam[0].team_id;
+        const teamId = activeTeam.teamMemberList[0].team_id;
 
         const [teamLogoUrlList, avatarUrlList] = await Promise.all([
           getTeamLogoUrlList(supabaseClient, teamIdList as string[]),

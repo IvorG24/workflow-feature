@@ -91,7 +91,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const router = useRouter();
   const requestListContext = useContext(RequestListContext);
   const requestContext = useContext(RequestContext);
-  const activeTeamContext = useContext(ActiveTeamContext);
+  const { teamMemberList } = useContext(ActiveTeamContext);
   const fileUrlListContext = useContext(FileUrlListContext);
   const { setRequestList } = requestListContext;
   const { request: requestProps } = requestContext;
@@ -156,7 +156,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         url: attachmentUrlList ? attachmentUrlList[i] : null,
       };
     });
-  const userIdRoleDictionary = activeTeamContext.reduce(
+  const userIdRoleDictionary = teamMemberList.reduce(
     (acc, member) => ({
       ...acc,
       [`${member.user_id}`]: member.member_role_id,
@@ -175,10 +175,10 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       userIdRoleDictionary[approver.approver_id] === "purchaser";
     return isPurchaser;
   });
-  const approver = activeTeamContext.find(
+  const approver = teamMemberList.find(
     (member) => member.user_id === approverIdWithStatus?.approver_id
   );
-  const purchaser = activeTeamContext.find(
+  const purchaser = teamMemberList.find(
     (member) => member.user_id === purchaserIdWithStatus?.approver_id
   );
 

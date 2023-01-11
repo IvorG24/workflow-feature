@@ -19,11 +19,11 @@ const Member = () => {
 
   const { supabaseClient } = useSessionContext();
 
-  const memberListContextValue = useContext(ActiveTeamContext);
+  const { teamMemberList } = useContext(ActiveTeamContext);
 
   const [searchBarValue, setSearchBarValue] = useState("");
   const [memberList, setMemberList] = useState<GetTeam>(
-    memberListContextValue as GetTeam
+    teamMemberList as GetTeam
   );
   const [authUserRole, setAuthUserRole] = useState<string>("");
   const rolesOrder = ["owner", "admin", "purchaser", "member"];
@@ -88,8 +88,8 @@ const Member = () => {
   };
 
   useEffect(() => {
-    setMemberList(memberListContextValue as GetTeam);
-  }, [memberListContextValue]);
+    setMemberList(teamMemberList as GetTeam);
+  }, [teamMemberList]);
 
   useEffect(() => {
     if (user) {

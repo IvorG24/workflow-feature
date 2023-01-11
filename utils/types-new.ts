@@ -253,7 +253,8 @@ export type ApproverList = {
 export type FieldIdResponseKeyValue = { [key: string]: string };
 
 // Update Request Draft
-export type ResponseList = { response_id: number; response_value: string }[];
+// Key is response_id and value is the response_value.
+export type ResponseList = { [key: string]: string };
 
 // Notifications
 export type NotificationType = "user" | "team";
