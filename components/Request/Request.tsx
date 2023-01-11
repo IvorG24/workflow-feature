@@ -2,17 +2,15 @@ import ActiveTeamContext from "@/contexts/ActiveTeamContext";
 import FileUrlListContext from "@/contexts/FileUrlListContext";
 import RequestContext from "@/contexts/RequestContext";
 import RequestListContext from "@/contexts/RequestListContext";
+import useFetchRequest from "@/hooks/useFetchRequest";
+import useFetchRequestCommentList from "@/hooks/useFetchRequestCommentList";
+import useFetchRequestWithAttachmentUrlList from "@/hooks/useFetchRequestWithAttachmentUrlList";
 import { editComment } from "@/utils/queries";
 import {
   createRequestComment,
   deletePendingRequest,
   deleteRequestComment,
-  GetRequest,
-  getRequest,
-  getRequestCommentList,
   GetRequestCommentList,
-  GetRequestWithAttachmentUrlList,
-  getRequestWithAttachmentUrlList,
   updateRequestComment,
   updateRequestStatus,
 } from "@/utils/queries-new";
@@ -33,7 +31,6 @@ import {
   Divider,
   Flex,
   Group,
-  LoadingOverlay,
   MultiSelect,
   NumberInput,
   Paper,
@@ -52,7 +49,7 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { Close, Dots, Maximize } from "../Icon";
 import AttachmentBox from "../RequestsPage/AttachmentBox";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
@@ -94,7 +91,6 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const { teamMemberList } = useContext(ActiveTeamContext);
   const fileUrlListContext = useContext(FileUrlListContext);
   const { setRequestList } = requestListContext;
-  const { request: requestProps } = requestContext;
   const requestWithApproverList =
     view === "full"
       ? requestContext.requestWithApproverList
@@ -104,41 +100,13 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const [comment, setComment] = useState("");
   const [editCommentId, setEditCommentId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
-  const [attachmentUrlList, setAttachmentUrlList] =
-    useState<GetRequestWithAttachmentUrlList>();
-  const [request, setRequest] = useState<GetRequest>(requestProps);
-  const [commentList, setCommentList] = useState<GetRequestCommentList>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        if (!router.isReady) return;
-
-        const [data, data2, data3] = await Promise.all([
-          getRequest(supabaseClient, selectedRequestId),
-          getRequestWithAttachmentUrlList(supabaseClient, selectedRequestId),
-          getRequestCommentList(supabaseClient, selectedRequestId),
-        ]);
-        if (!data) throw new Error("Request not found");
-
-        setRequest(data);
-        setAttachmentUrlList(data2);
-        setCommentList(data3);
-      } catch (error) {
-        console.error(error);
-        showNotification({
-          title: "Error!",
-          message: "Failed to fetch request information",
-          color: "red",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [router, selectedRequestId, supabaseClient]);
-
-  if (isLoading) return <LoadingOverlay visible={isLoading} overlayBlur={2} />;
+  const { requestWithAttachmentUrlList: attachmentUrlList } =
+    useFetchRequestWithAttachmentUrlList(selectedRequestId);
+  const { request, setRequest } = useFetchRequest(selectedRequestId);
+  const {
+    requestCommentList: commentList,
+    setRequestCommentList: setCommentList,
+  } = useFetchRequestCommentList(selectedRequestId);
 
   const title = request?.[0]?.request_title;
   const description = request?.[0]?.request_description;
@@ -209,7 +177,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
 
       setComment("");
       setCommentList((prev) => {
-        const newCommentList = [...prev];
+        const newCommentList = [...(prev as GetRequestCommentList)];
         newCommentList.push(createdComment as GetRequestCommentList[0]);
         return newCommentList;
       });
@@ -233,7 +201,9 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       await deleteRequestComment(supabaseClient, commentId);
 
       setCommentList((prev) =>
-        prev.filter((comment) => comment.comment_id !== commentId)
+        (prev as GetRequestCommentList).filter(
+          (comment) => comment.comment_id !== commentId
+        )
       );
       showNotification({
         title: "Success!",
@@ -260,10 +230,11 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         editCommentId as number
       );
 
-      const newCommentList = commentList.map((comment) =>
-        comment.comment_id === updatedComment?.comment_id
-          ? updatedComment
-          : comment
+      const newCommentList = (commentList as GetRequestCommentList).map(
+        (comment) =>
+          comment.comment_id === updatedComment?.comment_id
+            ? updatedComment
+            : comment
       );
 
       setCommentList(() => newCommentList as GetRequestCommentList);
