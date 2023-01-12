@@ -1,3 +1,5 @@
+import { Database } from "@/utils/database.types-new";
+import { updateUserPassword } from "@/utils/queries-new";
 import {
   Button,
   Container,
@@ -7,6 +9,8 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import AddSignature from "./AddSignature";
@@ -19,6 +23,9 @@ type ChangePasswordData = {
 
 const ProfileSettingsPage = () => {
   const [openedSignature, setOpenedSignature] = useState(false);
+  const supabaseClient = useSupabaseClient<Database>();
+  const user = useUser();
+
   const {
     register,
     handleSubmit,
@@ -30,7 +37,28 @@ const ProfileSettingsPage = () => {
     console.log("delete account");
   };
   const onSubmit = handleSubmit(async (data) => {
-    console.log(data);
+    try {
+      if (!user?.id) throw new Error();
+
+      await updateUserPassword(
+        supabaseClient,
+        user.id,
+        data.oldPassword,
+        data.newPassword
+      );
+      showNotification({
+        title: "Success!",
+        message: "Your password has been updated.",
+        color: "green",
+      });
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        title: "Error!",
+        message: `${(error as Error).message}`,
+        color: "red",
+      });
+    }
   });
   return (
     <Container fluid m={0} p={0}>
@@ -62,9 +90,12 @@ const ProfileSettingsPage = () => {
             {...register("newPassword", {
               required: "New password is required",
               minLength: {
-                value: 8,
-                message: "Password must be at least 8 characters",
+                value: 6,
+                message: "Password must be at least 6 characters",
               },
+              validate: (value) =>
+                getValues("oldPassword") !== value ||
+                "New password must be different",
             })}
             error={errors.newPassword?.message}
             mt="sm"
@@ -74,8 +105,8 @@ const ProfileSettingsPage = () => {
             {...register("confirmPassword", {
               required: "Confirm password is required",
               minLength: {
-                value: 8,
-                message: "Password must be at least 8 characters",
+                value: 6,
+                message: "Password must be at least 6 characters",
               },
               validate: (value) =>
                 getValues("newPassword") === value || "Passwords do not match",

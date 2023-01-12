@@ -1,4 +1,5 @@
 // todo: create unit test
+import { Database } from "@/utils/database.types-new";
 import {
   Button,
   Center,
@@ -12,7 +13,8 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
-import { useSessionContext } from "@supabase/auth-helpers-react";
+import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -30,7 +32,8 @@ const InviteUser = () => {
   const theme = useMantineTheme();
   const router = useRouter();
   const { name } = router.query;
-  const { session, supabaseClient } = useSessionContext();
+  const supabaseClient = useSupabaseClient<Database>();
+  const user = useUser();
   const {
     register,
     handleSubmit,
@@ -44,17 +47,27 @@ const InviteUser = () => {
   });
 
   const handleCreateTeam = async () => {
+    if (!user) throw new Error("User is not logged in");
+
     try {
-      const { error } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from("team_table")
-        .insert([{ team_name: name, user_id: session?.user.id }]);
+        .insert({ team_name: name as string, user_id: user.id })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      router.push("/dashboard");
+      await router.push(
+        `/t/${data.team_id as string}/requests?active_tab=all&page=1`
+      );
     } catch (error) {
-      // todo: create a notification
       console.error(error);
+      showNotification({
+        title: "Error!",
+        message: "Failed to Create Team",
+        color: "red",
+      });
     }
   };
 

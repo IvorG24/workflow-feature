@@ -24,8 +24,8 @@ const Setting = ({ activeTab }: Props) => {
       >
         <Tabs.List>
           {/* <Tabs.Tab value="general">General</Tabs.Tab> */}
+          <Tabs.Tab value="profile">Profile</Tabs.Tab>
           <Tabs.Tab value="members">Members</Tabs.Tab>
-          {/* <Tabs.Tab value="profile">Profile</Tabs.Tab> */}
           {/* <Tabs.Tab value="notification">Notification</Tabs.Tab> */}
           {/* <Tabs.Tab value="billing">Billing</Tabs.Tab> */}
         </Tabs.List>
@@ -33,11 +33,11 @@ const Setting = ({ activeTab }: Props) => {
         <Tabs.Panel value="general" pt="xl">
           {/* <General /> */}
         </Tabs.Panel>
-        <Tabs.Panel value="members" pt="xl">
-          <MembersPage />
-        </Tabs.Panel>
         <Tabs.Panel value="profile" pt="xl">
           <ProfileSettingsPage />
+        </Tabs.Panel>
+        <Tabs.Panel value="members" pt="xl">
+          <MembersPage />
         </Tabs.Panel>
         <Tabs.Panel value="notification" pt="xl">
           <NotificationSettingsPage />

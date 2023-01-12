@@ -36,15 +36,11 @@ const Register = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    getValues,
   } = useForm<FormData>();
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      if (data.password !== data.confirmPassword) {
-        setNotification("Passwords do not match.");
-        return;
-      }
-
       const { email, password } = data;
       // todo: add loading state
       const { error } = await supabase.auth.signUp({
@@ -135,6 +131,8 @@ const Register = () => {
                 type="password"
                 {...register("confirmPassword", {
                   required: "Confirm Password is required",
+                  validate: (value) =>
+                    getValues("password") === value || "Passwords do not match",
                 })}
                 error={errors.confirmPassword?.message}
                 data-cy="register-input-confirmPassword"
