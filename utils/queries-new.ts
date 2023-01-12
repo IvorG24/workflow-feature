@@ -911,7 +911,9 @@ export const updateUserProfile = async (
   const { data, error } = await supabaseClient
     .from("user_profile_table")
     .update(userProfileUpdateInput)
-    .eq("user_id", userProfileUpdateInput.user_id);
+    .eq("user_id", userProfileUpdateInput.user_id)
+    .select()
+    .single();
   if (error) throw error;
   return data;
 };

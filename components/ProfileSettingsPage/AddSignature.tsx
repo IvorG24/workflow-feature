@@ -1,3 +1,6 @@
+import { Database } from "@/utils/database.types-new";
+import { uploadFile } from "@/utils/file";
+import { updateUserProfile } from "@/utils/queries-new";
 import {
   Button,
   Center,
@@ -10,32 +13,82 @@ import {
   Title,
   UnstyledButton,
 } from "@mantine/core";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { showNotification } from "@mantine/notifications";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
 import { Close, Edit, PhotoCamera } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./AddSignature.module.scss";
 
 type Props = {
-  onCancel: MouseEventHandler<HTMLButtonElement>;
+  onCancel: () => void;
+  setCurrentSignatureUrl: (url: string) => void;
 };
 
 type Choice = "upload" | "draw" | undefined;
 
-const AddSignature = ({ onCancel }: Props) => {
+const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
+  const supabaseClient = useSupabaseClient<Database>();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [choice, setChoice] = useState<Choice>(undefined);
+  const [isUploading, setIsUploading] = useState(false);
+  const user = useUser();
 
   useEffect(() => {
-    if (uploadFile) {
-      fileBrowseHandler(uploadFile);
+    if (file) {
+      fileBrowseHandler(file);
       setChoice("upload");
     }
-  }, [uploadFile]);
+  }, [file]);
 
   const fileBrowseHandler = (file: File) => {
     const imagePath = URL.createObjectURL(file);
     setImageUrl(imagePath);
+  };
+  const handleUploadSignature = async () => {
+    try {
+      setIsUploading(true);
+      let filepath;
+      if (file) {
+        const { path } = await uploadFile(
+          supabaseClient,
+          file.name,
+          file,
+          "signatures"
+        );
+        filepath = path;
+
+        // Save uploaded signature to user profile.
+        await updateUserProfile(supabaseClient, {
+          user_id: user?.id,
+          user_signature_filepath: filepath,
+        });
+        setCurrentSignatureUrl(imageUrl || "");
+        showNotification({
+          title: "Success!",
+          message: "Signature updated.",
+          color: "green",
+        });
+        onCancel();
+      } else {
+        showNotification({
+          title: "Error!",
+          message: "No signature file selected.",
+          color: "red",
+        });
+        return;
+      }
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        title: "Error!",
+        message: "Upload signature failed.",
+        color: "red",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
   return (
     <Container fluid>
@@ -70,7 +123,7 @@ const AddSignature = ({ onCancel }: Props) => {
             </Paper>
           </UnstyledButton>
 
-          <FileButton onChange={setUploadFile} accept="image/png,image/jpeg">
+          <FileButton onChange={setFile} accept="image/png,image/jpeg">
             {(props) => (
               <UnstyledButton {...props}>
                 <Paper withBorder shadow="md" p="xl" miw={180} radius="lg">
@@ -112,10 +165,12 @@ const AddSignature = ({ onCancel }: Props) => {
         </Paper>
       )}
       <Flex justify="center" gap="xl" mt="xl">
-        <Button onClick={onCancel} variant="outline">
+        <Button disabled={isUploading} onClick={onCancel} variant="outline">
           Cancel
         </Button>
-        <Button>Save</Button>
+        <Button disabled={isUploading} onClick={handleUploadSignature}>
+          Save
+        </Button>
       </Flex>
     </Container>
   );

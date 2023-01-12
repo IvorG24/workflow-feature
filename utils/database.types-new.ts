@@ -378,6 +378,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
         Insert: {
@@ -387,6 +388,7 @@ export interface Database {
           user_first_name?: string | null
           user_id: string
           user_last_name?: string | null
+          user_signature_filepath?: string | null
           username?: string | null
         }
         Update: {
@@ -396,6 +398,7 @@ export interface Database {
           user_first_name?: string | null
           user_id?: string
           user_last_name?: string | null
+          user_signature_filepath?: string | null
           username?: string | null
         }
       }
@@ -446,6 +449,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -494,6 +498,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -542,6 +547,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -573,6 +579,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -621,6 +628,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -669,6 +677,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -717,6 +726,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -746,6 +756,7 @@ export interface Database {
           user_request_comment_id: number | null
           user_request_comment_request_id: number | null
           user_request_comment_user_id: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -794,6 +805,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -815,6 +827,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -836,6 +849,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
@@ -859,6 +873,7 @@ export interface Database {
           user_first_name: string | null
           user_id: string | null
           user_last_name: string | null
+          user_signature_filepath: string | null
           username: string | null
         }
       }
