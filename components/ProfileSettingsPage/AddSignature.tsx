@@ -15,7 +15,11 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  default as ReactSignatureCanvas,
+  default as SignatureCanvas,
+} from "react-signature-canvas";
 import { Close, Edit, PhotoCamera } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./AddSignature.module.scss";
@@ -34,6 +38,7 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
   const [choice, setChoice] = useState<Choice>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const user = useUser();
+  const sigCanvas = useRef<ReactSignatureCanvas>(null);
 
   useEffect(() => {
     if (file) {
@@ -64,6 +69,70 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
           user_id: user?.id,
           user_signature_filepath: filepath,
         });
+        setCurrentSignatureUrl(imageUrl || "");
+        showNotification({
+          title: "Success!",
+          message: "Signature updated.",
+          color: "green",
+        });
+        onCancel();
+      } else {
+        showNotification({
+          title: "Error!",
+          message: "No signature file selected.",
+          color: "red",
+        });
+        return;
+      }
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        title: "Error!",
+        message: "Upload signature failed.",
+        color: "red",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  const handleConvertCanvasAndUploadSignature = async () => {
+    try {
+      // disable saving of signature if user hasn't drawn a signature
+      if (sigCanvas.current?.isEmpty()) {
+        showNotification({
+          title: "Error!",
+          message: "No signature provided.",
+          color: "red",
+        });
+        return;
+      }
+      setIsUploading(true);
+
+      // Convert canvas to image.
+
+      const canvas = sigCanvas.current?.getCanvas();
+      const dataURL = canvas?.toDataURL("image/png");
+      const blob = await fetch(dataURL || "").then((r) => r.blob());
+      const file = new File([blob], `${user?.id}-signature.png`, {
+        type: "image/png",
+      });
+
+      let filepath;
+      if (file) {
+        const { path } = await uploadFile(
+          supabaseClient,
+          file.name,
+          file,
+          "signatures"
+        );
+        filepath = path;
+
+        // Save uploaded signature to user profile.
+        await updateUserProfile(supabaseClient, {
+          user_id: user?.id,
+          user_signature_filepath: filepath,
+        });
+        const imageUrl = URL.createObjectURL(file);
         setCurrentSignatureUrl(imageUrl || "");
         showNotification({
           title: "Success!",
@@ -142,7 +211,17 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
           </FileButton>
         </Flex>
       )}
-      {choice === "draw" && <Paper> Draw Signature content here</Paper>}
+      {choice === "draw" && (
+        <div className={styles.canvasContainer}>
+          <SignatureCanvas
+            canvasProps={{
+              className: styles.sigCanvas,
+            }}
+            ref={sigCanvas}
+            data-testid="sigCanvas"
+          />
+        </div>
+      )}
       {choice === "upload" && (
         <Paper
           shadow="xs"
@@ -165,12 +244,32 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
         </Paper>
       )}
       <Flex justify="center" gap="xl" mt="xl">
+        {choice === "draw" && (
+          <Button
+            disabled={isUploading}
+            onClick={() => sigCanvas.current?.clear()}
+            variant="outline"
+          >
+            Clear
+          </Button>
+        )}
         <Button disabled={isUploading} onClick={onCancel} variant="outline">
           Cancel
         </Button>
-        <Button disabled={isUploading} onClick={handleUploadSignature}>
-          Save
-        </Button>
+
+        {choice === "draw" && (
+          <Button
+            disabled={isUploading}
+            onClick={handleConvertCanvasAndUploadSignature}
+          >
+            Save
+          </Button>
+        )}
+        {choice === "upload" && (
+          <Button disabled={isUploading} onClick={handleUploadSignature}>
+            Save
+          </Button>
+        )}
       </Flex>
     </Container>
   );
