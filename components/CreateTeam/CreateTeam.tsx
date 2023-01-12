@@ -156,7 +156,9 @@ const CreateTeam = () => {
         await Promise.all(promises);
       }
 
-      router.push(`/t/${createdTeam.team_id}/dashboard`);
+      await router.push(
+        `/t/${createdTeam.team_id as string}/requests?active_tab=all&page=1`
+      );
     } catch (e) {
       console.error(e);
       setIsCreating(false);

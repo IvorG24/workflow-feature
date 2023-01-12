@@ -29,12 +29,11 @@ import { useContext, useState } from "react";
 import {
   AddCircle,
   ArrowBack,
-  Dashboard,
   Description,
   EditDocument,
-  Group as GroupIcon,
   Logout,
   Notifications,
+  Settings,
 } from "../Icon";
 import IconWrapper from "../IconWrapper/IconWrapper";
 import styles from "./Navbar.module.scss";
@@ -59,7 +58,7 @@ const Navbar = ({ openNavbar }: Props) => {
 
   const teamOptions = teamList.map((team) => ({
     value: team.team_id as string,
-    label: team.team_name as string,
+    label: (team.team_name as string).toUpperCase(),
     image: fileUrlListContext?.teamLogoUrlList[team.team_id as string],
   }));
 
@@ -119,7 +118,7 @@ const Navbar = ({ openNavbar }: Props) => {
           if (val === "create") {
             router.push(`/teams/create`);
           } else {
-            router.push(`/t/${val}/dashboard`);
+            router.push(`/t/${val}/requests?active_tab=all&page=1`);
           }
         }}
         icon={
@@ -152,7 +151,7 @@ const Navbar = ({ openNavbar }: Props) => {
               className={styles.notificationsButtonWrapper}
               p={0}
             >
-              <NavLink
+              {/* <NavLink
                 component="a"
                 onClick={() =>
                   router.push(`/t/${router.query.tid as string}/dashboard`)
@@ -164,7 +163,7 @@ const Navbar = ({ openNavbar }: Props) => {
                     <Dashboard />
                   </IconWrapper>
                 }
-              />
+              /> */}
 
               <NavLink
                 component="a"
@@ -199,10 +198,11 @@ const Navbar = ({ openNavbar }: Props) => {
               /> */}
               <NavLink
                 component="a"
-                label="Members"
+                label="Settings"
                 icon={
                   <IconWrapper className={iconStyle}>
-                    <GroupIcon />
+                    {/* <GroupIcon /> */}
+                    <Settings />
                   </IconWrapper>
                 }
                 onClick={() =>

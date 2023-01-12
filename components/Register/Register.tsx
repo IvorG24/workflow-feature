@@ -36,6 +36,7 @@ const Register = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    getValues,
   } = useForm<FormData>();
 
   const onSubmit = handleSubmit(async (data) => {
@@ -130,6 +131,8 @@ const Register = () => {
                 type="password"
                 {...register("confirmPassword", {
                   required: "Confirm Password is required",
+                  validate: (value) =>
+                    getValues("password") === value || "Passwords do not match",
                 })}
                 error={errors.confirmPassword?.message}
                 data-cy="register-input-confirmPassword"

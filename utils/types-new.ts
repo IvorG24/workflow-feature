@@ -258,3 +258,15 @@ export type ResponseList = { [key: string]: string };
 
 // Notifications
 export type NotificationType = "user" | "team";
+
+// Request List to CSV
+export type RequestListToCSV = {
+  id: number;
+  team: string;
+  title: string;
+  description: string;
+  status: RequestStatus;
+  data_created: string;
+  approver: string;
+  purchaser: string;
+}[];
