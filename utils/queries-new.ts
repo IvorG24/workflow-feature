@@ -78,6 +78,7 @@ import {
 // ✅ Get request draft of a form.
 // ✅ Get user by username.
 // ✅ Get team by team_name.
+// ✅ Update user password.
 
 // - Create or retrieve a user profile.
 export const createOrRetrieveUserProfile = async (
@@ -1479,3 +1480,24 @@ export const getTeamByTeamName = async (
   }
 };
 export type GetTeamByTeamName = Awaited<ReturnType<typeof getTeamByTeamName>>;
+
+// Update user password.
+export const updateUserPassword = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  oldPassword: string,
+  newPassword: string
+) => {
+  try {
+    const { data, error } = await supabaseClient.rpc("change_user_password", {
+      current_plain_password: oldPassword,
+      new_plain_password: newPassword,
+    });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateUserPassword = Awaited<ReturnType<typeof updateUserPassword>>;

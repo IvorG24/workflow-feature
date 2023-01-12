@@ -872,6 +872,10 @@ export interface Database {
         }
         Returns: number
       }
+      change_user_password: {
+        Args: { current_plain_password: string; new_plain_password: string }
+        Returns: Json
+      }
       check_if_invitation_is_valid: {
         Args: { invitation_id_var: number }
         Returns: boolean

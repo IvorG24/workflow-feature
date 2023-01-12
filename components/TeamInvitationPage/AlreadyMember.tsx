@@ -23,7 +23,9 @@ const AlreadyMember = ({ teamName, teamLogo, teamId }: Props) => {
           fullWidth
           maw={300}
           size="lg"
-          onClick={() => router.push(`/t/${teamId}/dashboard`)}
+          onClick={() =>
+            router.push(`/t/${teamId}/requests?active_tab=all&page=1`)
+          }
           data-cy="invitation-button"
         >
           Continue to team dashboard
