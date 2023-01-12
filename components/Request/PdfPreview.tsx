@@ -1,10 +1,10 @@
-import { GetTeamRequestList } from "@/utils/queries-new";
 import { setBadgeColor } from "@/utils/request";
 import { Box, Divider, Group, Text, Title } from "@mantine/core";
 import { startCase } from "lodash";
+import { ReducedRequestType } from "./RequestList";
 
 type Props = {
-  request: GetTeamRequestList[0];
+  request: ReducedRequestType;
   attachments: { filepath: string; url: string | null }[] | undefined;
 };
 
@@ -18,9 +18,8 @@ const PdfPreview = ({ request, attachments }: Props) => {
         backgroundColor: "#FFFFFF",
       }}
     >
-      {/* add team logo? */}
       <Title align="center" order={4} mb="md">
-        {request.team_name}
+        {request.team_name?.toUpperCase()}
       </Title>
 
       <Group position="apart">
@@ -41,16 +40,35 @@ const PdfPreview = ({ request, attachments }: Props) => {
           {request.request_title}
         </Text>
       </Group>
-      <Text color="dark.9">{request.request_date_created?.slice(0, 10)}</Text>
-      <Text my="sm" color="dark.9">
+      <Text c="dark.9">{request.request_date_created?.slice(0, 10)}</Text>
+      <Text my="sm" c="dark.9">
         {request.request_description}
       </Text>
+      <Divider mb="sm" />
+      <Text fw={500} c="dark.9">
+        Request Form
+      </Text>
+      {request.fields.map((f, idx: number) => {
+        return (
+          <Box key={idx} p="xs">
+            <Group>
+              <Text fw={500}>Q:</Text>
+              <Text>{f.label}</Text>
+            </Group>
+            <Group>
+              <Text fw={500}>A:</Text>
+              <Text>{f.value ? f.value : "N/A"}</Text>
+            </Group>
+          </Box>
+        );
+      })}
+      <Divider my="sm" />
       <Group>
         <Box>
           <Text fw={500} c="dark.9">
             Requested By
           </Text>
-          <Text color="dark.9">{`${request.user_first_name} ${request.user_last_name}`}</Text>
+          <Text c="dark.9">{`${request.user_first_name} ${request.user_last_name}`}</Text>
         </Box>
         <Box>
           <Text fw={500} c="dark.9">
@@ -60,7 +78,7 @@ const PdfPreview = ({ request, attachments }: Props) => {
         </Box>
       </Group>
       <Box mt="md">
-        <Text fw={500} color="dark.9">
+        <Text fw={500} c="dark.9">
           Attachments
         </Text>
         {attachments?.map((item, idx: number) => {

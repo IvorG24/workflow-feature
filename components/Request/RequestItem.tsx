@@ -19,22 +19,22 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconDotsVertical, IconDownload } from "@tabler/icons";
 import jsPDF from "jspdf";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
 import PdfPreview from "./PdfPreview";
 import RequestComment from "./RequestComment";
+import { ReducedRequestType } from "./RequestList";
 
 type Props = {
-  request: GetTeamRequestList[0];
+  request: ReducedRequestType;
   setSelectedRequest: Dispatch<SetStateAction<GetTeamRequestList[0] | null>>;
 };
 
 const RequestItem = ({ request, setSelectedRequest }: Props) => {
-  const requestRef = useRef<HTMLDivElement>(null);
+  const supabaseClient = useSupabaseClient();
   const [openPdfPreview, setOpenPdfPreview] = useState(false);
   const [attachmentUrlList, setAttachmentUrlList] =
     useState<GetRequestWithAttachmentUrlList>();
-  const supabaseClient = useSupabaseClient();
 
   const attachments = request.request_attachment_filepath_list?.map(
     (filepath, i) => {
@@ -46,24 +46,25 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
   );
 
   useEffect(() => {
-    async () => {
+    (async () => {
       try {
-        const data = await getRequestWithAttachmentUrlList(
+        const urlList = await getRequestWithAttachmentUrlList(
           supabaseClient,
           request.request_id as number
         );
-        setAttachmentUrlList(data);
-      } catch (error) {
-        console.log(error);
+        setAttachmentUrlList(urlList);
+      } catch (e) {
+        console.log(e);
         showNotification({
           title: "Error!",
-          message: "Failed to fetch request information",
+          message: "Failed to fetch request information.",
           color: "red",
         });
       }
-    };
+    })();
   }, [request, supabaseClient]);
 
+  // TODO for JC: Add png for approver and purchaser signature
   const handleDownloadToPdf = () => {
     const html = document.getElementById(`${request.request_id}`);
     const pdfHeight =
@@ -87,7 +88,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
   };
 
   return (
-    <Box p="xs" ref={requestRef}>
+    <Box p="xs">
       {/* PDF PREVIEW */}
       {request && (
         <Modal
