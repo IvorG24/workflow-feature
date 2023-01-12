@@ -1,7 +1,13 @@
 import { GetTeamFormTemplateList } from "@/utils/queries-new";
 import { createContext } from "react";
 
-const ActiveTeamFormListContext =
-  createContext<GetTeamFormTemplateList>(undefined);
+export type ActiveTeamFormList = {
+  formTemplateList: GetTeamFormTemplateList;
+  setFormTemplateList: (formTemplateList: GetTeamFormTemplateList) => void;
+};
 
+const ActiveTeamFormListContext = createContext<ActiveTeamFormList>({
+  formTemplateList: [],
+  setFormTemplateList: () => {},
+});
 export default ActiveTeamFormListContext;

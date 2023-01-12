@@ -53,7 +53,7 @@ const Navbar = ({ openNavbar }: Props) => {
 
   const { hovered: addRequestHovered, ref: addRequestRef } = useHover();
   const userProfile = useContext(CurrentUserProfileContext);
-  const formList = useContext(ActiveTeamFormListContext);
+  const { formTemplateList: formList } = useContext(ActiveTeamFormListContext);
   const fileUrlListContext = useContext(FileUrlListContext);
 
   const teamOptions = teamList.map((team) => ({

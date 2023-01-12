@@ -1,6 +1,12 @@
 import { AddCircle } from "@/components/Icon";
+import ActiveTeamFormListContext from "@/contexts/ActiveTeamFormListContext";
 import { Database } from "@/utils/database.types";
-import { buildFormTemplate, updateFormTemplate } from "@/utils/queries-new";
+import {
+  buildFormTemplate,
+  GetTeamFormTemplateList,
+  getTeamFormTemplateList,
+  updateFormTemplate,
+} from "@/utils/queries-new";
 import { FormRequest } from "@/utils/types";
 import {
   Box,
@@ -13,7 +19,7 @@ import {
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { FC, memo, useCallback, useState } from "react";
+import { FC, memo, useCallback, useContext, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import {
   Control,
@@ -36,6 +42,7 @@ const FormBuilder: FC<Props> = (props) => {
   const supabaseClient = useSupabaseClient<Database>();
   const user = useUser();
   const router = useRouter();
+  const { setFormTemplateList } = useContext(ActiveTeamFormListContext);
 
   const { register, control, handleSubmit, getValues } = props;
   const isInEditMode = getValues().form_id ? true : false;
@@ -159,6 +166,13 @@ const FormBuilder: FC<Props> = (props) => {
         title: "Form built",
         message: "You can now create requests with this form!",
       });
+
+      const updatedFormTemplateList = await getTeamFormTemplateList(
+        supabaseClient,
+        router.query.tid as string
+      );
+      setFormTemplateList(updatedFormTemplateList as GetTeamFormTemplateList);
+
       router.push(`/t/${router.query.tid}/forms`);
     } catch (e) {
       console.log("ERROR", e);

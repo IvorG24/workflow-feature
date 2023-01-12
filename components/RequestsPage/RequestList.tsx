@@ -39,7 +39,9 @@ const RequestList = () => {
   const { requestList, requestWithApproverList } = requestListContext;
   const requestListCount = requestList.length;
 
-  const activeTeamFormList = useContext(ActiveTeamFormListContext);
+  const { formTemplateList: activeTeamFormList } = useContext(
+    ActiveTeamFormListContext
+  );
   const formList = activeTeamFormList
     ? activeTeamFormList.map((form) => ({
         value: `${form.form_id}`,

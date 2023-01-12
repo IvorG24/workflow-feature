@@ -184,7 +184,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
                 <CurrentUserTeamListContext.Provider value={teamList}>
                   <ActiveTeamContext.Provider value={currentTeam}>
                     <ActiveTeamFormListContext.Provider
-                      value={formTemplateList}
+                      value={{ formTemplateList, setFormTemplateList }}
                     >
                       <FileUrlListContext.Provider value={fileUrlList}>
                         {getLayout(<Component {...pageProps} />)}
