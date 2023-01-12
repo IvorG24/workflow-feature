@@ -19,7 +19,7 @@ const Member = () => {
 
   const { supabaseClient } = useSessionContext();
 
-  const { teamMemberList } = useContext(ActiveTeamContext);
+  const { teamMemberList, setActiveTeam } = useContext(ActiveTeamContext);
 
   const [searchBarValue, setSearchBarValue] = useState("");
   const [memberList, setMemberList] = useState<GetTeam>(
@@ -75,13 +75,46 @@ const Member = () => {
         newRole
       );
 
+      // Update teamMemberList in ActiveTeamContext
+      // If updated to owner or admin, then update approverIdList.
+      // If updated to purchaser, then update purchaserIdList.
+
+      const updatedTeamMemberList = teamMemberList?.map((member) => {
+        if (member.user_id === memberId) {
+          return {
+            ...member,
+            member_role_id: newRole,
+          };
+        }
+        return member;
+      });
+
+      const updatedApproverIdList = updatedTeamMemberList
+        ?.filter((member) => {
+          return (
+            member.member_role_id === "owner" ||
+            member.member_role_id === "admin"
+          );
+        })
+        .map((member) => member.user_id);
+
+      const updatedPurchaserIdList = updatedTeamMemberList
+        ?.filter((member) => {
+          return member.member_role_id === "purchaser";
+        })
+        .map((member) => member.user_id);
+
+      setActiveTeam?.({
+        teamMemberList: updatedTeamMemberList,
+        approverIdList: updatedApproverIdList as string[],
+        purchaserIdList: updatedPurchaserIdList as string[],
+      });
+
       showNotification({
         title: "Success!",
         message: `Member role updated.`,
         color: "green",
       });
-
-      router.replace(router.asPath);
     } catch (error) {
       console.log(error);
     }

@@ -117,7 +117,11 @@ const CreateRequest = () => {
   // }
   const approverList =
     teamMemberList
-      .filter((approver) => approverIdList.includes(approver.user_id as string))
+      .filter(
+        (approver) =>
+          approverIdList.includes(approver.user_id as string) &&
+          approver.user_id !== user?.id
+      )
       .map((approver) => ({
         label: approver.username,
         value: approver.user_id,
@@ -125,8 +129,10 @@ const CreateRequest = () => {
 
   const purchaserList =
     teamMemberList
-      .filter((approver) =>
-        purchaserIdList.includes(approver.user_id as string)
+      .filter(
+        (approver) =>
+          purchaserIdList.includes(approver.user_id as string) &&
+          approver.user_id !== user?.id
       )
       .map((approver) => ({
         label: approver.username,
@@ -325,7 +331,7 @@ const CreateRequest = () => {
         });
         return;
       }
-      
+
       setIsCreating(true);
 
       let filepath;
