@@ -1,6 +1,7 @@
 import { setBadgeColor } from "@/utils/request";
 import { Box, Divider, Group, Text, Title } from "@mantine/core";
 import { startCase } from "lodash";
+import Image from "next/image";
 import { ReducedRequestType } from "./RequestList";
 
 type Props = {
@@ -52,12 +53,16 @@ const PdfPreview = ({ request, attachments }: Props) => {
         return (
           <Box key={idx} p="xs">
             <Group>
-              <Text fw={500}>Q:</Text>
-              <Text>{f.label}</Text>
+              <Text fw={500} c="dark.9">
+                Q:
+              </Text>
+              <Text c="dark.9">{f.label}</Text>
             </Group>
             <Group>
-              <Text fw={500}>A:</Text>
-              <Text>{f.value ? f.value : "N/A"}</Text>
+              <Text fw={500} c="dark.9">
+                A:
+              </Text>
+              <Text c="dark.9">{f.value ? f.value : "N/A"}</Text>
             </Group>
           </Box>
         );
@@ -68,12 +73,27 @@ const PdfPreview = ({ request, attachments }: Props) => {
           <Text fw={500} c="dark.9">
             Requested By
           </Text>
+          <Image
+            // replace with purchaser signature filepath
+            src={request.user_signature_filepath}
+            alt={request.user_signature_filepath}
+            width={50}
+            height={50}
+          />
           <Text c="dark.9">{`${request.user_first_name} ${request.user_last_name}`}</Text>
         </Box>
         <Box>
           <Text fw={500} c="dark.9">
             Approved By
           </Text>
+          <Image
+            // replace with approver signature filepath
+            src={request.user_signature_filepath}
+            alt={request.user_signature_filepath}
+            width={50}
+            height={50}
+          />
+          {/* replace with approver name */}
           <Text c="dark.9">N/A</Text>
         </Box>
       </Group>

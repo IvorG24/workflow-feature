@@ -81,7 +81,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
     doc.html(html as HTMLElement, {
       callback: (doc) => doc.save(`request_${request.request_title}`),
       x: doc.internal.pageSize.width / 6,
-      y: 50,
+      y: 10,
     });
     setOpenPdfPreview(false);
     return;

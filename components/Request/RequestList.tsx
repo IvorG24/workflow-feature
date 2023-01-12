@@ -36,6 +36,7 @@ const dataWithResponse = [
     user_last_name: "",
     user_avatar_filepath: null,
     user_email: "sejidi1552@irebah.com",
+    user_signature_filepath: "/image/dummy-folder/fake-signature.png",
     team_id: "6caef095-ff7e-419d-b27e-4b7c5ba22880",
     team_name: "default",
     team_logo_filepath: null,
@@ -65,6 +66,7 @@ const dataWithResponse = [
     request_status_id: "pending",
   },
   {
+    user_signature_filepath: "/image/dummy-folder/fake-signature.png",
     form_fact_id: 3013,
     form_fact_user_id: "2bab63b7-1115-4ca5-aa08-f8f2fc49ef4e",
     form_fact_team_id: "6caef095-ff7e-419d-b27e-4b7c5ba22880",
@@ -110,6 +112,7 @@ const dataWithResponse = [
     request_status_id: "pending",
   },
   {
+    user_signature_filepath: "/image/dummy-folder/fake-signature.png",
     form_fact_id: 3014,
     form_fact_user_id: "2bab63b7-1115-4ca5-aa08-f8f2fc49ef4e",
     form_fact_team_id: "6caef095-ff7e-419d-b27e-4b7c5ba22880",
@@ -155,6 +158,7 @@ const dataWithResponse = [
     request_status_id: "pending",
   },
   {
+    user_signature_filepath: "/image/dummy-folder/fake-signature.png",
     form_fact_id: 3015,
     form_fact_user_id: "2bab63b7-1115-4ca5-aa08-f8f2fc49ef4e",
     form_fact_team_id: "6caef095-ff7e-419d-b27e-4b7c5ba22880",
@@ -200,6 +204,7 @@ const dataWithResponse = [
     request_status_id: "pending",
   },
   {
+    user_signature_filepath: "/image/dummy-folder/fake-signature.png",
     form_fact_id: 3016,
     form_fact_user_id: "2bab63b7-1115-4ca5-aa08-f8f2fc49ef4e",
     form_fact_team_id: "6caef095-ff7e-419d-b27e-4b7c5ba22880",
@@ -253,6 +258,8 @@ export type ReducedRequestFieldType = {
 };
 
 export type ReducedRequestType = GetTeamRequestList[0] & {
+  user_signature_filepath: string;
+} & {
   fields: ReducedRequestFieldType[];
 };
 
@@ -289,7 +296,6 @@ const RequestList = () => {
 
       return acc;
     }, initialValue);
-    console.log(reducedRequests);
     setRequestList(reducedRequests as ReducedRequestType[]);
   }, []);
 
