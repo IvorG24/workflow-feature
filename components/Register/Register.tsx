@@ -40,6 +40,11 @@ const Register = () => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      if (data.password !== data.confirmPassword) {
+        setNotification("Passwords do not match.");
+        return;
+      }
+
       const { email, password } = data;
       // todo: add loading state
       const { error } = await supabase.auth.signUp({
