@@ -72,6 +72,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     approverIdList: [],
     purchaserIdList: [],
   });
+  const currentTeam = { ...activeTeam, setActiveTeam };
   const [formTemplateList, setFormTemplateList] =
     useState<GetTeamFormTemplateList>();
   const [fileUrlList, setFileUrlList] = useState<FileUrlList>({
@@ -181,7 +182,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             <NotificationsProvider position="top-center">
               <CurrentUserProfileContext.Provider value={userProfile}>
                 <CurrentUserTeamListContext.Provider value={teamList}>
-                  <ActiveTeamContext.Provider value={activeTeam}>
+                  <ActiveTeamContext.Provider value={currentTeam}>
                     <ActiveTeamFormListContext.Provider
                       value={formTemplateList}
                     >

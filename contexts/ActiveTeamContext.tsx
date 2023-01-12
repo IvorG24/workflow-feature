@@ -1,10 +1,11 @@
 import { GetTeam } from "@/utils/queries-new";
-import { createContext } from "react";
+import { createContext, Dispatch, SetStateAction } from "react";
 
 export type ActiveTeamProps = {
   teamMemberList: GetTeam;
-  approverIdList: string[]
-  purchaserIdList: string[]
+  approverIdList: string[];
+  purchaserIdList: string[];
+  setActiveTeam?: Dispatch<SetStateAction<ActiveTeamProps>>;
 };
 
 const ActiveTeamContext = createContext<ActiveTeamProps>({
@@ -12,5 +13,4 @@ const ActiveTeamContext = createContext<ActiveTeamProps>({
   approverIdList: [],
   purchaserIdList: [],
 });
-
 export default ActiveTeamContext;
