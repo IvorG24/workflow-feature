@@ -1,9 +1,12 @@
+import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import { Database } from "@/utils/database.types-new";
+import { getFileUrl } from "@/utils/file";
 import { updateUserPassword } from "@/utils/queries-new";
 import {
   Button,
   Container,
   Divider,
+  Image,
   Modal,
   PasswordInput,
   Text,
@@ -11,7 +14,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import AddSignature from "./AddSignature";
 
@@ -25,13 +28,27 @@ const ProfileSettingsPage = () => {
   const [openedSignature, setOpenedSignature] = useState(false);
   const supabaseClient = useSupabaseClient<Database>();
   const user = useUser();
-
+  const userProfile = useContext(CurrentUserProfileContext);
+  const currentSignatureFilePath = userProfile?.user_signature_filepath;
+  const [currentSignatureUrl, setCurrentSignatureUrl] = useState("");
   const {
     register,
     handleSubmit,
     getValues,
     formState: { errors },
   } = useForm<ChangePasswordData>();
+
+  useEffect(() => {
+    (async () => {
+      if (!currentSignatureFilePath) return;
+      const url = await getFileUrl(
+        supabaseClient,
+        currentSignatureFilePath,
+        "signatures"
+      );
+      setCurrentSignatureUrl(url);
+    })();
+  }, [supabaseClient, currentSignatureFilePath]);
 
   const onDeleteAccount = () => {
     console.log("delete account");
@@ -66,8 +83,17 @@ const ProfileSettingsPage = () => {
       <Text>
         This signature will be auto-attached on every approval you make.
       </Text>
+      {currentSignatureUrl && (
+        <div style={{ width: 240 }}>
+          <Image radius="md" src={currentSignatureUrl} alt="Signature" />
+        </div>
+      )}
+
       <Modal opened={openedSignature} onClose={() => setOpenedSignature(false)}>
-        <AddSignature onCancel={() => setOpenedSignature(false)} />
+        <AddSignature
+          onCancel={() => setOpenedSignature(false)}
+          setCurrentSignatureUrl={setCurrentSignatureUrl}
+        />
       </Modal>
       <Button onClick={() => setOpenedSignature(true)} mt="lg">
         Add Signature
