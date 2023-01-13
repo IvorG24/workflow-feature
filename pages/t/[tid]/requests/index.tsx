@@ -2,7 +2,7 @@
 
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
-import RequestListPage from "@/components/RequestsPage/RequestsPage";
+import RequestList from "@/components/Request/RequestList";
 import RequestListContext from "@/contexts/RequestListContext";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 
@@ -113,7 +113,8 @@ const RequestsPage: NextPageWithLayout<RequestListProps> = (props) => {
       }}
     >
       <Meta description="List of all Requests" url="localhost:3000/requests" />
-      <RequestListPage />
+      <RequestList />
+      {/* <RequestListPage /> */}
     </RequestListContext.Provider>
   );
 };
