@@ -1,6 +1,7 @@
 import { RequestStatus } from "@/utils/types-new";
 import { ActionIcon, Select, SimpleGrid, TextInput } from "@mantine/core";
 import SvgSearch from "../Icon/Search";
+import ExportToCsv from "./ExportToCsv";
 
 const statusOptions: {
   value: RequestStatus;
@@ -15,7 +16,7 @@ const statusOptions: {
 
 const RequestFilter = () => {
   return (
-    <SimpleGrid cols={3} mt="sm" maw={400}>
+    <SimpleGrid cols={4} mt="sm" maw={600}>
       <TextInput
         //   value={search}
         //   onChange={(e) => setSearch(e.currentTarget.value)}
@@ -43,6 +44,7 @@ const RequestFilter = () => {
         //   onChange={handleFilterByStatus}
         data-cy="request-select-status"
       />
+      <ExportToCsv />
     </SimpleGrid>
   );
 };

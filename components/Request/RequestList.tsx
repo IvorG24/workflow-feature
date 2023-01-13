@@ -38,7 +38,7 @@ const RequestList = () => {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 700px)");
   const requestListContext = useContext(RequestListContext);
-  const { requestList, requestWithApproverList } = requestListContext;
+  const { requestList } = requestListContext;
   const [checked, setChecked] = useState<string[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<
     GetTeamRequestList[0] | null
