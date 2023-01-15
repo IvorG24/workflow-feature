@@ -40,18 +40,18 @@ const TeamLayout = ({ children }: Props) => {
     <>
       <AppShell
         navbarOffsetBreakpoint="sm"
+        header={
+          <Header openNavbar={openNavbar} setOpenNavbar={setOpenNavbar} />
+        }
         navbar={<Navbar openNavbar={openNavbar} />}
         footer={
           <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-            <Footer height="auto" p="sm" withBorder>
+            <Footer height={80} p="sm" withBorder>
               {bottomNavLinks.length > 0 && (
                 <BottomNavigation links={bottomNavLinks} />
               )}
             </Footer>
           </MediaQuery>
-        }
-        header={
-          <Header openNavbar={openNavbar} setOpenNavbar={setOpenNavbar} />
         }
       >
         <Container p={0} fluid>
