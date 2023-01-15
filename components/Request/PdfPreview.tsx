@@ -10,6 +10,8 @@ type Props = {
 };
 
 const PdfPreview = ({ request, attachments }: Props) => {
+  console.log(!request.user_signature_filepath);
+
   return (
     <Box
       id={`${request.request_id}`}
@@ -73,26 +75,30 @@ const PdfPreview = ({ request, attachments }: Props) => {
           <Text fw={500} c="dark.9">
             Requested By
           </Text>
-          <Image
-            // replace with purchaser signature filepath
-            src={request.user_signature_filepath}
-            alt={request.user_signature_filepath}
-            width={50}
-            height={50}
-          />
+          {/*  replace with purchaser signature filepath */}
+          {request.user_signature_filepath && (
+            <Image
+              src={request.user_signature_filepath}
+              alt={request.user_signature_filepath}
+              width={50}
+              height={50}
+            />
+          )}
           <Text c="dark.9">{`${request.user_first_name} ${request.user_last_name}`}</Text>
         </Box>
         <Box>
           <Text fw={500} c="dark.9">
             Approved By
           </Text>
-          <Image
-            // replace with approver signature filepath
-            src={request.user_signature_filepath}
-            alt={request.user_signature_filepath}
-            width={50}
-            height={50}
-          />
+          {/* replace with approver signature filepath */}
+          {request.user_signature_filepath && (
+            <Image
+              src={request.user_signature_filepath}
+              alt={request.user_signature_filepath}
+              width={50}
+              height={50}
+            />
+          )}
           {/* replace with approver name */}
           <Text c="dark.9">N/A</Text>
         </Box>

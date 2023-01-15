@@ -4,6 +4,7 @@ import {
   GetTeamRequestList,
 } from "@/utils/queries-new";
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -17,7 +18,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconDotsVertical, IconDownload } from "@tabler/icons";
+import { IconAlertCircle, IconDotsVertical, IconDownload } from "@tabler/icons";
 import jsPDF from "jspdf";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
@@ -96,6 +97,16 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
           onClose={() => setOpenPdfPreview(false)}
           title="Download Preview"
         >
+          {!request.user_signature_filepath && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Notice!"
+              color="red"
+              mb="sm"
+            >
+              This document does not contain any signatures.
+            </Alert>
+          )}
           <PdfPreview request={request} attachments={attachments} />
           <SimpleGrid cols={2} mt="xl">
             <Button variant="default" onClick={() => setOpenPdfPreview(false)}>
