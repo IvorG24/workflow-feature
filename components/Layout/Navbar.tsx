@@ -165,18 +165,6 @@ const Navbar = ({ openNavbar }: Props) => {
                 }
               /> */}
 
-              <NavLink
-                component="a"
-                label="Notifications"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    <Notifications />
-                  </IconWrapper>
-                }
-                onClick={() =>
-                  router.push(`/t/${router.query.tid as string}/notifications`)
-                }
-              />
               {/* // TODO: Commenting this for now. */}
               {/* <Badge
               className={styles.notificationsButtonWrapper__badge}
@@ -196,21 +184,7 @@ const Navbar = ({ openNavbar }: Props) => {
                 }
                 onClick={() => router.push(`/t/${router.query.tid as string}/settings/general`)}
               /> */}
-              <NavLink
-                component="a"
-                label="Settings"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    {/* <GroupIcon /> */}
-                    <Settings />
-                  </IconWrapper>
-                }
-                onClick={() =>
-                  router.push(
-                    `/t/${router.query.tid as string}/settings/members`
-                  )
-                }
-              />
+
               <NavLink
                 component="a"
                 label="All Requests"
@@ -227,6 +201,33 @@ const Navbar = ({ openNavbar }: Props) => {
                   )
                 }
               />
+              <NavLink
+                component="a"
+                label="Notifications"
+                icon={
+                  <IconWrapper className={iconStyle}>
+                    <Notifications />
+                  </IconWrapper>
+                }
+                onClick={() =>
+                  router.push(`/t/${router.query.tid as string}/notifications`)
+                }
+              />
+              <NavLink
+                component="a"
+                label="Settings"
+                icon={
+                  <IconWrapper className={iconStyle}>
+                    {/* <GroupIcon /> */}
+                    <Settings />
+                  </IconWrapper>
+                }
+                onClick={() =>
+                  router.push(
+                    `/t/${router.query.tid as string}/settings/members`
+                  )
+                }
+              />
             </Container>
           </MantineNavbar.Section>
 
@@ -234,6 +235,9 @@ const Navbar = ({ openNavbar }: Props) => {
 
           <ScrollArea className={styles.navScroll}>
             <MantineNavbar.Section mt="lg">
+              <Title order={2} size={14} weight={400} color="dimmed">
+                Request Forms
+              </Title>
               <NavLink
                 component="a"
                 label="Forms"
