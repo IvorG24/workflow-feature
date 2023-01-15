@@ -18,7 +18,8 @@ const BottomNavigation = ({ links }: { links: ILink[] }) => {
   const { colorScheme } = useMantineColorScheme();
   return (
     <Container
-      p="xs"
+      p="sm"
+      mb="xs"
       bg={colorScheme === "dark" ? "dark" : "white"}
       className={styles.container}
     >
