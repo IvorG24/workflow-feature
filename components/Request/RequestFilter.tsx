@@ -108,11 +108,6 @@ const RequestFilter = () => {
           shallow: true,
         }
       );
-      // router.push(
-      //   `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${router.query.page}`,
-      //   undefined,
-      //   { shallow: true }
-      // );
     }
   };
 
