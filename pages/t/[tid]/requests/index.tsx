@@ -11,6 +11,7 @@ import {
   getRequestWithApproverList,
   getTeamRequestList,
 } from "@/utils/queries-new";
+import { Container, Tabs } from "@mantine/core";
 import { useUser } from "@supabase/auth-helpers-react";
 import { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
@@ -101,7 +102,6 @@ const RequestsPage: NextPageWithLayout<RequestListProps> = (props) => {
     );
   }, [router.query]);
 
-  // todo: fix meta tags
   return (
     <RequestListContext.Provider
       value={{
@@ -112,8 +112,30 @@ const RequestsPage: NextPageWithLayout<RequestListProps> = (props) => {
       }}
     >
       <Meta description="List of all Requests" url="localhost:3000/requests" />
-      <RequestList />
-      {/* <RequestListPage /> */}
+      <Container p={0} fluid>
+        <Tabs
+          value={router.query.active_tab as string}
+          onTabChange={(value) =>
+            router.push(
+              {
+                query: { ...router.query, active_tab: value, page: "1" },
+              },
+              undefined,
+              { shallow: true }
+            )
+          }
+        >
+          <Tabs.List>
+            <Tabs.Tab value="all">All</Tabs.Tab>
+            <Tabs.Tab value="sent">Sent</Tabs.Tab>
+            <Tabs.Tab value="received">Received</Tabs.Tab>
+          </Tabs.List>
+        </Tabs>
+
+        <Container fluid m={0} p={0}>
+          <RequestList />
+        </Container>
+      </Container>
     </RequestListContext.Provider>
   );
 };
