@@ -1,5 +1,6 @@
 import RequestListContext from "@/contexts/RequestListContext";
 import { GetTeamRequestList } from "@/utils/queries-new";
+import { setBadgeColor } from "@/utils/request";
 import {
   Badge,
   Box,
@@ -43,23 +44,10 @@ const RequestList = () => {
   const [selectedRequest, setSelectedRequest] = useState<
     GetTeamRequestList[0] | null
   >(null);
-  const [activePage, setActivePage] = useState(
-    router.query.page ? Number(router.query.page) : 1
-  );
+  const [activePage, setActivePage] = useState(1);
   const [requestListToDisplay, setRequestListToDisplay] = useState<
     ReducedRequestType[] | null
   >(null);
-
-  const handlePagination = (activePage: number) => {
-    setActivePage(activePage);
-    router.push(
-      {
-        query: { ...router.query, page: activePage },
-      },
-      undefined,
-      { shallow: true }
-    );
-  };
 
   useEffect(() => {
     const slicedRequest = requestList.slice(
@@ -87,6 +75,21 @@ const RequestList = () => {
     setRequestListToDisplay(reducedRequestList as ReducedRequestType[]);
   }, [activePage, requestList]);
 
+  useEffect(() => {
+    setActivePage(router.query.page ? Number(router.query.page) : 1);
+  }, [router.query.page]);
+
+  const handlePagination = (activePage: number) => {
+    setActivePage(activePage);
+    router.push(
+      {
+        query: { ...router.query, page: activePage },
+      },
+      undefined,
+      { shallow: true }
+    );
+  };
+
   return (
     <Box>
       <RequestFilter />
@@ -95,7 +98,8 @@ const RequestList = () => {
           <Stack p="sm">
             <Checkbox.Group value={checked} onChange={setChecked}>
               <Stack spacing="xs" w="100%">
-                {requestList &&
+                {requestListToDisplay &&
+                requestListToDisplay[0].fields.length ? (
                   requestListToDisplay?.map((data) => (
                     <Box
                       key={data.request_id}
@@ -126,14 +130,17 @@ const RequestList = () => {
                       <Badge
                         size="sm"
                         variant="filled"
-                        color="blue"
+                        color={setBadgeColor(data.request_status_id as string)}
                         w="100%"
                         maw="80px"
                       >
                         {data.request_status_id}
                       </Badge>
                     </Box>
-                  ))}
+                  ))
+                ) : (
+                  <Box>No results found.</Box>
+                )}
               </Stack>
             </Checkbox.Group>
             {ceil((requestList.length as number) / REQUEST_PER_PAGE) >= 1 ? (

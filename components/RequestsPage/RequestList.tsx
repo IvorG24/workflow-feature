@@ -88,10 +88,6 @@ const RequestList = () => {
     const search = e.currentTarget.value;
     handleSearch(search);
 
-    // if (e.key === "Enter") {
-    //   handleSearch(search);
-    // }
-
     if (e.key === "Backspace" && search === "") {
       setSearch("");
       handleSearch(search);

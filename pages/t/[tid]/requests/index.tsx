@@ -70,7 +70,6 @@ const filterRequestList = (
       return searchString.includes(search_query.toString().toLowerCase());
     });
   }
-
   return filteredRequestList;
 };
 
