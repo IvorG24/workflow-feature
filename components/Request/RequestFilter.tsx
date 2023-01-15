@@ -112,7 +112,15 @@ const RequestFilter = () => {
   };
 
   return (
-    <SimpleGrid cols={4} mt="sm" maw={600}>
+    <SimpleGrid
+      cols={1}
+      mt="sm"
+      maw={600}
+      breakpoints={[
+        { minWidth: 768, cols: 4, spacing: "xs" },
+        { minWidth: 320, cols: 1, spacing: "xs" },
+      ]}
+    >
       <TextInput
         value={search}
         onChange={(e) => setSearch(e.currentTarget.value)}
@@ -123,6 +131,7 @@ const RequestFilter = () => {
             <SvgSearch />
           </ActionIcon>
         }
+        size="xs"
       />
       <Select
         clearable
@@ -130,6 +139,7 @@ const RequestFilter = () => {
         data={formList as (string | SelectItem)[]}
         value={selectedForm}
         onChange={handleFilterBySelectedForm}
+        size="xs"
       />
       <Select
         clearable
@@ -138,6 +148,7 @@ const RequestFilter = () => {
         value={status}
         onChange={handleFilterByStatus}
         data-cy="request-select-status"
+        size="xs"
       />
       <ExportToCsv />
     </SimpleGrid>

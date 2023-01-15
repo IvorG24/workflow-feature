@@ -10,8 +10,6 @@ type Props = {
 };
 
 const PdfPreview = ({ request, attachments }: Props) => {
-  console.log(!request.user_signature_filepath);
-
   return (
     <Box
       id={`${request.request_id}`}

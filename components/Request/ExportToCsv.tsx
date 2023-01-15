@@ -1,7 +1,7 @@
 import ActiveTeamContext from "@/contexts/ActiveTeamContext";
 import RequestListContext from "@/contexts/RequestListContext";
 import { TeamMemberRole } from "@/utils/types-new";
-import { ActionIcon } from "@mantine/core";
+import { Button } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { IconDownload } from "@tabler/icons";
 import { parse } from "json2csv";
@@ -88,14 +88,26 @@ const ExportToCsv = () => {
   };
 
   return (
-    <ActionIcon
-      variant="transparent"
+    <Button
+      variant="light"
       title="Export to CSV"
       aria-label="Export to CSV"
+      color="indigo"
       onClick={handleExportRequestListToCSV}
+      size="xs"
+      rightIcon={<IconDownload size={16} />}
     >
-      <IconDownload size={16} />
-    </ActionIcon>
+      Export to CSV
+    </Button>
+    // <ActionIcon
+    //   variant="transparent"
+    //   title="Export to CSV"
+    //   aria-label="Export to CSV"
+    //   color="green"
+    //   onClick={handleExportRequestListToCSV}
+    // >
+    //   <IconDownload size={20} />
+    // </ActionIcon>
   );
 };
 
