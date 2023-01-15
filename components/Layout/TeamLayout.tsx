@@ -25,12 +25,12 @@ const TeamLayout = ({ children }: Props) => {
       icon: <IconHome />,
     },
     {
-      label: "Add Request",
+      label: "Forms",
       href: `/t/${router.query.tid}/forms`,
       icon: <IconFileDescription />,
     },
     {
-      label: "Add Request",
+      label: "Requests",
       href: `/t/${router.query.tid}/requests?active_tab=all&page=1`,
       icon: <IconFilePencil />,
     },
@@ -43,7 +43,7 @@ const TeamLayout = ({ children }: Props) => {
         navbar={<Navbar openNavbar={openNavbar} />}
         footer={
           <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-            <Footer height="auto" p="md" withBorder={false}>
+            <Footer height="auto" p="sm" withBorder>
               {bottomNavLinks.length > 0 && (
                 <BottomNavigation links={bottomNavLinks} />
               )}
