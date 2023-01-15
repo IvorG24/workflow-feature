@@ -42,7 +42,7 @@ const RequestFilter = () => {
     setSelectedForm(selectedForm);
     if (selectedForm) {
       router.push(
-        { query: { ...router.query, form: selectedForm } },
+        { query: { ...router.query, form: selectedForm, page: 1 } },
         undefined,
         { shallow: true }
       );
