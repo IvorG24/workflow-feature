@@ -126,38 +126,7 @@ export const createOrRetrieveUserTeamList = async (
     .order("team_member_id", { ascending: false });
 
   if (error) throw error;
-  if (data && data.length > 0) return data;
-
-  const { data: teamData, error: teamError } = await supabaseClient
-    .from("team_table")
-    .insert({
-      team_name: `${user.email}'s team`.toLowerCase(),
-    })
-    .select()
-    .single();
-
-  if (teamError) throw teamError;
-  if (!teamData) throw new Error("No default team created.");
-
-  const { error: insertError } = await supabaseClient
-    .from("team_member_table")
-    .insert({
-      team_member_team_id: teamData.team_id,
-      team_member_user_id: user.id,
-      team_member_member_role_id: "owner",
-    });
-
-  if (insertError) throw insertError;
-
-  const { data: teamMemberViewData, error: teamMemberViewError } =
-    await supabaseClient
-      .from("team_member_view")
-      .select()
-      .eq("user_id", user.id)
-      .is("team_is_disabled", false)
-      .order("team_member_id", { ascending: false });
-  if (teamMemberViewError) throw teamMemberViewError;
-  return teamMemberViewData || [];
+  return data;
 };
 export type CreateOrRetrieveUserTeamList = Awaited<
   ReturnType<typeof createOrRetrieveUserTeamList>
