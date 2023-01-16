@@ -1,4 +1,4 @@
-import { uploadFile } from "@/utils/queries";
+import { uploadFile } from "@/utils/file";
 import { deleteTeam, getTeamByTeamName, updateTeam } from "@/utils/queries-new";
 import { Database, TeamTableRow } from "@/utils/types";
 import {
@@ -58,6 +58,7 @@ const GeneralSettingsPage = ({ team }: Props) => {
 
   const handleUpdateTeam = async () => {
     if (teamNameError) return;
+    if (!teamName && !teamLogo) return;
 
     try {
       setIsLoading(true);
@@ -76,7 +77,7 @@ const GeneralSettingsPage = ({ team }: Props) => {
 
       await updateTeam(supabase, {
         team_id: `${router.query.tid}`,
-        team_name: teamName.toLowerCase(),
+        team_name: teamName ? teamName.toLowerCase() : team.team_name,
         team_logo_filepath: filepath,
       });
       router.reload();
