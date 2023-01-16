@@ -64,6 +64,7 @@ const dataWithResponse = [
     request_attachment_filepath_list: ["1673444257171-Team Page.png"],
     request_is_disabled: false,
     request_status_id: "pending",
+    team_is_disabled: false,
   },
   {
     user_signature_filepath: "/image/dummy-folder/fake-signature.png",
@@ -110,6 +111,7 @@ const dataWithResponse = [
     request_attachment_filepath_list: ["1673444257171-Team Page.png"],
     request_is_disabled: false,
     request_status_id: "pending",
+    team_is_disabled: false,
   },
   {
     user_signature_filepath: "/image/dummy-folder/fake-signature.png",
@@ -156,6 +158,7 @@ const dataWithResponse = [
     request_attachment_filepath_list: ["1673444257171-Team Page.png"],
     request_is_disabled: false,
     request_status_id: "pending",
+    team_is_disabled: false,
   },
   {
     user_signature_filepath: "/image/dummy-folder/fake-signature.png",
@@ -202,6 +205,7 @@ const dataWithResponse = [
     request_attachment_filepath_list: ["1673444257171-Team Page.png"],
     request_is_disabled: false,
     request_status_id: "pending",
+    team_is_disabled: false,
   },
   {
     user_signature_filepath: "/image/dummy-folder/fake-signature.png",
@@ -248,6 +252,7 @@ const dataWithResponse = [
     request_attachment_filepath_list: ["1673444257171-Team Page.png"],
     request_is_disabled: false,
     request_status_id: "pending",
+    team_is_disabled: false,
   },
 ];
 
@@ -296,6 +301,7 @@ const RequestList = () => {
 
       return acc;
     }, initialValue);
+    console.log(reducedRequests);
     setRequestList(reducedRequests as ReducedRequestType[]);
   }, []);
 

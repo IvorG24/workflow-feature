@@ -1362,6 +1362,8 @@ export const getRequestCommentList = async (
     );
     return dataWithUrl || [];
   }
+
+  return data || [];
 };
 export type GetRequestCommentList = Awaited<
   ReturnType<typeof getRequestCommentList>
