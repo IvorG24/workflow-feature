@@ -17,9 +17,8 @@ import {
   Divider,
   Flex,
   Group,
+  Menu,
   Paper,
-  Popover,
-  Stack,
   Text,
   Textarea,
 } from "@mantine/core";
@@ -200,46 +199,34 @@ const RequestComment = ({ requestId }: Props) => {
                         )}
                       </Text>
                     </Flex>
-                    <Popover
-                      width={200}
-                      position="left"
-                      withArrow
-                      shadow="sm"
-                      disabled={comment.user_id !== user?.id ? true : false}
-                    >
-                      <Popover.Target>
+                    <Menu position="left" withArrow>
+                      <Menu.Target>
                         <ActionIcon c="dimmed" sx={{ cursor: "pointer" }}>
                           <IconDotsVertical size={16} />
                         </ActionIcon>
-                      </Popover.Target>
-                      <Popover.Dropdown>
-                        <Stack>
-                          <Group
-                            spacing="xs"
-                            onClick={() => {
-                              setNewComment(`${comment.comment_content}`);
-                              setEditCommentId(comment.comment_id);
-                            }}
-                          >
-                            <IconEdit size={16} />
-                            <Text>Edit</Text>
-                          </Group>
-                          <Group
-                            spacing="xs"
-                            onClick={() =>
-                              confirmationModal("delete", "this comment?", () =>
-                                handleDeleteComment(
-                                  comment.comment_id as number
-                                )
-                              )
-                            }
-                          >
-                            <IconTrash size={16} />
-                            <Text>Delete</Text>
-                          </Group>
-                        </Stack>
-                      </Popover.Dropdown>
-                    </Popover>
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Item
+                          icon={<IconEdit size={16} />}
+                          onClick={() => {
+                            setNewComment(`${comment.comment_content}`);
+                            setEditCommentId(comment.comment_id);
+                          }}
+                        >
+                          Edit
+                        </Menu.Item>
+                        <Menu.Item
+                          icon={<IconTrash size={16} />}
+                          onClick={() =>
+                            confirmationModal("delete", "this comment?", () =>
+                              handleDeleteComment(comment.comment_id as number)
+                            )
+                          }
+                        >
+                          Delete
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
                   </Group>
                   <Flex p="sm" px="md" gap={10}>
                     {comment.comment_id === editCommentId ? (
