@@ -1,4 +1,5 @@
 import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import FileUrlListContext from "@/contexts/FileUrlListContext";
 import RequestContext from "@/contexts/RequestContext";
 import RequestListContext from "@/contexts/RequestListContext";
@@ -88,6 +89,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const router = useRouter();
   const requestListContext = useContext(RequestListContext);
   const requestContext = useContext(RequestContext);
+  const currentUser = useContext(CurrentUserProfileContext);
   const { teamMemberList } = useContext(ActiveTeamContext);
   const fileUrlListContext = useContext(FileUrlListContext);
   const { setRequestList } = requestListContext;
@@ -178,7 +180,10 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
       setComment("");
       setCommentList((prev) => {
         const newCommentList = [...(prev as GetRequestCommentList)];
-        newCommentList.push(createdComment as GetRequestCommentList[0]);
+        newCommentList.push({
+          ...(createdComment as GetRequestCommentList[0]),
+          username: currentUser ? currentUser.username : "",
+        });
         return newCommentList;
       });
 
