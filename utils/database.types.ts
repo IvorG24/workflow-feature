@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json }
   | Json[];
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       field_table: {
@@ -255,21 +255,21 @@ export interface Database {
       team_table: {
         Row: {
           team_id: string;
+          team_logo_filepath: string | null;
           team_name: string | null;
-          user_id: string | null;
-          team_logo: string | null;
+          team_is_disabled: boolean;
         };
         Insert: {
           team_id?: string;
+          team_logo_filepath?: string | null;
           team_name?: string | null;
-          user_id?: string | null;
-          team_logo?: string | null;
+          team_is_disabled?: boolean | null;
         };
         Update: {
           team_id?: string;
+          team_logo_filepath?: string | null;
           team_name?: string | null;
-          user_id?: string | null;
-          team_logo?: string | null;
+          team_is_disabled?: boolean | null;
         };
       };
       user_notification_table: {
@@ -371,4 +371,4 @@ export interface Database {
       team_role: "owner" | "admin" | "purchaser" | "member";
     };
   };
-}
+};

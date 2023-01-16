@@ -207,7 +207,7 @@ const Navbar = ({ openNavbar }: Props) => {
                 }
                 onClick={() =>
                   router.push(
-                    `/t/${router.query.tid as string}/settings/members`
+                    `/t/${router.query.tid as string}/settings/general`
                   )
                 }
               />
