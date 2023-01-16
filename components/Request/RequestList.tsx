@@ -161,7 +161,9 @@ const RequestList = () => {
               withCloseButton={false}
               fullScreen
               padding={0}
-              onClose={() => setSelectedRequest(null)}
+              onClose={() => {
+                setSelectedRequest(null);
+              }}
             >
               <Box p="xs">
                 <RequestItem

@@ -1,10 +1,9 @@
 import ActiveTeamContext from "@/contexts/ActiveTeamContext";
-import RequestListContext from "@/contexts/RequestListContext";
+import RequestContext from "@/contexts/RequestContext";
 import {
   deletePendingRequest,
   GetRequestWithAttachmentUrlList,
   getRequestWithAttachmentUrlList,
-  GetTeamRequestList,
   updateRequestStatus,
 } from "@/utils/queries-new";
 import { setBadgeColor } from "@/utils/request";
@@ -15,9 +14,7 @@ import {
   Badge,
   Box,
   Button,
-  CloseButton,
   Divider,
-  Flex,
   Group,
   Modal,
   SimpleGrid,
@@ -30,32 +27,24 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconDotsVertical, IconDownload } from "@tabler/icons";
 import jsPDF from "jspdf";
 import { useRouter } from "next/router";
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { useContext, useEffect, useState } from "react";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
 import PdfPreview from "./PdfPreview";
 import RequestComment from "./RequestComment";
-import { ReducedRequestType } from "./RequestList";
+import { ReducedRequestFieldType, ReducedRequestType } from "./RequestList";
 
-type Props = {
-  request: ReducedRequestType;
-  setSelectedRequest: Dispatch<SetStateAction<GetTeamRequestList[0] | null>>;
-};
-
-const RequestItem = ({ request, setSelectedRequest }: Props) => {
-  const user = useUser();
+const RequestItemPage = () => {
   const router = useRouter();
+  const user = useUser();
+  const { request: requestContext } = useContext(RequestContext);
+  const [requestToDisplay, setRequestToDisplay] =
+    useState<ReducedRequestType | null>(null);
+
   const supabaseClient = useSupabaseClient();
-  const { requestWithApproverList, setRequestList } =
-    useContext(RequestListContext);
+  const { requestWithApproverList } = useContext(RequestContext);
   const [openPdfPreview, setOpenPdfPreview] = useState(false);
   const { teamMemberList } = useContext(ActiveTeamContext);
-  const requestId = request.request_id as number;
+  const requestId = requestContext[0].request_id;
   const userIdRoleDictionary = teamMemberList.reduce(
     (acc, member) => ({
       ...acc,
@@ -63,7 +52,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
     }),
     {}
   ) as { [key: string]: TeamMemberRole };
-  const approverList = requestWithApproverList[`${request.request_id}`];
+  const approverList = requestWithApproverList[`${requestId}`];
   const approverIdWithStatus = approverList.find((approver) => {
     const isApprover =
       userIdRoleDictionary[approver.approver_id] === "owner" ||
@@ -82,13 +71,13 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
     (member) => member.user_id === purchaserIdWithStatus?.approver_id
   );
 
-  const currentUserIsOwner = request.user_id === user?.id;
+  const currentUserIsOwner = requestToDisplay?.user_id === user?.id;
   const currentUserIsApprover = approver?.user_id === user?.id;
-  const currentUserIsPurchaser = purchaser?.user_id === user?.id;
+  // const currentUserIsPurchaser = purchaser?.user_id === user?.id;
 
   const [attachmentUrlList, setAttachmentUrlList] =
     useState<GetRequestWithAttachmentUrlList>();
-  const attachments = request.request_attachment_filepath_list?.map(
+  const attachments = requestContext[0].request_attachment_filepath_list?.map(
     (filepath, i) => {
       return {
         filepath,
@@ -102,7 +91,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       try {
         const urlList = await getRequestWithAttachmentUrlList(
           supabaseClient,
-          request.request_id as number
+          requestId as number
         );
         setAttachmentUrlList(urlList);
       } catch (e) {
@@ -114,10 +103,10 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
         });
       }
     })();
-  }, [request, supabaseClient]);
+  }, [requestId, supabaseClient]);
 
   const handleDownloadToPdf = () => {
-    const html = document.getElementById(`${request.request_id}`);
+    const html = document.getElementById(`${requestToDisplay?.request_id}`);
     const pdfHeight =
       Number(`${html?.clientHeight}`) > 842
         ? Number(`${html?.clientHeight}`) + 2
@@ -130,7 +119,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
     });
 
     doc.html(html as HTMLElement, {
-      callback: (doc) => doc.save(`request_${request.request_title}`),
+      callback: (doc) => doc.save(`request_${requestToDisplay?.request_title}`),
       x: doc.internal.pageSize.width / 6,
       y: 10,
     });
@@ -158,42 +147,29 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
     try {
       await updateRequestStatus(
         supabaseClient,
-        requestId,
+        requestId as number,
         newStatus,
         user?.id as string
       );
 
-      setSelectedRequest({
-        ...request,
+      setRequestToDisplay({
+        ...(requestToDisplay as ReducedRequestType),
         form_fact_request_status_id: newStatus,
         request_status_id: newStatus,
       });
 
-      if (setRequestList) {
-        setRequestList((prev) =>
-          prev.map((prevItem) => {
-            if (prevItem.request_id === requestId) {
-              return {
-                ...prevItem,
-                form_fact_request_status_id: newStatus,
-                request_status_id: newStatus,
-              };
-            } else {
-              return prevItem;
-            }
-          })
-        );
-      }
       showNotification({
         title: "Success!",
-        message: `You ${newStatus} ${request && request.request_title}`,
+        message: `You ${newStatus} ${
+          requestToDisplay && requestToDisplay?.request_title
+        }`,
         color: "green",
       });
     } catch {
       showNotification({
         title: "Error!",
         message: `Failed to update status of ${
-          request && request.request_title
+          requestToDisplay && requestToDisplay?.request_title
         }`,
         color: "red",
       });
@@ -202,41 +178,65 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
 
   const handleDelete = async () => {
     try {
-      if (!request) throw Error("No request found");
+      if (!requestToDisplay) throw Error("No request found");
 
       await deletePendingRequest(supabaseClient, requestId as number);
 
       showNotification({
         title: "Success!",
-        message: `You deleted ${request && request.request_title}`,
+        message: `You deleted ${
+          requestToDisplay && requestToDisplay?.request_title
+        }`,
         color: "green",
       });
 
-      if (setRequestList) {
-        setRequestList((prev) => {
-          return prev.filter((request) => request.request_id !== requestId);
-        });
-      }
-      setSelectedRequest(null);
+      router.push(`/t/${router.query.tid}/requests?active_tab=all&page=1`);
     } catch {
       showNotification({
         title: "Error!",
-        message: `Failed to delete ${request && request.request_title}`,
+        message: `Failed to delete ${
+          requestToDisplay && requestToDisplay?.request_title
+        }`,
         color: "red",
       });
     }
   };
 
+  useEffect(() => {
+    if (!requestContext) {
+      router.push(`/t/${router.query.tid}/requests?active_tab=all&page=1`);
+    }
+
+    const initialFields: { label: string; value: string; type: string }[] = [];
+    const initialValue = [{ ...requestContext[0], fields: initialFields }];
+
+    const reducedRequest = requestContext.reduce((acc, next) => {
+      const match = acc.find((a) => a.request_id === next.request_id);
+      const nextFields: ReducedRequestFieldType = {
+        label: next.field_name as string,
+        value: next.response_value as string,
+        type: next.request_field_type as string,
+      };
+      if (match) {
+        match.fields.push(nextFields as ReducedRequestFieldType);
+      } else {
+        acc.push({ ...next, fields: [nextFields] });
+      }
+      return acc;
+    }, initialValue);
+    setRequestToDisplay(reducedRequest[0] as ReducedRequestType);
+  }, [requestContext, router]);
+
   return (
     <Box p="xs">
       {/* PDF PREVIEW */}
-      {request && (
+      {requestToDisplay && (
         <Modal
           opened={openPdfPreview}
           onClose={() => setOpenPdfPreview(false)}
           title="Download Preview"
         >
-          {!request.user_signature_filepath && (
+          {!requestToDisplay.user_signature_filepath && (
             <Alert
               icon={<IconAlertCircle size={16} />}
               title="Notice!"
@@ -246,7 +246,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
               This document does not contain any signatures.
             </Alert>
           )}
-          <PdfPreview request={request} attachments={attachments} />
+          <PdfPreview request={requestToDisplay} attachments={attachments} />
           <SimpleGrid cols={2} mt="xl">
             <Button variant="default" onClick={() => setOpenPdfPreview(false)}>
               Cancel
@@ -257,45 +257,39 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
           </SimpleGrid>
         </Modal>
       )}
-      <Group position="apart">
-        <Box
-          sx={{ cursor: "pointer" }}
+      <Box>
+        <Title
+          order={4}
           onClick={() =>
             router.push(`/t/${router.query.tid}/requests/${requestId}`)
           }
         >
-          <Group spacing="xs">
-            <Title order={4}>{request.request_title}</Title>
-            <Text td="underline" fz="xs" c="indigo">
-              (View Full Page)
-            </Text>
-          </Group>
-          <Badge
-            size="sm"
-            variant="filled"
-            color={setBadgeColor(request.request_status_id as string)}
-            w="100%"
-            maw="80px"
-          >
-            {request.request_status_id}
-          </Badge>
-        </Box>
-        <CloseButton
-          aria-label="close-request"
-          onClick={() => setSelectedRequest(null)}
-        />
-      </Group>
+          {requestToDisplay?.request_title}
+        </Title>
+        <Badge
+          size="sm"
+          variant="filled"
+          color={setBadgeColor(requestToDisplay?.request_status_id as string)}
+          w="100%"
+          maw="80px"
+        >
+          {requestToDisplay?.request_status_id}
+        </Badge>
+      </Box>
       <Group my="sm" position="apart">
         <Group>
-          <Avatar src={request.user_avatar_filepath} color="blue" radius="xl" />
+          <Avatar
+            src={requestToDisplay?.user_avatar_filepath}
+            color="blue"
+            radius="xl"
+          />
           <Box>
-            <Text fw={500}>{request.username}</Text>
+            <Text fw={500}>{requestToDisplay?.username}</Text>
             <Text fz="xs" c="dimmed">
-              {request.request_date_created?.slice(0, 10)}
+              {requestToDisplay?.request_date_created?.slice(0, 10)}
             </Text>
           </Box>
         </Group>
-
         <Group sx={{ cursor: "pointer" }}>
           <Text fz="xs" c="dimmed" onClick={() => setOpenPdfPreview(true)}>
             <IconDownload />
@@ -305,8 +299,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
           </Text>
         </Group>
       </Group>
-
-      <Text pl={5}>{request.request_description}</Text>
+      <Text>{requestToDisplay?.request_description}</Text>
 
       <Divider my="sm" variant="dotted" />
       {approver && (
@@ -340,8 +333,8 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
         </>
       )}
       <Divider my="sm" variant="dotted" />
-      {request.request_attachment_filepath_list &&
-      request.request_attachment_filepath_list.length > 0 ? (
+      {requestToDisplay?.request_attachment_filepath_list &&
+      requestToDisplay?.request_attachment_filepath_list.length > 0 ? (
         <>
           <Text fw={500}>Attachments</Text>
           <Group mt="xs">
@@ -365,39 +358,41 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
         <Text c="dimmed">No attachments</Text>
       )}
 
-      {currentUserIsApprover && request.request_status_id === "pending" && (
-        <>
-          <Divider my="sm" variant="dotted" />
-          <SimpleGrid cols={2} my="xl">
-            <Button
-              variant="light"
-              color="red"
-              onClick={() =>
-                confirmationModal(
-                  "reject",
-                  `${request && request.request_title}`,
-                  () => handleUpdateStatus("rejected")
-                )
-              }
-            >
-              Reject
-            </Button>
-            <Button
-              color="indigo"
-              onClick={() =>
-                confirmationModal(
-                  "approve",
-                  `${request && request.request_title}`,
-                  () => handleUpdateStatus("approved")
-                )
-              }
-            >
-              Approve
-            </Button>
-          </SimpleGrid>
-        </>
-      )}
-      {currentUserIsOwner && request.request_status_id === "pending" ? (
+      {currentUserIsApprover &&
+        requestToDisplay?.request_status_id === "pending" && (
+          <>
+            <Divider my="sm" variant="dotted" />
+            <SimpleGrid cols={2} my="xl">
+              <Button
+                variant="light"
+                color="red"
+                onClick={() =>
+                  confirmationModal(
+                    "reject",
+                    `${requestToDisplay && requestToDisplay?.request_title}`,
+                    () => handleUpdateStatus("rejected")
+                  )
+                }
+              >
+                Reject
+              </Button>
+              <Button
+                color="indigo"
+                onClick={() =>
+                  confirmationModal(
+                    "approve",
+                    `${requestToDisplay && requestToDisplay?.request_title}`,
+                    () => handleUpdateStatus("approved")
+                  )
+                }
+              >
+                Approve
+              </Button>
+            </SimpleGrid>
+          </>
+        )}
+      {currentUserIsOwner &&
+      requestToDisplay?.request_status_id === "pending" ? (
         <>
           <Divider my="sm" variant="dotted" />
           <Group>
@@ -408,7 +403,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
               onClick={() =>
                 confirmationModal(
                   "delete",
-                  `${request && request.request_title}`,
+                  `${requestToDisplay && requestToDisplay?.request_title}`,
                   handleDelete
                 )
               }
@@ -419,44 +414,10 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
           </Group>
         </>
       ) : null}
-      {currentUserIsPurchaser && request.request_status_id === "approved" ? (
-        <>
-          <Divider mt="xl" />
-          <Group>
-            <Button
-              color="dark"
-              my="sm"
-              fullWidth
-              onClick={() =>
-                confirmationModal(
-                  "mark as purchased",
-                  `${request && request.request_title}`,
-                  () => handleUpdateStatus("purchased")
-                )
-              }
-            >
-              Mark as Purchased
-            </Button>
-          </Group>
-          <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
-            <Button
-              onClick={() =>
-                confirmationModal(
-                  "mark as purchased",
-                  `${request && request.request_title}`,
-                  () => handleUpdateStatus("purchased")
-                )
-              }
-            >
-              Mark as Purchased
-            </Button>
-          </Flex>
-        </>
-      ) : null}
       <Divider my="sm" variant="dotted" />
-      <RequestComment requestId={requestId} />
+      <RequestComment requestId={requestId as number} />
     </Box>
   );
 };
 
-export default RequestItem;
+export default RequestItemPage;

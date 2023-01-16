@@ -2,7 +2,7 @@ import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 
-import Request from "@/components/Request/Request";
+import RequestItemPage from "@/components/Request/RequestItemPage";
 import RequestContext, { RequestProps } from "@/contexts/RequestContext";
 import { getRequest, getRequestWithApproverList } from "@/utils/queries-new";
 import { GetServerSidePropsContext } from "next";
@@ -26,10 +26,11 @@ const RequestPage: NextPageWithLayout<RequestProps> = (props) => {
       <Meta description="Specific Request" url="localhost:3000/requests/id" />
       {/* <Request view="full" selectedRequest={selectedRequest} /> */}
       {/* <Request view="full" selectedRequest={selectedRequestWithAttachmentUrl} /> */}
-      <Request
+      {/* <Request
         view="full"
         selectedRequestId={Number(props.request[0].request_id)}
-      />
+      /> */}
+      <RequestItemPage />
       {/* <Request
         view="split"
         selectedRequestId={selectedRequestId}
