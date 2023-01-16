@@ -236,16 +236,17 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
           onClose={() => setOpenPdfPreview(false)}
           title="Download Preview"
         >
-          {!request.user_signature_filepath && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              title="Notice!"
-              color="red"
-              mb="sm"
-            >
-              This document does not contain any signatures.
-            </Alert>
-          )}
+          {!approver?.user_signature_filepath &&
+            !purchaser?.user_signature_filepath && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                title="Notice!"
+                color="red"
+                mb="sm"
+              >
+                This document does not contain any signatures.
+              </Alert>
+            )}
           <PdfPreview
             request={request}
             attachments={attachments}
