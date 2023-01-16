@@ -1,14 +1,18 @@
+import { TeamTableRow } from "@/utils/types-new";
 import { Container, Tabs, Title } from "@mantine/core";
 import { useRouter } from "next/router";
+import GeneralSettingsPage from "../GeneralSettingsPage/GeneralSettingsPage";
+
 import MembersPage from "../MembersPage/MembersPage";
 import NotificationSettingsPage from "../NotificationSettingsPage/NotificationSettingsPage";
 import ProfileSettingsPage from "../ProfileSettingsPage/ProfileSettingsPage";
 
 type Props = {
   activeTab: string;
+  team?: TeamTableRow;
 };
 
-const Setting = ({ activeTab }: Props) => {
+const Setting = ({ activeTab, team }: Props) => {
   const router = useRouter();
 
   return (
@@ -23,7 +27,7 @@ const Setting = ({ activeTab }: Props) => {
         mt="xl"
       >
         <Tabs.List>
-          {/* <Tabs.Tab value="general">General</Tabs.Tab> */}
+          <Tabs.Tab value="general">General</Tabs.Tab>
           <Tabs.Tab value="profile">Profile</Tabs.Tab>
           <Tabs.Tab value="members">Members</Tabs.Tab>
           {/* <Tabs.Tab value="notification">Notification</Tabs.Tab> */}
@@ -31,7 +35,7 @@ const Setting = ({ activeTab }: Props) => {
         </Tabs.List>
 
         <Tabs.Panel value="general" pt="xl">
-          {/* <General /> */}
+          {team ? <GeneralSettingsPage team={team} /> : null}
         </Tabs.Panel>
         <Tabs.Panel value="profile" pt="xl">
           <ProfileSettingsPage />
