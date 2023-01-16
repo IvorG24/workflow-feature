@@ -1033,7 +1033,7 @@ export const uploadTeamLogo = async (
     await supabaseClient
       .from("team_table")
       .update({
-        team_logo: uploadedTeamLogoUrl.publicUrl,
+        team_logo_filepath: uploadedTeamLogoUrl.publicUrl,
       })
       .eq("team_id", teamId);
 
