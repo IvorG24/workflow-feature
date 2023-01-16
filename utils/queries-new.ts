@@ -658,11 +658,15 @@ export const createRequestComment = async (
   supabaseClient: SupabaseClient<Database>,
   commentContent: string,
   userId: string,
-  requestId: number
+  requestId: number,
+  commentAttachment: string
 ) => {
   const { data: commentData, error } = await supabaseClient
     .from("request_comment_table")
-    .insert({ comment_content: commentContent })
+    .insert({
+      comment_content: commentContent,
+      comment_request_attachment: commentAttachment,
+    })
     .select()
     .single();
   if (error) throw error;
@@ -1333,9 +1337,31 @@ export const getRequestCommentList = async (
     .is("request_is_draft", false)
     .is("request_is_disabled", false)
     .order("comment_id", { ascending: true });
-
   if (error) throw error;
-  return data || [];
+
+  if (data) {
+    const dataWithUrl = await Promise.all(
+      data?.map(async (comment) => {
+        if (comment.comment_request_attachment) {
+          const url = await getFileUrl(
+            supabaseClient,
+            `${comment.comment_request_attachment}`,
+            "comment_attachments"
+          );
+          return {
+            ...comment,
+            comment_request_attachment_url: url,
+          };
+        } else {
+          return {
+            ...comment,
+            comment_request_attachment_url: "",
+          };
+        }
+      })
+    );
+    return dataWithUrl || [];
+  }
 };
 export type GetRequestCommentList = Awaited<
   ReturnType<typeof getRequestCommentList>

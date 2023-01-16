@@ -5,6 +5,7 @@ import RequestListContext from "@/contexts/RequestListContext";
 import useFetchRequest from "@/hooks/useFetchRequest";
 import useFetchRequestCommentList from "@/hooks/useFetchRequestCommentList";
 import useFetchRequestWithAttachmentUrlList from "@/hooks/useFetchRequestWithAttachmentUrlList";
+import { uploadFile } from "@/utils/file";
 import { editComment } from "@/utils/queries";
 import {
   createRequestComment,
@@ -29,6 +30,7 @@ import {
   Button,
   Container,
   Divider,
+  FileInput,
   Flex,
   Group,
   MultiSelect,
@@ -50,7 +52,8 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { useContext, useState } from "react";
-import { Close, Dots, Maximize } from "../Icon";
+import { Close, Dots, FileIcon, Maximize, Upload } from "../Icon";
+import IconWrapper from "../IconWrapper/IconWrapper";
 import AttachmentBox from "../RequestsPage/AttachmentBox";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
 import styles from "./Request.module.scss";
@@ -100,6 +103,8 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
   const [comment, setComment] = useState("");
   const [editCommentId, setEditCommentId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
+  const [commentAttachment, setCommentAttachment] = useState<File | null>(null);
+
   const { requestWithAttachmentUrlList: attachmentUrlList } =
     useFetchRequestWithAttachmentUrlList(selectedRequestId);
   const { request, setRequest } = useFetchRequest(selectedRequestId);
@@ -168,14 +173,26 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
     if (!comment) return;
     if (!request) return;
     try {
+      let attachmentPath = "";
+      if (commentAttachment) {
+        const file = await uploadFile(
+          supabaseClient,
+          commentAttachment?.name,
+          commentAttachment,
+          "comment_attachments"
+        );
+        attachmentPath = file.path;
+      }
       const createdComment = await createRequestComment(
         supabaseClient,
         comment,
         user?.id as string,
-        request[0].request_id as number
+        request[0].request_id as number,
+        attachmentPath
       );
 
       setComment("");
+      setCommentAttachment(null);
       setCommentList((prev) => {
         const newCommentList = [...(prev as GetRequestCommentList)];
         newCommentList.push(createdComment as GetRequestCommentList[0]);
@@ -751,6 +768,17 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
             data-cy="request-input-comment"
           />
           <Group position="right" mt="xs">
+            <FileInput
+              placeholder="Add Attachment"
+              withAsterisk
+              value={commentAttachment}
+              onChange={(value) => setCommentAttachment(value)}
+              icon={
+                <IconWrapper size={14}>
+                  <Upload />
+                </IconWrapper>
+              }
+            />
             <Button
               w={100}
               onClick={handleAddComment}
@@ -843,6 +871,25 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               ) : null}
               {comment.comment_id !== editCommentId ? (
                 <Text mt="xs">{comment.comment_content}</Text>
+              ) : null}
+              {comment.comment_request_attachment ? (
+                <a
+                  href={comment.comment_request_attachment_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button
+                    mt="xs"
+                    variant="outline"
+                    leftIcon={
+                      <IconWrapper size={14}>
+                        <FileIcon />
+                      </IconWrapper>
+                    }
+                  >
+                    {comment.comment_request_attachment}
+                  </Button>
+                </a>
               ) : null}
             </Paper>
           ))}
