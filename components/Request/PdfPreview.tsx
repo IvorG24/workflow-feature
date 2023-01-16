@@ -130,15 +130,21 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
         )}
       </Group>
       {attachments && attachments?.length > 0 ? (
-        <Box mt="md">
+        <>
+          <Divider my="sm" />
           <Text fw={500} c="dark.9">
             Attachments
           </Text>
           {attachments?.map((item, idx: number) => {
             return <Text key={idx}>{item.filepath}</Text>;
           })}
-        </Box>
-      ) : null}
+        </>
+      ) : (
+        <>
+          <Divider my="sm" />
+          <Text c="dimmed">No attachments</Text>
+        </>
+      )}
     </Box>
   );
 };
