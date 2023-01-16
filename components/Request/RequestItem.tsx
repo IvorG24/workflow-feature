@@ -4,6 +4,7 @@ import {
   deletePendingRequest,
   GetRequestWithAttachmentUrlList,
   getRequestWithAttachmentUrlList,
+  GetTeam,
   GetTeamRequestList,
   updateRequestStatus,
 } from "@/utils/queries-new";
@@ -81,7 +82,6 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
   const purchaser = teamMemberList.find(
     (member) => member.user_id === purchaserIdWithStatus?.approver_id
   );
-
   const currentUserIsOwner = request.user_id === user?.id;
   const currentUserIsApprover = approver?.user_id === user?.id;
   const currentUserIsPurchaser = purchaser?.user_id === user?.id;
@@ -246,7 +246,12 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
               This document does not contain any signatures.
             </Alert>
           )}
-          <PdfPreview request={request} attachments={attachments} />
+          <PdfPreview
+            request={request}
+            attachments={attachments}
+            approver={approver ? (approver as GetTeam[0]) : undefined}
+            purchaser={approver ? (approver as GetTeam[0]) : undefined}
+          />
           <SimpleGrid cols={2} mt="xl">
             <Button variant="default" onClick={() => setOpenPdfPreview(false)}>
               Cancel
@@ -297,7 +302,22 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
         </Group>
 
         <Group sx={{ cursor: "pointer" }}>
-          <Text fz="xs" c="dimmed" onClick={() => setOpenPdfPreview(true)}>
+          <Text
+            fz="xs"
+            c="dimmed"
+            onClick={() => {
+              if (request.request_status_id !== "approved") {
+                showNotification({
+                  title: "Oops!",
+                  message: "Only approved requests can be downloaded as PDF.",
+                  color: "orange",
+                  autoClose: false,
+                });
+              } else {
+                setOpenPdfPreview(true);
+              }
+            }}
+          >
             <IconDownload />
           </Text>
           <Text fz="xs" c="dimmed">
@@ -327,7 +347,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       {purchaser && (
         <>
           <Text fw={500}>Purchaser</Text>
-          <Group p="sm" spacing="xs">
+          <Group mt="sm" spacing="xs">
             <Avatar
               src={purchaser?.user_avatar_filepath}
               color="blue"
