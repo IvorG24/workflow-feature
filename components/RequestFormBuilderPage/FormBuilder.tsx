@@ -112,8 +112,22 @@ const FormBuilder: FC<Props> = (props) => {
       (question) => question.data.expected_response_type === "section"
     );
 
-    if (!isSectionList) return false;
-    if (isSectionList.length === 0) return false;
+    if (!isSectionList) {
+      showNotification({
+        title: "Invalid",
+        message: "Please add a field",
+        color: "orange",
+      });
+      return false;
+    }
+    if (isSectionList.length === 0) {
+      showNotification({
+        title: "Invalid",
+        message: "Please add a field",
+        color: "orange",
+      });
+      return false;
+    }
 
     if (!isSectionList[0]) {
       showNotification({
