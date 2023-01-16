@@ -163,7 +163,7 @@ const RequestList = () => {
               padding={0}
               onClose={() => setSelectedRequest(null)}
             >
-              <Box p="md">
+              <Box p="xs">
                 <RequestItem
                   request={selectedRequest as ReducedRequestType}
                   setSelectedRequest={setSelectedRequest}

@@ -65,16 +65,24 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       userIdRoleDictionary[approver.approver_id] === "admin";
     return isApprover;
   });
-  const [attachmentUrlList, setAttachmentUrlList] =
-    useState<GetRequestWithAttachmentUrlList>();
-
+  const purchaserIdWithStatus = approverList.find((approver) => {
+    const isPurchaser =
+      userIdRoleDictionary[approver.approver_id] === "purchaser";
+    return isPurchaser;
+  });
   const approver = teamMemberList.find(
     (member) => member.user_id === approverIdWithStatus?.approver_id
+  );
+  const purchaser = teamMemberList.find(
+    (member) => member.user_id === purchaserIdWithStatus?.approver_id
   );
 
   const currentUserIsOwner = request.user_id === user?.id;
   const currentUserIsApprover = approver?.user_id === user?.id;
+  // const currentUserIsPurchaser = purchaser?.user_id === user?.id;
 
+  const [attachmentUrlList, setAttachmentUrlList] =
+    useState<GetRequestWithAttachmentUrlList>();
   const attachments = request.request_attachment_filepath_list?.map(
     (filepath, i) => {
       return {
@@ -267,7 +275,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       </Group>
       <Group my="sm" position="apart">
         <Group>
-          <Avatar color="blue" radius="xl" />
+          <Avatar src={request.user_avatar_filepath} color="blue" radius="xl" />
           <Box>
             <Text fw={500}>{request.username}</Text>
             <Text fz="xs" c="dimmed">
@@ -285,6 +293,38 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
         </Group>
       </Group>
       <Text>{request.request_description}</Text>
+
+      <Divider my="sm" variant="dotted" />
+      {approver && (
+        <>
+          <Text fw={500}>Approver</Text>
+          <Group mt="sm" spacing="xs">
+            <Avatar
+              src={approver?.user_avatar_filepath}
+              color="blue"
+              radius="xl"
+            />
+            <Text>
+              {approver?.user_first_name} {approver?.user_last_name}
+            </Text>
+          </Group>
+        </>
+      )}
+      {purchaser && (
+        <>
+          <Text fw={500}>Purchaser</Text>
+          <Group p="sm" spacing="xs">
+            <Avatar
+              src={purchaser?.user_avatar_filepath}
+              color="blue"
+              radius="xl"
+            />
+            <Text>
+              {purchaser?.user_first_name} {purchaser?.user_last_name}
+            </Text>
+          </Group>
+        </>
+      )}
       <Divider my="sm" variant="dotted" />
       {request.request_attachment_filepath_list &&
       request.request_attachment_filepath_list.length > 0 ? (
@@ -310,8 +350,6 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       ) : (
         <Text c="dimmed">No attachments</Text>
       )}
-
-      {/* {requestWithApproverList} */}
 
       {currentUserIsApprover && request.request_status_id === "pending" && (
         <>
@@ -368,7 +406,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
         </>
       ) : null}
       <Divider my="sm" variant="dotted" />
-      <RequestComment />
+      <RequestComment requestId={requestId} />
     </Box>
   );
 };
