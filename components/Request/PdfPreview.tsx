@@ -1,9 +1,11 @@
+import { getFileUrl } from "@/utils/file";
 import { GetTeam } from "@/utils/queries-new";
 import { setBadgeColor } from "@/utils/request";
 import { Box, Divider, Group, Text, Title } from "@mantine/core";
-// import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
-// import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { ReducedRequestType } from "./RequestList";
 
 type Props = {
@@ -14,25 +16,31 @@ type Props = {
 };
 
 const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
-  // const supabaseClient = useSupabaseClient();
-  // const [approverSignatureUrl, setApproverSignatureUrl] = useState("");
-  // const [purchaserSignatureUrl, setPurchaserSignatureUrl] = useState("");
+  const supabaseClient = useSupabaseClient();
+  const [approverSignatureUrl, setApproverSignatureUrl] = useState("");
+  const [purchaserSignatureUrl, setPurchaserSignatureUrl] = useState("");
 
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       console.log(approver?.user_signature_filepath);
-  //       const approverSignature = await getFileUrl(
-  //         supabaseClient,
-  //         approver?.user_signature_filepath as string,
-  //         "signatures"
-  //       );
-  //       console.log(approverSignature);
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   })();
-  // }, [approver, supabaseClient]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const approverSignature = await getFileUrl(
+          supabaseClient,
+          approver?.user_signature_filepath as string,
+          "signatures"
+        );
+        setApproverSignatureUrl(approverSignature);
+
+        const purchaserSignature = await getFileUrl(
+          supabaseClient,
+          purchaser?.user_signature_filepath as string,
+          "signatures"
+        );
+        setPurchaserSignatureUrl(purchaserSignature);
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+  }, [approver, purchaser, supabaseClient]);
 
   return (
     <Box
@@ -99,12 +107,12 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
             <Text fw={500} c="dark.9">
               Purchased By
             </Text>
-            {/* <Image
+            <Image
               src={purchaserSignatureUrl}
               alt={purchaser.user_signature_filepath as string}
               width={50}
               height={50}
-            /> */}
+            />
             <Text c="dark.9">{`${purchaser.user_first_name} ${purchaser.user_last_name}`}</Text>
           </Box>
         ) : (
@@ -115,12 +123,12 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
             <Text fw={500} c="dark.9">
               Approved By
             </Text>
-            {/* <Image
-                src={approverSignatureUrl}
-                alt={request.user_signature_filepath as string}
-                width={50}
-                height={50}
-              /> */}
+            <Image
+              src={approverSignatureUrl}
+              alt={approver.user_signature_filepath as string}
+              width={50}
+              height={50}
+            />
             <Text c="dark.9">
               {approver?.user_first_name} {approver?.user_last_name}
             </Text>

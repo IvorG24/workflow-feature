@@ -18,7 +18,6 @@ import {
   Button,
   CloseButton,
   Divider,
-  Flex,
   Group,
   Modal,
   SimpleGrid,
@@ -85,7 +84,6 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
   const currentUserIsOwner = request.user_id === user?.id;
   const currentUserIsApprover = approver?.user_id === user?.id;
   const currentUserIsPurchaser = purchaser?.user_id === user?.id;
-
   const [attachmentUrlList, setAttachmentUrlList] =
     useState<GetRequestWithAttachmentUrlList>();
   const attachments = request.request_attachment_filepath_list?.map(
@@ -96,7 +94,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       };
     }
   );
-
+  console.log(requestWithApproverList[`${request.request_id}`]);
   useEffect(() => {
     (async () => {
       try {
@@ -330,36 +328,32 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       <Text pl={5}>{request.request_description}</Text>
 
       <Divider my="sm" variant="dotted" />
-      {approver && (
-        <>
-          <Text fw={500}>Approver</Text>
-          <Group mt="sm" spacing="xs">
-            <Avatar
-              src={approver?.user_avatar_filepath}
-              color="blue"
-              radius="xl"
-            />
-            <Text>
-              {approver?.user_first_name} {approver?.user_last_name}
-            </Text>
-          </Group>
-        </>
-      )}
-      {purchaser && (
-        <>
-          <Text fw={500}>Purchaser</Text>
-          <Group mt="sm" spacing="xs">
-            <Avatar
-              src={purchaser?.user_avatar_filepath}
-              color="blue"
-              radius="xl"
-            />
-            <Text>
-              {purchaser?.user_first_name} {purchaser?.user_last_name}
-            </Text>
-          </Group>
-        </>
-      )}
+      <>
+        <Text fw={500}>Approver</Text>
+        <Group mb="xs" spacing="xs">
+          <Avatar
+            src={approver?.user_avatar_filepath}
+            color="blue"
+            radius="xl"
+          />
+          <Text>
+            {approver?.user_first_name} {approver?.user_last_name}
+          </Text>
+        </Group>
+      </>
+      <>
+        <Text fw={500}>Purchaser</Text>
+        <Group mb="xs" spacing="xs">
+          <Avatar
+            src={purchaser?.user_avatar_filepath}
+            color="blue"
+            radius="xl"
+          />
+          <Text>
+            {purchaser?.user_first_name} {purchaser?.user_last_name}
+          </Text>
+        </Group>
+      </>
       <Divider my="sm" variant="dotted" />
       {request.request_attachment_filepath_list &&
       request.request_attachment_filepath_list.length > 0 ? (
@@ -459,19 +453,6 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
               Mark as Purchased
             </Button>
           </Group>
-          <Flex mt="xl" wrap="wrap" gap="xs" align="center" justify="flex-end">
-            <Button
-              onClick={() =>
-                confirmationModal(
-                  "mark as purchased",
-                  `${request && request.request_title}`,
-                  () => handleUpdateStatus("purchased")
-                )
-              }
-            >
-              Mark as Purchased
-            </Button>
-          </Flex>
         </>
       ) : null}
       <Divider my="sm" variant="dotted" />
