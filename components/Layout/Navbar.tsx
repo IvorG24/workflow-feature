@@ -414,48 +414,48 @@ const Navbar = ({ openNavbar }: Props) => {
                 </NavLink> */}
             </MantineNavbar.Section>
           </ScrollArea>
-          <MantineNavbar.Section mt="auto">
-            <NavLink
-              component="a"
-              onClick={() =>
-                router.push(`/t/${router.query.tid}/profiles/${user?.id}/bio`)
-              }
-              label={userProfile?.username}
-              description="View Profile"
-              icon={
-                <IconWrapper className={iconStyle}>
-                  <Avatar
-                    radius="xl"
-                    src={
-                      fileUrlListContext?.avatarUrlList[
-                        userProfile?.user_id as string
-                      ]
-                    }
-                  />
-                </IconWrapper>
-              }
-              data-cy="navbar-profiles"
-            />
-            <Button
-              variant="light"
-              color="red"
-              fullWidth
-              leftIcon={
-                <IconWrapper className={styles.logoutButton__icon}>
-                  <Logout />
-                </IconWrapper>
-              }
-              onClick={async () => {
-                await supabase.auth.signOut();
-                await router.push("/sign-in");
-              }}
-              data-cy="navbar-logout"
-            >
-              Logout
-            </Button>
-          </MantineNavbar.Section>
         </>
       ) : null}
+      <MantineNavbar.Section mt="auto">
+        <NavLink
+          component="a"
+          onClick={() =>
+            router.push(`/t/${router.query.tid}/profiles/${user?.id}/bio`)
+          }
+          label={userProfile?.username}
+          description="View Profile"
+          icon={
+            <IconWrapper className={iconStyle}>
+              <Avatar
+                radius="xl"
+                src={
+                  fileUrlListContext?.avatarUrlList[
+                    userProfile?.user_id as string
+                  ]
+                }
+              />
+            </IconWrapper>
+          }
+          data-cy="navbar-profiles"
+        />
+        <Button
+          variant="light"
+          color="red"
+          fullWidth
+          leftIcon={
+            <IconWrapper className={styles.logoutButton__icon}>
+              <Logout />
+            </IconWrapper>
+          }
+          onClick={async () => {
+            await supabase.auth.signOut();
+            await router.push("/sign-in");
+          }}
+          data-cy="navbar-logout"
+        >
+          Logout
+        </Button>
+      </MantineNavbar.Section>
     </MantineNavbar>
   );
 };

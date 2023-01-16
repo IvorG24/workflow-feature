@@ -1,5 +1,6 @@
 import TeamLayout from "@/components/Layout/TeamLayout";
 import Meta from "@/components/Meta/Meta";
+import { createOrRetrieveUserTeamList } from "@/utils/queries-new";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext } from "next";
 import { ReactElement } from "react";
@@ -18,13 +19,22 @@ const HomePage: NextPageWithLayout = () => {
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabaseClient = createServerSupabaseClient(ctx);
   const {
-    data: { session },
-  } = await supabaseClient.auth.getSession();
+    data: { user },
+  } = await supabaseClient.auth.getUser();
 
-  if (!session)
+  if (!user)
     return {
       redirect: {
         destination: "/sign-in",
+        permanent: false,
+      },
+    };
+
+  const teamList = await createOrRetrieveUserTeamList(supabaseClient, user);
+  if (!teamList.length)
+    return {
+      redirect: {
+        destination: "/teams/create",
         permanent: false,
       },
     };
