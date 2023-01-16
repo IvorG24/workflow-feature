@@ -1,8 +1,13 @@
+import ActiveTeamContext from "@/contexts/ActiveTeamContext";
+import RequestListContext from "@/contexts/RequestListContext";
 import {
+  deletePendingRequest,
   getRequestWithAttachmentUrlList,
   GetRequestWithAttachmentUrlList,
   GetTeamRequestList,
+  updateRequestStatus,
 } from "@/utils/queries-new";
+import { RequestStatus, TeamMemberRole } from "@/utils/types-new";
 import {
   Alert,
   Avatar,
@@ -16,11 +21,18 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { openConfirmModal } from "@mantine/modals";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconDotsVertical, IconDownload } from "@tabler/icons";
 import jsPDF from "jspdf";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
 import PdfPreview from "./PdfPreview";
 import RequestComment from "./RequestComment";
@@ -32,10 +44,36 @@ type Props = {
 };
 
 const RequestItem = ({ request, setSelectedRequest }: Props) => {
+  const user = useUser();
   const supabaseClient = useSupabaseClient();
+  const { requestWithApproverList, setRequestList } =
+    useContext(RequestListContext);
   const [openPdfPreview, setOpenPdfPreview] = useState(false);
+  const { teamMemberList } = useContext(ActiveTeamContext);
+  const requestId = request.request_id as number;
+  const userIdRoleDictionary = teamMemberList.reduce(
+    (acc, member) => ({
+      ...acc,
+      [`${member.user_id}`]: member.member_role_id,
+    }),
+    {}
+  ) as { [key: string]: TeamMemberRole };
+  const approverList = requestWithApproverList[requestId.toString()];
+  const approverIdWithStatus = approverList.find((approver) => {
+    const isApprover =
+      userIdRoleDictionary[approver.approver_id] === "owner" ||
+      userIdRoleDictionary[approver.approver_id] === "admin";
+    return isApprover;
+  });
   const [attachmentUrlList, setAttachmentUrlList] =
     useState<GetRequestWithAttachmentUrlList>();
+
+  const approver = teamMemberList.find(
+    (member) => member.user_id === approverIdWithStatus?.approver_id
+  );
+
+  const currentUserIsOwner = request.user_id === user?.id;
+  const currentUserIsApprover = approver?.user_id === user?.id;
 
   const attachments = request.request_attachment_filepath_list?.map(
     (filepath, i) => {
@@ -65,7 +103,6 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
     })();
   }, [request, supabaseClient]);
 
-  // TODO for JC: Add png for approver and purchaser signature
   const handleDownloadToPdf = () => {
     const html = document.getElementById(`${request.request_id}`);
     const pdfHeight =
@@ -86,6 +123,109 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
     });
     setOpenPdfPreview(false);
     return;
+  };
+
+  const confirmationModal = (
+    action: string,
+    requestTitle: string,
+    confirmFunction: () => Promise<void>
+  ) =>
+    openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to {action} the {requestTitle}?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: () => confirmFunction(),
+    });
+
+  const handleUpdateStatus = async (newStatus: RequestStatus) => {
+    try {
+      await updateRequestStatus(
+        supabaseClient,
+        requestId,
+        newStatus,
+        user?.id as string
+      );
+
+      setSelectedRequest({
+        ...request,
+        form_fact_request_status_id: newStatus,
+        request_status_id: newStatus,
+      });
+
+      if (setRequestList) {
+        setRequestList((prev) =>
+          prev.map((prevItem) => {
+            if (prevItem.request_id === requestId) {
+              return {
+                ...prevItem,
+                form_fact_request_status_id: newStatus,
+                request_status_id: newStatus,
+              };
+            } else {
+              return prevItem;
+            }
+          })
+        );
+      }
+      showNotification({
+        title: "Success!",
+        message: `You ${newStatus} ${request && request.request_title}`,
+        color: "green",
+      });
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to update status of ${
+          request && request.request_title
+        }`,
+        color: "red",
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (!request) throw Error("No request found");
+
+      await deletePendingRequest(supabaseClient, requestId as number);
+
+      showNotification({
+        title: "Success!",
+        message: `You deleted ${request && request.request_title}`,
+        color: "green",
+      });
+
+      if (setRequestList) {
+        setRequestList((prev) => {
+          return prev.filter((request) => request.request_id !== requestId);
+        });
+      }
+      setSelectedRequest(null);
+      // if (view === "full") {
+      //   router.push(`/t/${router.query.tid}/requests`);
+      // } else {
+      //   if (setRequestList) {
+      //     setRequestList((prev) => {
+      //       return prev.filter(
+      //         (request) => request.request_id !== selectedRequestId
+      //       );
+      //     });
+      //     setSelectedRequestId && setSelectedRequestId(null);
+      //   } else {
+      //     router.replace(router.asPath);
+      //   }
+      // }
+    } catch {
+      showNotification({
+        title: "Error!",
+        message: `Failed to delete ${request && request.request_title}`,
+        color: "red",
+      });
+    }
   };
 
   return (
@@ -146,7 +286,8 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       </Group>
       <Text>{request.request_description}</Text>
       <Divider my="sm" variant="dotted" />
-      {request.request_attachment_filepath_list ? (
+      {request.request_attachment_filepath_list &&
+      request.request_attachment_filepath_list.length > 0 ? (
         <>
           <Text fw={500}>Attachments</Text>
           <Group mt="xs">
@@ -169,12 +310,64 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       ) : (
         <Text c="dimmed">No attachments</Text>
       )}
+
+      {/* {requestWithApproverList} */}
+
+      {currentUserIsApprover && request.request_status_id === "pending" && (
+        <>
+          <Divider my="sm" variant="dotted" />
+          <SimpleGrid cols={2} my="xl">
+            <Button
+              variant="light"
+              color="red"
+              onClick={() =>
+                confirmationModal(
+                  "reject",
+                  `${request && request.request_title}`,
+                  () => handleUpdateStatus("rejected")
+                )
+              }
+            >
+              Reject
+            </Button>
+            <Button
+              color="indigo"
+              onClick={() =>
+                confirmationModal(
+                  "approve",
+                  `${request && request.request_title}`,
+                  () => handleUpdateStatus("approved")
+                )
+              }
+            >
+              Approve
+            </Button>
+          </SimpleGrid>
+        </>
+      )}
+      {currentUserIsOwner && request.request_status_id === "pending" ? (
+        <>
+          <Divider my="sm" variant="dotted" />
+          <Group>
+            <Button
+              color="dark"
+              my="sm"
+              fullWidth
+              onClick={() =>
+                confirmationModal(
+                  "delete",
+                  `${request && request.request_title}`,
+                  handleDelete
+                )
+              }
+              data-cy="request-delete"
+            >
+              Delete
+            </Button>
+          </Group>
+        </>
+      ) : null}
       <Divider my="sm" variant="dotted" />
-      <SimpleGrid cols={2} my="xl">
-        <Button variant="default">Delete</Button>
-        <Button color="indigo">Approve</Button>
-      </SimpleGrid>
-      <Divider my="sm" />
       <RequestComment />
     </Box>
   );
