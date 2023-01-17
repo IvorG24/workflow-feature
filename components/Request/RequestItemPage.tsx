@@ -288,9 +288,7 @@ const RequestItemPage = () => {
             <Button variant="default" onClick={() => setOpenPdfPreview(false)}>
               Cancel
             </Button>
-            <Button color="indigo" onClick={() => handleDownloadToPdf()}>
-              Download
-            </Button>
+            <Button onClick={() => handleDownloadToPdf()}>Download</Button>
           </SimpleGrid>
         </Modal>
       )}
@@ -305,7 +303,7 @@ const RequestItemPage = () => {
         </Title>
         <Badge
           size="sm"
-          variant="filled"
+          variant="light"
           color={setBadgeColor(requestToDisplay?.request_status_id as string)}
           w="100%"
           maw="80px"
@@ -317,7 +315,7 @@ const RequestItemPage = () => {
         <Group>
           <Avatar
             src={requestToDisplay?.user_avatar_filepath}
-            color="blue"
+            color="green"
             radius="xl"
           />
           <Box>
@@ -329,10 +327,10 @@ const RequestItemPage = () => {
         </Group>
         <Group sx={{ cursor: "pointer" }}>
           <Text fz="xs" c="dimmed" onClick={() => setOpenPdfPreview(true)}>
-            <IconDownload />
+            <IconDownload size={20} />
           </Text>
           <Text fz="xs" c="dimmed">
-            <IconDotsVertical />
+            <IconDotsVertical size={20} />
           </Text>
         </Group>
       </Group>
@@ -344,7 +342,7 @@ const RequestItemPage = () => {
           <Group spacing="xs">
             <Avatar
               src={approver?.user_avatar_filepath}
-              color="blue"
+              color="green"
               radius="xl"
             />
             {approver.user_last_name ? (
@@ -363,7 +361,7 @@ const RequestItemPage = () => {
           <Group spacing="xs">
             <Avatar
               src={purchaser?.user_avatar_filepath}
-              color="blue"
+              color="green"
               radius="xl"
             />
             {purchaser.user_last_name ? (
@@ -477,7 +475,6 @@ const RequestItemPage = () => {
                 Reject
               </Button>
               <Button
-                color="indigo"
                 onClick={() =>
                   confirmationModal(
                     "approve",

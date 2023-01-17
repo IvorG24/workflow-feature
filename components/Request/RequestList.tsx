@@ -130,7 +130,7 @@ const RequestList = () => {
                       </Flex>
                       <Badge
                         size="sm"
-                        variant="filled"
+                        variant="light"
                         color={setBadgeColor(data.request_status_id as string)}
                         w="100%"
                         maw="80px"

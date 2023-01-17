@@ -24,7 +24,6 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { openConfirmModal } from "@mantine/modals";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconDotsVertical, IconDownload } from "@tabler/icons";
@@ -176,21 +175,21 @@ const RequestItemPage = ({
     return;
   };
 
-  const confirmationModal = (
-    action: string,
-    requestTitle: string,
-    confirmFunction: () => Promise<void>
-  ) =>
-    openConfirmModal({
-      title: "Please confirm your action",
-      children: (
-        <Text size="sm">
-          Are you sure you want to {action} the {requestTitle}?
-        </Text>
-      ),
-      labels: { confirm: "Confirm", cancel: "Cancel" },
-      onConfirm: () => confirmFunction(),
-    });
+  // const confirmationModal = (
+  //   action: string,
+  //   requestTitle: string,
+  //   confirmFunction: () => Promise<void>
+  // ) =>
+  //   openConfirmModal({
+  //     title: "Please confirm your action",
+  //     children: (
+  //       <Text size="sm">
+  //         Are you sure you want to {action} the {requestTitle}?
+  //       </Text>
+  //     ),
+  //     labels: { confirm: "Confirm", cancel: "Cancel" },
+  //     onConfirm: () => confirmFunction(),
+  //   });
 
   const handleUpdateStatus = async (newStatus: RequestStatus) => {
     try {
@@ -335,9 +334,7 @@ const RequestItemPage = ({
             <Button variant="default" onClick={() => setOpenPdfPreview(false)}>
               Cancel
             </Button>
-            <Button color="indigo" onClick={() => handleDownloadToPdf()}>
-              Download
-            </Button>
+            <Button onClick={() => handleDownloadToPdf()}>Download</Button>
           </SimpleGrid>
         </Modal>
       )}
@@ -356,7 +353,7 @@ const RequestItemPage = ({
           </Title>
           <Badge
             size="sm"
-            variant="filled"
+            variant="light"
             color={setBadgeColor(requestToDisplay?.request_status_id as string)}
             w="100%"
             maw="80px"
@@ -373,7 +370,7 @@ const RequestItemPage = ({
         <Group>
           <Avatar
             src={requestToDisplay?.user_avatar_filepath}
-            color="blue"
+            color="green"
             radius="xl"
           />
           <Box>
@@ -405,10 +402,10 @@ const RequestItemPage = ({
               }
             }}
           >
-            <IconDownload />
+            <IconDownload size={20} />
           </Text>
           <Text fz="xs" c="dimmed">
-            <IconDotsVertical />
+            <IconDotsVertical size={20} />
           </Text>
         </Group>
       </Group>
@@ -421,7 +418,7 @@ const RequestItemPage = ({
           <Group spacing="xs">
             <Avatar
               src={approver?.user_avatar_filepath}
-              color="blue"
+              color="green"
               radius="xl"
             />
             {approver.user_last_name ? (
@@ -440,7 +437,7 @@ const RequestItemPage = ({
           <Group spacing="xs">
             <Avatar
               src={purchaser?.user_avatar_filepath}
-              color="blue"
+              color="green"
               radius="xl"
             />
             {purchaser.user_last_name ? (
@@ -543,26 +540,11 @@ const RequestItemPage = ({
               <Button
                 variant="light"
                 color="red"
-                onClick={() =>
-                  confirmationModal(
-                    "reject",
-                    `${requestToDisplay && requestToDisplay?.request_title}`,
-                    () => handleUpdateStatus("rejected")
-                  )
-                }
+                onClick={() => handleUpdateStatus("rejected")}
               >
                 Reject
               </Button>
-              <Button
-                color="indigo"
-                onClick={() =>
-                  confirmationModal(
-                    "approve",
-                    `${requestToDisplay && requestToDisplay?.request_title}`,
-                    () => handleUpdateStatus("approved")
-                  )
-                }
-              >
+              <Button onClick={() => handleUpdateStatus("approved")}>
                 Approve
               </Button>
             </SimpleGrid>
@@ -577,13 +559,7 @@ const RequestItemPage = ({
               color="dark"
               my="sm"
               fullWidth
-              onClick={() =>
-                confirmationModal(
-                  "mark as purchased",
-                  `${request && requestToDisplay?.request_title}`,
-                  () => handleUpdateStatus("purchased")
-                )
-              }
+              onClick={() => handleUpdateStatus("purchased")}
             >
               Mark as Purchased
             </Button>
@@ -599,13 +575,7 @@ const RequestItemPage = ({
               color="dark"
               my="sm"
               fullWidth
-              onClick={() =>
-                confirmationModal(
-                  "delete",
-                  `${requestToDisplay && requestToDisplay?.request_title}`,
-                  handleDelete
-                )
-              }
+              onClick={handleDelete}
               data-cy="request-delete"
             >
               Delete
