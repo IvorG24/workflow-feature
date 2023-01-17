@@ -247,10 +247,10 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
         const newCommentList = [...(prev as GetRequestCommentList)];
         newCommentList.push({
           ...(createdComment as GetRequestCommentList[0]),
-          username: currentUser ? currentUser.username : "",
+          username: currentUser?.username || "",
           comment_attachment_filepath: attachmentPath,
           comment_attachment_url: commentAttachmentUrl,
-          user_id: currentUser ? currentUser?.user_id : "",
+          user_id: currentUser?.user_id || "",
         });
         return newCommentList;
       });

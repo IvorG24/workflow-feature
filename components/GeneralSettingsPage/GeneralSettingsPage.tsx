@@ -39,6 +39,7 @@ const GeneralSettingsPage = ({ team }: Props) => {
   const [currentLogo, setCurrentLogo] = useState("");
 
   useEffect(() => {
+    if (!team?.team_logo_filepath) return;
     const fetchCurrentLogoUrl = async () => {
       const url = await getFileUrl(
         supabase,
