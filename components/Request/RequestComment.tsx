@@ -47,11 +47,14 @@ const RequestComment = ({ requestId }: Props) => {
   const handleAddComment = async () => {
     if (!comment) return;
     try {
+      // replace with correct comment attachment
+      const commentAttachment = "";
       const createdComment = await createRequestComment(
         supabaseClient,
         comment,
         user?.id as string,
-        requestId as number
+        requestId as number,
+        commentAttachment
       );
       setComment("");
       setCommentList((prev) => {
@@ -78,11 +81,13 @@ const RequestComment = ({ requestId }: Props) => {
     try {
       if (!newComment) return;
       if (!editComment) return;
-
+      // replace with correct comment attachment path
+      const commentAttachmentPath = "";
       const updatedComment = await updateRequestComment(
         supabaseClient,
         newComment,
-        editCommentId as number
+        editCommentId as number,
+        commentAttachmentPath
       );
 
       const newCommentList = (commentList as GetRequestCommentList).map(
