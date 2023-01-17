@@ -183,19 +183,6 @@ const Navbar = ({ openNavbar }: Props) => {
             >
               1
             </Badge> */}
-
-                {/* <NavLink
-                component="a"
-                // href={`/t/${router.query.tid as string}/settings/general`}
-                label="Settings"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    <Settings />
-                  </IconWrapper>
-                }
-                onClick={() => router.push(`/t/${router.query.tid as string}/settings/general`)}
-              /> */}
-
                 <NavLink
                   component="a"
                   label="All Requests"

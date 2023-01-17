@@ -78,7 +78,9 @@ import {
 // ✅ Get request draft of a form.
 // ✅ Get user by username.
 // ✅ Get team by team_name.
+// ✅ Get team by id.
 // ✅ Update user password.
+// ✅ Delete team.
 
 // - Create or retrieve a user profile.
 export const createOrRetrieveUserProfile = async (
@@ -120,40 +122,11 @@ export const createOrRetrieveUserTeamList = async (
     .from("team_member_view")
     .select()
     .eq("user_id", user.id)
+    .is("team_is_disabled", false)
     .order("team_member_id", { ascending: false });
 
   if (error) throw error;
-  if (data && data.length > 0) return data;
-
-  const { data: teamData, error: teamError } = await supabaseClient
-    .from("team_table")
-    .insert({
-      team_name: `${user.email}'s team`.toLowerCase(),
-    })
-    .select()
-    .single();
-
-  if (teamError) throw teamError;
-  if (!teamData) throw new Error("No default team created.");
-
-  const { error: insertError } = await supabaseClient
-    .from("team_member_table")
-    .insert({
-      team_member_team_id: teamData.team_id,
-      team_member_user_id: user.id,
-      team_member_member_role_id: "owner",
-    });
-
-  if (insertError) throw insertError;
-
-  const { data: teamMemberViewData, error: teamMemberViewError } =
-    await supabaseClient
-      .from("team_member_view")
-      .select()
-      .eq("user_id", user.id)
-      .order("team_member_id", { ascending: false });
-  if (teamMemberViewError) throw teamMemberViewError;
-  return teamMemberViewData || [];
+  return data;
 };
 export type CreateOrRetrieveUserTeamList = Awaited<
   ReturnType<typeof createOrRetrieveUserTeamList>
@@ -927,6 +900,7 @@ export const updateTeam = async (
     .from("team_table")
     .update(teamUpdateInput)
     .eq("team_id", teamUpdateInput.team_id);
+
   if (error) throw error;
 };
 
@@ -1483,6 +1457,27 @@ export const getTeamByTeamName = async (
 };
 export type GetTeamByTeamName = Awaited<ReturnType<typeof getTeamByTeamName>>;
 
+// Get team by team_id.
+export const getTeamByTeamId = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamId: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("team_table")
+      .select()
+      .eq("team_id", teamId)
+      .maybeSingle();
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetTeamByTeamId = Awaited<ReturnType<typeof getTeamByTeamId>>;
+
 // Update user password.
 export const updateUserPassword = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1503,3 +1498,14 @@ export const updateUserPassword = async (
   }
 };
 export type UpdateUserPassword = Awaited<ReturnType<typeof updateUserPassword>>;
+
+export const deleteTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamId: string
+) => {
+  const { error } = await supabaseClient
+    .from("team_table")
+    .update({ team_is_disabled: true })
+    .eq("team_id", teamId);
+  if (error) throw error;
+};

@@ -6,6 +6,7 @@ import {
   UnstyledButton,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useRouter } from "next/router";
 import { ReactNode } from "react";
 import IconWrapper from "../IconWrapper/IconWrapper";
 
@@ -17,6 +18,8 @@ export type ILink = {
 
 const BottomNavigation = ({ links }: { links: ILink[] }) => {
   const { colorScheme } = useMantineColorScheme();
+  const router = useRouter();
+
   return (
     <Container
       p={0}
@@ -28,7 +31,7 @@ const BottomNavigation = ({ links }: { links: ILink[] }) => {
         {links.length > 0 &&
           links.map((link, idx) => (
             <UnstyledButton
-              href={link.href}
+              onClick={() => router.push(link.href)}
               aria-label={link.label}
               component="a"
               key={idx}
