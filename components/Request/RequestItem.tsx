@@ -94,7 +94,6 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       };
     }
   );
-  console.log(requestWithApproverList[`${request.request_id}`]);
   useEffect(() => {
     (async () => {
       try {
@@ -305,10 +304,15 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
             fz="xs"
             c="dimmed"
             onClick={() => {
-              if (request.request_status_id !== "approved") {
+              if (
+                !["approved", "purchased"].includes(
+                  request.request_status_id as string
+                )
+              ) {
                 showNotification({
-                  title: "Oops!",
-                  message: "Only approved requests can be downloaded as PDF.",
+                  title: "Sorry!",
+                  message:
+                    "Request should be approved or purchased to download receipt.",
                   color: "orange",
                   autoClose: false,
                 });
