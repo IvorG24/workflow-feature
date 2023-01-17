@@ -64,7 +64,8 @@ const filterRequestList = (
         request.request_on_behalf_of,
         request.request_id,
         request.field_name,
-        request.response_value,
+        request.response_value?.toString(),
+        request.field_options?.toString(),
       ]
         .filter((e) => e)
         .join(" ")
