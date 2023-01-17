@@ -1,12 +1,14 @@
 import {
-  Center,
   Container,
+  Flex,
+  Stack,
+  Text,
   UnstyledButton,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useRouter } from "next/router";
 import { ReactNode } from "react";
 import IconWrapper from "../IconWrapper/IconWrapper";
-import styles from "./BottomNavigation.module.scss";
 
 export type ILink = {
   href: string;
@@ -16,25 +18,31 @@ export type ILink = {
 
 const BottomNavigation = ({ links }: { links: ILink[] }) => {
   const { colorScheme } = useMantineColorScheme();
+  const router = useRouter();
+
   return (
     <Container
-      p="xs"
+      p={0}
       bg={colorScheme === "dark" ? "dark" : "white"}
-      className={styles.container}
+      w="100%"
+      fluid
     >
-      {links.length > 0 &&
-        links.map((link, idx) => (
-          <UnstyledButton
-            href={link.href}
-            aria-label={link.label}
-            component="a"
-            key={idx}
-          >
-            <Center>
-              <IconWrapper fontSize={20}>{link.icon}</IconWrapper>
-            </Center>
-          </UnstyledButton>
-        ))}
+      <Flex justify="space-around">
+        {links.length > 0 &&
+          links.map((link, idx) => (
+            <UnstyledButton
+              onClick={() => router.push(link.href)}
+              aria-label={link.label}
+              component="a"
+              key={idx}
+            >
+              <Stack align="center" spacing="xs">
+                <IconWrapper fontSize={20}>{link.icon}</IconWrapper>
+                <Text fz="xs">{link.label}</Text>
+              </Stack>
+            </UnstyledButton>
+          ))}
+      </Flex>
     </Container>
   );
 };

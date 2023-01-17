@@ -1,7 +1,6 @@
 // todo: create unit test
-import FileUrlListContext from "@/contexts/FileUrlListContext";
 import { Database } from "@/utils/database.types";
-import { uploadFile } from "@/utils/file";
+import { replaceFile, uploadFile } from "@/utils/file";
 import {
   getUserByUsername,
   GetUserProfile,
@@ -20,22 +19,15 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
+import { toLower } from "lodash";
 import {
   Dispatch,
   MouseEventHandler,
   SetStateAction,
-  useContext,
   useRef,
   useState,
 } from "react";
 import { useForm } from "react-hook-form";
-
-type Props = {
-  user: NonNullable<GetUserProfile>;
-  onCancel: MouseEventHandler<HTMLButtonElement>;
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-};
 
 type Data = {
   username: string;
@@ -43,9 +35,22 @@ type Data = {
   lastName: string;
 };
 
-const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
+type Props = {
+  user: NonNullable<GetUserProfile>;
+  onCancel: MouseEventHandler<HTMLButtonElement>;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  setIsEditProfileOpen: Dispatch<SetStateAction<boolean>>;
+  avatarUrlList: Record<string, string | null>;
+};
+
+const EditProfileForm = ({
+  user,
+  onCancel,
+  setIsLoading,
+  setIsEditProfileOpen,
+  avatarUrlList,
+}: Props) => {
   const supabaseClient = useSupabaseClient<Database>();
-  const router = useRouter();
 
   const {
     register,
@@ -55,8 +60,6 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
   const [avatar, setAvatar] = useState<File | null>(null);
 
   const avatarInput = useRef<HTMLButtonElement>(null);
-
-  const fileUrlListContext = useContext(FileUrlListContext);
 
   const [usernameError, setUsernameError] = useState("");
 
@@ -83,40 +86,60 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
   // };
 
   const onSubmit = handleSubmit(async (data) => {
+    if (
+      data.username === user.username &&
+      data.firstName === user.user_first_name &&
+      data.lastName === user.user_last_name &&
+      !avatar
+    )
+      return;
+
     try {
-      const isUsernameTaken = !!(await getUserByUsername(
-        supabaseClient,
-        data.username,
-        user.user_id
-      ));
+      const username = toLower(data.username);
+      const isUsernameTaken =
+        data.username === user.username
+          ? false
+          : !!(await getUserByUsername(supabaseClient, username, user.user_id));
       if (isUsernameTaken) {
-        setUsernameError(`${data.username} username is already taken.`);
+        setUsernameError(`${username} username is already taken.`);
         return;
       }
       setIsLoading(true);
-
       let filepath;
-
       // Call the uploadFile function first so that if the team logo upload fails, the team will not be created.
       if (avatar) {
-        const { path } = await uploadFile(
-          supabaseClient,
-          avatar.name,
-          avatar,
-          "avatars"
-        );
-        filepath = path;
+        if (user.user_avatar_filepath) {
+          await replaceFile(
+            supabaseClient,
+            user.user_avatar_filepath,
+            avatar,
+            "avatars"
+          );
+          filepath = user.user_avatar_filepath;
+        } else {
+          const { path } = await uploadFile(
+            supabaseClient,
+            avatar.name,
+            avatar,
+            "avatars"
+          );
+          filepath = path;
+        }
+        avatarUrlList[user.user_id] = URL.createObjectURL(avatar);
       }
 
       await updateUserProfile(supabaseClient, {
-        username: data.username,
+        username: username,
         user_id: user.user_id,
         user_avatar_filepath: filepath,
         user_first_name: data.firstName,
         user_last_name: data.lastName,
       });
+      user.username = username;
+      user.user_first_name = data.firstName;
+      user.user_last_name = data.lastName;
 
-      router.reload();
+      setIsEditProfileOpen(false);
     } catch {
       showNotification({
         title: "Error!",
@@ -150,7 +173,7 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
               src={
                 avatar
                   ? URL.createObjectURL(avatar)
-                  : fileUrlListContext?.avatarUrlList[user.user_id as string]
+                  : avatarUrlList[user.user_id as string]
               }
               alt="User avatar"
             />

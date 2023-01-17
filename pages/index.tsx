@@ -38,6 +38,13 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
         permanent: false,
       },
     };
+  else
+    return {
+      redirect: {
+        destination: `/t/${teamList[0].team_id}/requests?active_tab=all&page=1`,
+        permanent: false,
+      },
+    };
 
   return {
     props: {},

@@ -76,8 +76,8 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const [formTemplateList, setFormTemplateList] =
     useState<GetTeamFormTemplateList>();
   const [fileUrlList, setFileUrlList] = useState<FileUrlList>({
-    avatarUrlList: {},
     teamLogoUrlList: {},
+    avatarUrlList: {},
   });
 
   useEffect(() => {

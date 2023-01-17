@@ -1448,13 +1448,15 @@ export type GetCurrentDate = Awaited<ReturnType<typeof getCurrentDate>>;
 // Get user by username.
 export const getUserByUsername = async (
   supabaseClient: SupabaseClient<Database>,
-  username: string
+  username: string,
+  userId: string
 ) => {
   try {
     const { data, error } = await supabaseClient
       .from("user_profile_table")
       .select()
       .eq("username", username)
+      .neq("user_id", userId)
       .maybeSingle();
     if (error) throw error;
 
