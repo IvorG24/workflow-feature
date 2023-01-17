@@ -1,14 +1,19 @@
 import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
+import FileUrlListContext from "@/contexts/FileUrlListContext";
 import { Database } from "@/utils/database.types-new";
 import { getFileUrl } from "@/utils/file";
 import { updateUserPassword } from "@/utils/queries-new";
 import {
+  Avatar,
   Button,
   Container,
   Divider,
+  Group,
   Image,
+  LoadingOverlay,
   Modal,
   PasswordInput,
+  Stack,
   Text,
   Title,
 } from "@mantine/core";
@@ -16,7 +21,10 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Edit, Mail } from "../Icon";
+import IconWrapper from "../IconWrapper/IconWrapper";
 import AddSignature from "./AddSignature";
+import EditProfileForm from "./EditProfileForm";
 
 type ChangePasswordData = {
   oldPassword: string;
@@ -31,6 +39,13 @@ const ProfileSettingsPage = () => {
   const userProfile = useContext(CurrentUserProfileContext);
   const currentSignatureFilePath = userProfile?.user_signature_filepath;
   const [currentSignatureUrl, setCurrentSignatureUrl] = useState("");
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const { avatarUrlList } = useContext(FileUrlListContext);
+  const noFirstAndLastName =
+    !userProfile?.user_first_name && !userProfile?.user_last_name;
+
   const {
     register,
     handleSubmit,
@@ -49,6 +64,12 @@ const ProfileSettingsPage = () => {
       setCurrentSignatureUrl(url);
     })();
   }, [supabaseClient, currentSignatureFilePath]);
+
+  useEffect(() => {
+    if (userProfile !== null) {
+      return setIsLoading(false);
+    }
+  }, [userProfile]);
 
   const onDeleteAccount = () => {
     console.log("delete account");
@@ -79,7 +100,70 @@ const ProfileSettingsPage = () => {
   });
   return (
     <Container fluid m={0} p={0}>
-      <Title order={3}>Set your signature</Title>
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      <Modal
+        opened={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        size="lg"
+      >
+        {userProfile && (
+          <EditProfileForm
+            user={userProfile}
+            onCancel={() => setIsEditProfileOpen(false)}
+            setIsLoading={setIsLoading}
+            setIsEditProfileOpen={setIsEditProfileOpen}
+            avatarUrlList={avatarUrlList}
+          />
+        )}
+      </Modal>
+      <Group px={30}>
+        <Avatar
+          size={200}
+          radius={100}
+          src={avatarUrlList[userProfile?.user_id as string]}
+        />
+        <Stack spacing={0}>
+          {!noFirstAndLastName && (
+            <Title
+              order={2}
+            >{`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}</Title>
+          )}
+          {noFirstAndLastName && <Title order={2}>No name</Title>}
+
+          <Text>{userProfile?.username}</Text>
+          <Group align="center" mt="xs" spacing={4}>
+            <IconWrapper fontSize={20} color="dimmed">
+              <Mail />
+            </IconWrapper>
+            <Text>{userProfile?.user_email}</Text>
+            <Text color="dimmed">&nbsp;</Text>
+          </Group>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditProfileOpen(true)}
+            leftIcon={
+              <IconWrapper fontSize={16}>
+                <Edit />
+              </IconWrapper>
+            }
+            sx={(theme) => ({
+              color:
+                theme.colorScheme === "dark"
+                  ? theme.colors.dark[0]
+                  : theme.colors.dark[6],
+            })}
+            color="dark"
+            mt="md"
+            mr="md"
+          >
+            Edit Profile
+          </Button>
+        </Stack>
+      </Group>
+      <Title order={3} mt="xl">
+        Set your signature
+      </Title>
       <Text>
         This signature will be auto-attached on every approval you make.
       </Text>
