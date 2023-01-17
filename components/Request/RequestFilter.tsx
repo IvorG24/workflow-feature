@@ -96,17 +96,9 @@ const RequestFilter = () => {
       );
     } else {
       router.push(
-        {
-          query: {
-            ...router.query,
-            active_tab: router.query.active_tab,
-            page: router.query.page,
-          },
-        },
+        `/t/${router.query.tid}/requests?active_tab=${router.query.active_tab}&page=${router.query.page}`,
         undefined,
-        {
-          shallow: true,
-        }
+        { shallow: true }
       );
     }
   };
