@@ -9,6 +9,7 @@ import { Database } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
+  Box,
   Button,
   Container,
   Divider,
@@ -104,54 +105,64 @@ const Navbar = ({ openNavbar }: Props) => {
   return (
     <MantineNavbar
       p="md"
-      h={{ sm: "auto" }}
+      h="auto"
       width={{ sm: 200, lg: 300 }}
       hiddenBreakpoint="sm"
       hidden={!openNavbar}
+      mb={{ base: 80, sm: 0 }}
     >
-      <Select
-        label="Team"
-        value={(router.query.tid as string) || "create"}
-        data={teamOptions}
-        itemComponent={SelectItem}
-        onChange={(val) => {
-          if (val === "create") {
-            router.push(`/teams/create`);
-          } else {
-            router.push(`/t/${val}/requests?active_tab=all&page=1`);
-          }
+      <Box
+        p={0}
+        h="100%"
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-between",
         }}
-        icon={
-          <Avatar
-            src={
-              fileUrlListContext?.teamLogoUrlList[router.query.tid as string]
+      >
+        <Select
+          label="Team"
+          value={(router.query.tid as string) || "create"}
+          data={teamOptions}
+          itemComponent={SelectItem}
+          onChange={(val) => {
+            if (val === "create") {
+              router.push(`/teams/create`);
+            } else {
+              router.push(`/t/${val}/requests?active_tab=all&page=1`);
             }
-            radius="xl"
-            size="sm"
-          />
-        }
-        size="md"
-        styles={{
-          label: {
-            fontSize: "14px",
-          },
-        }}
-        data-cy="navbar-select-teams"
-      />
+          }}
+          icon={
+            <Avatar
+              src={
+                fileUrlListContext?.teamLogoUrlList[router.query.tid as string]
+              }
+              radius="xl"
+              size="sm"
+            />
+          }
+          size="md"
+          styles={{
+            label: {
+              fontSize: "14px",
+            },
+          }}
+          data-cy="navbar-select-teams"
+        />
 
-      {router.query.tid !== undefined ? (
-        <>
-          <MantineNavbar.Section mt="lg">
-            <Title order={2} size={14} weight={400} color="dimmed">
-              Account
-            </Title>
+        {router.query.tid !== undefined ? (
+          <>
+            <MantineNavbar.Section mt="lg">
+              <Title order={2} size={14} weight={400} color="dimmed">
+                Account
+              </Title>
 
-            <Container
-              fluid
-              className={styles.notificationsButtonWrapper}
-              p={0}
-            >
-              {/* <NavLink
+              <Container
+                fluid
+                className={styles.notificationsButtonWrapper}
+                p={0}
+              >
+                {/* <NavLink
                 component="a"
                 onClick={() =>
                   router.push(`/t/${router.query.tid as string}/dashboard`)
@@ -165,173 +176,168 @@ const Navbar = ({ openNavbar }: Props) => {
                 }
               /> */}
 
-              <NavLink
-                component="a"
-                label="Notifications"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    <Notifications />
-                  </IconWrapper>
-                }
-                onClick={() =>
-                  router.push(`/t/${router.query.tid as string}/notifications`)
-                }
-              />
-              {/* // TODO: Commenting this for now. */}
-              {/* <Badge
+                {/* // TODO: Commenting this for now. */}
+                {/* <Badge
               className={styles.notificationsButtonWrapper__badge}
               color="red"
             >
               1
             </Badge> */}
-
-              {/* <NavLink
-                component="a"
-                // href={`/t/${router.query.tid as string}/settings/general`}
-                label="Settings"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    <Settings />
-                  </IconWrapper>
-                }
-                onClick={() => router.push(`/t/${router.query.tid as string}/settings/general`)}
-              /> */}
-              <NavLink
-                component="a"
-                label="Settings"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    {/* <GroupIcon /> */}
-                    <Settings />
-                  </IconWrapper>
-                }
-                onClick={() =>
-                  router.push(
-                    `/t/${router.query.tid as string}/settings/general`
-                  )
-                }
-              />
-              <NavLink
-                component="a"
-                label="All Requests"
-                icon={
-                  <IconWrapper className={iconStyle}>
-                    <EditDocument />
-                  </IconWrapper>
-                }
-                onClick={() =>
-                  router.push(
-                    `/t/${
-                      router.query.tid as string
-                    }/requests?active_tab=all&page=1`
-                  )
-                }
-              />
-            </Container>
-          </MantineNavbar.Section>
-
-          <Divider mt="xs" />
-
-          <ScrollArea className={styles.navScroll}>
-            <MantineNavbar.Section mt="lg">
-              <NavLink
-                component="a"
-                label="Forms"
-                opened={isOpenRequest}
-                onClick={(e) => {
-                  e.preventDefault();
-                  router.push(`/t/${router.query.tid as string}/forms`);
-                }}
-                icon={
-                  <Flex align="center" gap={4}>
-                    <IconWrapper
-                      fontSize={10}
-                      color="gray"
-                      className={`${styles.arrowRight} ${
-                        activeNest === "request" && styles.arrowDown
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!addRequestHovered) {
-                          setActiveNest((v) =>
-                            v === "request" ? "" : "request"
-                          );
-                          setIsOpenRequest((v) => !v);
-                        }
-                      }}
-                      data-cy="navbar-forms-dropdown"
-                    >
-                      <ArrowBack />
-                    </IconWrapper>
+                <NavLink
+                  component="a"
+                  label="All Requests"
+                  icon={
                     <IconWrapper className={iconStyle}>
-                      <Description />
+                      <EditDocument />
                     </IconWrapper>
-                  </Flex>
-                }
-                px="xs"
-                disableRightSectionRotation
-                rightSection={
-                  <Group ref={addRequestRef}>
-                    <ActionIcon
-                      variant="subtle"
-                      component="a"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(
-                          `/t/${router.query.tid as string}/forms/build`
-                        );
-                      }}
-                      className={`${styles.createRequestButton} ${
-                        colorScheme === "dark"
-                          ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                          : ""
-                      }`}
-                      data-cy="navbar-createForm"
-                    >
-                      <AddCircle />
-                    </ActionIcon>
-                  </Group>
-                }
-                childrenOffset={15}
-              >
-                {formList &&
-                  formList.map((form) => (
-                    <NavLink
-                      px="xs"
-                      key={form.form_id}
-                      component="a"
-                      // href={`/t/${router.query.tid as string}/requests?active_tab=all&page=1&form=${form.form_id}`}
-                      onClick={() =>
-                        router.push(
-                          `/t/${
-                            router.query.tid as string
-                          }/requests?active_tab=all&page=1&form=${form.form_id}`
-                        )
-                      }
-                      label={form.form_name}
-                      rightSection={
-                        <ActionIcon
-                          variant="subtle"
-                          component="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handlePushToCreateRequest(form.form_id as number);
-                          }}
-                          aria-label="create a request"
-                          className={`${styles.createRequestButton} ${
-                            colorScheme === "dark"
-                              ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
-                              : ""
-                          }`}
-                        >
-                          <AddCircle />
-                        </ActionIcon>
-                      }
-                    />
-                  ))}
-              </NavLink>
+                  }
+                  onClick={() =>
+                    router.push(
+                      `/t/${
+                        router.query.tid as string
+                      }/requests?active_tab=all&page=1`
+                    )
+                  }
+                />
+                <NavLink
+                  component="a"
+                  label="Notifications"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      <Notifications />
+                    </IconWrapper>
+                  }
+                  onClick={() =>
+                    router.push(
+                      `/t/${router.query.tid as string}/notifications`
+                    )
+                  }
+                />
+                <NavLink
+                  component="a"
+                  label="Settings"
+                  icon={
+                    <IconWrapper className={iconStyle}>
+                      {/* <GroupIcon /> */}
+                      <Settings />
+                    </IconWrapper>
+                  }
+                  onClick={() =>
+                    router.push(
+                      `/t/${router.query.tid as string}/settings/members`
+                    )
+                  }
+                />
+              </Container>
+            </MantineNavbar.Section>
 
-              {/* <NavLink
+            <Divider mt="xs" />
+
+            <ScrollArea className={styles.navScroll}>
+              <MantineNavbar.Section mt="lg">
+                <Title order={2} size={14} weight={400} color="dimmed">
+                  Request Forms
+                </Title>
+                <NavLink
+                  component="a"
+                  label="Forms"
+                  opened={isOpenRequest}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/t/${router.query.tid as string}/forms`);
+                  }}
+                  icon={
+                    <Flex align="center" gap={4}>
+                      <IconWrapper
+                        fontSize={10}
+                        color="gray"
+                        className={`${styles.arrowRight} ${
+                          activeNest === "request" && styles.arrowDown
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!addRequestHovered) {
+                            setActiveNest((v) =>
+                              v === "request" ? "" : "request"
+                            );
+                            setIsOpenRequest((v) => !v);
+                          }
+                        }}
+                        data-cy="navbar-forms-dropdown"
+                      >
+                        <ArrowBack />
+                      </IconWrapper>
+                      <IconWrapper className={iconStyle}>
+                        <Description />
+                      </IconWrapper>
+                    </Flex>
+                  }
+                  px="xs"
+                  disableRightSectionRotation
+                  rightSection={
+                    <Group ref={addRequestRef}>
+                      <ActionIcon
+                        variant="subtle"
+                        component="a"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(
+                            `/t/${router.query.tid as string}/forms/build`
+                          );
+                        }}
+                        className={`${styles.createRequestButton} ${
+                          colorScheme === "dark"
+                            ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                            : ""
+                        }`}
+                        data-cy="navbar-createForm"
+                      >
+                        <AddCircle />
+                      </ActionIcon>
+                    </Group>
+                  }
+                  childrenOffset={15}
+                >
+                  {formList &&
+                    formList.map((form) => (
+                      <NavLink
+                        px="xs"
+                        key={form.form_id}
+                        component="a"
+                        // href={`/t/${router.query.tid as string}/requests?active_tab=all&page=1&form=${form.form_id}`}
+                        onClick={() =>
+                          router.push(
+                            `/t/${
+                              router.query.tid as string
+                            }/requests?active_tab=all&page=1&form=${
+                              form.form_id
+                            }`
+                          )
+                        }
+                        label={form.form_name}
+                        rightSection={
+                          <ActionIcon
+                            variant="subtle"
+                            component="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handlePushToCreateRequest(form.form_id as number);
+                            }}
+                            aria-label="create a request"
+                            className={`${styles.createRequestButton} ${
+                              colorScheme === "dark"
+                                ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
+                                : ""
+                            }`}
+                          >
+                            <AddCircle />
+                          </ActionIcon>
+                        }
+                      />
+                    ))}
+                </NavLink>
+
+                {/* <NavLink
                   label="Review Forms"
                   component="a"
                   childrenOffset={15}
@@ -412,50 +418,51 @@ const Navbar = ({ openNavbar }: Props) => {
                     />
                   ))}
                 </NavLink> */}
-            </MantineNavbar.Section>
-          </ScrollArea>
-        </>
-      ) : null}
-      <MantineNavbar.Section mt="auto">
-        <NavLink
-          component="a"
-          onClick={() =>
-            router.push(`/t/${router.query.tid}/profiles/${user?.id}/bio`)
-          }
-          label={userProfile?.username}
-          description="View Profile"
-          icon={
-            <IconWrapper className={iconStyle}>
-              <Avatar
-                radius="xl"
-                src={
-                  fileUrlListContext?.avatarUrlList[
-                    userProfile?.user_id as string
-                  ]
+              </MantineNavbar.Section>
+            </ScrollArea>
+            <MantineNavbar.Section mt="auto">
+              <NavLink
+                component="a"
+                onClick={() =>
+                  router.push(`/t/${router.query.tid}/profiles/${user?.id}/bio`)
                 }
+                label={userProfile?.username}
+                description="View Profile"
+                icon={
+                  <IconWrapper className={iconStyle}>
+                    <Avatar
+                      radius="xl"
+                      src={
+                        fileUrlListContext?.avatarUrlList[
+                          userProfile?.user_id as string
+                        ]
+                      }
+                    />
+                  </IconWrapper>
+                }
+                data-cy="navbar-profiles"
               />
-            </IconWrapper>
-          }
-          data-cy="navbar-profiles"
-        />
-        <Button
-          variant="light"
-          color="red"
-          fullWidth
-          leftIcon={
-            <IconWrapper className={styles.logoutButton__icon}>
-              <Logout />
-            </IconWrapper>
-          }
-          onClick={async () => {
-            await supabase.auth.signOut();
-            await router.push("/sign-in");
-          }}
-          data-cy="navbar-logout"
-        >
-          Logout
-        </Button>
-      </MantineNavbar.Section>
+              <Button
+                variant="light"
+                color="red"
+                fullWidth
+                leftIcon={
+                  <IconWrapper className={styles.logoutButton__icon}>
+                    <Logout />
+                  </IconWrapper>
+                }
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  await router.push("/sign-in");
+                }}
+                data-cy="navbar-logout"
+              >
+                Logout
+              </Button>
+            </MantineNavbar.Section>
+          </>
+        ) : null}
+      </Box>
     </MantineNavbar>
   );
 };

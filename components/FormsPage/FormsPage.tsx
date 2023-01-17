@@ -30,7 +30,7 @@ const FormsPage = ({ teamRequestFormList }: Props) => {
   const { colorScheme } = useMantineColorScheme();
 
   return (
-    <Container p="md" fluid>
+    <Container p={0} fluid>
       <Title order={1} my="md">
         Forms
       </Title>
