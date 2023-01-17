@@ -99,8 +99,7 @@ const RequestList = () => {
           <Stack p="sm">
             <Checkbox.Group value={checked} onChange={setChecked}>
               <Stack spacing="xs" w="100%">
-                {requestListToDisplay &&
-                requestListToDisplay[0].fields.length ? (
+                {requestListToDisplay ? (
                   requestListToDisplay?.map((data) => (
                     <Box
                       key={data.request_id}

@@ -340,17 +340,18 @@ const RequestItemPage = ({
       )}
 
       <Group position="apart">
-        <Box>
-          <Title
-            order={4}
-            onClick={() =>
-              router.push(
-                `/t/${router.query.tid}/requests/${selectedRequestId}`
-              )
-            }
-          >
-            {requestToDisplay?.request_title}
-          </Title>
+        <Box
+          sx={{ cursor: "pointer" }}
+          onClick={() =>
+            router.push(`/t/${router.query.tid}/requests/${selectedRequestId}`)
+          }
+        >
+          <Group spacing="xs">
+            <Title order={4}>{requestToDisplay?.request_title}</Title>
+            <Text fz="xs" c="indigo" td="underline">
+              (Full Page)
+            </Text>
+          </Group>
           <Badge
             size="sm"
             variant="light"

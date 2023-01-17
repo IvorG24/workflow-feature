@@ -293,14 +293,7 @@ const RequestItemPage = () => {
         </Modal>
       )}
       <Box>
-        <Title
-          order={4}
-          onClick={() =>
-            router.push(`/t/${router.query.tid}/requests/${requestId}`)
-          }
-        >
-          {requestToDisplay?.request_title}
-        </Title>
+        <Title order={4}>{requestToDisplay?.request_title}</Title>
         <Badge
           size="sm"
           variant="light"
