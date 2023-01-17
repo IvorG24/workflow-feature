@@ -94,17 +94,21 @@ const RequestItemPage = ({
     {}
   ) as { [key: string]: TeamMemberRole };
   const approverList = requestWithApproverList[`${selectedRequestId}`];
-  const approverIdWithStatus = approverList.find((approver) => {
-    const isApprover =
-      userIdRoleDictionary[approver.approver_id] === "owner" ||
-      userIdRoleDictionary[approver.approver_id] === "admin";
-    return isApprover;
-  });
-  const purchaserIdWithStatus = approverList.find((approver) => {
-    const isPurchaser =
-      userIdRoleDictionary[approver.approver_id] === "purchaser";
-    return isPurchaser;
-  });
+  const approverIdWithStatus =
+    approverList &&
+    approverList.find((approver) => {
+      const isApprover =
+        userIdRoleDictionary[approver.approver_id] === "owner" ||
+        userIdRoleDictionary[approver.approver_id] === "admin";
+      return isApprover;
+    });
+  const purchaserIdWithStatus =
+    approverList &&
+    approverList.find((approver) => {
+      const isPurchaser =
+        userIdRoleDictionary[approver.approver_id] === "purchaser";
+      return isPurchaser;
+    });
   const approver = teamMemberList.find(
     (member) => member.user_id === approverIdWithStatus?.approver_id
   );

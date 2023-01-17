@@ -35,7 +35,7 @@ const filterRequestList = (
       if (active_tab === "sent") {
         return request.form_fact_user_id === userId;
       } else if (active_tab === "received") {
-        return approverList[request.request_id || ""].find(
+        return approverList[request.request_id || ""]?.find(
           (approver) => approver.approver_id === userId
         );
       } else {
@@ -63,6 +63,9 @@ const filterRequestList = (
         request.request_description,
         request.request_on_behalf_of,
         request.request_id,
+        request.field_name,
+        request.response_value?.toString(),
+        request.field_options?.toString(),
       ]
         .filter((e) => e)
         .join(" ")

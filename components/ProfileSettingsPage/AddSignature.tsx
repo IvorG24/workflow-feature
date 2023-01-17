@@ -15,6 +15,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import {
   default as ReactSignatureCanvas,
@@ -39,6 +40,7 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
   const [isUploading, setIsUploading] = useState(false);
   const user = useUser();
   const sigCanvas = useRef<ReactSignatureCanvas>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (file) {
@@ -139,6 +141,7 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
           message: "Signature updated.",
           color: "green",
         });
+        router.reload();
         onCancel();
       } else {
         showNotification({

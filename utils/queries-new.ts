@@ -371,7 +371,8 @@ export const getRequestWithApproverList = async (
     const { data, error } = await supabaseClient
       .from("request_request_approver_status_view")
       .select()
-      .in("request_id", requestId);
+      .in("request_id", requestId)
+      .order("request_id", { ascending: false });
 
     if (error) throw error;
     if (!data) return {};
@@ -386,12 +387,28 @@ export const getRequestWithApproverList = async (
     //     }
     //   ]
     // },
-    const result: GetRequestWithApproverList = {};
-    data.map(({ request_id, approvers }) => {
-      result[request_id?.toString() || ""] =
-        approvers as RequestWithApproverList;
+    // const result: GetRequestWithApproverList = {};
+    // data.map(({ request_id, approvers }) => {
+    //   result[request_id?.toString() || ""] =
+    //     approvers as RequestWithApproverList;
+    // });
+
+    const getRequestWithApproverList: GetRequestWithApproverList = {};
+
+    data.forEach((request) => {
+      const { request_id, approvers } = request;
+      if (!getRequestWithApproverList[request_id as unknown as string]) {
+        getRequestWithApproverList[request_id as unknown as string] =
+          approvers as [];
+      } else {
+        getRequestWithApproverList[request_id as unknown as string] = [
+          ...getRequestWithApproverList[request_id as unknown as string],
+          ...(approvers as string[]),
+        ] as [];
+      }
     });
-    return result;
+
+    return getRequestWithApproverList;
   } catch (error) {
     console.error(error);
     throw error;
