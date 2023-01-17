@@ -140,7 +140,7 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
       <Divider my="sm" />
 
       <Group position="apart">
-        {purchaser ? (
+        {purchaser && request.request_status_id === "purchased" ? (
           <Box>
             <Text fw={500} c="dark.9">
               Purchased By
