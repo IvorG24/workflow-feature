@@ -358,6 +358,36 @@ const RequestItemPage = () => {
         <Text c="dimmed">No attachments</Text>
       )}
 
+      {requestToDisplay && (
+        <>
+          <Divider mb="sm" />
+          <Text fw={500} c="dark.9">
+            Request Form
+          </Text>
+          {requestToDisplay.fields.map((f, idx: number) => {
+            if (f.type !== "section") {
+              return (
+                <Box key={idx} p="xs">
+                  <Group>
+                    <Text fw={500} c="dark.9">
+                      Q:
+                    </Text>
+                    <Text c="dark.9">{f.label}</Text>
+                  </Group>
+                  <Group>
+                    <Text fw={500} c="dark.9">
+                      A:
+                    </Text>
+                    <Text c="dark.9">{f.value ? f.value : "N/A"}</Text>
+                  </Group>
+                </Box>
+              );
+            }
+          })}
+          <Divider my="sm" />
+        </>
+      )}
+
       {currentUserIsApprover &&
         requestToDisplay?.request_status_id === "pending" && (
           <>

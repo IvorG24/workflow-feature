@@ -65,6 +65,7 @@ const RequestList = () => {
         value: next.response_value as string,
         type: next.request_field_type as string,
       };
+
       if (match) {
         match.fields.push(nextFields as ReducedRequestFieldType);
       } else {

@@ -223,7 +223,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       });
     }
   };
-
+  console.log(request.fields);
   return (
     <Box p="xs">
       {/* PDF PREVIEW */}
@@ -383,6 +383,32 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       ) : (
         <Text c="dimmed">No attachments</Text>
       )}
+
+      <Divider mb="sm" />
+      <Text fw={500} c="dark.9">
+        Request Form
+      </Text>
+      {request.fields.map((f, idx: number) => {
+        if (f.type !== "section") {
+          return (
+            <Box key={idx} p="xs">
+              <Group>
+                <Text fw={500} c="dark.9">
+                  Q:
+                </Text>
+                <Text c="dark.9">{f.label}</Text>
+              </Group>
+              <Group>
+                <Text fw={500} c="dark.9">
+                  A:
+                </Text>
+                <Text c="dark.9">{f.value ? f.value : "N/A"}</Text>
+              </Group>
+            </Box>
+          );
+        }
+      })}
+      <Divider my="sm" />
 
       {currentUserIsApprover && request.request_status_id === "pending" && (
         <>
