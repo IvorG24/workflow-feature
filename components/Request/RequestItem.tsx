@@ -284,29 +284,24 @@ const RequestItemPage = ({
   };
 
   useEffect(() => {
-    if (!request) {
-      router.push(`/t/${router.query.tid}/requests?active_tab=all&page=1`);
-    } else {
-      const initialFields: { label: string; value: string; type: string }[] =
-        [];
-      const initialValue = [{ ...request[0], fields: initialFields }];
+    const initialFields: { label: string; value: string; type: string }[] = [];
+    const initialValue = [{ ...request?.[0], fields: initialFields }];
 
-      const reducedRequest = request?.reduce((acc, next) => {
-        const match = acc.find((a) => a.request_id === next.request_id);
-        const nextFields: ReducedRequestFieldType = {
-          label: next.field_name as string,
-          value: next.response_value as string,
-          type: next.request_field_type as string,
-        };
-        if (match) {
-          match.fields.push(nextFields as ReducedRequestFieldType);
-        } else {
-          acc.push({ ...next, fields: [nextFields] });
-        }
-        return acc;
-      }, initialValue);
-      setRequestToDisplay(reducedRequest[0] as ReducedRequestType);
-    }
+    const reducedRequest = request?.reduce((acc, next) => {
+      const match = acc.find((a) => a.request_id === next.request_id);
+      const nextFields: ReducedRequestFieldType = {
+        label: next.field_name as string,
+        value: next.response_value as string,
+        type: next.request_field_type as string,
+      };
+      if (match) {
+        match.fields.push(nextFields as ReducedRequestFieldType);
+      } else {
+        acc.push({ ...next, fields: [nextFields] });
+      }
+      return acc;
+    }, initialValue);
+    setRequestToDisplay(reducedRequest?.[0] as ReducedRequestType);
   }, [request, router]);
 
   return !isLoading ? (
