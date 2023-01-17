@@ -40,6 +40,7 @@ const RequestFilter = () => {
 
   const handleFilterBySelectedForm = (selectedForm: string | null) => {
     setSelectedForm(selectedForm);
+    setSearch("");
     if (selectedForm) {
       router.push(
         { query: { ...router.query, form: selectedForm, page: 1 } },
@@ -86,6 +87,7 @@ const RequestFilter = () => {
 
   const handleFilterByStatus = (status: string | null) => {
     setStatus(status as string);
+    setSearch("");
     if (status) {
       router.push(
         { query: { ...router.query, status: status, page: 1 } },
