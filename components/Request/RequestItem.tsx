@@ -100,7 +100,6 @@ const RequestItemPage = ({
       userIdRoleDictionary[approver.approver_id] === "admin";
     return isApprover;
   });
-
   const purchaserIdWithStatus = approverList.find((approver) => {
     const isPurchaser =
       userIdRoleDictionary[approver.approver_id] === "purchaser";
@@ -109,11 +108,9 @@ const RequestItemPage = ({
   const approver = teamMemberList.find(
     (member) => member.user_id === approverIdWithStatus?.approver_id
   );
-
   const purchaser = teamMemberList.find(
     (member) => member.user_id === purchaserIdWithStatus?.approver_id
   );
-
   const currentUserIsOwner = requestToDisplay?.user_id === user?.id;
   const currentUserIsApprover = approver?.user_id === user?.id;
   const currentUserIsPurchaser = purchaser?.user_id === user?.id;

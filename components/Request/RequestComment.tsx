@@ -1,6 +1,7 @@
+import CurrentUserProfileContext from "@/contexts/CurrentUserProfileContext";
 import FileUrlListContext from "@/contexts/FileUrlListContext";
 import useFetchRequestCommentList from "@/hooks/useFetchRequestCommentList";
-import { editComment } from "@/utils/queries";
+import { deleteFile, getFileUrl, uploadFile } from "@/utils/file";
 import {
   createRequestComment,
   deleteRequestComment,
@@ -15,10 +16,13 @@ import {
   Box,
   Button,
   Divider,
+  FileInput,
   Flex,
   Group,
+  LoadingOverlay,
   Menu,
   Paper,
+  Stack,
   Text,
   Textarea,
 } from "@mantine/core";
@@ -26,7 +30,10 @@ import { openConfirmModal } from "@mantine/modals";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconDotsVertical, IconEdit, IconTrash } from "@tabler/icons";
-import { useContext, useState } from "react";
+import axios from "axios";
+import { useContext, useEffect, useState } from "react";
+import { FileIcon, Upload } from "../Icon";
+import IconWrapper from "../IconWrapper/IconWrapper";
 
 type Props = {
   requestId: number;
@@ -35,34 +42,100 @@ type Props = {
 const RequestComment = ({ requestId }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
+  const currentUser = useContext(CurrentUserProfileContext);
   const fileUrlListContext = useContext(FileUrlListContext);
   const [comment, setComment] = useState("");
+  const [commentAttachment, setCommentAttachment] = useState<File | null>(null);
   const [newComment, setNewComment] = useState("");
   const [editCommentId, setEditCommentId] = useState<number | null>(null);
+  const [editComment, setEditComment] = useState<
+    GetRequestCommentList[0] | null
+  >(null);
+  const [editCommentAttachment, setEditCommentAttachment] =
+    useState<File | null>(null);
+  const [isEditCommentAttachmentChanged, setIsEditCommentAttachmentChanged] =
+    useState(false);
+  const [isCommentLoading, setIsCommentLoading] = useState(false);
   const {
     requestCommentList: commentList,
     setRequestCommentList: setCommentList,
   } = useFetchRequestCommentList(requestId);
 
+  useEffect(() => {
+    setIsCommentLoading(true);
+    const downloadAttachment = async () => {
+      try {
+        setEditCommentAttachment(null);
+        setIsEditCommentAttachmentChanged(false);
+        if (editComment?.comment_attachment_url) {
+          axios
+            .get(editComment?.comment_attachment_url, {
+              responseType: "blob",
+            })
+            .then((response) => {
+              setEditCommentAttachment({
+                ...response.data,
+                name: editComment.comment_attachment_filepath,
+              });
+            });
+        }
+      } catch {
+        showNotification({
+          title: "Error!",
+          message: "Failed to fetch comment attachment",
+          color: "red",
+        });
+      }
+    };
+    downloadAttachment();
+    setIsCommentLoading(false);
+  }, [editComment]);
+
   const handleAddComment = async () => {
-    if (!comment) return;
+    if (!comment && !commentAttachment) return;
+    setIsCommentLoading(true);
     try {
-      // replace with correct comment attachment
-      const commentAttachment = "";
+      let attachmentPath = "";
+      if (commentAttachment) {
+        const file = await uploadFile(
+          supabaseClient,
+          commentAttachment?.name,
+          commentAttachment,
+          "comment_attachments"
+        );
+        attachmentPath = file.path;
+      }
       const createdComment = await createRequestComment(
         supabaseClient,
         comment,
         user?.id as string,
         requestId as number,
-        commentAttachment
+        attachmentPath
       );
+
       setComment("");
+      setCommentAttachment(null);
+
+      let commentAttachmentUrl = "";
+      if (attachmentPath) {
+        commentAttachmentUrl = await getFileUrl(
+          supabaseClient,
+          attachmentPath,
+          "comment_attachments"
+        );
+      }
       setCommentList((prev) => {
-        return [
-          ...(prev as GetRequestCommentList),
-          createdComment as GetRequestCommentList[0],
-        ];
+        const newCommentList = [...(prev as GetRequestCommentList)];
+        newCommentList.push({
+          ...(createdComment as GetRequestCommentList[0]),
+          username: currentUser?.username || "",
+          comment_attachment_filepath: attachmentPath,
+          comment_attachment_url: commentAttachmentUrl,
+          user_id: currentUser?.user_id || "",
+        });
+        return newCommentList;
       });
+
       showNotification({
         title: "Success!",
         message: "Comment created",
@@ -75,31 +148,75 @@ const RequestComment = ({ requestId }: Props) => {
         color: "red",
       });
     }
+    setIsCommentLoading(false);
   };
 
   const handleEditComment = async () => {
     try {
-      if (!newComment) return;
+      if (!newComment && !editCommentAttachment) return;
       if (!editComment) return;
-      // replace with correct comment attachment path
-      const commentAttachmentPath = "";
+      if (
+        editComment?.comment_content === newComment &&
+        !isEditCommentAttachmentChanged
+      ) {
+        setEditComment(null);
+        setNewComment("");
+        return;
+      }
+
+      setIsCommentLoading(true);
+
+      if (editComment?.comment_attachment_filepath) {
+        await deleteFile(
+          supabaseClient,
+          `${editComment.comment_attachment_filepath}`,
+          "comment_attachments"
+        );
+      }
+
+      let commentAttachmentPath = "";
+      if (editCommentAttachment) {
+        const file = await uploadFile(
+          supabaseClient,
+          editCommentAttachment?.name,
+          editCommentAttachment,
+          "comment_attachments"
+        );
+        commentAttachmentPath = file.path;
+      }
+
       const updatedComment = await updateRequestComment(
         supabaseClient,
         newComment,
-        editCommentId as number,
+        editComment?.comment_id as number,
         commentAttachmentPath
       );
+
+      let commentAttachmentUrl = "";
+      if (commentAttachmentPath) {
+        commentAttachmentUrl = await getFileUrl(
+          supabaseClient,
+          commentAttachmentPath,
+          "comment_attachments"
+        );
+      }
 
       const newCommentList = (commentList as GetRequestCommentList).map(
         (comment) =>
           comment.comment_id === updatedComment?.comment_id
-            ? updatedComment
+            ? {
+                ...updatedComment,
+                username: currentUser ? currentUser.username : "",
+                comment_attachment_filepath: commentAttachmentPath,
+                comment_attachment_url: commentAttachmentUrl,
+                user_id: currentUser ? currentUser?.user_id : "",
+              }
             : comment
       );
 
       setCommentList(() => newCommentList as GetRequestCommentList);
 
-      setEditCommentId(null);
+      setEditComment(null);
       setNewComment("");
 
       showNotification({
@@ -114,6 +231,7 @@ const RequestComment = ({ requestId }: Props) => {
         color: "red",
       });
     }
+    setIsCommentLoading(false);
   };
 
   const handleDeleteComment = async (commentId: number) => {
@@ -174,6 +292,17 @@ const RequestComment = ({ requestId }: Props) => {
               onChange={(e) => setComment(e.target.value)}
             />
             <Group position="right" mt="xs">
+              <FileInput
+                placeholder="Add Attachment"
+                withAsterisk
+                value={commentAttachment}
+                onChange={(value) => setCommentAttachment(value)}
+                icon={
+                  <IconWrapper size={14}>
+                    <Upload />
+                  </IconWrapper>
+                }
+              />
               <Button
                 onClick={handleAddComment}
                 data-cy="request-submit-comment"
@@ -184,6 +313,7 @@ const RequestComment = ({ requestId }: Props) => {
           </Paper>
           {commentList && commentList.length > 0 && (
             <>
+              <LoadingOverlay visible={isCommentLoading} />
               <Text my="xs">Comments</Text>
               {commentList.map((comment) => (
                 <Box bg="white" key={comment.comment_id}>
@@ -268,7 +398,29 @@ const RequestComment = ({ requestId }: Props) => {
                     ) : (
                       <>
                         <Divider orientation="vertical" />
-                        <Text>{comment.comment_content}</Text>
+                        <Stack>
+                          <Text>{comment.comment_content}</Text>
+                          {comment.comment_attachment_filepath &&
+                          comment.comment_id !== editComment?.comment_id ? (
+                            <a
+                              href={comment.comment_attachment_url}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <Button
+                                mt="xs"
+                                variant="outline"
+                                leftIcon={
+                                  <IconWrapper size={14}>
+                                    <FileIcon />
+                                  </IconWrapper>
+                                }
+                              >
+                                {comment.comment_attachment_filepath}
+                              </Button>
+                            </a>
+                          ) : null}
+                        </Stack>
                       </>
                     )}
                   </Flex>
