@@ -45,9 +45,8 @@ const RequestComment = ({ requestId }: Props) => {
   const currentUser = useContext(CurrentUserProfileContext);
   const fileUrlListContext = useContext(FileUrlListContext);
   const [comment, setComment] = useState("");
-  const [commentAttachment, setCommentAttachment] = useState<File | null>(null);
   const [newComment, setNewComment] = useState("");
-  const [editCommentId, setEditCommentId] = useState<number | null>(null);
+  const [commentAttachment, setCommentAttachment] = useState<File | null>(null);
   const [editComment, setEditComment] = useState<
     GetRequestCommentList[0] | null
   >(null);
@@ -56,6 +55,7 @@ const RequestComment = ({ requestId }: Props) => {
   const [isEditCommentAttachmentChanged, setIsEditCommentAttachmentChanged] =
     useState(false);
   const [isCommentLoading, setIsCommentLoading] = useState(false);
+  const [isEditCommentLoading, setIsEditCommentLoading] = useState(false);
   const {
     requestCommentList: commentList,
     setRequestCommentList: setCommentList,
@@ -125,15 +125,15 @@ const RequestComment = ({ requestId }: Props) => {
         );
       }
       setCommentList((prev) => {
-        const newCommentList = [...(prev as GetRequestCommentList)];
-        newCommentList.push({
+        const editCommentList = [...(prev as GetRequestCommentList)];
+        editCommentList.push({
           ...(createdComment as GetRequestCommentList[0]),
           username: currentUser?.username || "",
           comment_attachment_filepath: attachmentPath,
           comment_attachment_url: commentAttachmentUrl,
           user_id: currentUser?.user_id || "",
         });
-        return newCommentList;
+        return editCommentList;
       });
 
       showNotification({
@@ -152,8 +152,9 @@ const RequestComment = ({ requestId }: Props) => {
   };
 
   const handleEditComment = async () => {
+    console.log(editComment);
     try {
-      if (!newComment && !editCommentAttachment) return;
+      if (!editComment && !editCommentAttachment) return;
       if (!editComment) return;
       if (
         editComment?.comment_content === newComment &&
@@ -164,7 +165,7 @@ const RequestComment = ({ requestId }: Props) => {
         return;
       }
 
-      setIsCommentLoading(true);
+      setIsEditCommentLoading(true);
 
       if (editComment?.comment_attachment_filepath) {
         await deleteFile(
@@ -201,7 +202,7 @@ const RequestComment = ({ requestId }: Props) => {
         );
       }
 
-      const newCommentList = (commentList as GetRequestCommentList).map(
+      const editCommentList = (commentList as GetRequestCommentList).map(
         (comment) =>
           comment.comment_id === updatedComment?.comment_id
             ? {
@@ -214,7 +215,7 @@ const RequestComment = ({ requestId }: Props) => {
             : comment
       );
 
-      setCommentList(() => newCommentList as GetRequestCommentList);
+      setCommentList(() => editCommentList as GetRequestCommentList);
 
       setEditComment(null);
       setNewComment("");
@@ -231,7 +232,7 @@ const RequestComment = ({ requestId }: Props) => {
         color: "red",
       });
     }
-    setIsCommentLoading(false);
+    setIsEditCommentLoading(false);
   };
 
   const handleDeleteComment = async (commentId: number) => {
@@ -284,7 +285,8 @@ const RequestComment = ({ requestId }: Props) => {
           </Text>
         </Accordion.Control>
         <Accordion.Panel p={0}>
-          <Paper bg="#f8f8f8" px="xs" pb="xs">
+          <Paper bg="#f8f8f8" px="xs" pb="xs" sx={{ position: "relative" }}>
+            <LoadingOverlay visible={isCommentLoading} />
             <Textarea
               placeholder="Type your comment here"
               variant="unstyled"
@@ -312,8 +314,7 @@ const RequestComment = ({ requestId }: Props) => {
             </Group>
           </Paper>
           {commentList && commentList.length > 0 && (
-            <>
-              <LoadingOverlay visible={isCommentLoading} />
+            <Box>
               <Text my="xs">Comments</Text>
               {commentList.map((comment) => (
                 <Box bg="white" key={comment.comment_id}>
@@ -345,7 +346,7 @@ const RequestComment = ({ requestId }: Props) => {
                           icon={<IconEdit size={16} />}
                           onClick={() => {
                             setNewComment(`${comment.comment_content}`);
-                            setEditCommentId(comment.comment_id);
+                            setEditComment(comment);
                           }}
                         >
                           Edit
@@ -364,18 +365,40 @@ const RequestComment = ({ requestId }: Props) => {
                     </Menu>
                   </Group>
                   <Flex p="sm" px="md" gap={10}>
-                    {comment.comment_id === editCommentId ? (
-                      <Paper bg="#f8f8f8" px="xs" pb="xs" w="100%">
+                    {comment.comment_id === editComment?.comment_id ? (
+                      <Paper
+                        bg="#f8f8f8"
+                        px="xs"
+                        pb="xs"
+                        w="100%"
+                        sx={{ position: "relative" }}
+                      >
+                        <LoadingOverlay visible={isEditCommentLoading} />
                         <Textarea
                           placeholder="Type your comment here"
                           variant="unstyled"
                           value={newComment}
                           onChange={(e) => setNewComment(e.target.value)}
                         />
+                        <FileInput
+                          w={200}
+                          placeholder="Add Attachment"
+                          withAsterisk
+                          value={editCommentAttachment}
+                          onChange={(value) => {
+                            setIsEditCommentAttachmentChanged(true);
+                            setEditCommentAttachment(value);
+                          }}
+                          icon={
+                            <IconWrapper size={14}>
+                              <Upload />
+                            </IconWrapper>
+                          }
+                        />
                         <Group position="right" mt="xs" spacing={5}>
                           <Button
                             onClick={() => {
-                              setEditCommentId(null);
+                              setEditComment(null);
                               setNewComment("");
                             }}
                             variant="default"
@@ -410,13 +433,16 @@ const RequestComment = ({ requestId }: Props) => {
                               <Button
                                 mt="xs"
                                 variant="outline"
+                                w={200}
                                 leftIcon={
                                   <IconWrapper size={14}>
                                     <FileIcon />
                                   </IconWrapper>
                                 }
                               >
-                                {comment.comment_attachment_filepath}
+                                <Text c="green" lineClamp={1}>
+                                  {comment.comment_attachment_filepath}
+                                </Text>
                               </Button>
                             </a>
                           ) : null}
@@ -426,7 +452,7 @@ const RequestComment = ({ requestId }: Props) => {
                   </Flex>
                 </Box>
               ))}
-            </>
+            </Box>
           )}
         </Accordion.Panel>
       </Accordion.Item>
