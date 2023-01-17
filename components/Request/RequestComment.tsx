@@ -152,7 +152,6 @@ const RequestComment = ({ requestId }: Props) => {
   };
 
   const handleEditComment = async () => {
-    console.log(editComment);
     try {
       if (!editComment && !editCommentAttachment) return;
       if (!editComment) return;
