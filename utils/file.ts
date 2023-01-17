@@ -82,3 +82,21 @@ export async function replaceFile(
     throw error;
   }
 }
+
+// * Delete an existing file
+export async function deleteFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .remove([path]);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

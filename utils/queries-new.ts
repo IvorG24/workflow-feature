@@ -687,7 +687,8 @@ export const createRequestComment = async (
 export const updateRequestComment = async (
   supabaseClient: SupabaseClient<Database>,
   commentContent: string,
-  commentId: number
+  commentId: number,
+  commentAttachmentPath: string
 ) => {
   const { data: currentDateData, error } = await supabaseClient
     .rpc("get_current_date")
@@ -702,6 +703,7 @@ export const updateRequestComment = async (
           comment_content: commentContent,
           comment_is_edited: true,
           comment_last_updated: currentDateData,
+          comment_attachment_filepath: commentAttachmentPath,
         })
         .eq("comment_id", commentId)
         .select()
@@ -1350,12 +1352,12 @@ export const getRequestCommentList = async (
           );
           return {
             ...comment,
-            comment_request_attachment_url: url,
+            comment_attachment_url: url,
           };
         } else {
           return {
             ...comment,
-            comment_request_attachment_url: "",
+            comment_attachment_url: "",
           };
         }
       })
