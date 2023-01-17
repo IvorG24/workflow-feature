@@ -19,7 +19,7 @@ import { useRouter } from "next/router";
 import { useContext, useEffect, useState } from "react";
 
 import RequestFilter from "./RequestFilter";
-import RequestItem from "./RequestItem";
+import RequestItemPage from "./RequestItemPage";
 
 export type ReducedRequestFieldType = {
   label: string;
@@ -41,9 +41,9 @@ const RequestList = () => {
   const requestListContext = useContext(RequestListContext);
   const { requestList } = requestListContext;
   const [checked, setChecked] = useState<string[]>([]);
-  const [selectedRequest, setSelectedRequest] = useState<
-    GetTeamRequestList[0] | null
-  >(null);
+  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
+    null
+  );
   const [activePage, setActivePage] = useState(1);
   const [requestListToDisplay, setRequestListToDisplay] = useState<
     ReducedRequestType[] | null
@@ -116,7 +116,7 @@ const RequestList = () => {
                         <Box
                           w="100%"
                           onClick={() => {
-                            setSelectedRequest(data as GetTeamRequestList[0]);
+                            setSelectedRequestId(data.request_id as number);
                           }}
                         >
                           <Text fw={500}>{data.request_title}</Text>
@@ -155,7 +155,7 @@ const RequestList = () => {
             ) : null}
           </Stack>
         </Grid.Col>
-        {selectedRequest ? (
+        {selectedRequestId ? (
           isMobile ? (
             <Modal
               opened={isMobile}
@@ -163,22 +163,22 @@ const RequestList = () => {
               fullScreen
               padding={0}
               onClose={() => {
-                setSelectedRequest(null);
+                setSelectedRequestId(null);
               }}
             >
               <Box p="xs">
-                <RequestItem
-                  request={selectedRequest as ReducedRequestType}
-                  setSelectedRequest={setSelectedRequest}
+                <RequestItemPage
+                  selectedRequestId={selectedRequestId}
+                  setSelectedRequestId={setSelectedRequestId}
                 />
               </Box>
             </Modal>
           ) : (
             <Grid.Col span={6} pt="0">
               <Paper shadow="xs" p="md">
-                <RequestItem
-                  request={selectedRequest as ReducedRequestType}
-                  setSelectedRequest={setSelectedRequest}
+                <RequestItemPage
+                  selectedRequestId={selectedRequestId}
+                  setSelectedRequestId={setSelectedRequestId}
                 />
               </Paper>
             </Grid.Col>

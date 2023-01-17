@@ -6,6 +6,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { MARKS } from "./RequestItemPage";
 import { ReducedRequestType } from "./RequestList";
 
 type Props = {
@@ -23,19 +24,23 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
   useEffect(() => {
     (async () => {
       try {
-        const approverSignature = await getFileUrl(
-          supabaseClient,
-          approver?.user_signature_filepath as string,
-          "signatures"
-        );
-        setApproverSignatureUrl(approverSignature);
+        if (approver) {
+          const approverSignature = await getFileUrl(
+            supabaseClient,
+            approver?.user_signature_filepath as string,
+            "signatures"
+          );
+          setApproverSignatureUrl(approverSignature);
+        }
 
-        const purchaserSignature = await getFileUrl(
-          supabaseClient,
-          purchaser?.user_signature_filepath as string,
-          "signatures"
-        );
-        setPurchaserSignatureUrl(purchaserSignature);
+        if (purchaser) {
+          const purchaserSignature = await getFileUrl(
+            supabaseClient,
+            purchaser?.user_signature_filepath as string,
+            "signatures"
+          );
+          setPurchaserSignatureUrl(purchaserSignature);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -78,42 +83,84 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
         {request.request_description}
       </Text>
       <Divider mb="sm" />
-      <Text fw={500} c="dark.9">
-        Request Form
-      </Text>
-      {request.fields.map((f, idx: number) => {
-        return (
-          <Box key={idx} p="xs">
-            <Group>
-              <Text fw={500} c="dark.9">
-                Q:
-              </Text>
-              <Text c="dark.9">{f.label}</Text>
-            </Group>
-            <Group>
-              <Text fw={500} c="dark.9">
-                A:
-              </Text>
-              <Text c="dark.9">{f.value ? f.value : "N/A"}</Text>
-            </Group>
-          </Box>
-        );
-      })}
+      {request && (
+        <>
+          <Divider my="sm" />
+          <Text fw={500} c="dark.9">
+            Request Form Details
+          </Text>
+          {request.fields.map((f, idx: number) => {
+            let valueToDisplay = f.value;
+            if (f.type === "section") {
+              return (
+                <Box key={idx}>
+                  <Group spacing="xs">
+                    <Text fw={500} c="dark.9">
+                      Section:
+                    </Text>
+                    <Text c="dark.9">{f.label}</Text>
+                  </Group>
+                </Box>
+              );
+            }
+            if (f.type === "date") {
+              valueToDisplay = new Date(f.value).toLocaleDateString();
+            }
+            if (f.type === "daterange") {
+              const localeDate = f.value
+                .split(",")
+                .map((date) => new Date(date).toLocaleDateString());
+              valueToDisplay = localeDate.join(" - ");
+            }
+            if (f.type === "slider") {
+              valueToDisplay = MARKS[Number(f.value) - 1].label;
+            }
+
+            return (
+              <Box key={idx} p="xs">
+                <Group>
+                  <Text fw={500} c="dark.9">
+                    Q:
+                  </Text>
+                  <Text c="dark.9">{f.label}</Text>
+                </Group>
+                <Group>
+                  <Text fw={500} c="dark.9">
+                    A:
+                  </Text>
+                  {/* <Text c="dark.9">{f.value ? f.value : "N/A"}</Text> */}
+                  <Text c="dark.9">
+                    {valueToDisplay ? valueToDisplay : "N/A"}
+                  </Text>
+                </Group>
+              </Box>
+            );
+          })}
+        </>
+      )}
       <Divider my="sm" />
 
-      <Group>
+      <Group position="apart">
         {purchaser ? (
           <Box>
             <Text fw={500} c="dark.9">
               Purchased By
             </Text>
-            <Image
-              src={purchaserSignatureUrl}
-              alt={purchaser.user_signature_filepath as string}
-              width={50}
-              height={50}
-            />
-            <Text c="dark.9">{`${purchaser.user_first_name} ${purchaser.user_last_name}`}</Text>
+            {purchaserSignatureUrl ? (
+              <Image
+                src={purchaserSignatureUrl}
+                alt={purchaser.user_signature_filepath as string}
+                width={50}
+                height={50}
+              />
+            ) : null}
+            {purchaser.user_last_name ? (
+              <Text>
+                {purchaser?.user_first_name} {purchaser?.user_last_name}
+              </Text>
+            ) : (
+              <Text>{purchaser?.user_email}</Text>
+            )}
           </Box>
         ) : (
           <Text>No Purchaser</Text>
@@ -123,15 +170,21 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
             <Text fw={500} c="dark.9">
               Approved By
             </Text>
-            <Image
-              src={approverSignatureUrl}
-              alt={approver.user_signature_filepath as string}
-              width={50}
-              height={50}
-            />
-            <Text c="dark.9">
-              {approver?.user_first_name} {approver?.user_last_name}
-            </Text>
+            {approverSignatureUrl ? (
+              <Image
+                src={approverSignatureUrl}
+                alt={approver.user_signature_filepath as string}
+                width={50}
+                height={50}
+              />
+            ) : null}
+            {approver.user_last_name ? (
+              <Text>
+                {approver?.user_first_name} {approver?.user_last_name}
+              </Text>
+            ) : (
+              <Text>{approver?.user_email}</Text>
+            )}
           </Box>
         ) : (
           <Text>No Approver</Text>

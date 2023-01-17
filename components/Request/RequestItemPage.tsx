@@ -1,5 +1,6 @@
 import ActiveTeamContext from "@/contexts/ActiveTeamContext";
-import RequestContext from "@/contexts/RequestContext";
+import RequestListContext from "@/contexts/RequestListContext";
+import useFetchRequest from "@/hooks/useFetchRequest";
 import {
   deletePendingRequest,
   GetRequestWithAttachmentUrlList,
@@ -7,6 +8,7 @@ import {
   updateRequestStatus,
 } from "@/utils/queries-new";
 import { setBadgeColor } from "@/utils/request";
+import { Marks } from "@/utils/types";
 import { RequestStatus, TeamMemberRole } from "@/utils/types-new";
 import {
   Alert,
@@ -14,6 +16,7 @@ import {
   Badge,
   Box,
   Button,
+  CloseButton,
   Divider,
   Group,
   Modal,
@@ -27,24 +30,63 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconDotsVertical, IconDownload } from "@tabler/icons";
 import jsPDF from "jspdf";
 import { useRouter } from "next/router";
-import { useContext, useEffect, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import AttachmentPill from "../RequestsPage/AttachmentPill";
 import PdfPreview from "./PdfPreview";
 import RequestComment from "./RequestComment";
 import { ReducedRequestFieldType, ReducedRequestType } from "./RequestList";
+import RequestSkeleton from "./RequestSkeleton";
 
-const RequestItemPage = () => {
+export const MARKS: Marks[] = [
+  {
+    value: 1,
+    label: "0%",
+  },
+  {
+    value: 2,
+    label: "25%",
+  },
+  {
+    value: 3,
+    label: "50%",
+  },
+  {
+    value: 4,
+    label: "75%",
+  },
+  {
+    value: 5,
+    label: "100%",
+  },
+];
+
+type Props = {
+  selectedRequestId: number;
+  setSelectedRequestId: Dispatch<SetStateAction<number | null>>;
+};
+
+const RequestItemPage = ({
+  selectedRequestId,
+  setSelectedRequestId,
+}: Props) => {
   const router = useRouter();
   const user = useUser();
-  const { request: requestContext } = useContext(RequestContext);
+  const { request } = useFetchRequest(selectedRequestId);
+  const [isLoading, setIsLoading] = useState(true);
   const [requestToDisplay, setRequestToDisplay] =
     useState<ReducedRequestType | null>(null);
 
   const supabaseClient = useSupabaseClient();
-  const { requestWithApproverList } = useContext(RequestContext);
+  const { requestWithApproverList, setRequestList } =
+    useContext(RequestListContext);
   const [openPdfPreview, setOpenPdfPreview] = useState(false);
   const { teamMemberList } = useContext(ActiveTeamContext);
-  const requestId = requestContext[0].request_id;
   const userIdRoleDictionary = teamMemberList.reduce(
     (acc, member) => ({
       ...acc,
@@ -52,13 +94,14 @@ const RequestItemPage = () => {
     }),
     {}
   ) as { [key: string]: TeamMemberRole };
-  const approverList = requestWithApproverList[`${requestId}`];
+  const approverList = requestWithApproverList[`${selectedRequestId}`];
   const approverIdWithStatus = approverList.find((approver) => {
     const isApprover =
       userIdRoleDictionary[approver.approver_id] === "owner" ||
       userIdRoleDictionary[approver.approver_id] === "admin";
     return isApprover;
   });
+
   const purchaserIdWithStatus = approverList.find((approver) => {
     const isPurchaser =
       userIdRoleDictionary[approver.approver_id] === "purchaser";
@@ -67,17 +110,17 @@ const RequestItemPage = () => {
   const approver = teamMemberList.find(
     (member) => member.user_id === approverIdWithStatus?.approver_id
   );
+
   const purchaser = teamMemberList.find(
     (member) => member.user_id === purchaserIdWithStatus?.approver_id
   );
 
   const currentUserIsOwner = requestToDisplay?.user_id === user?.id;
   const currentUserIsApprover = approver?.user_id === user?.id;
-  // const currentUserIsPurchaser = purchaser?.user_id === user?.id;
-
+  const currentUserIsPurchaser = purchaser?.user_id === user?.id;
   const [attachmentUrlList, setAttachmentUrlList] =
     useState<GetRequestWithAttachmentUrlList>();
-  const attachments = requestContext[0].request_attachment_filepath_list?.map(
+  const attachments = request?.[0].request_attachment_filepath_list?.map(
     (filepath, i) => {
       return {
         filepath,
@@ -87,23 +130,29 @@ const RequestItemPage = () => {
   );
 
   useEffect(() => {
+    if (request) {
+      setIsLoading(false);
+    }
+  }, [isLoading, request]);
+
+  useEffect(() => {
     (async () => {
       try {
         const urlList = await getRequestWithAttachmentUrlList(
           supabaseClient,
-          requestId as number
+          selectedRequestId as number
         );
         setAttachmentUrlList(urlList);
       } catch (e) {
         console.log(e);
         showNotification({
           title: "Error!",
-          message: "Failed to fetch request information.",
+          message: "Failed to fetch attachment information.",
           color: "red",
         });
       }
     })();
-  }, [requestId, supabaseClient]);
+  }, [selectedRequestId, supabaseClient]);
 
   const handleDownloadToPdf = () => {
     const html = document.getElementById(`${requestToDisplay?.request_id}`);
@@ -147,7 +196,7 @@ const RequestItemPage = () => {
     try {
       await updateRequestStatus(
         supabaseClient,
-        requestId as number,
+        selectedRequestId as number,
         newStatus,
         user?.id as string
       );
@@ -157,6 +206,22 @@ const RequestItemPage = () => {
         form_fact_request_status_id: newStatus,
         request_status_id: newStatus,
       });
+
+      if (setRequestList) {
+        setRequestList((prev) =>
+          prev.map((prevItem) => {
+            if (prevItem.request_id === selectedRequestId) {
+              return {
+                ...prevItem,
+                form_fact_request_status_id: newStatus,
+                request_status_id: newStatus,
+              };
+            } else {
+              return prevItem;
+            }
+          })
+        );
+      }
 
       showNotification({
         title: "Success!",
@@ -180,7 +245,15 @@ const RequestItemPage = () => {
     try {
       if (!requestToDisplay) throw Error("No request found");
 
-      await deletePendingRequest(supabaseClient, requestId as number);
+      await deletePendingRequest(supabaseClient, selectedRequestId as number);
+
+      if (setRequestList) {
+        setRequestList((prev) => {
+          return prev.filter(
+            (request) => request.request_id !== selectedRequestId
+          );
+        });
+      }
 
       showNotification({
         title: "Success!",
@@ -203,31 +276,32 @@ const RequestItemPage = () => {
   };
 
   useEffect(() => {
-    if (!requestContext) {
+    if (!request) {
       router.push(`/t/${router.query.tid}/requests?active_tab=all&page=1`);
+    } else {
+      const initialFields: { label: string; value: string; type: string }[] =
+        [];
+      const initialValue = [{ ...request[0], fields: initialFields }];
+
+      const reducedRequest = request?.reduce((acc, next) => {
+        const match = acc.find((a) => a.request_id === next.request_id);
+        const nextFields: ReducedRequestFieldType = {
+          label: next.field_name as string,
+          value: next.response_value as string,
+          type: next.request_field_type as string,
+        };
+        if (match) {
+          match.fields.push(nextFields as ReducedRequestFieldType);
+        } else {
+          acc.push({ ...next, fields: [nextFields] });
+        }
+        return acc;
+      }, initialValue);
+      setRequestToDisplay(reducedRequest[0] as ReducedRequestType);
     }
+  }, [request, router]);
 
-    const initialFields: { label: string; value: string; type: string }[] = [];
-    const initialValue = [{ ...requestContext[0], fields: initialFields }];
-
-    const reducedRequest = requestContext.reduce((acc, next) => {
-      const match = acc.find((a) => a.request_id === next.request_id);
-      const nextFields: ReducedRequestFieldType = {
-        label: next.field_name as string,
-        value: next.response_value as string,
-        type: next.request_field_type as string,
-      };
-      if (match) {
-        match.fields.push(nextFields as ReducedRequestFieldType);
-      } else {
-        acc.push({ ...next, fields: [nextFields] });
-      }
-      return acc;
-    }, initialValue);
-    setRequestToDisplay(reducedRequest[0] as ReducedRequestType);
-  }, [requestContext, router]);
-
-  return (
+  return !isLoading ? (
     <Box p="xs">
       {/* PDF PREVIEW */}
       {requestToDisplay && (
@@ -236,17 +310,24 @@ const RequestItemPage = () => {
           onClose={() => setOpenPdfPreview(false)}
           title="Download Preview"
         >
-          {!requestToDisplay.user_signature_filepath && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              title="Notice!"
-              color="red"
-              mb="sm"
-            >
-              This document does not contain any signatures.
-            </Alert>
-          )}
-          <PdfPreview request={requestToDisplay} attachments={attachments} />
+          {!approver?.user_signature_filepath ||
+            (!purchaser?.user_signature_filepath && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                title="Notice!"
+                color="red"
+                mb="sm"
+              >
+                This document does not contain signatures from both approver and
+                purchaser.
+              </Alert>
+            ))}
+          <PdfPreview
+            request={requestToDisplay}
+            attachments={attachments}
+            approver={approver}
+            purchaser={purchaser}
+          />
           <SimpleGrid cols={2} mt="xl">
             <Button variant="default" onClick={() => setOpenPdfPreview(false)}>
               Cancel
@@ -257,25 +338,34 @@ const RequestItemPage = () => {
           </SimpleGrid>
         </Modal>
       )}
-      <Box>
-        <Title
-          order={4}
-          onClick={() =>
-            router.push(`/t/${router.query.tid}/requests/${requestId}`)
-          }
-        >
-          {requestToDisplay?.request_title}
-        </Title>
-        <Badge
-          size="sm"
-          variant="filled"
-          color={setBadgeColor(requestToDisplay?.request_status_id as string)}
-          w="100%"
-          maw="80px"
-        >
-          {requestToDisplay?.request_status_id}
-        </Badge>
-      </Box>
+
+      <Group position="apart">
+        <Box>
+          <Title
+            order={4}
+            onClick={() =>
+              router.push(
+                `/t/${router.query.tid}/requests/${selectedRequestId}`
+              )
+            }
+          >
+            {requestToDisplay?.request_title}
+          </Title>
+          <Badge
+            size="sm"
+            variant="filled"
+            color={setBadgeColor(requestToDisplay?.request_status_id as string)}
+            w="100%"
+            maw="80px"
+          >
+            {requestToDisplay?.request_status_id}
+          </Badge>
+        </Box>
+        <CloseButton
+          aria-label="close-request"
+          onClick={() => setSelectedRequestId(null)}
+        />
+      </Group>
       <Group my="sm" position="apart">
         <Group>
           <Avatar
@@ -291,7 +381,27 @@ const RequestItemPage = () => {
           </Box>
         </Group>
         <Group sx={{ cursor: "pointer" }}>
-          <Text fz="xs" c="dimmed" onClick={() => setOpenPdfPreview(true)}>
+          <Text
+            fz="xs"
+            c="dimmed"
+            onClick={() => {
+              if (
+                !["approved", "purchased"].includes(
+                  requestToDisplay?.request_status_id as string
+                )
+              ) {
+                showNotification({
+                  title: "Sorry!",
+                  message:
+                    "Request should be approved or purchased to download receipt.",
+                  color: "orange",
+                  autoClose: false,
+                });
+              } else {
+                setOpenPdfPreview(true);
+              }
+            }}
+          >
             <IconDownload />
           </Text>
           <Text fz="xs" c="dimmed">
@@ -303,36 +413,44 @@ const RequestItemPage = () => {
 
       <Divider my="sm" variant="dotted" />
       {approver && (
-        <>
+        <Box my="sm">
           <Text fw={500}>Approver</Text>
-          <Group mt="sm" spacing="xs">
+          <Group spacing="xs">
             <Avatar
               src={approver?.user_avatar_filepath}
               color="blue"
               radius="xl"
             />
-            <Text>
-              {approver?.user_first_name} {approver?.user_last_name}
-            </Text>
+            {approver.user_last_name ? (
+              <Text>
+                {approver?.user_first_name} {approver?.user_last_name}
+              </Text>
+            ) : (
+              <Text>{approver?.user_email}</Text>
+            )}
           </Group>
-        </>
+        </Box>
       )}
       {purchaser && (
         <>
           <Text fw={500}>Purchaser</Text>
-          <Group p="sm" spacing="xs">
+          <Group spacing="xs">
             <Avatar
               src={purchaser?.user_avatar_filepath}
               color="blue"
               radius="xl"
             />
-            <Text>
-              {purchaser?.user_first_name} {purchaser?.user_last_name}
-            </Text>
+            {purchaser.user_last_name ? (
+              <Text>
+                {purchaser?.user_first_name} {purchaser?.user_last_name}
+              </Text>
+            ) : (
+              <Text>{purchaser?.user_email}</Text>
+            )}
           </Group>
         </>
       )}
-      <Divider my="sm" variant="dotted" />
+      <Divider my="sm" />
       {requestToDisplay?.request_attachment_filepath_list &&
       requestToDisplay?.request_attachment_filepath_list.length > 0 ? (
         <>
@@ -360,38 +478,64 @@ const RequestItemPage = () => {
 
       {requestToDisplay && (
         <>
-          <Divider mb="sm" />
+          <Divider my="sm" />
           <Text fw={500} c="dark.9">
-            Request Form
+            Request Form Details
           </Text>
           {requestToDisplay.fields.map((f, idx: number) => {
-            if (f.type !== "section") {
+            let valueToDisplay = f.value;
+            if (f.type === "section") {
               return (
-                <Box key={idx} p="xs">
-                  <Group>
+                <Box key={idx}>
+                  <Group spacing="xs">
                     <Text fw={500} c="dark.9">
-                      Q:
+                      Section:
                     </Text>
                     <Text c="dark.9">{f.label}</Text>
-                  </Group>
-                  <Group>
-                    <Text fw={500} c="dark.9">
-                      A:
-                    </Text>
-                    <Text c="dark.9">{f.value ? f.value : "N/A"}</Text>
                   </Group>
                 </Box>
               );
             }
+            if (f.type === "date") {
+              valueToDisplay = new Date(f.value).toLocaleDateString();
+            }
+            if (f.type === "daterange") {
+              const localeDate = f.value
+                .split(",")
+                .map((date) => new Date(date).toLocaleDateString());
+              valueToDisplay = localeDate.join(" - ");
+            }
+            if (f.type === "slider") {
+              valueToDisplay = MARKS[Number(f.value) - 1].label;
+            }
+
+            return (
+              <Box key={idx} p="xs">
+                <Group>
+                  <Text fw={500} c="dark.9">
+                    Q:
+                  </Text>
+                  <Text c="dark.9">{f.label}</Text>
+                </Group>
+                <Group>
+                  <Text fw={500} c="dark.9">
+                    A:
+                  </Text>
+                  {/* <Text c="dark.9">{f.value ? f.value : "N/A"}</Text> */}
+                  <Text c="dark.9">
+                    {valueToDisplay ? valueToDisplay : "N/A"}
+                  </Text>
+                </Group>
+              </Box>
+            );
           })}
-          <Divider my="sm" />
         </>
       )}
 
       {currentUserIsApprover &&
         requestToDisplay?.request_status_id === "pending" && (
           <>
-            <Divider my="sm" variant="dotted" />
+            <Divider my="sm" />
             <SimpleGrid cols={2} my="xl">
               <Button
                 variant="light"
@@ -421,10 +565,32 @@ const RequestItemPage = () => {
             </SimpleGrid>
           </>
         )}
+      {currentUserIsPurchaser &&
+      requestToDisplay?.request_status_id === "approved" ? (
+        <>
+          <Divider mt="xl" />
+          <Group>
+            <Button
+              color="dark"
+              my="sm"
+              fullWidth
+              onClick={() =>
+                confirmationModal(
+                  "mark as purchased",
+                  `${request && requestToDisplay?.request_title}`,
+                  () => handleUpdateStatus("purchased")
+                )
+              }
+            >
+              Mark as Purchased
+            </Button>
+          </Group>
+        </>
+      ) : null}
       {currentUserIsOwner &&
       requestToDisplay?.request_status_id === "pending" ? (
         <>
-          <Divider my="sm" variant="dotted" />
+          <Divider my="sm" />
           <Group>
             <Button
               color="dark"
@@ -444,9 +610,11 @@ const RequestItemPage = () => {
           </Group>
         </>
       ) : null}
-      <Divider my="sm" variant="dotted" />
-      <RequestComment requestId={requestId as number} />
+      <Divider my="sm" />
+      <RequestComment requestId={selectedRequestId as number} />
     </Box>
+  ) : (
+    <RequestSkeleton />
   );
 };
 

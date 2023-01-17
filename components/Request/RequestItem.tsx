@@ -223,7 +223,7 @@ const RequestItem = ({ request, setSelectedRequest }: Props) => {
       });
     }
   };
-  console.log(request.fields);
+
   return (
     <Box p="xs">
       {/* PDF PREVIEW */}
