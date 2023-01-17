@@ -6,7 +6,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { MARKS } from "./RequestItemPage";
+import { MARKS } from "./RequestItem";
 import { ReducedRequestType } from "./RequestList";
 
 type Props = {
@@ -82,7 +82,6 @@ const PdfPreview = ({ request, attachments, approver, purchaser }: Props) => {
       <Text my="sm" c="dark.9">
         {request.request_description}
       </Text>
-      <Divider mb="sm" />
       {request && (
         <>
           <Divider my="sm" />

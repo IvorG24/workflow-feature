@@ -19,7 +19,7 @@ import { useRouter } from "next/router";
 import { useContext, useEffect, useState } from "react";
 
 import RequestFilter from "./RequestFilter";
-import RequestItemPage from "./RequestItemPage";
+import RequestItem from "./RequestItem";
 
 export type ReducedRequestFieldType = {
   label: string;
@@ -167,7 +167,7 @@ const RequestList = () => {
               }}
             >
               <Box p="xs">
-                <RequestItemPage
+                <RequestItem
                   selectedRequestId={selectedRequestId}
                   setSelectedRequestId={setSelectedRequestId}
                 />
@@ -176,7 +176,7 @@ const RequestList = () => {
           ) : (
             <Grid.Col span={6} pt="0">
               <Paper shadow="xs" p="md">
-                <RequestItemPage
+                <RequestItem
                   selectedRequestId={selectedRequestId}
                   setSelectedRequestId={setSelectedRequestId}
                 />
