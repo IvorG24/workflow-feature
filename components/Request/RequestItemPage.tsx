@@ -319,7 +319,27 @@ const RequestItemPage = () => {
           </Box>
         </Group>
         <Group sx={{ cursor: "pointer" }}>
-          <Text fz="xs" c="dimmed" onClick={() => setOpenPdfPreview(true)}>
+          <Text
+            fz="xs"
+            c="dimmed"
+            onClick={() => {
+              if (
+                !["approved", "purchased"].includes(
+                  requestToDisplay?.request_status_id as string
+                )
+              ) {
+                showNotification({
+                  title: "Sorry!",
+                  message:
+                    "Request should be approved or purchased to download receipt.",
+                  color: "orange",
+                  autoClose: false,
+                });
+              } else {
+                setOpenPdfPreview(true);
+              }
+            }}
+          >
             <IconDownload size={20} />
           </Text>
           <Text fz="xs" c="dimmed">
