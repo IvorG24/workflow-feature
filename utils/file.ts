@@ -15,7 +15,6 @@ export async function getFileUrl(
     if (error) throw error;
 
     const url = URL.createObjectURL(data);
-
     return url;
   } catch (error) {
     console.error(error);

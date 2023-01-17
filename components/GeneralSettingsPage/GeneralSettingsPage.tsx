@@ -1,4 +1,4 @@
-import { uploadFile } from "@/utils/file";
+import { getFileUrl, uploadFile } from "@/utils/file";
 import { deleteTeam, getTeamByTeamName, updateTeam } from "@/utils/queries-new";
 import { Database, TeamTableRow } from "@/utils/types";
 import {
@@ -20,7 +20,7 @@ import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { upperCase } from "lodash";
 import { useRouter } from "next/router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   team: TeamTableRow;
@@ -36,6 +36,19 @@ const GeneralSettingsPage = ({ team }: Props) => {
   const [isChecking, setIsChecking] = useState(false);
   const [teamNameError, setTeamNameError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentLogo, setCurrentLogo] = useState("");
+
+  useEffect(() => {
+    const fetchCurrentLogoUrl = async () => {
+      const url = await getFileUrl(
+        supabase,
+        `${team.team_logo_filepath}`,
+        "team_logos"
+      );
+      setCurrentLogo(url);
+    };
+    fetchCurrentLogoUrl();
+  }, []);
 
   const handleTeamName = async (value: string) => {
     setTeamNameError("");
@@ -154,9 +167,7 @@ const GeneralSettingsPage = ({ team }: Props) => {
           <Avatar
             size={100}
             radius={100}
-            src={
-              teamLogo ? URL.createObjectURL(teamLogo) : team.team_logo_filepath
-            }
+            src={teamLogo ? URL.createObjectURL(teamLogo) : currentLogo}
             alt="Team Logo"
             color="green"
           >
