@@ -665,7 +665,7 @@ export const createRequestComment = async (
     .from("request_comment_table")
     .insert({
       comment_content: commentContent,
-      comment_request_attachment: commentAttachment,
+      comment_attachment_filepath: commentAttachment,
     })
     .select()
     .single();
@@ -1342,10 +1342,10 @@ export const getRequestCommentList = async (
   if (data) {
     const dataWithUrl = await Promise.all(
       data?.map(async (comment) => {
-        if (comment.comment_request_attachment) {
+        if (comment.comment_attachment_filepath) {
           const url = await getFileUrl(
             supabaseClient,
-            `${comment.comment_request_attachment}`,
+            `${comment.comment_attachment_filepath}`,
             "comment_attachments"
           );
           return {

@@ -872,7 +872,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
               {comment.comment_id !== editCommentId ? (
                 <Text mt="xs">{comment.comment_content}</Text>
               ) : null}
-              {comment.comment_request_attachment ? (
+              {comment.comment_attachment_filepath ? (
                 <a
                   href={comment.comment_request_attachment_url}
                   target="_blank"
@@ -887,7 +887,7 @@ const Request = ({ view, selectedRequestId, setSelectedRequestId }: Props) => {
                       </IconWrapper>
                     }
                   >
-                    {comment.comment_request_attachment}
+                    {comment.comment_attachment_filepath}
                   </Button>
                 </a>
               ) : null}

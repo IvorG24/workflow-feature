@@ -1,4 +1,4 @@
-import { Database } from "@/utils/database-new.types";
+import { Database } from "@/utils/database.types-new";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
