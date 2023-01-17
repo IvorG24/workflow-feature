@@ -304,16 +304,17 @@ const Navbar = ({ openNavbar }: Props) => {
                         px="xs"
                         key={form.form_id}
                         component="a"
+                        style={{ cursor: "default" }}
                         // href={`/t/${router.query.tid as string}/requests?active_tab=all&page=1&form=${form.form_id}`}
-                        onClick={() =>
-                          router.push(
-                            `/t/${
-                              router.query.tid as string
-                            }/requests?active_tab=all&page=1&form=${
-                              form.form_id
-                            }`
-                          )
-                        }
+                        // onClick={() =>
+                        //   router.push(
+                        //     `/t/${
+                        //       router.query.tid as string
+                        //     }/requests?active_tab=all&page=1&form=${
+                        //       form.form_id
+                        //     }`
+                        //   )
+                        // }
                         label={form.form_name}
                         rightSection={
                           <ActionIcon
