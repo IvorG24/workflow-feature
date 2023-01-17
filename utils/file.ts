@@ -15,7 +15,6 @@ export async function getFileUrl(
     if (error) throw error;
 
     const url = URL.createObjectURL(data);
-
     return url;
   } catch (error) {
     console.error(error);
@@ -76,6 +75,24 @@ export async function replaceFile(
     const { data, error } = await supabaseClient.storage
       .from(bucket)
       .update(path, file);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+// * Delete an existing file
+export async function deleteFile(
+  supabaseClient: SupabaseClient<Database>,
+  path: string,
+  bucket: string
+) {
+  try {
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .remove([path]);
     if (error) throw error;
     return data;
   } catch (error) {
