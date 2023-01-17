@@ -94,7 +94,7 @@ const RequestsPage: NextPageWithLayout<RequestListProps> = (props) => {
 
     setRequestListProps(
       filterRequestList(
-        props.requestList,
+        requestListProps,
         router.query,
         user.id,
         props.requestWithApproverList
