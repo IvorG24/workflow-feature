@@ -92,7 +92,7 @@ const ExportToCsv = () => {
       variant="light"
       title="Export to CSV"
       aria-label="Export to CSV"
-      color="indigo"
+      color="green"
       onClick={handleExportRequestListToCSV}
       size="xs"
       rightIcon={<IconDownload size={16} />}
