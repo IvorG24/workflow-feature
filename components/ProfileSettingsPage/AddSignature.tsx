@@ -141,8 +141,8 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
           message: "Signature updated.",
           color: "green",
         });
-        onCancel();
         router.reload();
+        onCancel();
       } else {
         showNotification({
           title: "Error!",
