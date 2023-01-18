@@ -25,20 +25,24 @@ const ExportToCsv = () => {
     const data = requestList.map((request) => {
       const approverList =
         requestWithApproverList[request.request_id as number];
-      const approverIdWithStatus = approverList.find((approver) => {
-        const isApprover =
-          userIdRoleDictionary[approver.approver_id] === "owner" ||
-          userIdRoleDictionary[approver.approver_id] === "admin";
-        return isApprover;
-      });
+      const approverIdWithStatus =
+        approverList &&
+        approverList.find((approver) => {
+          const isApprover =
+            userIdRoleDictionary[approver.approver_id] === "owner" ||
+            userIdRoleDictionary[approver.approver_id] === "admin";
+          return isApprover;
+        });
       const approver = teamMemberList.find(
         (member) => member.user_id === approverIdWithStatus?.approver_id
       )?.user_email;
-      const purchaserIdWithStatus = approverList.find((approver) => {
-        const isPurchaser =
-          userIdRoleDictionary[approver.approver_id] === "purchaser";
-        return isPurchaser;
-      });
+      const purchaserIdWithStatus =
+        approverList &&
+        approverList.find((approver) => {
+          const isPurchaser =
+            userIdRoleDictionary[approver.approver_id] === "purchaser";
+          return isPurchaser;
+        });
       const purchaser = teamMemberList.find(
         (member) => member.user_id === purchaserIdWithStatus?.approver_id
       )?.user_email;
@@ -78,6 +82,8 @@ const ExportToCsv = () => {
     const contentType = "text/csv";
     const csvFile = new Blob([csv], { type: contentType });
     const a = document.createElement("a");
+    // At target blank to the anchor tag above
+    a.target = "_blank";
     const currentDate = new Date().toISOString().slice(0, 10);
     const filename = `${currentDate}_${team}_requests.csv`;
     a.download = filename;

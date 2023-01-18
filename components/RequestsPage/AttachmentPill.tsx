@@ -15,7 +15,12 @@ type Props = {
 
 const AttachmentPill = ({ filename, fileUrl, fileType }: Props) => {
   return (
-    <UnstyledButton component="a" href={fileUrl} aria-label={filename}>
+    <UnstyledButton
+      component="a"
+      href={fileUrl}
+      target="_blank"
+      aria-label={filename}
+    >
       <Tooltip
         label={filename}
         openDelay={1500}
