@@ -27,7 +27,12 @@ Props) => {
   //   alert("Download file triggered");
   // };
   return (
-    <UnstyledButton component="a" href={fileUrl} aria-label={filename}>
+    <UnstyledButton
+      component="a"
+      href={fileUrl}
+      target="_blank"
+      aria-label={filename}
+    >
       <Paper
         withBorder
         radius="xs"
