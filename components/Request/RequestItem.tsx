@@ -343,7 +343,12 @@ const RequestItemPage = ({
         <Box
           sx={{ cursor: "pointer" }}
           onClick={() =>
-            router.push(`/t/${router.query.tid}/requests/${selectedRequestId}`)
+            // router.push(`/t/${router.query.tid}/requests/${selectedRequestId}`)
+            // Open a new tab using the link above
+            window.open(
+              `/t/${router.query.tid}/requests/${selectedRequestId}`,
+              "_blank"
+            )
           }
         >
           <Group spacing="xs">
