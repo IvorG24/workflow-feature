@@ -156,22 +156,21 @@ const RequestItemPage = ({
 
   const handleDownloadToPdf = () => {
     const html = document.getElementById(`${requestToDisplay?.request_id}`);
-    const pdfHeight =
-      Number(`${html?.clientHeight}`) > 842
-        ? Number(`${html?.clientHeight}`) + 2
-        : 842;
-
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "px",
-      format: [pdfHeight, 592],
-    });
+    const doc = new jsPDF("p", "pt", [595.28, 841.89]);
+    const pdfWidth = doc.internal.pageSize.getWidth();
+    html?.style.setProperty("width", `${pdfWidth - 40}px`);
+    // html?.style.setProperty("padding", `37px`);
 
     doc.html(html as HTMLElement, {
-      callback: (doc) => doc.save(`request_${requestToDisplay?.request_title}`),
-      x: doc.internal.pageSize.width / 6,
-      y: 10,
+      margin: [20, 20, 60, 20],
+      callback: function (pdf) {
+        pdf.setFontSize(11);
+        pdf.save(`request_${requestToDisplay?.request_title}`);
+      },
+      // x: 37,
+      // y: 37,
     });
+
     setOpenPdfPreview(false);
     return;
   };
