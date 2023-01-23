@@ -66,6 +66,7 @@ const QuestionItemBuilder: FC<Props> = (props) => {
           withBorder
           shadow="sm"
           mb="md"
+          data-cy="question-container"
         >
           {!isSection ? (
             <>

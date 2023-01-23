@@ -427,7 +427,11 @@ const CreateRequest = () => {
     <Container m={0} px={8} py={16} fluid>
       <LoadingOverlay visible={isCreating || isLoading} />
       <Title>Create {formName}</Title>
-      {isDraft && <Badge color={setBadgeColor("approved")}>Draft</Badge>}
+      {isDraft && (
+        <Badge color={setBadgeColor("approved")} data-cy="draft-status">
+          Draft
+        </Badge>
+      )}
       <Paper shadow="xl" radius={8} mt={32} px={32} py={48}>
         <form onSubmit={onSubmit}>
           <Stack>
@@ -553,6 +557,7 @@ const CreateRequest = () => {
                         handleAnswer(Number(field.field_id), e.target.value)
                       }
                       value={field.response_value || ""}
+                      data-cy="text-field"
                     />,
                     `${field.field_tooltip}`
                   );
@@ -566,6 +571,7 @@ const CreateRequest = () => {
                         handleAnswer(Number(field.field_id), `${e}`)
                       }
                       value={Number(field.response_value)}
+                      data-cy="number-field"
                     />,
                     `${field.field_tooltip}`
                   );
@@ -584,6 +590,7 @@ const CreateRequest = () => {
                           ? new Date(field.response_value)
                           : null
                       }
+                      data-cy="date-field"
                     />,
                     `${field.field_tooltip}`
                   );
@@ -605,6 +612,7 @@ const CreateRequest = () => {
                           ? [new Date(dates[0]), new Date(dates[1])]
                           : [null, null]
                       }
+                      data-cy="daterange-field"
                     />,
                     `${field.field_tooltip}`
                   );
@@ -624,6 +632,7 @@ const CreateRequest = () => {
                           ? new Date(field.response_value)
                           : null
                       }
+                      data-cy="time-field"
                     />,
                     `${field.field_tooltip}`
                   );
@@ -647,6 +656,7 @@ const CreateRequest = () => {
                           handleAnswer(Number(field.field_id), `${e}`)
                         }
                         value={Number(field.response_value)}
+                        data-cy="slider-field"
                       />
                     </Box>
                   );
@@ -671,6 +681,7 @@ const CreateRequest = () => {
                           ? field.response_value.split(",")
                           : []
                       }
+                      data-cy="multiselect-field"
                     />,
                     `${field.field_tooltip}`
                   );
@@ -693,6 +704,7 @@ const CreateRequest = () => {
                         handleAnswer(Number(field.field_id), `${e}`)
                       }
                       value={field.response_value}
+                      data-cy="select-field"
                     />,
                     `${field.field_tooltip}`
                   );
