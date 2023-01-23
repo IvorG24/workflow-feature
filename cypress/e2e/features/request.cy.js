@@ -163,9 +163,10 @@ describe("Requests", () => {
     cy.loginViaUi(userD);
     cy.get("[data-cy='navbar-forms-dropdown']").click();
     cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='select-approver']").click();
+    cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
     cy.get("[data-cy='request-title']").type(randomTitleA);
-    cy.get("[data-cy='create-request']").first().click();
-    cy.get("[data-cy='draft-status']").should("be.visible");
+    cy.get("[data-cy='request-description']").type("Lorem ipsum");
   });
   it("Test Draft State - Close Tab/Window - Part 2", () => {
     cy.loginViaUi(userD);
