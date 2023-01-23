@@ -27,7 +27,9 @@ const Setting = ({ activeTab, team }: Props) => {
         mt="xl"
       >
         <Tabs.List>
-          <Tabs.Tab value="general">General</Tabs.Tab>
+          <Tabs.Tab value="general" data-cy="general-tab">
+            General
+          </Tabs.Tab>
           <Tabs.Tab value="profile" data-cy="profile-tab">
             Profile
           </Tabs.Tab>

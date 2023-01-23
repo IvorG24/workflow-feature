@@ -182,7 +182,7 @@ const GeneralSettingsPage = ({ team }: Props) => {
           </Button>
         </Stack>
       </Flex>
-      <Button mt={40} onClick={handleUpdateTeam}>
+      <Button mt={40} onClick={handleUpdateTeam} data-cy="update-team">
         Update Team
       </Button>
       <Divider my="xl" />

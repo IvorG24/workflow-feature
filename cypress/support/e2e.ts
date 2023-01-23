@@ -37,7 +37,9 @@ export const userD = {
 };
 
 // you may replace the testfile in the root folder
-export const testfile = "testfile.png";
+export const testfile = "cypress/support/testfiles/testfile.png";
+export const teamLogo = "cypress/support/testfiles/sciclogo.png";
+export const testAvatar = "cypress/support/testfiles/testAvatar.png";
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

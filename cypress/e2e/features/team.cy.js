@@ -1,9 +1,16 @@
-import { testfile, userA, userB, userC, userD } from "../../support/e2e";
+import {
+  teamLogo,
+  testfile,
+  userA,
+  userB,
+  userC,
+  userD,
+} from "../../support/e2e";
 
 const randomTeamName = Math.random().toString(36).slice(2, 10);
 
 describe("Teams", () => {
-  it("Create a team, and invite User B", () => {
+  it("Create a team, invite User B, and update team", () => {
     cy.loginViaUi(userA);
     cy.get("[data-cy='navbar-select-teams']").as("selectTeam").click();
     cy.contains("Create Team").click();
@@ -17,6 +24,21 @@ describe("Teams", () => {
     cy.get("[data-cy='team-submit']").click();
     cy.get("@selectTeam").click();
     cy.contains(randomTeamName.toLocaleUpperCase());
+    cy.get("@selectTeam").click();
+    // Update Team
+    cy.get("[data-cy='navbar-settings']").click();
+    cy.get("[data-cy='general-tab']").click();
+    // Update Team Name
+    cy.get("[data-cy='team-name']").type(`testteam+1`);
+    // Update Team Logo
+    cy.get("input[type='file']").selectFile(teamLogo, { force: true });
+    cy.get("[data-cy='update-team']").click();
+    cy.get("[data-cy='team-name']")
+      .invoke("attr", "placeholder")
+      .should("eq", `testteam+1`);
+    // Change Team Name to original
+    cy.get("[data-cy='team-name']").type(randomTeamName);
+    cy.get("[data-cy='update-team']").click();
   });
   it("Signin User B, and Accept Invitation", () => {
     cy.loginViaUi(userB);

@@ -166,6 +166,7 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
             })}
             defaultValue={`${user?.username}`}
             error={usernameError}
+            data-cy="username"
           />
           <TextInput
             label="First Name"
@@ -178,6 +179,7 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
             })}
             defaultValue={`${user?.user_first_name}`}
             error={errors.firstName?.message}
+            data-cy="firstname"
           />
           <TextInput
             label="Last Name"
@@ -190,6 +192,7 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
             })}
             defaultValue={`${user?.user_last_name}`}
             error={errors.lastName?.message}
+            data-cy="lastname"
           />
           <TextInput
             label="Email"
@@ -205,7 +208,12 @@ const EditProfileForm = ({ user, onCancel, setIsLoading }: Props) => {
             >
               Cancel
             </Button>
-            <Button color="dark" type="submit" aria-label="save changes">
+            <Button
+              color="dark"
+              type="submit"
+              aria-label="save changes"
+              data-cy="submit"
+            >
               Save Changes
             </Button>
           </Flex>
