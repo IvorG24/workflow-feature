@@ -508,7 +508,7 @@ const RequestItemPage = ({
             if (f.type === "date") {
               valueToDisplay = new Date(f.value).toLocaleDateString();
             }
-            if (f.type === "daterange") {
+            if (f.type === "daterange" && f.value !== null) {
               const localeDate = f.value
                 .split(",")
                 .map((date) => new Date(date).toLocaleDateString());

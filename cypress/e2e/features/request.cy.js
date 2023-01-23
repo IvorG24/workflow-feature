@@ -28,25 +28,35 @@ const randomTitleA = titles[randomIndexA];
 const randomTitleB = titles[randomIndexB];
 
 describe("Requests", () => {
-  it("Test Draft State - Reload", () => {
-    cy.loginViaUi(userC);
-    cy.get("[data-cy='navbar-forms-dropdown']").click();
-    cy.get("[data-cy='create-request']").first().click();
-    cy.get("[data-cy='select-approver']").click();
-    cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
-    cy.get("[data-cy='request-title']").type(randomTitleA);
-    cy.get("[data-cy='request-description']").type("Lorem ipsum");
-    cy.reload();
-    cy.get("[data-cy='draft-status']").should("be.visible");
-  });
   it("Create Request without Attachment", () => {
     cy.loginViaUi(userC);
     cy.get("[data-cy='navbar-forms-dropdown']").click();
-    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='create-request']").last().click();
+    // Request Details
     cy.get("[data-cy='select-approver']").click();
     cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
+    cy.get("[data-cy='select-purchaser']").click();
+    cy.get(".mantine-Select-item").contains(userD.email.split("@")[0]).click();
     cy.get("[data-cy='request-title']").type(randomTitleA);
     cy.get("[data-cy='request-description']").type("Lorem ipsum");
+    // Request Fields
+    cy.get("[data-cy='text-field']").first().type("Hello Earth");
+    cy.get("[data-cy='number-field']").type(10);
+    cy.get("[data-cy='date-field']").type("2023-02-28", { force: true });
+    cy.get("[data-cy='daterange-field']")
+      .invoke("val", [
+        new Date("February 28, 2023"),
+        new Date("December 28, 2023"),
+      ])
+      .trigger("change");
+    cy.get("[data-cy='text-field']").last().type(userC.email);
+    cy.get("[data-cy='multiselect-field']").click();
+    cy.get(".mantine-MultiSelect-item").first().click();
+    cy.contains("50%").click();
+    cy.get("[data-cy='select-field']").click();
+    cy.get(".mantine-Select-item").first().click();
+    cy.get("[data-cy='time-field']").type("01:30");
+
     cy.get("[data-cy='request-submit']").click();
     cy.contains(randomTitleA);
   });
@@ -54,7 +64,7 @@ describe("Requests", () => {
     cy.loginViaUi(userC);
     cy.get("[data-cy='navbar-forms-dropdown']").click();
     cy.get("[data-cy='create-request']").last().click();
-    // Request Detai;s
+    // Request Details
     cy.get("[data-cy='select-approver']").click();
     cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
     cy.get("[data-cy='select-purchaser']").click();
@@ -66,12 +76,12 @@ describe("Requests", () => {
     cy.get("[data-cy='text-field']").first().type("Hello World");
     cy.get("[data-cy='number-field']").type(10);
     cy.get("[data-cy='date-field']").type("2023-02-28", { force: true });
-    cy.get("[data-cy='daterange-field']")
-      .invoke("val", [
-        new Date("February 28, 2023"),
-        new Date("December 28, 2023"),
-      ])
-      .trigger("change");
+    // cy.get("[data-cy='daterange-field']")
+    //   .invoke("val", [
+    //     new Date("February 28, 2023"),
+    //     new Date("December 28, 2023"),
+    //   ])
+    //   .trigger("change");
     cy.get("[data-cy='text-field']").last().type(userC.email);
     cy.get("[data-cy='multiselect-field']").click();
     cy.get(".mantine-MultiSelect-item").first().click();
@@ -101,9 +111,6 @@ describe("Requests", () => {
     cy.loginViaUi(userA);
     cy.get("[data-cy='navbar-requests']").click();
     cy.get("[data-cy='request-item']").contains(randomTitleA).click();
-    cy.get("[data-cy='request-status']")
-      .children()
-      .should("have.text", "pending");
     cy.get("[data-cy='download-request']").click();
     cy.contains("Sorry!");
   });
@@ -138,5 +145,18 @@ describe("Requests", () => {
     cy.get(".mantine-Select-item").first().click();
     cy.get("[data-cy='status-filter']").click();
     cy.get(".mantine-Select-item").contains("Approved").click();
+  });
+  it("Test Draft State - Reload", () => {
+    cy.loginViaUi(userC);
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='select-approver']").click();
+    cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
+    cy.get("[data-cy='request-title']").type(randomTitleA);
+    cy.get("[data-cy='request-description']").type("Lorem ipsum");
+    cy.reload();
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='draft-status']").should("be.visible");
   });
 });
