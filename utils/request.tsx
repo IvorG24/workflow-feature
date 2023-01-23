@@ -13,6 +13,8 @@ export const setBadgeColor = (status: string) => {
       return "red";
     case "revision":
       return "orange";
+    case "cancelled":
+      return "gray";
     case "stale":
       return "gray";
   }

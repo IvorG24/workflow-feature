@@ -9,6 +9,7 @@ export async function getFileUrl(
   bucket: string
 ) {
   try {
+    if (isValidHttpUrl(path)) return path;
     const { data, error } = await supabaseClient.storage
       .from(bucket)
       .download(path);
@@ -99,4 +100,14 @@ export async function deleteFile(
     console.error(error);
     throw error;
   }
+}
+
+function isValidHttpUrl(string: string) {
+  let url;
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+  return url.protocol === "http:" || url.protocol === "https:";
 }

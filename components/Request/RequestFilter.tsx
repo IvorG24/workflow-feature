@@ -20,6 +20,7 @@ const statusOptions: {
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
   { value: "purchased", label: "Purchased" },
+  { value: "cancelled", label: "Cancelled" },
   { value: "stale", label: "Stale" },
 ];
 
