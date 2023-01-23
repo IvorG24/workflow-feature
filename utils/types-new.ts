@@ -224,6 +224,7 @@ export type RequestStatus =
   | "approved"
   | "rejected"
   | "purchased"
+  | "cancelled"
   | "stale";
 
 // Build Form Template
