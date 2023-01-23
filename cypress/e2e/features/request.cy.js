@@ -159,4 +159,18 @@ describe("Requests", () => {
     cy.get("[data-cy='create-request']").first().click();
     cy.get("[data-cy='draft-status']").should("be.visible");
   });
+  it("Test Draft State - Close Tab/Window - Part 1", () => {
+    cy.loginViaUi(userD);
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='request-title']").type(randomTitleA);
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='draft-status']").should("be.visible");
+  });
+  it("Test Draft State - Close Tab/Window - Part 2", () => {
+    cy.loginViaUi(userD);
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='draft-status']").should("be.visible");
+  });
 });
