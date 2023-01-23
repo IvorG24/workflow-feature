@@ -269,7 +269,11 @@ const AddSignature = ({ onCancel, setCurrentSignatureUrl }: Props) => {
           </Button>
         )}
         {choice === "upload" && (
-          <Button disabled={isUploading} onClick={handleUploadSignature}>
+          <Button
+            disabled={isUploading}
+            onClick={handleUploadSignature}
+            data-cy="save-signature"
+          >
             Save
           </Button>
         )}

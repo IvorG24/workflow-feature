@@ -124,6 +124,7 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                             ?.expected_response_type?.message
                         }
                         disabled={isInEditmode}
+                        data-cy="response-type"
                       />
                     )}
                   />

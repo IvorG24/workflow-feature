@@ -153,12 +153,14 @@ const InviteTeamMembersSection = ({ members }: Props) => {
           {...register("emails", { required: "Email is required" })}
           onChange={(e) => setValue("emails", e)}
           error={errors.emails?.message}
+          data-cy="team-select-members"
         />
         <Button
           type="submit"
           fullWidth
           maw={{ md: "150px", lg: "200px" }}
           size="md"
+          data-cy="submit"
         >
           Send Invites
         </Button>

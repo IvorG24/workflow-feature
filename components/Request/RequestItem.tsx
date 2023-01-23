@@ -311,6 +311,7 @@ const RequestItemPage = ({
           opened={openPdfPreview}
           onClose={() => setOpenPdfPreview(false)}
           title="Download Preview"
+          data-cy="download-preview"
         >
           {!approver?.user_signature_filepath ||
             (!purchaser?.user_signature_filepath && (
@@ -363,6 +364,7 @@ const RequestItemPage = ({
             color={setBadgeColor(requestToDisplay?.request_status_id as string)}
             w="100%"
             maw="80px"
+            data-cy="request-status"
           >
             {requestToDisplay?.request_status_id}
           </Badge>
@@ -390,6 +392,7 @@ const RequestItemPage = ({
           <Text
             fz="xs"
             c="dimmed"
+            data-cy="download-request"
             onClick={() => {
               if (
                 !["approved", "purchased"].includes(
@@ -550,7 +553,10 @@ const RequestItemPage = ({
               >
                 Reject
               </Button>
-              <Button onClick={() => handleUpdateStatus("approved")}>
+              <Button
+                onClick={() => handleUpdateStatus("approved")}
+                data-cy="approve-request"
+              >
                 Approve
               </Button>
             </SimpleGrid>
@@ -566,6 +572,7 @@ const RequestItemPage = ({
               my="sm"
               fullWidth
               onClick={() => handleUpdateStatus("purchased")}
+              data-cy="purchase-request"
             >
               Mark as Purchased
             </Button>

@@ -1,8 +1,8 @@
-import { user } from "../../support/e2e";
+import { userA } from "../../support/e2e";
 
 describe("Navbar", () => {
   it("Check if Navbar links are redirecting to correct url", () => {
-    cy.loginViaUi(user);
+    cy.loginViaUi(userA);
     cy.get("[data-cy='navbar-profiles']").click();
     cy.url().should("include", "/profiles");
     cy.get("[data-cy='navbar-requests']").click();

@@ -16,10 +16,28 @@
 // Import commands.js using ES2015 syntax:
 import "./commands";
 
-export const user = {
-  email: "nojam38531@khaxan.com",
+export const userA = {
+  email: "cajopo2754@tohup.com",
   password: "test123123",
 };
+
+export const userB = {
+  email: "wisoj99237@themesw.com",
+  password: "test123123",
+};
+
+export const userC = {
+  email: "gegoci9090@themesw.com",
+  password: "test123123",
+};
+
+export const userD = {
+  email: "juancarloslumingkit@gmail.com",
+  password: "test123123",
+};
+
+// you may replace the testfile in the root folder
+export const testfile = "testfile.png";
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

@@ -179,7 +179,11 @@ const ProfileSettingsPage = () => {
           setCurrentSignatureUrl={setCurrentSignatureUrl}
         />
       </Modal>
-      <Button onClick={() => setOpenedSignature(true)} mt="lg">
+      <Button
+        onClick={() => setOpenedSignature(true)}
+        mt="lg"
+        data-cy="add-signature"
+      >
         Add Signature
       </Button>
       <Divider color="gray.2" mt="xl" />

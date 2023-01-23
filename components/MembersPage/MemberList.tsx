@@ -55,7 +55,11 @@ const MemberList = ({
     <Stack mih="300px" pt="md">
       {paginate(memberList, pageSize, pageNumber).map((member) => {
         return (
-          <Grid key={member.user_id} sx={{ borderTop: "1px solid #E9E9E9" }}>
+          <Grid
+            key={member.user_id}
+            sx={{ borderTop: "1px solid #E9E9E9" }}
+            data-cy="memberList-item"
+          >
             <Grid.Col order={1} span={10} sm={8}>
               <Group
                 onClick={() =>

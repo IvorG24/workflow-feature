@@ -14,7 +14,6 @@ Cypress.Commands.add("loginViaUi", (user: User) => {
   cy.get("[data-cy='signin-input-email']").type(user.email);
   cy.get("[data-cy='signin-input-password']").type(user.password);
   cy.get("[data-cy='signin-submit']").click();
-  cy.wait(2000);
 });
 
 Cypress.Commands.add("selectTeam", (team: string) => {

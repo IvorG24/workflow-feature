@@ -278,7 +278,7 @@ const RequestComment = ({ requestId }: Props) => {
   return (
     <Accordion variant="separated">
       <Accordion.Item value="comments">
-        <Accordion.Control>
+        <Accordion.Control data-cy="show-comments">
           <Text fz="sm" fw={500}>
             Show Comments
           </Text>
@@ -291,6 +291,7 @@ const RequestComment = ({ requestId }: Props) => {
               variant="unstyled"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
+              data-cy="comment-content"
             />
             <Group position="right" mt="xs">
               <FileInput
@@ -303,11 +304,9 @@ const RequestComment = ({ requestId }: Props) => {
                     <Upload />
                   </IconWrapper>
                 }
+                data-cy="comment-attachment"
               />
-              <Button
-                onClick={handleAddComment}
-                data-cy="request-submit-comment"
-              >
+              <Button onClick={handleAddComment} data-cy="submit">
                 Send
               </Button>
             </Group>
@@ -316,7 +315,7 @@ const RequestComment = ({ requestId }: Props) => {
             <Box>
               <Text my="xs">Comments</Text>
               {commentList.map((comment) => (
-                <Box bg="white" key={comment.comment_id}>
+                <Box bg="white" key={comment.comment_id} data-cy="comment">
                   <Group position="apart">
                     <Flex gap={5} align="center">
                       <Avatar

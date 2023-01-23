@@ -184,6 +184,7 @@ const Navbar = ({ openNavbar }: Props) => {
               1
             </Badge> */}
                 <NavLink
+                  data-cy="navbar-requests"
                   component="a"
                   label="All Requests"
                   icon={
@@ -200,6 +201,7 @@ const Navbar = ({ openNavbar }: Props) => {
                   }
                 />
                 <NavLink
+                  data-cy="navbar-notifications"
                   component="a"
                   label="Notifications"
                   icon={
@@ -214,6 +216,7 @@ const Navbar = ({ openNavbar }: Props) => {
                   }
                 />
                 <NavLink
+                  data-cy="navbar-settings"
                   component="a"
                   label="Settings"
                   icon={
@@ -290,7 +293,7 @@ const Navbar = ({ openNavbar }: Props) => {
                             ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                             : ""
                         }`}
-                        data-cy="navbar-createForm"
+                        data-cy="create-form"
                       >
                         <AddCircle />
                       </ActionIcon>
@@ -330,6 +333,7 @@ const Navbar = ({ openNavbar }: Props) => {
                                 ? `${styles.colorLight} ${styles.createRequestButton__darkMode}`
                                 : ""
                             }`}
+                            data-cy="create-request"
                           >
                             <AddCircle />
                           </ActionIcon>
@@ -423,6 +427,7 @@ const Navbar = ({ openNavbar }: Props) => {
             </ScrollArea>
             <MantineNavbar.Section mt="auto">
               <NavLink
+                data-cy="navbar-profiles"
                 component="a"
                 onClick={() =>
                   router.push(`/t/${router.query.tid}/profiles/${user?.id}/bio`)
@@ -441,7 +446,6 @@ const Navbar = ({ openNavbar }: Props) => {
                     />
                   </IconWrapper>
                 }
-                data-cy="navbar-profiles"
               />
               <Button
                 variant="light"

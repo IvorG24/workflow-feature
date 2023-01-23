@@ -24,7 +24,7 @@ const SuccessInvitation = ({ teamName, teamLogo, teamId }: Props) => {
           maw={300}
           size="lg"
           onClick={() => router.push(`/t/${teamId}/dashboard`)}
-          data-cy="invitation-button"
+          data-cy="to-team-dashboard"
         >
           Continue to team dashboard
         </Button>

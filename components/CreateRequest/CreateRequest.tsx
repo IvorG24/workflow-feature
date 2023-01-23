@@ -469,6 +469,7 @@ const CreateRequest = () => {
                 withAsterisk
                 value={selectedApprover}
                 onChange={setSelectedApprover}
+                data-cy="select-approver"
               />
             </Flex>
             <Flex gap="xl" wrap="wrap">
@@ -504,6 +505,7 @@ const CreateRequest = () => {
                 value={selectedPurchaser}
                 onChange={setSelectedPurchaser}
                 clearable
+                data-cy="select-purchaser"
               />
             </Flex>
             <Textarea
@@ -524,6 +526,7 @@ const CreateRequest = () => {
               label="Image Attachment"
               placeholder="Select file"
               icon={<IconUpload size={14} />}
+              data-cy="upload-file"
             />
 
             {/* // TODO: Loop per form fact view because form fat view are basically field list. */}
