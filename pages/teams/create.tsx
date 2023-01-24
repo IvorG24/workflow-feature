@@ -2,6 +2,7 @@ import Layout from "@/components/Layout/Layout";
 import { createStyles } from "@mantine/core";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { InferGetServerSidePropsType } from "next";
+import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 type CreateTeamPageProps = { sampleProp: string };
@@ -21,9 +22,9 @@ export const getServerSideProps = async () => {
   };
 };
 
-function IndexPage({
-  data,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+const CreateTeamPage: NextPageWithLayout<
+  InferGetServerSidePropsType<typeof getServerSideProps>
+> = ({ data }) => {
   // will resolve data to type Data
   const supabaseClient = useSupabaseClient();
   const user = useUser();
@@ -31,10 +32,10 @@ function IndexPage({
   const { classes, cx } = useStyles();
 
   return <h1>index page {JSON.stringify(data)}</h1>;
-}
+};
 
-export default IndexPage;
+export default CreateTeamPage;
 
-IndexPage.getLayout = function getLayout(page: ReactElement) {
+CreateTeamPage.getLayout = function getLayout(page: ReactElement) {
   return <Layout>{page}</Layout>;
 };

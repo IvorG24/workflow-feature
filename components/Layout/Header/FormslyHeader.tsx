@@ -43,22 +43,22 @@ const useStyles = createStyles((theme) => ({
 function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
   //   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
   //     useDisclosure(false);
-  //   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
+  //   const [linkListOpened, { toggle: togglelinkList }] = useDisclosure(false);
   const { classes, theme } = useStyles();
   const router = useRouter();
 
-  const links = [
+  const linkList = [
     {
       label: "Requests",
-      url: `/teams/${router.query.teamName}/requests}`,
+      url: `/teams/${router.query.teamName}/requests`,
     },
     {
       label: "Analytics",
-      url: `/teams/${router.query.teamName}/analytics}`,
+      url: `/teams/${router.query.teamName}/analytics`,
     },
     {
       label: "Environment Impact",
-      url: `/teams/${router.query.teamName}/environment}`,
+      url: `/teams/${router.query.teamName}/environment-impact`,
     },
   ];
 
@@ -95,7 +95,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
           </MediaQuery>
           <MediaQuery smallerThan="md" styles={{ display: "none" }}>
             <Group sx={{ height: "100%" }} spacing={0}>
-              {links.map((link) => (
+              {linkList.map((link) => (
                 <a
                   key={link.label}
                   //   href="#"

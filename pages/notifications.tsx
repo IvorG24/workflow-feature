@@ -5,23 +5,15 @@ import { InferGetServerSidePropsType } from "next";
 import { ReactElement } from "react";
 import { NextPageWithLayout } from "./_app";
 
-type IndexPageProps = { sampleProp: string };
+type NotificationListPageProps = { sampleProp: string };
 
 const useStyles = createStyles((theme) => ({}));
 
 export const getServerSideProps = async () => {
   // const res = await fetch('https://.../data')
   const res = { sampleProp: "sample" };
-  // const data: IndexPageProps = await res.json();
-  const data: IndexPageProps = res;
-
-  // TODO: Put this in GSSP of index page.
-  // if (!teamList) router.push(`/teams/create`);
-  // if (teamList.length === 0) router.push(`/teams/create`);
-
-  // if (!router.query.teamName) {
-  //   router.push(`/teams/${teamList[0].name}`);
-  // }
+  // const data: NotificationListPageProps = await res.json();
+  const data: NotificationListPageProps = res;
 
   return {
     props: {
@@ -30,7 +22,7 @@ export const getServerSideProps = async () => {
   };
 };
 
-const IndexPage: NextPageWithLayout<
+const NotificationListPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
 > = ({ data }) => {
   // will resolve data to type Data
@@ -42,8 +34,8 @@ const IndexPage: NextPageWithLayout<
   return <h1>index page {JSON.stringify(data)}</h1>;
 };
 
-export default IndexPage;
+export default NotificationListPage;
 
-IndexPage.getLayout = function getLayout(page: ReactElement) {
+NotificationListPage.getLayout = function getLayout(page: ReactElement) {
   return <Layout>{page}</Layout>;
 };

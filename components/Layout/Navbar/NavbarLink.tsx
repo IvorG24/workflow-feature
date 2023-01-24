@@ -29,20 +29,16 @@ function NavbarLink({ label }: NavbarLinkProps) {
         },
       })}
     >
-      <Group position="apart">
+      <Group
+        position="apart"
+        onClick={() =>
+          router.push(`/teams/${router.query.teamName}/forms/${label}/edit`)
+        }
+      >
         {/* <ThemeIcon color={color} variant="light">
           {icon}
         </ThemeIcon> */}
-        <Text
-          onClick={() =>
-            router.push(
-              `/teams/${router.query.teamName}/forms/${router.query.formName}/edit`
-            )
-          }
-          size="sm"
-        >
-          {label}
-        </Text>
+        <Text size="sm">{label}</Text>
       </Group>
     </UnstyledButton>
   );

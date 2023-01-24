@@ -57,6 +57,10 @@ function FormslyNavbar({
   const { classes } = useStyles();
   const router = useRouter();
 
+  const handleBuildForm = () => {
+    router.push(`/teams/${router.query.teamName}/forms/build`);
+  };
+
   return (
     // Original
     // <Navbar height={600} p="xs" width={{ base: 300 }}>
@@ -75,14 +79,12 @@ function FormslyNavbar({
       </Navbar.Section> */}
       <Navbar.Section mt="xs">
         <Group position="apart">
-          <Text
-            onClick={() => router.push(`/teams/${router.query.teamName}/forms`)}
-            fz="md"
-            style={{ cursor: "pointer" }}
+          <Text fz="md">Form Templates</Text>
+          <Button
+            onClick={handleBuildForm}
+            size="xs"
+            leftIcon={<IconHammer size={14} />}
           >
-            Form Templates
-          </Text>
-          <Button size="xs" leftIcon={<IconHammer size={14} />}>
             Build Form
           </Button>
         </Group>

@@ -1,4 +1,4 @@
-import { AppShell, Text, useMantineTheme } from "@mantine/core";
+import { AppShell, useMantineTheme } from "@mantine/core";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import FormslyFooter from "./Footer/FormslyFooter";
@@ -101,7 +101,11 @@ const formListData = [
   { name: "Disciplinary Form", id: "20" },
 ];
 
-function Layout() {
+export type LayoutProps = {
+  children: React.ReactNode;
+};
+
+function Layout({ children }: LayoutProps) {
   const theme = useMantineTheme();
   const [opened, setOpened] = useState(false);
   const [formList, setFormList] = useState(formListData);
@@ -177,7 +181,7 @@ function Layout() {
         <FormslyHeader opened={opened} setOpened={setOpened} />
       }
     >
-      <Text>Resize app to see responsive navbar in action</Text>
+      {children}
     </AppShell>
   );
 }
