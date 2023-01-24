@@ -4,23 +4,15 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { InferGetServerSidePropsType } from "next";
 import { ReactElement } from "react";
 
-type IndexPageProps = { sampleProp: string };
+type TeamPageProps = { sampleProp: string };
 
 const useStyles = createStyles((theme) => ({}));
 
 export const getServerSideProps = async () => {
   // const res = await fetch('https://.../data')
   const res = { sampleProp: "sample" };
-  // const data: IndexPageProps = await res.json();
-  const data: IndexPageProps = res;
-
-  // TODO: Put this in GSSP of index page.
-  // if (!teamList) router.push(`/teams/create`);
-  // if (teamList.length === 0) router.push(`/teams/create`);
-
-  // if (!router.query.teamName) {
-  //   router.push(`/teams/${teamList[0].name}`);
-  // }
+  // const data: TeamPageProps = await res.json();
+  const data: TeamPageProps = res;
 
   return {
     props: {
