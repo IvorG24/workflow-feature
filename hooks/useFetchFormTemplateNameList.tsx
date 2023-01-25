@@ -27,6 +27,7 @@ const useFetchFormTemplateNameList = (teamId: string) => {
         const data = await getFormTemplateNameList(supabaseClient, teamId);
 
         setFormTemplateNameList(data);
+        setIsFetching(false);
       } catch (error) {
         console.error(error);
         showNotification({
@@ -34,8 +35,6 @@ const useFetchFormTemplateNameList = (teamId: string) => {
           message: "Failed to fetch form templates",
           color: "red",
         });
-      } finally {
-        setIsFetching(false);
       }
     })();
   }, [supabaseClient, user, router, teamId]);

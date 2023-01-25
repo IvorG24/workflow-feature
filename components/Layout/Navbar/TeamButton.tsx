@@ -1,3 +1,4 @@
+import { GetUserTeamList } from "@/utils/queries";
 import {
   Avatar,
   Group,
@@ -6,53 +7,45 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import { toLower } from "lodash";
-import { useRouter } from "next/router";
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef } from "react";
 
 export type TeamButtonProps = {
-  teamList: TeamButtonItem[];
+  teamList: GetUserTeamList;
+  activeTeamIndex: number;
+  handleChangeTeam: (teamName: string) => void;
 };
 
 // https://mantine.dev/core/select/
 interface TeamButtonItem extends React.ComponentPropsWithoutRef<"div"> {
   image: string;
-  name: string;
-  description: string;
+  label: string;
+  // description: string;
 }
 
 const SelectItem = forwardRef<HTMLDivElement, TeamButtonItem>(
-  ({ image, name, description, ...others }: TeamButtonItem, ref) => (
+  ({ image, label, ...others }: TeamButtonItem, ref) => (
     <div ref={ref} {...others}>
       <Group noWrap>
         <Avatar src={image} size="xs" />
 
         <div>
           <Text size="sm" truncate>
-            {name}
+            {label}
           </Text>
-          <Text size="xs" opacity={0.65} truncate>
+          {/* <Text size="xs" opacity={0.65} truncate>
             {description}
-          </Text>
+          </Text> */}
         </div>
       </Group>
     </div>
   )
 );
 
-function TeamButton({ teamList }: TeamButtonProps) {
-  const router = useRouter();
-  const [activeTeam, setActiveTeam] = useState(teamList[0]);
-
-  useEffect(() => {
-    if (!router.isReady) return;
-    setActiveTeam(
-      () =>
-        teamList.find((team) => team.name === router.query.teamName) ||
-        teamList[0]
-    );
-  }, [router.query.teamName]);
-
+function TeamButton({
+  teamList,
+  activeTeamIndex,
+  handleChangeTeam,
+}: TeamButtonProps) {
   // const [data, setData] = useState<SelectItem[]>(
   //   teamList.map((team) => {
   //     return {
@@ -63,22 +56,16 @@ function TeamButton({ teamList }: TeamButtonProps) {
   //     };
   //   })
   // );
+
+  console.log(teamList);
+
   const data: SelectItem[] = teamList.map((team) => {
     return {
-      image: team.image,
-      label: team.name,
-      description: team.description,
-      value: team.name,
+      image: team.team_logo_filepath || "",
+      label: team.team_name || "",
+      value: team.team_name || "",
     };
   });
-
-  const handleChangeTeam = (teamName: string) => {
-    const team = teamList.find((team) => team.name === teamName);
-    if (team) {
-      // setActiveTeam(team);
-      router.push(`/teams/${toLower(team.name as string)}`);
-    }
-  };
 
   return (
     <Tooltip label="Choose Team">
@@ -87,9 +74,14 @@ function TeamButton({ teamList }: TeamButtonProps) {
         data={data}
         maxDropdownHeight={400}
         nothingFound="No team"
-        value={activeTeam.name}
+        value={teamList[activeTeamIndex]?.team_name || ""}
         mb="sm"
-        icon={<Avatar src={activeTeam.image} size="sm" />}
+        icon={
+          <Avatar
+            src={teamList[activeTeamIndex]?.team_logo_filepath || ""}
+            size="sm"
+          />
+        }
         size="md"
         onChange={handleChangeTeam}
       />

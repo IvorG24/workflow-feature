@@ -22,6 +22,7 @@ const useFetchUserProfile = (userId: string | null | undefined) => {
         const data = await getUserProfile(supabaseClient, userId);
 
         setUserProfile(data);
+        setIsFetching(false);
       } catch (error) {
         console.error(error);
         showNotification({
@@ -29,8 +30,6 @@ const useFetchUserProfile = (userId: string | null | undefined) => {
           message: "Failed to fetch user profile",
           color: "red",
         });
-      } finally {
-        setIsFetching(false);
       }
     })();
   }, [supabaseClient, session, userId]);

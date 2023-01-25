@@ -1,3 +1,4 @@
+import { GetTeamFormList, GetUserTeamList } from "@/utils/queries";
 import {
   Autocomplete,
   Box,
@@ -18,8 +19,8 @@ import TeamButton from "./TeamButton";
 export type FormslyNavbarProps = {
   opened: boolean;
   setOpened: Dispatch<SetStateAction<boolean>>;
-  teamList: any[];
-  formList: any[];
+  teamList: GetUserTeamList;
+  formList: GetTeamFormList;
   handleSearchForm: (keyword: string) => void;
 };
 
@@ -50,16 +51,25 @@ const useStyles = createStyles((theme) => ({
 
 function FormslyNavbar({
   opened,
-  setOpened,
   teamList,
   formList,
   handleSearchForm,
 }: FormslyNavbarProps) {
-  const { classes } = useStyles();
+  // const { classes } = useStyles();
   const router = useRouter();
 
   const handleBuildForm = () => {
-    router.push(`/teams/${toLower(router.query.teamName as string)}/forms/build`);
+    router.push(
+      `/teams/${toLower(router.query.teamName as string)}/forms/build`
+    );
+  };
+
+  const handleChangeTeam = (teamName: string) => {
+    const team = teamList.find((team) => team.team_name === teamName);
+    if (team) {
+      // setActiveTeam(team);
+      router.push(`/teams/${toLower(team.team_name as string)}`);
+    }
   };
 
   return (
@@ -80,7 +90,13 @@ function FormslyNavbar({
       style={{ height: "100%" }}
     > */}
       <Navbar.Section>
-        <TeamButton teamList={teamList} />
+        <TeamButton
+          teamList={teamList}
+          activeTeamIndex={teamList.findIndex(
+            (e) => e.team_name === router.query.teamName
+          )}
+          handleChangeTeam={handleChangeTeam}
+        />
       </Navbar.Section>
       {/* <Navbar.Section mt="xs">
         <Brand />
@@ -98,17 +114,6 @@ function FormslyNavbar({
         </Group>
       </Navbar.Section>
       <Navbar.Section mt="xs">
-        {/* <TextInput
-          placeholder="Find a form..."
-          size="xs"
-          icon={<IconSearch size={12} stroke={1.5} />}
-          rightSectionWidth={70}
-          // rightSection={<Code className={classes.searchCode}>Ctrl + K</Code>}
-          styles={{ rightSection: { pointerEvents: "none" } }}
-          // mb="sm"
-          onChange={handleSearchForm}
-        /> */}
-
         <Autocomplete
           placeholder="Find a form..."
           size="xs"
@@ -116,28 +121,17 @@ function FormslyNavbar({
           rightSectionWidth={70}
           styles={{ rightSection: { pointerEvents: "none" } }}
           onChange={handleSearchForm}
-          data={formList.map((form) => form.name)}
+          data={formList.map((form) => form.form_name) as string[]}
         />
       </Navbar.Section>
 
       <Navbar.Section grow component={ScrollArea} mx="-xs" px="xs">
         <Box py="md">
-          {formList.map((form, i) => {
-            // Circular index of i.
-            // const circularIndex = i % data.length;
+          {formList.map((form) => {
             return (
-              <NavbarLink
-                // color={data[circularIndex].color}
-                // icon={data[circularIndex].icon}
-                label={form.name}
-                key={form.id}
-              />
+              <NavbarLink label={form.form_name as string} key={form.form_id} />
             );
           })}
-          {/* <MainLinks />
-          <MainLinks />
-          <MainLinks />
-          <MainLinks /> */}
         </Box>
       </Navbar.Section>
     </Navbar>

@@ -84,6 +84,7 @@ const AuthenticationForm = (props: PaperProps) => {
       }
 
       await router.push("/");
+      setIsVerifying(false);
     } catch (e) {
       console.error(e);
       showNotification({
@@ -91,8 +92,6 @@ const AuthenticationForm = (props: PaperProps) => {
         message: type === "signIn" ? "Sign In failed" : "Registration failed",
         color: "red",
       });
-    } finally {
-      setIsVerifying(false);
     }
   };
 
@@ -103,6 +102,7 @@ const AuthenticationForm = (props: PaperProps) => {
         provider: provider,
       });
       if (error) throw error;
+      setIsVerifying(false);
     } catch (e) {
       console.error(e);
       showNotification({
@@ -110,8 +110,6 @@ const AuthenticationForm = (props: PaperProps) => {
         message: type === "signIn" ? "Sign In failed" : "Registration failed",
         color: "red",
       });
-    } finally {
-      setIsVerifying(false);
     }
   };
 
