@@ -3,6 +3,7 @@ import {
   ActionIcon,
   Autocomplete,
   Burger,
+  Button,
   createStyles,
   Group,
   Header,
@@ -112,7 +113,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
           <Group sx={{ height: "100%" }} spacing="sm" noWrap>
             <Brand />
             <Autocomplete
-              placeholder="Find a filled out form..."
+              placeholder="Find a request..."
               icon={<IconSearch size={16} stroke={1.5} />}
               data={keyword ? [{ label: keyword, value: keyword }] : []}
               zIndex={10000000000}
@@ -126,7 +127,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
         <MediaQuery largerThan="md" styles={{ display: "none" }}>
           <Group sx={{ height: "100%" }} spacing="sm" position="center">
             <Autocomplete
-              placeholder="Find a filled out form..."
+              placeholder="Find a request..."
               icon={<IconSearch size={16} stroke={1.5} />}
               data={keyword ? [{ label: keyword, value: keyword }] : []}
               zIndex={10000000000}
@@ -155,6 +156,39 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
           </Group>
         </MediaQuery>
         <Group spacing={0} position="right" noWrap>
+          <MediaQuery smallerThan="md" styles={{ display: "none" }}>
+            <Tooltip label="Send request for approval">
+              <Button
+                onClick={() =>
+                  router.push(
+                    `/teams/${toLower(
+                      router.query.teamName as string
+                    )}/requests/create`
+                  )
+                }
+                size="xs"
+                leftIcon={<IconPlus size={14} />}
+              >
+                Create request
+              </Button>
+            </Tooltip>
+          </MediaQuery>
+          <MediaQuery largerThan="md" styles={{ display: "none" }}>
+            <Tooltip label="Fill out a form">
+              <ActionIcon
+                size="lg"
+                onClick={() =>
+                  router.push(
+                    `/teams/${toLower(
+                      router.query.teamName as string
+                    )}/requests/create`
+                  )
+                }
+              >
+                <IconPlus size={18} stroke={1.5} />
+              </ActionIcon>
+            </Tooltip>
+          </MediaQuery>
           <Tooltip label="Notifications">
             <ActionIcon
               size="lg"
@@ -169,32 +203,10 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
               <IconBell size={18} stroke={1.5} />
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Fill out a form">
-            <ActionIcon
-              size="lg"
-              onClick={() =>
-                router.push(
-                  `/teams/${toLower(
-                    router.query.teamName as string
-                  )}/requests/create`
-                )
-              }
-            >
-              <IconPlus size={18} stroke={1.5} />
-            </ActionIcon>
-          </Tooltip>
+
           <Menu shadow="md" width={200}>
             <Menu.Target>
-              <ActionIcon
-                size="lg"
-                onClick={() =>
-                  router.push(
-                    `/teams/${toLower(
-                      router.query.teamName as string
-                    )}/requests/create`
-                  )
-                }
-              >
+              <ActionIcon size="lg">
                 <IconUserCircle size={18} stroke={1.5} />
               </ActionIcon>
             </Menu.Target>
@@ -204,9 +216,21 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
               <Menu.Item
                 onClick={() =>
                   router.push(
-                    `/teams/${toLower(
-                      router.query.teamName as string
-                    )}/settings/users/${userProfile.username}/account`
+                    `/teams/${toLower(router.query.teamName as string)}/users/${
+                      userProfile?.username as string
+                    }/profile`
+                  )
+                }
+                icon={<IconUserCircle size={14} />}
+              >
+                Profile
+              </Menu.Item>
+              <Menu.Item
+                onClick={() =>
+                  router.push(
+                    `/teams/${toLower(router.query.teamName as string)}/users/${
+                      userProfile?.username as string
+                    }/settings/account`
                   )
                 }
                 icon={<IconSettings size={14} />}

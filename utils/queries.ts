@@ -34,9 +34,10 @@ export const getUserProfile = async (
     const { data, error } = await supabaseClient
       .from("user_profile_table")
       .select()
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .single();
     if (error) throw error;
-    return data || [];
+    return data;
   } catch (error) {
     console.error(error);
     throw error;

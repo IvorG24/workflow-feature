@@ -57,7 +57,6 @@ function TeamButton({
   //   })
   // );
 
-  console.log(teamList);
 
   const data: SelectItem[] = teamList.map((team) => {
     return {

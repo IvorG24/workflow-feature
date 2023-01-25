@@ -79,7 +79,7 @@ function FormslyNavbar({
       p="md"
       hiddenBreakpoint="md"
       hidden={!opened}
-      width={{ base: 300 }}
+      width={{ sm: 200, lg: 300 }}
       style={{ height: "100%" }}
     >
       {/* <Navbar
