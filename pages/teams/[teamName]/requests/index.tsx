@@ -1,8 +1,7 @@
 import Layout from "@/components/Layout/Layout";
-import { createStyles } from "@mantine/core";
+import { createStyles, Text } from "@mantine/core";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { InferGetServerSidePropsType } from "next";
-import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
 type RequestListPageProps = { sampleProp: string };
@@ -31,7 +30,7 @@ const RequestListPage: NextPageWithLayoutLayout<
 
   const { classes, cx } = useStyles();
 
-  return <h1>index page {JSON.stringify(data)}</h1>;
+  return <Text>Resize app to see responsive navbar in action</Text>;
 };
 
 export default RequestListPage;

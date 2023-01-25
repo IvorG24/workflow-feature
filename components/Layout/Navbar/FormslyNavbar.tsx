@@ -9,6 +9,7 @@ import {
   Text,
 } from "@mantine/core";
 import { IconHammer, IconSearch } from "@tabler/icons";
+import { toLower } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import NavbarLink from "./NavbarLink";
@@ -58,7 +59,7 @@ function FormslyNavbar({
   const router = useRouter();
 
   const handleBuildForm = () => {
-    router.push(`/teams/${router.query.teamName}/forms/build`);
+    router.push(`/teams/${toLower(router.query.teamName as string)}/forms/build`);
   };
 
   return (
@@ -68,9 +69,16 @@ function FormslyNavbar({
       p="md"
       hiddenBreakpoint="md"
       hidden={!opened}
-      width={{ sm: 200, lg: 300 }}
+      width={{ base: 300 }}
       style={{ height: "100%" }}
     >
+      {/* <Navbar
+      p="md"
+      hiddenBreakpoint="md"
+      hidden={!opened}
+      width={{ sm: 200, lg: 300 }}
+      style={{ height: "100%" }}
+    > */}
       <Navbar.Section>
         <TeamButton teamList={teamList} />
       </Navbar.Section>

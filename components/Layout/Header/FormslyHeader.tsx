@@ -1,17 +1,28 @@
+import useFetchUserProfile from "@/hooks/useFetchUserProfile";
 import {
   ActionIcon,
   Autocomplete,
-  Box,
   Burger,
   createStyles,
   Group,
   Header,
   MediaQuery,
+  Menu,
   Tooltip,
 } from "@mantine/core";
-import { IconBell, IconPlus, IconSearch } from "@tabler/icons";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import {
+  IconBell,
+  IconLogout,
+  IconMail,
+  IconPlus,
+  IconSearch,
+  IconSettings,
+  IconUserCircle,
+} from "@tabler/icons";
+import { toLower } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { Brand } from "../Navbar/Brand";
 
 export type FormslyHeaderProps = {
@@ -46,6 +57,10 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
   //   const [linkListOpened, { toggle: togglelinkList }] = useDisclosure(false);
   const { classes, theme } = useStyles();
   const router = useRouter();
+  const [keyword, setKeyword] = useState("");
+  const supabaseClient = useSupabaseClient();
+  const user = useUser();
+  const { userProfile } = useFetchUserProfile(user?.id);
 
   const linkList = [
     {
@@ -57,82 +72,168 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
       url: `/teams/${router.query.teamName}/analytics`,
     },
     {
-      label: "Environment Impact",
+      label: "Environmental Impact",
       url: `/teams/${router.query.teamName}/environment-impact`,
     },
   ];
 
+  const handleSearchRequest = (keyword: string) => {
+    router.push(
+      `/teams/${router.query.teamName}/requests?keyword=${toLower(keyword)}`
+    );
+  };
+
+  const handleLogout = async () => {
+    await supabaseClient.auth.signOut();
+    await router.push("/authentication");
+  };
+
   return (
     // <Header height={{ base: 50, md: 70 }} p="md">
-    <Box>
-      <Header height={60} px="md">
-        <Group position="apart" sx={{ height: "100%" }}>
-          {/* Original */}
-          {/* <Burger
+    // <Box>
+    <Header height={60} px="md">
+      <Group position="apart" sx={{ height: "100%" }} noWrap>
+        {/* Original */}
+        {/* <Burger
             opened={drawerOpened}
             onClick={toggleDrawer}
             className={classes.hiddenDesktop}
           /> */}
-          <MediaQuery largerThan="md" styles={{ display: "none" }}>
-            <Burger
-              opened={opened}
-              onClick={() => setOpened((o) => !o)}
-              size="sm"
-              color={theme.colors.gray[6]}
-              mr="xl"
+        <MediaQuery largerThan="md" styles={{ display: "none" }}>
+          <Burger
+            opened={opened}
+            onClick={() => setOpened((o) => !o)}
+            size="sm"
+            color={theme.colors.gray[6]}
+            mr="xl"
+          />
+        </MediaQuery>
+        <MediaQuery smallerThan="md" styles={{ display: "none" }}>
+          <Group sx={{ height: "100%" }} spacing="sm" noWrap>
+            <Brand />
+            <Autocomplete
+              placeholder="Find a filled out form..."
+              icon={<IconSearch size={16} stroke={1.5} />}
+              data={keyword ? [{ label: keyword, value: keyword }] : []}
+              zIndex={10000000000}
+              onChange={setKeyword}
+              onItemSubmit={(e) => {
+                handleSearchRequest(e.value);
+              }}
             />
-          </MediaQuery>
-          <MediaQuery smallerThan="md" styles={{ display: "none" }}>
-            <Group sx={{ height: "100%" }} spacing="sm">
-              <Brand />
-              <Autocomplete
-                placeholder="Find a filled out form..."
-                icon={<IconSearch size={16} stroke={1.5} />}
-                data={[]}
-                zIndex={1000}
-              />
-            </Group>
-          </MediaQuery>
-          <MediaQuery smallerThan="md" styles={{ display: "none" }}>
-            <Group sx={{ height: "100%" }} spacing={0}>
-              {linkList.map((link) => (
-                <a
-                  key={link.label}
-                  //   href="#"
-                  onClick={() => router.push(link.url)}
-                  className={classes.link}
-                  style={{
-                    cursor: "pointer",
-                  }}
-                >
-                  {link.label}
-                </a>
-              ))}
-            </Group>
-          </MediaQuery>
-          <Group spacing={0} position="right">
-            <Tooltip label="Notifications">
-              <ActionIcon
-                size="lg"
-                onClick={() => router.push("/notifications")}
+          </Group>
+        </MediaQuery>
+        <MediaQuery largerThan="md" styles={{ display: "none" }}>
+          <Group sx={{ height: "100%" }} spacing="sm" position="center">
+            <Autocomplete
+              placeholder="Find a filled out form..."
+              icon={<IconSearch size={16} stroke={1.5} />}
+              data={keyword ? [{ label: keyword, value: keyword }] : []}
+              zIndex={10000000000}
+              onChange={setKeyword}
+              onItemSubmit={(e) => {
+                handleSearchRequest(e.value);
+              }}
+            />
+          </Group>
+        </MediaQuery>
+        <MediaQuery smallerThan="md" styles={{ display: "none" }}>
+          <Group sx={{ height: "100%" }} spacing={0} noWrap>
+            {linkList.map((link) => (
+              <a
+                key={link.label}
+                //   href="#"
+                onClick={() => router.push(link.url)}
+                className={classes.link}
+                style={{
+                  cursor: "pointer",
+                }}
               >
-                <IconBell size={18} stroke={1.5} />
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="Fill out a form">
+                {link.label}
+              </a>
+            ))}
+          </Group>
+        </MediaQuery>
+        <Group spacing={0} position="right" noWrap>
+          <Tooltip label="Notifications">
+            <ActionIcon
+              size="lg"
+              onClick={() =>
+                router.push(
+                  `/teams/${toLower(
+                    router.query.teamName as string
+                  )}/notifications`
+                )
+              }
+            >
+              <IconBell size={18} stroke={1.5} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Fill out a form">
+            <ActionIcon
+              size="lg"
+              onClick={() =>
+                router.push(
+                  `/teams/${toLower(
+                    router.query.teamName as string
+                  )}/requests/create`
+                )
+              }
+            >
+              <IconPlus size={18} stroke={1.5} />
+            </ActionIcon>
+          </Tooltip>
+          <Menu shadow="md" width={200}>
+            <Menu.Target>
               <ActionIcon
                 size="lg"
                 onClick={() =>
-                  router.push(`/teams/${router.query.teamName}/requests/create`)
+                  router.push(
+                    `/teams/${toLower(
+                      router.query.teamName as string
+                    )}/requests/create`
+                  )
                 }
               >
-                <IconPlus size={18} stroke={1.5} />
+                <IconUserCircle size={18} stroke={1.5} />
               </ActionIcon>
-            </Tooltip>
-          </Group>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+              <Menu.Label>Account</Menu.Label>
+              <Menu.Item
+                onClick={() =>
+                  router.push(
+                    `/teams/${toLower(
+                      router.query.teamName as string
+                    )}/settings/users/${userProfile.username}/account`
+                  )
+                }
+                icon={<IconSettings size={14} />}
+              >
+                Settings
+              </Menu.Item>
+              <Menu.Item
+                onClick={() =>
+                  router.push(
+                    `/teams/${toLower(
+                      router.query.teamName as string
+                    )}/notifications?type=team-invitations`
+                  )
+                }
+                icon={<IconMail size={14} />}
+              >
+                Team Invitations
+              </Menu.Item>
+              <Menu.Item onClick={handleLogout} icon={<IconLogout size={14} />}>
+                Logout
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Group>
-      </Header>
-    </Box>
+      </Group>
+    </Header>
+    // </Box>
   );
 }
 

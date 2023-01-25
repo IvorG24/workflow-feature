@@ -1,5 +1,5 @@
 import Layout from "@/components/Layout/Layout";
-import { createStyles } from "@mantine/core";
+import { createStyles, Text } from "@mantine/core";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { InferGetServerSidePropsType } from "next";
 import { NextPageWithLayout } from "pages/_app";
@@ -31,7 +31,7 @@ const TeamPage: NextPageWithLayout<
 
   const { classes, cx } = useStyles();
 
-  return <h1>index page {JSON.stringify(data)}</h1>;
+  return <Text>Resize app to see responsive navbar in action</Text>;
 };
 
 export default TeamPage;

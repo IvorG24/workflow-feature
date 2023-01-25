@@ -1,4 +1,5 @@
 import { AppShell, useMantineTheme } from "@mantine/core";
+import { toLower } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import FormslyFooter from "./Footer/FormslyFooter";
@@ -114,8 +115,11 @@ function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     if (!router.isReady) return;
-    if (!router.asPath.includes("/teams")) return;
-    if (!router.query.teamName) router.push("/");
+    if (!router.asPath.includes("/onboarding")) return;
+    if (!router.asPath.includes("/teams/create")) return;
+    if (!router.query.teamName)
+      router.push(`/teams/${toLower(teamList[0].name)}`);
+    // if (!router.query.teamName) router.push("/");
   }, [router]);
 
   const handleSearchForm = (value: string) => {
@@ -136,8 +140,8 @@ function Layout({ children }: LayoutProps) {
               : theme.colors.gray[0],
         },
       }}
-      navbarOffsetBreakpoint="sm"
-      asideOffsetBreakpoint="sm"
+      navbarOffsetBreakpoint="md"
+      // asideOffsetBreakpoint="md"
       navbar={
         <FormslyNavbar
           opened={opened}

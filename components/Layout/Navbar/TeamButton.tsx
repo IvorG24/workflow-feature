@@ -6,6 +6,7 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
+import { toLower } from "lodash";
 import { useRouter } from "next/router";
 import { forwardRef, useEffect, useState } from "react";
 
@@ -75,7 +76,7 @@ function TeamButton({ teamList }: TeamButtonProps) {
     const team = teamList.find((team) => team.name === teamName);
     if (team) {
       // setActiveTeam(team);
-      router.push(`/teams/${team.name}`);
+      router.push(`/teams/${toLower(team.name as string)}`);
     }
   };
 

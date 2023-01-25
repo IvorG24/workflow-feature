@@ -1,9 +1,9 @@
 import Layout from "@/components/Layout/Layout";
-import { createStyles } from "@mantine/core";
+import { createStyles, Text } from "@mantine/core";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { InferGetServerSidePropsType } from "next";
 import { ReactElement } from "react";
-import { NextPageWithLayout } from "./_app";
+import { NextPageWithLayout } from "../../_app";
 
 type NotificationListPageProps = { sampleProp: string };
 
@@ -31,7 +31,7 @@ const NotificationListPage: NextPageWithLayout<
 
   const { classes, cx } = useStyles();
 
-  return <h1>index page {JSON.stringify(data)}</h1>;
+  return <Text>Resize app to see responsive navbar in action</Text>;
 };
 
 export default NotificationListPage;

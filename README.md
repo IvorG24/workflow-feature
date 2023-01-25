@@ -11,10 +11,15 @@ Everything that is current user will not show URL. Current user id will be fetch
 
 ```txt
 /
-/notifications
-/notifications?query...
+/onboarding
+/team/team-name/notifications
+/team/team-name/notifications?query...
 
-/users/user-name
+/team/team-name/users/user-name
+/team/team-name/users/username/settings/profile
+/team/team-name/users/username/settings/notifications
+/team/team-name/users/username/settings/security
+/team/team-name/users/username/settings/teams
 
 /teams/create
 /teams/team-name/requests
@@ -24,14 +29,6 @@ Everything that is current user will not show URL. Current user id will be fetch
 /teams/team-name/forms
 /teams/team-name/forms/form-name
 /teams/team-name/settings/profile
-
-/settings/profile
-/settings/account
-/settings/appearance
-/settings/notifications
-/settings/security
-/settings/teams
-
 ```
 
 ## References
@@ -39,3 +36,4 @@ Everything that is current user will not show URL. Current user id will be fetch
 1. [Why save color theme in cookie according to Mantine](https://mantine.dev/guides/dark-theme/#save-color-scheme-in-cookie)
 2. [Mantine Responsive Layout](https://mantine.dev/core/app-shell/)
 3. [Setup NavigationProgress](https://mantine.dev/others/nprogress/#setup-navigationprogress)
+4. Use mantine createStyles because recommended.

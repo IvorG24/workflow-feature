@@ -1,4 +1,5 @@
 import { Group, Text, UnstyledButton } from "@mantine/core";
+import { toLower } from "lodash";
 import { useRouter } from "next/router";
 
 export type NavbarLinkProps = {
@@ -32,7 +33,7 @@ function NavbarLink({ label }: NavbarLinkProps) {
       <Group
         position="apart"
         onClick={() =>
-          router.push(`/teams/${router.query.teamName}/forms/${label}/edit`)
+          router.push(`/teams/${toLower(router.query.teamName as string)}/forms/${toLower(label)}/edit`)
         }
       >
         {/* <ThemeIcon color={color} variant="light">
