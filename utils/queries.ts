@@ -479,7 +479,7 @@ export type createFormApproverList = Awaited<
   ReturnType<typeof createFormApproverList>
 >;
 
-export const getFormApprovers = async (
+export const getFormApproverList = async (
   supabaseClient: SupabaseClient<Database>,
   formId: number
 ) => {
@@ -496,7 +496,9 @@ export const getFormApprovers = async (
     throw error;
   }
 };
-export type GetFormApprovers = Awaited<ReturnType<typeof getFormApprovers>>;
+export type GetFormApproverList = Awaited<
+  ReturnType<typeof getFormApproverList>
+>;
 
 export const getFormByTeamAndFormName = async (
   supabaseClient: SupabaseClient<Database>,
@@ -692,3 +694,32 @@ export const getRequestApproverList = async (
 export type GetRequestApproverList = Awaited<
   ReturnType<typeof getRequestApproverList>
 >;
+
+export const approveRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  requestId: number,
+  actionId: string
+) => {
+  // update request_request_approver_action_table.request_approver_action_is_approved
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_approver_action_table")
+      .update({
+        request_approver_action_is_approved: true,
+      })
+      .eq("request_approver_action_request_id", requestId)
+      .eq("request_approver_action_user_id", userId)
+      .eq("request_approver_action_action_id", actionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};

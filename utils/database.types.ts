@@ -643,6 +643,33 @@ export interface Database {
           username: string | null
         }
       }
+      request_request_approver_action_view: {
+        Row: {
+          action_id: string | null
+          request_approver_action_action_id: string | null
+          request_approver_action_id: number | null
+          request_approver_action_is_approved: boolean | null
+          request_approver_action_request_id: number | null
+          request_approver_action_status_last_updated: string | null
+          request_approver_action_user_id: string | null
+          request_attachment_filepath_list: string[] | null
+          request_date_created: string | null
+          request_description: string | null
+          request_id: number | null
+          request_is_disabled: boolean | null
+          request_is_draft: boolean | null
+          request_on_behalf_of: string | null
+          request_title: string | null
+          user_avatar_filepath: string | null
+          user_created_at: string | null
+          user_email: string | null
+          user_first_name: string | null
+          user_id: string | null
+          user_last_name: string | null
+          user_signature_filepath: string | null
+          username: string | null
+        }
+      }
       request_request_approver_status_view: {
         Row: {
           approvers: Json | null

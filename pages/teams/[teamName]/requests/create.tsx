@@ -20,7 +20,7 @@ import { ReactElement, useState } from "react";
 import {
   createRequest,
   CreateRequestParams,
-  getFormApprovers,
+  getFormApproverList,
   getFormByTeamAndFormName,
 } from "@/utils/queries";
 import { showNotification } from "@mantine/notifications";
@@ -129,10 +129,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
   if (!ctx.query.teamName || !ctx.query.form) {
     return {
-      redirect: {
-        destination: "/400",
-        permanent: false,
-      },
+      notFound: true,
     };
   }
 
@@ -144,14 +141,11 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
   if (form.length === 0) {
     return {
-      redirect: {
-        destination: "/404",
-        permanent: false,
-      },
+      notFound: true,
     };
   }
 
-  const formApprovers = await getFormApprovers(
+  const formApprovers = await getFormApproverList(
     supabaseClient,
     form[0].form_id as number
   );
