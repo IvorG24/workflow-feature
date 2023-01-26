@@ -1,15 +1,17 @@
 import { Group, Text, UnstyledButton } from "@mantine/core";
 import { toLower } from "lodash";
 import { useRouter } from "next/router";
+import { Dispatch, SetStateAction } from "react";
 
 export type NavbarLinkProps = {
   //   icon: React.ReactNode;
   //   color: string;
   label: string;
+  setOpened: Dispatch<SetStateAction<boolean>>;
 };
 
 // function NavbarLink({ icon, color, label }: NavbarLinkProps) {
-function NavbarLink({ label }: NavbarLinkProps) {
+function NavbarLink({ label, setOpened }: NavbarLinkProps) {
   const router = useRouter();
 
   return (
@@ -29,13 +31,19 @@ function NavbarLink({ label }: NavbarLinkProps) {
               : theme.colors.gray[0],
         },
       })}
+      // onClick={() =>
+      //   router.push(`/teams/${toLower(router.query.teamName as string)}/forms/${toLower(label)}/edit`)
+      // }
+      onClick={async () => {
+        await router.push(
+          `/teams/${toLower(
+            router.query.teamName as string
+          )}/requests/create?form=${toLower(label)}`
+        );
+        setOpened(false);
+      }}
     >
-      <Group
-        position="apart"
-        onClick={() =>
-          router.push(`/teams/${toLower(router.query.teamName as string)}/forms/${toLower(label)}/edit`)
-        }
-      >
+      <Group position="apart">
         {/* <ThemeIcon color={color} variant="light">
           {icon}
         </ThemeIcon> */}

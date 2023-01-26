@@ -1,37 +1,33 @@
 import Layout from "@/components/Layout/Layout";
-import { createStyles, Text } from "@mantine/core";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { InferGetServerSidePropsType } from "next";
+import Request from "@/components/RequestPage/Request";
+import { getRequest, getRequestApproverList } from "@/utils/queries";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
-type RequestPageProps = { sampleProp: string };
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabaseClient = createServerSupabaseClient(ctx);
 
-const useStyles = createStyles((theme) => ({}));
+  const promises = [
+    getRequest(supabaseClient, Number(ctx.query.requestId)),
+    getRequestApproverList(supabaseClient, Number(ctx.query.requestId)),
+  ];
 
-export const getServerSideProps = async () => {
-  // const res = await fetch('https://.../data')
-  const res = { sampleProp: "sample" };
-  // const data: RequestPageProps = await res.json();
-  const data: RequestPageProps = res;
+  const [request, approverList] = await Promise.all(promises);
 
   return {
     props: {
-      data,
+      request,
+      approverList,
     },
   };
 };
 
 const RequestPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ data }) => {
-  // will resolve data to type Data
-  const supabaseClient = useSupabaseClient();
-  const user = useUser();
-
-  const { classes, cx } = useStyles();
-
-  return <Text>Resize app to see responsive navbar in action</Text>;
+> = ({ request, approverList }) => {
+  return <Request request={request} approverList={approverList} />;
 };
 
 export default RequestPage;

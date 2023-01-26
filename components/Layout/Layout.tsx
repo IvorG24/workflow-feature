@@ -44,7 +44,7 @@ function Layout({ children }: LayoutProps) {
         if (!isOnboarded) router.push("/onboarding");
         setIsLoading(false);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         showNotification({
           title: "Error",
           message: "Something went wrong. Please try again later.",
@@ -96,6 +96,7 @@ function Layout({ children }: LayoutProps) {
         );
 
         setFormList(data);
+        setFilteredFormList(data);
         setIsFetchingFormList(false);
       } catch (error) {
         console.error(error);
@@ -109,6 +110,10 @@ function Layout({ children }: LayoutProps) {
   }, [router.query.teamName]);
 
   const handleSearchForm = (value: string) => {
+    if (!value) {
+      setFilteredFormList(formList);
+      return;
+    }
     // Filter form list on key change using keyword.
     const data = formList.filter((form) =>
       form?.form_name?.toLowerCase().includes(value.toLowerCase())

@@ -1,18 +1,18 @@
 import Layout from "@/components/Layout/Layout";
-import { createStyles, Text } from "@mantine/core";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { InferGetServerSidePropsType } from "next";
+import RequestList from "@/components/RequestListPage/RequestList";
+import { getTeamRequestList } from "@/utils/queries";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
 
-type RequestListPageProps = { sampleProp: string };
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabaseClient = createServerSupabaseClient(ctx);
 
-const useStyles = createStyles((theme) => ({}));
-
-export const getServerSideProps = async () => {
-  // const res = await fetch('https://.../data')
-  const res = { sampleProp: "sample" };
-  // const data: RequestListPageProps = await res.json();
-  const data: RequestListPageProps = res;
+  const data = await getTeamRequestList(
+    supabaseClient,
+    ctx.query.teamName as string
+  );
 
   return {
     props: {
@@ -21,16 +21,10 @@ export const getServerSideProps = async () => {
   };
 };
 
-const RequestListPage: NextPageWithLayoutLayout<
+const RequestListPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
 > = ({ data }) => {
-  // will resolve data to type Data
-  const supabaseClient = useSupabaseClient();
-  const user = useUser();
-
-  const { classes, cx } = useStyles();
-
-  return <Text>Resize app to see responsive navbar in action</Text>;
+  return <RequestList requestList={data} />;
 };
 
 export default RequestListPage;

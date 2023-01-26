@@ -10,7 +10,7 @@ import {
   Text,
 } from "@mantine/core";
 import { IconHammer, IconSearch } from "@tabler/icons";
-import { toLower } from "lodash";
+import { startCase, toLower } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import NavbarLink from "./NavbarLink";
@@ -51,6 +51,7 @@ const useStyles = createStyles((theme) => ({
 
 function FormslyNavbar({
   opened,
+  setOpened,
   teamList,
   formList,
   handleSearchForm,
@@ -58,17 +59,19 @@ function FormslyNavbar({
   // const { classes } = useStyles();
   const router = useRouter();
 
-  const handleBuildForm = () => {
-    router.push(
+  const handleBuildForm = async () => {
+    await router.push(
       `/teams/${toLower(router.query.teamName as string)}/forms/build`
     );
+    setOpened(false);
   };
 
-  const handleChangeTeam = (teamName: string) => {
+  const handleChangeTeam = async (teamName: string) => {
     const team = teamList.find((team) => team.team_name === teamName);
     if (team) {
       // setActiveTeam(team);
-      router.push(`/teams/${toLower(team.team_name as string)}`);
+      await router.push(`/teams/${toLower(team.team_name as string)}`);
+      setOpened(false);
     }
   };
 
@@ -129,7 +132,11 @@ function FormslyNavbar({
         <Box py="md">
           {formList.map((form) => {
             return (
-              <NavbarLink label={form.form_name as string} key={form.form_id} />
+              <NavbarLink
+                label={startCase(form.form_name as string)}
+                key={form.form_id}
+                setOpened={setOpened}
+              />
             );
           })}
         </Box>

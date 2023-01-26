@@ -147,6 +147,22 @@ export type UserProfileTableInsert =
 export type UserProfileTableUpdate =
   Database["public"]["Tables"]["user_profile_table"]["Update"];
 
+// request_action_table
+export type RequestActionTableRow =
+  Database["public"]["Tables"]["request_action_table"]["Row"];
+export type RequestActionTableInsert =
+  Database["public"]["Tables"]["request_action_table"]["Insert"];
+export type RequestActionTableUpdate =
+  Database["public"]["Tables"]["request_action_table"]["Update"];
+
+// request_form_approver_table
+export type RequestFormApproverTableRow =
+  Database["public"]["Tables"]["request_form_approver_table"]["Row"];
+export type RequestFormApproverTableInsert =
+  Database["public"]["Tables"]["request_form_approver_table"]["Insert"];
+export type RequestFormApproverTableUpdate =
+  Database["public"]["Tables"]["request_form_approver_table"]["Update"];
+
 // request_form_fact_view
 export type RequestFormFactViewRow =
   Database["public"]["Views"]["request_form_fact_view"]["Row"];

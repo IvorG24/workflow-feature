@@ -1,20 +1,17 @@
-import {
-  getFormTemplateNameList,
-  GetFormTemplateNameList,
-} from "@/utils/queries";
+import { GetFormTemplateNameList, GetTeamMemberList, getTeamMemberList } from "@/utils/queries";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-
 import useAuth from "./useAuth";
 
-const useFetchFormTemplateNameList = (teamId: string) => {
-  const { user } = useAuth();
+const useFetchTeamMemberList = (teamName: string) => {
+  const { session } = useAuth();
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  const [formTemplateNameList, setFormTemplateNameList] =
-    useState<GetFormTemplateNameList>([]);
+  const [teamMemberList, setTeamMemberList] = useState<GetTeamMemberList>(
+    []
+  );
   const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
@@ -22,11 +19,12 @@ const useFetchFormTemplateNameList = (teamId: string) => {
       try {
         setIsFetching(true);
         if (!router.isReady) return;
-        if (!user) return;
+        if (!session) return;
+        if (!teamName) return;
 
-        const data = await getFormTemplateNameList(supabaseClient, teamId);
+        const data = await getTeamMemberList(supabaseClient, teamName);
 
-        setFormTemplateNameList(data);
+        setTeamMemberList(data);
         setIsFetching(false);
       } catch (error) {
         console.error(error);
@@ -37,9 +35,9 @@ const useFetchFormTemplateNameList = (teamId: string) => {
         });
       }
     })();
-  }, [supabaseClient, user, router, teamId]);
+  }, [supabaseClient, session, router, teamName]);
 
-  return { formTemplateNameList, setFormTemplateNameList, isFetching };
+  return { teamMemberList, setTeamMemberList, isFetching };
 };
 
-export default useFetchFormTemplateNameList;
+export default useFetchTeamMemberList;

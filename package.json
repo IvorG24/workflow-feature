@@ -51,6 +51,7 @@
     "react-dom": "18.2.0",
     "react-hook-form": "^7.39.4",
     "react-signature-canvas": "^1.0.6",
+    "uuid": "^9.0.0",
     "validator": "^13.7.0"
   },
   "devDependencies": {
@@ -69,6 +70,7 @@
     "@types/react-beforeunload": "^2.1.1",
     "@types/react-dom": "18.0.8",
     "@types/react-signature-canvas": "^1.0.2",
+    "@types/uuid": "^9.0.0",
     "@types/validator": "^13.7.10",
     "@typescript-eslint/eslint-plugin": "^5.42.1",
     "cypress": "^12.2.0",

@@ -60,6 +60,17 @@ export interface Database {
           notification_redirect_url?: string | null
         }
       }
+      request_action_table: {
+        Row: {
+          action_id: string
+        }
+        Insert: {
+          action_id: string
+        }
+        Update: {
+          action_id?: string
+        }
+      }
       request_comment_table: {
         Row: {
           comment_attachment_filepath: string | null
@@ -119,6 +130,26 @@ export interface Database {
           request_field_type?:
             | Database["public"]["Enums"]["request_field_type"]
             | null
+        }
+      }
+      request_form_approver_table: {
+        Row: {
+          form_approver_action_id: string | null
+          form_approver_form_id: number | null
+          form_approver_id: number
+          form_approver_user_id: string | null
+        }
+        Insert: {
+          form_approver_action_id?: string | null
+          form_approver_form_id?: number | null
+          form_approver_id?: never
+          form_approver_user_id?: string | null
+        }
+        Update: {
+          form_approver_action_id?: string | null
+          form_approver_form_id?: number | null
+          form_approver_id?: never
+          form_approver_user_id?: string | null
         }
       }
       request_form_fact_table: {
@@ -188,6 +219,32 @@ export interface Database {
           order_field_id_list?: number[] | null
           order_id?: never
           order_last_updated?: string | null
+        }
+      }
+      request_request_approver_action_table: {
+        Row: {
+          request_approver_action_action_id: string | null
+          request_approver_action_id: number
+          request_approver_action_is_approved: boolean | null
+          request_approver_action_request_id: number | null
+          request_approver_action_status_last_updated: string | null
+          request_approver_action_user_id: string | null
+        }
+        Insert: {
+          request_approver_action_action_id?: string | null
+          request_approver_action_id?: never
+          request_approver_action_is_approved?: boolean | null
+          request_approver_action_request_id?: number | null
+          request_approver_action_status_last_updated?: string | null
+          request_approver_action_user_id?: string | null
+        }
+        Update: {
+          request_approver_action_action_id?: string | null
+          request_approver_action_id?: never
+          request_approver_action_is_approved?: boolean | null
+          request_approver_action_request_id?: number | null
+          request_approver_action_status_last_updated?: string | null
+          request_approver_action_user_id?: string | null
         }
       }
       request_request_approver_table: {
@@ -410,6 +467,32 @@ export interface Database {
       }
     }
     Views: {
+      request_form_approver_action_view: {
+        Row: {
+          approvers: Json | null
+          form_id: number | null
+        }
+      }
+      request_form_approver_view: {
+        Row: {
+          action_id: string | null
+          form_approver_action_id: string | null
+          form_approver_form_id: number | null
+          form_approver_id: number | null
+          form_approver_user_id: string | null
+          form_created_at: string | null
+          form_id: number | null
+          form_name: string | null
+          user_avatar_filepath: string | null
+          user_created_at: string | null
+          user_email: string | null
+          user_first_name: string | null
+          user_id: string | null
+          user_last_name: string | null
+          user_signature_filepath: string | null
+          username: string | null
+        }
+      }
       request_form_fact_view: {
         Row: {
           field_id: number | null

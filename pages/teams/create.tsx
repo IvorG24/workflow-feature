@@ -30,6 +30,7 @@ const CreateTeamPage: NextPageWithLayout<
   const user = useUser();
 
   const { classes, cx } = useStyles();
+
   return <Text>Resize app to see responsive navbar in action</Text>;
 };
 
