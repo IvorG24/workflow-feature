@@ -109,6 +109,7 @@ const RequestList = () => {
                         borderBottom: "1px solid #E9E9E9",
                       }}
                       pb="sm"
+                      data-cy="request-item"
                     >
                       <Flex gap="sm" w="100%">
                         <Checkbox value={data.request_title as string} />

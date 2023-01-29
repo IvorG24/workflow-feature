@@ -66,6 +66,7 @@ const QuestionItemBuilder: FC<Props> = (props) => {
           withBorder
           shadow="sm"
           mb="md"
+          data-cy="question-container"
         >
           {!isSection ? (
             <>
@@ -124,6 +125,7 @@ const QuestionItemBuilder: FC<Props> = (props) => {
                             ?.expected_response_type?.message
                         }
                         disabled={isInEditmode}
+                        data-cy="response-type"
                       />
                     )}
                   />

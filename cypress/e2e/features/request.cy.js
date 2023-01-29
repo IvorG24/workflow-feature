@@ -1,77 +1,177 @@
-import { user } from "../../support/e2e";
+import { testfile, userA, userB, userC, userD } from "../../support/e2e";
 
-function selectStatus(status) {
-  cy.get("[data-cy='request-select-status']").click();
-  cy.get(".mantine-Select-item").contains(status).click();
-  cy.wait(2000);
-}
+const titles = [
+  "The Great Gatsby",
+  "To Kill a Mockingbird",
+  "The Lord of the Rings",
+  "The Little Prince",
+  "Pride and Prejudice",
+  "The Hobbit",
+  "The Diary of a Young Girl",
+  "The Catcher in the Rye",
+  "The Picture of Dorian Gray",
+  "One Hundred Years of Solitude",
+  "The Iliad",
+  "The Odyssey",
+  "Don Quixote",
+  "The Divine Comedy",
+  "The Stranger",
+  "The Metamorphosis",
+  "The Brothers Karamazov",
+  "War and Peace",
+  "The Count of Monte Cristo",
+];
+
+const randomIndexA = Math.floor(Math.random() * titles.length);
+const randomIndexB = Math.floor(Math.random() * titles.length);
+const randomTitleA = titles[randomIndexA];
+const randomTitleB = titles[randomIndexB];
 
 describe("Requests", () => {
-  it("Create and Delete Request", () => {
-    cy.loginViaUi({ email: "sejidi1552@irebah.com", password: "test123123" });
-    // Select a team in which the login user is a Member or Purchaser
-    // This is to avoid getting the warning "This team doesn't have any possible approvers yet."
-    cy.selectTeam("ABC TEAM");
+  it("Create Request without Attachment", () => {
+    cy.loginViaUi(userC);
     cy.get("[data-cy='navbar-forms-dropdown']").click();
-    cy.wait(500);
-    // Create 3 requests to perform delete, approve, and reject
-    Cypress._.times(3, () => {
-      cy.get("[data-cy='navbar-createRequest']").first().click();
-      cy.get("[data-cy='request-title']").type("TEST");
-      cy.get("[data-cy='request-description']").type("Lorem ipsum");
-      cy.get("[data-cy='request-submit']").click();
-      cy.wait(2000);
-      cy.contains("Request Created");
-    });
-    // Delete a Request
-    cy.get("[data-cy='navbar-requests']").click();
-    selectStatus("Pending");
-    cy.get("[data-cy='request-status']").first().contains("Pending").click();
-    cy.get("[data-cy='request-delete']").click();
-    cy.get("button").contains("Confirm").click();
-    cy.contains("Success!");
+    cy.get("[data-cy='create-request']").last().click();
+    // Request Details
+    cy.get("[data-cy='select-approver']").click();
+    cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
+    cy.get("[data-cy='select-purchaser']").click();
+    cy.get(".mantine-Select-item").contains(userD.email.split("@")[0]).click();
+    cy.get("[data-cy='request-title']").type(randomTitleA);
+    cy.get("[data-cy='request-description']").type("Lorem ipsum");
+    // Request Fields
+    cy.get("[data-cy='text-field']").first().type("Hello Earth");
+    cy.get("[data-cy='number-field']").type(10);
+    cy.get("[data-cy='date-field']").type("2023-02-28", { force: true });
+    cy.get("[data-cy='daterange-field']")
+      .invoke("val", [
+        new Date("February 28, 2023"),
+        new Date("December 28, 2023"),
+      ])
+      .trigger("change");
+    cy.get("[data-cy='text-field']").last().type(userC.email);
+    cy.get("[data-cy='multiselect-field']").click();
+    cy.get(".mantine-MultiSelect-item").first().click();
+    cy.contains("50%").click();
+    cy.get("[data-cy='select-field']").click();
+    cy.get(".mantine-Select-item").first().click();
+    cy.get("[data-cy='time-field']").type("01:30");
+
+    cy.get("[data-cy='request-submit']").click();
+    cy.contains(randomTitleA);
   });
-  it("Approve and Reject Request", () => {
-    cy.loginViaUi(user);
-    cy.selectTeam("ABC TEAM");
-    cy.get("[data-cy='navbar-requests']").click();
-    selectStatus("Pending");
-    // Approve a Pending request
-    cy.get("[data-cy='request-status']").first().contains("Pending").click();
-    cy.get("[data-cy='request-approve']").click();
-    cy.get("button").contains("Confirm").click();
-    cy.contains("Success!");
-    cy.wait(2000);
-    // Reject a Request
-    cy.get("[data-cy='request-status']").first().contains("Pending").click();
-    cy.get("[data-cy='request-reject']").click();
-    cy.get("button").contains("Confirm").click();
-    cy.contains("Success!");
+  it("Create Request with attachment, purchaser, and add comment", () => {
+    cy.loginViaUi(userC);
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").last().click();
+    // Request Details
+    cy.get("[data-cy='select-approver']").click();
+    cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
+    cy.get("[data-cy='select-purchaser']").click();
+    cy.get(".mantine-Select-item").contains(userD.email.split("@")[0]).click();
+    cy.get("[data-cy='request-title']").type(randomTitleB);
+    cy.get("[data-cy='request-description']").type("Lorem ipsum");
+    cy.get("input[type='file']").selectFile(testfile, { force: true });
+    // Request Fields
+    cy.get("[data-cy='text-field']").first().type("Hello World");
+    cy.get("[data-cy='number-field']").type(10);
+    cy.get("[data-cy='date-field']").type("2023-02-28", { force: true });
+    // cy.get("[data-cy='daterange-field']")
+    //   .invoke("val", [
+    //     new Date("February 28, 2023"),
+    //     new Date("December 28, 2023"),
+    //   ])
+    //   .trigger("change");
+    cy.get("[data-cy='text-field']").last().type(userC.email);
+    cy.get("[data-cy='multiselect-field']").click();
+    cy.get(".mantine-MultiSelect-item").first().click();
+    cy.contains("50%").click();
+    cy.get("[data-cy='select-field']").click();
+    cy.get(".mantine-Select-item").first().click();
+    cy.get("[data-cy='time-field']").type("01:30");
+
+    cy.get("[data-cy='request-submit']").click();
+    cy.contains(randomTitleB);
+
+    const randomStringA = Math.random().toString(36).slice(2, 10);
+    const randomStringB = Math.random().toString(36).slice(2, 10);
+    // comment with attachment
+    cy.get("[data-cy='request-item']").first().click();
+    cy.get("[data-cy='show-comments']").click();
+    cy.get("[data-cy='comment-content']").type(randomStringA);
+    cy.get("input[type='file']").selectFile(testfile, { force: true });
+    cy.get("[data-cy='submit']").click();
+    cy.get("[data-cy='comment']").contains(randomStringA);
+    // comment without attachment
+    cy.get("[data-cy='comment-content']").type(randomStringB);
+    cy.get("[data-cy='submit']").click();
+    cy.get("[data-cy='comment']").contains(randomStringB);
   });
-  it("Add, Edit, and Delete Comment", () => {
-    const comment = "Test comment";
-    cy.loginViaUi(user);
-    cy.selectTeam("ABC TEAM");
+  it("Download a Pending request", () => {
+    cy.loginViaUi(userA);
     cy.get("[data-cy='navbar-requests']").click();
-    cy.get("[data-cy='request-status']").first().click();
-    // Create Comment
-    cy.get("[data-cy='request-input-comment']").type(comment);
-    cy.get("[data-cy='request-submit-comment']").click();
-    cy.contains("Success!");
-    // Edit Comment
-    cy.contains(comment)
-      .get("[data-cy='request-comment-options']")
-      .as("testCommentOptions")
-      .click();
-    cy.get("[data-cy='request-edit-comment']").click();
-    cy.get("[data-cy='request-input-edit-comment']").type(
-      `{selectAll}{backspace}Edited: ${comment}`
-    );
-    cy.get("[data-cy='request-submit-edited-comment']").click();
-    cy.contains("Success!");
-    // Delete Comment
-    cy.get("@testCommentOptions").click();
-    cy.get("[data-cy='request-delete-comment']").click();
-    cy.contains("Success!");
+    cy.get("[data-cy='request-item']").contains(randomTitleA).click();
+    cy.get("[data-cy='download-request']").click();
+    cy.contains("Sorry!");
+  });
+  it("Approve Request", () => {
+    cy.loginViaUi(userB);
+    cy.get("[data-cy='navbar-requests']").click();
+    cy.get("[data-cy='request-item']").contains(randomTitleA).click();
+    cy.get("[data-cy='approve-request']").click();
+    cy.get("[data-cy='request-status']")
+      .children()
+      .should("have.text", "approved");
+    cy.get("[data-cy='request-item']").contains(randomTitleB).click();
+    cy.get("[data-cy='approve-request']").click();
+    cy.get("[data-cy='request-status']")
+      .children()
+      .should("have.text", "approved");
+  });
+  it("Purchase Request", () => {
+    cy.loginViaUi(userD);
+    cy.get("[data-cy='request-item']").contains(randomTitleB).click();
+    cy.get("[data-cy='purchase-request']").click();
+    cy.get("[data-cy='request-status']")
+      .children()
+      .should("have.text", "purchased");
+  });
+  it("Test Filters - Search, Form Type, Status", () => {
+    cy.loginViaUi(userA);
+    cy.get("[data-cy='navbar-requests']").click();
+    cy.get("[data-cy='search-filter']").type(randomTitleB);
+    cy.contains(randomTitleB);
+    cy.get("[data-cy='form-filter']").click();
+    cy.get(".mantine-Select-item").first().click();
+    cy.get("[data-cy='status-filter']").click();
+    cy.get(".mantine-Select-item").contains("Approved").click();
+  });
+  it("Test Draft State - Reload", () => {
+    cy.loginViaUi(userC);
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='select-approver']").click();
+    cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
+    cy.get("[data-cy='request-title']").type(randomTitleA);
+    cy.get("[data-cy='request-description']").type("Lorem ipsum");
+    cy.reload();
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='draft-status']").should("be.visible");
+  });
+  it("Test Draft State - Close Tab/Window - Part 1", () => {
+    cy.loginViaUi(userD);
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='select-approver']").click();
+    cy.get(".mantine-Select-item").contains(userB.email.split("@")[0]).click();
+    cy.get("[data-cy='request-title']").type(randomTitleA);
+    cy.get("[data-cy='request-description']").type("Lorem ipsum");
+  });
+  it("Test Draft State - Close Tab/Window - Part 2", () => {
+    cy.loginViaUi(userD);
+    cy.get("[data-cy='navbar-forms-dropdown']").click();
+    cy.get("[data-cy='create-request']").first().click();
+    cy.get("[data-cy='draft-status']").should("be.visible");
   });
 });

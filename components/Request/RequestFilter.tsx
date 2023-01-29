@@ -127,6 +127,7 @@ const RequestFilter = () => {
           </ActionIcon>
         }
         size="xs"
+        data-cy="search-filter"
       />
       <Select
         clearable
@@ -135,6 +136,7 @@ const RequestFilter = () => {
         value={selectedForm}
         onChange={handleFilterBySelectedForm}
         size="xs"
+        data-cy="form-filter"
       />
       <Select
         clearable
@@ -142,7 +144,7 @@ const RequestFilter = () => {
         data={statusOptions}
         value={status}
         onChange={handleFilterByStatus}
-        data-cy="request-select-status"
+        data-cy="status-filter"
         size="xs"
       />
       <ExportToCsv />

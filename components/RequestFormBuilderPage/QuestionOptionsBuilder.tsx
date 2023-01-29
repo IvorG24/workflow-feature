@@ -2,7 +2,12 @@ import { AddCircle } from "@/components/Icon";
 import { FormRequest } from "@/utils/types";
 import { Flex, Select } from "@mantine/core";
 import { FC, memo, useCallback, useEffect, useState } from "react";
-import { Control, useFieldArray, UseFormGetValues, useFormState } from "react-hook-form";
+import {
+  Control,
+  useFieldArray,
+  UseFormGetValues,
+  useFormState,
+} from "react-hook-form";
 
 type Props = {
   control: Control<FormRequest>;
@@ -82,6 +87,7 @@ const QuestionOptionsBuilder: FC<Props> = (props) => {
       description="Select the item to remove from the list"
       error={errors.questions?.[questionIndex]?.option?.root?.message}
       disabled={isInEditMode}
+      data-cy="select-field"
     />
   );
 };

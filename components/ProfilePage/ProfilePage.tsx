@@ -169,6 +169,7 @@ const Profile = () => {
                 color="dark"
                 mt="md"
                 mr="md"
+                data-cy="edit-profile"
               >
                 Edit Profile
               </Button>
