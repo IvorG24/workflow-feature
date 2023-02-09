@@ -1,43 +1,56 @@
 import Layout from "@/components/Layout/Layout";
-import { getTeamMemberList } from "@/utils/queries";
-import { createStyles, JsonInput } from "@mantine/core";
+import { getUserTeamList, isUserOnboarded } from "@/utils/queries";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { NextPageWithLayout } from "pages/_app";
 import { ReactElement } from "react";
-import { NextPageWithLayout } from "./_app";
-
-type IndexPageProps = { sampleProp: string };
-
-const useStyles = createStyles((theme) => ({}));
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabaseClient = createServerSupabaseClient(ctx);
 
-  const teamName = `${ctx.query?.teamName}`;
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
 
-  const teamMemberList = await getTeamMemberList(supabaseClient, teamName);
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/authentication",
+        permanent: false,
+      },
+    };
+  }
+
+  const isOnboarded = await isUserOnboarded(supabaseClient, session?.user?.id);
+
+  if (!isOnboarded) {
+    return {
+      redirect: {
+        destination: "/onboarding",
+        permanent: false,
+      },
+    };
+  }
+
+  const teamList = await getUserTeamList(
+    supabaseClient,
+    session?.user?.id as string
+  );
+
+  const firstTeam = teamList[0].team_name;
 
   return {
-    props: {
-      teamMemberList,
+    redirect: {
+      destination: `/teams/${firstTeam}/requests`,
+      permanent: false,
     },
   };
-}
+};
 
 const IndexPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ teamMemberList }) => {
-  return (
-    <JsonInput
-      label="Your package.json"
-      placeholder="Textarea will autosize to fit the content"
-      validationError="Invalid json"
-      formatOnBlur
-      autosize
-      value={JSON.stringify(teamMemberList)}
-      minRows={4}
-    />
-  );
+> = () => {
+  return <></>;
 };
 
 export default IndexPage;

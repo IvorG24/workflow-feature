@@ -23,7 +23,7 @@ function CreateTeamPage() {
 
   useEffect(() => {
     if (!router.isReady) return;
-    if (!user?.id) router.push("/sign-in");
+    if (!user?.id) router.push("/authentication");
   }, [user, router.isReady]);
 
   const handleCreateTeam = async (userId: string, teamName: string) => {

@@ -23,6 +23,7 @@ export type PolymorphicFieldInputProps = {
   handleUpdateFieldValue?: (id: string, value: string) => void;
 };
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 interface ItemProps extends React.ComponentPropsWithoutRef<"div"> {
   value: string;
   description: string;
@@ -127,7 +128,8 @@ function PolymorphicFieldInput({
       size="xs"
       value={value as unknown as [Date, Date]}
       onChange={(value) => {
-        if (handleUpdateFieldValue) handleUpdateFieldValue(id, value as unknown as string);
+        if (handleUpdateFieldValue)
+          handleUpdateFieldValue(id, value as unknown as string);
       }}
       disabled={isDisabled}
     />

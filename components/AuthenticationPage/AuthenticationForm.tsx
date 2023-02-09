@@ -1,9 +1,8 @@
 import {
   Anchor,
   Button,
-  Checkbox,
+  Center,
   Container,
-  Divider,
   Group,
   LoadingOverlay,
   Paper,
@@ -17,15 +16,9 @@ import { useForm } from "@mantine/form";
 import { useToggle } from "@mantine/hooks";
 import { showNotification } from "@mantine/notifications";
 import { useSessionContext } from "@supabase/auth-helpers-react";
-import { Provider } from "@supabase/supabase-js";
-import { startCase } from "lodash";
+import { lowerCase, startCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import {
-  FacebookButton,
-  GoogleButton,
-  TwitterButton,
-} from "./SocialButtonList/SocialButtonList";
 
 type AuthenticationFormValues = {
   email: string;
@@ -76,6 +69,24 @@ const AuthenticationForm = (props: PaperProps) => {
         });
         if (error) throw error;
       } else {
+        // Check if email exists first before signing up
+        const { data: checkEmailExistsData, error: checkEmailExistsError } =
+          await supabaseClient
+            .rpc("check_email_exists", { user_email: email })
+            .select()
+            .single();
+
+        if (checkEmailExistsError) throw checkEmailExistsError;
+
+        if (checkEmailExistsData) {
+          showNotification({
+            title: "Error",
+            message: "Email already exists. Please try another email.",
+            color: "red",
+          });
+          return;
+        }
+
         const { error } = await supabaseClient.auth.signUp({
           email,
           password,
@@ -84,44 +95,48 @@ const AuthenticationForm = (props: PaperProps) => {
       }
 
       await router.push("/");
-      setIsVerifying(false);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
       showNotification({
         title: "Error",
-        message: type === "signIn" ? "Sign In failed" : "Registration failed",
+        message: (error as Error).message,
         color: "red",
       });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
-  const signInWithProvider = async (provider: Provider) => {
-    try {
-      setIsVerifying(true);
-      const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: provider,
-      });
-      if (error) throw error;
-      setIsVerifying(false);
-    } catch (e) {
-      console.error(e);
-      showNotification({
-        title: "Error",
-        message: type === "signIn" ? "Sign In failed" : "Registration failed",
-        color: "red",
-      });
-    }
-  };
+  // * Archived
+  // const signInWithProvider = async (provider: Provider) => {
+  //   try {
+  //     setIsVerifying(true);
+  //     const { error } = await supabaseClient.auth.signInWithOAuth({
+  //       provider: provider,
+  //     });
+  //     if (error) throw error;
+  //     setIsVerifying(false);
+  //   } catch (e) {
+  //     console.error(e);
+  //     showNotification({
+  //       title: "Error",
+  //       message: type === "signIn" ? "Sign In failed" : "Registration failed",
+  //       color: "red",
+  //     });
+  //   }
+  // };
 
   return (
-    <Container p="xl" size="sm">
-      <LoadingOverlay visible={isLoading || isVerifying} overlayBlur={2} />
-      <Paper radius="md" p="xl" withBorder {...props}>
-        <Text size="lg" weight={500}>
-          Welcome to Mantine, {type} with
-        </Text>
+    <Center h="90vh">
+      <Container p="xl" size="sm">
+        <LoadingOverlay visible={isLoading || isVerifying} overlayBlur={2} />
+        <Paper radius="md" p="xl" withBorder {...props}>
+          <Text size="lg" weight={500} mb="xl">
+            Welcome to Formsly, {lowerCase(startCase(type))} with
+          </Text>
 
-        <Group grow mb="md" mt="md">
+          {/* // * Archived */}
+          {/* <Group grow mb="md" mt="md">
           <GoogleButton
             onClick={() => signInWithProvider("google")}
             radius="xl"
@@ -146,36 +161,37 @@ const AuthenticationForm = (props: PaperProps) => {
           label="Or continue with email"
           labelPosition="center"
           my="lg"
-        />
+        /> */}
 
-        <form onSubmit={form.onSubmit(handleOnSubmit)}>
-          <Stack>
-            <TextInput
-              required
-              label="Email"
-              placeholder="hello@mantine.dev"
-              value={form.values.email}
-              onChange={(event) =>
-                form.setFieldValue("email", event.currentTarget.value)
-              }
-              error={form.errors.email && "Invalid email"}
-            />
+          <form onSubmit={form.onSubmit(handleOnSubmit)}>
+            <Stack>
+              <TextInput
+                required
+                label="Email"
+                placeholder="hello@formsly.io"
+                value={form.values.email}
+                onChange={(event) =>
+                  form.setFieldValue("email", event.currentTarget.value)
+                }
+                error={form.errors.email && "Invalid email"}
+              />
 
-            <PasswordInput
-              required
-              label="Password"
-              placeholder="Your password"
-              value={form.values.password}
-              onChange={(event) =>
-                form.setFieldValue("password", event.currentTarget.value)
-              }
-              error={
-                form.errors.password &&
-                "Password should include at least 6 characters"
-              }
-            />
+              <PasswordInput
+                required
+                label="Password"
+                placeholder="Your password"
+                value={form.values.password}
+                onChange={(event) =>
+                  form.setFieldValue("password", event.currentTarget.value)
+                }
+                error={
+                  form.errors.password &&
+                  "Password should include at least 6 characters"
+                }
+              />
 
-            {type === "register" && (
+              {/* // * Archived */}
+              {/* {type === "register" && (
               <Checkbox
                 label="I accept terms and conditions"
                 checked={form.values.terms}
@@ -183,26 +199,27 @@ const AuthenticationForm = (props: PaperProps) => {
                   form.setFieldValue("terms", event.currentTarget.checked)
                 }
               />
-            )}
-          </Stack>
+            )} */}
+            </Stack>
 
-          <Group position="apart" mt="xl">
-            <Anchor
-              component="button"
-              type="button"
-              color="dimmed"
-              onClick={() => toggle()}
-              size="xs"
-            >
-              {type === "register"
-                ? "Already have an account? Sign In"
-                : "Don't have an account? Register"}
-            </Anchor>
-            <Button type="submit">{startCase(type)}</Button>
-          </Group>
-        </form>
-      </Paper>
-    </Container>
+            <Group position="apart" mt="xl">
+              <Anchor
+                component="button"
+                type="button"
+                color="dimmed"
+                onClick={() => toggle()}
+                size="xs"
+              >
+                {type === "register"
+                  ? "Already have an account? Sign In"
+                  : "Don't have an account? Register"}
+              </Anchor>
+              <Button type="submit">{startCase(type)}</Button>
+            </Group>
+          </form>
+        </Paper>
+      </Container>
+    </Center>
   );
 };
 

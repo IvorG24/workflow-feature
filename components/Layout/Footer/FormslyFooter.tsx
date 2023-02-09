@@ -2,7 +2,7 @@ import { Button, createStyles, Footer, MediaQuery } from "@mantine/core";
 import { IconBallpen, IconChartBar, IconPlant } from "@tabler/icons";
 import { useRouter } from "next/router";
 
-const useStyles = createStyles((theme) => ({
+const useStyles = createStyles(() => ({
   buttonGroup: {
     justifyContent: "center",
   },

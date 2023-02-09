@@ -49,7 +49,7 @@ export default function FormListTable({ data }: FormListTableProps) {
   const toggleRow = (id: string) => setSelection(id);
   const [isEditingForm, setIsEditingForm] = useState("");
 
-  const rows = data.map((item, index) => {
+  const rows = data.map((item) => {
     const selected = selection === item.id;
 
     return (

@@ -20,8 +20,6 @@ import {
   UserProfileTableInsert,
 } from "./types";
 
-const PAGE_SIZE = 15;
-
 export type GetTeamFormTemplateListFilter = {
   keyword: string;
   isHiddenOnly: boolean;
@@ -310,34 +308,25 @@ export const isUserOnboarded = async (
   userId: string
 ) => {
   try {
-    const promises = [
-      supabaseClient
+    const { data: userProfileData, error: userProfileError } =
+      await supabaseClient
         .from("user_profile_table")
-        // .select("*", { count: "exact", head: true })
         .select()
         .eq("user_id", userId)
-        .maybeSingle(),
-      supabaseClient
-        .from("team_member_table")
-        // .select("*", { count: "exact", head: true })
-        .select()
-        .eq("team_member_user_id", userId)
-        .maybeSingle(),
-    ];
+        .maybeSingle();
 
-    const [userProfile, teamList] = await Promise.all(promises);
+    const { data: teamListData, error: teamListError } = await supabaseClient
+      .from("team_member_table")
+      .select()
+      .eq("team_member_user_id", userId)
+      .limit(1)
+      .maybeSingle();
 
-    if (userProfile.error) throw userProfile.error;
-    if (teamList.error) throw teamList.error;
+    if (userProfileError) throw userProfileError;
+    if (teamListError) throw teamListError;
 
-    if (!userProfile?.data) return false;
-    if (!teamList?.data) return false;
-
-    // if (!userProfile.count) return false;
-    // if (!teamList.count) return false;
-
-    // if (userProfile.count === 0) return false;
-    // if (teamList.count === 0) return false;
+    if (!userProfileData) return false;
+    if (!teamListData) return false;
 
     return true;
   } catch (error) {
@@ -730,11 +719,19 @@ export const createRequest = async (
 };
 export type CreateRequest = Awaited<ReturnType<typeof createRequest>>;
 
+export type GetTeamRequestListFilter = {
+  keyword?: string;
+  mainStatus?: RequestStatus;
+  requesterUserId?: string;
+  approverUserId?: string;
+  sort?: "asc" | "desc";
+  range?: [number, number];
+  pendingOnly?: boolean;
+};
 export const getTeamRequestList = async (
   supabaseClient: SupabaseClient<Database>,
-  teamName: string
-  // range = [0, 15],
-  // filter?: Partial<Filter>
+  teamName: string,
+  filter?: GetTeamRequestListFilter
 ) => {
   try {
     const { data: team, error: teamError } = await supabaseClient
@@ -745,37 +742,47 @@ export const getTeamRequestList = async (
 
     if (teamError) throw teamError;
 
-    // const { data, error } = await supabaseClient
-    //   .from("request_request_distinct_view")
-    //   .select()
-    //   .eq("team_id", team.team_id)
-    //   .is("request_is_disabled", false)
-    //   .order("request_date_created", { ascending: false })
-    //   .range(range[0], range[1]);
-
     let query = supabaseClient
       .from("request_request_distinct_view")
       .select()
       .eq("team_id", team.team_id);
 
-    // if (filter) {
-    //   if (filter.keyword) {
-    //     query = query.ilike("request_title", `%${filter.keyword}%`);
-    //     query = query.ilike("request_description", `%${filter.keyword}%`);
-    //   }
-    //   if (filter.mainStatus) {
-    //     query = query.eq("status_id", filter.mainStatus);
-    //   }
-    //   if (filter.form) {
-    //     query = query.eq("form_name", filter.form);
-    //   }
-    //   if (filter.requester) {
-    //     query = query.eq("username", filter.requester);
-    //   }
-    // }
+    if (filter?.keyword) {
+      // Reference: https://github.com/supabase/supabase/discussions/6778
+      // if (searchText !== "") {
+      //   const wordOne = searchText.trim().split(" ").at(0);
+      //   const wordTwo = searchText.trim().split(" ").at(1);
+      //   console.log({ wordOne, wordTwo });
+      //   query = query.or(
+      //     `or(first_name.ilike.%${wordOne}%,last_name.ilike.%${wordTwo}%),and(first_name.ilike.%${wordTwo}%,last_name.ilike.%${wordOne}%)`
+      //   );
+      // }
+      // search in request_title, request_description
+      query = query.or(
+        `request_title.ilike.%${filter.keyword}%,request_description.ilike.%${filter.keyword}%`
+      );
+    }
+    if (filter?.mainStatus) {
+      query = query.eq("form_fact_request_status_id", filter.mainStatus);
+    }
+    if (filter?.requesterUserId) {
+      query = query.eq("user_id", filter.requesterUserId);
+    }
 
     query = query.is("request_is_disabled", false);
-    // .range(range[0], range[1]);
+
+    if (filter?.pendingOnly) {
+      query = query.eq("form_fact_request_status_id", "pending");
+    }
+
+    if (filter?.range) {
+      query = query.range(filter.range[0], filter.range[1]);
+    }
+    if (filter?.sort) {
+      query = query.order("request_date_created", {
+        ascending: filter.sort === "asc",
+      });
+    }
 
     const { data, error } = await query;
 
@@ -787,6 +794,76 @@ export const getTeamRequestList = async (
   }
 };
 export type GetTeamRequestList = Awaited<ReturnType<typeof getTeamRequestList>>;
+
+export type GetTeamRequestListCountFilter = {
+  keyword?: string;
+  mainStatus?: RequestStatus;
+  requesterUserId?: string;
+  approverUserId?: string;
+  sort?: "asc" | "desc";
+  range?: [number, number];
+  pendingOnly?: boolean;
+};
+export const getTeamRequestListCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamName: string,
+  filter?: GetTeamRequestListCountFilter
+) => {
+  try {
+    const { data: team, error: teamError } = await supabaseClient
+      .from("team_table")
+      .select("team_id")
+      .eq("team_name", teamName)
+      .single();
+
+    if (teamError) throw teamError;
+
+    let query = supabaseClient
+      .from("request_request_distinct_view")
+      .select("*", { count: "exact", head: true })
+      .eq("team_id", team.team_id);
+
+    if (filter?.keyword) {
+      // Reference: https://github.com/supabase/supabase/discussions/6778
+      // if (searchText !== "") {
+      //   const wordOne = searchText.trim().split(" ").at(0);
+      //   const wordTwo = searchText.trim().split(" ").at(1);
+      //   console.log({ wordOne, wordTwo });
+      //   query = query.or(
+      //     `or(first_name.ilike.%${wordOne}%,last_name.ilike.%${wordTwo}%),and(first_name.ilike.%${wordTwo}%,last_name.ilike.%${wordOne}%)`
+      //   );
+      // }
+      // search in request_title, request_description
+      query = query.or(
+        `request_title.ilike.%${filter.keyword}%,request_description.ilike.%${filter.keyword}%`
+      );
+    }
+    if (filter?.mainStatus) {
+      query = query.eq("form_fact_request_status_id", filter.mainStatus);
+    }
+    if (filter?.requesterUserId) {
+      query = query.eq("user_id", filter.requesterUserId);
+    }
+
+    query = query.is("request_is_disabled", false);
+
+    if (filter?.pendingOnly) {
+      query = query.eq("form_fact_request_status_id", "pending");
+    }
+
+    const { count, error } = await query;
+
+    if (error) throw error;
+
+    return count || 0;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetTeamRequestListCount = Awaited<
+  ReturnType<typeof getTeamRequestListCount>
+>;
 
 export const getRequest = async (
   supabaseClient: SupabaseClient<Database>,
@@ -811,13 +888,13 @@ export type GetRequest = Awaited<ReturnType<typeof getRequest>>;
 
 export const getRequestApproverList = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number
+  requestIdList: number[]
 ) => {
   try {
     const { data, error } = await supabaseClient
       .from("request_request_approver_action_view")
       .select()
-      .eq("request_id", requestId)
+      .in("request_id", requestIdList)
       .eq("request_is_disabled", false)
       .eq("request_is_draft", false);
 
@@ -1443,3 +1520,26 @@ export const updateFormTemplateVisbility = async (
 export type UpdateFormTemplateVisbility = Awaited<
   ReturnType<typeof updateFormTemplateVisbility>
 >;
+
+export const isRequestCancelled = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_table")
+      .select()
+      .eq("request_id", requestId)
+      .is("request_is_disabled", false)
+      .is("request_is_cancelled", true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return !!data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type IsRequestCancelled = Awaited<ReturnType<typeof isRequestCancelled>>;

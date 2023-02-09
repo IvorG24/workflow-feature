@@ -20,6 +20,7 @@ export type TeamButtonProps = {
 };
 
 // https://mantine.dev/core/select/
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 interface TeamButtonItem extends React.ComponentPropsWithoutRef<"div"> {
   image: string;
   label: string;

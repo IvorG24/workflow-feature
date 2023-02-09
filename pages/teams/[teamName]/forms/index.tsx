@@ -4,7 +4,6 @@ import {
   GetTeam,
   getTeamFormTemplateList,
   getTeamMember,
-  GetTeamMember,
   updateFormTemplateVisbility,
 } from "@/utils/queries";
 import {
@@ -18,10 +17,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import {
-  createServerSupabaseClient,
-  User,
-} from "@supabase/auth-helpers-nextjs";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconEye, IconEyeOff, IconSearch } from "@tabler/icons";
 import { DataTable } from "mantine-datatable";
@@ -43,8 +39,6 @@ export type Form = {
 
 export type FormListPagePageProps = {
   formList: Form[];
-  user: User;
-  userTeamInfo: GetTeamMember;
   team: GetTeam;
 };
 
@@ -55,13 +49,14 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     data: { session },
   } = await supabaseClient.auth.getSession();
 
-  if (!session)
+  if (!session) {
     return {
       redirect: {
-        destination: "/sign-in",
+        destination: "/authentication",
         permanent: false,
       },
     };
+  }
 
   const teamName = `${ctx.query?.teamName}`;
 
@@ -90,13 +85,18 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     user.id
   );
 
+  // if current user is not admin, return not found page
+  if (currentUserTeamInfo?.member_role_id === "member") {
+    return {
+      notFound: true,
+    };
+  }
+
   const team = await getTeam(supabaseClient, teamName);
 
   return {
     props: {
       formList,
-      user,
-      currentUserTeamInfo,
       team,
     },
   };
@@ -104,7 +104,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
 const FormListPagePage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ formList, user, currentUserTeamInfo, team }) => {
+> = ({ formList, team }) => {
   const supabaseClient = useSupabaseClient();
   const [page, setPage] = useState(1);
 
@@ -113,12 +113,6 @@ const FormListPagePage: NextPageWithLayout<
 
   const [query, setQuery] = useState("");
   const [hiddenOnly, setHiddenOnly] = useState(false);
-
-  const isAdmin =
-    currentUserTeamInfo?.member_role_id === "owner" ||
-    currentUserTeamInfo?.member_role_id === "admin";
-  const isMember = !isAdmin;
-  const isOwner = currentUserTeamInfo?.member_role_id === "owner";
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -210,7 +204,7 @@ const FormListPagePage: NextPageWithLayout<
 
   return (
     <>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
       <Grid align="center" mb="md">
         <Grid.Col xs={8} sm={9}>
           <Group noWrap>
@@ -244,6 +238,7 @@ const FormListPagePage: NextPageWithLayout<
           withBorder
           withColumnBorders
           striped
+          fetching={isLoading}
           records={records}
           columns={[
             { accessor: "formName" },

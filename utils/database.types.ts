@@ -916,6 +916,12 @@ export interface Database {
       }
     }
     Functions: {
+      check_email_exists: {
+        Args: {
+          email: string
+        }
+        Returns: boolean
+      }
       get_current_date: {
         Args: Record<PropertyKey, never>
         Returns: string

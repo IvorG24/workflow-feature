@@ -67,13 +67,14 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     data: { session },
   } = await supabaseClient.auth.getSession();
 
-  if (!session)
+  if (!session) {
     return {
       redirect: {
-        destination: "/sign-in",
+        destination: "/authentication",
         permanent: false,
       },
     };
+  }
 
   const teamName = `${ctx.query?.teamName}`;
 
@@ -328,7 +329,7 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
   return (
     <>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
       <Grid align="center" mb="md">
         <Grid.Col xs={8} sm={9}>
           <Group noWrap>
@@ -362,6 +363,7 @@ const TeamSettingsProfilePage: NextPageWithLayout<
           withBorder
           withColumnBorders
           striped
+          fetching={isLoading}
           rowClassName={({ id }) =>
             user.id === id ? classes.blueishRow : undefined
           }

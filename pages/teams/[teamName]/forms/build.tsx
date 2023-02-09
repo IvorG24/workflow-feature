@@ -273,7 +273,7 @@ const BuildFormPage: NextPageWithLayout = () => {
         primaryApproverId
       );
 
-      await router.push("/");
+      await router.push(`/teams/${teamName}/forms`);
 
       setIsLoading(false);
     } catch (error) {
@@ -697,10 +697,8 @@ const BuildFormPage: NextPageWithLayout = () => {
           {requestTrail.map((trail, index) => {
             const { approverId, approverUsername, approverActionName } = trail;
             return (
-              <Group noWrap mt="xs">
-                <List.Item
-                  key={index}
-                >{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
+              <Group noWrap mt="xs" key={index}>
+                <List.Item>{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
                 <Chip
                   size="xs"
                   variant="outline"
