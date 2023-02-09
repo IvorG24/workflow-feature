@@ -72,6 +72,7 @@ function FormslyNavbar({
   };
 
   const handleChangeTeam = async (teamName: string) => {
+    console.log(teamName);
     if (teamName === "manage team") {
       await router.push(
         `/teams/${router.query.teamName as string}/settings/profile`
@@ -90,6 +91,7 @@ function FormslyNavbar({
     if (team) {
       // setActiveTeam(team);
       await router.push(`/teams/${team.team_name as string}`);
+      router.reload();
       setOpened(false);
     }
   };

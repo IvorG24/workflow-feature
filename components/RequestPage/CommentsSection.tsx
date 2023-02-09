@@ -226,7 +226,9 @@ export default function CommentsSection({
                           <Menu.Item
                             onClick={() => {
                               setIsEditingCommentIndex(index);
-                              setEditedComment(comment.comment_content as string);
+                              setEditedComment(
+                                comment.comment_content as string
+                              );
                             }}
                           >
                             Edit comment
@@ -296,11 +298,12 @@ export default function CommentsSection({
                     bullet={
                       <ThemeIcon
                         size={22}
-                        variant="gradient"
+                        // variant="gradient"
                         //   gradient={{ from: "lime", to: "cyan" }}
                         // blue gradientd
                         // gradient={{ from: "blue", to: "cyan" }}
-                        gradient={{ from: "red", to: "yellow" }}
+                        // gradient={{ from: "red", to: "yellow" }}
+                        color="dark"
                         radius="xl"
                       >
                         <IconCircleDashed size={14} />
@@ -310,6 +313,37 @@ export default function CommentsSection({
                     <Text color="dimmed" size="sm">
                       <b>{comment.username}</b> uncanceled this request on{" "}
                       <b>{formattedDate}</b>
+                    </Text>
+                    <Text color="dimmed" size="sm">
+                      {comment.comment_content}
+                    </Text>
+                  </Timeline.Item>
+                );
+              }
+              if (comment.comment_type_id === "undo") {
+                return (
+                  <Timeline.Item
+                    key={comment.comment_id}
+                    //   title="Icon"
+                    bulletSize={24}
+                    bullet={
+                      <ThemeIcon
+                        size={22}
+                        // variant="gradient"
+                        color="dark"
+                        //   gradient={{ from: "lime", to: "cyan" }}
+                        // blue gradientd
+                        // gradient={{ from: "blue", to: "cyan" }}
+                        // gradient={{ from: "red", to: "yellow" }}
+                        radius="xl"
+                      >
+                        <IconCircleDashed size={14} />
+                      </ThemeIcon>
+                    }
+                  >
+                    <Text color="dimmed" size="sm">
+                      <b>{comment.username}</b> undid this request status change
+                      on <b>{formattedDate}</b>
                     </Text>
                     <Text color="dimmed" size="sm">
                       {comment.comment_content}

@@ -257,5 +257,6 @@ export type CommentType =
   | "approved"
   | "rejected"
   | "canceled"
+  | "undo"
   | "uncanceled"
   | "request_created";

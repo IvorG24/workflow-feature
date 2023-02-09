@@ -12,7 +12,6 @@ import {
   Checkbox,
   Grid,
   Group,
-  LoadingOverlay,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -204,7 +203,6 @@ const FormListPagePage: NextPageWithLayout<
 
   return (
     <>
-      {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
       <Grid align="center" mb="md">
         <Grid.Col xs={8} sm={9}>
           <Group noWrap>

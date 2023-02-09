@@ -721,12 +721,11 @@ export type CreateRequest = Awaited<ReturnType<typeof createRequest>>;
 
 export type GetTeamRequestListFilter = {
   keyword?: string;
-  mainStatus?: RequestStatus;
+  mainStatus?: RequestStatus | "canceled" | null;
   requesterUserId?: string;
   approverUserId?: string;
   sort?: "asc" | "desc";
   range?: [number, number];
-  pendingOnly?: boolean;
 };
 export const getTeamRequestList = async (
   supabaseClient: SupabaseClient<Database>,
@@ -764,6 +763,7 @@ export const getTeamRequestList = async (
     }
     if (filter?.mainStatus) {
       query = query.eq("form_fact_request_status_id", filter.mainStatus);
+      query = query.is("request_is_canceled", false);
     }
     if (filter?.requesterUserId) {
       query = query.eq("user_id", filter.requesterUserId);
@@ -771,18 +771,14 @@ export const getTeamRequestList = async (
 
     query = query.is("request_is_disabled", false);
 
-    if (filter?.pendingOnly) {
-      query = query.eq("form_fact_request_status_id", "pending");
-    }
-
     if (filter?.range) {
       query = query.range(filter.range[0], filter.range[1]);
     }
-    if (filter?.sort) {
-      query = query.order("request_date_created", {
-        ascending: filter.sort === "asc",
-      });
-    }
+    // if (filter?.sort) {
+    query = query.order("request_date_created", {
+      ascending: filter?.sort === "asc" ? true : false,
+    });
+    // }
 
     const { data, error } = await query;
 
@@ -797,12 +793,11 @@ export type GetTeamRequestList = Awaited<ReturnType<typeof getTeamRequestList>>;
 
 export type GetTeamRequestListCountFilter = {
   keyword?: string;
-  mainStatus?: RequestStatus;
+  mainStatus?: RequestStatus | "canceled" | null;
   requesterUserId?: string;
   approverUserId?: string;
   sort?: "asc" | "desc";
   range?: [number, number];
-  pendingOnly?: boolean;
 };
 export const getTeamRequestListCount = async (
   supabaseClient: SupabaseClient<Database>,
@@ -840,16 +835,13 @@ export const getTeamRequestListCount = async (
     }
     if (filter?.mainStatus) {
       query = query.eq("form_fact_request_status_id", filter.mainStatus);
+      query = query.is("request_is_canceled", false);
     }
     if (filter?.requesterUserId) {
       query = query.eq("user_id", filter.requesterUserId);
     }
 
     query = query.is("request_is_disabled", false);
-
-    if (filter?.pendingOnly) {
-      query = query.eq("form_fact_request_status_id", "pending");
-    }
 
     const { count, error } = await query;
 
@@ -875,7 +867,8 @@ export const getRequest = async (
       .select()
       .eq("request_id", requestId)
       .eq("request_is_disabled", false)
-      .eq("request_is_draft", false);
+      .eq("request_is_draft", false)
+      .order("form_fact_order_number", { ascending: true });
 
     if (error) throw error;
     return data || [];
@@ -926,7 +919,7 @@ export const updateRequestStatus = async (
 
     if (serverDateError) throw serverDateError;
 
-    const { data, error } = await supabaseClient
+    const { data: approverActionTableData, error } = await supabaseClient
       .from("request_request_approver_action_table")
       .update({
         request_approver_action_status_id: newStatus,
@@ -942,17 +935,20 @@ export const updateRequestStatus = async (
     if (error) throw error;
 
     if (isUpdatedByPrimaryApprover) {
-      const { error } = await supabaseClient
+      const { data: formFactTableData, error } = await supabaseClient
         .from("request_form_fact_table")
         .update({
           form_fact_request_status_id: newStatus,
         })
-        .eq("form_fact_request_id", requestId);
+        .eq("form_fact_request_id", requestId)
+        .select();
 
       if (error) throw error;
+
+      return { formFactTableData, approverActionTableData };
     }
 
-    return data;
+    return { approverActionTableData };
   } catch (error) {
     console.error(error);
     throw error;
@@ -965,13 +961,13 @@ export type UpdateRequestStatus = Awaited<
 export const updateRequestCancelStatus = async (
   supabaseClient: SupabaseClient<Database>,
   requestId: number,
-  isCancelled: boolean
+  isCanceled: boolean
 ) => {
   try {
     const { data, error } = await supabaseClient
       .from("request_request_table")
       .update({
-        request_is_cancelled: isCancelled,
+        request_is_canceled: isCanceled,
       })
       .eq("request_id", requestId)
       .select()
@@ -1521,7 +1517,7 @@ export type UpdateFormTemplateVisbility = Awaited<
   ReturnType<typeof updateFormTemplateVisbility>
 >;
 
-export const isRequestCancelled = async (
+export const isRequestCanceled = async (
   supabaseClient: SupabaseClient<Database>,
   requestId: number
 ) => {
@@ -1531,7 +1527,7 @@ export const isRequestCancelled = async (
       .select()
       .eq("request_id", requestId)
       .is("request_is_disabled", false)
-      .is("request_is_cancelled", true)
+      .is("request_is_canceled", true)
       .maybeSingle();
 
     if (error) throw error;
@@ -1542,4 +1538,4 @@ export const isRequestCancelled = async (
     throw error;
   }
 };
-export type IsRequestCancelled = Awaited<ReturnType<typeof isRequestCancelled>>;
+export type IsRequestCanceled = Awaited<ReturnType<typeof isRequestCanceled>>;

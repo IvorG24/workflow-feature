@@ -1,5 +1,5 @@
 import useFetchUserProfile from "@/hooks/useFetchUserProfile";
-import { getRandomColor } from "@/utils/styling";
+import { getRandomMantineColor } from "@/utils/styling";
 import {
   ActionIcon,
   Autocomplete,
@@ -23,7 +23,7 @@ import {
 } from "@tabler/icons";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { Brand } from "../Navbar/Brand";
 
 export type FormslyHeaderProps = {
@@ -114,10 +114,6 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
   //   );
   // };
 
-  const memoizedCallback = useCallback(() => {
-    return getRandomColor(theme);
-  }, []);
-
   return (
     // <Header height={{ base: 50, md: 70 }} p="md">
     // <Box>
@@ -141,7 +137,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
         <MediaQuery smallerThan="md" styles={{ display: "none" }}>
           <Group sx={{ height: "100%" }} spacing="sm" noWrap>
             <Brand />
-            <Autocomplete
+            {/* <Autocomplete
               placeholder="Find a request by title or description..."
               icon={<IconSearch size={16} stroke={1.5} />}
               data={keyword ? [{ label: keyword, value: keyword }] : []}
@@ -150,10 +146,10 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
               onItemSubmit={(e) => {
                 handleSearchRequest(e.value);
               }}
-            />
+            /> */}
           </Group>
         </MediaQuery>
-        <MediaQuery largerThan="md" styles={{ display: "none" }}>
+        {/* <MediaQuery largerThan="md" styles={{ display: "none" }}>
           <Group sx={{ height: "100%" }} spacing="sm" position="center">
             <Autocomplete
               placeholder="Find a request by title or description..."
@@ -166,7 +162,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
               }}
             />
           </Group>
-        </MediaQuery>
+        </MediaQuery> */}
         <MediaQuery smallerThan="md" styles={{ display: "none" }}>
           <Group sx={{ height: "100%" }} spacing={0} noWrap>
             {linkList.map((link) => (
@@ -223,7 +219,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
                   size="sm"
                   // src={userProfile?.user_avatar_filepath}
                   alt={userProfile?.username || ""}
-                  color={memoizedCallback()}
+                  color={getRandomMantineColor()}
                 >
                   {startCase(userProfile?.username?.charAt(0))}
                   {startCase(userProfile?.username?.charAt(1))}

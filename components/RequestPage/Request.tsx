@@ -166,7 +166,7 @@ function Request({
   const teamId = request[0].team_id as string;
   const teamName = request[0].team_name as string;
   const requestId = request[0].request_id as number;
-  const cancelled = !!request[0].request_is_cancelled;
+  const canceled = !!request[0].request_is_canceled;
   const primaryApproverId = trail.data.find(
     (item) => item.isPrimaryApprover
   )?.approverId;
@@ -175,7 +175,7 @@ function Request({
     (item) => item.approverId === user?.id
   );
   const isCurrentUserRequester = request[0].user_id === user?.id;
-  const [isCancelled, toggleIsCancelled] = useToggle();
+  const [isCanceled, toggleIsCanceled] = useToggle();
   const [isSignedByCurrentUser, setIsSignedByCurrentUser] = useState<boolean>();
   const [
     currentUserApproverActionStatusId,
@@ -256,8 +256,8 @@ function Request({
   }, [isCurrentUserApprover?.approverActionStatusId]);
 
   useEffect(() => {
-    toggleIsCancelled(cancelled);
-  }, [cancelled]);
+    toggleIsCanceled(canceled);
+  }, [canceled]);
 
   useEffect(() => {
     let foundLastSignedIndex = trail.data.findIndex(
@@ -321,7 +321,7 @@ function Request({
       // check if request is canceled already from the server
       const request = await getRequest(supabaseClient, requestId);
 
-      if (request[0].request_is_cancelled) {
+      if (request[0].request_is_canceled) {
         showNotification({
           title: "Error",
           message: "Request is already canceled. Kindly refresh the page.",
@@ -381,13 +381,13 @@ function Request({
 
   const handleCancelRequest = async (
     requestId: number,
-    isCancelled: boolean,
+    isCanceled: boolean,
     userId: string
   ) => {
     try {
       setIsLoading(true);
 
-      // check if the request is already cancelled, approved, or rejected
+      // check if the request is already canceled, approved, or rejected
       const request = await getRequest(supabaseClient, requestId);
       if (request[0].form_fact_request_status_id !== "pending") {
         showNotification({
@@ -399,19 +399,19 @@ function Request({
         setIsLoading(false);
         return;
       }
-      if (request[0].request_is_cancelled) {
+      if (request[0].request_is_canceled) {
         showNotification({
           title: "Error",
-          message: "Request is already cancelled. Kindly refresh the page.",
+          message: "Request is already canceled. Kindly refresh the page.",
           color: "red",
         });
         setIsLoading(false);
         return;
       }
 
-      await updateRequestCancelStatus(supabaseClient, requestId, isCancelled);
+      await updateRequestCancelStatus(supabaseClient, requestId, isCanceled);
 
-      const commentType = isCancelled ? "canceled" : "uncanceled";
+      const commentType = isCanceled ? "canceled" : "uncanceled";
 
       await addComment(
         supabaseClient,
@@ -422,7 +422,7 @@ function Request({
         null
       );
 
-      toggleIsCancelled(isCancelled);
+      toggleIsCanceled(isCanceled);
 
       setIsLoading(false);
     } catch (error) {
@@ -444,7 +444,6 @@ function Request({
       <LoadingOverlay
         visible={isLoading}
         overlayBlur={2}
-        x
         style={{ position: "fixed" }}
       />
       <Text size="xl" mb="xl" weight="bolder">
@@ -594,7 +593,7 @@ function Request({
 
         {isCurrentUserApprover &&
           currentUserApproverActionStatusId === "pending" &&
-          !isCancelled && (
+          !isCanceled && (
             <Textarea
               placeholder="You can leave a comment with your approval or rejection"
               value={updateStatusComment}
@@ -609,7 +608,7 @@ function Request({
 
         {isCurrentUserApprover &&
           currentUserApproverActionStatusId === "pending" &&
-          !isCancelled && (
+          !isCanceled && (
             <Container size="sm" p={0} mt="lg">
               <Group position="right" p={0}>
                 <Button
@@ -662,12 +661,12 @@ function Request({
               </Group>
             </Container>
           )}
-        {isCurrentUserRequester && mainStatus === "pending" && !isCancelled && (
+        {isCurrentUserRequester && mainStatus === "pending" && !isCanceled && (
           <Container size="sm" p={0} mt="lg">
             <Group position="right" p={0}>
               <Button
                 size="md"
-                color="dark"
+                // color="dark"
                 variant="outline"
                 onClick={() => handleCancelRequest(requestId, true, user.id)}
               >
@@ -676,7 +675,7 @@ function Request({
             </Group>
           </Container>
         )}
-        {isCurrentUserRequester && isCancelled && (
+        {isCurrentUserRequester && isCanceled && (
           <Container size="sm" p={0} mt="lg">
             <Group position="right" p={0}>
               <Button
@@ -690,28 +689,24 @@ function Request({
             </Group>
           </Container>
         )}
-        {isCurrentUserRequester &&
-          mainStatus === "approved" &&
-          !isCancelled && (
-            <Container size="sm" p={0} mt="lg">
-              <Group position="right" p={0}>
-                <Button size="md" disabled>
-                  Approved
-                </Button>
-              </Group>
-            </Container>
-          )}
-        {isCurrentUserRequester &&
-          mainStatus === "rejected" &&
-          !isCancelled && (
-            <Container size="sm" p={0} mt="lg">
-              <Group position="right" p={0}>
-                <Button size="md" disabled>
-                  Rejected
-                </Button>
-              </Group>
-            </Container>
-          )}
+        {isCurrentUserRequester && mainStatus === "approved" && !isCanceled && (
+          <Container size="sm" p={0} mt="lg">
+            <Group position="right" p={0}>
+              <Button size="md" disabled>
+                Approved
+              </Button>
+            </Group>
+          </Container>
+        )}
+        {isCurrentUserRequester && mainStatus === "rejected" && !isCanceled && (
+          <Container size="sm" p={0} mt="lg">
+            <Group position="right" p={0}>
+              <Button size="md" disabled>
+                Rejected
+              </Button>
+            </Group>
+          </Container>
+        )}
       </Container>
     </>
   );

@@ -1,16 +1,19 @@
 import Layout from "@/components/Layout/Layout";
 import {
+  addComment,
+  GetRequestApproverList,
   getRequestApproverList,
   GetTeam,
   getTeam,
   getTeamMember,
+  getTeamMemberList,
   getTeamRequestList,
   getTeamRequestListCount,
   GetTeamRequestListFilter,
-  isRequestCancelled,
+  isRequestCanceled,
   updateRequestStatus,
 } from "@/utils/queries";
-import { getRandomColor } from "@/utils/styling";
+import { getRandomMantineColor } from "@/utils/styling";
 import { RequestStatus } from "@/utils/types";
 import {
   ActionIcon,
@@ -19,13 +22,13 @@ import {
   Box,
   Button,
   Checkbox,
+  DefaultMantineColor,
   Divider,
-  Grid,
   Group,
+  Select,
   Text,
   TextInput,
   Tooltip,
-  useMantineTheme,
 } from "@mantine/core";
 import { hideNotification, showNotification } from "@mantine/notifications";
 import {
@@ -73,11 +76,13 @@ export type RequestRow = {
   attachmentFilepathList: string[];
   requester: Requester;
   approverList: Approver[];
-  currentUserIsApprover: Approver | null;
+  currentUserIsApprover: GetRequestApproverList[0] | null;
   currentUserIsPrimaryApprover: boolean;
   mainStatus: RequestStatus;
   requestDateCreated: string;
   primaryApprover: Approver;
+  color: DefaultMantineColor;
+  isCanceled: boolean;
 };
 
 export type Member = {
@@ -94,6 +99,7 @@ export type RequestListPageProps = {
   // currentUserTeamInfo: Member;
   user: User;
   team: GetTeam;
+  teamMemberList: Member[];
   count: number;
 };
 
@@ -148,6 +154,8 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       mainStatus: request.form_fact_request_status_id as RequestStatus,
       requestDateCreated: formattedDate,
       primaryApprover: {} as Approver,
+      color: getRandomMantineColor(),
+      isCanceled: request.request_is_canceled as boolean,
     };
   });
 
@@ -212,13 +220,17 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   //   role: teamMember.member_role_id,
   // };
 
-  const team = await getTeam(supabaseClient, teamName);
+  const [team, teamMemberList] = await Promise.all([
+    getTeam(supabaseClient, teamName),
+    getTeamMemberList(supabaseClient, teamName),
+  ]);
 
   return {
     props: {
-      requestList: modifiedRequestList,
+      requestList: modifiedRequestList as unknown as RequestRow[],
       user,
       team,
+      teamMemberList,
       count,
     },
   };
@@ -226,24 +238,35 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
 const RequestListPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ requestList, user, team, count }) => {
+> = ({ requestList, user, team, teamMemberList, count }) => {
   const router = useRouter();
-  const theme = useMantineTheme();
   const supabaseClient = useSupabaseClient();
   const [page, setPage] = useState(1);
-  const [records, setRecords] = useState(requestList);
+  const [records, setRecords] = useState<RequestRow[]>(requestList);
   const [totalRecords, setTotalRecords] = useState(count);
   const [query, setQuery] = useState("");
-  const [pendingOnly, setPendingOnly] = useState(false);
+  // const [pendingOnly, setPendingOnly] = useState(false);
+  const [mainStatusFilter, setMainStatusFilter] = useState<
+    RequestStatus | "canceled" | null
+  >(null);
+  const [requester, setRequester] = useState("");
+  const [oldestFirst, setOldestFirst] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const teamName = team?.team_name as string;
 
-  const handleRefetchRequestList = async (
-    page: number,
-    pendingOnly: boolean
-  ) => {
+  const handleRefetchRequestList = async ({
+    page,
+    oldestFirst,
+    mainStatus,
+    requester,
+  }: {
+    page: number;
+    oldestFirst: boolean;
+    mainStatus: RequestStatus | "canceled" | null;
+    requester?: string;
+  }) => {
     try {
       setIsLoading(true);
 
@@ -253,7 +276,9 @@ const RequestListPage: NextPageWithLayout<
       const filter: GetTeamRequestListFilter = {
         range: [start, end],
         keyword: query,
-        pendingOnly,
+        sort: oldestFirst ? "asc" : "desc",
+        mainStatus,
+        requesterUserId: requester,
       };
 
       const data = await getTeamRequestList(supabaseClient, teamName, filter);
@@ -286,6 +311,8 @@ const RequestListPage: NextPageWithLayout<
           mainStatus: request.form_fact_request_status_id as RequestStatus,
           requestDateCreated: formattedDate,
           primaryApprover: {} as Approver,
+          color: getRandomMantineColor(),
+          isCanceled: request.request_is_canceled as boolean,
         };
       });
 
@@ -328,7 +355,7 @@ const RequestListPage: NextPageWithLayout<
         };
       });
 
-      setRecords(modifiedRequestList);
+      setRecords(modifiedRequestList as unknown as RequestRow[]);
       setTotalRecords(count);
     } catch (error) {
       console.error(error);
@@ -343,23 +370,43 @@ const RequestListPage: NextPageWithLayout<
   };
 
   const handlePageChange = async (page: number) => {
-    await handleRefetchRequestList(page, pendingOnly);
+    await handleRefetchRequestList({
+      page,
+      oldestFirst,
+      mainStatus: mainStatusFilter,
+      requester,
+    });
     setPage(page);
   };
 
-  const handleApplyFilters = async () => {
+  const handleApplyFilters = async ({
+    oldestFirst,
+    mainStatus,
+    requester,
+  }: {
+    oldestFirst: boolean;
+    mainStatus: RequestStatus | "canceled" | null;
+    requester?: string;
+  }) => {
     const page = 1;
-    await handleRefetchRequestList(page, pendingOnly);
-    setPendingOnly(pendingOnly);
+    await handleRefetchRequestList({
+      page,
+      oldestFirst,
+      mainStatus,
+      requester,
+    });
+    setOldestFirst(oldestFirst);
+    setMainStatusFilter(mainStatus);
+    setRequester(requester as string);
     setPage(page);
   };
 
-  const handlePendingOnly = async (pendingOnly: boolean) => {
-    const page = 1;
-    await handleRefetchRequestList(page, pendingOnly);
-    setPendingOnly(pendingOnly);
-    setPage(page);
-  };
+  // const handlePendingOnly = async (pendingOnly: boolean) => {
+  //   const page = 1;
+  //   await handleRefetchRequestList({page, oldestFirst});
+  //   setPendingOnly(pendingOnly);
+  //   setPage(page);
+  // };
 
   const handleUpdateRequestStatus = async (
     requestId: number,
@@ -380,17 +427,17 @@ const RequestListPage: NextPageWithLayout<
         return;
       }
 
-      // check if request is already cancelled before updating status
-      if (await isRequestCancelled(supabaseClient, requestId)) {
+      // check if request is already canceled before updating status
+      if (await isRequestCanceled(supabaseClient, requestId)) {
         showNotification({
           title: "Error",
-          message: "Request is already cancelled. Kindly refresh the page.",
+          message: "Request is already canceled. Kindly refresh the page.",
           color: "red",
         });
         return;
       }
 
-      await updateRequestStatus(
+      const { approverActionTableData } = await updateRequestStatus(
         supabaseClient,
         user.id,
         requestId,
@@ -399,10 +446,47 @@ const RequestListPage: NextPageWithLayout<
         currentUserIsPrimaryApprover,
         comment
       );
-      await handleRefetchRequestList(page, pendingOnly);
+
+      await addComment(
+        supabaseClient,
+        requestId,
+        user.id,
+        comment,
+        newStatus === "pending" ? "undo" : newStatus,
+        null
+      );
+      // await handleRefetchRequestList({page, oldestFirst});
+
+      // instead of refetching, just update the request status in records
+      setRecords((prev) => {
+        return prev.map((record) => {
+          if (record.requestId === requestId) {
+            return {
+              ...record,
+              mainStatus: newStatus as RequestStatus,
+              currentUserIsApprover: {
+                ...record.currentUserIsApprover,
+                request_approver_action_status_id: newStatus as RequestStatus,
+                request_approver_action_status_last_updated:
+                  approverActionTableData.request_approver_action_status_last_updated as string,
+              },
+              approverList: record.approverList.map((approver) => {
+                if (approver.userId === user.id) {
+                  return {
+                    ...approver,
+                    approvalStatus: newStatus as RequestStatus,
+                  } as Approver;
+                }
+                return approver as Approver;
+              }) as Approver[],
+            } as RequestRow;
+          }
+          return record as RequestRow;
+        }) as unknown as RequestRow[];
+      });
 
       // show undo button
-      if (newStatus !== "pending")
+      if (newStatus && newStatus !== "pending")
         showNotification({
           id: "update-request-status-undo",
           title: `Request ${startCase(newStatus)}`,
@@ -419,7 +503,7 @@ const RequestListPage: NextPageWithLayout<
                       "pending",
                       currentUserActionId,
                       currentUserIsPrimaryApprover,
-                      "Undo request status change."
+                      null
                     );
                   }}
                   variant="outline"
@@ -452,31 +536,97 @@ const RequestListPage: NextPageWithLayout<
 
   return (
     <>
-      <Grid align="center" mb="md">
-        <Grid.Col xs={8} sm={9}>
-          <Group noWrap>
-            <TextInput
-              sx={{ width: "100%" }}
-              placeholder="Search request..."
-              value={query}
-              onChange={(e) => setQuery(e.currentTarget.value)}
-            />
-            <ActionIcon onClick={() => handleApplyFilters()}>
-              <IconSearch size={18} stroke={1.5} />
-            </ActionIcon>
-          </Group>
-        </Grid.Col>
-        <Grid.Col xs={4} sm={3}>
-          <Checkbox
-            label="Pending only"
-            checked={pendingOnly}
-            onChange={(e) => {
-              handlePendingOnly(e.currentTarget.checked);
+      <Group>
+        <Group noWrap>
+          <TextInput
+            sx={{ width: "100%" }}
+            placeholder="Search request..."
+            value={query}
+            onChange={(e) => setQuery(e.currentTarget.value)}
+          />
+          <ActionIcon
+            onClick={() =>
+              handleApplyFilters({ mainStatus: mainStatusFilter, oldestFirst })
+            }
+          >
+            <IconSearch size={18} stroke={1.5} />
+          </ActionIcon>
+        </Group>
+
+        <Group noWrap>
+          <Select
+            placeholder="Requester"
+            searchable
+            clearable
+            data={teamMemberList.map((member) => {
+              return {
+                label: member.username as string,
+                value: member.user_id as string,
+              };
+            })}
+            value={requester}
+            onChange={(requester) => {
+              handleApplyFilters({
+                mainStatus: mainStatusFilter,
+                oldestFirst,
+                requester: requester as string,
+              });
             }}
           />
-        </Grid.Col>
-      </Grid>
-      <Box h={500}>
+          <Select
+            placeholder="Status"
+            searchable
+            clearable
+            data={[
+              {
+                label: "Pending",
+                value: "pending",
+              },
+              {
+                label: "Approved",
+                value: "approved",
+              },
+              {
+                label: "Rejected",
+                value: "rejected",
+              },
+              {
+                label: "Canceled",
+                value: "canceled",
+              },
+            ]}
+            value={mainStatusFilter}
+            onChange={(mainStatus) => {
+              handleApplyFilters({
+                mainStatus: mainStatus as RequestStatus,
+                oldestFirst,
+              });
+            }}
+          />
+        </Group>
+      </Group>
+
+      <Group noWrap mt="md">
+        {/* <Checkbox
+          label="Pending only"
+          checked={pendingOnly}
+          onChange={(e) => {
+            handlePendingOnly(e.currentTarget.checked);
+          }}
+        /> */}
+        <Checkbox
+          label="Oldest first"
+          checked={oldestFirst}
+          onChange={(e) => {
+            handleApplyFilters({
+              mainStatus: mainStatusFilter,
+              oldestFirst: e.currentTarget.checked,
+            });
+          }}
+        />
+      </Group>
+
+      <Box h={500} mt="md">
         <DataTable
           withBorder
           withColumnBorders
@@ -500,6 +650,8 @@ const RequestListPage: NextPageWithLayout<
                 approverList,
                 currentUserIsPrimaryApprover,
                 currentUserIsApprover,
+                color,
+                isCanceled,
               }) => {
                 const currentUserActionId = currentUserIsApprover?.action_id;
                 const badgeColor =
@@ -513,7 +665,7 @@ const RequestListPage: NextPageWithLayout<
                   <Box>
                     <Group position="apart" noWrap>
                       <Group noWrap>
-                        <Avatar size="sm" color={getRandomColor(theme)}>
+                        <Avatar size="sm" color={color}>
                           {requester.username[0]}
                           {requester.username[1]}
                         </Avatar>
@@ -525,10 +677,13 @@ const RequestListPage: NextPageWithLayout<
                     </Group>
 
                     <Box mt="xs">
-                      <Text size="sm" fw="bold">
+                      <Badge size="xs" variant="outline">
+                        {formName}
+                      </Badge>
+                      <Text size="sm" fw="bold" lineClamp={2}>
                         {title}
                       </Text>
-                      <Text size="xs" fw="light">
+                      <Text size="xs" fw="light" lineClamp={4}>
                         {description || "No description"}
                       </Text>
                     </Box>
@@ -540,10 +695,16 @@ const RequestListPage: NextPageWithLayout<
                         </Text>
                         <Text size="xs">{primaryApprover?.username}</Text>
                       </Box>
-
-                      <Badge size="xs" color={badgeColor}>
-                        {mainStatus}
-                      </Badge>
+                      {isCanceled && (
+                        <Badge size="xs" color="dark">
+                          Canceled
+                        </Badge>
+                      )}
+                      {!isCanceled && (
+                        <Badge size="xs" color={badgeColor}>
+                          {mainStatus}
+                        </Badge>
+                      )}
                     </Group>
 
                     <Divider mt="xs" mb="sm" />
@@ -562,7 +723,9 @@ const RequestListPage: NextPageWithLayout<
                               );
                             }}
                             disabled={
-                              !currentUserIsApprover || mainStatus !== "pending"
+                              !currentUserIsApprover ||
+                              mainStatus !== "pending" ||
+                              isCanceled
                             }
                           >
                             <IconWritingSign
@@ -584,7 +747,9 @@ const RequestListPage: NextPageWithLayout<
                               );
                             }}
                             disabled={
-                              !currentUserIsApprover || mainStatus !== "pending"
+                              !currentUserIsApprover ||
+                              mainStatus !== "pending" ||
+                              isCanceled
                             }
                           >
                             <IconWritingSignOff
@@ -594,16 +759,18 @@ const RequestListPage: NextPageWithLayout<
                             />
                           </ActionIcon>
                         </Tooltip>
-                        {currentUserIsApprover?.request_approver_action_status_id !==
-                          "pending" && (
-                          <Text size="xs" fw="bold" c="dimmed">
-                            You already{" "}
-                            {toLower(
-                              currentUserIsApprover?.request_approver_action_status_id as string
-                            )}{" "}
-                            this request
-                          </Text>
-                        )}
+                        {currentUserIsApprover?.request_approver_action_status_id ===
+                          "approved" ||
+                          (currentUserIsApprover?.request_approver_action_status_id ===
+                            "rejected" && (
+                            <Text size="xs" fw="bold" c="dimmed">
+                              You already{" "}
+                              {toLower(
+                                currentUserIsApprover?.request_approver_action_status_id as string
+                              )}{" "}
+                              this request
+                            </Text>
+                          ))}
                       </Group>
                       <Group noWrap>
                         <Tooltip label="Download request receipt">
@@ -613,7 +780,7 @@ const RequestListPage: NextPageWithLayout<
                                 message: "Downloading request receipt",
                               })
                             }
-                            disabled={mainStatus !== "approved"}
+                            disabled={mainStatus !== "approved" || isCanceled}
                           >
                             <IconDownload size={18} stroke={1.5} />
                           </ActionIcon>

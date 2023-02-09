@@ -1,10 +1,24 @@
-import { MantineTheme } from "@mantine/core";
-
-export const getRandomColor = (theme: MantineTheme) => {
-  // gte random mantine color
-  const randomColor = Object.keys(theme.colors)[
-    Math.floor(Math.random() * Object.keys(theme.colors).length)
-  ];
-
-  return randomColor as keyof MantineTheme["colors"];
+export const defaultMantineColorList = [
+  "dark",
+  "gray",
+  "red",
+  "pink",
+  "grape",
+  "violet",
+  "indigo",
+  "blue",
+  "cyan",
+  "green",
+  "lime",
+  "yellow",
+  "orange",
+  "teal",
+];
+export const getRandomMantineColor = () => {
+  // gte random mantine color from defaultMantineColorList
+  const randomColor =
+    defaultMantineColorList[
+      Math.floor(Math.random() * defaultMantineColorList.length)
+    ];
+  return randomColor;
 };

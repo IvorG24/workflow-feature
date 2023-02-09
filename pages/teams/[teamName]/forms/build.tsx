@@ -4,10 +4,12 @@ import {
   createFormApproverList,
   getTeam,
   getTeamFormTemplateNameList,
+  getTeamMember,
   getUserProfileByUsername,
 } from "@/utils/queries";
 import {
   ActionIcon,
+  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -34,7 +36,7 @@ import {
   IconInfoCircle,
   IconPlus,
 } from "@tabler/icons";
-import { startCase } from "lodash";
+import { startCase, toLower } from "lodash";
 import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
 import { ReactElement, useState } from "react";
@@ -43,6 +45,7 @@ import { v4 as uuidv4 } from "uuid";
 import PolymorphicFieldInput from "@/components/BuildFormPage/PolymorphicFieldInput";
 import useFetchTeamMemberList from "@/hooks/useFetchTeamMemberList";
 import { RequestFieldType, requestFieldTypeList } from "@/utils/types";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import {
   DragDropContext,
   Draggable,
@@ -146,8 +149,43 @@ export type RequestTrail = {
   }[];
 };
 
-export const getServerSideProps = async () => {
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   resetServerContext();
+
+  const supabaseClient = createServerSupabaseClient(ctx);
+
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/authentication",
+        permanent: false,
+      },
+    };
+  }
+
+  const teamName = `${ctx.query?.teamName}`;
+
+  const user = session?.user;
+
+  const currentUserTeamInfo = await getTeamMember(
+    supabaseClient,
+    teamName,
+    user.id
+  );
+
+  // if current user is not admin, prevent from creating a form
+  if (currentUserTeamInfo?.member_role_id === "member") {
+    return {
+      redirect: {
+        destination: "/403",
+        permanent: false,
+      },
+    };
+  }
 
   return { props: {} };
 };
@@ -211,6 +249,7 @@ const BuildFormPage: NextPageWithLayout = () => {
   ) => {
     try {
       setIsLoading(true);
+
       if (!userId) throw new Error("User not found");
       if (!teamName) throw new Error("No active team");
 
@@ -467,25 +506,33 @@ const BuildFormPage: NextPageWithLayout = () => {
               </Group>
             </Group>
             <Divider size="xs" my="xs" />
-            {item.type !== "section" && item.type !== "repeatable_section" && (
-              <Group mt="xs">
-                <TextInput
-                  placeholder={`Add field tooltip`}
-                  size="xs"
-                  value={item.tooltip}
-                  onChange={(event) =>
-                    handleUpdateFieldTooltip(item.id, event.currentTarget.value)
-                  }
-                />
-                <Checkbox
-                  size="xs"
-                  label="Required"
-                  onChange={(event) =>
-                    handleToggleIsRequired(item.id, event.currentTarget.checked)
-                  }
-                />
-              </Group>
-            )}
+            {item.type &&
+              item.type !== "section" &&
+              item.type !== "repeatable_section" && (
+                <Group mt="xs">
+                  <TextInput
+                    placeholder={`Add field tooltip`}
+                    size="xs"
+                    value={item.tooltip}
+                    onChange={(event) =>
+                      handleUpdateFieldTooltip(
+                        item.id,
+                        event.currentTarget.value
+                      )
+                    }
+                  />
+                  <Checkbox
+                    size="xs"
+                    label="Required"
+                    onChange={(event) =>
+                      handleToggleIsRequired(
+                        item.id,
+                        event.currentTarget.checked
+                      )
+                    }
+                  />
+                </Group>
+              )}
             {item.type === "select" && (
               <Group noWrap mt="md">
                 <TextInput
@@ -706,7 +753,9 @@ const BuildFormPage: NextPageWithLayout = () => {
                   onChange={() => setPrimaryApproverId(approverId)}
                 >
                   {approverId === primaryApproverId && "Primary Approver"}
-                  {approverId !== primaryApproverId && "Secondary Approver"}
+                  {approverId &&
+                    approverId !== primaryApproverId &&
+                    "Secondary Approver"}
                 </Chip>
                 <Tooltip label="Remove field">
                   <CloseButton
@@ -741,11 +790,18 @@ const BuildFormPage: NextPageWithLayout = () => {
                 );
               })}
           />
-          <TextInput
+          {/* <TextInput
             placeholder="Action"
             size="sm"
             value={newSignerAction}
             onChange={(event) => setNewSignerAction(event.currentTarget.value)}
+          /> */}
+          <Autocomplete
+            placeholder="Signed as this action"
+            size="sm"
+            value={toLower(newSignerAction)}
+            data={["approved", "purchased"]}
+            onChange={(value) => setNewSignerAction(value)}
           />
           <Button
             onClick={() => handleAddSigner(newSignerUsername, newSignerAction)}

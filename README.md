@@ -37,3 +37,4 @@ Everything that is current user will not show URL. Current user id will be fetch
 2. [Mantine Responsive Layout](https://mantine.dev/core/app-shell/)
 3. [Setup NavigationProgress](https://mantine.dev/others/nprogress/#setup-navigationprogress)
 4. Use mantine createStyles because recommended.
+5. [Mantine Data Table](https://icflorescu.github.io/mantine-datatable/)

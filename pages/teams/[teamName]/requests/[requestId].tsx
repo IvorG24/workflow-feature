@@ -52,7 +52,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
   const promises = [
     getRequest(supabaseClient, Number(ctx.query.requestId)),
-    getRequestApproverList(supabaseClient, Number(ctx.query.requestId)),
+    getRequestApproverList(supabaseClient, [Number(ctx.query.requestId)]),
   ];
 
   const result = await Promise.all(promises);

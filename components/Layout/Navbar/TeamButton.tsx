@@ -1,5 +1,5 @@
 import { GetUserTeamList } from "@/utils/queries";
-import { getRandomColor } from "@/utils/styling";
+import { getRandomMantineColor } from "@/utils/styling";
 import {
   Avatar,
   Group,
@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { IconBuildingCommunity, IconCirclePlus } from "@tabler/icons";
 import { startCase, toUpper } from "lodash";
-import { forwardRef, useCallback } from "react";
+import { forwardRef } from "react";
 
 export type TeamButtonProps = {
   teamList: GetUserTeamList;
@@ -107,10 +107,6 @@ function TeamButton({
     }
   );
 
-  const memoizedCallback = useCallback(() => {
-    return getRandomColor(theme);
-  }, []);
-
   return (
     <Tooltip label="Choose Team">
       <Select
@@ -124,7 +120,7 @@ function TeamButton({
           <Avatar
             // src={teamList[activeTeamIndex]?.team_logo_filepath || ""}
             size="sm"
-            color={memoizedCallback()}
+            color={getRandomMantineColor()}
           >
             {startCase(teamList[activeTeamIndex]?.team_name?.[0])}
             {startCase(teamList[activeTeamIndex]?.team_name?.[1])}

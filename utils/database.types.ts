@@ -302,7 +302,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -313,7 +313,7 @@ export interface Database {
           request_date_created?: string | null
           request_description?: string | null
           request_id?: number
-          request_is_cancelled?: boolean | null
+          request_is_canceled?: boolean | null
           request_is_disabled?: boolean | null
           request_is_draft?: boolean | null
           request_on_behalf_of?: string | null
@@ -324,7 +324,7 @@ export interface Database {
           request_date_created?: string | null
           request_description?: string | null
           request_id?: number
-          request_is_cancelled?: boolean | null
+          request_is_canceled?: boolean | null
           request_is_disabled?: boolean | null
           request_is_draft?: boolean | null
           request_on_behalf_of?: string | null
@@ -552,7 +552,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number | null
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -602,7 +602,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number | null
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -652,7 +652,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number | null
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -692,7 +692,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number | null
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -734,7 +734,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number | null
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -771,7 +771,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number | null
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -817,7 +817,7 @@ export interface Database {
           request_date_created: string | null
           request_description: string | null
           request_id: number | null
-          request_is_cancelled: boolean | null
+          request_is_canceled: boolean | null
           request_is_disabled: boolean | null
           request_is_draft: boolean | null
           request_on_behalf_of: string | null
@@ -918,7 +918,7 @@ export interface Database {
     Functions: {
       check_email_exists: {
         Args: {
-          email: string
+          user_email: string
         }
         Returns: boolean
       }
