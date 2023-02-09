@@ -1,9 +1,10 @@
 import useFetchUserProfile from "@/hooks/useFetchUserProfile";
+import { getRandomColor } from "@/utils/styling";
 import {
   ActionIcon,
   Autocomplete,
+  Avatar,
   Burger,
-  Button,
   createStyles,
   Group,
   Header,
@@ -16,14 +17,13 @@ import {
   IconBell,
   IconLogout,
   IconMail,
-  IconPlus,
   IconSearch,
   IconSettings,
   IconUserCircle,
 } from "@tabler/icons";
-import { toLower } from "lodash";
+import { startCase } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { Brand } from "../Navbar/Brand";
 
 export type FormslyHeaderProps = {
@@ -49,6 +49,9 @@ const useStyles = createStyles((theme) => ({
           ? theme.colors.dark[6]
           : theme.colors.gray[0],
     }),
+  },
+  menu: {
+    // styles cursor
   },
 }));
 
@@ -79,15 +82,41 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
   ];
 
   const handleSearchRequest = (keyword: string) => {
-    router.push(
-      `/teams/${router.query.teamName}/requests?keyword=${toLower(keyword)}`
-    );
+    router.push(`/teams/${router.query.teamName}/requests?keyword=${keyword}`);
   };
 
   const handleLogout = async () => {
     await supabaseClient.auth.signOut();
     await router.push("/authentication");
   };
+
+  // const handleCreateRequest = async () => {
+  //   const teamFormList = await getTeamFormList(
+  //     supabaseClient,
+  //     router.query.teamName as string
+  //   );
+
+  //   if (teamFormList.length === 0) {
+  //     showNotification({
+  //       title: "No form found",
+  //       message: "Please create a form first",
+  //       color: theme.colors.red[7],
+  //     });
+  //     return;
+  //   }
+
+  //   const formName = teamFormList[0].form_name;
+
+  //   router.push(
+  //     `/teams/${
+  //       router.query.teamName as string
+  //     }/requests/create?form=${formName}`
+  //   );
+  // };
+
+  const memoizedCallback = useCallback(() => {
+    return getRandomColor(theme);
+  }, []);
 
   return (
     // <Header height={{ base: 50, md: 70 }} p="md">
@@ -113,7 +142,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
           <Group sx={{ height: "100%" }} spacing="sm" noWrap>
             <Brand />
             <Autocomplete
-              placeholder="Find a request..."
+              placeholder="Find a request by title or description..."
               icon={<IconSearch size={16} stroke={1.5} />}
               data={keyword ? [{ label: keyword, value: keyword }] : []}
               zIndex={10000000000}
@@ -127,7 +156,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
         <MediaQuery largerThan="md" styles={{ display: "none" }}>
           <Group sx={{ height: "100%" }} spacing="sm" position="center">
             <Autocomplete
-              placeholder="Find a request..."
+              placeholder="Find a request by title or description..."
               icon={<IconSearch size={16} stroke={1.5} />}
               data={keyword ? [{ label: keyword, value: keyword }] : []}
               zIndex={10000000000}
@@ -156,47 +185,30 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
           </Group>
         </MediaQuery>
         <Group spacing={0} position="right" noWrap>
-          <MediaQuery smallerThan="md" styles={{ display: "none" }}>
+          {/* <MediaQuery smallerThan="md" styles={{ display: "none" }}>
             <Tooltip label="Send request for approval">
               <Button
-                onClick={() =>
-                  router.push(
-                    `/teams/${toLower(
-                      router.query.teamName as string
-                    )}/requests/create`
-                  )
-                }
+                onClick={handleCreateRequest}
                 size="xs"
                 leftIcon={<IconPlus size={14} />}
               >
                 Create request
               </Button>
             </Tooltip>
-          </MediaQuery>
-          <MediaQuery largerThan="md" styles={{ display: "none" }}>
+          </MediaQuery> */}
+          {/* <MediaQuery largerThan="md" styles={{ display: "none" }}>
             <Tooltip label="Fill out a form">
-              <ActionIcon
-                size="lg"
-                onClick={() =>
-                  router.push(
-                    `/teams/${toLower(
-                      router.query.teamName as string
-                    )}/requests/create`
-                  )
-                }
-              >
+              <ActionIcon size="lg" onClick={handleCreateRequest}>
                 <IconPlus size={18} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
-          </MediaQuery>
+          </MediaQuery> */}
           <Tooltip label="Notifications">
             <ActionIcon
               size="lg"
               onClick={() =>
                 router.push(
-                  `/teams/${toLower(
-                    router.query.teamName as string
-                  )}/notifications`
+                  `/teams/${router.query.teamName as string}/notifications`
                 )
               }
             >
@@ -206,8 +218,19 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
 
           <Menu shadow="md" width={200}>
             <Menu.Target>
-              <ActionIcon size="lg">
+              <ActionIcon>
+                <Avatar
+                  size="sm"
+                  // src={userProfile?.user_avatar_filepath}
+                  alt={userProfile?.username || ""}
+                  color={memoizedCallback()}
+                >
+                  {startCase(userProfile?.username?.charAt(0))}
+                  {startCase(userProfile?.username?.charAt(1))}
+                </Avatar>
+                {/* <ActionIcon size="lg">
                 <IconUserCircle size={18} stroke={1.5} />
+              </ActionIcon> */}
               </ActionIcon>
             </Menu.Target>
 
@@ -216,7 +239,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
               <Menu.Item
                 onClick={() =>
                   router.push(
-                    `/teams/${toLower(router.query.teamName as string)}/users/${
+                    `/teams/${router.query.teamName as string}/users/${
                       userProfile?.username as string
                     }/profile`
                   )
@@ -228,7 +251,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
               <Menu.Item
                 onClick={() =>
                   router.push(
-                    `/teams/${toLower(router.query.teamName as string)}/users/${
+                    `/teams/${router.query.teamName as string}/users/${
                       userProfile?.username as string
                     }/settings/account`
                   )
@@ -240,9 +263,9 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
               <Menu.Item
                 onClick={() =>
                   router.push(
-                    `/teams/${toLower(
+                    `/teams/${
                       router.query.teamName as string
-                    )}/notifications?type=team-invitations`
+                    }/notifications?type=team-invitations`
                   )
                 }
                 icon={<IconMail size={14} />}

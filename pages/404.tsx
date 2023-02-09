@@ -8,7 +8,6 @@ import {
   Title,
 } from "@mantine/core";
 import { useRouter } from "next/router";
-import image from "public/image/404.svg";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -57,7 +56,10 @@ export default function NotFoundImage() {
         cols={2}
         breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
       >
-        <Image src={image} className={classes.mobileImage} />
+        <Image
+          src={`/${process.env.VERCEL_URL}/image/404.svg`}
+          className={classes.mobileImage}
+        />
         <div>
           <Title className={classes.title}>Something is not right...</Title>
           <Text color="dimmed" size="lg">
@@ -75,7 +77,10 @@ export default function NotFoundImage() {
             Get back to home page
           </Button>
         </div>
-        <Image src={image} className={classes.desktopImage} />
+        <Image
+          src={`/${process.env.VERCEL_URL}/image/404.svg`}
+          className={classes.desktopImage}
+        />
       </SimpleGrid>
     </Container>
   );

@@ -3,32 +3,46 @@ import {
   createForm,
   createFormApproverList,
   getTeam,
+  getTeamFormTemplateNameList,
   getUserProfileByUsername,
 } from "@/utils/queries";
 import {
   ActionIcon,
+  Box,
   Button,
+  Checkbox,
+  Chip,
+  CloseButton,
   Container,
   createStyles,
+  Divider,
   Group,
+  List,
   LoadingOverlay,
   Select,
-  Stepper,
   Text,
   TextInput,
+  ThemeIcon,
   Tooltip,
 } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { IconGripVertical, IconPlus } from "@tabler/icons";
-import { capitalize, toLower } from "lodash";
+import {
+  IconCircleDashed,
+  IconGripVertical,
+  IconInfoCircle,
+  IconPlus,
+} from "@tabler/icons";
+import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
 import { ReactElement, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+import PolymorphicFieldInput from "@/components/BuildFormPage/PolymorphicFieldInput";
 import useFetchTeamMemberList from "@/hooks/useFetchTeamMemberList";
+import { RequestFieldType, requestFieldTypeList } from "@/utils/types";
 import {
   DragDropContext,
   Draggable,
@@ -114,6 +128,13 @@ export type DndListHandleProps = {
     id: string;
     type: string;
     label: string;
+    optionList?: string[];
+    optionTooltipList?: string[];
+
+    newOption?: string;
+    newOptionTooltip?: string;
+    isRequired?: boolean;
+    tooltip?: string;
   }[];
 };
 
@@ -121,7 +142,7 @@ export type RequestTrail = {
   data: {
     approverId: string;
     approverUsername: string;
-    approverAction: string;
+    approverActionName: string;
   }[];
 };
 
@@ -141,35 +162,97 @@ const BuildFormPage: NextPageWithLayout = () => {
   const router = useRouter();
   const user = useUser();
   const [formName, setFormName] = useState("");
-  const [requestTrail, setRequestTrail] = useState<RequestTrail["data"]>([]);
+  // const [requestTrail, setRequestTrail] = useState<RequestTrail["data"]>([]);
+
+  const [requestTrail, requestTrailHandler] = useListState<
+    RequestTrail["data"][0]
+  >([]);
+  const [primaryApproverId, setPrimaryApproverId] = useState("");
   const [newSignerUsername, setNewSignerUsername] = useState("");
   const [newSignerAction, setNewSignerAction] = useState("");
-  const { isFetching, teamMemberList } = useFetchTeamMemberList(
+  const { teamMemberList } = useFetchTeamMemberList(
     router.query.teamName as string
   );
 
-  const handleAppend = (item: DndListHandleProps["data"][0]) =>
-    handlers.append(item);
+  const handleAppend = (item: DndListHandleProps["data"][0]) => {
+    // check if item keys are empty is empty
+    const { id, type, label } = item;
+    if (!id || !type || !label) {
+      showNotification({
+        title: "Error",
+        message: "Please fill in field type and label",
+        color: "red",
+        autoClose: 3000,
+      });
 
-  const handleAddSection = () => {
-    handleAppend({
-      id: uuidv4(),
-      type: "section",
-      label: "Section",
-    });
+      return;
+    }
+
+    handlers.append(item);
+    setNewInputFieldType("");
+    setNewInputFieldLabel("");
   };
+
+  // const handleAddSection = () => {
+  //   handleAppend({
+  //     id: uuidv4(),
+  //     type: "section",
+  //     label: "Section",
+  //   });
+  // };
 
   const handleSaveForm = async (
     userId: string,
     teamName: string,
     formName: string,
     fieldList: DndListHandleProps["data"],
-    requestTrail: RequestTrail["data"]
+    requestTrail: RequestTrail["data"],
+    primaryApproverId: string
   ) => {
     try {
       setIsLoading(true);
       if (!userId) throw new Error("User not found");
-      if (!router.query.teamName) throw new Error("No active team");
+      if (!teamName) throw new Error("No active team");
+
+      // check if form name is empty
+      if (!formName) throw new Error("Form name is empty");
+
+      // check if fieldList is empty
+      if (fieldList.length === 0) throw new Error("No field added");
+
+      // check if primary approver is empty
+      if (!primaryApproverId) throw new Error("No primary approver selected");
+      // check primary approver from requestTrail
+      const primaryApprover = requestTrail.find(
+        (approver) => approver.approverId === primaryApproverId
+      );
+      if (!primaryApprover) throw new Error("No primary approver selected");
+
+      // check if requestTrail is empty
+      if (requestTrail.length === 0) throw new Error("No approver added");
+
+      // check if form name already exists for the team
+      const teamFormTemplateNameList = await getTeamFormTemplateNameList(
+        supabaseClient,
+        teamName
+      );
+      if (
+        teamFormTemplateNameList
+          .map((formTemplate) => formTemplate.form_name)
+          .includes(formName)
+      )
+        throw new Error("Form name already exists");
+
+      // check if there are empty options in select and multi-select fields
+      const emptyOptionFieldList = fieldList.filter(
+        (field) => field.type === "select" || field.type === "multiple"
+      );
+      if (emptyOptionFieldList.length > 0) {
+        const emptyOptionField = emptyOptionFieldList.find(
+          (field) => !field?.optionList || field.optionList.length === 0
+        );
+        if (emptyOptionField) throw new Error("Empty option field found");
+      }
 
       const team = await getTeam(supabaseClient, teamName);
 
@@ -177,19 +260,17 @@ const BuildFormPage: NextPageWithLayout = () => {
 
       const createdForm = await createForm(
         supabaseClient,
-        { form_name: toLower(formName) },
+        { form_name: formName },
         fieldList,
         team.team_id,
         userId
       );
 
-      // insert to
-      // insert to request_form_approver_table
-
       await createFormApproverList(
         supabaseClient,
         createdForm.request_form_table.form_id,
-        requestTrail
+        requestTrail,
+        primaryApproverId
       );
 
       await router.push("/");
@@ -199,9 +280,11 @@ const BuildFormPage: NextPageWithLayout = () => {
       console.error(error);
       showNotification({
         title: "Error",
-        message: "Something went wrong. Please try again later.",
+        message: (error as Error).message,
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -210,6 +293,16 @@ const BuildFormPage: NextPageWithLayout = () => {
     signerAction: string
   ) => {
     try {
+      if (!signerUsername || !signerAction) {
+        showNotification({
+          title: "Error",
+          message: "Please fill in signer username and action",
+          color: "red",
+          autoClose: 3000,
+        });
+        return;
+      }
+
       const userProfile = await getUserProfileByUsername(
         supabaseClient,
         signerUsername
@@ -217,14 +310,24 @@ const BuildFormPage: NextPageWithLayout = () => {
 
       if (!userProfile) throw new Error("User not found");
 
-      setRequestTrail((prev) => [
-        ...prev,
-        {
-          approverId: userProfile.user_id as string,
-          approverUsername: userProfile.username as string,
-          approverAction: signerAction,
-        },
-      ]);
+      // setRequestTrail((prev) => [
+      //   ...prev,
+      //   {
+      //     approverId: userProfile.user_id as string,
+      //     approverUsername: userProfile.username as string,
+      //     approverActionName: signerAction,
+      //   },
+      // ]);
+
+      requestTrailHandler.append({
+        approverId: userProfile.user_id as string,
+        approverUsername: userProfile.username as string,
+        approverActionName: signerAction,
+      });
+
+      if (requestTrail.length === 0)
+        setPrimaryApproverId(userProfile.user_id as string);
+
       setNewSignerUsername("");
       setNewSignerAction("");
     } catch (error) {
@@ -235,6 +338,83 @@ const BuildFormPage: NextPageWithLayout = () => {
         color: "red",
       });
     }
+  };
+
+  const handleRemoveSigner = async (index: number) => {
+    requestTrailHandler.remove(index);
+  };
+
+  const handleAddOption = (
+    id: string,
+    option: string,
+    optionTooltip: string
+  ) => {
+    if (!id || !option) {
+      showNotification({
+        title: "Error",
+        message: "Option cannot be empty",
+        color: "red",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    handlers.applyWhere(
+      (item) => item.id === id,
+      (item) => ({
+        ...item,
+        newOption: "",
+        newOptionTooltip: "",
+        optionList: [...(item.optionList || []), option],
+        optionTooltipList: [...(item.optionTooltipList || []), optionTooltip],
+      })
+    );
+    showNotification({
+      title: "Success",
+      message: "Option added",
+      color: "green",
+      autoClose: 3000,
+    });
+  };
+
+  const handleOptionChange = (id: string, option: string) => {
+    handlers.applyWhere(
+      (item) => item.id === id,
+      (item) => ({
+        ...item,
+        newOption: option,
+      })
+    );
+  };
+
+  const handleToggleIsRequired = (id: string, value: boolean) => {
+    handlers.applyWhere(
+      (item) => item.id === id,
+      (item) => ({
+        ...item,
+        isRequired: value,
+      })
+    );
+  };
+
+  const handleUpdateFieldTooltip = (id: string, tooltip: string) => {
+    handlers.applyWhere(
+      (item) => item.id === id,
+      (item) => ({
+        ...item,
+        tooltip,
+      })
+    );
+  };
+
+  const handleOptionTooltipChange = (id: string, tooltip: string) => {
+    handlers.applyWhere(
+      (item) => item.id === id,
+      (item) => ({
+        ...item,
+        newOptionTooltip: tooltip,
+      })
+    );
   };
 
   const items = state.map((item, index) => (
@@ -252,13 +432,142 @@ const BuildFormPage: NextPageWithLayout = () => {
           <div {...provided.dragHandleProps} className={classes.dragHandle}>
             <IconGripVertical size={18} stroke={1.5} />
           </div>
-          <Text className={classes.type}>{capitalize(item.type[0])}</Text>
-          <div>
-            <Text>{item.label}</Text>
-            <Text color="dimmed" size="sm">
-              This will accept a {item.type} input
-            </Text>
-          </div>
+          {/* <Text className={classes.type}>{capitalize(item.type[0])}</Text> */}
+          <Box w="100%" ml="md">
+            <Group noWrap position="apart">
+              <PolymorphicFieldInput
+                id={item.id}
+                type={item.type as RequestFieldType}
+                label={item.label}
+                options={item.optionList || []}
+                optionTooltipList={item.optionTooltipList || []}
+              />
+              <Group noWrap>
+                <Tooltip label="Click to show field description">
+                  <ActionIcon
+                    size="xs"
+                    onClick={() =>
+                      showNotification({
+                        title: item.label,
+                        message:
+                          item?.tooltip || "No tooltip added for this field",
+                        color: "info",
+                      })
+                    }
+                  >
+                    <IconInfoCircle size={18} stroke={1.5} />
+                  </ActionIcon>
+                </Tooltip>
+                <CloseButton
+                  size="xs"
+                  p={0}
+                  m={0}
+                  onClick={() => handlers.remove(index)}
+                />
+              </Group>
+            </Group>
+            <Divider size="xs" my="xs" />
+            {item.type !== "section" && item.type !== "repeatable_section" && (
+              <Group mt="xs">
+                <TextInput
+                  placeholder={`Add field tooltip`}
+                  size="xs"
+                  value={item.tooltip}
+                  onChange={(event) =>
+                    handleUpdateFieldTooltip(item.id, event.currentTarget.value)
+                  }
+                />
+                <Checkbox
+                  size="xs"
+                  label="Required"
+                  onChange={(event) =>
+                    handleToggleIsRequired(item.id, event.currentTarget.checked)
+                  }
+                />
+              </Group>
+            )}
+            {item.type === "select" && (
+              <Group noWrap mt="md">
+                <TextInput
+                  size="xs"
+                  placeholder="Add option"
+                  // value={newOption}
+                  // onChange={(event) => setNewOption(event.currentTarget.value)}
+                  value={item.newOption}
+                  onChange={(event) =>
+                    handleOptionChange(item.id, event.currentTarget.value)
+                  }
+                />
+                <TextInput
+                  // placeholder="Add option tooltip"
+                  placeholder={`Add option description`}
+                  size="xs"
+                  value={item.newOptionTooltip}
+                  onChange={(event) =>
+                    handleOptionTooltipChange(
+                      item.id,
+                      event.currentTarget.value
+                    )
+                  }
+                />
+                <Tooltip label={`Add ${item.type} option`}>
+                  <ActionIcon
+                    variant="outline"
+                    size="xs"
+                    onClick={() =>
+                      handleAddOption(
+                        item.id,
+                        item.newOption || "",
+                        item.newOptionTooltip || ""
+                      )
+                    }
+                  >
+                    <IconPlus size={18} stroke={1.5} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            )}
+            {item.type === "multiple" && (
+              <Group noWrap mt="md">
+                <TextInput
+                  size="xs"
+                  placeholder="Add option"
+                  // value={newOption}
+                  // onChange={(event) => setNewOption(event.currentTarget.value)}
+                  value={item.newOption}
+                  onChange={(event) =>
+                    handleOptionChange(item.id, event.currentTarget.value)
+                  }
+                />
+                <TextInput
+                  placeholder={`Add option description`}
+                  size="xs"
+                  value={item.newOptionTooltip}
+                  onChange={(event) =>
+                    handleOptionTooltipChange(
+                      item.id,
+                      event.currentTarget.value
+                    )
+                  }
+                />
+                <Tooltip label={`Add ${item.type} option`}>
+                  <ActionIcon
+                    variant="outline"
+                    size="xs"
+                    onClick={() =>
+                      handleAddOption(
+                        item.id,
+                        item.newOption || "",
+                        item.newOptionTooltip || ""
+                      )
+                    }
+                  >
+                    <IconPlus size={18} stroke={1.5} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            )}
+          </Box>
         </div>
       )}
     </Draggable>
@@ -267,26 +576,31 @@ const BuildFormPage: NextPageWithLayout = () => {
   return (
     <>
       <LoadingOverlay
-        visible={isLoading || isFetching}
+        visible={isLoading}
         overlayBlur={2}
         style={{ position: "fixed" }}
       />
       <Text size="xl" mb="xl" weight="bolder">
-        Build Form
+        Build form
       </Text>
       <Container
         className={classes.container}
         style={{ border: "1px solid #ccc", boxShadow: "2px 2px 5px #ccc" }}
       >
         <Group position="left" noWrap mb="xl">
-          <Text>Form Name</Text>
+          {/* <Text>Form Name</Text> */}
           <TextInput
             size="md"
             value={formName}
             onChange={(event) => setFormName(event.currentTarget.value)}
+            label="Form Name"
+            required
+            withAsterisk
           />
         </Group>
-        <Group position="left" mb="xl">
+        <Divider />
+
+        <Group position="left" my="xl">
           <Text>Fields</Text>
         </Group>
         <DragDropContext
@@ -314,11 +628,11 @@ const BuildFormPage: NextPageWithLayout = () => {
                 placeholder="Type"
                 onChange={(type) => setNewInputFieldType(type || "")}
                 value={newInputFieldType}
-                data={[
-                  { value: "text", label: "Text" },
-                  { value: "number", label: "Number" },
-                  { value: "date", label: "Date" },
-                ]}
+                searchable
+                data={requestFieldTypeList.map((type) => ({
+                  value: type,
+                  label: startCase(type),
+                }))}
               />
               <TextInput
                 placeholder="Label"
@@ -343,28 +657,71 @@ const BuildFormPage: NextPageWithLayout = () => {
                   <IconPlus size={18} stroke={1.5} />
                 </ActionIcon>
               </Tooltip>
-              <Button onClick={handleAddSection} size="sm">
+              {/* <Button onClick={handleAddSection} size="sm">
                 Add Section
-              </Button>
+              </Button> */}
             </Group>
           </Container>
         </div>
 
-        <Group position="left" mb="xl">
+        <Divider mt="xl" />
+
+        <Group position="left" my="xl">
           <Text>Signers</Text>
         </Group>
-        <Stepper active={requestTrail.length + 1} orientation="vertical">
+
+        {/* <Stepper active={requestTrail.length + 1} orientation="vertical">
           {requestTrail.map((trail, index) => {
-            const { approverUsername, approverAction } = trail;
+            const { approverUsername, approverActionName } = trail;
             return (
               <Stepper.Step
                 key={index}
                 label={`Step ${index + 1}`}
-                description={`Will be ${approverAction} by ${approverUsername}`}
+                description={`Will be ${approverActionName} by ${approverUsername}`}
               />
             );
           })}
-        </Stepper>
+        </Stepper> */}
+
+        <List
+          spacing="xs"
+          size="sm"
+          mb="xl"
+          center
+          icon={
+            <ThemeIcon color="blue" size={24} radius="xl">
+              <IconCircleDashed size={16} />
+            </ThemeIcon>
+          }
+        >
+          {requestTrail.map((trail, index) => {
+            const { approverId, approverUsername, approverActionName } = trail;
+            return (
+              <Group noWrap mt="xs">
+                <List.Item
+                  key={index}
+                >{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
+                <Chip
+                  size="xs"
+                  variant="outline"
+                  checked={approverId === primaryApproverId}
+                  onChange={() => setPrimaryApproverId(approverId)}
+                >
+                  {approverId === primaryApproverId && "Primary Approver"}
+                  {approverId !== primaryApproverId && "Secondary Approver"}
+                </Chip>
+                <Tooltip label="Remove field">
+                  <CloseButton
+                    size="xs"
+                    p={0}
+                    m={0}
+                    onClick={() => handleRemoveSigner(index)}
+                  />
+                </Tooltip>
+              </Group>
+            );
+          })}
+        </List>
 
         <Group position="center" noWrap>
           <Select
@@ -372,15 +729,19 @@ const BuildFormPage: NextPageWithLayout = () => {
             placeholder="Signer"
             onChange={(username) => setNewSignerUsername(username || "")}
             value={newSignerUsername}
-            // data={[
-            //   { value: "text", label: "Text" },
-            //   { value: "number", label: "Number" },
-            //   { value: "date", label: "Date" },
-            // ]}
-            data={teamMemberList.map((member) => ({
-              value: member.username as string,
-              label: member.username as string,
-            }))}
+            searchable
+            nothingFound="Team member not found"
+            data={teamMemberList
+              .map((member) => ({
+                value: member.username as string,
+                label: member.username as string,
+              }))
+              .filter((member) => {
+                if (requestTrail.length === 0) return true;
+                return !requestTrail.some(
+                  (trail) => trail.approverUsername === member.value
+                );
+              })}
           />
           <TextInput
             placeholder="Action"
@@ -405,7 +766,8 @@ const BuildFormPage: NextPageWithLayout = () => {
                   router.query.teamName as string,
                   formName,
                   state,
-                  requestTrail
+                  requestTrail,
+                  primaryApproverId
                 )
               }
               size="md"

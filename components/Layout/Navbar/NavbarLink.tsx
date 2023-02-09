@@ -1,5 +1,5 @@
-import { Group, Text, UnstyledButton } from "@mantine/core";
-import { toLower } from "lodash";
+import { Group, Text, Tooltip, UnstyledButton } from "@mantine/core";
+import { IconPlus } from "@tabler/icons";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 
@@ -32,23 +32,31 @@ function NavbarLink({ label, setOpened }: NavbarLinkProps) {
         },
       })}
       // onClick={() =>
-      //   router.push(`/teams/${toLower(router.query.teamName as string)}/forms/${toLower(label)}/edit`)
+      //   router.push(`/teams/${router.query.teamName as string}/forms/${label}/edit`)
       // }
       onClick={async () => {
         await router.push(
-          `/teams/${toLower(
+          `/teams/${
             router.query.teamName as string
-          )}/requests/create?form=${toLower(label)}`
+          }/requests/create?form=${label}`
         );
         setOpened(false);
       }}
     >
-      <Group position="apart">
-        {/* <ThemeIcon color={color} variant="light">
+      <Tooltip label={`Click to create request with ${label} form`}>
+        <Group position="apart" noWrap>
+          {/* <ThemeIcon color={color} variant="light">
           {icon}
         </ThemeIcon> */}
-        <Text size="sm">{label}</Text>
-      </Group>
+          <Text size="sm" lineClamp={1}>
+            {label}
+          </Text>
+          {/* on hover show action icon plus */}
+          {/* <ActionIcon size="sm"> */}
+          <IconPlus size={18} stroke={1.5} />
+          {/* </ActionIcon> */}
+        </Group>
+      </Tooltip>
     </UnstyledButton>
   );
 }

@@ -60,22 +60,6 @@ export type RequestFormTableInsert =
 export type RequestFormTableUpdate =
   Database["public"]["Tables"]["request_form_table"]["Update"];
 
-// request_order_table
-export type RequestOrderTableRow =
-  Database["public"]["Tables"]["request_order_table"]["Row"];
-export type RequestOrderTableInsert =
-  Database["public"]["Tables"]["request_order_table"]["Insert"];
-export type RequestOrderTableUpdate =
-  Database["public"]["Tables"]["request_order_table"]["Update"];
-
-// request_request_approver_table
-export type RequestRequestApproverTableRow =
-  Database["public"]["Tables"]["request_request_approver_table"]["Row"];
-export type RequestRequestApproverTableInsert =
-  Database["public"]["Tables"]["request_request_approver_table"]["Insert"];
-export type RequestRequestApproverTableUpdate =
-  Database["public"]["Tables"]["request_request_approver_table"]["Update"];
-
 // request_request_table
 export type RequestRequestTableRow =
   Database["public"]["Tables"]["request_request_table"]["Row"];
@@ -171,10 +155,6 @@ export type RequestFormFactViewRow =
 export type RequestFormTemplateViewRow =
   Database["public"]["Views"]["request_form_template_view"]["Row"];
 
-// request_request_approver_view
-export type RequestRequestApproverViewRow =
-  Database["public"]["Views"]["request_request_approver_view"]["Row"];
-
 // request_request_user_comment_view
 export type RequestRequestUserCommentViewRow =
   Database["public"]["Views"]["request_request_user_comment_view"]["Row"];
@@ -191,57 +171,12 @@ export type TeamMemberViewRow =
 export type TeamUserNotificationViewRow =
   Database["public"]["Views"]["team_user_notification_view"]["Row"];
 
-// Enums
-// request_field_type
-export type RequestFieldType =
-  Database["public"]["Enums"]["request_field_type"];
-
 // Functions
 
-// check_if_invitation_is_valid
-export type CheckIfInvitationIsValidArgs =
-  Database["public"]["Functions"]["check_if_invitation_is_valid"]["Args"];
-export type CheckIfInvitationIsValidReturns =
-  Database["public"]["Functions"]["check_if_invitation_is_valid"]["Returns"];
-
-// get_user_id_list_from_email_list
-export type GetUserIdListFromEmailListArgs =
-  Database["public"]["Functions"]["get_user_id_list_from_email_list"]["Args"];
-export type GetUserIdListFromEmailListReturns =
-  Database["public"]["Functions"]["get_user_id_list_from_email_list"]["Returns"];
-
-// build_form_template
-export type BuildFormTemplateArgs =
-  Database["public"]["Functions"]["build_form_template"]["Args"];
-export type BuildFormTemplateReturns =
-  Database["public"]["Functions"]["build_form_template"]["Returns"];
-
-// create_request
-export type CreateRequestArgs =
-  Database["public"]["Functions"]["create_request"]["Args"];
-export type CreateRequestReturns =
-  Database["public"]["Functions"]["create_request"]["Returns"];
-
-// update_request_draft
-export type UpdateRequestDraftArgs =
-  Database["public"]["Functions"]["update_request_draft"]["Args"];
-export type UpdateRequestDraftReturns =
-  Database["public"]["Functions"]["update_request_draft"]["Returns"];
-
 // Custom Types
-export type TeamMemberRole =
-  | "owner"
-  | "admin"
-  | "approver"
-  | "member"
-  | "purchaser";
-export type RequestStatus =
-  | "pending"
-  | "approved"
-  | "rejected"
-  | "purchased"
-  | "cancelled"
-  | "stale";
+export type TeamMemberRole = "owner" | "admin" | "member";
+export type RequestStatus = "pending" | "approved" | "rejected";
+export const requestStatusList = ["pending", "approved", "rejected"];
 
 // Build Form Template
 export type QuestionRow = { question: string; expected_response_type: string };
@@ -287,3 +222,40 @@ export type RequestListToCSV = {
   approver: string;
   purchaser: string;
 }[];
+
+export type RequestFieldType =
+  | "section"
+  | "repeatable_section"
+  | "text"
+  | "number"
+  | "date"
+  | "daterange"
+  | "select"
+  // | "slider"
+  | "multiple";
+export const requestFieldTypeList = [
+  "section",
+  "repeatable_section",
+  "text",
+  "number",
+  "date",
+  "daterange",
+  "select",
+  // "slider",
+  "multiple",
+];
+
+export type Bucket =
+  | "request_attachments"
+  | "comment_attachments"
+  | "avatars"
+  | "signatures"
+  | "team_logos";
+
+export type CommentType =
+  | "comment"
+  | "approved"
+  | "rejected"
+  | "canceled"
+  | "uncanceled"
+  | "request_created";

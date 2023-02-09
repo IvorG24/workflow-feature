@@ -13,7 +13,6 @@ import {
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { toLower } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
@@ -67,10 +66,11 @@ function Onboarding() {
       const createTeamParams: TeamTableInsert = {
         team_name: values.teamName,
         team_logo_filepath: teamLogoFilepath,
+        team_user_id: user.id,
       };
       const data = await createTeam(supabaseClient, createTeamParams, user.id);
 
-      router.push(`/teams/${toLower(data.team_table.team_name as string)}`);
+      router.push(`/teams/${data.team_table.team_name as string}`);
       form.reset();
       setIsLoading(false);
     } catch (error) {

@@ -1,28 +1,84 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { toLower } from "lodash";
 import {
-  DndListHandleProps,
-  RequestTrail,
+  DndListHandleProps as BuildFormDndListHandleProps,
+  RequestTrail as BuildFormRequestTrail,
 } from "pages/teams/[teamName]/forms/build";
 import {
+  DndListHandleProps as CreateRequestDndListHandleProps,
+  RequestTrail as CreateRequestTrail,
+} from "pages/teams/[teamName]/requests/create";
+import { removeFileList } from "./file";
+import {
+  CommentType,
   Database,
-  RequestFieldType,
   RequestFormFactTableInsert,
   RequestFormTableInsert,
-  RequestOrderTableInsert,
+  RequestStatus,
   TeamMemberTableInsert,
   TeamTableInsert,
   UserProfileTableInsert,
 } from "./types";
 
+const PAGE_SIZE = 15;
+
+export type GetTeamFormTemplateListFilter = {
+  keyword: string;
+  isHiddenOnly: boolean;
+};
+export const getTeamFormTemplateList = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamName: string,
+  filter?: GetTeamFormTemplateListFilter
+) => {
+  try {
+    let query = supabaseClient
+      .from("request_form_template_distinct_view")
+      .select()
+      .eq("team_name", teamName);
+
+    if (filter?.keyword) {
+      // Reference: https://github.com/supabase/supabase/discussions/6778
+      // if (searchText !== "") {
+      //   const wordOne = searchText.trim().split(" ").at(0);
+      //   const wordTwo = searchText.trim().split(" ").at(1);
+      //   console.log({ wordOne, wordTwo });
+      //   query = query.or(
+      //     `or(first_name.ilike.%${wordOne}%,last_name.ilike.%${wordTwo}%),and(first_name.ilike.%${wordTwo}%,last_name.ilike.%${wordOne}%)`
+      //   );
+      // }
+      // search in form_name, username
+      query = query.or(
+        `or(form_name.ilike.%${filter.keyword}%,username.ilike.%${filter.keyword}%)`
+      );
+    }
+    if (filter?.isHiddenOnly) {
+      query = query.eq("form_is_hidden", true);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return data || [];
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetTeamFormTemplateList = Awaited<
+  ReturnType<typeof getTeamFormTemplateList>
+>;
+
 export const getTeamFormTemplateNameList = async (
   supabaseClient: SupabaseClient<Database>,
-  teamId: string
+  teamName: string
 ) => {
   try {
     const { data, error } = await supabaseClient
       .from("request_form_template_distinct_view")
       .select("form_id, form_name")
-      .eq("team_id", teamId);
+      .eq("team_name", teamName);
     if (error) throw error;
 
     return data || [];
@@ -44,7 +100,7 @@ export const getUserProfile = async (
       .from("user_profile_table")
       .select()
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   } catch (error) {
@@ -80,6 +136,7 @@ export const createUserProfile = async (
   params: UserProfileTableInsert
 ) => {
   try {
+    params.username = params.username ? toLower(params.username) : null;
     const { data, error } = await supabaseClient
       .from("user_profile_table")
       .insert(params)
@@ -102,6 +159,7 @@ export const createTeam = async (
   // insert to team table
   // insert to team member table
   try {
+    params.team_name = params.team_name ? toLower(params.team_name) : null;
     const { data: data1Data, error: data1Error } = await supabaseClient
       .from("team_table")
       .insert(params)
@@ -255,12 +313,16 @@ export const isUserOnboarded = async (
     const promises = [
       supabaseClient
         .from("user_profile_table")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId),
+        // .select("*", { count: "exact", head: true })
+        .select()
+        .eq("user_id", userId)
+        .maybeSingle(),
       supabaseClient
         .from("team_member_table")
-        .select("*", { count: "exact", head: true })
-        .eq("team_member_user_id", userId),
+        // .select("*", { count: "exact", head: true })
+        .select()
+        .eq("team_member_user_id", userId)
+        .maybeSingle(),
     ];
 
     const [userProfile, teamList] = await Promise.all(promises);
@@ -268,11 +330,14 @@ export const isUserOnboarded = async (
     if (userProfile.error) throw userProfile.error;
     if (teamList.error) throw teamList.error;
 
-    if (!userProfile.count) return false;
-    if (!teamList.count) return false;
+    if (!userProfile?.data) return false;
+    if (!teamList?.data) return false;
 
-    if (userProfile.count === 0) return false;
-    if (teamList.count === 0) return false;
+    // if (!userProfile.count) return false;
+    // if (!teamList.count) return false;
+
+    // if (userProfile.count === 0) return false;
+    // if (teamList.count === 0) return false;
 
     return true;
   } catch (error) {
@@ -290,7 +355,8 @@ export const getTeamFormList = async (
     const { data, error } = await supabaseClient
       .from("request_form_template_distinct_view")
       .select("form_id, form_name")
-      .eq("team_name", teamName);
+      .eq("team_name", teamName)
+      .is("form_is_hidden", false);
 
     if (error) throw error;
 
@@ -305,7 +371,7 @@ export type GetTeamFormList = Awaited<ReturnType<typeof getTeamFormList>>;
 export const createForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: RequestFormTableInsert,
-  dndListHandleProps: DndListHandleProps["data"],
+  dndListHandleProps: BuildFormDndListHandleProps["data"],
   teamId: string,
   userId: string
 ) => {
@@ -331,9 +397,10 @@ export const createForm = async (
           .from("request_field_table")
           .insert({
             field_name: item.label,
-            request_field_type: item.type as RequestFieldType,
-            field_is_required: false,
-            field_options: null,
+            field_is_required: !!item.isRequired,
+            field_tooltip: item?.tooltip || null,
+            field_option_list: item.optionList,
+            field_option_tooltip_list: item.optionTooltipList,
           })
           .select()
           .single();
@@ -343,30 +410,17 @@ export const createForm = async (
       if (error) throw error;
     });
 
-    // insert into request_order_table
-    const params2: RequestOrderTableInsert = {
-      order_field_id_list: requestFieldList.map(
-        ({ data }) => data?.field_id as number
-      ),
-    };
-
-    const { data: data2Data, error: data2Error } = await supabaseClient
-      .from("request_order_table")
-      .insert(params2)
-      .select()
-      .single();
-    if (data2Error) throw data2Error;
-
     // insert into request_form_fact_table
     const params3: RequestFormFactTableInsert[] = requestFieldList.map(
-      (field) => {
+      (field, index) => {
         return {
           form_fact_form_id: data1Data?.form_id as number,
           form_fact_field_id: field.data?.field_id as number,
-          form_fact_order_id: data2Data?.order_id as number,
           form_fact_team_id: teamId,
           form_fact_user_id: userId,
           form_fact_request_status_id: "pending",
+          form_fact_order_number: index + 1,
+          form_fact_field_type_id: dndListHandleProps[index].type,
         };
       }
     );
@@ -381,7 +435,6 @@ export const createForm = async (
     return {
       request_form_table: data1Data,
       request_field_table: requestFieldList.map(({ data }) => data),
-      request_order_table: data2Data,
       request_form_fact_table: data3Data || [],
     };
   } catch (error) {
@@ -400,7 +453,7 @@ export const getTeam = async (
       .from("team_table")
       .select()
       .eq("team_name", teamName)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;
@@ -411,16 +464,47 @@ export const getTeam = async (
 };
 export type GetTeam = Awaited<ReturnType<typeof getTeam>>;
 
+export type GetTeamMemberListFilter = {
+  keyword?: string;
+  isAdminOnly?: boolean;
+};
 export const getTeamMemberList = async (
   supabaseClient: SupabaseClient<Database>,
-  teamName: string
+  teamName: string,
+  filter?: GetTeamMemberListFilter
 ) => {
   try {
-    const { data, error } = await supabaseClient
+    let query = supabaseClient
       .from("team_member_view")
       .select()
-      .eq("team_name", teamName);
+      .eq("team_name", teamName)
+      .is("team_member_disabled", false);
 
+    const { keyword, isAdminOnly } = filter || {};
+
+    if (keyword) {
+      // Reference: https://github.com/supabase/supabase/discussions/6778
+      // if (searchText !== "") {
+      //   const wordOne = searchText.trim().split(" ").at(0);
+      //   const wordTwo = searchText.trim().split(" ").at(1);
+      //   console.log({ wordOne, wordTwo });
+      //   query = query.or(
+      //     `or(first_name.ilike.%${wordOne}%,last_name.ilike.%${wordTwo}%),and(first_name.ilike.%${wordTwo}%,last_name.ilike.%${wordOne}%)`
+      //   );
+      // }
+      // Search in username, user_first_name, user_last_name, email,
+      query = query.or(
+        `or(user_first_name.ilike.%${keyword}%,user_last_name.ilike.%${keyword}%,username.ilike.%${keyword}%,user_email.ilike.%${keyword}%)`
+      );
+    }
+    if (isAdminOnly) {
+      // only team_member_member_role_id === "owner" or "admin"
+      query = query.or(
+        `or(team_member_member_role_id.eq.owner,team_member_member_role_id.eq.admin)`
+      );
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   } catch (error) {
@@ -430,10 +514,33 @@ export const getTeamMemberList = async (
 };
 export type GetTeamMemberList = Awaited<ReturnType<typeof getTeamMemberList>>;
 
+export const getTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamName: string,
+  userId: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("team_member_view")
+      .select()
+      .eq("team_name", teamName)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetTeamMember = Awaited<ReturnType<typeof getTeamMember>>;
+
 export const createFormApproverList = async (
   supabaseClient: SupabaseClient<Database>,
   formId: number,
-  requestTrail: RequestTrail["data"]
+  requestTrail: BuildFormRequestTrail["data"],
+  primaryApproverId: string
 ) => {
   try {
     // insert to request_action_table
@@ -442,7 +549,7 @@ export const createFormApproverList = async (
       .insert(
         requestTrail.map((trail) => {
           return {
-            action_id: trail.approverAction,
+            action_name: trail.approverActionName,
           };
         })
       )
@@ -459,6 +566,8 @@ export const createFormApproverList = async (
             form_approver_form_id: formId,
             form_approver_user_id: trail.approverId,
             form_approver_action_id: data1Data[index].action_id,
+            form_approver_is_primary_approver:
+              trail.approverId === primaryApproverId,
           };
         })
       )
@@ -487,7 +596,8 @@ export const getFormApproverList = async (
     const { data, error } = await supabaseClient
       .from("request_form_approver_view")
       .select()
-      .eq("form_id", formId);
+      .eq("form_id", formId)
+      .is("form_approver_is_disabled", false);
 
     if (error) throw error;
     return data || [];
@@ -529,24 +639,16 @@ export type CreateRequestParams = {
   formId: number;
   userId: string;
   teamId: string;
-  orderId: number;
-  responseList: {
-    fieldId: number;
-    responseValue: string;
-  }[];
-  requestTrail: RequestTrail["data"];
+  dndList: CreateRequestDndListHandleProps["data"];
+  requestTrail: CreateRequestTrail["data"];
+  primaryApproverId: string;
+  filepathList?: string[];
 };
 export const createRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: CreateRequestParams
 ) => {
   try {
-    // insert into request_request_table
-    // insert into request_response_table
-    // insert into request_form_fact_table
-    // insert into request_request_approver_action_table
-    // insert into
-
     const { data: data1Data, error: data1Error } = await supabaseClient
       .from("request_request_table")
       .insert({
@@ -554,6 +656,7 @@ export const createRequest = async (
         request_description: params.description,
         request_is_draft: false,
         request_is_disabled: false,
+        request_attachment_filepath_list: params.filepathList || null,
       })
       .select()
       .single();
@@ -563,9 +666,9 @@ export const createRequest = async (
     const { data: data2Data, error: data2Error } = await supabaseClient
       .from("request_response_table")
       .insert(
-        params.responseList.map((response) => {
+        params.dndList.map((item) => {
           return {
-            response_value: response.responseValue,
+            response_value: item.value,
           };
         })
       )
@@ -576,18 +679,19 @@ export const createRequest = async (
     const { data: data3Data, error: data3Error } = await supabaseClient
       .from("request_form_fact_table")
       .insert(
-        params.responseList.map((response) => {
+        params.dndList.map((item, index) => {
           return {
             form_fact_user_id: params.userId,
             form_fact_form_id: params.formId,
-            form_fact_field_id: response.fieldId,
+            form_fact_field_id: item.duplicatedId
+              ? Number(item.duplicatedId)
+              : Number(item.id),
             form_fact_request_id: data1Data.request_id,
-            form_fact_response_id: data2Data.find(
-              (e) => e.response_id === response.fieldId
-            )?.response_id as number,
+            form_fact_response_id: data2Data[index].response_id,
             form_fact_team_id: params.teamId,
             form_fact_request_status_id: "pending",
-            form_fact_order_id: params.orderId,
+            form_fact_order_number: index + 1,
+            form_fact_field_type_id: params.dndList[index].type,
           };
         })
       );
@@ -603,8 +707,10 @@ export const createRequest = async (
           return {
             request_approver_action_request_id: data1Data.request_id,
             request_approver_action_user_id: trail.approverId,
-            request_approver_action_action_id: trail.approverAction,
-            request_approver_action_is_approved: false,
+            request_approver_action_action_id: trail.approverActionId,
+            request_approver_action_is_primary_approver:
+              trail.approverId === params.primaryApproverId,
+            // request_approver_step: index + 1,
           };
         })
       );
@@ -627,6 +733,8 @@ export type CreateRequest = Awaited<ReturnType<typeof createRequest>>;
 export const getTeamRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   teamName: string
+  // range = [0, 15],
+  // filter?: Partial<Filter>
 ) => {
   try {
     const { data: team, error: teamError } = await supabaseClient
@@ -637,10 +745,39 @@ export const getTeamRequestList = async (
 
     if (teamError) throw teamError;
 
-    const { data, error } = await supabaseClient
+    // const { data, error } = await supabaseClient
+    //   .from("request_request_distinct_view")
+    //   .select()
+    //   .eq("team_id", team.team_id)
+    //   .is("request_is_disabled", false)
+    //   .order("request_date_created", { ascending: false })
+    //   .range(range[0], range[1]);
+
+    let query = supabaseClient
       .from("request_request_distinct_view")
       .select()
       .eq("team_id", team.team_id);
+
+    // if (filter) {
+    //   if (filter.keyword) {
+    //     query = query.ilike("request_title", `%${filter.keyword}%`);
+    //     query = query.ilike("request_description", `%${filter.keyword}%`);
+    //   }
+    //   if (filter.mainStatus) {
+    //     query = query.eq("status_id", filter.mainStatus);
+    //   }
+    //   if (filter.form) {
+    //     query = query.eq("form_name", filter.form);
+    //   }
+    //   if (filter.requester) {
+    //     query = query.eq("username", filter.requester);
+    //   }
+    // }
+
+    query = query.is("request_is_disabled", false);
+    // .range(range[0], range[1]);
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data || [];
@@ -695,23 +832,71 @@ export type GetRequestApproverList = Awaited<
   ReturnType<typeof getRequestApproverList>
 >;
 
-export const approveRequest = async (
+export const updateRequestStatus = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string,
   requestId: number,
-  actionId: string
+  actionId: string,
+  newStatus: RequestStatus,
+  isUpdatedByPrimaryApprover: boolean,
+  updateStatusComment: string | null
 ) => {
-  // update request_request_approver_action_table.request_approver_action_is_approved
-
   try {
+    const { data: serverDate, error: serverDateError } = await supabaseClient
+      .rpc("get_current_date")
+      .select()
+      .single();
+
+    if (serverDateError) throw serverDateError;
+
     const { data, error } = await supabaseClient
       .from("request_request_approver_action_table")
       .update({
-        request_approver_action_is_approved: true,
+        request_approver_action_status_id: newStatus,
+        request_approver_action_status_last_updated: serverDate,
+        request_approver_action_status_update_comment: updateStatusComment,
       })
       .eq("request_approver_action_request_id", requestId)
       .eq("request_approver_action_user_id", userId)
       .eq("request_approver_action_action_id", actionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (isUpdatedByPrimaryApprover) {
+      const { error } = await supabaseClient
+        .from("request_form_fact_table")
+        .update({
+          form_fact_request_status_id: newStatus,
+        })
+        .eq("form_fact_request_id", requestId);
+
+      if (error) throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateRequestStatus = Awaited<
+  ReturnType<typeof updateRequestStatus>
+>;
+
+export const updateRequestCancelStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number,
+  isCancelled: boolean
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_table")
+      .update({
+        request_is_cancelled: isCancelled,
+      })
+      .eq("request_id", requestId)
       .select()
       .single();
 
@@ -723,3 +908,538 @@ export const approveRequest = async (
     throw error;
   }
 };
+export type UpdateRequestCancelStatus = Awaited<
+  ReturnType<typeof updateRequestCancelStatus>
+>;
+
+export const updateForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  dndListHandleProps: BuildFormDndListHandleProps["data"]
+  // teamId: string,
+  // userId: string
+) => {
+  // update into request_field_table: field_tooltip, field_option_list, field_option_tooltip_list.
+  // use promise.all to update all fields at once in request_field_table.
+  // update into request_form_fact_table: form_fact_order_number.
+  // use promise.all to update all fields at once in request_form_fact_table.
+
+  try {
+    const updateFieldTooltipPromiseList = dndListHandleProps.map((item) => {
+      return supabaseClient
+        .from("request_field_table")
+        .update({
+          field_tooltip: item.tooltip,
+          field_option_list: item.optionList,
+          field_option_tooltip_list: item.optionTooltipList,
+          field_is_required: item.isRequired,
+        })
+        .eq("field_id", item.id)
+        .select()
+        .single();
+    });
+
+    const updateFieldTooltipResult = await Promise.all(
+      updateFieldTooltipPromiseList
+    );
+
+    const updateFormFactOrderNumberPromiseList = dndListHandleProps.map(
+      (item, index) => {
+        return supabaseClient
+          .from("request_form_fact_table")
+          .update({
+            form_fact_order_number: index,
+          })
+          .eq("form_fact_field_id", item.id)
+          .select()
+          .single();
+      }
+    );
+
+    const updateFormFactOrderNumberResult = await Promise.all(
+      updateFormFactOrderNumberPromiseList
+    );
+
+    return {
+      updateFieldTooltipResult,
+      updateFormFactOrderNumberResult,
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateForm = Awaited<ReturnType<typeof updateForm>>;
+
+export const updateFormApproverList = async (
+  supabaseClient: SupabaseClient<Database>,
+  formId: number,
+  requestTrail: BuildFormRequestTrail["data"],
+  primaryApproverId: string
+) => {
+  try {
+    // disable current approvers from request_form_approver_table  of the form.
+    const { data: data0Data, error: data0Error } = await supabaseClient
+      .from("request_form_approver_table")
+      .update({
+        form_approver_is_disabled: true,
+      })
+      .eq("form_approver_form_id", formId)
+      .select();
+
+    if (data0Error) throw data0Error;
+
+    // * Add new approvers
+
+    // insert to request_action_table
+    const { data: data1Data, error: data1Error } = await supabaseClient
+      .from("request_action_table")
+      .insert(
+        requestTrail.map((trail) => {
+          return {
+            action_name: trail.approverActionName,
+          };
+        })
+      )
+      .select();
+
+    if (data1Error) throw data1Error;
+
+    // insert to request_form_approver_table
+    const { data: data2Data, error: data2Error } = await supabaseClient
+      .from("request_form_approver_table")
+      .insert(
+        requestTrail.map((trail, index) => {
+          return {
+            form_approver_form_id: formId,
+            form_approver_user_id: trail.approverId,
+            form_approver_action_id: data1Data[index].action_id,
+            form_approver_is_primary_approver:
+              trail.approverId === primaryApproverId,
+          };
+        })
+      )
+      .select();
+
+    if (data2Error) throw data2Error;
+
+    return {
+      request_action_table: data1Data || [],
+      request_form_approver_table: data2Data || [],
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateFormApproverList = Awaited<
+  ReturnType<typeof updateFormApproverList>
+>;
+
+export const addComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number,
+  userId: string,
+  comment: string | null,
+  commentType: CommentType,
+  attachmentFilepathList: string[] | null
+) => {
+  try {
+    const { data: data0Data, error: data0Error } = await supabaseClient
+      .from("request_comment_table")
+      .insert({
+        comment_content: comment,
+        comment_type_id: commentType,
+        comment_attachment_filepath_list: attachmentFilepathList,
+      })
+      .select();
+
+    if (data0Error) throw data0Error;
+
+    const { data: data1Data, error: data1Error } = await supabaseClient
+      .from("request_request_user_comment_table")
+      .insert({
+        user_request_comment_user_id: userId,
+        user_request_comment_request_id: requestId,
+        user_request_comment_comment_id: data0Data[0].comment_id,
+      })
+      .select();
+
+    if (data1Error) throw data1Error;
+
+    return {
+      request_comment_table: data0Data || [],
+      request_request_user_comment_table: data1Data || [],
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type AddComment = Awaited<ReturnType<typeof addComment>>;
+
+export const editComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  commentId: number,
+  comment: string
+) => {
+  try {
+    const {
+      data: currentDatabaseServerDate,
+      error: currentDatabaseServerDateError,
+    } = await supabaseClient.rpc("get_current_date").select().single();
+
+    if (currentDatabaseServerDateError) throw currentDatabaseServerDateError;
+
+    // TODO: How will updating the comment attachment list happen here?
+    const { data, error } = await supabaseClient
+      .from("request_comment_table")
+      .update({
+        comment_content: comment,
+        comment_is_edited: true,
+        comment_last_updated: currentDatabaseServerDate,
+      })
+      .eq("comment_id", commentId)
+      .select();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type EditComment = Awaited<ReturnType<typeof editComment>>;
+
+export const updateCommentAttachmentList = async (
+  supabaseClient: SupabaseClient<Database>,
+  commentId: number,
+  attachmentList: string[]
+) => {
+  try {
+    // get current comment attachment list
+    const {
+      data: currentCommentAttachmentListData,
+      error: currentCommentAttachmentListError,
+    } = await supabaseClient
+      .from("request_comment_table")
+      .select("comment_attachment_filepath_list")
+      .eq("comment_id", commentId)
+      .single();
+
+    if (currentCommentAttachmentListError)
+      throw currentCommentAttachmentListError;
+
+    // remove current attachment list
+    await removeFileList(
+      supabaseClient,
+      currentCommentAttachmentListData.comment_attachment_filepath_list || [],
+      "comment_attachments"
+    );
+
+    // update comment attachment list
+    const { data, error } = await supabaseClient
+      .from("request_comment_table")
+      .update({
+        comment_attachment_filepath_list: attachmentList,
+      })
+      .eq("comment_id", commentId)
+      .select();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateCommentAttachmentList = Awaited<
+  ReturnType<typeof updateCommentAttachmentList>
+>;
+
+export const disableComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  commentId: number
+) => {
+  try {
+    const {
+      data: currentDatabaseServerDate,
+      error: currentDatabaseServerDateError,
+    } = await supabaseClient.rpc("get_current_date").select().single();
+
+    if (currentDatabaseServerDateError) throw currentDatabaseServerDateError;
+
+    const { data, error } = await supabaseClient
+      .from("request_comment_table")
+      .update({
+        comment_is_disabled: true,
+        comment_last_updated: currentDatabaseServerDate,
+      })
+      .eq("comment_id", commentId)
+      .select();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type DisableComment = Awaited<ReturnType<typeof disableComment>>;
+
+export const getCommentList = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: number
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_request_user_comment_view")
+      .select()
+      .eq("request_id", requestId)
+      .is("comment_is_disabled", false);
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetCommentList = Awaited<ReturnType<typeof getCommentList>>;
+
+export const deleteComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  commentId: number
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_comment_table")
+      .update({ comment_is_disabled: true })
+      .eq("comment_id", commentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type DeleteComment = Awaited<ReturnType<typeof deleteComment>>;
+
+export const isUsernameExisting = async (
+  supabaseClient: SupabaseClient<Database>,
+  username: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("user_profile_table")
+      .select()
+      .ilike("username", username)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return !!data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type IsUsernameExisting = Awaited<ReturnType<typeof isUsernameExisting>>;
+
+export const isTeamNameExisting = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamName: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("team_table")
+      .select()
+      .ilike("team_name", teamName)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return !!data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type IsTeamNameExisting = Awaited<ReturnType<typeof isTeamNameExisting>>;
+
+export const isEmailExisting = async (
+  supabaseClient: SupabaseClient<Database>,
+  email: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("user_profile_table")
+      .select()
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return !!data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type IsEmailExisting = Awaited<ReturnType<typeof isEmailExisting>>;
+
+export const isFormNameExisting = async (
+  supabaseClient: SupabaseClient<Database>,
+  formName: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("form_table")
+      .select()
+      .ilike("form_name", formName)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return !!data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type IsFormNameExisting = Awaited<ReturnType<typeof isFormNameExisting>>;
+
+export const transferTeamOwnership = async (
+  supabaseClient: SupabaseClient<Database>,
+  fromUserId: string,
+  toUserId: string,
+  teamId: string
+) => {
+  try {
+    const { data: updateMemberData, error: updateMemberError } =
+      await supabaseClient
+        .from("team_member_table")
+        .update({
+          team_member_member_role_id: "owner",
+        })
+        .eq("team_member_user_id", toUserId)
+        .eq("team_member_team_id", teamId)
+        .select()
+        .single();
+
+    if (updateMemberError) throw updateMemberError;
+
+    const { data: updateOwnerData, error: updateOwnerError } =
+      await supabaseClient
+        .from("team_member_table")
+        .update({
+          team_member_member_role_id: "admin",
+        })
+        .eq("team_member_user_id", fromUserId)
+        .eq("team_member_team_id", teamId)
+        .select()
+        .single();
+
+    if (updateOwnerError) throw updateOwnerError;
+
+    return {
+      updateMemberData,
+      updateOwnerData,
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type TransferTeamOwnership = Awaited<
+  ReturnType<typeof transferTeamOwnership>
+>;
+
+export const removeTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  teamId: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("team_member_table")
+      .update({
+        team_member_disabled: true,
+      })
+      .eq("team_member_user_id", userId)
+      .eq("team_member_team_id", teamId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type RemoveTeamMember = Awaited<ReturnType<typeof removeTeamMember>>;
+
+export const updateTeamMemberRole = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  teamId: string,
+  teamMemberRoleId: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("team_member_table")
+      .update({
+        team_member_member_role_id: teamMemberRoleId,
+      })
+      .eq("team_member_user_id", userId)
+      .eq("team_member_team_id", teamId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateTeamMemberRole = Awaited<
+  ReturnType<typeof updateTeamMemberRole>
+>;
+
+export const updateFormTemplateVisbility = async (
+  supabaseClient: SupabaseClient<Database>,
+  formTemplateId: number,
+  isHidden: boolean
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("request_form_table")
+      .update({
+        form_is_hidden: isHidden,
+      })
+      .eq("form_id", formTemplateId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateFormTemplateVisbility = Awaited<
+  ReturnType<typeof updateFormTemplateVisbility>
+>;

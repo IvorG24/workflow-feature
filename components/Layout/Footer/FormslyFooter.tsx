@@ -1,5 +1,6 @@
 import { Button, createStyles, Footer, MediaQuery } from "@mantine/core";
 import { IconBallpen, IconChartBar, IconPlant } from "@tabler/icons";
+import { useRouter } from "next/router";
 
 const useStyles = createStyles((theme) => ({
   buttonGroup: {
@@ -8,6 +9,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 function FormslyFooter() {
+  const router = useRouter();
   const { classes } = useStyles();
   return (
     <MediaQuery largerThan="md" styles={{ display: "none" }}>
@@ -17,6 +19,9 @@ function FormslyFooter() {
             variant="subtle"
             size="xs"
             leftIcon={<IconBallpen size={12} />}
+            onClick={() =>
+              router.push(`/teams/${router.query.teamName}/requests`)
+            }
           >
             Requests
           </Button>
@@ -24,10 +29,26 @@ function FormslyFooter() {
             variant="subtle"
             size="xs"
             leftIcon={<IconChartBar size={12} />}
+            onClick={() =>
+              router.push(`/teams/${router.query.teamName}/analytics`)
+            }
           >
             Analytics
           </Button>
-          <Button variant="subtle" size="xs" leftIcon={<IconPlant size={12} />}>
+          <Button
+            variant="subtle"
+            size="xs"
+            leftIcon={
+              <IconPlant
+                size={12}
+                onClick={() =>
+                  router.push(
+                    `/teams/${router.query.teamName}/environment-impact`
+                  )
+                }
+              />
+            }
+          >
             Environment
           </Button>
         </Button.Group>

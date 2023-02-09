@@ -1,14 +1,14 @@
+import useAuth from "@/hooks/useAuth";
 import {
-  GetTeamFormList,
   getTeamFormList,
+  GetTeamFormList,
   GetUserTeamList,
   getUserTeamList,
   isUserOnboarded,
 } from "@/utils/queries";
 import { AppShell, LoadingOverlay, useMantineTheme } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { toLower } from "lodash";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import FormslyFooter from "./Footer/FormslyFooter";
@@ -27,20 +27,24 @@ function Layout({ children }: LayoutProps) {
   const [teamList, setTeamList] = useState<GetUserTeamList>([]);
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  const user = useUser();
+  // const user = useUser();
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingTeamList, setIsFetchingTeamList] = useState(true);
   const [isFetchingFormList, setIsFetchingFormList] = useState(true);
+  const { session } = useAuth();
 
   useEffect(() => {
     (async () => {
       try {
         setIsLoading(true);
         if (!router.isReady) return;
-        if (!user?.id) return;
+        if (!session?.user?.id) return;
 
         // If not onboarded, make user create user profile and team first.
-        const isOnboarded = await isUserOnboarded(supabaseClient, user.id);
+        const isOnboarded = await isUserOnboarded(
+          supabaseClient,
+          session?.user?.id
+        );
         if (!isOnboarded) router.push("/onboarding");
         setIsLoading(false);
       } catch (error) {
@@ -52,24 +56,41 @@ function Layout({ children }: LayoutProps) {
         });
       }
     })();
-  }, [router.query.teamName, user?.id]);
+  }, [router.query.teamName, session?.user?.id]);
 
   useEffect(() => {
     (async () => {
       try {
         setIsFetchingTeamList(true);
-        if (!user?.id) return;
+        if (!session?.user?.id) return;
         // Fetch current user's team list.
-        const data = await getUserTeamList(supabaseClient, user.id as string);
+        const data = await getUserTeamList(
+          supabaseClient,
+          session?.user?.id as string
+        );
+
+        if (!data) {
+          setIsFetchingTeamList(false);
+          return;
+        }
+        if (data.length === 0) {
+          setIsFetchingTeamList(false);
+          return;
+        }
 
         setTeamList(data);
 
-        // If user is onboarded and is trying to visit a page that requires a current active team, redirect to the first team in the list.
-        if (router.asPath.includes("/onboarding")) return;
-        if (router.asPath.includes("/teams/create")) return;
-
         if (!router.query.teamName)
-          router.push(`/teams/${toLower(data[0].team_name as string)}`);
+          router.push(`/teams/${data[0].team_name as string}`);
+
+        // if (
+        //   !data
+        //     .map((team) => team.team_name)
+        //     .includes(router.query.teamName as string)
+        // ) {
+        //   router.push("/404");
+        //   return;
+        // }
         setIsFetchingTeamList(false);
       } catch (error) {
         console.error(error);
@@ -78,9 +99,11 @@ function Layout({ children }: LayoutProps) {
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
+      } finally {
+        setIsFetchingTeamList(false);
       }
     })();
-  }, [router.query.teamName, user?.id]);
+  }, [router.query.teamName, session?.user?.id]);
 
   useEffect(() => {
     (async () => {
@@ -88,6 +111,7 @@ function Layout({ children }: LayoutProps) {
         setIsFetchingFormList(true);
         if (!router.isReady) return;
         if (!router.query.teamName) return;
+        if (!session?.user?.id) return;
 
         // Fetch current active team's form list.
         const data = await getTeamFormList(
@@ -105,9 +129,11 @@ function Layout({ children }: LayoutProps) {
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
+      } finally {
+        setIsFetchingFormList(false);
       }
     })();
-  }, [router.query.teamName]);
+  }, [router.query.teamName, session?.user?.id]);
 
   const handleSearchForm = (value: string) => {
     if (!value) {

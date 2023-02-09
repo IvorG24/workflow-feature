@@ -1,7 +1,8 @@
 import Layout from "@/components/Layout/Layout";
-import { createStyles, Text } from "@mantine/core";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { InferGetServerSidePropsType } from "next";
+import { getTeamMemberList } from "@/utils/queries";
+import { createStyles, JsonInput } from "@mantine/core";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { ReactElement } from "react";
 import { NextPageWithLayout } from "./_app";
 
@@ -9,37 +10,34 @@ type IndexPageProps = { sampleProp: string };
 
 const useStyles = createStyles((theme) => ({}));
 
-export const getServerSideProps = async () => {
-  // const res = await fetch('https://.../data')
-  const res = { sampleProp: "sample" };
-  // const data: IndexPageProps = await res.json();
-  const data: IndexPageProps = res;
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabaseClient = createServerSupabaseClient(ctx);
 
-  // TODO: Put this in GSSP of index page.
-  // if (!teamList) router.push(`/teams/create`);
-  // if (teamList.length === 0) router.push(`/teams/create`);
+  const teamName = `${ctx.query?.teamName}`;
 
-  // if (!router.query.teamName) {
-  //   router.push(`/teams/${toLower(teamList[0].name as string)}`);
-  // }
+  const teamMemberList = await getTeamMemberList(supabaseClient, teamName);
 
   return {
     props: {
-      data,
+      teamMemberList,
     },
   };
-};
+}
 
 const IndexPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ data }) => {
-  // will resolve data to type Data
-  const supabaseClient = useSupabaseClient();
-  const user = useUser();
-
-  const { classes, cx } = useStyles();
-
-  return <Text>Resize app to see responsive navbar in action</Text>;
+> = ({ teamMemberList }) => {
+  return (
+    <JsonInput
+      label="Your package.json"
+      placeholder="Textarea will autosize to fit the content"
+      validationError="Invalid json"
+      formatOnBlur
+      autosize
+      value={JSON.stringify(teamMemberList)}
+      minRows={4}
+    />
+  );
 };
 
 export default IndexPage;

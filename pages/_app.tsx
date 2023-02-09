@@ -1,3 +1,4 @@
+import { RouterTransition } from "@/components/RouterTransition";
 import {
   ColorScheme,
   ColorSchemeProvider,
@@ -10,8 +11,7 @@ import { getCookie, setCookie } from "cookies-next";
 import type { NextPage } from "next";
 import type { AppProps } from "next/app";
 import NextApp, { AppContext } from "next/app";
-import { useState } from "react";
-import { RouterTransition } from "./RouterTransition";
+import { ReactElement, ReactNode, useState } from "react";
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;

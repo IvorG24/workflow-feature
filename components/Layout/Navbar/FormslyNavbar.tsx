@@ -10,7 +10,6 @@ import {
   Text,
 } from "@mantine/core";
 import { IconHammer, IconSearch } from "@tabler/icons";
-import { startCase, toLower } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import NavbarLink from "./NavbarLink";
@@ -47,6 +46,14 @@ const useStyles = createStyles((theme) => ({
       theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[2]
     }`,
   },
+  formTemplates: {
+    // underline if hovered
+    "&:hover": {
+      textDecoration: "underline",
+    },
+    // sttyle cursor
+    cursor: "pointer",
+  },
 }));
 
 function FormslyNavbar({
@@ -56,21 +63,33 @@ function FormslyNavbar({
   formList,
   handleSearchForm,
 }: FormslyNavbarProps) {
-  // const { classes } = useStyles();
+  const { classes } = useStyles();
   const router = useRouter();
 
   const handleBuildForm = async () => {
-    await router.push(
-      `/teams/${toLower(router.query.teamName as string)}/forms/build`
-    );
+    await router.push(`/teams/${router.query.teamName as string}/forms/build`);
     setOpened(false);
   };
 
   const handleChangeTeam = async (teamName: string) => {
+    if (teamName === "manage team") {
+      await router.push(
+        `/teams/${router.query.teamName as string}/settings/profile`
+      );
+      setOpened(false);
+      return;
+    }
+
+    if (teamName === "create team") {
+      await router.push(`/teams/create`);
+      setOpened(false);
+      return;
+    }
+
     const team = teamList.find((team) => team.team_name === teamName);
     if (team) {
       // setActiveTeam(team);
-      await router.push(`/teams/${toLower(team.team_name as string)}`);
+      await router.push(`/teams/${team.team_name as string}`);
       setOpened(false);
     }
   };
@@ -106,13 +125,19 @@ function FormslyNavbar({
       </Navbar.Section> */}
       <Navbar.Section mt="xs">
         <Group position="apart">
-          <Text fz="md">Form Templates</Text>
+          <Text
+            fz="md"
+            className={classes.formTemplates}
+            onClick={() => router.push(`/teams/${router.query.teamName}/forms`)}
+          >
+            Forms
+          </Text>
           <Button
             onClick={handleBuildForm}
             size="xs"
             leftIcon={<IconHammer size={14} />}
           >
-            Build Form
+            Build form
           </Button>
         </Group>
       </Navbar.Section>
@@ -133,7 +158,7 @@ function FormslyNavbar({
           {formList.map((form) => {
             return (
               <NavbarLink
-                label={startCase(form.form_name as string)}
+                label={form.form_name as string}
                 key={form.form_id}
                 setOpened={setOpened}
               />

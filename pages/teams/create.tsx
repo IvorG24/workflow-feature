@@ -1,41 +1,125 @@
-import Layout from "@/components/Layout/Layout";
-import { createStyles, Text } from "@mantine/core";
+import { CreateTeam, createTeam, isTeamNameExisting } from "@/utils/queries";
+import {
+  Button,
+  Center,
+  Flex,
+  LoadingOverlay,
+  Text,
+  TextInput,
+} from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { InferGetServerSidePropsType } from "next";
-import { NextPageWithLayout } from "pages/_app";
-import { ReactElement } from "react";
+import { toUpper } from "lodash";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
-type CreateTeamPageProps = { sampleProp: string };
-
-const useStyles = createStyles((theme) => ({}));
-
-export const getServerSideProps = async () => {
-  // const res = await fetch('https://.../data')
-  const res = { sampleProp: "sample" };
-  // const data: CreateTeamPageProps = await res.json();
-  const data: CreateTeamPageProps = res;
-
-  return {
-    props: {
-      data,
-    },
-  };
-};
-
-const CreateTeamPage: NextPageWithLayout<
-  InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ data }) => {
-  // will resolve data to type Data
+function CreateTeamPage() {
   const supabaseClient = useSupabaseClient();
+  const [teamName, setTeamName] = useState("");
   const user = useUser();
+  const router = useRouter();
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [createdTeam, setCreatedTeam] = useState<CreateTeam | null>(null);
 
-  const { classes, cx } = useStyles();
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (!user?.id) router.push("/sign-in");
+  }, [user, router.isReady]);
 
-  return <Text>Resize app to see responsive navbar in action</Text>;
-};
+  const handleCreateTeam = async (userId: string, teamName: string) => {
+    try {
+      setIsCreatingTeam(true);
+      if (!userId) {
+        showNotification({
+          title: "Error",
+          message: "Please sign in to create a team.",
+          color: "red",
+        });
+        return;
+      }
+      if (!teamName) {
+        showNotification({
+          title: "Error",
+          message: "Please input a team name.",
+          color: "red",
+        });
+        return;
+      }
+
+      // Check if team name already exists in database
+      if (await isTeamNameExisting(supabaseClient, teamName)) {
+        showNotification({
+          title: "Error",
+          message: "Team name already exists. Please try another name.",
+          color: "red",
+        });
+        return;
+      }
+
+      const data = await createTeam(
+        supabaseClient,
+        {
+          team_name: teamName,
+        },
+        userId
+      );
+
+      setCreatedTeam(data);
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        title: "Error",
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsCreatingTeam(false);
+    }
+  };
+
+  return (
+    <>
+      <Center h="90vh">
+        <LoadingOverlay visible={isCreatingTeam} overlayBlur={2} />
+        <Flex direction="column" gap="sm" w={400}>
+          {!createdTeam && (
+            <>
+              <Text fz="xl" fw={700}>
+                Create team
+              </Text>
+              <TextInput
+                size="xl"
+                placeholder="Input team name"
+                value={toUpper(teamName)}
+                onChange={(event) => setTeamName(event.currentTarget.value)}
+              />
+              <Button
+                onClick={() => handleCreateTeam(user?.id || "", teamName)}
+              >
+                Continue
+              </Button>
+            </>
+          )}
+          {createdTeam && (
+            <>
+              <Text fz="xl" fw={700}>
+                {`Team ${toUpper(
+                  createdTeam.team_table.team_name as string
+                )} created`}
+              </Text>
+              <Button
+                onClick={() =>
+                  router.push(`/teams/${createdTeam.team_table.team_name}`)
+                }
+              >
+                Proceed to team page
+              </Button>
+            </>
+          )}
+        </Flex>
+      </Center>
+    </>
+  );
+}
 
 export default CreateTeamPage;
-
-CreateTeamPage.getLayout = function getLayout(page: ReactElement) {
-  return <Layout>{page}</Layout>;
-};

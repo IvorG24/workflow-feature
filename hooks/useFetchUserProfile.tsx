@@ -1,12 +1,10 @@
 import { getUserProfile, GetUserProfile } from "@/utils/queries";
 import { showNotification } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 
-import useAuth from "./useAuth";
-
 const useFetchUserProfile = (userId: string | null | undefined) => {
-  const { session } = useAuth();
+  const user = useUser();
   const supabaseClient = useSupabaseClient();
   const [userProfile, setUserProfile] = useState<GetUserProfile>();
   const [isFetching, setIsFetching] = useState(true);
@@ -15,9 +13,9 @@ const useFetchUserProfile = (userId: string | null | undefined) => {
     (async () => {
       try {
         setIsFetching(true);
-        if (!supabaseClient) return;
-        if (!session) return;
+        if (!user?.id) return;
         if (!userId) return;
+        if (!supabaseClient) return;
 
         const data = await getUserProfile(supabaseClient, userId);
 
@@ -32,7 +30,7 @@ const useFetchUserProfile = (userId: string | null | undefined) => {
         });
       }
     })();
-  }, [supabaseClient, session, userId]);
+  }, [userId, user?.id, supabaseClient]);
 
   return { userProfile, setUserProfile, isFetching };
 };
