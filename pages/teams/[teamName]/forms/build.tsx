@@ -46,13 +46,13 @@ import PolymorphicFieldInput from "@/components/BuildFormPage/PolymorphicFieldIn
 import useFetchTeamMemberList from "@/hooks/useFetchTeamMemberList";
 import { RequestFieldType, requestFieldTypeList } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { GetServerSidePropsContext } from "next";
 import {
   DragDropContext,
   Draggable,
   Droppable,
   resetServerContext,
 } from "react-beautiful-dnd";
-import { GetServerSidePropsContext } from "next";
 
 const useStyles = createStyles((theme) => ({
   container: {
@@ -316,6 +316,7 @@ const BuildFormPage: NextPageWithLayout = () => {
       await router.push(`/teams/${teamName}/forms`);
 
       setIsLoading(false);
+      router.reload();
     } catch (error) {
       console.error(error);
       showNotification({
