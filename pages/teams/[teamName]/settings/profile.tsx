@@ -1,9 +1,11 @@
 import Layout from "@/components/Layout/Layout";
 import {
+  createNotification,
   getTeam,
   GetTeam,
   getTeamMember,
   getTeamMemberList,
+  inviteUserToTeam,
   removeTeamMember,
   transferTeamOwnership,
   updateTeamMemberRole,
@@ -11,12 +13,14 @@ import {
 import {
   ActionIcon,
   Box,
+  Button,
   Checkbox,
   createStyles,
   Grid,
   Group,
-  LoadingOverlay,
   Menu,
+  MultiSelect,
+  SelectItem,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -157,6 +161,13 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
   const [query, setQuery] = useState("");
   const [adminsOnly, setAdminsOnly] = useState(false);
+
+  const [selectedUsers, setSelectedUsers] = useState<SelectItem[]>([]);
+
+  // const [data, setData] = useState([
+  //   { value: "react", label: "React" },
+  //   { value: "ng", label: "Angular" },
+  // ]);
 
   const isAdmin =
     currentUserTeamInfo?.role === "owner" ||
@@ -323,6 +334,99 @@ const TeamSettingsProfilePage: NextPageWithLayout<
     }
   };
 
+  const handleSendInvitation = async () => {
+    // filter users that do not have an account
+    const promises = selectedUsers.map(async (user) => {
+      const trimmedEmail = user.value.trim();
+      return supabaseClient
+        .rpc("check_email_exists", { user_email: trimmedEmail })
+        .select()
+        .single();
+    });
+
+    const results = (await Promise.all(promises)) as { data: boolean }[];
+
+    // only get users that have account
+    const users = results
+      .filter((result) => result.data)
+      .map((result) => result.data);
+
+    const isExistingUserEmailList = selectedUsers
+      .filter((_, index) => !!users[index])
+      .map((user) => user.value);
+
+    // inviteUserToTeam
+    const invitePromises = isExistingUserEmailList.map(async (email) => {
+      return inviteUserToTeam(supabaseClient, user.id, email, teamId);
+    });
+
+    const invitationResultList = (await Promise.all(invitePromises)).map(
+      (result) => {
+        return {
+          fromUserId: result.team_invitation_table.team_invitation_created_by,
+          toUserEmail: result.invitation_table.invitation_target_email,
+          teamInvitationId: result.team_invitation_table.team_invitation_id,
+        };
+      }
+    );
+
+    const toUserIdList = (
+      await Promise.all(
+        invitationResultList.map(({ toUserEmail }) => {
+          return supabaseClient
+            .from("user_profile_table")
+            .select("user_id")
+            .eq("user_email", toUserEmail)
+            .single();
+        })
+      )
+    ).map((result) => result?.data?.user_id);
+
+    // createNotification
+    const notificationPromises = isExistingUserEmailList.map(
+      async (_, index) => {
+        const teamInvitationId = `${invitationResultList[index].teamInvitationId}`;
+        const content = `You have been invited to join team ${teamName}`;
+        const redirectionUrl = `/teams/${teamName}/team-invitations/${teamInvitationId}`;
+        const toUserId = toUserIdList[index];
+
+        return createNotification(
+          supabaseClient,
+          content,
+          redirectionUrl,
+          toUserId,
+          teamId
+        );
+      }
+    );
+
+    await Promise.all(notificationPromises);
+
+    if (
+      isExistingUserEmailList.length !== 0 &&
+      isExistingUserEmailList.length === selectedUsers.length
+    ) {
+      showNotification({
+        title: "Info",
+        message: "All users invited.",
+        color: "blue",
+      });
+    } else if (isExistingUserEmailList.length > 0) {
+      showNotification({
+        title: "Warning",
+        message:
+          "Invitation sent. Only users who already have account were invited.",
+        color: "yellow",
+      });
+    } else {
+      showNotification({
+        title: "Error",
+        message: "No user invited. Users must registered to Formsly.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     handleRefetchMemberList();
   }, [adminsOnly]);
@@ -330,7 +434,7 @@ const TeamSettingsProfilePage: NextPageWithLayout<
   return (
     <>
       {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
-      <Grid align="center" mb="md">
+      <Grid align="center">
         <Grid.Col xs={8} sm={9}>
           <Group noWrap>
             <TextInput
@@ -358,7 +462,58 @@ const TeamSettingsProfilePage: NextPageWithLayout<
           />
         </Grid.Col>
       </Grid>
-      <Box h={500}>
+
+      <Group noWrap mt="md">
+        <MultiSelect
+          sx={{ width: "100%" }}
+          maxSelectedValues={5}
+          limit={5}
+          value={selectedUsers.map((user) => user.value)}
+          onChange={(values) => {
+            const newSelectedUsers = values.map((value) => {
+              return { value, label: value };
+            });
+            setSelectedUsers(newSelectedUsers);
+          }}
+          data={selectedUsers}
+          placeholder="Invite existing Formsly users to your team. Max 5 invites at a time."
+          searchable
+          creatable
+          getCreateLabel={(query) => `+ Create ${query}`}
+          onCreate={(query) => {
+            // check if user is already par of team
+            const isAlreadyMember = records.find(
+              (record) => record.email === query
+            );
+
+            if (isAlreadyMember) {
+              showNotification({
+                title: "Error",
+                message:
+                  "Cannot invite user. User is already a member of this team",
+                color: "red",
+              });
+              return;
+            }
+
+            if (selectedUsers.length >= 5) {
+              showNotification({
+                title: "Error",
+                message: "You can only invite up to 5 Formsly users at a time",
+                color: "red",
+              });
+              return;
+            }
+            const item = { value: query, label: query };
+            setSelectedUsers((current) => [...current, item]);
+            return item;
+          }}
+        />
+        <Button size="xs" onClick={() => handleSendInvitation()}>
+          Send invitation
+        </Button>
+      </Group>
+      <Box h={500} mt="md">
         <DataTable
           withBorder
           withColumnBorders

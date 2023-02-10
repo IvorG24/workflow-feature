@@ -247,7 +247,7 @@ export type InviteUserToTeam = Awaited<ReturnType<typeof inviteUserToTeam>>;
 export const createNotification = async (
   supabaseClient: SupabaseClient<Database>,
   content: string,
-  redirectionUrl: string,
+  redirectionUrl: string | null,
   toUserId: string,
   teamId: string | null
 ) => {
@@ -256,7 +256,7 @@ export const createNotification = async (
       .from("notification_table")
       .insert({
         notification_content: content,
-        notification_redirection_url: redirectionUrl,
+        notification_redirect_url: redirectionUrl,
       })
       .select()
       .single();
@@ -1539,3 +1539,4 @@ export const isRequestCanceled = async (
   }
 };
 export type IsRequestCanceled = Awaited<ReturnType<typeof isRequestCanceled>>;
+
