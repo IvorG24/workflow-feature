@@ -12,8 +12,9 @@ import type { NextPage } from "next";
 import type { AppProps } from "next/app";
 import NextApp, { AppContext } from "next/app";
 import { ReactElement, ReactNode, useState } from "react";
-
-export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+// Reference:
+// https://github.com/eclipse-emfcloud/emfcloud/discussions/125
+export type NextPageWithLayout<P = Record<string, unknown>, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
 

@@ -2,7 +2,6 @@ import useFetchUserProfile from "@/hooks/useFetchUserProfile";
 import { getRandomMantineColor } from "@/utils/styling";
 import {
   ActionIcon,
-  Autocomplete,
   Avatar,
   Burger,
   createStyles,
@@ -17,13 +16,12 @@ import {
   IconBell,
   IconLogout,
   IconMail,
-  IconSearch,
   IconSettings,
   IconUserCircle,
 } from "@tabler/icons";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { Brand } from "../Navbar/Brand";
 
 export type FormslyHeaderProps = {
@@ -61,7 +59,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
   //   const [linkListOpened, { toggle: togglelinkList }] = useDisclosure(false);
   const { classes, theme } = useStyles();
   const router = useRouter();
-  const [keyword, setKeyword] = useState("");
+  // const [keyword, setKeyword] = useState("");
   const supabaseClient = useSupabaseClient();
   const user = useUser();
   const { userProfile } = useFetchUserProfile(user?.id);
@@ -81,9 +79,9 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
     },
   ];
 
-  const handleSearchRequest = (keyword: string) => {
-    router.push(`/teams/${router.query.teamName}/requests?keyword=${keyword}`);
-  };
+  // const handleSearchRequest = (keyword: string) => {
+  //   router.push(`/teams/${router.query.teamName}/requests?keyword=${keyword}`);
+  // };
 
   const handleLogout = async () => {
     await supabaseClient.auth.signOut();

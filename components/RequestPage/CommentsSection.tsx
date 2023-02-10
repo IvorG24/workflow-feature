@@ -60,7 +60,7 @@ export type CommentsSectionProps = {
 
 export default function CommentsSection({
   isFetchingCommentList,
-  setIsFetchingCommentList,
+  // setIsFetchingCommentList,
   commentList,
   setCommentList,
 }: CommentsSectionProps) {
@@ -69,7 +69,7 @@ export default function CommentsSection({
   const userId = user?.id;
   const [newComment, setNewComment] = useState("");
   const [editedComment, setEditedComment] = useState("");
-  const [attachment, setAttachment] = useState<File | null>(null);
+  // const [attachment, setAttachment] = useState<File | null>(null);
   // const [isFetchingCommentList, setIsFetchingCommentList] = useState(true);
   const supabaseClient = useSupabaseClient();
   const router = useRouter();

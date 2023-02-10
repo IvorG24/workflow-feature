@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { RequestFieldType } from "@/utils/types";
 import {
   Divider,
@@ -45,6 +46,7 @@ const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
   )
 );
 
+// eslint-disable-next-line react/display-name
 function PolymorphicFieldInput({
   id,
   type,
@@ -185,5 +187,5 @@ function PolymorphicFieldInput({
     </Group>
   );
 }
-
+// eslint-disable-next-line react/display-name
 export default PolymorphicFieldInput;

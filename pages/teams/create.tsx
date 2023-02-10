@@ -1,3 +1,4 @@
+import { isUniqueNameValid } from "@/utils/input";
 import { CreateTeam, createTeam, isTeamNameExisting } from "@/utils/queries";
 import {
   Button,
@@ -9,7 +10,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { toUpper } from "lodash";
+import { toLower, toUpper } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -46,8 +47,19 @@ function CreateTeamPage() {
         return;
       }
 
-      // Check if team name already exists in database
+      // check isUniqueNameValid
+      if (!isUniqueNameValid(teamName)) {
+        showNotification({
+          title: "Error",
+          message:
+            "Team name must include uppercased, spaces, underscores, and numbers only.",
+          color: "red",
+        });
+        return;
+      }
+
       if (await isTeamNameExisting(supabaseClient, teamName)) {
+        // Check if team name already exists in database
         showNotification({
           title: "Error",
           message: "Team name already exists. Please try another name.",
@@ -94,7 +106,9 @@ function CreateTeamPage() {
                 onChange={(event) => setTeamName(event.currentTarget.value)}
               />
               <Button
-                onClick={() => handleCreateTeam(user?.id || "", teamName)}
+                onClick={() =>
+                  handleCreateTeam(user?.id || "", toLower(teamName.trim()))
+                }
               >
                 Continue
               </Button>

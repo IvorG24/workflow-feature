@@ -363,7 +363,7 @@ const CreateRequestPage: NextPageWithLayout<
         if (field.type === "daterange") {
           return (
             (field.value as unknown as string[]) ||
-            [].filter((e: any) => e).length < 2
+            [].filter((e) => e).length < 2
           );
         }
         return !field.value;
@@ -611,9 +611,8 @@ const CreateRequestPage: NextPageWithLayout<
           {requestTrail.map((trail, index) => {
             const { approverUsername, approverActionName } = trail;
             return (
-              <Group noWrap mt="xs">
+              <Group noWrap mt="xs" key={index}>
                 <List.Item
-                  key={index}
                 >{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
                 {trail.isPrimaryApprover && <Badge>Primary Approver</Badge>}
               </Group>

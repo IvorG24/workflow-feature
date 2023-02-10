@@ -25,7 +25,6 @@ import {
   IconGripVertical,
   IconInfoCircle,
 } from "@tabler/icons";
-import { useRouter } from "next/router";
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -130,20 +129,13 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-function Request({
-  request,
-  dndList,
-  trail,
-  setIsFetchingCommentList,
-  setCommentList,
-}: RequestProps) {
+function Request({ request, dndList, trail, setCommentList }: RequestProps) {
   const { classes, cx } = useStyles();
   const [state, handlers] = useListState<DndListHandleProps["data"][0]>(
     dndList.data
   );
   const [isLoading, setIsLoading] = useState(false);
   const supabaseClient = useSupabaseClient();
-  const router = useRouter();
   const user = useUser();
 
   const [requestTrail, requestTrailHandler] = useListState([...trail.data]);
@@ -162,9 +154,6 @@ function Request({
   const description = request[0].request_description as string;
   const formName = request[0].form_name as string;
 
-  const formId = request[0].form_id as number;
-  const teamId = request[0].team_id as string;
-  const teamName = request[0].team_name as string;
   const requestId = request[0].request_id as number;
   const canceled = !!request[0].request_is_canceled;
   const primaryApproverId = trail.data.find(
@@ -176,7 +165,7 @@ function Request({
   );
   const isCurrentUserRequester = request[0].user_id === user?.id;
   const [isCanceled, toggleIsCanceled] = useToggle();
-  const [isSignedByCurrentUser, setIsSignedByCurrentUser] = useState<boolean>();
+  // const [isSignedByCurrentUser, setIsSignedByCurrentUser] = useState<boolean>();
   const [
     currentUserApproverActionStatusId,
     setCurrentUserApproverActionStatusId,
@@ -340,7 +329,7 @@ function Request({
         isUpdatedByPrimaryApprover,
         updateStatusComment || null
       );
-      setIsSignedByCurrentUser(true);
+      // setIsSignedByCurrentUser(true);
       setLastSignedIndex((prev) => (noApproved ? prev : prev + 1));
       setNoApproved(false);
       setCurrentUserApproverActionStatusId(newStatus);
@@ -552,9 +541,8 @@ function Request({
             const { approverUsername, approverActionName } = trail;
             if (trail.approverActionStatusId === "approved") {
               return (
-                <Group noWrap mt="xs">
+                <Group noWrap mt="xs" key={index}>
                   <List.Item
-                    key={index}
                     icon={
                       <ThemeIcon color="teal" size={24} radius="xl">
                         <IconCircleCheck size={16} />
@@ -566,9 +554,8 @@ function Request({
               );
             } else if (trail.approverActionStatusId === "rejected") {
               return (
-                <Group noWrap mt="xs">
+                <Group noWrap mt="xs" key={index}>
                   <List.Item
-                    key={index}
                     icon={
                       <ThemeIcon color="red" size={24} radius="xl">
                         <IconCircleMinus size={16} />
@@ -580,10 +567,8 @@ function Request({
               );
             } else {
               return (
-                <Group noWrap mt="xs">
-                  <List.Item
-                    key={index}
-                  >{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
+                <Group noWrap mt="xs" key={index}>
+                  <List.Item>{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
                   {trail.isPrimaryApprover && <Badge>Primary Approver</Badge>}
                 </Group>
               );

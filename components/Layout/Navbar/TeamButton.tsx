@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { GetUserTeamList } from "@/utils/queries";
 import { getRandomMantineColor } from "@/utils/styling";
 import {
@@ -7,7 +8,6 @@ import {
   SelectItem,
   Text,
   Tooltip,
-  useMantineTheme,
 } from "@mantine/core";
 import { IconBuildingCommunity, IconCirclePlus } from "@tabler/icons";
 import { startCase, toUpper } from "lodash";
@@ -67,13 +67,13 @@ const SelectItem = forwardRef<HTMLDivElement, TeamButtonItem>(
     </div>
   )
 );
-
+// eslint-disable-next-line react/display-name
 function TeamButton({
   teamList,
   activeTeamIndex,
   handleChangeTeam,
 }: TeamButtonProps) {
-  const theme = useMantineTheme();
+  // const theme = useMantineTheme();
 
   // const [data, setData] = useState<SelectItem[]>(
   //   teamList.map((team) => {
@@ -133,4 +133,5 @@ function TeamButton({
   );
 }
 
+// eslint-disable-next-line react/display-name
 export default TeamButton;

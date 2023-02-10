@@ -639,7 +639,6 @@ const RequestListPage: NextPageWithLayout<
               title: "Requests",
               render: ({
                 requester,
-                formId,
                 formName,
                 title,
                 description,
@@ -647,7 +646,6 @@ const RequestListPage: NextPageWithLayout<
                 primaryApprover,
                 requestDateCreated,
                 requestId,
-                approverList,
                 currentUserIsPrimaryApprover,
                 currentUserIsApprover,
                 color,

@@ -52,6 +52,7 @@ import {
   Droppable,
   resetServerContext,
 } from "react-beautiful-dnd";
+import { GetServerSidePropsContext } from "next";
 
 const useStyles = createStyles((theme) => ({
   container: {
