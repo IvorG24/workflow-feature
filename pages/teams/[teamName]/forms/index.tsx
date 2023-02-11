@@ -58,8 +58,20 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 
   const teamName = `${ctx.query?.teamName}`;
+  const user = session?.user;
 
-  const data = await getTeamFormTemplateList(supabaseClient, teamName);
+  const [currentUserTeamInfo, team, data] = await Promise.all([
+    getTeamMember(supabaseClient, teamName, user.id),
+    getTeam(supabaseClient, teamName),
+    getTeamFormTemplateList(supabaseClient, teamName),
+  ]);
+
+  // if current user is not admin, return not found page
+  if (currentUserTeamInfo?.member_role_id === "member" || !team) {
+    return {
+      notFound: true,
+    };
+  }
 
   // format to match FormListPagePageProps
   const formList = data.map((form) => {
@@ -75,23 +87,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       formDateCreated: formattedDate,
     };
   });
-
-  const user = session?.user;
-
-  const currentUserTeamInfo = await getTeamMember(
-    supabaseClient,
-    teamName,
-    user.id
-  );
-
-  // if current user is not admin, return not found page
-  if (currentUserTeamInfo?.member_role_id === "member") {
-    return {
-      notFound: true,
-    };
-  }
-
-  const team = await getTeam(supabaseClient, teamName);
 
   return {
     props: {

@@ -1,4 +1,3 @@
-import Layout from "@/components/Layout/Layout";
 import {
   getNotificationList,
   GetNotificationListFilter,
@@ -11,6 +10,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Container,
   createStyles,
   Group,
   SegmentedControl,
@@ -30,7 +30,7 @@ import moment from "moment";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
-import { ReactElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   read: {
@@ -65,7 +65,7 @@ export type NotificationRow = {
   checked?: boolean;
 };
 
-export type NotificationListPageProps = {
+export type TeamInvitationListPageProps = {
   notificationList: NotificationRow[];
   user: User;
   teamName: string;
@@ -90,10 +90,8 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
   const user = session?.user;
 
-  const teamName = `${ctx.query?.teamName}`;
-
   const filter: GetNotificationListFilter = {
-    teamName,
+    notificationType: "team_invitation",
   };
 
   const { data, count } = await getNotificationList(
@@ -102,7 +100,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     filter
   );
 
-  // format data to match NotificationListPageProps
+  // format data to match TeamInvitationListPageProps
   const notificationList = data.map((notification) => {
     const date = moment(notification.notification_date_created);
     const formattedDate = date.fromNow();
@@ -123,15 +121,14 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     props: {
       notificationList,
       user,
-      teamName,
       count,
     },
   };
 };
 
-const NotificationListPage: NextPageWithLayout<
+const TeamInvitationListPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ notificationList, user, teamName, count }) => {
+> = ({ notificationList, user, count }) => {
   const { classes, cx } = useStyles();
 
   const supabaseClient = useSupabaseClient();
@@ -151,7 +148,7 @@ const NotificationListPage: NextPageWithLayout<
 
   const [filter, setFilter] = useState<GetNotificationListFilter>({
     keyword: "",
-    teamName,
+    notificationType: "team_invitation",
     isUnreadOnly: false,
     sort: "desc",
     range: [0, GET_NOTIFICATION_LIST_LIMIT - 1],
@@ -223,7 +220,7 @@ const NotificationListPage: NextPageWithLayout<
         filter
       );
 
-      // format data to match NotificationListPageProps
+      // format data to match TeamInvitationListPageProps
       const notificationList = data.map((notification) => {
         const date = moment(notification.notification_date_created);
         const formattedDate = date.fromNow();
@@ -297,7 +294,7 @@ const NotificationListPage: NextPageWithLayout<
   }, [filter]);
 
   return (
-    <>
+    <Container mt="xl">
       <Group position="apart">
         <Group noWrap spacing="xl">
           <SegmentedControl
@@ -402,15 +399,15 @@ const NotificationListPage: NextPageWithLayout<
                   ""
                 ),
             },
-            {
-              accessor: "notificationType",
-              title: "",
-              render: ({ notificationType }) => {
-                return startCase(notificationType as string);
-              },
-              visibleMediaQuery: (theme) =>
-                `(min-width: ${theme.breakpoints.xs}px)`,
-            },
+            // {
+            //   accessor: "notificationType",
+            //   title: "",
+            //   render: ({ notificationType }) => {
+            //     return startCase(notificationType as string);
+            //   },
+            //   visibleMediaQuery: (theme) =>
+            //     `(min-width: ${theme.breakpoints.xs}px)`,
+            // },
             {
               accessor: "dateCreated",
               title: "",
@@ -423,12 +420,8 @@ const NotificationListPage: NextPageWithLayout<
           onPageChange={handlePageChange}
         />
       </Box>
-    </>
+    </Container>
   );
 };
 
-export default NotificationListPage;
-
-NotificationListPage.getLayout = function getLayout(page: ReactElement) {
-  return <Layout>{page}</Layout>;
-};
+export default TeamInvitationListPage;

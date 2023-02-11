@@ -5,6 +5,8 @@ import {
   GetTeam,
   getTeamMember,
   getTeamMemberList,
+  GetUserProfile,
+  getUserProfile,
   inviteUserToTeam,
   removeTeamMember,
   transferTeamOwnership,
@@ -62,6 +64,7 @@ export type TeamSettingsProfilePageProps = {
   currentUserTeamInfo: Member;
   user: User;
   team: GetTeam;
+  userProfile: GetUserProfile;
 };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
@@ -81,8 +84,20 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 
   const teamName = `${ctx.query?.teamName}`;
+  const user = session?.user;
 
-  const data = await getTeamMemberList(supabaseClient, teamName);
+  const [team, userProfile, teamMember, data] = await Promise.all([
+    getTeam(supabaseClient, teamName),
+    getUserProfile(supabaseClient, user.id),
+    getTeamMember(supabaseClient, teamName, session?.user?.id),
+    getTeamMemberList(supabaseClient, teamName),
+  ]);
+
+  if (!teamMember || !team || !userProfile) {
+    return {
+      notFound: true,
+    };
+  }
 
   //format to match TeamSettingsProfilePageProps
   const memberList = data.map((member) => {
@@ -112,19 +127,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     }
   });
 
-  // get current user's information as a team member
-  const teamMember = await getTeamMember(
-    supabaseClient,
-    teamName,
-    session?.user?.id
-  );
-
-  if (!teamMember) {
-    return {
-      notFound: true,
-    };
-  }
-
   // format to match TeamSettingsProfilePageProps
   const currentUserTeamInfo = {
     id: teamMember.user_id,
@@ -135,23 +137,20 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     role: teamMember.member_role_id,
   };
 
-  const user = session?.user;
-
-  const team = await getTeam(supabaseClient, teamName);
-
   return {
     props: {
       memberList,
       currentUserTeamInfo,
       user,
       team,
+      userProfile,
     },
   };
 };
 
 const TeamSettingsProfilePage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ memberList, currentUserTeamInfo, user, team }) => {
+> = ({ memberList, currentUserTeamInfo, user, team, userProfile }) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
   const [page, setPage] = useState(1);
@@ -163,11 +162,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
   const [adminsOnly, setAdminsOnly] = useState(false);
 
   const [selectedUsers, setSelectedUsers] = useState<SelectItem[]>([]);
-
-  // const [data, setData] = useState([
-  //   { value: "react", label: "React" },
-  //   { value: "ng", label: "Angular" },
-  // ]);
 
   const isAdmin =
     currentUserTeamInfo?.role === "owner" ||
@@ -379,8 +373,8 @@ const TeamSettingsProfilePage: NextPageWithLayout<
     const notificationPromises = isExistingUserEmailList.map(
       async (_, index) => {
         const teamInvitationId = `${invitationResultList[index].teamInvitationId}`;
-        const content = `You have been invited to join team ${teamName}`;
-        const redirectionUrl = `/teams/${teamName}/team-invitations/${teamInvitationId}`;
+        const content = `You have been invited to join team ${teamName} by ${userProfile.username}`;
+        const redirectionUrl = `/team-invitations/${teamInvitationId}`;
         const toUserId = toUserIdList[index];
 
         return createNotification(

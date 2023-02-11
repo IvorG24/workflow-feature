@@ -254,13 +254,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
                 Settings
               </Menu.Item>
               <Menu.Item
-                onClick={() =>
-                  router.push(
-                    `/teams/${
-                      router.query.teamName as string
-                    }/notifications?type=team-invitations`
-                  )
-                }
+                onClick={() => router.push(`/team-invitations`)}
                 icon={<IconMail size={14} />}
               >
                 Team Invitations
