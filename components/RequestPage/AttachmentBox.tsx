@@ -21,8 +21,6 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-
-
 export type AttachmentBoxProps = {
   filename: string;
   fileUrl: string;
@@ -40,7 +38,6 @@ const AttachmentBox = ({
 AttachmentBoxProps) => {
   const { classes } = useStyles();
 
-
   // * Archived
   // const handleDownloadFile = async (fileUrl: string) => {
   //   try {
@@ -57,7 +54,7 @@ AttachmentBoxProps) => {
   //   } catch (error) {
   //     console.error(`Failed to download file: ${error}`);
   //     showNotification({
-  //       title: "Error",
+  //
   //       message: "Failed to download file",
   //       color: "red",
   //     });

@@ -406,7 +406,6 @@ const CreateRequestPage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: (error as Error).message,
         color: "red",
       });
@@ -460,7 +459,6 @@ const CreateRequestPage: NextPageWithLayout<
     ).length;
     if (repeatableSectionCount === 1) {
       showNotification({
-        title: "Error",
         message: "At least one repeatable section is required",
         color: "red",
       });
@@ -484,7 +482,6 @@ const CreateRequestPage: NextPageWithLayout<
   const handleOnReject = (fileRejections: FileRejection[]) => {
     const errorMessage = fileRejections[0].errors[0].message;
     showNotification({
-      title: "Error",
       message: errorMessage,
       color: "red",
     });
@@ -612,8 +609,7 @@ const CreateRequestPage: NextPageWithLayout<
             const { approverUsername, approverActionName } = trail;
             return (
               <Group noWrap mt="xs" key={index}>
-                <List.Item
-                >{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
+                <List.Item>{`Will be ${approverActionName} by ${approverUsername}`}</List.Item>
                 {trail.isPrimaryApprover && <Badge>Primary Approver</Badge>}
               </Group>
             );

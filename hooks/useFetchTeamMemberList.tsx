@@ -24,7 +24,6 @@ const useFetchTeamMemberList = (teamName: string) => {
       } catch (error) {
         console.error(error);
         showNotification({
-          title: "Error",
           message: "Failed to fetch form templates",
           color: "red",
         });

@@ -24,7 +24,6 @@ const useFetchUserProfile = (userId: string | null | undefined) => {
       } catch (error) {
         console.error(error);
         showNotification({
-          title: "Error",
           message: "Failed to fetch user profile",
           color: "red",
         });

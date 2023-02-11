@@ -96,7 +96,6 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
 
   //   if (teamFormList.length === 0) {
   //     showNotification({
-  //       title: "No form found",
   //       message: "Please create a form first",
   //       color: theme.colors.red[7],
   //     });

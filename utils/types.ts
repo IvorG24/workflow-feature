@@ -209,7 +209,7 @@ export type FieldIdResponseKeyValue = { [key: string]: string };
 export type ResponseList = { [key: string]: string };
 
 // Notifications
-export type NotificationType = "user" | "team";
+export type NotificationType = "request_for_approval" | "team_invitation";
 
 // Request List to CSV
 export type RequestListToCSV = {
@@ -260,3 +260,4 @@ export type CommentType =
   | "undo"
   | "uncanceled"
   | "request_created";
+

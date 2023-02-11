@@ -50,7 +50,6 @@ function Layout({ children }: LayoutProps) {
       } catch (error) {
         console.error(error);
         showNotification({
-          title: "Error",
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
@@ -82,20 +81,9 @@ function Layout({ children }: LayoutProps) {
 
         if (!router.query.teamName)
           router.push(`/teams/${data[0].team_name as string}`);
-
-        // if (
-        //   !data
-        //     .map((team) => team.team_name)
-        //     .includes(router.query.teamName as string)
-        // ) {
-        //   router.push("/404");
-        //   return;
-        // }
-        setIsFetchingTeamList(false);
       } catch (error) {
         console.error(error);
         showNotification({
-          title: "Error",
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
@@ -125,7 +113,6 @@ function Layout({ children }: LayoutProps) {
       } catch (error) {
         console.error(error);
         showNotification({
-          title: "Error",
           message: "Something went wrong. Please try again later.",
           color: "red",
         });

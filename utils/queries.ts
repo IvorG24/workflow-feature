@@ -12,6 +12,7 @@ import { removeFileList } from "./file";
 import {
   CommentType,
   Database,
+  NotificationType,
   RequestFormFactTableInsert,
   RequestFormTableInsert,
   RequestStatus,
@@ -249,7 +250,8 @@ export const createNotification = async (
   content: string,
   redirectionUrl: string | null,
   toUserId: string,
-  teamId: string | null
+  teamId: string | null,
+  notificationType: NotificationType
 ) => {
   try {
     const { data: data1Data, error: data1Error } = await supabaseClient
@@ -268,6 +270,7 @@ export const createNotification = async (
         team_user_notification_team_id: teamId,
         team_user_notification_user_id: toUserId,
         team_user_notification_notification_id: data1Data?.notification_id,
+        team_user_notification_type_id: notificationType,
       })
       .select()
       .single();
@@ -1540,3 +1543,113 @@ export const isRequestCanceled = async (
 };
 export type IsRequestCanceled = Awaited<ReturnType<typeof isRequestCanceled>>;
 
+export const GET_NOTIFICATION_LIST_LIMIT = 15;
+export type GetNotificationListFilter = {
+  notificationType?: NotificationType;
+  keyword?: string;
+  teamName?: string;
+  isUnreadOnly?: boolean;
+  sort?: "asc" | "desc";
+  range?: [number, number];
+};
+export const getNotificationList = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string,
+  filter: GetNotificationListFilter = {}
+) => {
+  try {
+    const { notificationType, keyword, teamName, isUnreadOnly, sort, range } =
+      filter;
+
+    let queryCount = supabaseClient
+      .from("team_user_notification_view")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    let query = supabaseClient
+      .from("team_user_notification_view")
+      .select()
+      .eq("user_id", userId);
+
+    if (teamName) {
+      query = query.eq("team_name", teamName);
+      queryCount = queryCount.eq("team_name", teamName);
+    }
+
+    if (notificationType) {
+      query = query.eq("team_user_notification_type_id", notificationType);
+      queryCount = queryCount.eq(
+        "team_user_notification_type_id",
+        notificationType
+      );
+    }
+
+    if (keyword) {
+      query = query.ilike("notification_content", `%${keyword}%`);
+      queryCount = queryCount.ilike("notification_content", `%${keyword}%`);
+    }
+
+    if (isUnreadOnly) {
+      query = query.is("notification_is_read", false);
+      queryCount = queryCount.is("notification_is_read", false);
+    }
+
+    if (sort) {
+      query = query.order("notification_date_created", {
+        ascending: sort === "asc",
+      });
+    }
+
+    if (range) {
+      query = query.range(range[0], range[1]);
+    } else {
+      query = query.range(0, GET_NOTIFICATION_LIST_LIMIT - 1);
+    }
+
+    const [queryResult, queryCountResult] = await Promise.all([
+      query,
+      queryCount,
+    ]);
+
+    const { data, error } = queryResult;
+    const { count, error: countError } = queryCountResult;
+
+    if (error) throw error;
+    if (countError) throw countError;
+
+    return {
+      data: data || [],
+      count: count || 0,
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetNotificationList = Awaited<
+  ReturnType<typeof getNotificationList>
+>;
+
+export const readNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  notificationId: number
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("notification_table")
+      .update({
+        notification_is_read: true,
+      })
+      .eq("notification_id", notificationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type ReadNotification = Awaited<ReturnType<typeof readNotification>>;

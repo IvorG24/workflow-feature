@@ -107,7 +107,6 @@ export default function CommentsSection({
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -127,7 +126,6 @@ export default function CommentsSection({
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -154,7 +152,6 @@ export default function CommentsSection({
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -174,7 +171,7 @@ export default function CommentsSection({
   //     } catch (error) {
   //       console.error(error);
   //       showNotification({
-  //         title: "Error",
+  //
   //         message: "Something went wrong. Please try again later.",
   //         color: "red",
   //       });

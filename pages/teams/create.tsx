@@ -32,7 +32,6 @@ function CreateTeamPage() {
       setIsCreatingTeam(true);
       if (!userId) {
         showNotification({
-          title: "Error",
           message: "Please sign in to create a team.",
           color: "red",
         });
@@ -40,7 +39,6 @@ function CreateTeamPage() {
       }
       if (!teamName) {
         showNotification({
-          title: "Error",
           message: "Please input a team name.",
           color: "red",
         });
@@ -50,7 +48,6 @@ function CreateTeamPage() {
       // check isUniqueNameValid
       if (!isUniqueNameValid(teamName)) {
         showNotification({
-          title: "Error",
           message:
             "Team name must include uppercased, spaces, underscores, and numbers only.",
           color: "red",
@@ -61,7 +58,6 @@ function CreateTeamPage() {
       if (await isTeamNameExisting(supabaseClient, teamName)) {
         // Check if team name already exists in database
         showNotification({
-          title: "Error",
           message: "Team name already exists. Please try another name.",
           color: "red",
         });
@@ -80,7 +76,6 @@ function CreateTeamPage() {
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });

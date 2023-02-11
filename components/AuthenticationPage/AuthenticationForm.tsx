@@ -80,7 +80,6 @@ const AuthenticationForm = (props: PaperProps) => {
 
         if (checkEmailExistsData) {
           showNotification({
-            title: "Error",
             message: "Email already exists. Please try another email.",
             color: "red",
           });
@@ -98,7 +97,6 @@ const AuthenticationForm = (props: PaperProps) => {
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: (error as Error).message,
         color: "red",
       });
@@ -119,7 +117,7 @@ const AuthenticationForm = (props: PaperProps) => {
   //   } catch (e) {
   //     console.error(e);
   //     showNotification({
-  //       title: "Error",
+  //
   //       message: type === "signIn" ? "Sign In failed" : "Registration failed",
   //       color: "red",
   //     });

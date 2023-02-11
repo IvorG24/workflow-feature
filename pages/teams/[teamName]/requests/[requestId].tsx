@@ -127,7 +127,6 @@ const RequestPage: NextPageWithLayout<
       } catch (error) {
         console.error(error);
         showNotification({
-          title: "Error",
           message: "Something went wrong. Please try again later.",
           color: "red",
         });

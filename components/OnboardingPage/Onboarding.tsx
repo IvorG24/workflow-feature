@@ -60,7 +60,6 @@ function Onboarding() {
         !values.teamName
       ) {
         showNotification({
-          title: "Error",
           message: "Please fill in all fields.",
           color: "red",
         });
@@ -71,7 +70,6 @@ function Onboarding() {
       // check username is valid
       if (!isUniqueNameValid(toLower(values.username.trim()))) {
         showNotification({
-          title: "Error",
           message:
             "Username must include uppercased, spaces, underscores, and numbers only.",
           color: "red",
@@ -82,7 +80,6 @@ function Onboarding() {
       // check isUniqueNameValid
       if (!isUniqueNameValid(toLower(values.teamName.trim()))) {
         showNotification({
-          title: "Error",
           message:
             "Team name must include uppercased, spaces, underscores, and numbers only.",
           color: "red",
@@ -100,7 +97,6 @@ function Onboarding() {
 
       if (usernameData) {
         showNotification({
-          title: "Error",
           message: "Username is already taken.",
           color: "red",
         });
@@ -118,7 +114,6 @@ function Onboarding() {
 
       if (teamNameData) {
         showNotification({
-          title: "Error",
           message: "Team name is already taken.",
           color: "red",
         });
@@ -167,7 +162,6 @@ function Onboarding() {
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again.",
         color: "red",
       });

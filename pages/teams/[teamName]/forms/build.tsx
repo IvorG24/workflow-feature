@@ -218,7 +218,6 @@ const BuildFormPage: NextPageWithLayout = () => {
     const { id, type, label } = item;
     if (!id || !type || !label) {
       showNotification({
-        title: "Error",
         message: "Please fill in field type and label",
         color: "red",
         autoClose: 3000,
@@ -320,7 +319,6 @@ const BuildFormPage: NextPageWithLayout = () => {
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: (error as Error).message,
         color: "red",
       });
@@ -336,7 +334,6 @@ const BuildFormPage: NextPageWithLayout = () => {
     try {
       if (!signerUsername || !signerAction) {
         showNotification({
-          title: "Error",
           message: "Please fill in signer username and action",
           color: "red",
           autoClose: 3000,
@@ -374,7 +371,6 @@ const BuildFormPage: NextPageWithLayout = () => {
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -392,7 +388,6 @@ const BuildFormPage: NextPageWithLayout = () => {
   ) => {
     if (!id || !option) {
       showNotification({
-        title: "Error",
         message: "Option cannot be empty",
         color: "red",
         autoClose: 3000,
@@ -411,7 +406,6 @@ const BuildFormPage: NextPageWithLayout = () => {
       })
     );
     showNotification({
-      title: "Success",
       message: "Option added",
       color: "green",
       autoClose: 3000,

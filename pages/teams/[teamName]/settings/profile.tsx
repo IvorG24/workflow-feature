@@ -231,7 +231,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -249,7 +248,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
       if (!isAdmin) {
         showNotification({
-          title: "Error",
           message: "You are not an admin of this team",
           color: "red",
         });
@@ -266,7 +264,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong",
         color: "red",
       });
@@ -280,7 +277,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
       if (!isAdmin) {
         showNotification({
-          title: "Error",
           message: "You are not an admin of this team",
           color: "red",
         });
@@ -294,7 +290,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong",
         color: "red",
       });
@@ -311,7 +306,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
       if (!isOwner) {
         showNotification({
-          title: "Error",
           message: "You are not the owner of this team",
           color: "red",
         });
@@ -325,7 +319,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong",
         color: "red",
       });
@@ -395,7 +388,8 @@ const TeamSettingsProfilePage: NextPageWithLayout<
           content,
           redirectionUrl,
           toUserId,
-          teamId
+          teamId,
+          "team_invitation"
         );
       }
     );
@@ -407,20 +401,17 @@ const TeamSettingsProfilePage: NextPageWithLayout<
       isExistingUserEmailList.length === selectedUsers.length
     ) {
       showNotification({
-        title: "Info",
         message: "All users invited.",
         color: "blue",
       });
     } else if (isExistingUserEmailList.length > 0) {
       showNotification({
-        title: "Warning",
         message:
           "Invitation sent. Only users who already have account were invited.",
         color: "yellow",
       });
     } else {
       showNotification({
-        title: "Error",
         message: "No user invited. Users must registered to Formsly.",
         color: "red",
       });
@@ -471,7 +462,8 @@ const TeamSettingsProfilePage: NextPageWithLayout<
           value={selectedUsers.map((user) => user.value)}
           onChange={(values) => {
             const newSelectedUsers = values.map((value) => {
-              return { value, label: value };
+              const trimmedValue = value.trim();
+              return { value: trimmedValue, label: trimmedValue };
             });
             setSelectedUsers(newSelectedUsers);
           }}
@@ -488,7 +480,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
             if (isAlreadyMember) {
               showNotification({
-                title: "Error",
                 message:
                   "Cannot invite user. User is already a member of this team",
                 color: "red",
@@ -498,7 +489,6 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
             if (selectedUsers.length >= 5) {
               showNotification({
-                title: "Error",
                 message: "You can only invite up to 5 Formsly users at a time",
                 color: "red",
               });
@@ -513,11 +503,12 @@ const TeamSettingsProfilePage: NextPageWithLayout<
           Send invitation
         </Button>
       </Group>
-      <Box h={500} mt="md">
+      {/* <Box h={500} mt="md"> */}
+      <Box mt="md">
         <DataTable
-          withBorder
-          withColumnBorders
-          striped
+          minHeight={250}
+          fw="bolder"
+          c="dimmed"
           fetching={isLoading}
           rowClassName={({ id }) =>
             user.id === id ? classes.blueishRow : undefined

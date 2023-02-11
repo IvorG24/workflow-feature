@@ -360,7 +360,6 @@ const RequestListPage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -420,7 +419,6 @@ const RequestListPage: NextPageWithLayout<
 
       if (!currentUserActionId) {
         showNotification({
-          title: "Error",
           message: "You are not an approver for this request.",
           color: "red",
         });
@@ -430,7 +428,6 @@ const RequestListPage: NextPageWithLayout<
       // check if request is already canceled before updating status
       if (await isRequestCanceled(supabaseClient, requestId)) {
         showNotification({
-          title: "Error",
           message: "Request is already canceled. Kindly refresh the page.",
           color: "red",
         });
@@ -525,7 +522,6 @@ const RequestListPage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: `(${startCase(newStatus)}) request failed.`,
         color: "red",
       });
@@ -626,8 +622,10 @@ const RequestListPage: NextPageWithLayout<
         />
       </Group>
 
-      <Box h={500} mt="md">
+      {/* <Box h={500} mt="md"> */}
+      <Box mt="md">
         <DataTable
+          minHeight={250}
           withBorder
           withColumnBorders
           striped

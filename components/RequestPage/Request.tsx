@@ -312,7 +312,6 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
 
       if (request[0].request_is_canceled) {
         showNotification({
-          title: "Error",
           message: "Request is already canceled. Kindly refresh the page.",
           color: "red",
         });
@@ -359,7 +358,6 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -380,7 +378,6 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
       const request = await getRequest(supabaseClient, requestId);
       if (request[0].form_fact_request_status_id !== "pending") {
         showNotification({
-          title: "Error",
           message:
             "Request is already approved or rejected. Kindly refresh the page.",
           color: "red",
@@ -390,7 +387,6 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
       }
       if (request[0].request_is_canceled) {
         showNotification({
-          title: "Error",
           message: "Request is already canceled. Kindly refresh the page.",
           color: "red",
         });
@@ -417,7 +413,6 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });

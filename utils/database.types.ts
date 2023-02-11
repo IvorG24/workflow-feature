@@ -60,6 +60,17 @@ export interface Database {
           notification_redirect_url?: string | null
         }
       }
+      notification_type_table: {
+        Row: {
+          notification_type_id: string
+        }
+        Insert: {
+          notification_type_id: string
+        }
+        Update: {
+          notification_type_id?: string
+        }
+      }
       request_action_table: {
         Row: {
           action_id: string
@@ -450,18 +461,21 @@ export interface Database {
           team_user_notification_id: number
           team_user_notification_notification_id: number | null
           team_user_notification_team_id: string | null
+          team_user_notification_type_id: string | null
           team_user_notification_user_id: string | null
         }
         Insert: {
           team_user_notification_id?: never
           team_user_notification_notification_id?: number | null
           team_user_notification_team_id?: string | null
+          team_user_notification_type_id?: string | null
           team_user_notification_user_id?: string | null
         }
         Update: {
           team_user_notification_id?: never
           team_user_notification_notification_id?: number | null
           team_user_notification_team_id?: string | null
+          team_user_notification_type_id?: string | null
           team_user_notification_user_id?: string | null
         }
       }
@@ -903,6 +917,7 @@ export interface Database {
           team_user_notification_id: number | null
           team_user_notification_notification_id: number | null
           team_user_notification_team_id: string | null
+          team_user_notification_type_id: string | null
           team_user_notification_user_id: string | null
           user_avatar_filepath: string | null
           user_date_created: string | null

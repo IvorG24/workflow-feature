@@ -128,7 +128,9 @@ function FormslyNavbar({
       <Navbar.Section mt="xs">
         <Group position="apart">
           <Text
-            fz="md"
+            fz="xl"
+            c="dimmed"
+            fw="bolder"
             className={classes.formTemplates}
             onClick={() => router.push(`/teams/${router.query.teamName}/forms`)}
           >

@@ -1,4 +1,4 @@
-import { createStyles, Image, Title } from "@mantine/core";
+import { createStyles, Title } from "@mantine/core";
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
@@ -72,28 +72,7 @@ export function Banner() {
         <Title className={classes.title}>
           This feature will be available soon...
         </Title>
-        {/* <Text weight={500} size="lg" mb={5}>
-          Subscribe to our newsletter!
-        </Text>
-        <Text size="sm" color="dimmed">
-          You will never miss important product updates, latest news and
-          community QA sessions. Our newsletter is once a week, every Sunday.
-        </Text>
-
-        <div className={classes.controls}>
-          <TextInput
-            placeholder="Your email"
-            classNames={{ input: classes.input, root: classes.inputWrapper }}
-          />
-          <Button className={classes.control}>Subscribe</Button>
-        </div>
-       */}
       </div>
-
-      <Image
-        src={`/${process.env.NEXT_PUBLIC_VERCEL_URL}/image/banner.svg`}
-        className={classes.image}
-      />
     </div>
   );
 }

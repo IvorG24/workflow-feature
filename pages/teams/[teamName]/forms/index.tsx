@@ -64,7 +64,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   // format to match FormListPagePageProps
   const formList = data.map((form) => {
     const date = moment(form.form_date_created);
-    const formattedDate = date.format("MMM D, YYYY");
+    const formattedDate = date.fromNow();
 
     return {
       userId: form.user_id,
@@ -160,7 +160,6 @@ const FormListPagePage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -183,7 +182,6 @@ const FormListPagePage: NextPageWithLayout<
       await updateFormTemplateVisbility(supabaseClient, formId, isHidden);
 
       showNotification({
-        title: "Success",
         message: "Form template visibility updated.",
         color: "green",
       });
@@ -192,7 +190,6 @@ const FormListPagePage: NextPageWithLayout<
     } catch (error) {
       console.error(error);
       showNotification({
-        title: "Error",
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -231,11 +228,13 @@ const FormListPagePage: NextPageWithLayout<
           />
         </Grid.Col>
       </Grid>
-      <Box h={500}>
+      {/* <Box h={500}> */}
+      <Box>
         <DataTable
           withBorder
-          withColumnBorders
-          striped
+          fw="bolder"
+          c="dimmed"
+          minHeight={250}
           fetching={isLoading}
           records={records}
           columns={[
