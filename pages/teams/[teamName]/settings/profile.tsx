@@ -8,21 +8,30 @@ import {
   GetUserProfile,
   getUserProfile,
   inviteUserToTeam,
+  isTeamNameExisting,
   removeTeamMember,
   transferTeamOwnership,
+  updateTeam,
   updateTeamMemberRole,
 } from "@/utils/queries";
+import { isValidTeamName } from "@/utils/string";
 import {
   ActionIcon,
+  Avatar,
   Box,
   Button,
   Checkbox,
+  Container,
   createStyles,
+  FileInput,
   Grid,
   Group,
+  LoadingOverlay,
   Menu,
   MultiSelect,
   SelectItem,
+  Space,
+  Stack,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -38,11 +47,12 @@ import {
   IconSearch,
   IconTrash,
 } from "@tabler/icons";
-import { startCase } from "lodash";
+import { startCase, toLower, toUpper } from "lodash";
 import { DataTable } from "mantine-datatable";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
-import { ReactElement, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const PAGE_SIZE = 15;
 
@@ -151,17 +161,26 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 const TeamSettingsProfilePage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
 > = ({ memberList, currentUserTeamInfo, user, team, userProfile }) => {
+  const router = useRouter();
+
   const { classes } = useStyles();
+
   const supabaseClient = useSupabaseClient();
+
   const [page, setPage] = useState(1);
 
   const [records, setRecords] = useState(memberList.slice(0, PAGE_SIZE));
   const [totalRecords, setTotalRecords] = useState(memberList.length);
 
   const [query, setQuery] = useState("");
+
   const [adminsOnly, setAdminsOnly] = useState(false);
 
   const [selectedUsers, setSelectedUsers] = useState<SelectItem[]>([]);
+
+  const [teamProfileName, setTeamProfileName] = useState(team.team_name || "");
+
+  const [teamProfileNameError, setTeamProfileNameError] = useState("");
 
   const isAdmin =
     currentUserTeamInfo?.role === "owner" ||
@@ -171,14 +190,15 @@ const TeamSettingsProfilePage: NextPageWithLayout<
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const teamName = team?.team_name as string;
+
   const teamId = team?.team_id as string;
 
-  useEffect(() => {
-    const from = (page - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE;
-    setRecords(memberList.slice(from, to));
-  }, [page]);
+  const teamLogoInput = useRef<HTMLButtonElement>(null);
+
+  const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
   const handleRefetchMemberList = async () => {
     try {
@@ -422,14 +442,114 @@ const TeamSettingsProfilePage: NextPageWithLayout<
     }
   };
 
+  const handlUpdateTeam = async () => {
+    try {
+      setIsUpdating(true);
+
+      // check if team name is empty
+      if (teamProfileName.trim() === "") {
+        setTeamProfileNameError("Team name cannot be empty");
+        return;
+      }
+
+      // Check for validity of team name first
+      if (!isValidTeamName(teamProfileName)) {
+        setTeamProfileNameError(
+          "Team name must contain 6-30 alphanumeric characters and underscores, periods, apostrophes, or dashes only"
+        );
+
+        return;
+      }
+
+      // Check if team name is already taken
+      if (await isTeamNameExisting(supabaseClient, toLower(teamProfileName))) {
+        setTeamProfileNameError("Team name already exists");
+        return;
+      }
+
+      await updateTeam(
+        supabaseClient,
+        {
+          team_name: teamProfileName.trim(),
+        },
+        team.team_id
+      );
+
+      showNotification({
+        message: "Team profile has been updated.",
+      });
+
+      setTeamProfileNameError("");
+
+      router.push(`/teams/${toLower(teamProfileName)}/settings/profile`);
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        message: "Failed to update team profile",
+        color: "red",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  useEffect(() => {
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE;
+    setRecords(memberList.slice(from, to));
+  }, [page]);
+
   useEffect(() => {
     handleRefetchMemberList();
   }, [adminsOnly]);
 
   return (
     <>
-      {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
-      <Grid align="center">
+      <LoadingOverlay visible={isUpdating} overlayBlur={2} />
+      {/* Team Profile Information */}
+      <Container maw={300}>
+        <FileInput
+          accept="image/png,image/jpeg"
+          display="none"
+          ref={teamLogoInput}
+          onChange={(e) => setTeamLogo(e)}
+        />
+
+        <Avatar
+          color="cyan"
+          radius={125}
+          size={250}
+          // TODO: Add upload avatar functionality
+          // onClick={() => avatarInput.current?.click()}
+          // style={{ cursor: "pointer" }}
+          src={teamLogo ? URL.createObjectURL(teamLogo) : ""}
+          alt="User avatar"
+        >
+          {startCase(teamName?.[0])}
+          {startCase(teamName?.[1])}
+        </Avatar>
+
+        <Space h="xl" />
+
+        <Stack w="100%">
+          <TextInput
+            placeholder="Team name"
+            value={toUpper(teamProfileName)}
+            error={teamProfileNameError}
+            onChange={(e) =>
+              setTeamProfileName(e.currentTarget.value.toUpperCase())
+            }
+          />
+          <Button size="xs" onClick={handlUpdateTeam}>
+            Update
+          </Button>
+        </Stack>
+      </Container>
+
+      <Space h="xl" />
+
+      {/* Member List */}
+      <Grid align="center" mt="xl">
         <Grid.Col xs={8} sm={9}>
           <Group noWrap>
             <TextInput
@@ -519,9 +639,10 @@ const TeamSettingsProfilePage: NextPageWithLayout<
           }
           records={records}
           columns={[
-            { accessor: "username" },
+            { accessor: "username", ellipsis: true },
             {
               accessor: "name",
+              ellipsis: true,
               render: ({ firstName, lastName }) => `${firstName} ${lastName}`,
             },
             { accessor: "email" },

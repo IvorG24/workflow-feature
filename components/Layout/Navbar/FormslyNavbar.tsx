@@ -72,7 +72,6 @@ function FormslyNavbar({
   };
 
   const handleChangeTeam = async (teamName: string) => {
-    console.log(teamName);
     if (teamName === "manage team") {
       await router.push(
         `/teams/${router.query.teamName as string}/settings/profile`

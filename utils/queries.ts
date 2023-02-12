@@ -18,7 +18,9 @@ import {
   RequestStatus,
   TeamMemberTableInsert,
   TeamTableInsert,
+  TeamTableUpdate,
   UserProfileTableInsert,
+  UserProfileTableUpdate,
 } from "./types";
 
 export type GetTeamFormTemplateListFilter = {
@@ -99,7 +101,7 @@ export const getUserProfile = async (
       .from("user_profile_table")
       .select()
       .eq("user_id", userId)
-      .maybeSingle();
+      .single();
     if (error) throw error;
     return data;
   } catch (error) {
@@ -108,6 +110,28 @@ export const getUserProfile = async (
   }
 };
 export type GetUserProfile = Awaited<ReturnType<typeof getUserProfile>>;
+
+
+export const getUserProfileNullable = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("user_profile_table")
+      .select()
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetUserProfileNullable = Awaited<
+  ReturnType<typeof getUserProfileNullable>
+>;
 
 export const getUserProfileByUsername = async (
   supabaseClient: SupabaseClient<Database>,
@@ -722,6 +746,7 @@ export const createRequest = async (
 };
 export type CreateRequest = Awaited<ReturnType<typeof createRequest>>;
 
+export const GET_REQUEST_LIST_LIMIT = 20;
 export type GetTeamRequestListFilter = {
   keyword?: string;
   mainStatus?: RequestStatus | "canceled" | null;
@@ -776,6 +801,8 @@ export const getTeamRequestList = async (
 
     if (filter?.range) {
       query = query.range(filter.range[0], filter.range[1]);
+    } else {
+      query = query.range(0, GET_REQUEST_LIST_LIMIT);
     }
     // if (filter?.sort) {
     query = query.order("request_date_created", {
@@ -1316,7 +1343,7 @@ export const isUsernameExisting = async (
     const { data, error } = await supabaseClient
       .from("user_profile_table")
       .select()
-      .ilike("username", username)
+      .eq("username", username)
       .maybeSingle();
 
     if (error) throw error;
@@ -1675,3 +1702,50 @@ export const getTeamInvitation = async (
   }
 };
 export type GetTeamInvitation = Awaited<ReturnType<typeof getTeamInvitation>>;
+
+export const updateUserProfile = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserProfileTableUpdate,
+  userId: string
+) => {
+  try {
+    params.username = params.username?.trim().toLowerCase();
+    const { data, error } = await supabaseClient
+      .from("user_profile_table")
+      .update(params)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type UpdateUserProfile = Awaited<ReturnType<typeof updateUserProfile>>;
+
+// create function updateTeam
+
+export const updateTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TeamTableUpdate,
+  teamId: string
+) => {
+  try {
+    params.team_name = params.team_name?.trim().toLowerCase();
+    const { data, error } = await supabaseClient
+      .from("team_table")
+      .update(params)
+      .eq("team_id", teamId);
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export type UpdateTeam = Awaited<ReturnType<typeof updateTeam>>;

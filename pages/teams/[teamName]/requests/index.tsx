@@ -10,11 +10,13 @@ import {
   getTeamRequestList,
   getTeamRequestListCount,
   GetTeamRequestListFilter,
+  GET_REQUEST_LIST_LIMIT,
   isRequestCanceled,
   updateRequestStatus,
 } from "@/utils/queries";
 import { getRandomMantineColor } from "@/utils/styling";
-import { RequestStatus } from "@/utils/types";
+
+import { RequestStatus, RequestToCSV } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -43,6 +45,7 @@ import {
   IconWritingSign,
   IconWritingSignOff,
 } from "@tabler/icons";
+import { parse } from "json2csv";
 import { startCase, toLower } from "lodash";
 import { DataTable } from "mantine-datatable";
 import moment from "moment";
@@ -50,8 +53,6 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
 import { ReactElement, useState } from "react";
-
-const PAGE_SIZE = 15;
 
 type Requester = {
   username: string;
@@ -124,10 +125,10 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const teamName = `${ctx.query?.teamName}`;
 
   const data = await getTeamRequestList(supabaseClient, teamName, {
-    range: [0, PAGE_SIZE],
+    range: [0, GET_REQUEST_LIST_LIMIT],
   });
   const count = await getTeamRequestListCount(supabaseClient, teamName, {
-    range: [0, PAGE_SIZE],
+    range: [0, GET_REQUEST_LIST_LIMIT],
   });
 
   // format to match RequestListPageProps
@@ -271,8 +272,8 @@ const RequestListPage: NextPageWithLayout<
       setIsLoading(true);
 
       const index = page - 1;
-      const start = index * PAGE_SIZE;
-      const end = start + PAGE_SIZE - 1;
+      const start = index * GET_REQUEST_LIST_LIMIT;
+      const end = start + GET_REQUEST_LIST_LIMIT - 1;
       const filter: GetTeamRequestListFilter = {
         range: [start, end],
         keyword: query,
@@ -530,19 +531,80 @@ const RequestListPage: NextPageWithLayout<
     }
   };
 
+  const handleExportRequestListToCSV = async () => {
+    try {
+      setIsLoading(true);
+
+      // export records to csv using json2csv
+      // map first to match RequestToCSV type from types.ts
+      const requestListToCSV: RequestToCSV[] = records.map((record) => {
+        return {
+          title: record.title || "",
+          description: record.description || "",
+          dateCreated: record.requestDateCreated || "",
+          primaryApproverUsername: record.primaryApprover.username || "",
+          mainStatus: (record.mainStatus || "") as RequestStatus,
+        };
+      });
+
+      if (requestListToCSV.length === 0) {
+        showNotification({
+          message: "No requests to export",
+          color: "red",
+        });
+        return;
+      }
+
+      // const fields = Object.keys(requestListToCSV[0]).map((key) =>
+      //   startCase(key)
+      // );
+
+       const fields = Object.keys(requestListToCSV[0]);
+
+      const opts = { fields };
+      const csv = parse(requestListToCSV, opts);
+      window.URL = window.webkitURL || window.URL;
+      const contentType = "text/csv";
+      const csvFile = new Blob([csv], { type: contentType });
+      const a = document.createElement("a");
+      // At target blank to the anchor tag above
+      a.target = "_blank";
+
+      const date = moment(new Date());
+      const formattedDate = date.format("MMM D, YYYY");
+
+      const filename = `${teamName}_${formattedDate}_requests.csv`;
+      a.download = filename;
+      a.href = window.URL.createObjectURL(csvFile);
+      a.dataset.downloadurl = [contentType, a.download, a.href].join(":");
+      document.body.appendChild(a);
+      a.click();
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
-      <Group>
+      <Group position="apart">
         <Group noWrap>
           <TextInput
-            sx={{ width: "100%" }}
             placeholder="Search request..."
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
           />
           <ActionIcon
             onClick={() =>
-              handleApplyFilters({ mainStatus: mainStatusFilter, oldestFirst })
+              handleApplyFilters({
+                mainStatus: mainStatusFilter,
+                oldestFirst,
+              })
             }
           >
             <IconSearch size={18} stroke={1.5} />
@@ -602,7 +664,7 @@ const RequestListPage: NextPageWithLayout<
         </Group>
       </Group>
 
-      <Group noWrap mt="md">
+      <Group noWrap mt="md" position="apart">
         {/* <Checkbox
           label="Pending only"
           checked={pendingOnly}
@@ -620,6 +682,13 @@ const RequestListPage: NextPageWithLayout<
             });
           }}
         />
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={handleExportRequestListToCSV}
+        >
+          Export to CSV
+        </Button>
       </Group>
 
       {/* <Box h={500} mt="md"> */}
@@ -665,7 +734,9 @@ const RequestListPage: NextPageWithLayout<
                           {requester.username[0]}
                           {requester.username[1]}
                         </Avatar>
-                        <Text size="xs">{requester.username}</Text>
+                        <Text size="xs" truncate>
+                          {requester.username}
+                        </Text>
                       </Group>
                       <Text size="xs" fw="lighter">
                         {requestDateCreated}
@@ -689,7 +760,9 @@ const RequestListPage: NextPageWithLayout<
                         <Text size="xs" fw="bold" c="dimmed">
                           Primary approver
                         </Text>
-                        <Text size="xs">{primaryApprover?.username}</Text>
+                        <Text size="xs" truncate>
+                          {primaryApprover?.username}
+                        </Text>
                       </Box>
                       {isCanceled && (
                         <Badge size="xs" color="dark">
@@ -800,7 +873,7 @@ const RequestListPage: NextPageWithLayout<
             },
           ]}
           totalRecords={totalRecords}
-          recordsPerPage={PAGE_SIZE}
+          recordsPerPage={GET_REQUEST_LIST_LIMIT}
           page={page}
           onPageChange={(p) => handlePageChange(p)}
         />

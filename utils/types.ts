@@ -178,50 +178,8 @@ export type TeamMemberRole = "owner" | "admin" | "member";
 export type RequestStatus = "pending" | "approved" | "rejected";
 export const requestStatusList = ["pending", "approved", "rejected"];
 
-// Build Form Template
-export type QuestionRow = { question: string; expected_response_type: string };
-export type QuestionOption = {
-  value: string;
-};
-export type FormQuestion = {
-  fieldId?: number;
-  isRequired: boolean;
-  fieldTooltip?: string;
-  data: QuestionRow;
-  option?: QuestionOption[];
-};
-export type FormRequest = {
-  form_id?: number;
-  form_name: string;
-  questions: FormQuestion[];
-};
-
-// Create Request
-export type ApproverList = {
-  user_id: string;
-  request_status_id: RequestStatus;
-}[];
-// Key value pair of field_id and response
-export type FieldIdResponseKeyValue = { [key: string]: string };
-
-// Update Request Draft
-// Key is response_id and value is the response_value.
-export type ResponseList = { [key: string]: string };
-
 // Notifications
 export type NotificationType = "request_for_approval" | "team_invitation";
-
-// Request List to CSV
-export type RequestListToCSV = {
-  id: number;
-  team: string;
-  title: string;
-  description: string;
-  status: RequestStatus;
-  data_created: string;
-  approver: string;
-  purchaser: string;
-}[];
 
 export type RequestFieldType =
   | "section"
@@ -231,7 +189,6 @@ export type RequestFieldType =
   | "date"
   | "daterange"
   | "select"
-  // | "slider"
   | "multiple";
 export const requestFieldTypeList = [
   "section",
@@ -241,7 +198,6 @@ export const requestFieldTypeList = [
   "date",
   "daterange",
   "select",
-  // "slider",
   "multiple",
 ];
 
@@ -261,3 +217,10 @@ export type CommentType =
   | "uncanceled"
   | "request_created";
 
+export type RequestToCSV = {
+  title: string;
+  description: string;
+  dateCreated: string;
+  mainStatus: RequestStatus;
+  primaryApproverUsername: string;
+};

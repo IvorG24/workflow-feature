@@ -1,7 +1,6 @@
-import { Button, Center, Flex, Text } from "@mantine/core";
+import { Button, Center, Flex, Stack, Text } from "@mantine/core";
 
-import Onboarding from "@/components/OnboardingPage/Onboarding";
-import { isUserOnboarded } from "@/utils/queries";
+import { getUserProfileNullable, getUserTeamList } from "@/utils/queries";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
@@ -23,10 +22,20 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     };
   }
 
-  const isOnboarded = await isUserOnboarded(supabaseClient, session?.user?.id);
+  const user = session?.user;
+
+  const [userProfile, userTeamList] = await Promise.all([
+    getUserProfileNullable(supabaseClient, user.id),
+    getUserTeamList(supabaseClient, user.id),
+  ]);
+
+  const isOnboarded = userProfile && userTeamList.length > 0;
 
   return {
     props: {
+      user,
+      userProfile,
+      userTeamList,
       isOnboarded,
     },
   };
@@ -34,12 +43,12 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
 const OnboardingPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ isOnboarded }) => {
+> = ({ user, userProfile, userTeamList, isOnboarded }) => {
   const router = useRouter();
 
   return (
     <>
-      {isOnboarded && (
+      {/* {isOnboarded && (
         <Center h="90vh">
           <Flex direction="column" gap="sm" w={400}>
             <Text size="xl" c="dimmed" fw="bold">
@@ -52,7 +61,29 @@ const OnboardingPage: NextPageWithLayout<
         </Center>
       )}
 
-      {!isOnboarded && <Onboarding />}
+      {!isOnboarded && (
+        <Center h="90vh">
+          <Stack spacing="sm" w={400}>
+            <Text size="xl" c="dimmed" fw="bold">
+              You are onboarding...
+            </Text>
+            <Button onClick={() => router.push("/")}>
+              Proceed to the homepage
+            </Button>
+          </Stack>
+        </Center>
+      )} */}
+
+      <Center h="90vh">
+        <Stack spacing="sm" w={400}>
+          <Text size="xl" c="dimmed" fw="bold">
+            You are onboarding...
+          </Text>
+          <Button onClick={() => router.push("/")}>
+            Proceed to the homepage
+          </Button>
+        </Stack>
+      </Center>
     </>
   );
 };

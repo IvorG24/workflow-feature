@@ -1,5 +1,6 @@
 import { isUniqueNameValid } from "@/utils/input";
 import { CreateTeam, createTeam, isTeamNameExisting } from "@/utils/queries";
+import { isValidTeamName } from "@/utils/string";
 import {
   Button,
   Center,
@@ -45,11 +46,10 @@ function CreateTeamPage() {
         return;
       }
 
-      // check isUniqueNameValid
-      if (!isUniqueNameValid(teamName)) {
+      if (!isValidTeamName(teamName)) {
         showNotification({
           message:
-            "Team name must include uppercased, spaces, underscores, and numbers only.",
+            "Team name must contain 6-30 alphanumeric characters and underscores, periods, apostrophes, or dashes only",
           color: "red",
         });
         return;

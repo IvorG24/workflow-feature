@@ -237,6 +237,7 @@ const FormListPagePage: NextPageWithLayout<
             { accessor: "formDateCreated" },
             {
               accessor: "username",
+              ellipsis: true,
             },
             {
               accessor: "formIsHidden",
