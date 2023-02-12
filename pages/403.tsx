@@ -2,7 +2,6 @@ import {
   Button,
   Container,
   createStyles,
-  Image,
   SimpleGrid,
   Text,
   Title,
@@ -56,10 +55,6 @@ export default function NotFoundImage() {
         cols={2}
         breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
       >
-        <Image
-          src={`/${process.env.VERCEL_URL}/image/404.svg`}
-          className={classes.mobileImage}
-        />
         <div>
           <Title className={classes.title}>Something is not right...</Title>
           <Text color="dimmed" size="lg">
@@ -76,10 +71,6 @@ export default function NotFoundImage() {
             Get back to home page
           </Button>
         </div>
-        <Image
-          src={`/${process.env.VERCEL_URL}/image/404.svg`}
-          className={classes.desktopImage}
-        />
       </SimpleGrid>
     </Container>
   );

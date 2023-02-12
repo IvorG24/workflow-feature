@@ -322,6 +322,16 @@ const TeamSettingsProfilePage: NextPageWithLayout<
   };
 
   const handleSendInvitation = async () => {
+    if (selectedUsers.length === 0) {
+      showNotification({
+        message:
+          "Please provide at least one email address of an existing Formsly user",
+        color: "red",
+      });
+
+      return;
+    }
+
     // filter users that do not have an account
     const promises = selectedUsers.map(async (user) => {
       const trimmedEmail = user.value.trim();
@@ -533,6 +543,7 @@ const TeamSettingsProfilePage: NextPageWithLayout<
                     shadow="md"
                     position="left-end"
                     disabled={isMember || isCurrentUserInfo || isRowOwner}
+                    key={id}
                   >
                     <Menu.Target>
                       <Group spacing={4} noWrap>

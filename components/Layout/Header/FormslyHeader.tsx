@@ -215,7 +215,7 @@ function FormslyHeader({ opened, setOpened }: FormslyHeaderProps) {
                 <Avatar
                   size="sm"
                   // src={userProfile?.user_avatar_filepath}
-                  alt={userProfile?.username || ""}
+                  // alt={userProfile?.username || ""}
                   color={getRandomMantineColor()}
                 >
                   {startCase(userProfile?.username?.charAt(0))}

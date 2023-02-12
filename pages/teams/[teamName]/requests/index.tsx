@@ -658,7 +658,7 @@ const RequestListPage: NextPageWithLayout<
                     : "red";
 
                 return (
-                  <Box>
+                  <Box key={requestId}>
                     <Group position="apart" noWrap>
                       <Group noWrap>
                         <Avatar size="sm" color={color}>

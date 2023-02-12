@@ -6,6 +6,8 @@ import {
   readNotification,
 } from "@/utils/queries";
 import { NotificationType } from "@/utils/types";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   ActionIcon,
   Box,
@@ -70,6 +72,8 @@ export type NotificationListPageProps = {
   user: User;
   teamName: string;
   count: number;
+  headerCheckboxKey: string;
+  headerButtonKey: string;
 };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
@@ -119,19 +123,31 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     };
   });
 
+  const headerCheckboxKey = uuidv4();
+  const headerButtonKey = uuidv4();
+
   return {
     props: {
       notificationList,
       user,
       teamName,
       count,
+      headerCheckboxKey,
+      headerButtonKey,
     },
   };
 };
 
 const NotificationListPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ notificationList, user, teamName, count }) => {
+> = ({
+  notificationList,
+  user,
+  teamName,
+  count,
+  headerCheckboxKey,
+  headerButtonKey,
+}) => {
   const { classes, cx } = useStyles();
 
   const supabaseClient = useSupabaseClient();
@@ -374,16 +390,20 @@ const NotificationListPage: NextPageWithLayout<
               accessor: "checkbox",
               title: (
                 <Checkbox
-                  checked={checkList.length === records.length}
+                  key={headerCheckboxKey}
+                  checked={
+                    checkList.length > 0 && checkList.length === records.length
+                  }
                   size="xs"
-                  onClick={(e) => handleCheckAllRows(e.currentTarget.checked)}
+                  onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
                 />
               ),
               render: ({ notificationId }) => (
                 <Checkbox
+                  key={notificationId}
                   size="xs"
                   checked={checkList.includes(notificationId)}
-                  onClick={(e) => {
+                  onChange={(e) => {
                     e.stopPropagation();
                     handleCheckRow(notificationId);
                   }}
@@ -395,7 +415,12 @@ const NotificationListPage: NextPageWithLayout<
               accessor: "content",
               title:
                 checkList.length > 0 ? (
-                  <Button compact size="xs" onClick={handleBulkRead}>
+                  <Button
+                    key={headerButtonKey}
+                    compact
+                    size="xs"
+                    onClick={handleBulkRead}
+                  >
                     Read
                   </Button>
                 ) : (

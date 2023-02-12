@@ -24,13 +24,13 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconSearch } from "@tabler/icons";
-import { startCase } from "lodash";
 import { DataTable } from "mantine-datatable";
 import moment from "moment";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 const useStyles = createStyles((theme) => ({
   read: {
@@ -63,6 +63,7 @@ export type NotificationRow = {
   notificationType: NotificationType;
   isRead: boolean;
   checked?: boolean;
+  teamUserNotificationId: number;
 };
 
 export type TeamInvitationListPageProps = {
@@ -114,21 +115,25 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       notificationType:
         notification.team_user_notification_type_id as NotificationType,
       isRead: notification.notification_is_read as boolean,
+      teamUserNotificationId: notification.team_user_notification_id as number,
     };
   });
+
+  const headerCheckboxKey = uuidv4();
 
   return {
     props: {
       notificationList,
       user,
       count,
+      headerCheckboxKey,
     },
   };
 };
 
 const TeamInvitationListPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ notificationList, user, count }) => {
+> = ({ notificationList, user, count, headerCheckboxKey }) => {
   const { classes, cx } = useStyles();
 
   const supabaseClient = useSupabaseClient();
@@ -234,6 +239,7 @@ const TeamInvitationListPage: NextPageWithLayout<
           notificationType:
             notification.team_user_notification_type_id as NotificationType,
           isRead: notification.notification_is_read as boolean,
+          teamUserNotificationId: notification.team_user_notification_id,
         };
       });
 
@@ -371,16 +377,20 @@ const TeamInvitationListPage: NextPageWithLayout<
               accessor: "checkbox",
               title: (
                 <Checkbox
-                  checked={checkList.length === records.length}
+                  key={headerCheckboxKey}
+                  checked={
+                    checkList.length > 0 && checkList.length === records.length
+                  }
                   size="xs"
-                  onClick={(e) => handleCheckAllRows(e.currentTarget.checked)}
+                  onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
                 />
               ),
-              render: ({ notificationId }) => (
+              render: ({ notificationId, teamUserNotificationId }) => (
                 <Checkbox
+                  key={notificationId}
                   size="xs"
                   checked={checkList.includes(notificationId)}
-                  onClick={(e) => {
+                  onChange={(e) => {
                     e.stopPropagation();
                     handleCheckRow(notificationId);
                   }}
@@ -392,7 +402,12 @@ const TeamInvitationListPage: NextPageWithLayout<
               accessor: "content",
               title:
                 checkList.length > 0 ? (
-                  <Button compact size="xs" onClick={handleBulkRead}>
+                  <Button
+                    key={teamUserNotificationId}
+                    compact
+                    size="xs"
+                    onClick={handleBulkRead}
+                  >
                     Read
                   </Button>
                 ) : (

@@ -1653,3 +1653,25 @@ export const readNotification = async (
   }
 };
 export type ReadNotification = Awaited<ReturnType<typeof readNotification>>;
+
+// create getTeamInvitation function
+export const getTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamInvitationId: string
+) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from("team_invitation_view")
+      .select()
+      .eq("team_invitation_id", teamInvitationId)
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export type GetTeamInvitation = Awaited<ReturnType<typeof getTeamInvitation>>;
