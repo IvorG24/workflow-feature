@@ -635,7 +635,8 @@ export const getFormByTeamAndFormName = async (
       .from("request_form_template_view")
       .select()
       .eq("form_name", formName)
-      .eq("team_name", teamName);
+      .eq("team_name", teamName)
+      .order("form_fact_order_number", { ascending: true });
 
     if (error) throw error;
     return data || [];

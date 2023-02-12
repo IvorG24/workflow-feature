@@ -87,6 +87,10 @@ const useStyles = createStyles((theme) => ({
     boxShadow: "2px 2px 5px #ccc",
   },
 
+  section: {
+    marginTop: "2rem",
+  },
+
   add: {
     display: "flex",
     alignItems: "center",
@@ -256,6 +260,8 @@ const CreateRequestPage: NextPageWithLayout<
         <div
           className={cx(classes.item, {
             [classes.itemDragging]: snapshot.isDragging,
+            [classes.section]:
+              item.type === "section" || item.type === "repeatable_section",
           })}
           ref={provided.innerRef}
           {...provided.draggableProps}
@@ -372,6 +378,9 @@ const CreateRequestPage: NextPageWithLayout<
         throw new Error("Please fill in all required fields");
 
       if (attachment) {
+        showNotification({
+          message: "Uploading attachment",
+        });
         const filename = attachment.name;
 
         const userProfile = await getUserProfile(supabaseClient, user?.id);
@@ -389,8 +398,14 @@ const CreateRequestPage: NextPageWithLayout<
         params.filepathList = [filepath.path];
       }
 
+      showNotification({
+        message: "Creating request",
+      });
       const createdRequest = await createRequest(supabaseClient, params);
 
+      showNotification({
+        message: "Adding created by request comment",
+      });
       // add "created_by" comment
       await addComment(
         supabaseClient,
@@ -401,6 +416,9 @@ const CreateRequestPage: NextPageWithLayout<
         null
       );
 
+      showNotification({
+        message: "Create request complete ✉️",
+      });
       await router.push(`/teams/${teamName}/requests`);
       setIsLoading(false);
     } catch (error) {
@@ -447,9 +465,11 @@ const CreateRequestPage: NextPageWithLayout<
     // Reference: https://mantine.dev/hooks/use-list-state/
 
     // insert item at i position
-    duplicatedSectionWithItemList.map((item, index) =>
-      handlers.insert(index + i, item)
-    );
+    // duplicatedSectionWithItemList.map((item, index) =>
+    //   handlers.insert(index + i, item)
+    // );
+
+    handlers.insert(index, ...duplicatedSectionWithItemList);
   };
 
   const handleRemoveSection = (index: number): void => {
@@ -466,14 +486,16 @@ const CreateRequestPage: NextPageWithLayout<
     }
 
     let i = index;
+    const removeIndices = [index];
     for (i = i + 1; i < state.length; i++) {
       const item = state[i];
-
       if (item.type === "section" || item.type === "repeatable_section") break;
 
-      handlers.remove(i);
+      removeIndices.push(i);
     }
-    handlers.remove(index);
+
+    // remove section
+    handlers.remove(...removeIndices);
   };
 
   const handleOnDrop = (files: FileWithPath[]) => {
@@ -529,7 +551,7 @@ const CreateRequestPage: NextPageWithLayout<
         />
         <Divider />
         {/* </Group> */}
-        <Group position="left" mt="xl" mb="md">
+        <Group position="left" mt="xl">
           <Text>Fields</Text>
         </Group>
         <DragDropContext

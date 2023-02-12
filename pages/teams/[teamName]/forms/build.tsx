@@ -87,6 +87,10 @@ const useStyles = createStyles((theme) => ({
     boxShadow: "2px 2px 5px #ccc",
   },
 
+  section: {
+    marginTop: "2rem",
+  },
+
   add: {
     display: "flex",
     alignItems: "center",
@@ -297,6 +301,10 @@ const BuildFormPage: NextPageWithLayout = () => {
 
       if (!team) throw new Error("Team not found");
 
+      showNotification({
+        message: "Building form",
+      });
+
       const createdForm = await createForm(
         supabaseClient,
         { form_name: formName },
@@ -305,6 +313,10 @@ const BuildFormPage: NextPageWithLayout = () => {
         userId
       );
 
+      showNotification({
+        message: "Assigning approvers",
+      });
+
       await createFormApproverList(
         supabaseClient,
         createdForm.request_form_table.form_id,
@@ -312,6 +324,9 @@ const BuildFormPage: NextPageWithLayout = () => {
         primaryApproverId
       );
 
+      showNotification({
+        message: "Build form complete 📄",
+      });
       await router.push(`/teams/${teamName}/forms`);
 
       setIsLoading(false);
@@ -460,6 +475,8 @@ const BuildFormPage: NextPageWithLayout = () => {
         <div
           className={cx(classes.item, {
             [classes.itemDragging]: snapshot.isDragging,
+            [classes.section]:
+              item.type === "section" || item.type === "repeatable_section",
           })}
           ref={provided.innerRef}
           {...provided.draggableProps}
@@ -643,7 +660,7 @@ const BuildFormPage: NextPageWithLayout = () => {
         </Group>
         <Divider />
 
-        <Group position="left" my="xl">
+        <Group position="left" mt="xl">
           <Text>Fields</Text>
         </Group>
         <DragDropContext

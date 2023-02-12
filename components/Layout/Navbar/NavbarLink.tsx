@@ -40,6 +40,7 @@ function NavbarLink({ label, setOpened }: NavbarLinkProps) {
             router.query.teamName as string
           }/requests/create?form=${label}`
         );
+        router.reload();
         setOpened(false);
       }}
     >

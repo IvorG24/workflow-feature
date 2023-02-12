@@ -40,6 +40,7 @@ import {
 } from "@/utils/queries";
 import { RequestFieldType, RequestStatus } from "@/utils/types";
 import { showNotification } from "@mantine/notifications";
+import { startCase } from "lodash";
 import {
   DndListHandleProps,
   RequestTrail,
@@ -87,6 +88,10 @@ const useStyles = createStyles((theme) => ({
     marginBottom: theme.spacing.sm,
     border: "1px solid #ccc",
     boxShadow: "2px 2px 5px #ccc",
+  },
+
+  section: {
+    marginTop: "2rem",
   },
 
   add: {
@@ -180,6 +185,8 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
         <div
           className={cx(classes.item, {
             [classes.itemDragging]: snapshot.isDragging,
+            [classes.section]:
+              item.type === "section" || item.type === "repeatable_section",
           })}
           ref={provided.innerRef}
           {...provided.draggableProps}
@@ -319,6 +326,10 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
       }
 
       const isUpdatedByPrimaryApprover = userId === primaryApproverId;
+
+      showNotification({
+        message: `Signing request as ${startCase(newStatus)}`,
+      });
       await updateRequestStatus(
         supabaseClient,
         userId,
@@ -341,6 +352,9 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
         (trail) => ({ ...trail, approverActionStatusId: newStatus })
       );
 
+      showNotification({
+        message: "Adding request comment",
+      });
       // create approve or reject comment on the request then update the comment list
       await addComment(
         supabaseClient,
@@ -466,7 +480,7 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
         {/* </Group> */}
         <Divider />
 
-        <Group position="left" mt="xl" mb="xl">
+        <Group position="left" mt="xl">
           <Text>Fields</Text>
         </Group>
         <DragDropContext
