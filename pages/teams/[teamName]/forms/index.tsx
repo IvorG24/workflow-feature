@@ -168,7 +168,7 @@ const FormListPagePage: NextPageWithLayout<
   }, [hiddenOnly]);
 
   const handleUpdateFormTemplateVisbility = async (
-    formId: number,
+    formId: string,
     isHidden: boolean
   ) => {
     try {
@@ -250,7 +250,7 @@ const FormListPagePage: NextPageWithLayout<
                       // size="md"
                       onClick={() =>
                         handleUpdateFormTemplateVisbility(
-                          formId as number,
+                          formId as string,
                           !formIsHidden
                         )
                       }

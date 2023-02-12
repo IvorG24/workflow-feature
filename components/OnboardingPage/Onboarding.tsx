@@ -127,7 +127,7 @@ function Onboarding() {
       // Save user profile information
       const createUserProfileParams: UserProfileTableInsert = {
         user_id: user.id,
-        user_email: user.email,
+        user_email: user.email as string,
         user_avatar_filepath: avatarFilepath,
         user_first_name: values.firstName.trim(),
         user_last_name: values.lastName.trim(),

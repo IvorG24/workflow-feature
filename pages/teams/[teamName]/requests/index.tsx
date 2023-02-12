@@ -69,8 +69,8 @@ type Approver = {
 };
 
 export type RequestRow = {
-  requestId: number;
-  formId: number;
+  requestId: string;
+  formId: string;
   formName: string;
   title: string;
   description: string;
@@ -138,8 +138,8 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     const formattedDate = date.fromNow();
 
     return {
-      requestId: request.request_id as number,
-      formId: request.form_id as number,
+      requestId: request.request_id as string,
+      formId: request.form_id as string,
       formName: request.form_name as string,
       title: request.request_title as string,
       description: request.request_description || "",
@@ -295,8 +295,8 @@ const RequestListPage: NextPageWithLayout<
         const formattedDate = date.format("MMM D, YYYY");
 
         return {
-          requestId: request.request_id as number,
-          formId: request.form_id as number,
+          requestId: request.request_id as string,
+          formId: request.form_id as string,
           formName: request.form_name as string,
           title: request.request_title as string,
           description: request.request_description || "",
@@ -409,7 +409,7 @@ const RequestListPage: NextPageWithLayout<
   // };
 
   const handleUpdateRequestStatus = async (
-    requestId: number,
+    requestId: string,
     newStatus: RequestStatus,
     currentUserActionId: string | null | undefined,
     currentUserIsPrimaryApprover: boolean,
@@ -559,7 +559,7 @@ const RequestListPage: NextPageWithLayout<
       //   startCase(key)
       // );
 
-       const fields = Object.keys(requestListToCSV[0]);
+      const fields = Object.keys(requestListToCSV[0]);
 
       const opts = { fields };
       const csv = parse(requestListToCSV, opts);

@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout/Layout";
+import { getFileUrl, uploadFile } from "@/utils/file";
 import {
   getUserProfile,
   isUsernameExisting,
@@ -9,9 +10,12 @@ import {
   Avatar,
   Button,
   Center,
+  Divider,
   FileInput,
   Group,
+  Image,
   LoadingOverlay,
+  Space,
   Stack,
   TextInput,
 } from "@mantine/core";
@@ -22,7 +26,11 @@ import { startCase } from "lodash";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
-import { ReactElement, useRef, useState } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
+import {
+  default as ReactSignatureCanvas,
+  default as SignatureCanvas,
+} from "react-signature-canvas";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabaseClient = createServerSupabaseClient(ctx);
@@ -56,6 +64,8 @@ const UserProfilePage: NextPageWithLayout<
 > = ({ teamName, user, userProfile }) => {
   const router = useRouter();
 
+  const sigCanvas = useRef<ReactSignatureCanvas>(null);
+
   const supabaseClient = useSupabaseClient();
 
   const [avatar, setAvatar] = useState<File | null>(null);
@@ -64,12 +74,17 @@ const UserProfilePage: NextPageWithLayout<
 
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+
   const [inputList, setInputList] = useState({
     firstName: userProfile.user_first_name || "",
     lastName: userProfile.user_last_name || "",
     username: userProfile.username || "",
     email: userProfile.user_email || "",
   });
+
   const [errorList, setErrorList] = useState({
     firstName: "",
     lastName: "",
@@ -178,83 +193,290 @@ const UserProfilePage: NextPageWithLayout<
     }
   };
 
+  const handleDrawSignature = async () => {
+    try {
+      setIsUpdating(true);
+
+      if (sigCanvas.current?.isEmpty()) {
+        showNotification({
+          message: "Please provide a signature",
+          color: "red",
+        });
+        return;
+      }
+
+      const canvas = sigCanvas.current?.getCanvas();
+      const dataURL = canvas?.toDataURL("image/png");
+      const blob = await fetch(dataURL || "").then((r) => r.blob());
+
+      const file = new File([blob], `${userProfile.username}-signature.png`, {
+        type: "image/png",
+      });
+
+      if (!file) throw new Error();
+
+      const { path } = await uploadFile(
+        supabaseClient,
+        file.name,
+        file,
+        "signatures",
+        teamName,
+        userProfile.username as string
+      );
+
+      await updateUserProfile(
+        supabaseClient,
+        { user_signature_filepath: path },
+        user.id
+      );
+
+      const url = URL.createObjectURL(file);
+
+      setSignatureUrl(url);
+
+      showNotification({
+        message: "Signature has been updated",
+      });
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        message: "Failed to draw signature",
+        color: "red",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUploadSignature = async () => {
+    try {
+      setIsUpdating(true);
+
+      if (!signatureFile) {
+        showNotification({
+          message: "Please provide a signature file",
+          color: "red",
+        });
+        return;
+      }
+
+      const { path } = await uploadFile(
+        supabaseClient,
+        signatureFile.name,
+        signatureFile,
+        "signatures",
+        teamName,
+        userProfile.username as string
+      );
+
+      await updateUserProfile(
+        supabaseClient,
+        { user_signature_filepath: path },
+        user.id
+      );
+
+      const url = URL.createObjectURL(signatureFile);
+
+      setSignatureUrl(url);
+
+      showNotification({
+        message: "Signature has been updated",
+      });
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        message: "Failed to upload signature",
+        color: "red",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRemoveSignature = async () => {
+    try {
+      setIsUpdating(true);
+
+      await updateUserProfile(
+        supabaseClient,
+        { user_signature_filepath: null },
+        user.id
+      );
+
+      setSignatureUrl(null);
+
+      showNotification({
+        message: "Signature has been removed",
+      });
+    } catch (error) {
+      console.error(error);
+      showNotification({
+        message: "Failed to remove signature",
+        color: "red",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      if (!userProfile.user_signature_filepath) return;
+
+      const url = await getFileUrl(
+        supabaseClient,
+        userProfile.user_signature_filepath,
+        "signatures"
+      );
+
+      setSignatureUrl(url);
+    })();
+  }, [userProfile.user_signature_filepath]);
+
   return (
     <>
       <LoadingOverlay visible={isUpdating} overlayBlur={2} />
-      <Group position="center">
+      <Stack align="center">
         {/* User Profile Information */}
-        <Group>
-          <Stack w="100%" maw={300}>
-            <Center>
-              <FileInput
-                accept="image/png,image/jpeg"
-                display="none"
-                ref={avatarInput}
-                onChange={(e) => setAvatar(e)}
-              />
-              <Avatar
-                color="cyan"
-                radius={125}
-                size={250}
-                // TODO: Add upload avatar functionality
-                // onClick={() => avatarInput.current?.click()}
-                // style={{ cursor: "pointer" }}
-                src={avatar ? URL.createObjectURL(avatar) : ""}
-                alt="User avatar"
-              >
-                {startCase(userProfile?.username?.[0])}
-                {startCase(userProfile?.username?.[1])}
-              </Avatar>
-            </Center>
+        <Stack w="100%" maw={400}>
+          <Center>
+            <FileInput
+              accept="image/png,image/jpeg"
+              display="none"
+              ref={avatarInput}
+              onChange={(e) => setAvatar(e)}
+            />
+            <Avatar
+              color="cyan"
+              radius={125}
+              size={250}
+              // TODO: Add upload avatar functionality
+              // onClick={() => avatarInput.current?.click()}
+              // style={{ cursor: "pointer" }}
+              src={avatar ? URL.createObjectURL(avatar) : ""}
+              alt="User avatar"
+            >
+              {startCase(userProfile?.username?.[0])}
+              {startCase(userProfile?.username?.[1])}
+            </Avatar>
+          </Center>
 
-            <TextInput
-              placeholder="First name"
-              value={inputList["firstName"]}
-              error={errorList["firstName"]}
-              onChange={(e) =>
-                setInputList({ ...inputList, firstName: e.currentTarget.value })
-              }
-            />
-            <TextInput
-              placeholder="Last name"
-              value={inputList["lastName"]}
-              error={errorList["lastName"]}
-              onChange={(e) =>
-                setInputList({ ...inputList, lastName: e.currentTarget.value })
-              }
-            />
-            <TextInput
-              placeholder="Username"
-              value={inputList["username"]}
-              error={errorList["username"]}
-              onChange={(e) =>
-                setInputList({
-                  ...inputList,
-                  username: e.currentTarget.value.toLowerCase(),
-                })
-              }
-            />
-            <TextInput
-              placeholder="Email"
-              value={inputList["email"]}
-              disabled
-            />
-            <Group noWrap mt="xs">
-              <Button size="xs" onClick={handleUpdateUserProfile}>
-                Update
-              </Button>
-              {/* <Button size="xs" variant="outline">
-              Cancel
-            </Button> */}
-            </Group>
+          <TextInput
+            maw={400}
+            w="100%"
+            placeholder="First name"
+            value={inputList["firstName"]}
+            error={errorList["firstName"]}
+            onChange={(e) =>
+              setInputList({ ...inputList, firstName: e.currentTarget.value })
+            }
+          />
+          <TextInput
+            placeholder="Last name"
+            value={inputList["lastName"]}
+            error={errorList["lastName"]}
+            onChange={(e) =>
+              setInputList({ ...inputList, lastName: e.currentTarget.value })
+            }
+          />
+          <TextInput
+            placeholder="Username"
+            value={inputList["username"]}
+            error={errorList["username"]}
+            onChange={(e) =>
+              setInputList({
+                ...inputList,
+                username: e.currentTarget.value.toLowerCase(),
+              })
+            }
+          />
+          <TextInput placeholder="Email" value={inputList["email"]} disabled />
+          <Group noWrap mt="xs">
+            <Button w="100%" maw={400} onClick={handleUpdateUserProfile}>
+              Update
+            </Button>
+          </Group>
+        </Stack>
 
-            {/* // TODO: Add badges for current user here */}
-          </Stack>
-        </Group>
+        <Space h="xl" />
 
-        {/* User Profile Team Information */}
-        {/* // TODO: Add Requests of curent user here */}
-      </Group>
+        {/* Add signature */}
+
+        <Space h="xl" />
+
+        <Center component="div" maw={400}>
+          <Image
+            radius="md"
+            src={signatureUrl}
+            alt="User signature"
+            withPlaceholder
+            caption={
+              signatureUrl
+                ? "Your uploaded signature"
+                : "No signature uploaded yet"
+            }
+          />
+        </Center>
+
+        {signatureUrl && (
+          <Button
+            w="100%"
+            maw={400}
+            onClick={handleRemoveSignature}
+            variant="outline"
+          >
+            Remove signature
+          </Button>
+        )}
+
+        <Space h="xl" />
+
+        <Center
+          sx={(theme) => ({
+            backgroundColor:
+              theme.colorScheme === "dark"
+                ? theme.colors.dark[5]
+                : theme.colors.blue[0],
+            color: theme.colors.gray[1],
+            borderRadius: "0.5rem",
+          })}
+        >
+          <SignatureCanvas
+            canvasProps={{
+              height: "300px",
+              width: "400px",
+              className: "sigCanvas",
+            }}
+            ref={sigCanvas}
+            data-testid="sigCanvas"
+          />
+        </Center>
+
+        <Button w="100%" maw={400} onClick={handleDrawSignature}>
+          Draw your signature
+        </Button>
+        <Button
+          w="100%"
+          maw={400}
+          onClick={() => sigCanvas.current?.clear()}
+          variant="outline"
+        >
+          Clear
+        </Button>
+        <Divider label="Or" />
+        <FileInput
+          w="100%"
+          maw={400}
+          placeholder={signatureFile?.name || "Upload signature"}
+          withAsterisk
+          accept="image/png,image/jpeg"
+          value={signatureFile}
+          onChange={setSignatureFile}
+        />
+        <Button w="100%" maw={400} onClick={handleUploadSignature}>
+          Upload signature
+        </Button>
+      </Stack>
     </>
   );
 };

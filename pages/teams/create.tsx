@@ -1,4 +1,3 @@
-import { isUniqueNameValid } from "@/utils/input";
 import { CreateTeam, createTeam, isTeamNameExisting } from "@/utils/queries";
 import { isValidTeamName } from "@/utils/string";
 import {
@@ -46,7 +45,7 @@ function CreateTeamPage() {
         return;
       }
 
-      if (!isValidTeamName(teamName)) {
+      if (!isValidTeamName(teamName.trim())) {
         showNotification({
           message:
             "Team name must contain 6-30 alphanumeric characters and underscores, periods, apostrophes, or dashes only",
@@ -67,7 +66,8 @@ function CreateTeamPage() {
       const data = await createTeam(
         supabaseClient,
         {
-          team_name: teamName,
+          team_name: teamName.toLowerCase().trim(),
+          team_user_id: userId,
         },
         userId
       );

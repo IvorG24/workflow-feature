@@ -186,13 +186,13 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
   const formApprovers = await getFormApproverList(
     supabaseClient,
-    form[0].form_id as number
+    form[0].form_id as string
   );
 
   // Transform to DndListHandleProps and RequestTrail so frontend can handle data easier.
   const dndList: DndListHandleProps = {
     data: form.map((form) => ({
-      id: (form.field_id as number).toString(),
+      id: form.field_id as string,
       type: form.form_fact_field_type_id as string,
       label: form.field_name as string,
       value: "",
@@ -241,7 +241,7 @@ const CreateRequestPage: NextPageWithLayout<
   )?.approverId;
 
   const formName = form[0].form_name as string;
-  const formId = form[0].form_id as number;
+  const formId = form[0].form_id as string;
   const teamId = form[0].team_id as string;
   const teamName = form[0].team_name as string;
   const [title, setTitle] = useState("");

@@ -58,7 +58,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export type NotificationRow = {
-  notificationId: number;
+  notificationId: string;
   content: string;
   redirectionUrl: string | null;
   dateCreated: string;
@@ -113,7 +113,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
     return {
       // notificationId: notification.team_user_notification_id,
-      notificationId: notification.notification_id as number,
+      notificationId: notification.notification_id as string,
       content: notification.notification_content as string,
       redirectionUrl: notification.notification_redirect_url,
       dateCreated: formattedDate as string,
@@ -163,7 +163,7 @@ const NotificationListPage: NextPageWithLayout<
 
   const [keyword, setKeyword] = useState("");
 
-  const [checkList, setCheckList] = useState<number[]>([]);
+  const [checkList, setCheckList] = useState<string[]>([]);
 
   const [filter, setFilter] = useState<GetNotificationListFilter>({
     keyword: "",
@@ -210,7 +210,7 @@ const NotificationListPage: NextPageWithLayout<
     }
   };
 
-  const handleCheckRow = (notificationId: number) => {
+  const handleCheckRow = (notificationId: string) => {
     if (checkList.includes(notificationId)) {
       setCheckList(checkList.filter((id) => id !== notificationId));
     } else {
@@ -246,7 +246,7 @@ const NotificationListPage: NextPageWithLayout<
 
         return {
           // notificationId: notification.team_user_notification_id,
-          notificationId: notification.notification_id as number,
+          notificationId: notification.notification_id as string,
           content: notification.notification_content as string,
           redirectionUrl: notification.notification_redirect_url,
           dateCreated: formattedDate as string,

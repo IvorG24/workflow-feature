@@ -73,15 +73,13 @@ export default function CommentsSection({
   // const [isFetchingCommentList, setIsFetchingCommentList] = useState(true);
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-  const requestId = router.query.requestId
-    ? Number(router.query.requestId)
-    : null;
+  const requestId = `${router.query.requestId}`;
   // const [commentList, setCommentList] = useState<GetCommentList>([]);
   const [isEditingCommentIndex, setIsEditingCommentIndex] = useState(-1);
   const [isUpdatingComment, setIsUpdatingComment] = useState(false);
 
   const handleAddComment = async (
-    requestId: number,
+    requestId: string,
     comment: string,
     userId: string
   ) => {
@@ -114,7 +112,7 @@ export default function CommentsSection({
       setIsUpdatingComment(false);
     }
   };
-  const handleDeleteComment = async (requestId: number, commentId: number) => {
+  const handleDeleteComment = async (requestId: string, commentId: string) => {
     try {
       setIsUpdatingComment(true);
 
@@ -135,8 +133,8 @@ export default function CommentsSection({
   };
 
   const handleEditComment = async (
-    requestId: number,
-    commentId: number,
+    requestId: string,
+    commentId: string,
     comment: string
   ) => {
     try {
@@ -233,8 +231,8 @@ export default function CommentsSection({
                           <Menu.Item
                             onClick={() =>
                               handleDeleteComment(
-                                comment.request_id as number,
-                                comment.comment_id as number
+                                comment.request_id as string,
+                                comment.comment_id as string
                               )
                             }
                           >
@@ -272,8 +270,8 @@ export default function CommentsSection({
                             disabled={isUpdatingComment}
                             onClick={() =>
                               handleEditComment(
-                                comment.request_id as number,
-                                comment.comment_id as number,
+                                comment.request_id as string,
+                                comment.comment_id as string,
                                 editedComment
                               )
                             }
@@ -476,7 +474,7 @@ export default function CommentsSection({
               mt="xs"
               onClick={() =>
                 handleAddComment(
-                  requestId as number,
+                  requestId as string,
                   newComment,
                   userId as string
                 )

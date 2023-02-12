@@ -56,14 +56,14 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export type NotificationRow = {
-  notificationId: number;
+  notificationId: string;
   content: string;
   redirectionUrl: string | null;
   dateCreated: string;
   notificationType: NotificationType;
   isRead: boolean;
   checked?: boolean;
-  teamUserNotificationId: number;
+  teamUserNotificationId: string;
 };
 
 export type TeamInvitationListPageProps = {
@@ -108,18 +108,19 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
 
     return {
       // notificationId: notification.team_user_notification_id,
-      notificationId: notification.notification_id as number,
+      notificationId: notification.notification_id as string,
       content: notification.notification_content as string,
       redirectionUrl: notification.notification_redirect_url,
       dateCreated: formattedDate as string,
       notificationType:
         notification.team_user_notification_type_id as NotificationType,
       isRead: notification.notification_is_read as boolean,
-      teamUserNotificationId: notification.team_user_notification_id as number,
+      teamUserNotificationId: notification.team_user_notification_id as string,
     };
   });
 
   const headerCheckboxKey = uuidv4();
+  const headerButtonKey = uuidv4();
 
   return {
     props: {
@@ -127,13 +128,14 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       user,
       count,
       headerCheckboxKey,
+      headerButtonKey,
     },
   };
 };
 
 const TeamInvitationListPage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ notificationList, user, count, headerCheckboxKey }) => {
+> = ({ notificationList, user, count, headerCheckboxKey, headerButtonKey }) => {
   const { classes, cx } = useStyles();
 
   const supabaseClient = useSupabaseClient();
@@ -149,7 +151,7 @@ const TeamInvitationListPage: NextPageWithLayout<
 
   const [keyword, setKeyword] = useState("");
 
-  const [checkList, setCheckList] = useState<number[]>([]);
+  const [checkList, setCheckList] = useState<string[]>([]);
 
   const [filter, setFilter] = useState<GetNotificationListFilter>({
     keyword: "",
@@ -196,7 +198,7 @@ const TeamInvitationListPage: NextPageWithLayout<
     }
   };
 
-  const handleCheckRow = (notificationId: number) => {
+  const handleCheckRow = (notificationId: string) => {
     if (checkList.includes(notificationId)) {
       setCheckList(checkList.filter((id) => id !== notificationId));
     } else {
@@ -232,14 +234,14 @@ const TeamInvitationListPage: NextPageWithLayout<
 
         return {
           // notificationId: notification.team_user_notification_id,
-          notificationId: notification.notification_id as number,
+          notificationId: notification.notification_id as string,
           content: notification.notification_content as string,
           redirectionUrl: notification.notification_redirect_url,
           dateCreated: formattedDate as string,
           notificationType:
             notification.team_user_notification_type_id as NotificationType,
           isRead: notification.notification_is_read as boolean,
-          teamUserNotificationId: notification.team_user_notification_id,
+          teamUserNotificationId: notification.team_user_notification_id as string,
         };
       });
 
@@ -385,7 +387,7 @@ const TeamInvitationListPage: NextPageWithLayout<
                   onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
                 />
               ),
-              render: ({ notificationId, teamUserNotificationId }) => (
+              render: ({ notificationId }) => (
                 <Checkbox
                   key={notificationId}
                   size="xs"
@@ -403,7 +405,7 @@ const TeamInvitationListPage: NextPageWithLayout<
               title:
                 checkList.length > 0 ? (
                   <Button
-                    key={teamUserNotificationId}
+                    key={headerButtonKey}
                     compact
                     size="xs"
                     onClick={handleBulkRead}

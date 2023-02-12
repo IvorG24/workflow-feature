@@ -68,6 +68,7 @@ const AuthenticationForm = (props: PaperProps) => {
           password,
         });
         if (error) throw error;
+        await router.push("/");
       } else {
         // Check if email exists first before signing up
         const { data: checkEmailExistsData, error: checkEmailExistsError } =
@@ -91,9 +92,11 @@ const AuthenticationForm = (props: PaperProps) => {
           password,
         });
         if (error) throw error;
-      }
 
-      await router.push("/");
+        showNotification({
+          message: "Please check your email for the confirmation link",
+        });
+      }
     } catch (error) {
       console.error(error);
       showNotification({

@@ -111,7 +111,6 @@ export const getUserProfile = async (
 };
 export type GetUserProfile = Awaited<ReturnType<typeof getUserProfile>>;
 
-
 export const getUserProfileNullable = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string
@@ -159,7 +158,7 @@ export const createUserProfile = async (
   params: UserProfileTableInsert
 ) => {
   try {
-    params.username = params.username ? toLower(params.username) : null;
+    params.username = toLower(params.username);
     const { data, error } = await supabaseClient
       .from("user_profile_table")
       .insert(params)
@@ -182,7 +181,7 @@ export const createTeam = async (
   // insert to team table
   // insert to team member table
   try {
-    params.team_name = params.team_name ? toLower(params.team_name) : null;
+    params.team_name = toLower(params.team_name);
     const { data: data1Data, error: data1Error } = await supabaseClient
       .from("team_table")
       .insert(params)
@@ -430,8 +429,8 @@ export const createForm = async (
     const params3: RequestFormFactTableInsert[] = requestFieldList.map(
       (field, index) => {
         return {
-          form_fact_form_id: data1Data?.form_id as number,
-          form_fact_field_id: field.data?.field_id as number,
+          form_fact_form_id: data1Data?.form_id as string,
+          form_fact_field_id: field.data?.field_id as string,
           form_fact_team_id: teamId,
           form_fact_user_id: userId,
           form_fact_request_status_id: "pending",
@@ -554,7 +553,7 @@ export type GetTeamMember = Awaited<ReturnType<typeof getTeamMember>>;
 
 export const createFormApproverList = async (
   supabaseClient: SupabaseClient<Database>,
-  formId: number,
+  formId: string,
   requestTrail: BuildFormRequestTrail["data"],
   primaryApproverId: string
 ) => {
@@ -606,7 +605,7 @@ export type createFormApproverList = Awaited<
 
 export const getFormApproverList = async (
   supabaseClient: SupabaseClient<Database>,
-  formId: number
+  formId: string
 ) => {
   try {
     const { data, error } = await supabaseClient
@@ -652,7 +651,7 @@ export type GetFormByTeamAndFormName = Awaited<
 export type CreateRequestParams = {
   title: string;
   description: string;
-  formId: number;
+  formId: string;
   userId: string;
   teamId: string;
   dndList: CreateRequestDndListHandleProps["data"];
@@ -699,9 +698,10 @@ export const createRequest = async (
           return {
             form_fact_user_id: params.userId,
             form_fact_form_id: params.formId,
-            form_fact_field_id: item.duplicatedId
-              ? Number(item.duplicatedId)
-              : Number(item.id),
+            // form_fact_field_id: item.duplicatedId
+            //   ? Number(item.duplicatedId)
+            //   : Number(item.id),
+            form_fact_field_id: item.duplicatedId ? item.duplicatedId : item.id,
             form_fact_request_id: data1Data.request_id,
             form_fact_response_id: data2Data[index].response_id,
             form_fact_team_id: params.teamId,
@@ -889,7 +889,7 @@ export type GetTeamRequestListCount = Awaited<
 
 export const getRequest = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number
+  requestId: string
 ) => {
   try {
     const { data, error } = await supabaseClient
@@ -911,7 +911,7 @@ export type GetRequest = Awaited<ReturnType<typeof getRequest>>;
 
 export const getRequestApproverList = async (
   supabaseClient: SupabaseClient<Database>,
-  requestIdList: number[]
+  requestIdList: string[]
 ) => {
   try {
     const { data, error } = await supabaseClient
@@ -935,7 +935,7 @@ export type GetRequestApproverList = Awaited<
 export const updateRequestStatus = async (
   supabaseClient: SupabaseClient<Database>,
   userId: string,
-  requestId: number,
+  requestId: string,
   actionId: string,
   newStatus: RequestStatus,
   isUpdatedByPrimaryApprover: boolean,
@@ -990,7 +990,7 @@ export type UpdateRequestStatus = Awaited<
 
 export const updateRequestCancelStatus = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number,
+  requestId: string,
   isCanceled: boolean
 ) => {
   try {
@@ -1073,74 +1073,75 @@ export const updateForm = async (
 };
 export type UpdateForm = Awaited<ReturnType<typeof updateForm>>;
 
-export const updateFormApproverList = async (
-  supabaseClient: SupabaseClient<Database>,
-  formId: number,
-  requestTrail: BuildFormRequestTrail["data"],
-  primaryApproverId: string
-) => {
-  try {
-    // disable current approvers from request_form_approver_table  of the form.
-    const { data: data0Data, error: data0Error } = await supabaseClient
-      .from("request_form_approver_table")
-      .update({
-        form_approver_is_disabled: true,
-      })
-      .eq("form_approver_form_id", formId)
-      .select();
+// * Archived
+// export const updateFormApproverList = async (
+//   supabaseClient: SupabaseClient<Database>,
+//   formId: string,
+//   requestTrail: BuildFormRequestTrail["data"],
+//   primaryApproverId: string
+// ) => {
+//   try {
+//     // disable current approvers from request_form_approver_table  of the form.
+//     const { data: data0Data, error: data0Error } = await supabaseClient
+//       .from("request_form_approver_table")
+//       .update({
+//         form_approver_is_disabled: true,
+//       })
+//       .eq("form_approver_form_id", formId)
+//       .select();
 
-    if (data0Error) throw data0Error;
+//     if (data0Error) throw data0Error;
 
-    // * Add new approvers
+//     // * Add new approvers
 
-    // insert to request_action_table
-    const { data: data1Data, error: data1Error } = await supabaseClient
-      .from("request_action_table")
-      .insert(
-        requestTrail.map((trail) => {
-          return {
-            action_name: trail.approverActionName,
-          };
-        })
-      )
-      .select();
+//     // insert to request_action_table
+//     const { data: data1Data, error: data1Error } = await supabaseClient
+//       .from("request_action_table")
+//       .insert(
+//         requestTrail.map((trail) => {
+//           return {
+//             action_name: trail.approverActionName,
+//           };
+//         })
+//       )
+//       .select();
 
-    if (data1Error) throw data1Error;
+//     if (data1Error) throw data1Error;
 
-    // insert to request_form_approver_table
-    const { data: data2Data, error: data2Error } = await supabaseClient
-      .from("request_form_approver_table")
-      .insert(
-        requestTrail.map((trail, index) => {
-          return {
-            form_approver_form_id: formId,
-            form_approver_user_id: trail.approverId,
-            form_approver_action_id: data1Data[index].action_id,
-            form_approver_is_primary_approver:
-              trail.approverId === primaryApproverId,
-          };
-        })
-      )
-      .select();
+//     // insert to request_form_approver_table
+//     const { data: data2Data, error: data2Error } = await supabaseClient
+//       .from("request_form_approver_table")
+//       .insert(
+//         requestTrail.map((trail, index) => {
+//           return {
+//             form_approver_form_id: formId,
+//             form_approver_user_id: trail.approverId,
+//             form_approver_action_id: data1Data[index].action_id,
+//             form_approver_is_primary_approver:
+//               trail.approverId === primaryApproverId,
+//           };
+//         })
+//       )
+//       .select();
 
-    if (data2Error) throw data2Error;
+//     if (data2Error) throw data2Error;
 
-    return {
-      request_action_table: data1Data || [],
-      request_form_approver_table: data2Data || [],
-    };
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-export type UpdateFormApproverList = Awaited<
-  ReturnType<typeof updateFormApproverList>
->;
+//     return {
+//       request_action_table: data1Data || [],
+//       request_form_approver_table: data2Data || [],
+//     };
+//   } catch (error) {
+//     console.error(error);
+//     throw error;
+//   }
+// };
+// export type UpdateFormApproverList = Awaited<
+//   ReturnType<typeof updateFormApproverList>
+// >;
 
 export const addComment = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number,
+  requestId: string,
   userId: string,
   comment: string | null,
   commentType: CommentType,
@@ -1150,7 +1151,7 @@ export const addComment = async (
     const { data: data0Data, error: data0Error } = await supabaseClient
       .from("request_comment_table")
       .insert({
-        comment_content: comment,
+        comment_content: comment || "",
         comment_type_id: commentType,
         comment_attachment_filepath_list: attachmentFilepathList,
       })
@@ -1182,7 +1183,7 @@ export type AddComment = Awaited<ReturnType<typeof addComment>>;
 
 export const editComment = async (
   supabaseClient: SupabaseClient<Database>,
-  commentId: number,
+  commentId: string,
   comment: string
 ) => {
   try {
@@ -1216,7 +1217,7 @@ export type EditComment = Awaited<ReturnType<typeof editComment>>;
 
 export const updateCommentAttachmentList = async (
   supabaseClient: SupabaseClient<Database>,
-  commentId: number,
+  commentId: string,
   attachmentList: string[]
 ) => {
   try {
@@ -1263,7 +1264,7 @@ export type UpdateCommentAttachmentList = Awaited<
 
 export const disableComment = async (
   supabaseClient: SupabaseClient<Database>,
-  commentId: number
+  commentId: string
 ) => {
   try {
     const {
@@ -1294,7 +1295,7 @@ export type DisableComment = Awaited<ReturnType<typeof disableComment>>;
 
 export const getCommentList = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number
+  requestId: string
 ) => {
   try {
     const { data, error } = await supabaseClient
@@ -1315,7 +1316,7 @@ export type GetCommentList = Awaited<ReturnType<typeof getCommentList>>;
 
 export const deleteComment = async (
   supabaseClient: SupabaseClient<Database>,
-  commentId: number
+  commentId: string
 ) => {
   try {
     const { data, error } = await supabaseClient
@@ -1522,7 +1523,7 @@ export type UpdateTeamMemberRole = Awaited<
 
 export const updateFormTemplateVisbility = async (
   supabaseClient: SupabaseClient<Database>,
-  formTemplateId: number,
+  formTemplateId: string,
   isHidden: boolean
 ) => {
   try {
@@ -1549,7 +1550,7 @@ export type UpdateFormTemplateVisbility = Awaited<
 
 export const isRequestCanceled = async (
   supabaseClient: SupabaseClient<Database>,
-  requestId: number
+  requestId: string
 ) => {
   try {
     const { data, error } = await supabaseClient
@@ -1659,7 +1660,7 @@ export type GetNotificationList = Awaited<
 
 export const readNotification = async (
   supabaseClient: SupabaseClient<Database>,
-  notificationId: number
+  notificationId: string
 ) => {
   try {
     const { data, error } = await supabaseClient

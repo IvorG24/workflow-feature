@@ -52,7 +52,7 @@ import { DataTable } from "mantine-datatable";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
 import { NextPageWithLayout } from "pages/_app";
-import { useEffect, useRef, useState } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
 
 const PAGE_SIZE = 15;
 
@@ -470,7 +470,7 @@ const TeamSettingsProfilePage: NextPageWithLayout<
       await updateTeam(
         supabaseClient,
         {
-          team_name: teamProfileName.trim(),
+          team_name: teamProfileName.toLowerCase().trim(),
         },
         team.team_id
       );

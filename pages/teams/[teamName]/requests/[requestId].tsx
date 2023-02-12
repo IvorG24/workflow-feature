@@ -51,8 +51,8 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const supabaseClient = createServerSupabaseClient(ctx);
 
   const promises = [
-    getRequest(supabaseClient, Number(ctx.query.requestId)),
-    getRequestApproverList(supabaseClient, [Number(ctx.query.requestId)]),
+    getRequest(supabaseClient, `${ctx.query.requestId}`),
+    getRequestApproverList(supabaseClient, [`${ctx.query.requestId}`]),
   ];
 
   const result = await Promise.all(promises);
@@ -70,7 +70,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   // Transform to DndListHandleProps and RequestTrail so frontend can handle data easier.
   const dndList: DndListHandleProps = {
     data: request.map((field) => ({
-      id: (field.field_id as number).toString(),
+      id: field.field_id as string,
       type: field.form_fact_field_type_id as string,
       label: field.field_name as string,
       value: field.response_value as string,
@@ -111,9 +111,7 @@ const RequestPage: NextPageWithLayout<
   const [isFetchingCommentList, setIsFetchingCommentList] = useState(true);
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-  const requestId = router.query.requestId
-    ? Number(router.query.requestId)
-    : null;
+  const requestId = `${router.query.requestId}`;
   const [commentList, setCommentList] = useState<GetCommentList>([]);
 
   useEffect(() => {

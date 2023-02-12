@@ -154,7 +154,7 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
   const description = request[0].request_description as string;
   const formName = request[0].form_name as string;
 
-  const requestId = request[0].request_id as number;
+  const requestId = request[0].request_id as string;
   const canceled = !!request[0].request_is_canceled;
   const primaryApproverId = trail.data.find(
     (item) => item.isPrimaryApprover
@@ -299,7 +299,7 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
 
   const handleUpdateStatus = async (
     userId: string,
-    requestId: number,
+    requestId: string,
     actionId: string,
     newStatus: RequestStatus,
     primaryApproverId: string
@@ -367,7 +367,7 @@ function Request({ request, dndList, trail, setCommentList }: RequestProps) {
   };
 
   const handleCancelRequest = async (
-    requestId: number,
+    requestId: string,
     isCanceled: boolean,
     userId: string
   ) => {

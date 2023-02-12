@@ -14,6 +14,10 @@ const nextConfig = {
 
     return config;
   },
+  // allow image from unsplash
+  images: {
+    domains: ["images.unsplash.com"],
+  },
 };
 
 module.exports = nextConfig;
