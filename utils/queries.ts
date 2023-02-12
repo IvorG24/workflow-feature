@@ -699,9 +699,6 @@ export const createRequest = async (
           return {
             form_fact_user_id: params.userId,
             form_fact_form_id: params.formId,
-            // form_fact_field_id: item.duplicatedId
-            //   ? Number(item.duplicatedId)
-            //   : Number(item.id),
             form_fact_field_id: item.duplicatedId ? item.duplicatedId : item.id,
             form_fact_request_id: data1Data.request_id,
             form_fact_response_id: data2Data[index].response_id,
@@ -727,7 +724,6 @@ export const createRequest = async (
             request_approver_action_action_id: trail.approverActionId,
             request_approver_action_is_primary_approver:
               trail.approverId === params.primaryApproverId,
-            // request_approver_step: index + 1,
           };
         })
       );

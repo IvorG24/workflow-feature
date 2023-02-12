@@ -56,7 +56,6 @@ import {
 
 const useStyles = createStyles((theme) => ({
   container: {
-    // add subtle background and border design.
     backgroundColor:
       theme.colorScheme === "dark"
         ? theme.colors.dark[6]
@@ -75,9 +74,6 @@ const useStyles = createStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     borderRadius: theme.radius.md,
-    // border: `1px solid ${
-    //   theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2]
-    // }`,
     padding: `${theme.spacing.sm}px ${theme.spacing.xl}px`,
     paddingLeft: theme.spacing.xl - theme.spacing.md, // to offset drag handle
     backgroundColor:
@@ -95,13 +91,8 @@ const useStyles = createStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     borderRadius: theme.radius.md,
-    // border: `1px solid ${
-    //   theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2]
-    // }`,
     padding: `${theme.spacing.sm}px ${theme.spacing.xl}px`,
     paddingLeft: theme.spacing.xl - theme.spacing.md, // to offset drag handle
-    // backgroundColor:
-    //   theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.white,
 
     marginBottom: theme.spacing.sm,
     border: "1px solid #ccc",
@@ -269,12 +260,8 @@ const CreateRequestPage: NextPageWithLayout<
           <div {...provided.dragHandleProps} className={classes.dragHandle}>
             <IconGripVertical size={18} stroke={1.5} />
           </div>
-          {/* <Text className={classes.type}>{capitalize(item.type[0])}</Text> */}
+
           <Box w="100%" ml="md">
-            {/* <Text>{item.label}</Text>
-            <Text color="dimmed" size="sm">
-              This will accept a {item.type} input
-            </Text> */}
             <Group noWrap position="apart">
               <PolymorphicFieldInput
                 id={item.id}
@@ -459,16 +446,6 @@ const CreateRequestPage: NextPageWithLayout<
       ...duplicatedItemList,
     ];
 
-    // set individual item at given position
-    // const setItem = () => handlers.setItem(0, { a: 8 });
-    // values -> [{ a: 8 }, { a: 7 }]
-    // Reference: https://mantine.dev/hooks/use-list-state/
-
-    // insert item at i position
-    // duplicatedSectionWithItemList.map((item, index) =>
-    //   handlers.insert(index + i, item)
-    // );
-
     handlers.insert(index, ...duplicatedSectionWithItemList);
   };
 
@@ -603,18 +580,6 @@ const CreateRequestPage: NextPageWithLayout<
         <Group position="left" my="xl">
           <Text>Signers</Text>
         </Group>
-        {/* <Stepper active={requestTrail.length + 1} orientation="vertical">
-          {requestTrail.map((trail, index) => {
-            const { approverUsername, approverActionName } = trail;
-            return (
-              <Stepper.Step
-                key={index}
-                label={`Step ${index + 1}`}
-                description={`Will be ${approverActionName} by ${approverUsername}`}
-              />
-            );
-          })}
-        </Stepper> */}
 
         <List
           spacing="xs"

@@ -56,7 +56,6 @@ import {
 
 const useStyles = createStyles((theme) => ({
   container: {
-    // add subtle background and border design.
     backgroundColor:
       theme.colorScheme === "dark"
         ? theme.colors.dark[6]
@@ -75,9 +74,6 @@ const useStyles = createStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     borderRadius: theme.radius.md,
-    // border: `1px solid ${
-    //   theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2]
-    // }`,
     padding: `${theme.spacing.sm}px ${theme.spacing.xl}px`,
     paddingLeft: theme.spacing.xl - theme.spacing.md, // to offset drag handle
     backgroundColor:
@@ -95,13 +91,8 @@ const useStyles = createStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     borderRadius: theme.radius.md,
-    // border: `1px solid ${
-    //   theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2]
-    // }`,
     padding: `${theme.spacing.sm}px ${theme.spacing.xl}px`,
     paddingLeft: theme.spacing.xl - theme.spacing.md, // to offset drag handle
-    // backgroundColor:
-    //   theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.white,
 
     marginBottom: theme.spacing.sm,
     border: "1px solid #ccc",
@@ -235,14 +226,6 @@ const BuildFormPage: NextPageWithLayout = () => {
     setNewInputFieldLabel("");
   };
 
-  // const handleAddSection = () => {
-  //   handleAppend({
-  //     id: uuidv4(),
-  //     type: "section",
-  //     label: "Section",
-  //   });
-  // };
-
   const handleSaveForm = async (
     userId: string,
     teamName: string,
@@ -362,15 +345,6 @@ const BuildFormPage: NextPageWithLayout = () => {
       );
 
       if (!userProfile) throw new Error("User not found");
-
-      // setRequestTrail((prev) => [
-      //   ...prev,
-      //   {
-      //     approverId: userProfile.user_id as string,
-      //     approverUsername: userProfile.username as string,
-      //     approverActionName: signerAction,
-      //   },
-      // ]);
 
       requestTrailHandler.append({
         approverId: userProfile.user_id as string,
@@ -551,15 +525,12 @@ const BuildFormPage: NextPageWithLayout = () => {
                 <TextInput
                   size="xs"
                   placeholder="Add option"
-                  // value={newOption}
-                  // onChange={(event) => setNewOption(event.currentTarget.value)}
                   value={item.newOption}
                   onChange={(event) =>
                     handleOptionChange(item.id, event.currentTarget.value)
                   }
                 />
                 <TextInput
-                  // placeholder="Add option tooltip"
                   placeholder={`Add option description`}
                   size="xs"
                   value={item.newOptionTooltip}
@@ -592,8 +563,6 @@ const BuildFormPage: NextPageWithLayout = () => {
                 <TextInput
                   size="xs"
                   placeholder="Add option"
-                  // value={newOption}
-                  // onChange={(event) => setNewOption(event.currentTarget.value)}
                   value={item.newOption}
                   onChange={(event) =>
                     handleOptionChange(item.id, event.currentTarget.value)
