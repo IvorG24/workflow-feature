@@ -5,7 +5,6 @@
   ],
   "rules": {
     "selector-class-pattern": null,
-    "scss/at-import-partial-extension": null,
     "no-empty-source": null
   }
 }

@@ -1,26 +1,60 @@
-import Account from "@/components/Account/Account";
-import { Container } from "@mantine/core";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
-import type { NextPage } from "next";
+import Layout from "@/components/Layout/Layout";
+import { getUserTeamList, isUserOnboarded } from "@/utils/queries";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { NextPageWithLayout } from "pages/_app";
+import { ReactElement } from "react";
 
-const Home: NextPage = () => {
-  const session = useSession();
-  const supabase = useSupabaseClient();
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const supabaseClient = createServerSupabaseClient(ctx);
 
-  return (
-    <Container>
-      {!session ? (
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          theme="dark"
-        />
-      ) : (
-        <Account session={session} />
-      )}
-    </Container>
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/authentication",
+        permanent: false,
+      },
+    };
+  }
+
+  const isOnboarded = await isUserOnboarded(supabaseClient, session?.user?.id);
+
+  if (!isOnboarded) {
+    return {
+      redirect: {
+        destination: "/onboarding",
+        permanent: false,
+      },
+    };
+  }
+
+  const teamList = await getUserTeamList(
+    supabaseClient,
+    session?.user?.id as string
   );
+
+  const firstTeam = teamList[0].team_name;
+
+  return {
+    redirect: {
+      destination: `/teams/${firstTeam}/requests`,
+      permanent: false,
+    },
+  };
 };
 
-export default Home;
+const IndexPage: NextPageWithLayout<
+  InferGetServerSidePropsType<typeof getServerSideProps>
+> = () => {
+  return <></>;
+};
+
+export default IndexPage;
+
+IndexPage.getLayout = function getLayout(page: ReactElement) {
+  return <Layout>{page}</Layout>;
+};

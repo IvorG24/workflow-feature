@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
+  // Setting reactStrictMode to false since it causes issues in dev especially in using useEffect. According to the docs, it is safe to turn it off in dev.
+  // https://reactjs.org/docs/strict-mode.html
+  reactStrictMode: false,
+  swcMinify: false,
   // configure svgr https://react-svgr.com/docs/next/
   webpack(config) {
     config.module.rules.push({
@@ -11,6 +13,10 @@ const nextConfig = {
     });
 
     return config;
+  },
+  // allow image from unsplash
+  images: {
+    domains: ["images.unsplash.com"],
   },
 };
 

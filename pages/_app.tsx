@@ -1,21 +1,21 @@
-import getMantineTheme from "@/utils/getMantineTheme";
-import createClient from "@/utils/supabase";
+import { RouterTransition } from "@/components/RouterTransition";
 import {
   ColorScheme,
   ColorSchemeProvider,
   MantineProvider,
 } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
+import { NotificationsProvider } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { getCookie, setCookie } from "cookies-next";
+import type { NextPage } from "next";
 import type { AppProps } from "next/app";
-import { NextPage } from "next/types";
-import { ReactElement, ReactNode } from "react";
-import "../styles/globals.css";
-
-// #todo: implement better typing but I think it's okay because it's from the docs
-// https://nextjs.org/docs/basic-features/layouts
-// eslint-disable-next-line
-export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+import NextApp, { AppContext } from "next/app";
+import { ReactElement, ReactNode, useState } from "react";
+// comment
+// Reference:
+// https://github.com/eclipse-emfcloud/emfcloud/discussions/125
+export type NextPageWithLayout<P = Record<string, unknown>, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
 
@@ -23,38 +23,57 @@ type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
 };
 
-export default function App({ Component, pageProps }: AppPropsWithLayout) {
-  // save theme to local storage
-  // ref: https://mantine.dev/guides/dark-theme/
-  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
-    key: "mantine-color-scheme",
-    defaultValue: "light",
-    getInitialValueInEffect: true,
-  });
+export default function App(
+  props: AppPropsWithLayout & { colorScheme: ColorScheme }
+) {
+  const { Component, pageProps } = props;
+  const [colorScheme, setColorScheme] = useState<ColorScheme>(
+    props.colorScheme
+  );
 
-  const toggleColorScheme = (value?: ColorScheme) =>
-    setColorScheme(value ?? (colorScheme === "dark" ? "light" : "dark"));
+  const [supabaseClient] = useState(() => createBrowserSupabaseClient());
 
   const getLayout = Component.getLayout ?? ((page) => page);
 
+  const toggleColorScheme = (value?: ColorScheme) => {
+    const nextColorScheme =
+      value || (colorScheme === "dark" ? "light" : "dark");
+    setColorScheme(nextColorScheme);
+    setCookie("mantine-color-scheme", nextColorScheme, {
+      maxAge: 60 * 60 * 24 * 30,
+    });
+  };
+
   return (
-    <ColorSchemeProvider
-      colorScheme={colorScheme}
-      toggleColorScheme={toggleColorScheme}
-    >
-      <MantineProvider
-        withGlobalStyles
-        withNormalizeCSS
-        withCSSVariables
-        theme={{ colorScheme, ...getMantineTheme(colorScheme) }}
+    <>
+      <ColorSchemeProvider
+        colorScheme={colorScheme}
+        toggleColorScheme={toggleColorScheme}
       >
-        <SessionContextProvider
-          supabaseClient={createClient}
-          initialSession={pageProps.initialSession}
+        <MantineProvider
+          theme={{ colorScheme }}
+          withGlobalStyles
+          withNormalizeCSS
         >
-          {getLayout(<Component {...pageProps} />)}
-        </SessionContextProvider>
-      </MantineProvider>
-    </ColorSchemeProvider>
+          <RouterTransition />
+          <NotificationsProvider>
+            <SessionContextProvider
+              supabaseClient={supabaseClient}
+              initialSession={pageProps.initialSession}
+            >
+              {getLayout(<Component {...pageProps} />)}
+            </SessionContextProvider>
+          </NotificationsProvider>
+        </MantineProvider>
+      </ColorSchemeProvider>
+    </>
   );
 }
+
+App.getInitialProps = async (appContext: AppContext) => {
+  const appProps = await NextApp.getInitialProps(appContext);
+  return {
+    ...appProps,
+    colorScheme: getCookie("mantine-color-scheme", appContext.ctx) || "dark",
+  };
+};
