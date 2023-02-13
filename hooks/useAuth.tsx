@@ -1,4 +1,5 @@
 import { useSessionContext } from "@supabase/auth-helpers-react";
+import { Session } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
@@ -11,13 +12,10 @@ const useAuth = () => {
   useEffect(() => {
     if (!router.isReady) return;
     if (isLoading) return;
-    if (!session?.user) {
-      router.push("/sign-in");
-      return;
-    }
+    if (!session) router.push("/authentication");
   }, [supabaseClient, isLoading, session, router]);
 
-  return { isLoading, user: session?.user };
+  return { isLoading, session } as { isLoading: boolean; session: Session };
 };
 
 export default useAuth;

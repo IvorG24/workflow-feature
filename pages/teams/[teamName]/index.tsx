@@ -32,29 +32,36 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     };
   }
 
+  const teamName = `${ctx.query?.teamName}`;
+
   const teamList = await getUserTeamList(
     supabaseClient,
     session?.user?.id as string
   );
 
-  const firstTeam = teamList[0].team_name;
+  // check if member of team
+  if (!teamList.find((team) => team.team_name === teamName)) {
+    return {
+      notFound: true,
+    };
+  }
 
   return {
     redirect: {
-      destination: `/teams/${firstTeam}/requests`,
+      destination: `/teams/${teamName}/requests`,
       permanent: false,
     },
   };
 };
 
-const IndexPage: NextPageWithLayout<
+const HomePage: NextPageWithLayout<
   InferGetServerSidePropsType<typeof getServerSideProps>
 > = () => {
   return <></>;
 };
 
-export default IndexPage;
+export default HomePage;
 
-IndexPage.getLayout = function getLayout(page: ReactElement) {
+HomePage.getLayout = function getLayout(page: ReactElement) {
   return <Layout>{page}</Layout>;
 };

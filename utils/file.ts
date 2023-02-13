@@ -1,15 +1,17 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "./database.types-new";
+import { Database } from "./database.types";
+import { Bucket } from "./types";
 
 // * Get file URL from storage using filepath.
 // * See https://github.com/supabase/supabase/blob/master/examples/user-management/nextjs-ts-user-management/components/Avatar.tsx
 export async function getFileUrl(
   supabaseClient: SupabaseClient<Database>,
   path: string,
-  bucket: string
+  bucket: Bucket
 ) {
   try {
-    if (isValidHttpUrl(path)) return path;
+    // * Archived
+    // if (isValidHttpUrl(path)) return path;
     const { data, error } = await supabaseClient.storage
       .from(bucket)
       .download(path);
@@ -28,7 +30,7 @@ export async function getFileUrl(
 export async function downloadFile(
   supabaseClient: SupabaseClient<Database>,
   path: string,
-  bucket: string
+  bucket: Bucket
 ) {
   try {
     const { data, error } = await supabaseClient.storage
@@ -47,16 +49,18 @@ export async function downloadFile(
 // * Returns the filepath.
 export async function uploadFile(
   supabaseClient: SupabaseClient<Database>,
-  path: string,
+  filename: string,
   file: File | Blob,
-  bucket: string
+  bucket: Bucket,
+  teamName: string,
+  username: string
 ) {
   try {
-    const time = new Date().getTime();
-    const prefixedPath = `${time}-${path}`;
+    const datestring = new Date().toISOString();
+    const prefixedFilename = `${datestring}?${teamName}?${username}?${filename}`;
     const { data, error } = await supabaseClient.storage
       .from(bucket)
-      .upload(prefixedPath, file);
+      .upload(prefixedFilename, file);
     if (error) throw error;
     return data;
   } catch (error) {
@@ -70,7 +74,7 @@ export async function replaceFile(
   supabaseClient: SupabaseClient<Database>,
   path: string,
   file: File | Blob,
-  bucket: string
+  bucket: Bucket
 ) {
   try {
     const { data, error } = await supabaseClient.storage
@@ -88,7 +92,7 @@ export async function replaceFile(
 export async function deleteFile(
   supabaseClient: SupabaseClient<Database>,
   path: string,
-  bucket: string
+  bucket: Bucket
 ) {
   try {
     const { data, error } = await supabaseClient.storage
@@ -102,12 +106,52 @@ export async function deleteFile(
   }
 }
 
-function isValidHttpUrl(string: string) {
-  let url;
+// * Archived
+// function isValidHttpUrl(string: string) {
+//   let url;
+//   try {
+//     url = new URL(string);
+//   } catch (_) {
+//     return false;
+//   }
+//   return url.protocol === "http:" || url.protocol === "https:";
+// }
+
+// * Archived
+// Get file size without downloading the whole file.
+// export async function getFileSize(
+//   fileUrl: string
+// ): Promise<number | undefined> {
+//   try {
+//     const response = await axios.head(fileUrl);
+
+//     const contentLength = response.headers["content-length"];
+//     if (!contentLength) {
+//       throw new Error(`Could not retrieve file size for ${fileUrl}`);
+//     }
+
+//     return parseInt(contentLength, 10);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// }
+
+export async function removeFileList(
+  supabaseClient: SupabaseClient<Database>,
+  pathList: string[],
+  bucket: Bucket
+) {
   try {
-    url = new URL(string);
-  } catch (_) {
-    return false;
+    if (!pathList) return;
+    if (pathList.length === 0) return;
+
+    const { data, error } = await supabaseClient.storage
+      .from(bucket)
+      .remove(pathList);
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-  return url.protocol === "http:" || url.protocol === "https:";
 }
