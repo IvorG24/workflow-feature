@@ -1,15 +1,16 @@
-import Layout from "@/components/Layout/Layout";
+import { Layouts, PageWithLayoutProps } from "@/components/Layout/LayoutList";
 import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
-import { AppProps } from "next/app";
 import { useState } from "react";
 
-export default function App(props: AppProps) {
+export default function App(props: PageWithLayoutProps) {
   const { Component, pageProps } = props;
 
   const [supabaseClient] = useState(() => createBrowserSupabaseClient());
+  const Layout =
+    Layouts[Component.Layout] ?? (({ children }) => <>{children}</>);
 
   return (
     <MantineProvider
