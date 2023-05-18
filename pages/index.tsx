@@ -1,11 +1,7 @@
-import { Center, Container, Title } from "@mantine/core";
+import HomePage from "@/components/HomePage/HomePage";
 
-export default function Home() {
-  return (
-    <Container h="100vh">
-      <Center>
-        <Title>Welcome to Formsly.io</Title>
-      </Center>
-    </Container>
-  );
-}
+const Page = () => {
+  return <HomePage />;
+};
+
+export default Page;
