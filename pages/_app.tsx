@@ -1,8 +1,16 @@
-import "@/styles/globals.css";
+import Layout from "@/components/Layout/Layout";
 import { MantineProvider } from "@mantine/core";
-import type { AppProps } from "next/app";
+import { Notifications } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { AppProps } from "next/app";
+import { useState } from "react";
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function App(props: AppProps) {
+  const { Component, pageProps } = props;
+
+  const [supabaseClient] = useState(() => createBrowserSupabaseClient());
+
   return (
     <MantineProvider
       withGlobalStyles
@@ -11,7 +19,15 @@ export default function App({ Component, pageProps }: AppProps) {
         colorScheme: "light",
       }}
     >
-      <Component {...pageProps} />
+      <Notifications />
+      <SessionContextProvider
+        supabaseClient={supabaseClient}
+        initialSession={pageProps.initialSession}
+      >
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </SessionContextProvider>
     </MantineProvider>
   );
 }
