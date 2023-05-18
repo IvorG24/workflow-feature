@@ -3,18 +3,27 @@ DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public
   AUTHORIZATION postgres;
 
--- Start: Attachments
-CREATE TABLE attachment_table (
-    attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    attachment_name VARCHAR(4000) NOT NULL,
-    attachment_prefixed_name VARCHAR(4000) NOT NULL,
-    attachment_value VARCHAR(4000) NOT NULL,
-    attachment_bucket VARCHAR(4000) NOT NULL,
-    attachment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    attachment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-    attachment_attachment_type VARCHAR(4000) NOT NULL
-);
--- End: Attachments
+  -- Remove all policies for files
+DROP POLICY IF EXISTS objects_policy ON storage.objects;
+DROP POLICY IF EXISTS buckets_policy ON storage.buckets;
+
+-- Delete file buckets created and files uploaded
+DELETE FROM storage.objects;
+DELETE FROM storage.buckets;
+
+-- Allow all to access storage
+CREATE POLICY objects_policy ON storage.objects FOR ALL TO PUBLIC USING (true) WITH CHECK (true);
+CREATE POLICY buckets_policy ON storage.buckets FOR ALL TO PUBLIC USING (true) WITH CHECK (true);
+
+INSERT INTO storage.buckets (id, name) VALUES ('USER_AVATARS', 'USER_AVATARS');
+INSERT INTO storage.buckets (id, name) VALUES ('USER_SIGNATURES', 'USER_SIGNATURES');
+INSERT INTO storage.buckets (id, name) VALUES ('TEAM_LOGOS', 'TEAM_LOGOS');
+INSERT INTO storage.buckets (id, name) VALUES ('COMMENT_ATTACHMENTS', 'COMMENT_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('REQUEST_ATTACHMENTS', 'REQUEST_ATTACHMENTS');
+
+UPDATE storage.buckets SET public = true;
+
+---------- Start: TABLES
 
 -- Start: User and Teams
 CREATE TABLE user_table (
@@ -29,8 +38,8 @@ CREATE TABLE user_table (
     user_phone_number VARCHAR(4000),
     user_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
     user_active_team_id UUID,
+    user_avatar VARCHAR(4000),
 
-    user_avatar_attachment_id UUID REFERENCES attachment_table(attachment_id),
     CHECK (user_username = LOWER(user_username))
 );
 CREATE TABLE team_table (
@@ -39,8 +48,8 @@ CREATE TABLE team_table (
   team_name VARCHAR(4000) UNIQUE NOT NULL,
   team_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
-
-  team_logo_attachment_id UUID REFERENCES attachment_table(attachment_id),
+  team_logo VARCHAR(4000),
+  
   team_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
 CREATE TABLE team_member_table(
@@ -150,6 +159,19 @@ CREATE TABLE request_signer_table(
 );
 -- End: Request
 
+-- Start: Attachments
+CREATE TABLE attachment_table (
+    attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    attachment_name VARCHAR(4000) NOT NULL,
+    attachment_prefixed_name VARCHAR(4000) NOT NULL,
+    attachment_value VARCHAR(4000) NOT NULL,
+    attachment_bucket VARCHAR(4000) NOT NULL,
+    attachment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    attachment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+    attachment_attachment_type VARCHAR(4000) NOT NULL
+);
+-- End: Attachments
+
 -- Start: Comments
 CREATE TABLE comment_table(
   comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -163,3 +185,24 @@ CREATE TABLE comment_table(
   comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 -- End: Comments
+
+---------- End: TABLES
+
+---------- Start: FUNCTIONS
+
+CREATE FUNCTION get_current_date()
+RETURNS DATE
+AS $$
+BEGIN
+    RETURN CURRENT_DATE;
+END;
+$$ LANGUAGE plpgsql;
+
+---------- End: FUNCTIONS
+
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
+
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
