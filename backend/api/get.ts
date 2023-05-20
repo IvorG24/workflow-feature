@@ -1,11 +1,14 @@
 import { Database } from "@/utils/database";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-export const getCurrentUser = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { userId: string }
+export const getCurrentDate = async (
+  supabaseClient: SupabaseClient<Database>
 ) => {
-  if (!params?.userId) throw new Error("Missing required parameter: userId");
-
-  
+  const { data, error } = await supabaseClient
+    .rpc("get_current_date")
+    .select("*")
+    .single();
+  if (error) throw error;
+  if (!data) throw error;
+  return new Date(data);
 };
