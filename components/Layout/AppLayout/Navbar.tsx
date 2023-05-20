@@ -1,4 +1,7 @@
-import { Navbar as MantineNavbar, Text } from "@mantine/core";
+import { Navbar as MantineNavbar, Stack } from "@mantine/core";
+import FormList from "../NavbarComponents/FormList";
+import ReviewAppNavLinks from "../NavbarComponents/ReviewAppNavLink";
+import SelectTeam from "../NavbarComponents/SelectTeam";
 
 type NavbarProps = {
   openNavbar: boolean;
@@ -12,7 +15,11 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
       hidden={!openNavbar}
       width={{ sm: 200, lg: 300 }}
     >
-      <Text>Formsly Navbar</Text>
+      <Stack>
+        <SelectTeam />
+        <ReviewAppNavLinks />
+        <FormList />
+      </Stack>
     </MantineNavbar>
   );
 };

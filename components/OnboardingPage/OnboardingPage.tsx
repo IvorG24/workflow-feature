@@ -2,7 +2,7 @@ import { Container, Title } from "@mantine/core";
 
 const OnboardingPage = () => {
   return (
-    <Container>
+    <Container fluid>
       <Title>Onboarding Page</Title>
     </Container>
   );
