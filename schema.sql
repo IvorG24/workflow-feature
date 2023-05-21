@@ -54,7 +54,7 @@ CREATE TABLE team_table (
 );
 CREATE TABLE team_member_table(
   team_member_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  team_member_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
+  team_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
   team_member_disabled BOOL DEFAULT FALSE NOT NULL,
 
@@ -147,15 +147,16 @@ CREATE TABLE request_response_table(
   request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_response VARCHAR(4000) NOT NULL,
   request_response_duplicatable_section_id UUID,
+
+  request_response_request_id UUID REFERENCES request_table(request_id) NOT NULL,
   request_response_field_id UUID REFERENCES field_table(field_id) NOT NULL
 );
 CREATE TABLE request_signer_table(
   request_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
-  request_signer_action VARCHAR(4000) NOT NULL,
 
-  request_signer_request_id UUID REFERENCES request_table(request_id),
-  request_signer_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  request_signer_request_id UUID REFERENCES request_table(request_id) NOT NULL,
+  request_signer_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
 -- End: Request
 
@@ -182,6 +183,7 @@ CREATE TABLE comment_table(
   comment_is_disabled  BOOLEAN DEFAULT FALSE NOT NULL,
   comment_type VARCHAR(4000) NOT NULL,
 
+  comment_request_id UUID REFERENCES request_table(request_id) NOT NULL,
   comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 -- End: Comments

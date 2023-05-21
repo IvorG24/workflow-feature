@@ -140,7 +140,8 @@ export type CommentType =
   | "REVIEW_COMMENT";
 export type NotificationType =
   | "REQUEST"
-  | "APPROVED"
-  | "REJECTED"
+  | "APPROVE"
+  | "REJECT"
   | "INVITE"
-  | "REVIEW";
+  | "REVIEW"
+  | "COMMENT";
