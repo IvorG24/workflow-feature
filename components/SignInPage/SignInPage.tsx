@@ -41,6 +41,9 @@ const SignInPage = () => {
             </Title>
             <Stack>
               <TextInput
+                placeholder="Enter your email address"
+                label="Email"
+                error={errors.email?.message}
                 {...register("email", {
                   required:
                     "Email field cannot be empty. Please enter your email address.",
@@ -48,19 +51,16 @@ const SignInPage = () => {
                     validator.isEmail(value) ||
                     "Email is invalid. Please enter a valid email address.",
                 })}
-                placeholder="Enter your email address"
-                label="Email"
-                error={errors.email?.message}
               />
               <Box>
                 <PasswordInput
+                  placeholder="Enter your password"
+                  label="Password"
+                  error={errors.password?.message}
                   {...register("password", {
                     required:
                       "Password field cannot be empty. Please enter your password.",
                   })}
-                  placeholder="Enter your password"
-                  label="Password"
-                  error={errors.password?.message}
                 />
                 <Text mt={8} size="xs" color="blue" align="right">
                   Forgot Password?

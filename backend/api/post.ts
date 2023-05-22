@@ -98,3 +98,15 @@ export const createTeamInvitation = async (
   if (error) throw error;
   return data;
 };
+
+// Sign Up User
+export const signUpUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { email: string; password: string }
+) => {
+  const { data, error } = await supabaseClient.auth.signUp({
+    ...params,
+  });
+  if (error) throw error;
+  return data;
+};
