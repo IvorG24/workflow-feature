@@ -5,13 +5,17 @@ INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name,
 ('cf8b637e-3d65-4c7d-9680-a7330c73faa7', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '09856325789');
 
 INSERT INTO team_table (team_id, team_name, team_user_id) VALUES
-('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '8d01bf49-186f-49e2-8b13-b14220446622');
+('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '8d01bf49-186f-49e2-8b13-b14220446622'),
+('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', '8d01bf49-186f-49e2-8b13-b14220446622'),
+('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', '8d01bf49-186f-49e2-8b13-b14220446622');
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id) VALUES
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '8d01bf49-186f-49e2-8b13-b14220446622'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '9f4e60c0-6583-490f-a998-846a31d433d7'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '259e5eab-b47d-4918-8e6b-6dd4f8245a05'),
-('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'cf8b637e-3d65-4c7d-9680-a7330c73faa7');
+('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'cf8b637e-3d65-4c7d-9680-a7330c73faa7'),
+('ccff17b4-66bf-4c0f-bc02-35750403cecf', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '8d01bf49-186f-49e2-8b13-b14220446622'),
+('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '8d01bf49-186f-49e2-8b13-b14220446622');
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id) VALUES
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),

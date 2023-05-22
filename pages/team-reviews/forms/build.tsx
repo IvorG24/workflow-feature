@@ -1,7 +1,13 @@
 import BuildReviewFormPage from "@/components/BuildReviewFormPage/BuildReviewFormPage";
+import Meta from "@/components/Meta/Meta";
 
 const Page = () => {
-  return <BuildReviewFormPage />;
+  return (
+    <>
+      <Meta description="Form Builder Page" url="/team-reviews/forms/build" />
+      <BuildReviewFormPage />
+    </>
+  );
 };
 
 export default Page;

@@ -1,7 +1,13 @@
 import HomePage from "@/components/HomePage/HomePage";
+import Meta from "@/components/Meta/Meta";
 
 const Page = () => {
-  return <HomePage />;
+  return (
+    <>
+      <Meta description="Home Page" url="/" />
+      <HomePage />
+    </>
+  );
 };
 
 export default Page;

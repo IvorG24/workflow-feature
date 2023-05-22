@@ -1,7 +1,16 @@
+import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
 
 const Page = () => {
-  return <RequestPage />;
+  return (
+    <>
+      <Meta
+        description="Request Page"
+        url="/team-requests/requests/[requestId]"
+      />
+      <RequestPage />
+    </>
+  );
 };
 
 export default Page;

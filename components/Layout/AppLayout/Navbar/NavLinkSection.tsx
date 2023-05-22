@@ -1,4 +1,5 @@
 import { Box, NavLink, NavLinkProps, Stack, Text } from "@mantine/core";
+import { useRouter } from "next/router";
 import { ReactNode } from "react";
 
 export type NavLinkType = {
@@ -13,6 +14,8 @@ type NavLinkSectionProps = {
 } & NavLinkProps;
 
 const NavLinkSection = ({ label, links, ...props }: NavLinkSectionProps) => {
+  const router = useRouter();
+
   return (
     <Box h="fit-content">
       <Text mb={4} size="xs" weight={400}>
@@ -22,8 +25,12 @@ const NavLinkSection = ({ label, links, ...props }: NavLinkSectionProps) => {
         {links.map((link, idx) => (
           <NavLink
             label={link.label}
+            style={{ borderRadius: 5 }}
             icon={link.icon ? link.icon : null}
             key={`navLink-${idx}`}
+            px="xl"
+            active={router.pathname === link.href}
+            onClick={() => router.push(link.href)}
             {...props}
           />
         ))}
