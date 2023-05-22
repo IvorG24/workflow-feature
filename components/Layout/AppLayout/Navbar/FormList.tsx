@@ -12,7 +12,7 @@ import {
   Text,
 } from "@mantine/core";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
-import { capitalize, lowerCase } from "lodash";
+import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -42,7 +42,7 @@ const FormList = () => {
     <Box h="fit-content">
       <Group mb="sm" position="apart">
         <Text mb={4} size="xs" weight={400}>
-          {capitalize(activeApp)} Forms {`(${forms.length})`}
+          Forms {`(${forms.length})`}
         </Text>
         <Button
           variant="light"

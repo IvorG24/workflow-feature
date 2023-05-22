@@ -11,7 +11,8 @@ import { getAvatarColor } from "@/utils/styling";
 import { TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { isEmpty, startCase } from "lodash";
+import { isEmpty, lowerCase, startCase } from "lodash";
+import { useRouter } from "next/router";
 import { forwardRef } from "react";
 
 export type TeamSelectItem = {
@@ -43,6 +44,7 @@ const SelectItem = forwardRef<HTMLDivElement, TeamSelectItem>(
 
 const SelectTeam = () => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
+  const router = useRouter();
 
   const teamList = useTeamList();
   const activeApp = useActiveApp();
@@ -73,9 +75,8 @@ const SelectTeam = () => {
       teamId: `${value}`,
       app: activeApp,
     });
-    console.log(value, activeApp);
-    console.log(formList);
     setFormList(formList);
+    router.push(`/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`);
   };
 
   if (isEmpty(activeTeam)) {

@@ -1,6 +1,7 @@
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { useState } from "react";
-import Header from "./Header";
+import Header from "./Header/Header";
+import Navbar from "./Navbar/Navbar";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -24,6 +25,12 @@ const Layout = ({ children }: LayoutProps) => {
       asideOffsetBreakpoint="sm"
       header={
         <Header
+          openNavbar={openNavbar}
+          setOpenNavbar={() => setOpenNavbar((o) => !o)}
+        />
+      }
+      navbar={
+        <Navbar
           openNavbar={openNavbar}
           setOpenNavbar={() => setOpenNavbar((o) => !o)}
         />
