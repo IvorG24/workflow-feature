@@ -98,3 +98,67 @@ export const createTeamInvitation = async (
   if (error) throw error;
   return data;
 };
+
+// Sign Up User
+export const signUpUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { email: string; password: string }
+) => {
+  const { data, error } = await supabaseClient.auth.signUp({
+    ...params,
+  });
+  if (error) throw error;
+  return data;
+};
+
+// Sign In User
+export const signInUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { email: string; password: string }
+) => {
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      ...params,
+    });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error: `${error}` };
+  }
+};
+
+// Email verification
+export const checkIfEmailExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    email: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("user_email")
+    .eq("user_email", params.email);
+  if (error) throw error;
+  return data.length > 0;
+};
+
+// Send Reset Password Email
+export const sendResetPasswordEmail = async (
+  supabaseClient: SupabaseClient<Database>,
+  email: string
+) => {
+  await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: "http://localhost:3000/reset-password",
+  });
+};
+
+// Reset Password
+
+export const resetPassword = async (
+  supabaseClient: SupabaseClient<Database>,
+  password: string
+) => {
+  const { data, error } = await supabaseClient.auth.updateUser({ password });
+  if (error) throw error;
+  return data;
+};

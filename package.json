@@ -36,11 +36,13 @@
     "react-phone-number-input": "^3.2.23",
     "typescript": "5.0.4",
     "uuidv4": "^6.2.13",
+    "validator": "^13.9.0",
     "zustand": "^4.3.8"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.194",
     "@types/react-beforeunload": "^2.1.1",
+    "@types/validator": "^13.7.17",
     "eslint-config-prettier": "^8.8.0",
     "supabase": "^1.61.3"
   }
