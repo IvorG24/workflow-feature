@@ -1,5 +1,6 @@
 import { resetPassword } from "@/backend/api/post";
 import {
+  Alert,
   Box,
   Button,
   Center,
@@ -12,6 +13,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -42,6 +44,7 @@ const ResetPasswordPage = () => {
           color: "red",
         });
         router.push("/sign-in");
+        return;
       }
       const updatePassword = await resetPassword(supabaseClient, data.password);
       if (!updatePassword) throw new Error();
@@ -71,6 +74,9 @@ const ResetPasswordPage = () => {
               Reset Password
             </Title>
             <Stack>
+              <Alert icon={<IconAlertCircle size="1rem" />}>
+                {`Password must be at least 6 characters long and include lowercase and uppercase letters, as well as a special symbol (e.g., $&+).`}
+              </Alert>
               <Box>
                 <PasswordInput
                   placeholder="Enter your new password"
@@ -79,6 +85,21 @@ const ResetPasswordPage = () => {
                   {...register("password", {
                     required:
                       "Password field cannot be empty. Please enter your password.",
+                    minLength: {
+                      value: 6,
+                      message: "Password must have atleast 6 characters.",
+                    },
+                    validate: {
+                      haveLowerCase: (value) =>
+                        /[a-z]/.test(value) ||
+                        "Password must have atleast one lowercase letter.",
+                      haveUpperCase: (value) =>
+                        /[A-Z]/.test(value) ||
+                        "Password must have atleast one uppercase letter.",
+                      haveSpecialSymbol: (value) =>
+                        /[$&+,:;=?@#|'<>.^*()%!-]/.test(value) ||
+                        "Password must have a special symbol.",
+                    },
                   })}
                 />
                 <PasswordInput

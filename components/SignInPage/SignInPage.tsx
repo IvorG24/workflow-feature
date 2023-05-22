@@ -62,6 +62,7 @@ const SignInPage = () => {
       });
       if (isUserOnboarded) {
         router.push("/team-reviews/reviews");
+        return;
       }
       router.push("/onboarding");
     } catch (error) {

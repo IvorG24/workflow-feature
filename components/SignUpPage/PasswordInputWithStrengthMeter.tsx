@@ -84,10 +84,6 @@ const PasswordInputWithStrengthMeter = () => {
               {...register("password", {
                 required:
                   "Password field cannot be empty. Please enter your password.",
-                pattern: {
-                  value: requirements[0].re,
-                  message: requirements[0].label,
-                },
                 minLength: {
                   value: 6,
                   message: "Password must have atleast 6 characters.",
