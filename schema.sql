@@ -38,6 +38,7 @@ CREATE TABLE user_table (
     user_phone_number VARCHAR(4000),
     user_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
     user_active_team_id UUID,
+    user_active_app VARCHAR(4000) DEFAULT 'REQUEST' NOT NULL,
     user_avatar VARCHAR(4000),
 
     CHECK (user_username = LOWER(user_username))

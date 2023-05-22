@@ -1,7 +1,17 @@
+import { getAllTeamOfUser, getFormList, getUser } from "@/backend/api/get";
+import { updateUserActiveTeamAndActiveApp } from "@/backend/api/update";
+import { Database } from "@/utils/database";
+import { TEMP_USER_ID } from "@/utils/dummyData";
+import { useStore } from "@/utils/store";
+import { TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
-import { useState } from "react";
-import Header from "./Header";
-import Navbar from "./Navbar";
+import { notifications } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
+import Header from "./Header/Header";
+import Navbar from "./Navbar/Navbar";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -9,7 +19,69 @@ type LayoutProps = {
 
 const Layout = ({ children }: LayoutProps) => {
   const theme = useMantineTheme();
+  const store = useStore();
+  const router = useRouter();
+  const supabaseClient = createBrowserSupabaseClient<Database>();
+
   const [openNavbar, setOpenNavbar] = useState(false);
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        // fetch all the team where the user is a part of
+        const data = await getAllTeamOfUser(supabaseClient, {
+          userId: TEMP_USER_ID,
+        });
+        const teamList = data as TeamTableRow[];
+        store.setTeamList(teamList);
+
+        // fetch the current active team of the user
+        const user = await getUser(supabaseClient, { userId: TEMP_USER_ID });
+        const userActiveTeam = teamList.find(
+          (team) => team.team_id === user.user_active_team_id
+        );
+
+        let activeTeamId = "";
+        // set the user's active team
+        if (userActiveTeam) {
+          activeTeamId = userActiveTeam.team_id;
+          store.setActiveTeam(userActiveTeam);
+        } else {
+          activeTeamId = teamList[0].team_id;
+          store.setActiveTeam(teamList[0]);
+        }
+
+        // set the user's active app
+        store.setActiveApp(user.user_active_app);
+
+        // fetch form list of active team
+        const formList = await getFormList(supabaseClient, {
+          teamId: activeTeamId,
+          app: user.user_active_app,
+        });
+
+        // set form list
+        store.setFormList(formList);
+      } catch {
+        notifications.show({
+          title: "Error!",
+          message: "Unable to fetch team",
+          color: "red",
+          withBorder: true,
+        });
+        router.push("/500");
+      }
+    };
+    fetchInitialData();
+  }, []);
+
+  useBeforeunload(async () => {
+    await updateUserActiveTeamAndActiveApp(supabaseClient, {
+      teamId: store.activeTeam.team_id,
+      app: store.activeApp,
+      userId: TEMP_USER_ID,
+    });
+  });
 
   return (
     <AppShell

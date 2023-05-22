@@ -1,7 +1,13 @@
+import Meta from "@/components/Meta/Meta";
 import SignUpPage from "@/components/SignUpPage/SignUpPage";
 
 const Page = () => {
-  return <SignUpPage />;
+  return (
+    <>
+      <Meta description="Sign Up Page" url="/sign-up" />
+      <SignUpPage />
+    </>
+  );
 };
 
 export default Page;
