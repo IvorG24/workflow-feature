@@ -112,7 +112,7 @@ const SignUpPage = () => {
               </FormProvider>
               <PasswordInput
                 placeholder="Confirm your password"
-                label="Password"
+                label="Confirm Password"
                 error={errors.confirmPassword?.message}
                 {...register("confirmPassword", {
                   required:

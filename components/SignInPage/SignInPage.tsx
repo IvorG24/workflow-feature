@@ -1,4 +1,4 @@
-import { signInUser } from "@/backend/api/post";
+import { checkIfEmailExists, signInUser } from "@/backend/api/post";
 import {
   Anchor,
   Box,
@@ -21,6 +21,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
 import SocialMediaButtonList from "../SocialMediaButtonList";
+import ResetPasswordModal from "./ResetPasswordModal";
 
 type SignInFormValues = {
   email: string;
@@ -29,6 +30,7 @@ type SignInFormValues = {
 
 const SignInPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [openResetPasswordModal, setOpenResetPasswordModal] = useState(false);
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
   const {
@@ -40,15 +42,27 @@ const SignInPage = () => {
   const handleSignIn = async (data: SignInFormValues) => {
     try {
       setIsLoading(true);
-      const signIn = await signInUser(supabaseClient, {
+      const { error } = await signInUser(supabaseClient, {
         email: data.email,
         password: data.password,
       });
-      if (!signIn.user && !signIn.session) throw Error;
+      if (error?.toLowerCase().includes("invalid login credentials")) {
+        notifications.show({
+          message: "Invalid login credentials",
+          color: "red",
+        });
+        return;
+      }
       notifications.show({
         message: "Sign in successful.",
         color: "green",
       });
+      const isUserOnboarded = await checkIfEmailExists(supabaseClient, {
+        email: data.email,
+      });
+      if (isUserOnboarded) {
+        router.push("/team-reviews/reviews");
+      }
       router.push("/onboarding");
     } catch (error) {
       notifications.show({
@@ -93,9 +107,15 @@ const SignInPage = () => {
                       "Password field cannot be empty. Please enter your password.",
                   })}
                 />
-                <Text mt={8} size="xs" color="blue" align="right">
+                <Anchor
+                  component="button"
+                  mt={8}
+                  size="xs"
+                  align="right"
+                  onClick={() => setOpenResetPasswordModal(true)}
+                >
                   Forgot Password?
-                </Text>
+                </Anchor>
               </Box>
               <Button type="submit">Sign in</Button>
             </Stack>
@@ -121,6 +141,10 @@ const SignInPage = () => {
           />
         </Paper>
       </Center>
+      <ResetPasswordModal
+        opened={openResetPasswordModal}
+        onClose={() => setOpenResetPasswordModal(false)}
+      />
     </Container>
   );
 };
