@@ -1,4 +1,5 @@
 import { createUser, uploadImage } from "@/backend/api/post";
+import Meta from "@/components/Meta/Meta";
 import OnboardingPage from "@/components/OnboardingPage/OnboardingPage";
 import { LoadingOverlay } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -69,6 +70,7 @@ const Page = () => {
         overlayBlur={2}
         sx={{ position: "fixed" }}
       />
+      <Meta description="Onboarding Page" url="/onboarding" />
       <OnboardingPage
         onOnboardUser={handleOnboardUser}
         avatarFile={avatarFile}

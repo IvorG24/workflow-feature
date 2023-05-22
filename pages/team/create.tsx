@@ -1,7 +1,13 @@
 import CreateTeamPage from "@/components/CreateTeamPage/CreateTeamPage";
+import Meta from "@/components/Meta/Meta";
 
 const Page = () => {
-  return <CreateTeamPage />;
+  return (
+    <>
+      <Meta description="Create Team Page" url="/team/create" />
+      <CreateTeamPage />
+    </>
+  );
 };
 
 export default Page;

@@ -96,9 +96,10 @@ const UploadAvatar = ({
         >
           {(props) => (
             <ActionIcon
-              variant="light"
+              variant="default"
               color="blue"
               radius={100}
+              bg={"gray"}
               className={classes.fileButton}
               {...props}
               sx={() => ({

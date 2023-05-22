@@ -24,17 +24,23 @@ type Props = {
   onAvatarFileChange: (value: File | null) => void;
 };
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme) => ({
   phone: {
     padding: "14px !important",
-    border: "1px solid #ced4da !important",
+    border: `1px solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[1]
+    } !important`,
     borderRadius: "4px !important",
     height: "42px",
 
     "& input": {
       border: "none",
       marginLeft: 4,
-      color: "#444746",
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[0]
+          : theme.colors.gray[0],
+      background: "transparent",
 
       "&:focus-visible": {
         outline: "none !important",
