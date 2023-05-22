@@ -1,5 +1,6 @@
 import { Database } from "@/utils/database";
 
+// Start: Database Table Types
 export type AttachmentTableRow =
   Database["public"]["Tables"]["attachment_table"]["Row"];
 export type AttachmentTableInsert =
@@ -100,7 +101,9 @@ export type UserTableInsert =
   Database["public"]["Tables"]["user_table"]["Insert"];
 export type UserTableUpdate =
   Database["public"]["Tables"]["user_table"]["Update"];
+// End: atabase Table Types
 
+// Start: Database Enums
 export type AppType = "GENERAL" | "REQUEST" | "REVIEW";
 export type MemberRoleType = "OWNER" | "ADMIN" | "MEMBER";
 export type AttachmentBucketType =
@@ -145,3 +148,6 @@ export type NotificationType =
   | "INVITE"
   | "REVIEW"
   | "COMMENT";
+// End: Database Enums
+
+// Start: Joined Types

@@ -1,7 +1,13 @@
+import Meta from "@/components/Meta/Meta";
 import UserSettingsPage from "@/components/UserSettingsPage/UserSettingsPage";
 
 const Page = () => {
-  return <UserSettingsPage />;
+  return (
+    <>
+      <Meta description="User Settings Page" url="/user/settings" />
+      <UserSettingsPage />
+    </>
+  );
 };
 
 export default Page;
