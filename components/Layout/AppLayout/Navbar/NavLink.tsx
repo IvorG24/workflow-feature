@@ -1,4 +1,4 @@
-import { useStore } from "@/utils/store";
+import { useActiveApp } from "@/stores/useTeamStore";
 import { ActionIcon } from "@mantine/core";
 import {
   IconCirclePlus,
@@ -11,19 +11,18 @@ import NavLinkSection from "./NavLinkSection";
 const ReviewAppNavLink = () => {
   const defaultIconProps = { size: 20, stroke: 1 };
   const defaultNavLinkProps = { px: 0 };
-  const store = useStore();
+
+  const activeApp = useActiveApp();
 
   const overviewSection = [
     {
-      label: `${capitalize(store.activeApp)}`,
+      label: `${capitalize(activeApp)}`,
       icon: (
         <ActionIcon variant="transparent" ml="xs">
           <IconMessage2 {...defaultIconProps} />
         </ActionIcon>
       ),
-      href: `/team-${lowerCase(store.activeApp)}s/${lowerCase(
-        store.activeApp
-      )}s`,
+      href: `/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`,
     },
   ];
 

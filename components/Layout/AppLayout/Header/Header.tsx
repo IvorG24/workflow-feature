@@ -1,4 +1,4 @@
-import { useStore } from "@/utils/store";
+import { useActiveApp } from "@/stores/useTeamStore";
 import {
   Box,
   Burger,
@@ -19,7 +19,7 @@ type HeaderProps = {
 
 const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   const theme = useMantineTheme();
-  const store = useStore();
+  const activeApp = useActiveApp();
 
   return (
     <MantineHeader height={{ base: 50, md: 70 }} p="md">
@@ -41,10 +41,10 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
           />
         </MediaQuery>
 
-        {!store.activeApp ? <Skeleton width={127} height={45} /> : null}
-        {store.activeApp ? (
+        {!activeApp ? <Skeleton width={127} height={45} /> : null}
+        {activeApp ? (
           <Image
-            src={`/logo-${lowerCase(store.activeApp)}-${lowerCase(
+            src={`/logo-${lowerCase(activeApp)}-${lowerCase(
               theme.colorScheme
             )}.svg`}
             width={127}

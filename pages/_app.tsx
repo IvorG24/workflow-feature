@@ -1,5 +1,6 @@
 import { Layouts, PageWithLayoutProps } from "@/components/Layout/LayoutList";
-import { useStore } from "@/utils/store";
+import { useActiveApp } from "@/stores/useTeamStore";
+
 import {
   ColorScheme,
   ColorSchemeProvider,
@@ -16,8 +17,8 @@ export default function App(
   props: PageWithLayoutProps & { colorScheme: ColorScheme }
 ) {
   const { Component, pageProps } = props;
-  const store = useStore();
 
+  const activeApp = useActiveApp();
   const [supabaseClient] = useState(() => createBrowserSupabaseClient());
   const [colorScheme, setColorScheme] = useState<ColorScheme>(
     props.colorScheme
@@ -45,7 +46,7 @@ export default function App(
         withNormalizeCSS
         theme={{
           colorScheme,
-          primaryColor: store.activeApp === "REVIEW" ? "green" : "blue",
+          primaryColor: activeApp === "REVIEW" ? "green" : "blue",
         }}
       >
         <Notifications />

@@ -1,6 +1,11 @@
 import { getFormList } from "@/backend/api/get";
+import { useFormActions } from "@/stores/useFormStore";
+import {
+  useActiveApp,
+  useActiveTeam,
+  useTeamActions,
+} from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { useStore } from "@/utils/store";
 import {
   ActionIcon,
   Avatar,
@@ -25,13 +30,16 @@ import { useRouter } from "next/router";
 
 const HeaderMenu = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const store = useStore();
   const router = useRouter();
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
+  const activeApp = useActiveApp();
+  const activeTeam = useActiveTeam();
+  const { setActiveApp } = useTeamActions();
+  const { setFormList } = useFormActions();
+
   const handleSwitchApp = async () => {
-    const activeApp = store.activeApp;
-    store.setActiveApp(activeApp === "REQUEST" ? "REVIEW" : "REQUEST");
+    setActiveApp(activeApp === "REQUEST" ? "REVIEW" : "REQUEST");
     router.push(
       activeApp === "REQUEST"
         ? "/team-reviews/reviews"
@@ -39,10 +47,10 @@ const HeaderMenu = () => {
     );
 
     const formList = await getFormList(supabaseClient, {
-      teamId: store.activeTeam.team_id,
+      teamId: activeTeam.team_id,
       app: activeApp === "REQUEST" ? "REVIEW" : "REQUEST",
     });
-    store.setFormList(formList);
+    setFormList(formList);
   };
 
   return (

@@ -1,8 +1,13 @@
 import { getAllTeamOfUser, getFormList, getUser } from "@/backend/api/get";
 import { updateUserActiveTeamAndActiveApp } from "@/backend/api/update";
+import { useFormActions } from "@/stores/useFormStore";
+import {
+  useActiveApp,
+  useActiveTeam,
+  useTeamActions,
+} from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import { TEMP_USER_ID } from "@/utils/dummyData";
-import { useStore } from "@/utils/store";
 import { TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -19,9 +24,14 @@ type LayoutProps = {
 
 const Layout = ({ children }: LayoutProps) => {
   const theme = useMantineTheme();
-  const store = useStore();
   const router = useRouter();
   const supabaseClient = createBrowserSupabaseClient<Database>();
+
+  const activeTeam = useActiveTeam();
+  const activeApp = useActiveApp();
+  const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
+  const { setFormList } = useFormActions();
+  setFormList;
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
@@ -33,7 +43,7 @@ const Layout = ({ children }: LayoutProps) => {
           userId: TEMP_USER_ID,
         });
         const teamList = data as TeamTableRow[];
-        store.setTeamList(teamList);
+        setTeamList(teamList);
 
         // fetch the current active team of the user
         const user = await getUser(supabaseClient, { userId: TEMP_USER_ID });
@@ -45,14 +55,14 @@ const Layout = ({ children }: LayoutProps) => {
         // set the user's active team
         if (userActiveTeam) {
           activeTeamId = userActiveTeam.team_id;
-          store.setActiveTeam(userActiveTeam);
+          setActiveTeam(userActiveTeam);
         } else {
           activeTeamId = teamList[0].team_id;
-          store.setActiveTeam(teamList[0]);
+          setActiveTeam(teamList[0]);
         }
 
         // set the user's active app
-        store.setActiveApp(user.user_active_app);
+        setActiveApp(user.user_active_app);
 
         // fetch form list of active team
         const formList = await getFormList(supabaseClient, {
@@ -61,7 +71,7 @@ const Layout = ({ children }: LayoutProps) => {
         });
 
         // set form list
-        store.setFormList(formList);
+        setFormList(formList);
       } catch {
         notifications.show({
           title: "Error!",
@@ -77,8 +87,8 @@ const Layout = ({ children }: LayoutProps) => {
 
   useBeforeunload(async () => {
     await updateUserActiveTeamAndActiveApp(supabaseClient, {
-      teamId: store.activeTeam.team_id,
-      app: store.activeApp,
+      teamId: activeTeam.team_id,
+      app: activeApp,
       userId: TEMP_USER_ID,
     });
   });

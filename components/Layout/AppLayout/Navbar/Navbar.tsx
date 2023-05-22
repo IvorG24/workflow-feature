@@ -1,4 +1,4 @@
-import { useStore } from "@/utils/store";
+import { useActiveApp } from "@/stores/useTeamStore";
 import { Navbar as MantineNavbar, Skeleton, Stack } from "@mantine/core";
 import FormList from "./FormList";
 import NavLink from "./NavLink";
@@ -9,7 +9,8 @@ type NavbarProps = {
 };
 
 const Navbar = ({ openNavbar }: NavbarProps) => {
-  const store = useStore();
+  const activeApp = useActiveApp();
+
   return (
     <MantineNavbar
       p="md"
@@ -19,7 +20,7 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
     >
       <Stack>
         <SelectTeam />
-        {!store.activeApp ? (
+        {!activeApp ? (
           <>
             <Stack spacing={5}>
               <Skeleton height={20} width={60} />
@@ -39,7 +40,7 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
             </Stack>
           </>
         ) : null}
-        {store.activeApp ? (
+        {activeApp ? (
           <>
             <NavLink />
             <FormList />

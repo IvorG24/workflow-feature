@@ -1,4 +1,5 @@
-import { useStore } from "@/utils/store";
+import { useFormList } from "@/stores/useFormStore";
+import { useActiveApp } from "@/stores/useTeamStore";
 import { FormTableRow } from "@/utils/types";
 import {
   Autocomplete,
@@ -16,15 +17,16 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 const FormList = () => {
-  const store = useStore();
-  const forms = store.formList;
   const router = useRouter();
+
+  const forms = useFormList();
+  const activeApp = useActiveApp();
 
   const [formList, setFormList] = useState<FormTableRow[]>([]);
 
   useEffect(() => {
-    setFormList(store.formList);
-  }, [store.formList]);
+    setFormList(forms);
+  }, [forms]);
 
   const handleSearchForm = (value: string) => {
     if (!value) {
@@ -40,13 +42,13 @@ const FormList = () => {
     <Box h="fit-content">
       <Group mb="sm" position="apart">
         <Text mb={4} size="xs" weight={400}>
-          {capitalize(store.activeApp)} Forms {`(${forms.length})`}
+          {capitalize(activeApp)} Forms {`(${forms.length})`}
         </Text>
         <Button
           variant="light"
           size="xs"
           onClick={() =>
-            router.push(`/team-${lowerCase(store.activeApp)}s/forms/build`)
+            router.push(`/team-${lowerCase(activeApp)}s/forms/build`)
           }
         >
           Build Form
@@ -70,9 +72,7 @@ const FormList = () => {
               rightSection={<IconPlus size={14} />}
               onClick={() =>
                 router.push(
-                  `/team-${lowerCase(store.activeApp)}s/forms/${
-                    form.form_id
-                  }/create`
+                  `/team-${lowerCase(activeApp)}s/forms/${form.form_id}/create`
                 )
               }
             />

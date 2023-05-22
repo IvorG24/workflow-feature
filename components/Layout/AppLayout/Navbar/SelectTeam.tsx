@@ -1,6 +1,12 @@
 import { getFormList } from "@/backend/api/get";
+import { useFormActions } from "@/stores/useFormStore";
+import {
+  useActiveApp,
+  useActiveTeam,
+  useTeamActions,
+  useTeamList,
+} from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { useStore } from "@/utils/store";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
@@ -36,11 +42,16 @@ const SelectItem = forwardRef<HTMLDivElement, TeamSelectItem>(
 );
 
 const SelectTeam = () => {
-  const store = useStore();
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
+  const teamList = useTeamList();
+  const activeApp = useActiveApp();
+  const activeTeam = useActiveTeam();
+  const { setActiveTeam } = useTeamActions();
+  const { setFormList } = useFormActions();
+
   const formatTeamOptions = () => {
-    const teamOptions = store.teamList.map((team) => {
+    const teamOptions = teamList.map((team) => {
       return {
         value: team.team_id,
         label: team.team_name,
@@ -51,23 +62,23 @@ const SelectTeam = () => {
   };
 
   const handleOnChange = async (value: string | null) => {
-    const activeTeam = store.teamList.find((team) => {
+    const activeTeam = teamList.find((team) => {
       if (team.team_id === value) {
         return team;
       }
     });
-    activeTeam && store.setActiveTeam(activeTeam);
+    activeTeam && setActiveTeam(activeTeam);
 
     const formList = await getFormList(supabaseClient, {
       teamId: `${value}`,
-      app: store.activeApp,
+      app: activeApp,
     });
-    console.log(value, store.activeApp);
+    console.log(value, activeApp);
     console.log(formList);
-    store.setFormList(formList);
+    setFormList(formList);
   };
 
-  if (isEmpty(store.activeTeam)) {
+  if (isEmpty(activeTeam)) {
     return (
       <Select
         label={
@@ -91,7 +102,7 @@ const SelectTeam = () => {
       }
       itemComponent={SelectItem}
       data={formatTeamOptions()}
-      value={store.activeTeam.team_id}
+      value={activeTeam.team_id}
       onChange={handleOnChange}
       searchable
       maxDropdownHeight={400}
@@ -99,13 +110,11 @@ const SelectTeam = () => {
       icon={
         <Avatar
           size="sm"
-          src={store.activeTeam.team_logo}
-          color={getAvatarColor(
-            Number(`${store.activeTeam.team_id.charCodeAt(1)}`)
-          )}
+          src={activeTeam.team_logo}
+          color={getAvatarColor(Number(`${activeTeam.team_id.charCodeAt(1)}`))}
         >
-          {startCase(store.activeTeam.team_name[0])}
-          {startCase(store.activeTeam.team_name[1])}
+          {startCase(activeTeam.team_name[0])}
+          {startCase(activeTeam.team_name[1])}
         </Avatar>
       }
     />
