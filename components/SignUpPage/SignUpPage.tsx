@@ -19,7 +19,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import validator from "validator";
-import SocialMediaButtonList from "../SocialMediaButtonList";
+import SocialMediaButtonList from "../SocialMediaButton/SocialMediaButtonList";
 import PasswordInputWithStrengthMeter from "./PasswordInputWithStrengthMeter";
 
 export type SignUpFormValues = {
@@ -137,7 +137,7 @@ const SignUpPage = () => {
           </Anchor>
           <Divider
             my="lg"
-            label={<Text c="dimmed">Or sign in with</Text>}
+            label={<Text c="dimmed">Or sign up with</Text>}
             labelPosition="center"
           />
           <SocialMediaButtonList

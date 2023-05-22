@@ -20,7 +20,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import validator from "validator";
-import SocialMediaButtonList from "../SocialMediaButtonList";
+import SocialMediaButtonList from "../SocialMediaButton/SocialMediaButtonList";
 import ResetPasswordModal from "./ResetPasswordModal";
 
 type SignInFormValues = {

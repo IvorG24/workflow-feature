@@ -1,9 +1,7 @@
 import { Button, ButtonProps, Flex, FlexProps } from "@mantine/core";
-import {
-  IconBrandFacebook,
-  IconBrandGoogle,
-  IconBrandTwitter,
-} from "@tabler/icons-react";
+import { FacebookIcon } from "./FacebookIcon";
+import { GoogleIcon } from "./GoogleIcon";
+import { TwitterIcon } from "./TwitterIcon";
 
 type ButtonListProps = {
   flexProps?: FlexProps;
@@ -11,25 +9,23 @@ type ButtonListProps = {
 };
 
 export const GoogleButton = (props: ButtonProps) => {
-  return <Button leftIcon={<IconBrandGoogle />} {...props} />;
+  return <Button leftIcon={<GoogleIcon />} {...props} />;
 };
 
 export const FacebookButton = (props: ButtonProps) => {
-  return <Button leftIcon={<IconBrandFacebook />} {...props} />;
+  return <Button leftIcon={<FacebookIcon color="#1877F2" />} {...props} />;
 };
 
 export const TwitterButton = (props: ButtonProps) => {
-  return (
-    <Button leftIcon={<IconBrandTwitter />} variant="outline" {...props} />
-  );
+  return <Button leftIcon={<TwitterIcon color="#00acee" />} {...props} />;
 };
 
 const SocialMediaButtonList = (props: ButtonListProps) => {
   const { flexProps, buttonProps } = props;
   return (
     <Flex {...flexProps}>
-      <GoogleButton {...buttonProps}>Google</GoogleButton>
       <FacebookButton {...buttonProps}>Facebook</FacebookButton>
+      <GoogleButton {...buttonProps}>Google</GoogleButton>
       <TwitterButton {...buttonProps}>Twitter</TwitterButton>
     </Flex>
   );
