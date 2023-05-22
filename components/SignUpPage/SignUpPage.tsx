@@ -1,5 +1,6 @@
-import { signUpUser } from "@/backend/api/post";
+import { checkIfEmailExists, signUpUser } from "@/backend/api/post";
 import {
+  Anchor,
   Button,
   Center,
   Container,
@@ -14,6 +15,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import validator from "validator";
@@ -28,6 +30,7 @@ export type SignUpFormValues = {
 
 const SignUpPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const supabaseClient = useSupabaseClient();
   const signUpFormMethods = useForm<SignUpFormValues>({
     defaultValues: {
@@ -46,6 +49,17 @@ const SignUpPage = () => {
   const handleSignUp = async (data: SignUpFormValues) => {
     try {
       setIsLoading(true);
+      const isEmailExists = await checkIfEmailExists(supabaseClient, {
+        email: data.email,
+      });
+      if (isEmailExists) {
+        notifications.show({
+          message: "Email already registered.",
+          color: "red",
+        });
+        return;
+      }
+
       const signUp = await signUpUser(supabaseClient, {
         email: data.email,
         password: data.password,
@@ -111,6 +125,16 @@ const SignUpPage = () => {
               <Button type="submit">Sign up</Button>
             </Stack>
           </form>
+          <Anchor
+            w="100%"
+            component="button"
+            mt="md"
+            size="xs"
+            align="center"
+            onClick={() => router.push("/sign-in")}
+          >
+            Already registered? Sign in here
+          </Anchor>
           <Divider
             my="lg"
             label={<Text c="dimmed">Or sign in with</Text>}

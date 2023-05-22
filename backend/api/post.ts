@@ -110,3 +110,30 @@ export const signUpUser = async (
   if (error) throw error;
   return data;
 };
+
+// Sign In User
+export const signInUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { email: string; password: string }
+) => {
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    ...params,
+  });
+  if (error) throw error;
+  return data;
+};
+
+// Email verification
+export const checkIfEmailExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    email: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("user_email")
+    .eq("user_email", params.email);
+  if (error) throw error;
+  return data.length > 0;
+};
