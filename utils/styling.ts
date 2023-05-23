@@ -20,3 +20,8 @@ export const getAvatarColor = (number: number) => {
     defaultMantineColorList[number % defaultMantineColorList.length];
   return randomColor;
 };
+
+export const mobileNumberFormatter = (value: string | undefined) =>
+  !Number.isNaN(parseFloat(value ? value : "0"))
+    ? `${value}`.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3")
+    : "";
