@@ -1,11 +1,7 @@
 import { getAllTeamOfUser, getFormList, getUser } from "@/backend/api/get";
-import { updateUserActiveTeamAndActiveApp } from "@/backend/api/update";
+import { updateUserActiveApp } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
-import {
-  useActiveApp,
-  useActiveTeam,
-  useTeamActions,
-} from "@/stores/useTeamStore";
+import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { TeamTableRow } from "@/utils/types";
@@ -27,7 +23,6 @@ const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
-  const activeTeam = useActiveTeam();
   const activeApp = useActiveApp();
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
@@ -62,7 +57,13 @@ const Layout = ({ children }: LayoutProps) => {
         }
 
         // set the user's active app
-        setActiveApp(user.user_active_app);
+        if (router.pathname.includes("team-requests")) {
+          setActiveApp("REQUEST");
+        } else if (router.pathname.includes("team-reviews")) {
+          setActiveApp("REVIEW");
+        } else {
+          setActiveApp(user.user_active_app);
+        }
 
         // fetch form list of active team
         const formList = await getFormList(supabaseClient, {
@@ -86,8 +87,7 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   useBeforeunload(async () => {
-    await updateUserActiveTeamAndActiveApp(supabaseClient, {
-      teamId: activeTeam.team_id,
+    await updateUserActiveApp(supabaseClient, {
       app: activeApp,
       userId: TEMP_USER_ID,
     });

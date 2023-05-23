@@ -1,4 +1,5 @@
 import { getFormList } from "@/backend/api/get";
+import { updateUserActiveTeam } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import {
   useActiveApp,
@@ -7,6 +8,7 @@ import {
   useTeamList,
 } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
+import { TEMP_USER_ID } from "@/utils/dummyData";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
@@ -69,7 +71,13 @@ const SelectTeam = () => {
         return team;
       }
     });
-    activeTeam && setActiveTeam(activeTeam);
+    if (activeTeam) {
+      setActiveTeam(activeTeam);
+      await updateUserActiveTeam(supabaseClient, {
+        userId: TEMP_USER_ID,
+        teamId: activeTeam?.team_id,
+      });
+    }
 
     const formList = await getFormList(supabaseClient, {
       teamId: `${value}`,
