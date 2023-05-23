@@ -25,6 +25,17 @@ UPDATE storage.buckets SET public = true;
 
 ---------- Start: TABLES
 
+-- Start: Attachments
+CREATE TABLE attachment_table (
+    attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    attachment_name VARCHAR(4000) NOT NULL,
+    attachment_value VARCHAR(4000) NOT NULL,
+    attachment_bucket VARCHAR(4000) NOT NULL,
+    attachment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    attachment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+);
+-- End: Attachments
+
 -- Start: User and Teams
 CREATE TABLE user_table (
     -- temporary
@@ -161,17 +172,6 @@ CREATE TABLE request_signer_table(
   request_signer_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
 -- End: Request
-
--- Start: Attachments
-CREATE TABLE attachment_table (
-    attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    attachment_name VARCHAR(4000) NOT NULL,
-    attachment_value VARCHAR(4000) NOT NULL,
-    attachment_bucket VARCHAR(4000) NOT NULL,
-    attachment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    attachment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-);
--- End: Attachments
 
 -- Start: Comments
 CREATE TABLE comment_table(
