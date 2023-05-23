@@ -1,10 +1,11 @@
 import {
   Button,
   Container,
-  createStyles,
+  Flex,
   SimpleGrid,
   Text,
   Title,
+  createStyles,
 } from "@mantine/core";
 import { useRouter } from "next/router";
 
@@ -62,14 +63,25 @@ const Error404Page = () => {
             the address, or the page has been moved to another URL. If you think
             this is an error contact support.
           </Text>
-          <Button
-            size="md"
-            mt="xl"
-            className={classes.control}
-            onClick={() => router.push("/")}
-          >
-            Get back to home page
-          </Button>
+          <Flex gap="xs">
+            <Button
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={() => router.back()}
+              variant="outline"
+            >
+              Get back
+            </Button>
+            <Button
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={() => router.push("/")}
+            >
+              Get to home page
+            </Button>
+          </Flex>
         </div>
       </SimpleGrid>
     </Container>

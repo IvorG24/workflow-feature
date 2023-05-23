@@ -17,19 +17,34 @@ export const updateTeam = async (
   return data;
 };
 
-// Update user's active team and active app
-export const updateUserActiveTeamAndActiveApp = async (
+// Update user's active app
+export const updateUserActiveApp = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    teamId: string;
     userId: string;
     app: string;
   }
 ) => {
-  const { teamId, userId, app } = params;
+  const { userId, app } = params;
   const { error } = await supabaseClient
     .from("user_table")
-    .update({ user_active_team_id: teamId, user_active_app: app })
+    .update({ user_active_app: app })
+    .eq("user_id", userId);
+  if (error) throw error;
+};
+
+// Update user's active team
+export const updateUserActiveTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    teamId: string;
+  }
+) => {
+  const { userId, teamId } = params;
+  const { error } = await supabaseClient
+    .from("user_table")
+    .update({ user_active_team_id: teamId })
     .eq("user_id", userId);
   if (error) throw error;
 };
