@@ -78,7 +78,6 @@ const Layout = ({ children }: LayoutProps) => {
           title: "Error!",
           message: "Unable to fetch team",
           color: "red",
-          withBorder: true,
         });
         router.push("/500");
       }
