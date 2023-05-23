@@ -21,7 +21,7 @@ const Layout = ({ children }: LayoutProps) => {
               : theme.colors.gray[0],
         },
       }}
-      navbarOffsetBreakpoint="sm"
+      navbarOffsetBreakpoint={999999}
       asideOffsetBreakpoint="sm"
       header={
         <Header
