@@ -1,11 +1,11 @@
 import { createUser, uploadImage } from "@/backend/api/post";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
   Center,
   Container,
   Divider,
-  LoadingOverlay,
   NumberInput,
   Paper,
   Text,
@@ -35,15 +35,15 @@ type TempUser = { id: string; email: string };
 
 const tempUser: TempUser = {
   id: uuidv4(),
-  email: "johndoe10@gmail.com",
+  email: "johndoe10232@gmail.com",
 };
 
 const OnboardingPage = () => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+  const { setIsLoading } = useLoadingActions();
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const {
     register,
@@ -74,8 +74,14 @@ const OnboardingPage = () => {
         user_avatar: imageUrl,
       });
 
-      router.push("/");
+      await router.push("/team/create");
+      notifications.show({
+        title: "Success!",
+        message: "Profile completed",
+        color: "green",
+      });
     } catch (error) {
+      console.log(error);
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",
@@ -88,12 +94,6 @@ const OnboardingPage = () => {
 
   return (
     <Container p={0} mih="100vh" fluid>
-      <LoadingOverlay
-        visible={isLoading}
-        overlayBlur={2}
-        sx={{ position: "fixed" }}
-      />
-
       <Container p="xl" maw={450}>
         <Paper p="xl" shadow="sm" withBorder>
           <Title color="blue">Onboarding</Title>
@@ -190,9 +190,16 @@ const OnboardingPage = () => {
               rules={{
                 validate: {
                   valid: (value) =>
-                    `${value}`.length === 10 ? true : "Invalid mobile number",
+                    !value
+                      ? true
+                      : `${value}`.length === 10
+                      ? true
+                      : "Invalid mobile number",
+
                   startsWith: (value) =>
-                    `${value}`[0] === "9"
+                    !value
+                      ? true
+                      : `${value}`[0] === "9"
                       ? true
                       : "Mobile number must start with 9",
                 },
@@ -208,6 +215,7 @@ const OnboardingPage = () => {
                   max={9999999999}
                   onChange={onChange}
                   error={errors.user_phone_number?.message}
+                  mt="xs"
                 />
               )}
             />

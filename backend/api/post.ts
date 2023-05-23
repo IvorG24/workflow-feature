@@ -56,6 +56,7 @@ export const createUser = async (
     .select()
     .single();
   if (error) throw error;
+
   return data;
 };
 
