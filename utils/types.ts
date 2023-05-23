@@ -181,3 +181,7 @@ export type RequestType = {
     };
   }[];
 };
+
+export type UserWithSignatureType = UserTableRow & {
+  user_signature_attachment: AttachmentTableRow;
+};

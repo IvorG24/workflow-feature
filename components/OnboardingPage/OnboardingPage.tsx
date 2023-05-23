@@ -1,3 +1,4 @@
+import { checkUsername } from "@/backend/api/get";
 import { createUser, uploadImage } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { mobileNumberFormatter } from "@/utils/styling";
@@ -81,7 +82,6 @@ const OnboardingPage = () => {
         color: "green",
       });
     } catch (error) {
-      console.log(error);
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",
@@ -135,9 +135,15 @@ const OnboardingPage = () => {
                   message: "Username must be shorter than 100 characters",
                 },
                 validate: {
-                  notHaveUpperCase: (value) =>
-                    !/[A-Z]/.test(value) ||
-                    "Username must not have uppercase letter",
+                  validCharacters: (value) =>
+                    /^[a-z0-9_.]+$/.test(value) ||
+                    "Username can only contain letters, numbers, underscore, and period",
+                  alreadyUsed: async (value) => {
+                    const isAlreadyUsed = await checkUsername(supabaseClient, {
+                      username: value,
+                    });
+                    return isAlreadyUsed ? "Username is already used" : true;
+                  },
                 },
               })}
               error={errors.user_username?.message}
