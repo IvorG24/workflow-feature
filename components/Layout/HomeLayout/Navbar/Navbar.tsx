@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Button,
   Navbar as MantineNavbar,
   MediaQuery,
@@ -13,38 +12,22 @@ import { MouseEventHandler } from "react";
 const links = [
   {
     label: "Home",
-    icon: (
-      <ActionIcon variant="transparent" ml="xs">
-        <IconHome />
-      </ActionIcon>
-    ),
+    icon: <IconHome />,
     href: `/`,
   },
   {
     label: "Features",
-    icon: (
-      <ActionIcon variant="transparent" ml="xs">
-        <IconStar />
-      </ActionIcon>
-    ),
+    icon: <IconStar color="gray" />,
     href: `/`,
   },
   {
     label: "Pricing",
-    icon: (
-      <ActionIcon variant="transparent" ml="xs">
-        <IconCash />
-      </ActionIcon>
-    ),
+    icon: <IconCash color="gray" />,
     href: `/`,
   },
   {
     label: "Contact Us",
-    icon: (
-      <ActionIcon variant="transparent" ml="xs">
-        <IconPhone />
-      </ActionIcon>
-    ),
+    icon: <IconPhone color="gray" />,
     href: `/`,
   },
 ];

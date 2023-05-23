@@ -1,5 +1,5 @@
 import { useActiveApp } from "@/stores/useTeamStore";
-import { ActionIcon } from "@mantine/core";
+import { Box } from "@mantine/core";
 import {
   IconCirclePlus,
   IconMessage2,
@@ -18,9 +18,9 @@ const ReviewAppNavLink = () => {
     {
       label: `${capitalize(activeApp)}`,
       icon: (
-        <ActionIcon variant="transparent" ml="xs">
+        <Box ml="sm" py={5} mt={3}>
           <IconMessage2 {...defaultIconProps} />
-        </ActionIcon>
+        </Box>
       ),
       href: `/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`,
     },
@@ -30,18 +30,18 @@ const ReviewAppNavLink = () => {
     {
       label: "Manage Team",
       icon: (
-        <ActionIcon variant="transparent" ml="xs">
+        <Box ml="sm" py={5} mt={3}>
           <IconUsersGroup {...defaultIconProps} />
-        </ActionIcon>
+        </Box>
       ),
       href: `/team`,
     },
     {
       label: "Create Team",
       icon: (
-        <ActionIcon variant="transparent" ml="xs">
+        <Box ml="sm" py={5} mt={3}>
           <IconCirclePlus {...defaultIconProps} />
-        </ActionIcon>
+        </Box>
       ),
       href: `/team/create`,
     },
