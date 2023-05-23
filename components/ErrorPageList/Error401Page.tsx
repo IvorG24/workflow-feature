@@ -2,6 +2,7 @@ import {
   Button,
   Container,
   createStyles,
+  Flex,
   SimpleGrid,
   Text,
   Title,
@@ -60,14 +61,25 @@ const Error401Page = () => {
           <Text color="dimmed" size="lg">
             You do not have permission to access this page.
           </Text>
-          <Button
-            size="md"
-            mt="xl"
-            className={classes.control}
-            onClick={() => router.push("/")}
-          >
-            Get back to home page
-          </Button>
+          <Flex gap="xs">
+            <Button
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={() => router.back()}
+              variant="outline"
+            >
+              Get back
+            </Button>
+            <Button
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={() => router.push("/")}
+            >
+              Get to home page
+            </Button>
+          </Flex>
         </div>
       </SimpleGrid>
     </Container>

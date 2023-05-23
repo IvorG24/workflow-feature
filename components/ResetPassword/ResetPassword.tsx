@@ -27,7 +27,7 @@ const ResetPasswordPage = () => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
   const user = useUser();
-  console.log(user);
+
   const [isLoading, setIsLoading] = useState(false);
   const {
     register,
