@@ -100,3 +100,35 @@ export const getUserActiveTeamId = async (
 
   return data.user_active_team_id;
 };
+
+export const getUserWithSignature = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { userId } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("*, user_signature_attachment: user_signature_attachment_id(*)")
+    .eq("user_id", userId)
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+export const checkUsername = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    username: string;
+  }
+) => {
+  const { username } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("user_username")
+    .eq("user_username", username)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};
