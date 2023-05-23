@@ -41,6 +41,7 @@ CREATE TABLE user_table (
     user_active_app VARCHAR(4000) DEFAULT 'REQUEST' NOT NULL,
     user_avatar VARCHAR(4000),
 
+    user_signature_attachment_id UUID REFERENCES attachment_table(attachment_id),
     CHECK (user_username = LOWER(user_username))
 );
 CREATE TABLE team_table (
@@ -165,12 +166,10 @@ CREATE TABLE request_signer_table(
 CREATE TABLE attachment_table (
     attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
     attachment_name VARCHAR(4000) NOT NULL,
-    attachment_prefixed_name VARCHAR(4000) NOT NULL,
     attachment_value VARCHAR(4000) NOT NULL,
     attachment_bucket VARCHAR(4000) NOT NULL,
     attachment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     attachment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-    attachment_attachment_type VARCHAR(4000) NOT NULL
 );
 -- End: Attachments
 

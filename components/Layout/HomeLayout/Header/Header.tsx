@@ -1,13 +1,16 @@
-import { useActiveApp } from "@/stores/useTeamStore";
 import {
+  ActionIcon,
   Box,
   Burger,
+  Flex,
+  Group,
   Header as MantineHeader,
   MediaQuery,
-  Skeleton,
   UnstyledButton,
+  useMantineColorScheme,
   useMantineTheme,
 } from "@mantine/core";
+import { IconMoonStars, IconSun } from "@tabler/icons-react";
 import { lowerCase } from "lodash";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -20,12 +23,12 @@ type HeaderProps = {
 };
 
 const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();
-  const activeApp = useActiveApp();
   const router = useRouter();
 
   return (
-    <MantineHeader height={{ base: 50, md: 70 }} p="md">
+    <MantineHeader height={{ base: 50, md: 70 }} px="md">
       <Box
         sx={{
           display: "flex",
@@ -44,26 +47,27 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
           />
         </MediaQuery>
 
-        {!activeApp ? <Skeleton width={127} height={45} /> : null}
-        {activeApp ? (
-          <UnstyledButton
-            onClick={() =>
-              router.push(
-                `/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`
-              )
-            }
-          >
-            <Image
-              src={`/logo-${lowerCase(activeApp)}-${lowerCase(
-                theme.colorScheme
-              )}.svg`}
-              width={127}
-              height={45}
-              alt="Formsly Logo"
-            />
-          </UnstyledButton>
-        ) : null}
-        <HeaderMenu />
+        <Flex h="100%" w="100%" align="center" justify="space-between">
+          <Group>
+            <UnstyledButton onClick={() => router.push("/")}>
+              <Image
+                src={`/logo-request-${lowerCase(theme.colorScheme)}.svg`}
+                width={127}
+                height={45}
+                alt="Formsly Logo"
+              />
+            </UnstyledButton>
+            <ActionIcon variant="light" onClick={() => toggleColorScheme()}>
+              {colorScheme === "dark" ? (
+                <IconSun size={16} />
+              ) : (
+                <IconMoonStars size={16} />
+              )}
+            </ActionIcon>
+          </Group>
+
+          <HeaderMenu />
+        </Flex>
       </Box>
     </MantineHeader>
   );
