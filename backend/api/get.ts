@@ -1,5 +1,21 @@
 import { Database } from "@/utils/database";
+import { AttachmentBucketType } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
+
+// Get file url
+export async function getFileUrl(
+  supabaseClient: SupabaseClient<Database>,
+  params: { path: string; bucket: AttachmentBucketType }
+) {
+  const { path, bucket } = params;
+  const { data, error } = await supabaseClient.storage
+    .from(bucket)
+    .download(path);
+  if (error) throw error;
+
+  const url = URL.createObjectURL(data);
+  return url;
+}
 
 // Get server's current date
 export const getCurrentDate = async (

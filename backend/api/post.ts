@@ -1,6 +1,7 @@
 import { Database } from "@/utils/database";
 import {
   AttachmentBucketType,
+  AttachmentTableInsert,
   InvitationTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
@@ -9,6 +10,7 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
 import { v4 as uuidv4 } from "uuid";
+import { getFileUrl } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -162,4 +164,34 @@ export const resetPassword = async (
   const { data, error } = await supabaseClient.auth.updateUser({ password });
   if (error) throw error;
   return data;
+};
+
+// Create User
+export const createAttachment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    attachmentData: AttachmentTableInsert;
+    file: File;
+  }
+) => {
+  const { file, attachmentData } = params;
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from(attachmentData.attachment_bucket)
+    .upload(attachmentData.attachment_value, file, { upsert: true });
+  if (uploadError) throw uploadError;
+
+  const { data, error } = await supabaseClient
+    .from("attachment_table")
+    .upsert({ ...attachmentData })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  const url = await getFileUrl(supabaseClient, {
+    path: data.attachment_value,
+    bucket: attachmentData.attachment_bucket as AttachmentBucketType,
+  });
+  return { data, url };
 };

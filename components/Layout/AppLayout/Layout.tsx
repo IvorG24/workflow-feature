@@ -99,10 +99,12 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   useBeforeunload(async () => {
-    await updateUserActiveApp(supabaseClient, {
-      app: activeApp,
-      userId: TEMP_USER_ID,
-    });
+    if (activeApp) {
+      await updateUserActiveApp(supabaseClient, {
+        app: activeApp,
+        userId: TEMP_USER_ID,
+      });
+    }
   });
 
   return (
