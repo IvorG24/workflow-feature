@@ -13,6 +13,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { IconCalendar } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import RequestApproverList from "./RequestApproverList";
 
 type RequestCardProps = {
@@ -20,6 +21,7 @@ type RequestCardProps = {
 };
 
 const RequestCard = ({ request }: RequestCardProps) => {
+  const router = useRouter();
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
   const {
     request_form: form,
@@ -34,8 +36,16 @@ const RequestCard = ({ request }: RequestCardProps) => {
     day: "numeric",
   });
 
+  const handleRedirectToRequestPage = (requestId: string) => {
+    router.push(`/team-requests/requests/${requestId}`);
+    return;
+  };
+
   return (
-    <Card radius="lg">
+    <Card
+      onClick={() => handleRedirectToRequestPage(request.request_id)}
+      radius="lg"
+    >
       <Stack>
         <Group position="apart">
           <Group spacing={8}>

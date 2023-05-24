@@ -194,6 +194,8 @@ export type RequestWithResponseType = RequestTableRow & {
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_response: RequestResponseTableRow[];
+      } & {
+        field_options?: OptionTableRow[] | null;
       })[];
     })[];
   };

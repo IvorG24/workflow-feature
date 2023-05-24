@@ -162,7 +162,7 @@ export const getRequest = async (
   const { data, error } = await supabaseClient
     .from("request_table")
     .select(
-      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_approver, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_form: request_form_id(form_id, form_name, form_description, form_section: section_table(*, section_field: field_table(*, field_response: request_response_table(*)))))"
+      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_approver, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_form: request_form_id(form_id, form_name, form_description, form_section: section_table(*, section_field: field_table(*, field_options:option_table!option_field_id(*), field_response: request_response_table(*)))))"
     )
     .eq("request_id", requestId)
     .eq(
