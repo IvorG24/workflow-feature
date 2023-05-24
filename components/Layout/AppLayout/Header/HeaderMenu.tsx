@@ -5,7 +5,10 @@ import {
   useActiveTeam,
   useTeamActions,
 } from "@/stores/useTeamStore";
+import { useUserAvatar, useUserIntials } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { TEMP_USER_ID } from "@/utils/dummyData";
+import { getAvatarColor } from "@/utils/styling";
 import {
   ActionIcon,
   Avatar,
@@ -35,6 +38,8 @@ const HeaderMenu = () => {
 
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
+  const userAvatar = useUserAvatar();
+  const userInitials = useUserIntials();
   const { setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
 
@@ -78,7 +83,13 @@ const HeaderMenu = () => {
       <Menu shadow="md" width={200} position="bottom-end" withArrow>
         <Menu.Target data-cy="header-account-button">
           <ActionIcon>
-            <Avatar size={28}></Avatar>
+            <Avatar
+              size={28}
+              src={userAvatar}
+              color={getAvatarColor(Number(`${TEMP_USER_ID.charCodeAt(1)}`))}
+            >
+              {userInitials}
+            </Avatar>
           </ActionIcon>
         </Menu.Target>
 

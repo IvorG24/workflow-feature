@@ -1,3 +1,4 @@
+import { getAvatarColor } from "@/utils/styling";
 import {
   ActionIcon,
   Avatar,
@@ -8,6 +9,7 @@ import {
   Text,
 } from "@mantine/core";
 import { IconUpload, IconUser } from "@tabler/icons-react";
+import { upperCase } from "lodash";
 
 import { useRef, useState } from "react";
 
@@ -18,6 +20,8 @@ type Props = {
   size?: number;
   src?: string | null;
   disabled?: boolean;
+  initials?: string;
+  id?: string;
 };
 
 const useStyles = createStyles((theme) => ({
@@ -54,6 +58,8 @@ const UploadAvatar = ({
   size = 128,
   src = "",
   disabled = false,
+  initials = "",
+  id = "",
 }: Props) => {
   const { classes } = useStyles();
   const [error, setError] = useState("");
@@ -81,8 +87,13 @@ const UploadAvatar = ({
           size={size}
           className={classes.avatar}
           onClick={() => buttonRef.current?.click()}
+          color={id ? getAvatarColor(Number(`${id.charCodeAt(1)}`)) : "gray"}
         >
-          <IconUser color="gray" size={size / 2} />
+          {initials ? (
+            upperCase(initials)
+          ) : (
+            <IconUser color="gray" size={size / 2} />
+          )}
         </Avatar>
 
         <FileButton

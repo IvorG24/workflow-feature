@@ -1,11 +1,12 @@
 import { uploadImage } from "@/backend/api/post";
 import { udpateUser } from "@/backend/api/update";
+import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { now } from "lodash";
+import { capitalize } from "lodash";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import UploadSignature from "../UploadSignature/UploadSignature";
@@ -35,6 +36,8 @@ type Props = {
 
 const UserSettingsPage = ({ user }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
+
+  const { setUserAvatar, setUserInitials } = useUserActions();
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isUpdatingPersonalInfo, setIsUpdatingPersonalInfo] = useState(false);
@@ -67,12 +70,19 @@ const UserSettingsPage = ({ user }: Props) => {
           image: avatarFile,
           bucket: "USER_AVATARS",
         });
+        setUserAvatar(imageUrl);
       }
 
       await udpateUser(supabaseClient, {
         ...data,
-        user_avatar: imageUrl ? `${imageUrl}?date=${now()}` : data.user_avatar,
+        user_avatar: imageUrl ? imageUrl : data.user_avatar,
       });
+
+      setUserInitials(
+        `${capitalize(data.user_first_name[0])}${capitalize(
+          data.user_last_name[0]
+        )}`
+      );
 
       notifications.show({
         title: "Success!",

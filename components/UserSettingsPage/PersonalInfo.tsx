@@ -1,4 +1,6 @@
 import { checkUsername } from "@/backend/api/get";
+import { useUserIntials } from "@/stores/useUserStore";
+import { TEMP_USER_ID } from "@/utils/dummyData";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -34,6 +36,8 @@ const PersonalInfo = ({
 }: Props) => {
   const supabaseClient = useSupabaseClient();
 
+  const userInitials = useUserIntials();
+
   const {
     register,
     handleSubmit,
@@ -65,6 +69,8 @@ const PersonalInfo = ({
                 onError={(error: string) =>
                   setError("user_avatar", { message: error })
                 }
+                initials={userInitials}
+                id={TEMP_USER_ID}
               />
               <Button size="xs">View Public Profile</Button>
             </Flex>
@@ -210,7 +216,6 @@ const PersonalInfo = ({
 
             <Button
               type="submit"
-              w={120}
               size="xs"
               sx={{ alignSelf: "flex-end" }}
               disabled={!isDirty}

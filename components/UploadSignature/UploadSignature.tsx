@@ -87,7 +87,7 @@ const UploadSignature = ({
                   accept="image/png,image/jpeg"
                 >
                   {(props) => (
-                    <Button size="xs" w={80} {...props}>
+                    <Button size="xs" {...props}>
                       Upload
                     </Button>
                   )}
@@ -95,7 +95,6 @@ const UploadSignature = ({
                 <Button
                   size="xs"
                   variant="outline"
-                  w={80}
                   onClick={() => setOpenCanvas(true)}
                 >
                   Draw
@@ -116,7 +115,6 @@ const UploadSignature = ({
                 />
                 <Center>
                   <Button
-                    w={80}
                     size="xs"
                     variant="light"
                     onClick={() => sigCanvas.current?.clear()}

@@ -9,6 +9,7 @@ import { TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
@@ -28,7 +29,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
   setFormList;
-  const { setUserAvatar } = useUserActions();
+  const { setUserAvatar, setUserInitials } = useUserActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
@@ -45,8 +46,13 @@ const Layout = ({ children }: LayoutProps) => {
         // fetch the current active team of the user
         const user = await getUser(supabaseClient, { userId: TEMP_USER_ID });
 
-        // set user avatar
+        // set user avatar and initials
         setUserAvatar(user.user_avatar);
+        setUserInitials(
+          `${capitalize(user.user_first_name[0])}${capitalize(
+            user.user_last_name[0]
+          )}`
+        );
 
         const userActiveTeam = teamList.find(
           (team) => team.team_id === user.user_active_team_id
