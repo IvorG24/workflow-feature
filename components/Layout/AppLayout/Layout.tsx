@@ -75,6 +75,7 @@ const Layout = ({ children }: LayoutProps) => {
         const formList = await getFormList(supabaseClient, {
           teamId: activeTeamId,
           app: user.user_active_app,
+          isAll: false,
         });
 
         // set form list
@@ -106,6 +107,7 @@ const Layout = ({ children }: LayoutProps) => {
             theme.colorScheme === "dark"
               ? theme.colors.dark[8]
               : theme.colors.gray[0],
+          position: "relative",
         },
       }}
       navbarOffsetBreakpoint="sm"

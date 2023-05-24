@@ -27,10 +27,12 @@ import { Container, Title } from "@mantine/core";
 //     })
 //   )[0];
 
-//   const invitationData = await createTeamInvitation(supabaseClient, {
+// const invitationData = await createTeamInvitation(supabaseClient, [
+//   {
 //     invitation_from_team_member_id: ownerData.team_member_id,
 //     invitation_to_email: "testemail@gmail.com",
-//   });
+//   },
+// ]);
 
 //   setTeam(teamData);
 //   setMember(ownerData);
