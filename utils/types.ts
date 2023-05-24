@@ -101,7 +101,7 @@ export type UserTableInsert =
   Database["public"]["Tables"]["user_table"]["Insert"];
 export type UserTableUpdate =
   Database["public"]["Tables"]["user_table"]["Update"];
-// End: atabase Table Types
+// End: Database Table Types
 
 // Start: Database Enums
 export type AppType = "GENERAL" | "REQUEST" | "REVIEW";
@@ -224,4 +224,25 @@ export type RequestWithResponseType = RequestTableRow & {
       };
     };
   })[];
+};
+
+export type TeamWithTeamMemberType = {
+  team_id: string;
+  team_name: string;
+  team_is_request_signature_required: boolean;
+  team_logo: string;
+  team_user_id: string;
+  team_member: {
+    team_member_id: string;
+    team_member_role: MemberRoleType;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_email: string;
+      user_job_title: string;
+      user_phone_number: string;
+      user_avatar: string;
+    };
+  }[];
 };

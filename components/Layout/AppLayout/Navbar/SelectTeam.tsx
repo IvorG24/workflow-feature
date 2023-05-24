@@ -88,6 +88,7 @@ const SelectTeam = () => {
     const formList = await getFormList(supabaseClient, {
       teamId: `${value}`,
       app: activeApp,
+      isAll: false,
     });
     setFormList(formList);
     await router.push(
