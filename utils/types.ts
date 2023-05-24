@@ -156,7 +156,7 @@ export type RequestType = {
   request_date_created: string;
   request_status: FormStatusType;
   request_team_member: {
-    request_team_member: {
+    team_member_user: {
       user_first_name: string;
       user_last_name: string;
       user_avatar: string | null;
