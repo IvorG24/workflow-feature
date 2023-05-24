@@ -1,4 +1,4 @@
-import { udpateUser } from "@/backend/api/update";
+import { UserWithSignatureType } from "@/utils/types";
 import { Container, LoadingOverlay, Title } from "@mantine/core";
 import { FormProvider, useForm } from "react-hook-form";
 import ChangePassword from "./ChangePassword";
@@ -20,30 +20,17 @@ export type ChangePasswordForm = {
   confirm_password: string;
 };
 
-type UserProfile = {
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-};
-
-const tempUserProfile: UserProfile = {
-  email: "johndoe@gmail.com",
-  username: "johndoe",
-  firstName: "John",
-  lastName: "Doe",
-};
-
 type Props = {
   user: UserWithSignatureType;
 };
+
 const UserSettingsPage = ({ user }: Props) => {
   const personalInfoFormMethods = useForm<PersonalInfoForm>({
     defaultValues: {
-      user_email: tempUserProfile.email,
-      user_username: tempUserProfile.username,
-      user_first_name: tempUserProfile.firstName,
-      user_last_name: tempUserProfile.lastName,
+      user_email: user.user_email,
+      user_username: user.user_username,
+      user_first_name: user.user_first_name,
+      user_last_name: user.user_last_name,
     },
   });
 
@@ -57,22 +44,22 @@ const UserSettingsPage = ({ user }: Props) => {
     console.log(data);
   };
 
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  // const supabaseClient = createBrowserSupabaseClient<Database>();
 
-  const handleTestUpdateUser = async () => {
-    try {
-      await udpateUser(supabaseClient, {
-        user_id: TEMP_USER_ID,
-        user_first_name: "Updated First Name",
-        user_last_name: "Updated Last Name",
-        user_username: "updatedUserName",
-        user_phone_number: "9856895689",
-        user_job_title: "Updated Job Title",
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  };
+  // const handleTestUpdateUser = async () => {
+  //   try {
+  //     await udpateUser(supabaseClient, {
+  //       user_id: TEMP_USER_ID,
+  //       user_first_name: "Updated First Name",
+  //       user_last_name: "Updated Last Name",
+  //       user_username: "updatedUserName",
+  //       user_phone_number: "9856895689",
+  //       user_job_title: "Updated Job Title",
+  //     });
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // };
 
   return (
     <Container fluid>
