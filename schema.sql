@@ -52,8 +52,7 @@ CREATE TABLE user_table (
     user_active_app VARCHAR(4000) DEFAULT 'REQUEST' NOT NULL,
     user_avatar VARCHAR(4000),
 
-    user_signature_attachment_id UUID REFERENCES attachment_table(attachment_id),
-    CHECK (user_username = LOWER(user_username))
+    user_signature_attachment_id UUID REFERENCES attachment_table(attachment_id)
 );
 CREATE TABLE team_table (
   team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -152,6 +151,8 @@ CREATE TABLE option_table (
 -- Start: Request
 CREATE TABLE request_table(
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL

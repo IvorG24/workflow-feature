@@ -151,3 +151,37 @@ export type NotificationType =
 // End: Database Enums
 
 // Start: Joined Types
+export type RequestType = {
+  request_id: string;
+  request_date_created: string;
+  request_status: FormStatusType;
+  request_team_member: {
+    request_team_member: {
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string | null;
+    };
+  };
+  request_form: {
+    form_name: string;
+    form_description: string;
+  };
+  request_signer: {
+    request_signer_id: string;
+    request_signer_status: ReceiverStatusType;
+    request_signer: {
+      signer_is_primary_approver: boolean;
+      signer_team_member: {
+        team_member_user: {
+          user_first_name: string;
+          user_last_name: string;
+          user_avatar: string | null;
+        };
+      };
+    };
+  }[];
+};
+
+export type UserWithSignatureType = UserTableRow & {
+  user_signature_attachment: AttachmentTableRow;
+};

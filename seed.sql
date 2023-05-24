@@ -1,8 +1,8 @@
-INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name, user_email, user_job_title, user_phone_number) VALUES
-('8d01bf49-186f-49e2-8b13-b14220446622', 'johndoe', 'John', 'Doe', 'johndoe@gmail.com', 'Graphic Designer', '09586325781'),
-('9f4e60c0-6583-490f-a998-846a31d433d7', 'janedoe', 'Jane', 'Doe', 'janedoe@gmail.com', 'Sales Management', '09563268975'),
-('259e5eab-b47d-4918-8e6b-6dd4f8245a05', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '09571523487'),
-('cf8b637e-3d65-4c7d-9680-a7330c73faa7', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '09856325789');
+INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name, user_email, user_job_title, user_phone_number, user_active_team_id) VALUES
+('8d01bf49-186f-49e2-8b13-b14220446622', 'johndoe', 'John', 'Doe', 'johndoe@gmail.com', 'Graphic Designer', '9586325781', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('9f4e60c0-6583-490f-a998-846a31d433d7', 'janedoe', 'Jane', 'Doe', 'janedoe@gmail.com', 'Sales Management', '9563268975', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('259e5eab-b47d-4918-8e6b-6dd4f8245a05', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '9571523487', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('cf8b637e-3d65-4c7d-9680-a7330c73faa7', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO team_table (team_id, team_name, team_user_id) VALUES
 ('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '8d01bf49-186f-49e2-8b13-b14220446622'),

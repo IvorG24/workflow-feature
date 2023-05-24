@@ -1,3 +1,4 @@
+import { udpateUser } from "@/backend/api/update";
 import { Container, LoadingOverlay, Title } from "@mantine/core";
 import { FormProvider, useForm } from "react-hook-form";
 import ChangePassword from "./ChangePassword";
@@ -33,7 +34,10 @@ const tempUserProfile: UserProfile = {
   lastName: "Doe",
 };
 
-const UserSettingsPage = () => {
+type Props = {
+  user: UserWithSignatureType;
+};
+const UserSettingsPage = ({ user }: Props) => {
   const personalInfoFormMethods = useForm<PersonalInfoForm>({
     defaultValues: {
       user_email: tempUserProfile.email,
@@ -51,6 +55,23 @@ const UserSettingsPage = () => {
 
   const handleChangePassword = async (data: ChangePasswordForm) => {
     console.log(data);
+  };
+
+  const supabaseClient = createBrowserSupabaseClient<Database>();
+
+  const handleTestUpdateUser = async () => {
+    try {
+      await udpateUser(supabaseClient, {
+        user_id: TEMP_USER_ID,
+        user_first_name: "Updated First Name",
+        user_last_name: "Updated Last Name",
+        user_username: "updatedUserName",
+        user_phone_number: "9856895689",
+        user_job_title: "Updated Job Title",
+      });
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return (

@@ -2,6 +2,7 @@ import {
   Button,
   Container,
   createStyles,
+  Flex,
   SimpleGrid,
   Text,
   Title,
@@ -61,14 +62,25 @@ const Error500Page = () => {
             Sorry, something went wrong on our end. We are working to fix the
             problem and will be back up soon.
           </Text>
-          <Button
-            size="md"
-            mt="xl"
-            className={classes.control}
-            onClick={() => router.push("/")}
-          >
-            Get back to home page
-          </Button>
+          <Flex gap="xs">
+            <Button
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={() => router.back()}
+              variant="outline"
+            >
+              Get back
+            </Button>
+            <Button
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={() => router.push("/")}
+            >
+              Get to home page
+            </Button>
+          </Flex>
         </div>
       </SimpleGrid>
     </Container>
