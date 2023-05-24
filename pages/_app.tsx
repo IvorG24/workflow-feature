@@ -1,9 +1,12 @@
 import { Layouts, PageWithLayoutProps } from "@/components/Layout/LayoutList";
+import { RouterTransition } from "@/components/RouterTransition/RouterTransition";
+import { useIsLoading } from "@/stores/useLoadingStore";
 import { useActiveApp } from "@/stores/useTeamStore";
 
 import {
   ColorScheme,
   ColorSchemeProvider,
+  LoadingOverlay,
   MantineProvider,
 } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
@@ -19,6 +22,8 @@ export default function App(
   const { Component, pageProps } = props;
 
   const activeApp = useActiveApp();
+  const isLoading = useIsLoading();
+
   const [supabaseClient] = useState(() => createBrowserSupabaseClient());
   const [colorScheme, setColorScheme] = useState<ColorScheme>(
     props.colorScheme
@@ -49,12 +54,15 @@ export default function App(
           primaryColor: activeApp === "REVIEW" ? "green" : "blue",
         }}
       >
+        <RouterTransition />
+
         <Notifications />
         <SessionContextProvider
           supabaseClient={supabaseClient}
           initialSession={pageProps.initialSession}
         >
           <Layout>
+            <LoadingOverlay visible={isLoading} overlayBlur={2} />
             <Component {...pageProps} />
           </Layout>
         </SessionContextProvider>

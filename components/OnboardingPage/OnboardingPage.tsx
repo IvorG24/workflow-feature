@@ -1,63 +1,50 @@
-import { OnboardUserParams } from "@/pages/onboarding";
+import { checkUsername } from "@/backend/api/get";
+import { createUser, uploadImage } from "@/backend/api/post";
+import { useLoadingActions } from "@/stores/useLoadingStore";
+import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
   Center,
   Container,
   Divider,
+  NumberInput,
   Paper,
-  Stack,
   Text,
   TextInput,
   Title,
-  createStyles,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
-import { useFormContext } from "react-hook-form";
-import { parsePhoneNumber } from "react-phone-number-input";
-import PhoneInputWithCountry from "react-phone-number-input/react-hook-form";
-import "react-phone-number-input/style.css";
+import { Controller, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import UploadAvatar from "../UploadAvatar/UploadAvatar";
 
-type Props = {
-  onOnboardUser: (data: OnboardUserParams) => Promise<void>;
-  avatarFile: File | null;
-  onAvatarFileChange: (value: File | null) => void;
+type OnboardUserParams = {
+  user_id: string;
+  user_email: string;
+  user_first_name: string;
+  user_last_name: string;
+  user_username: string;
+  user_avatar: string;
+  user_phone_number: string;
+  user_job_title: string;
 };
 
-const useStyles = createStyles((theme) => ({
-  phone: {
-    padding: "14px !important",
-    border: `1px solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[1]
-    } !important`,
-    borderRadius: "4px !important",
-    height: "42px",
+type TempUser = { id: string; email: string };
 
-    "& input": {
-      border: "none",
-      marginLeft: 4,
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[0]
-          : theme.colors.gray[0],
-      background: "transparent",
+const tempUser: TempUser = {
+  id: uuidv4(),
+  email: "johndoe10232@gmail.com",
+};
 
-      "&:focus-visible": {
-        outline: "none !important",
-        boxShadow: "none !important",
-      },
-    },
-  },
-}));
+const OnboardingPage = () => {
+  const supabaseClient = useSupabaseClient();
+  const router = useRouter();
+  const { setIsLoading } = useLoadingActions();
 
-const OnboardingPage = ({
-  onOnboardUser,
-  avatarFile,
-  onAvatarFileChange,
-}: Props) => {
-  const { classes } = useStyles();
-
-  const [phone, setPhone] = useState<string>("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const {
     register,
@@ -65,7 +52,45 @@ const OnboardingPage = ({
     formState: { errors },
     setError,
     control,
-  } = useFormContext<OnboardUserParams>();
+  } = useForm<OnboardUserParams>({
+    defaultValues: { user_id: tempUser.id, user_email: tempUser.email },
+    reValidateMode: "onChange",
+  });
+
+  const handleOnboardUser = async (data: OnboardUserParams) => {
+    try {
+      setIsLoading(true);
+
+      let imageUrl = "";
+      if (avatarFile) {
+        imageUrl = await uploadImage(supabaseClient, {
+          id: data.user_id,
+          image: avatarFile,
+          bucket: "USER_AVATARS",
+        });
+      }
+
+      await createUser(supabaseClient, {
+        ...data,
+        user_avatar: imageUrl,
+      });
+
+      await router.push("/team/create");
+      notifications.show({
+        title: "Success!",
+        message: "Profile completed",
+        color: "green",
+      });
+    } catch (error) {
+      notifications.show({
+        title: "Something went wrong",
+        message: "Please try again later",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Container p={0} mih="100vh" fluid>
@@ -82,14 +107,14 @@ const OnboardingPage = ({
           <Center mt="lg">
             <UploadAvatar
               value={avatarFile}
-              onChange={onAvatarFileChange}
+              onChange={setAvatarFile}
               onError={(error: string) =>
                 setError("user_avatar", { message: error })
               }
             />
           </Center>
 
-          <form onSubmit={handleSubmit(onOnboardUser)}>
+          <form onSubmit={handleSubmit(handleOnboardUser)}>
             <TextInput
               label="Email"
               {...register("user_email")}
@@ -108,6 +133,17 @@ const OnboardingPage = ({
                 maxLength: {
                   value: 100,
                   message: "Username must be shorter than 100 characters",
+                },
+                validate: {
+                  validCharacters: (value) =>
+                    /^[a-z0-9_.]+$/.test(value) ||
+                    "Username can only contain letters, numbers, underscore, and period",
+                  alreadyUsed: async (value) => {
+                    const isAlreadyUsed = await checkUsername(supabaseClient, {
+                      username: value,
+                    });
+                    return isAlreadyUsed ? "Username is already used" : true;
+                  },
                 },
               })}
               error={errors.user_username?.message}
@@ -154,28 +190,41 @@ const OnboardingPage = ({
 
             <Divider mt={4} />
 
-            <Container m={0} p={0} fluid>
-              <Stack spacing={0} mt={16}>
-                <Text fw={600} fz={14}>
-                  Mobile number
-                </Text>
+            <Controller
+              control={control}
+              name="user_phone_number"
+              rules={{
+                validate: {
+                  valid: (value) =>
+                    !value
+                      ? true
+                      : `${value}`.length === 10
+                      ? true
+                      : "Invalid mobile number",
 
-                <PhoneInputWithCountry
-                  name="user_phone_number"
-                  aria-label="Phone"
-                  placeholder="Enter your phone number"
-                  international
-                  control={control}
-                  defaultCountry="PH"
-                  onChange={setPhone}
-                  defaultValue={parsePhoneNumber(phone || "", "PH")?.number}
-                  className={classes.phone}
+                  startsWith: (value) =>
+                    !value
+                      ? true
+                      : `${value}`[0] === "9"
+                      ? true
+                      : "Mobile number must start with 9",
+                },
+              }}
+              render={({ field: { onChange } }) => (
+                <NumberInput
+                  label="Mobile Number"
+                  maxLength={10}
+                  hideControls
+                  formatter={(value) => mobileNumberFormatter(value)}
+                  icon="+63"
+                  min={0}
+                  max={9999999999}
+                  onChange={onChange}
+                  error={errors.user_phone_number?.message}
+                  mt="xs"
                 />
-                <Text pt={2} fz={12} color="red">
-                  {errors.user_phone_number?.message}
-                </Text>
-              </Stack>
-            </Container>
+              )}
+            />
 
             <TextInput
               label="Job Title"

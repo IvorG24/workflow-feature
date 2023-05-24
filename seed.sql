@@ -1,8 +1,8 @@
-INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name, user_email, user_job_title, user_phone_number) VALUES
-('8d01bf49-186f-49e2-8b13-b14220446622', 'johndoe', 'John', 'Doe', 'johndoe@gmail.com', 'Graphic Designer', '09586325781'),
-('9f4e60c0-6583-490f-a998-846a31d433d7', 'janedoe', 'Jane', 'Doe', 'janedoe@gmail.com', 'Sales Management', '09563268975'),
-('259e5eab-b47d-4918-8e6b-6dd4f8245a05', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '09571523487'),
-('cf8b637e-3d65-4c7d-9680-a7330c73faa7', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '09856325789');
+INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name, user_email, user_job_title, user_phone_number, user_active_team_id) VALUES
+('8d01bf49-186f-49e2-8b13-b14220446622', 'johndoe', 'John', 'Doe', 'johndoe@gmail.com', 'Graphic Designer', '9586325781', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('9f4e60c0-6583-490f-a998-846a31d433d7', 'janedoe', 'Jane', 'Doe', 'janedoe@gmail.com', 'Sales Management', '9563268975', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('259e5eab-b47d-4918-8e6b-6dd4f8245a05', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '9571523487', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('cf8b637e-3d65-4c7d-9680-a7330c73faa7', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO team_table (team_id, team_name, team_user_id) VALUES
 ('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '8d01bf49-186f-49e2-8b13-b14220446622'),
@@ -25,9 +25,9 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
 ('2bba9d85-90ed-4cec-a97a-159e482f4f65', 'All fields Section 2', 2, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
 ('e36be46d-4eec-4d5a-bb71-fd2d539c599e', 'All fields Section 3', 3, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
-('5da6140a-bec6-4afa-aeec-2fcb84c17669', 'Duplicatable Section 1', 1, false, '337658f1-0777-45f2-853f-b6f20551712e'),
+('5da6140a-bec6-4afa-aeec-2fcb84c17669', 'Duplicatable Section 1', 1, true, '337658f1-0777-45f2-853f-b6f20551712e'),
 ('8ef2c6a0-797d-4e36-8246-cfa0f783afb5', 'Normal Section 2', 2, false, '337658f1-0777-45f2-853f-b6f20551712e'),
-('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, false, '337658f1-0777-45f2-853f-b6f20551712e');
+('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, true, '337658f1-0777-45f2-853f-b6f20551712e');
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id) VALUES
 ('9696114b-9884-4ecf-8000-ab30ecde85aa', 'Text field', 'TEXT', 1, '80017528-ddb2-419d-92be-cdfa867b8f42'),

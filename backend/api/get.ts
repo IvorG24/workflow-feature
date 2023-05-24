@@ -1,6 +1,7 @@
 import { Database } from "@/utils/database";
 import { SupabaseClient } from "@supabase/supabase-js";
 
+// Get server's current date
 export const getCurrentDate = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -13,6 +14,7 @@ export const getCurrentDate = async (
   return new Date(data);
 };
 
+// Get all the user's team
 export const getAllTeamOfUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -23,6 +25,7 @@ export const getAllTeamOfUser = async (
   const { data, error } = await supabaseClient
     .from("team_member_table")
     .select("*, team:team_table(*)")
+    .eq("team_member_disabled", false)
     .eq("team_member_user_id", userId);
   if (error) throw error;
   const teamList = data.map((teamMember) => {
@@ -32,6 +35,7 @@ export const getAllTeamOfUser = async (
   return teamList;
 };
 
+// Get user
 export const getUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -42,29 +46,40 @@ export const getUser = async (
   const { data, error } = await supabaseClient
     .from("user_table")
     .select("*")
+    .eq("user_is_disabled", false)
     .eq("user_id", userId)
     .single();
   if (error) throw error;
   return data;
 };
 
+// Get form list
 export const getFormList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
     app: string;
+    isAll: boolean;
   }
 ) => {
-  const { teamId, app } = params;
-  const { data, error } = await supabaseClient
+  const { teamId, app, isAll } = params;
+  let query = supabaseClient
     .from("form_table")
     .select("*, form_team_member:form_team_member_id!inner(*)")
     .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_is_disabled", false)
     .eq("form_app", app);
+
+  if (!isAll) {
+    query = query.eq("form_is_hidden", false);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data;
 };
 
+// Get request list
 export const getRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -83,6 +98,7 @@ export const getRequestList = async (
   return data;
 };
 
+// Get user's active team id
 export const getUserActiveTeamId = async (
   supabaseClient: SupabaseClient<Database>,
   params: { userId: string }
@@ -99,4 +115,108 @@ export const getUserActiveTeamId = async (
   if (!data?.user_active_team_id) throw new Error("Active team not found.");
 
   return data.user_active_team_id;
+};
+
+// Get user with signature attachment
+export const getUserWithSignature = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { userId } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("*, user_signature_attachment: user_signature_attachment_id(*)")
+    .eq("user_id", userId)
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Check username if it already exists
+export const checkUsername = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    username: string;
+  }
+) => {
+  const { username } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("user_username")
+    .eq("user_username", username)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};
+
+// Get specific request
+export const getRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select(
+      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_approver, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_form: request_form_id(form_id, form_name, form_description, form_section: section_table(*, section_field: field_table(*, field_response: request_response_table(*)))))"
+    )
+    .eq("request_id", requestId)
+    .eq(
+      "request_form.form_section.section_field.field_response.request_response_request_id",
+      requestId
+    )
+    .single();
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Get specific team
+export const getTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_table")
+    .select(
+      "team_id, team_name, team_is_request_signature_required, team_logo, team_user_id, team_member: team_member_table(team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_email, user_job_title, user_phone_number, user_avatar))"
+    )
+    .eq("team_id", teamId)
+    .eq("team_is_disabled", false)
+    .eq("team_member.team_member_disabled", false)
+    .eq("team_member.team_member_user.user_is_disabled", false)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Get user's team member id
+export const getUserTeamMemberId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    teamId: string;
+  }
+) => {
+  const { userId, teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select("team_member_id")
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.team_member_id;
 };

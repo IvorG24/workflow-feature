@@ -101,7 +101,7 @@ export type UserTableInsert =
   Database["public"]["Tables"]["user_table"]["Insert"];
 export type UserTableUpdate =
   Database["public"]["Tables"]["user_table"]["Update"];
-// End: atabase Table Types
+// End: Database Table Types
 
 // Start: Database Enums
 export type AppType = "GENERAL" | "REQUEST" | "REVIEW";
@@ -178,6 +178,71 @@ export type RequestType = {
           user_avatar: string | null;
         };
       };
+    };
+  }[];
+};
+
+export type UserWithSignatureType = UserTableRow & {
+  user_signature_attachment: AttachmentTableRow;
+};
+
+export type RequestWithResponseType = RequestTableRow & {
+  request_form: {
+    formId: string;
+    form_name: string;
+    form_description: string;
+    form_section: (SectionTableRow & {
+      section_field: (FieldTableRow & {
+        field_response: RequestResponseTableRow[];
+      })[];
+    })[];
+  };
+} & {
+  request_team_member: {
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_username: string;
+      user_avatar: string;
+    };
+  };
+} & {
+  request_signer: (RequestSignerTableRow & {
+    request_signer_id: string;
+    request_signer_status: string;
+    request_signer_signer: {
+      signer_id: string;
+      signer_is_primary_approver: boolean;
+      signer_action: string;
+      signer_order: number;
+      signer_team_member: {
+        team_member_user: {
+          user_first_name: string;
+          user_last_name: string;
+        };
+      };
+    };
+  })[];
+};
+
+export type TeamWithTeamMemberType = {
+  team_id: string;
+  team_name: string;
+  team_is_request_signature_required: boolean;
+  team_logo: string;
+  team_user_id: string;
+  team_member: {
+    team_member_id: string;
+    team_member_role: MemberRoleType;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_email: string;
+      user_job_title: string;
+      user_phone_number: string;
+      user_avatar: string;
     };
   }[];
 };

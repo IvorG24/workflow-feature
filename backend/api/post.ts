@@ -8,6 +8,7 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
+import { v4 as uuidv4 } from "uuid";
 
 // Upload Image
 export const uploadImage = async (
@@ -42,7 +43,7 @@ export const uploadImage = async (
   // get public url
   const { data } = supabaseClient.storage.from(bucket).getPublicUrl(`${id}`);
 
-  return data.publicUrl;
+  return `${data.publicUrl}?id=${uuidv4()}`;
 };
 
 // Create User
@@ -56,6 +57,7 @@ export const createUser = async (
     .select()
     .single();
   if (error) throw error;
+
   return data;
 };
 
@@ -86,10 +88,10 @@ export const createTeamMember = async (
   return data;
 };
 
-// Create Team Invitation
+// Create Team Invitation/s
 export const createTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
-  params: InvitationTableInsert
+  params: InvitationTableInsert[]
 ) => {
   const { data, error } = await supabaseClient
     .from("invitation_table")
@@ -153,7 +155,6 @@ export const sendResetPasswordEmail = async (
 };
 
 // Reset Password
-
 export const resetPassword = async (
   supabaseClient: SupabaseClient<Database>,
   password: string

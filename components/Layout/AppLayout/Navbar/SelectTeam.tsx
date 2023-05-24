@@ -1,6 +1,7 @@
 import { getFormList } from "@/backend/api/get";
 import { updateUserActiveTeam } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import {
   useActiveApp,
   useActiveTeam,
@@ -53,6 +54,7 @@ const SelectTeam = () => {
   const activeTeam = useActiveTeam();
   const { setActiveTeam } = useTeamActions();
   const { setFormList } = useFormActions();
+  const { setIsLoading } = useLoadingActions();
 
   const formatTeamOptions = () => {
     const teamOptions = teamList.map((team) => {
@@ -66,25 +68,33 @@ const SelectTeam = () => {
   };
 
   const handleOnChange = async (value: string | null) => {
-    const activeTeam = teamList.find((team) => {
+    if (value === activeTeam?.team_id) {
+      return;
+    }
+    setIsLoading(true);
+    const newActiveTeam = teamList.find((team) => {
       if (team.team_id === value) {
         return team;
       }
     });
-    if (activeTeam) {
-      setActiveTeam(activeTeam);
+    if (newActiveTeam) {
+      setActiveTeam(newActiveTeam);
       await updateUserActiveTeam(supabaseClient, {
         userId: TEMP_USER_ID,
-        teamId: activeTeam?.team_id,
+        teamId: newActiveTeam.team_id,
       });
     }
 
     const formList = await getFormList(supabaseClient, {
       teamId: `${value}`,
       app: activeApp,
+      isAll: false,
     });
     setFormList(formList);
-    router.push(`/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`);
+    await router.push(
+      `/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`
+    );
+    setIsLoading(false);
   };
 
   if (isEmpty(activeTeam)) {
@@ -103,30 +113,34 @@ const SelectTeam = () => {
   }
 
   return (
-    <Select
-      label={
-        <Text size="xs" weight={400}>
-          Switch Team
-        </Text>
-      }
-      itemComponent={SelectItem}
-      data={formatTeamOptions()}
-      value={activeTeam.team_id}
-      onChange={handleOnChange}
-      searchable
-      maxDropdownHeight={400}
-      nothingFound="Team not found"
-      icon={
-        <Avatar
-          size="sm"
-          src={activeTeam.team_logo}
-          color={getAvatarColor(Number(`${activeTeam.team_id.charCodeAt(1)}`))}
-        >
-          {startCase(activeTeam.team_name[0])}
-          {startCase(activeTeam.team_name[1])}
-        </Avatar>
-      }
-    />
+    <>
+      <Select
+        label={
+          <Text size="xs" weight={400}>
+            Switch Team
+          </Text>
+        }
+        itemComponent={SelectItem}
+        data={formatTeamOptions()}
+        value={activeTeam.team_id}
+        onChange={handleOnChange}
+        searchable
+        maxDropdownHeight={400}
+        nothingFound="Team not found"
+        icon={
+          <Avatar
+            size="sm"
+            src={activeTeam.team_logo}
+            color={getAvatarColor(
+              Number(`${activeTeam.team_id.charCodeAt(1)}`)
+            )}
+          >
+            {startCase(activeTeam.team_name[0])}
+            {startCase(activeTeam.team_name[1])}
+          </Avatar>
+        }
+      />
+    </>
   );
 };
 

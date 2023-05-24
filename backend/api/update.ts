@@ -1,5 +1,5 @@
 import { Database } from "@/utils/database";
-import { TeamTableUpdate } from "@/utils/types";
+import { TeamTableUpdate, UserTableUpdate } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // Update Team
@@ -46,5 +46,17 @@ export const updateUserActiveTeam = async (
     .from("user_table")
     .update({ user_active_team_id: teamId })
     .eq("user_id", userId);
+  if (error) throw error;
+};
+
+// Update User
+export const udpateUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserTableUpdate
+) => {
+  const { error } = await supabaseClient
+    .from("user_table")
+    .update(params)
+    .eq("user_id", params.user_id);
   if (error) throw error;
 };

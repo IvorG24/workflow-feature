@@ -2,6 +2,7 @@ import { getAllTeamOfUser, getFormList, getUser } from "@/backend/api/get";
 import { updateUserActiveApp } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
+import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { TeamTableRow } from "@/utils/types";
@@ -27,6 +28,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
   setFormList;
+  const { setUserAvatar } = useUserActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
@@ -42,6 +44,10 @@ const Layout = ({ children }: LayoutProps) => {
 
         // fetch the current active team of the user
         const user = await getUser(supabaseClient, { userId: TEMP_USER_ID });
+
+        // set user avatar
+        setUserAvatar(user.user_avatar);
+
         const userActiveTeam = teamList.find(
           (team) => team.team_id === user.user_active_team_id
         );
@@ -69,6 +75,7 @@ const Layout = ({ children }: LayoutProps) => {
         const formList = await getFormList(supabaseClient, {
           teamId: activeTeamId,
           app: user.user_active_app,
+          isAll: false,
         });
 
         // set form list
@@ -78,7 +85,6 @@ const Layout = ({ children }: LayoutProps) => {
           title: "Error!",
           message: "Unable to fetch team",
           color: "red",
-          withBorder: true,
         });
         router.push("/500");
       }
@@ -101,6 +107,7 @@ const Layout = ({ children }: LayoutProps) => {
             theme.colorScheme === "dark"
               ? theme.colors.dark[8]
               : theme.colors.gray[0],
+          position: "relative",
         },
       }}
       navbarOffsetBreakpoint="sm"
