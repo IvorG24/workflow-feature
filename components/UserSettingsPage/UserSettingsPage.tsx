@@ -8,6 +8,7 @@ import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { now } from "lodash";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import UploadSignature from "../UploadSignature/UploadSignature";
 import ChangePassword from "./ChangePassword";
 import PersonalInfo from "./PersonalInfo";
 
@@ -24,7 +25,7 @@ export type PersonalInfoForm = {
 
 export type ChangePasswordForm = {
   old_password: string;
-  new_password: string;
+  password: string;
   confirm_password: string;
 };
 
@@ -37,6 +38,8 @@ const UserSettingsPage = ({ user }: Props) => {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isUpdatingPersonalInfo, setIsUpdatingPersonalInfo] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isUpdatingSignature, setIsUpdatingSignature] = useState(false);
 
   const personalInfoFormMethods = useForm<PersonalInfoForm>({
     defaultValues: {
@@ -88,7 +91,49 @@ const UserSettingsPage = ({ user }: Props) => {
   };
 
   const handleChangePassword = async (data: ChangePasswordForm) => {
-    console.log(data);
+    try {
+      setIsUpdatingPassword(true);
+
+      console.log(data);
+      // todo: check old password then change new password
+
+      notifications.show({
+        title: "Success!",
+        message: "Password changed.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        title: "Something went wrong",
+        message: "Please try again later",
+        color: "red",
+      });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleUploadSignature = async (signature: File) => {
+    try {
+      setIsUpdatingSignature(true);
+
+      console.log(signature);
+      // todo: upload user signature
+
+      notifications.show({
+        title: "Success!",
+        message: "Signature updated.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        title: "Something went wrong",
+        message: "Please try again later",
+        color: "red",
+      });
+    } finally {
+      setIsUpdatingSignature(false);
+    }
   };
 
   return (
@@ -105,8 +150,17 @@ const UserSettingsPage = ({ user }: Props) => {
       </FormProvider>
 
       <FormProvider {...changePasswordFormMethods}>
-        <ChangePassword onChangePassword={handleChangePassword} />
+        <ChangePassword
+          onChangePassword={handleChangePassword}
+          isUpdatingPassword={isUpdatingPassword}
+        />
       </FormProvider>
+
+      <UploadSignature
+        onUploadSignature={handleUploadSignature}
+        user={user}
+        isUpdatingSignature={isUpdatingSignature}
+      />
     </Container>
   );
 };

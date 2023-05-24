@@ -2,28 +2,36 @@ import {
   Button,
   Container,
   Divider,
+  LoadingOverlay,
   Paper,
   PasswordInput,
   Stack,
   Text,
 } from "@mantine/core";
 import { useFormContext } from "react-hook-form";
+import PasswordInputWithStrengthMeter from "../SignUpPage/PasswordInputWithStrengthMeter";
 import { ChangePasswordForm } from "./UserSettingsPage";
 
 type Props = {
   onChangePassword: (data: ChangePasswordForm) => void;
+  isUpdatingPassword: boolean;
 };
 
-const ChangePassword = ({ onChangePassword }: Props) => {
+const ChangePassword = ({ onChangePassword, isUpdatingPassword }: Props) => {
   const {
     register,
     handleSubmit,
     getValues,
-    formState: { errors, isValid },
+    formState: { errors, isDirty },
   } = useFormContext<ChangePasswordForm>();
 
   return (
-    <Container p={0} mt="xl" fluid>
+    <Container p={0} mt="xl" pos="relative" fluid>
+      <LoadingOverlay
+        visible={isUpdatingPassword}
+        overlayBlur={2}
+        transitionDuration={500}
+      />
       <Paper p="lg" shadow="xs">
         <form onSubmit={handleSubmit(onChangePassword)}>
           <Stack>
@@ -33,37 +41,28 @@ const ChangePassword = ({ onChangePassword }: Props) => {
 
             <PasswordInput
               {...register("old_password", {
-                required: true,
-                minLength: 6,
+                required: "Old password is required",
+                minLength: {
+                  value: 6,
+                  message: "Password must have atleast 6 characters.",
+                },
               })}
               error={errors.old_password?.message}
               placeholder="Old Password"
               label="Old Password"
-              withAsterisk
             />
 
-            <PasswordInput
-              {...register("new_password", {
-                required: true,
-                minLength: 6,
-              })}
-              error={errors.new_password?.message}
-              placeholder="New Password"
-              label="New Password"
-              withAsterisk
-            />
+            <PasswordInputWithStrengthMeter label="New Password" />
 
             <PasswordInput
               {...register("confirm_password", {
-                required: true,
+                required: "Confirm password is required",
                 validate: (value: string) =>
-                  value === getValues("new_password") ||
-                  "Password do not match",
+                  value === getValues("password") || "Password do not match",
               })}
               error={errors.confirm_password?.message}
               placeholder="Confirm Password"
               label="Confirm Password"
-              withAsterisk
             />
 
             <Button
@@ -71,7 +70,7 @@ const ChangePassword = ({ onChangePassword }: Props) => {
               w={125}
               size="xs"
               sx={{ alignSelf: "flex-end" }}
-              disabled={!isValid}
+              disabled={!isDirty}
             >
               Update Password
             </Button>
