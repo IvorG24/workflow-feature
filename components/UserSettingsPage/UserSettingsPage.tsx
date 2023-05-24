@@ -1,12 +1,15 @@
-import { uploadImage } from "@/backend/api/post";
+import { getFileUrl } from "@/backend/api/get";
+import { createAttachment, uploadImage } from "@/backend/api/post";
 import { udpateUser } from "@/backend/api/update";
+import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { TEMP_USER_ID } from "@/utils/dummyData";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { now } from "lodash";
-import { useState } from "react";
+import { capitalize } from "lodash";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import UploadSignature from "../UploadSignature/UploadSignature";
 import ChangePassword from "./ChangePassword";
@@ -36,10 +39,36 @@ type Props = {
 const UserSettingsPage = ({ user }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
+  const { setUserAvatar, setUserInitials } = useUserActions();
+
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isUpdatingPersonalInfo, setIsUpdatingPersonalInfo] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const [openCanvas, setOpenCanvas] = useState(false);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [signatureUrl, setSignatureUrl] = useState("");
   const [isUpdatingSignature, setIsUpdatingSignature] = useState(false);
+
+  useEffect(() => {
+    const getUserSignatureUrl = async () => {
+      try {
+        setIsUpdatingSignature(true);
+        const url = await getFileUrl(supabaseClient, {
+          path: user.user_signature_attachment.attachment_value,
+          bucket: "USER_SIGNATURES",
+        });
+
+        setSignatureUrl(url);
+        setIsUpdatingSignature(false);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    if (user.user_signature_attachment) {
+      getUserSignatureUrl();
+    }
+  }, [user]);
 
   const personalInfoFormMethods = useForm<PersonalInfoForm>({
     defaultValues: {
@@ -67,12 +96,19 @@ const UserSettingsPage = ({ user }: Props) => {
           image: avatarFile,
           bucket: "USER_AVATARS",
         });
+        setUserAvatar(imageUrl);
       }
 
       await udpateUser(supabaseClient, {
         ...data,
-        user_avatar: imageUrl ? `${imageUrl}?date=${now()}` : data.user_avatar,
+        user_avatar: imageUrl ? imageUrl : data.user_avatar,
       });
+
+      setUserInitials(
+        `${capitalize(data.user_first_name[0])}${capitalize(
+          data.user_last_name[0]
+        )}`
+      );
 
       notifications.show({
         title: "Success!",
@@ -117,21 +153,41 @@ const UserSettingsPage = ({ user }: Props) => {
     try {
       setIsUpdatingSignature(true);
 
-      console.log(signature);
-      // todo: upload user signature
+      const { data: signatureAttachment, url } = await createAttachment(
+        supabaseClient,
+        {
+          attachmentData: {
+            attachment_name: signature.name,
+            attachment_bucket: "USER_SIGNATURES",
+            attachment_value: TEMP_USER_ID,
+            attachment_id: user.user_signature_attachment_id
+              ? user.user_signature_attachment_id
+              : undefined,
+          },
+          file: signature,
+        }
+      );
 
+      await udpateUser(supabaseClient, {
+        user_id: TEMP_USER_ID,
+        user_signature_attachment_id: signatureAttachment.attachment_id,
+      });
+
+      setSignatureUrl(url);
       notifications.show({
         title: "Success!",
         message: "Signature updated.",
         color: "green",
       });
     } catch (e) {
+      console.log(e);
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",
         color: "red",
       });
     } finally {
+      setOpenCanvas(false);
       setIsUpdatingSignature(false);
     }
   };
@@ -160,6 +216,11 @@ const UserSettingsPage = ({ user }: Props) => {
         onUploadSignature={handleUploadSignature}
         user={user}
         isUpdatingSignature={isUpdatingSignature}
+        openCanvas={openCanvas}
+        setOpenCanvas={setOpenCanvas}
+        signatureFile={signatureFile}
+        setSignatureFile={setSignatureFile}
+        signatureUrl={signatureUrl}
       />
     </Container>
   );
