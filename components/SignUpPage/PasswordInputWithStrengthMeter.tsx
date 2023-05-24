@@ -35,7 +35,7 @@ const requirements = [
 ];
 
 function getStrength(password: string) {
-  let multiplier = password.length > 5 ? 0 : 1;
+  let multiplier = password?.length > 5 ? 0 : 1;
 
   requirements.forEach((requirement) => {
     if (!requirement.re.test(password)) {
@@ -46,7 +46,11 @@ function getStrength(password: string) {
   return Math.max(100 - (100 / (requirements.length + 1)) * multiplier, 10);
 }
 
-const PasswordInputWithStrengthMeter = () => {
+const PasswordInputWithStrengthMeter = ({
+  label = "Password",
+}: {
+  label?: string;
+}) => {
   const {
     register,
     formState: { errors },
@@ -78,7 +82,7 @@ const PasswordInputWithStrengthMeter = () => {
             onBlurCapture={() => setPopoverOpened(false)}
           >
             <PasswordInput
-              label="Password"
+              label={label}
               placeholder="Enter your password"
               error={errors.password?.message}
               {...register("password", {
@@ -107,7 +111,7 @@ const PasswordInputWithStrengthMeter = () => {
           <Progress color={color} value={strength} size={5} mb="xs" />
           <PasswordRequirement
             label="Includes at least 6 characters"
-            meets={passwordValue.length > 5}
+            meets={passwordValue?.length > 5}
           />
           {checks}
         </Popover.Dropdown>
