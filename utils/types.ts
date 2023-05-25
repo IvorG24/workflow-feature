@@ -246,3 +246,7 @@ export type TeamWithTeamMemberType = {
     };
   }[];
 };
+
+export type FormWithTeamMember = FormTableRow & {
+  form_team_member: TeamMemberTableRow[];
+};
