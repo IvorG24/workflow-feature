@@ -13,7 +13,7 @@ import {
   Paper,
   Text,
 } from "@mantine/core";
-import { useRef, useState } from "react";
+import { Dispatch, SetStateAction, useRef } from "react";
 import {
   default as ReactSignatureCanvas,
   default as SignatureCanvas,
@@ -23,17 +23,24 @@ type Props = {
   onUploadSignature: (signature: File) => void;
   user: UserWithSignatureType;
   isUpdatingSignature: boolean;
+  openCanvas: boolean;
+  setOpenCanvas: Dispatch<SetStateAction<boolean>>;
+  signatureFile: File | null;
+  setSignatureFile: Dispatch<SetStateAction<File | null>>;
+  signatureUrl: string;
 };
 
 const UploadSignature = ({
   onUploadSignature,
   user,
   isUpdatingSignature,
+  openCanvas,
+  setOpenCanvas,
+  signatureFile,
+  setSignatureFile,
+  signatureUrl,
 }: Props) => {
-  const signatureFilepath = user?.user_signature_attachment?.attachment_value;
-  const [openCanvas, setOpenCanvas] = useState(false);
   const sigCanvas = useRef<ReactSignatureCanvas>(null);
-  const [signatureFile, setSignatureFile] = useState<File | null>(null);
 
   const handleOnEndDrawSignature = async () => {
     const canvas = sigCanvas.current?.getTrimmedCanvas();
@@ -70,8 +77,7 @@ const UploadSignature = ({
                 width={200}
                 height={200}
                 radius="md"
-                // todo: change into user signature path
-                src={signatureFilepath ? signatureFilepath : null}
+                src={signatureUrl}
                 alt="User signature"
                 fit="contain"
                 withPlaceholder
@@ -87,7 +93,7 @@ const UploadSignature = ({
                   accept="image/png,image/jpeg"
                 >
                   {(props) => (
-                    <Button size="xs" w={80} {...props}>
+                    <Button size="xs" {...props}>
                       Upload
                     </Button>
                   )}
@@ -95,7 +101,6 @@ const UploadSignature = ({
                 <Button
                   size="xs"
                   variant="outline"
-                  w={80}
                   onClick={() => setOpenCanvas(true)}
                 >
                   Draw
@@ -116,7 +121,6 @@ const UploadSignature = ({
                 />
                 <Center>
                   <Button
-                    w={80}
                     size="xs"
                     variant="light"
                     onClick={() => sigCanvas.current?.clear()}
@@ -131,7 +135,7 @@ const UploadSignature = ({
                   size="xs"
                   onClick={() => {
                     onUploadSignature(signatureFile as File);
-                    setOpenCanvas(false);
+                    
                   }}
                 >
                   Done

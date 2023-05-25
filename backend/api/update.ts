@@ -60,3 +60,4 @@ export const udpateUser = async (
     .eq("user_id", params.user_id);
   if (error) throw error;
 };
+
