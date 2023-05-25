@@ -1,4 +1,4 @@
-import { RequestType } from "@/utils/types";
+import { RequestType, TeamMemberWithUserType } from "@/utils/types";
 import {
   Box,
   Button,
@@ -18,6 +18,8 @@ import RequestCard from "./RequestCard/RequestCard";
 
 type Props = {
   requestList: RequestType[];
+  requestListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
 };
 
 const RequestListPage = ({ requestList }: Props) => {

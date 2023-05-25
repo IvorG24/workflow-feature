@@ -179,8 +179,7 @@ const UserSettingsPage = ({ user }: Props) => {
         message: "Signature updated.",
         color: "green",
       });
-    } catch (e) {
-      console.log(e);
+    } catch {
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",

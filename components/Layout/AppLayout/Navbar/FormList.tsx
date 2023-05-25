@@ -2,6 +2,7 @@ import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp } from "@/stores/useTeamStore";
 import { FormTableRow } from "@/utils/types";
 import {
+  Anchor,
   Autocomplete,
   Box,
   Button,
@@ -42,7 +43,11 @@ const FormList = () => {
     <Box h="fit-content">
       <Group mb="sm" position="apart">
         <Text mb={4} size="xs" weight={400}>
-          Forms {`(${forms.length})`}
+          <Anchor
+            onClick={() => router.push(`/team-${lowerCase(activeApp)}s/forms`)}
+          >
+            View All ({forms.length})
+          </Anchor>
         </Text>
         <Button
           variant="light"
