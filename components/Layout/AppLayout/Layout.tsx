@@ -81,7 +81,6 @@ const Layout = ({ children }: LayoutProps) => {
         const formList = await getFormList(supabaseClient, {
           teamId: activeTeamId,
           app: user.user_active_app,
-          isAll: false,
         });
 
         // set form list

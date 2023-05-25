@@ -61,3 +61,19 @@ export const udpateUser = async (
   if (error) throw error;
 };
 
+// Update form visibility
+export const updateFormVisibility = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    isHidden: boolean;
+  }
+) => {
+  const { formId, isHidden } = params;
+
+  const { error } = await supabaseClient
+    .from("form_table")
+    .update({ form_is_hidden: isHidden })
+    .eq("form_id", formId);
+  if (error) throw error;
+};
