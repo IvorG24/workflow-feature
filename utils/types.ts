@@ -246,3 +246,15 @@ export type TeamWithTeamMemberType = {
     };
   }[];
 };
+
+export type SectionWithField = {
+  field_table: FieldTableRow[];
+} & SectionTableRow;
+
+export type SectionWithFieldResponse = {
+  field_table: FieldWithResponse[];
+} & SectionTableRow;
+
+export type FieldWithResponse = {
+  response_table: RequestResponseTableRow;
+} & FieldTableRow;
