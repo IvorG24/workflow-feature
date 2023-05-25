@@ -247,6 +247,20 @@ export type TeamWithTeamMemberType = {
   }[];
 };
 
+export type FormWithOwnerType = FormTableRow & {
+  form_team_member: TeamMemberTableRow;
+};
+
+export type TeamMemberWithUserType = {
+  team_member_id: string;
+  team_member_role: string;
+  team_member_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+  };
+};
+
 export type FormWithTeamMember = FormTableRow & {
   form_team_member: TeamMemberTableRow[];
 };

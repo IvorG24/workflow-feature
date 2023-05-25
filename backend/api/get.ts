@@ -75,22 +75,15 @@ export const getFormList = async (
   params: {
     teamId: string;
     app: string;
-    isAll: boolean;
   }
 ) => {
-  const { teamId, app, isAll } = params;
-  let query = supabaseClient
+  const { teamId, app } = params;
+  const { data, error } = await supabaseClient
     .from("form_table")
     .select("*, form_team_member:form_team_member_id!inner(*)")
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_disabled", false)
     .eq("form_app", app);
-
-  if (!isAll) {
-    query = query.eq("form_is_hidden", false);
-  }
-
-  const { data, error } = await query;
   if (error) throw error;
   return data;
 };
@@ -291,4 +284,85 @@ export const getUserTeamMemberId = async (
   if (error) throw error;
 
   return data?.team_member_id;
+};
+
+// Get form list with filter
+export const getFormListWithFilter = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    app: string;
+    page: number;
+    limit: number;
+    creator?: string[];
+    status?: "hidden" | "visible";
+    sort?: "ascending" | "descending";
+    search?: string;
+  }
+) => {
+  const {
+    teamId,
+    app,
+    page,
+    limit,
+    creator,
+    status,
+    sort = "descending",
+    search,
+  } = params;
+
+  const start = (page - 1) * limit;
+  let query = supabaseClient
+    .from("form_table")
+    .select("*, form_team_member:form_team_member_id!inner(*)", {
+      count: "exact",
+    })
+    .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_is_disabled", false)
+    .eq("form_app", app);
+
+  if (creator) {
+    let creatorCondition = "";
+    creator.forEach((value) => {
+      creatorCondition += `form_team_member_id.eq.${value}, `;
+    });
+    query = query.or(creatorCondition.slice(0, -2));
+  }
+
+  if (status) {
+    query = query.eq("form_is_hidden", status === "hidden");
+  }
+
+  if (search) {
+    query = query.ilike("form_name", `%${search}%`);
+  }
+
+  query = query.order("form_date_created", {
+    ascending: sort === "ascending",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return { data, count };
+};
+
+// Get team's all members
+export const getTeamMemberList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
+    )
+    .eq("team_member_team_id", teamId);
+  if (error) throw error;
+
+  return data;
 };
