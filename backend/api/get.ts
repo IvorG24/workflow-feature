@@ -366,3 +366,25 @@ export const getTeamMemberList = async (
 
   return data;
 };
+
+// Get specific form
+export const getForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+  }
+) => {
+  const { formId } = params;
+  const { data, error } = await supabaseClient
+    .from("form_table")
+    .select(
+      "form_name, form_description, form_date_created, form_is_hidden, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), form_signer: signer_table(signer_id, signer_is_primary_approver, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
+    )
+    .eq("form_id", formId)
+    .eq("form_is_disabled", false)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+};
