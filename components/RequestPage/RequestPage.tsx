@@ -1,12 +1,4 @@
-// TODO:
-// 1. Connect handleUpdateStatus to backend
-// 2. Display Approve/Reject/Cancel if current user has permission
-
-import {
-  FieldType,
-  FormStatusType,
-  RequestWithResponseType,
-} from "@/utils/types";
+import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Box,
   Button,
@@ -20,7 +12,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
-import RequestResponse from "./RequestResponse";
+import RequestSection from "./RequestSection";
 
 type Props = {
   request: RequestWithResponseType;
@@ -78,28 +70,30 @@ const RequestPage = ({ request }: Props) => {
           <Text weight={600}>{requestStatus}</Text>
         </Group>
 
-        {sections.map((section) => (
-          <Box my="lg" key={section.section_id}>
-            <Divider label={section.section_name} labelPosition="center" />
-            <Stack>
-              {section.section_field.map((field) => (
-                <Box key={field.field_id}>
-                  {field.field_response.map((response) => (
-                    <RequestResponse
-                      key={response.request_response_id}
-                      response={{
-                        type: field.field_type as FieldType,
-                        label: field.field_name,
-                        value: response.request_response,
-                        options: field.field_options ? field.field_options : [],
-                      }}
-                    />
-                  ))}
-                </Box>
+        {sections.map((section) => {
+          const duplicateSectionIdList = section.section_field[0].field_response
+            .map(
+              (response) => response.request_response_duplicatable_section_id
+            )
+            .filter((id) => id !== null);
+          // if duplicateSectionIdList is empty, use section_id instead
+          const newSectionIdList =
+            duplicateSectionIdList.length > 0
+              ? duplicateSectionIdList
+              : [section.section_id];
+
+          return (
+            <Box key={section.section_id}>
+              {newSectionIdList.map((sectionId) => (
+                <RequestSection
+                  key={sectionId}
+                  duplicateSectionId={sectionId}
+                  section={section}
+                />
               ))}
-            </Stack>
-          </Box>
-        ))}
+            </Box>
+          );
+        })}
         <Space h="xl" />
         <Divider my="sm" />
         <Stack>
