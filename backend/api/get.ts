@@ -1,5 +1,5 @@
 import { Database } from "@/utils/database";
-import { AttachmentBucketType } from "@/utils/types";
+import { AttachmentBucketType, FormStatusType } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // Get file url
@@ -100,18 +100,74 @@ export const getRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
+    page: number;
+    limit: number;
+    requestor?: string[];
+    status?: FormStatusType[];
+    form?: string[];
+    sort?: "ascending" | "descending";
+    search?: string;
   }
 ) => {
-  const { teamId } = params;
-  const { data, error } = await supabaseClient
+  const {
+    teamId,
+    page,
+    limit,
+    requestor,
+    status,
+    form,
+    sort = "descending",
+    search,
+  } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
     .from("request_table")
     .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), request_form: request_form_id(form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_approver, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))))"
+      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), request_form: request_form_id( form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_approver, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))))",
+      { count: "exact" }
     )
     .eq("request_team_member.team_member_team_id", teamId);
+
+  if (requestor) {
+    let requestorCondition = "";
+    requestor.forEach((value) => {
+      requestorCondition += `request_team_member_id.eq.${value}, `;
+    });
+    query = query.or(requestorCondition.slice(0, -2));
+  }
+
+  if (status) {
+    let statusCondition = "";
+    status.forEach((value) => {
+      statusCondition += `request_status.eq.${value}, `;
+    });
+    query = query.or(statusCondition.slice(0, -2));
+  }
+
+  if (form) {
+    let formCondition = "";
+    form.forEach((value) => {
+      formCondition += `request_form_id.eq.${value}, `;
+    });
+    query = query.or(formCondition.slice(0, -2));
+  }
+
+  if (search) {
+    query = query.eq("request_id", search);
+  }
+
+  query = query.order("request_date_created", {
+    ascending: sort === "ascending",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
   if (error) throw error;
 
-  return data;
+  return { data, count };
 };
 
 // Get user's active team id
