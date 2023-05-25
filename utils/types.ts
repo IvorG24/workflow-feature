@@ -260,3 +260,35 @@ export type TeamMemberWithUserType = {
     user_last_name: string;
   };
 };
+
+export type FormType = {
+  form_name: string;
+  form_description: string;
+  form_date_created: string;
+  form_is_hidden: boolean;
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+  };
+  form_signer: {
+    signer_id: string;
+    signer_is_primary_approver: boolean;
+    signer_action: string;
+    signer_order: boolean;
+    signer_team_member: {
+      team_member_id: string;
+      team_member_user: {
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+      };
+    };
+  }[];
+  form_section: (SectionTableRow & {
+    section_field: (FieldTableRow & { field_option: OptionTableRow[] })[];
+  })[];
+};
