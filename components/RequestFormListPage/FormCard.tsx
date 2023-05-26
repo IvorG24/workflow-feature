@@ -1,9 +1,11 @@
-import { FormWithTeamMember } from "@/utils/types";
+import { FormWithOwnerType } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
+  Avatar,
   Badge,
   Flex,
+  Group,
   Menu,
   Paper,
   Text,
@@ -19,6 +21,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import moment from "moment";
+import { useRouter } from "next/router";
 import { MouseEventHandler } from "react";
 
 const useStyles = createStyles(() => ({
@@ -28,14 +31,14 @@ const useStyles = createStyles(() => ({
 }));
 
 type Props = {
-  form: FormWithTeamMember;
+  form: FormWithOwnerType;
   onDeleteForm: MouseEventHandler<HTMLButtonElement>;
   onHideForm: MouseEventHandler<HTMLButtonElement>;
 };
 
 const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
   const { classes } = useStyles();
-
+  const router = useRouter();
   const { ref, hovered: isFormNameHovered } = useHover();
 
   return (
@@ -49,7 +52,9 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
     >
       <Flex direction="column" justify="space-between" mih={138}>
         <Flex direction="column">
-          <Anchor href={`/team-requests/forms/${form.form_id}`}>
+          <Anchor
+            onClick={() => router.push(`/team-requests/forms/${form.form_id}`)}
+          >
             <Tooltip
               label={form.form_name}
               openDelay={2000}
@@ -89,9 +94,21 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
           </Badge>
         )}
         <Flex justify="space-between">
-          <Text size="xs" color="dimmed">
-            Created {moment(form.form_date_created).fromNow()}
-          </Text>
+          <Group spacing={4}>
+            {/* todo: change into creator label and avatar */}
+            <Tooltip label="John Doe">
+              <Avatar
+                src={
+                  "https://avatars.githubusercontent.com/u/10353856?s=460&u=88394dfd67727327c1f7670a1764dc38a8a24831&v=4"
+                }
+                radius={18}
+                size={18}
+              ></Avatar>
+            </Tooltip>
+            <Text size="xs" color="dimmed">
+              Created {moment(form.form_date_created).fromNow()}
+            </Text>
+          </Group>
 
           <Menu shadow="md" width={200} position="bottom-end">
             <Menu.Target>

@@ -1,154 +1,323 @@
-import { FormWithTeamMember } from "@/utils/types";
+import { deleteForm } from "@/backend/api/delete";
+import { getFormListWithFilter } from "@/backend/api/get";
+import { updateFormVisibility } from "@/backend/api/update";
+import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/contant";
+import { Database } from "@/utils/database";
+import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
   Container,
   Flex,
+  LoadingOverlay,
+  MultiSelect,
+  Pagination,
   Switch,
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from "@mantine/core";
-import { IconSearch } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import {
+  IconSearch,
+  IconSortAscending,
+  IconSortDescending,
+} from "@tabler/icons-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import DeleteFormModal from "./DeleteFormModal";
 import FormCard from "./FormCard";
-
-
-// Example
-// const { data, count } = await getFormListWithFilter(supabaseClient, {
-//   teamId: teamId,
-//   app: "REQUEST",
-//   page: 1,
-//   limit: DEFAULT_FORM_LIST_LIMIT,
-//   creator: ["eb4d3419-b70f-44ba-b88f-c3d983cbcf3b"],
-//   status: "visible",
-//   sort: "ascending",
-//   search: "dup",
-// });
-
-// type Props = {
-//   formList: FormWithOwnerType[];
-//   formListCount: number;
-//   teamMemberList: TeamMemberWithUserType[];
-// };
-
+import ToggleHideFormModal from "./ToggleHideFormModal";
 
 type Props = {
-  forms: FormWithTeamMember[];
+  formList: FormWithOwnerType[];
+  formListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
+  teamId: string;
 };
 
 type SearchForm = {
   search: string;
+  creatorList: string[];
+  isAscendingSort: boolean;
+  isHiddenOnly: boolean;
 };
 
-const RequestFormListPage = ({ forms }: Props) => {
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    formState: { errors },
-  } = useForm<SearchForm>();
+const RequestFormListPage = ({
+  formList: initialFormList,
+  formListCount: initialFormListCount,
+  teamMemberList,
+  teamId,
+}: Props) => {
+  const supabaseClient = createBrowserSupabaseClient<Database>();
 
-  const [isHiddenOnly, setIsHiddenOnly] = useState(false);
+  const [formList, setFormList] =
+    useState<FormWithOwnerType[]>(initialFormList);
+  const [formListCount, setFormListCount] = useState(initialFormListCount);
+  const [isFetchingFormList, setIsFetchingFormList] = useState(false);
+  const [activePage, setActivePage] = useState(1);
+  const [isDeletingForm, setIsDeletingForm] = useState(false);
+  const [isHidingForm, setIsHidingForm] = useState(false);
+  const [selectedForm, setSelectedForm] = useState<FormWithOwnerType | null>(
+    null
+  );
 
-  // todo: handle search form
-  const handleSearchForm = ({ search }: SearchForm) => {
-    console.log(search);
+  const { register, handleSubmit, getValues, setValue, control } =
+    useForm<SearchForm>({
+      defaultValues: { isAscendingSort: true, isHiddenOnly: false },
+      mode: "onChange",
+    });
+
+  const handleFilterForms = async (
+    {
+      search,
+      creatorList,
+      isAscendingSort,
+      isHiddenOnly,
+    }: SearchForm = getValues()
+  ) => {
+    try {
+      setIsFetchingFormList(true);
+      const { data, count } = await getFormListWithFilter(supabaseClient, {
+        teamId,
+        app: "REQUEST",
+        page: activePage,
+        limit: DEFAULT_FORM_LIST_LIMIT,
+        creator: creatorList,
+        status: isHiddenOnly ? "hidden" : undefined,
+        sort: isAscendingSort ? "ascending" : "descending",
+        search: search,
+      });
+
+      const result = data as FormWithOwnerType[];
+      setFormList(result);
+      setFormListCount(count || 0);
+    } catch (e) {
+      notifications.show({
+        title: "Something went wrong",
+        message: "Please try again later",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingFormList(false);
+    }
   };
 
-  // todo: handle hide form
-  const handleHideForm = (id: string) => {
-    console.log(id);
+  const handleUpdateFormVisibility = async (id: string, isHidden: boolean) => {
+    try {
+      await updateFormVisibility(supabaseClient, {
+        formId: id,
+        isHidden: !isHidden,
+      });
+
+      setFormList((formList) =>
+        formList.map((form) => {
+          if (form.form_id !== id) return form;
+          return { ...form, form_is_hidden: !isHidden };
+        })
+      );
+
+      notifications.show({
+        title: "Success!",
+        message: "Updated form visibility.",
+        color: "green",
+      });
+    } catch (error) {
+      notifications.show({
+        title: "Something went wrong",
+        message: "Please try again later",
+        color: "red",
+      });
+    }
   };
 
-  // todo: handle delete form
-  const handleDeleteForm = (id: string) => {
-    console.log(id);
+  const handleDeleteForm = async (id: string) => {
+    try {
+      await deleteForm(supabaseClient, {
+        formId: id,
+      });
+
+      setFormList((formList) => formList.filter((form) => form.form_id !== id));
+
+      notifications.show({
+        title: "Success!",
+        message: "Deleted form.",
+        color: "green",
+      });
+    } catch (error) {
+      notifications.show({
+        title: "Something went wrong",
+        message: "Please try again later",
+        color: "red",
+      });
+    }
   };
 
-  // const handleUpdateFormVisiblity = async () => {
-  //   await updateFormVisibility(supabaseClient, {
-  //     formId: "b8408545-4354-47d0-a648-928c6755a94b",
-  //     isHidden: true,
-  //   });
-  // };
-
-  // const handleDeleteForm = async () => {
-  //   await deleteForm(supabaseClient, {
-  //     formId: "b8408545-4354-47d0-a648-928c6755a94b",
-  //   });
-  // };
+  const creatorData = teamMemberList.map((member) => {
+    return {
+      value: member.team_member_id,
+      label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+    };
+  });
 
   return (
-    <Container p={0} fluid>
+    <Container p={0} pos="relative" fluid>
+      <LoadingOverlay
+        visible={isFetchingFormList}
+        overlayBlur={2}
+        transitionDuration={500}
+      />
+
       <Title order={2}>Forms </Title>
 
-      <Flex gap="xl" align="center" wrap="wrap" mt="xl">
-        <form onSubmit={handleSubmit(handleSearchForm)}>
+      <form onSubmit={handleSubmit(handleFilterForms)}>
+        <Flex gap="lg" align="center" wrap="wrap" mt="xl">
+          <Controller
+            control={control}
+            name="isAscendingSort"
+            defaultValue={true}
+            render={({ field: { value } }) => {
+              return (
+                <Tooltip
+                  label={
+                    getValues("isAscendingSort") ? "Ascending" : "Descending"
+                  }
+                  openDelay={800}
+                >
+                  <ActionIcon
+                    onClick={async () => {
+                      setValue(
+                        "isAscendingSort",
+                        !getValues("isAscendingSort")
+                      );
+
+                      await handleFilterForms();
+                    }}
+                    size={36}
+                    color="dark.3"
+                    variant="outline"
+                  >
+                    {value ? (
+                      <IconSortAscending size={18} />
+                    ) : (
+                      <IconSortDescending size={18} />
+                    )}
+                  </ActionIcon>
+                </Tooltip>
+              );
+            }}
+          />
+
           <TextInput
             placeholder="Search form..."
-            size="xs"
             rightSection={
               <ActionIcon size="xs" type="submit">
                 <IconSearch />
               </ActionIcon>
             }
-            {...register("search", {
-              required: true,
-              minLength: {
-                value: 2,
-                message: "Must have at least 2 characters",
-              },
-            })}
-            error={errors.search?.message}
+            {...register("search")}
           />
-        </form>
 
-        <Switch
-          label="Hidden only"
-          size="xs"
-          checked={isHiddenOnly}
-          onChange={(event) => setIsHiddenOnly(event.currentTarget.checked)}
-        />
-      </Flex>
+          <Controller
+            control={control}
+            name="creatorList"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                data={creatorData}
+                placeholder="Creator"
+                value={value}
+                onChange={onChange}
+                onDropdownClose={async () => await handleFilterForms()}
+                clearable
+                searchable
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="isHiddenOnly"
+            render={({ field: { value, onChange } }) => (
+              <Switch
+                label="Hidden only"
+                checked={value}
+                onChange={onChange}
+                onClick={() =>
+                  setTimeout(async () => await handleFilterForms(), 100)
+                }
+              />
+            )}
+          />
+        </Flex>
+      </form>
 
       <Flex
-        justify={forms.length > 0 ? "flex-start" : "center"}
+        justify={formList.length > 0 ? "flex-start" : "center"}
         align="center"
         gap="md"
         wrap="wrap"
         mih={170}
         mt="xl"
       >
-        {forms.length > 0 ? (
-          forms.map((form) => (
+        {formList.length > 0 ? (
+          formList.map((form) => (
             <FormCard
               form={form}
-              onDeleteForm={() => handleDeleteForm(form.form_id)}
-              onHideForm={() => handleHideForm(form.form_id)}
+              onDeleteForm={() => {
+                setSelectedForm(form);
+                setIsDeletingForm(true);
+              }}
+              onHideForm={() => {
+                setSelectedForm(form);
+                setIsHidingForm(true);
+              }}
               key={form.form_id}
             />
           ))
         ) : (
           <Text align="center" size={24} weight="bolder" color="dark.1">
-            No form/s found for keyword &quot;{getValues("search")}&quot;
+            No form/s found
           </Text>
         )}
       </Flex>
 
-      {/* <Paper p="xl" mt="xl">
-        <Text>Count: {formListCount}</Text>
-        <pre>{JSON.stringify(formList, null, 2)}</pre>
-      </Paper>
-      <Paper p="xl" mt="xl">
-        <pre>{JSON.stringify(teamMemberList, null, 2)}</pre>
-      </Paper>
-      <Stack mt="xl">
-        <Button onClick={handleUpdateFormVisiblity}>
-          Test Update Form Visibility
-        </Button>
-        <Button onClick={handleDeleteForm}>Test Delete Form</Button>
-      </Stack> */}
+      <Pagination
+        value={activePage}
+        total={Math.ceil(formListCount / DEFAULT_FORM_LIST_LIMIT)}
+        onChange={async (value) => {
+          setActivePage(value);
+          await handleFilterForms();
+        }}
+        mt="xl"
+        position="right"
+      />
+
+      {selectedForm !== null && (
+        <>
+          <DeleteFormModal
+            opened={isDeletingForm}
+            onClose={() => setIsDeletingForm(false)}
+            onDeleteForm={async () => {
+              await handleDeleteForm(selectedForm?.form_id);
+              setIsDeletingForm(false);
+            }}
+          />
+
+          <ToggleHideFormModal
+            opened={isHidingForm}
+            onClose={() => setIsHidingForm(false)}
+            onToggleHideForm={async () => {
+              await handleUpdateFormVisibility(
+                selectedForm?.form_id,
+                selectedForm?.form_is_hidden
+              );
+              setIsHidingForm(false);
+            }}
+            isHidden={selectedForm?.form_is_hidden}
+          />
+        </>
+      )}
     </Container>
   );
 };
