@@ -112,7 +112,7 @@ CREATE TABLE form_table(
 );
 CREATE TABLE signer_table (
   signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  signer_is_primary_approver BOOLEAN DEFAULT FALSE NOT NULL,
+  signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
   signer_action VARCHAR(4000) NOT NULL,
   signer_order INT NOT NULL,
 
@@ -153,6 +153,7 @@ CREATE TABLE request_table(
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL
@@ -194,10 +195,10 @@ CREATE TABLE comment_table(
 ---------- Start: FUNCTIONS
 
 CREATE FUNCTION get_current_date()
-RETURNS DATE
+RETURNS TIMESTAMPTZ
 AS $$
 BEGIN
-    RETURN CURRENT_DATE;
+    RETURN NOW();
 END;
 $$ LANGUAGE plpgsql;
 

@@ -1,6 +1,9 @@
 import { Database } from "@/utils/database";
 import { TeamTableUpdate, UserTableUpdate } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { lowerCase } from "lodash";
+import { getCurrentDate } from "./get";
+import { createComment, createNotification } from "./post";
 
 // Update Team
 export const updateTeam = async (
@@ -75,5 +78,122 @@ export const updateFormVisibility = async (
     .from("form_table")
     .update({ form_is_hidden: isHidden })
     .eq("form_id", formId);
+  if (error) throw error;
+};
+
+// Update request status and signer status
+export const approveOrRejectRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestAction: "APPROVED" | "REJECTED";
+    requestId: string;
+    isPrimarySigner: boolean;
+    requestSignerId: string;
+    requestOwnerId: string;
+    signerFullName: string;
+    formName: string;
+    memberId: string;
+  }
+) => {
+  const {
+    requestId,
+    isPrimarySigner,
+    requestSignerId,
+    requestOwnerId,
+    signerFullName,
+    formName,
+    requestAction,
+    memberId,
+  } = params;
+
+  const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
+
+  // update request signer
+  const { error: updateSignerError } = await supabaseClient
+    .from("request_signer_table")
+    .update({ request_signer_status: requestAction })
+    .eq("request_signer_id", requestSignerId);
+  if (updateSignerError) throw updateSignerError;
+
+  // create comment
+  await createComment(supabaseClient, {
+    comment_request_id: requestId,
+    comment_team_member_id: memberId,
+    comment_type: `ACTION_${requestAction}`,
+    comment_content: `${signerFullName} ${lowerCase(
+      requestAction
+    )} this request`,
+  });
+
+  // create notification
+  await createNotification(supabaseClient, {
+    notification_app: "REQUEST",
+    notification_type: present[requestAction],
+    notification_content: `${signerFullName} ${lowerCase(
+      requestAction
+    )} your ${formName} request`,
+    notification_redirect_url: `/team-requests/requests/${requestId}`,
+    notification_team_member_id: requestOwnerId,
+  });
+
+  // update request status if the signer is the primary signer
+  if (isPrimarySigner) {
+    const { error: updateRequestError } = await supabaseClient
+      .from("request_table")
+      .update({ request_status: requestAction })
+      .eq("request_id", requestId)
+      .select();
+    if (updateRequestError) throw updateRequestError;
+
+    // create notification
+    await createNotification(supabaseClient, {
+      notification_app: "REQUEST",
+      notification_type: present[requestAction],
+      notification_content: `Your ${formName} request is ${lowerCase(
+        requestAction
+      )}`,
+      notification_redirect_url: `/team-requests/requests/${requestId}`,
+      notification_team_member_id: requestOwnerId,
+    });
+  }
+};
+
+// Update request status to canceled
+export const cancelRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string; memberId: string }
+) => {
+  const { requestId, memberId } = params;
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({ request_status: "CANCELED" })
+    .eq("request_id", requestId);
+  if (error) throw error;
+
+  // create comment
+  await createComment(supabaseClient, {
+    comment_request_id: requestId,
+    comment_team_member_id: memberId,
+    comment_type: "REQUEST_CANCELED",
+    comment_content: "Request canceled",
+  });
+};
+
+// Update comment
+export const updateComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { commentId: string; newComment: string }
+) => {
+  const { commentId, newComment } = params;
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const { error } = await supabaseClient
+    .from("comment_table")
+    .update({
+      comment_content: newComment,
+      comment_is_edited: true,
+      comment_last_updated: `${currentDate}`,
+    })
+    .eq("comment_id", commentId);
   if (error) throw error;
 };

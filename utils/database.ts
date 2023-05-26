@@ -260,6 +260,7 @@ export type Database = {
           request_date_created: string;
           request_form_id: string;
           request_id: string;
+          request_is_disabled: boolean;
           request_status: string;
           request_team_member_id: string | null;
         };
@@ -267,6 +268,7 @@ export type Database = {
           request_date_created?: string;
           request_form_id: string;
           request_id?: string;
+          request_is_disabled?: boolean;
           request_status?: string;
           request_team_member_id?: string | null;
         };
@@ -274,6 +276,7 @@ export type Database = {
           request_date_created?: string;
           request_form_id?: string;
           request_id?: string;
+          request_is_disabled?: boolean;
           request_status?: string;
           request_team_member_id?: string | null;
         };
@@ -306,7 +309,7 @@ export type Database = {
           signer_action: string;
           signer_form_id: string;
           signer_id: string;
-          signer_is_primary_approver: boolean;
+          signer_is_primary_signer: boolean;
           signer_order: number;
           signer_team_member_id: string;
         };
@@ -314,7 +317,7 @@ export type Database = {
           signer_action: string;
           signer_form_id: string;
           signer_id?: string;
-          signer_is_primary_approver?: boolean;
+          signer_is_primary_signer?: boolean;
           signer_order: number;
           signer_team_member_id: string;
         };
@@ -322,7 +325,7 @@ export type Database = {
           signer_action?: string;
           signer_form_id?: string;
           signer_id?: string;
-          signer_is_primary_approver?: boolean;
+          signer_is_primary_signer?: boolean;
           signer_order?: number;
           signer_team_member_id?: string;
         };
