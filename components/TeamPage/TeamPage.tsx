@@ -1,5 +1,9 @@
 import { createTeamInvitation, uploadImage } from "@/backend/api/post";
-import { updateTeam } from "@/backend/api/update";
+import {
+  updateTeam,
+  updateTeamMemberRole,
+  updateTeamOwner,
+} from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
@@ -116,17 +120,45 @@ const TeamPage = ({ team, teamMemberId }: Props) => {
     setIsLoading(false);
   };
 
+  const handleUpdateMemberRole = async () => {
+    try {
+      await updateTeamMemberRole(supabaseClient, {
+        memberId: "390dbc5f-c3ba-4f86-81ca-7cc9746b6e31",
+        role: "ADMIN",
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleTransferOwnership = async () => {
+    try {
+      await updateTeamOwner(supabaseClient, {
+        ownerId: "eb4d3419-b70f-44ba-b88f-c3d983cbcf3b",
+        memberId: "d9c6c738-8a60-43de-965f-f1f666da1639",
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   return (
     <Container>
       <Title>Team Page</Title>
-      <Paper p="xl" mt="xl">
-        <pre>{JSON.stringify(team, null, 2)}</pre>
-      </Paper>
       <Stack mt="xl">
         <FileInput label="Team Logo" onChange={setImage} value={image} />
         <Button onClick={handleUpdateTeam}>Update Team</Button>
         <Button onClick={handleInvite}>Invite Team Member</Button>
       </Stack>
+      <Stack mt="xl">
+        <Button onClick={handleUpdateMemberRole}>
+          Change Team Member Role
+        </Button>
+        <Button onClick={handleTransferOwnership}>Transfer Ownership</Button>
+      </Stack>
+      <Paper p="xl" mt="xl">
+        <pre>{JSON.stringify(team, null, 2)}</pre>
+      </Paper>
     </Container>
   );
 };
