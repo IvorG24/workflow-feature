@@ -11,7 +11,7 @@ import {
   LoadingOverlay,
   MultiSelect,
   Pagination,
-  Switch,
+  Select,
   Text,
   TextInput,
   Title,
@@ -41,7 +41,7 @@ type SearchForm = {
   search: string;
   creatorList: string[];
   isAscendingSort: boolean;
-  isHiddenOnly: boolean;
+  status?: "hidden" | "visible" | "hidden&visible";
 };
 
 const RequestFormListPage = ({
@@ -65,27 +65,24 @@ const RequestFormListPage = ({
 
   const { register, handleSubmit, getValues, setValue, control } =
     useForm<SearchForm>({
-      defaultValues: { isAscendingSort: true, isHiddenOnly: false },
+      defaultValues: { isAscendingSort: false },
       mode: "onChange",
     });
 
   const handleFilterForms = async (
-    {
-      search,
-      creatorList,
-      isAscendingSort,
-      isHiddenOnly,
-    }: SearchForm = getValues()
+    { search, creatorList, isAscendingSort, status }: SearchForm = getValues()
   ) => {
     try {
       setIsFetchingFormList(true);
+
       const { data, count } = await getFormListWithFilter(supabaseClient, {
         teamId,
         app: "REQUEST",
         page: activePage,
         limit: DEFAULT_FORM_LIST_LIMIT,
         creator: creatorList,
-        status: isHiddenOnly ? "hidden" : undefined,
+        status:
+          status === "hidden" || status === "visible" ? status : undefined,
         sort: isAscendingSort ? "ascending" : "descending",
         search: search,
       });
@@ -161,6 +158,21 @@ const RequestFormListPage = ({
     };
   });
 
+  const statusData = [
+    {
+      value: "hiddenAndVisible",
+      label: "Hidden and visible",
+    },
+    {
+      value: "visible",
+      label: "Visible only",
+    },
+    {
+      value: "hidden",
+      label: "Hidden only",
+    },
+  ];
+
   return (
     <Container p={0} pos="relative" fluid>
       <LoadingOverlay
@@ -227,8 +239,10 @@ const RequestFormListPage = ({
                 data={creatorData}
                 placeholder="Creator"
                 value={value}
-                onChange={onChange}
-                onDropdownClose={async () => await handleFilterForms()}
+                onChange={async (value) => {
+                  onChange(value);
+                  await handleFilterForms();
+                }}
                 clearable
                 searchable
               />
@@ -237,15 +251,17 @@ const RequestFormListPage = ({
 
           <Controller
             control={control}
-            name="isHiddenOnly"
+            name="status"
             render={({ field: { value, onChange } }) => (
-              <Switch
-                label="Hidden only"
-                checked={value}
-                onChange={onChange}
-                onClick={() =>
-                  setTimeout(async () => await handleFilterForms(), 100)
-                }
+              <Select
+                data={statusData}
+                placeholder="Status"
+                value={value}
+                onChange={async (value) => {
+                  onChange(value);
+                  await handleFilterForms();
+                }}
+                clearable
               />
             )}
           />
