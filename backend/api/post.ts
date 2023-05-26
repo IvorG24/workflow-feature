@@ -2,7 +2,9 @@ import { Database } from "@/utils/database";
 import {
   AttachmentBucketType,
   AttachmentTableInsert,
+  CommentTableInsert,
   InvitationTableInsert,
+  NotificationTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
   UserTableInsert,
@@ -194,4 +196,24 @@ export const createAttachment = async (
     bucket: attachmentData.attachment_bucket as AttachmentBucketType,
   });
   return { data, url };
+};
+
+// Create notification
+export const createNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: NotificationTableInsert
+) => {
+  const { error } = await supabaseClient
+    .from("notification_table")
+    .insert(params);
+  if (error) throw error;
+};
+
+// Create comment
+export const createComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: CommentTableInsert
+) => {
+  const { error } = await supabaseClient.from("comment_table").insert(params);
+  if (error) throw error;
 };

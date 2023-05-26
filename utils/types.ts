@@ -136,9 +136,9 @@ export type CommentType =
   | "ACTION_APPROVED"
   | "ACTION_REJECTED"
   | "REQUEST_CANCELED"
-  | "REQUEST_UNDO"
+  // | "REQUEST_UNDO"
   | "REQUEST_COMMENT"
-  | "REQUEST_CREATED"
+  // | "REQUEST_CREATED"
   | "REVIEW_CREATED"
   | "REVIEW_COMMENT";
 export type NotificationType =
@@ -170,7 +170,7 @@ export type RequestType = {
     request_signer_id: string;
     request_signer_status: ReceiverStatusType;
     request_signer: {
-      signer_is_primary_approver: boolean;
+      signer_is_primary_signer: boolean;
       signer_team_member: {
         team_member_user: {
           user_first_name: string;
@@ -193,6 +193,7 @@ export type RequestWithResponseType = RequestTableRow & {
     form_description: string;
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
+        field_option: OptionTableRow[];
         field_response: RequestResponseTableRow[];
       })[];
     })[];
@@ -213,7 +214,7 @@ export type RequestWithResponseType = RequestTableRow & {
     request_signer_status: string;
     request_signer_signer: {
       signer_id: string;
-      signer_is_primary_approver: boolean;
+      signer_is_primary_signer: boolean;
       signer_action: string;
       signer_order: number;
       signer_team_member: {
@@ -224,6 +225,26 @@ export type RequestWithResponseType = RequestTableRow & {
       };
     };
   })[];
+} & {
+  request_comment: {
+    comment_id: string;
+    comment_date_created: string;
+    comment_content: string;
+    comment_is_edited: boolean;
+    comment_last_updated: string;
+    comment_type: CommentType;
+    comment_team_member: {
+      request_team_member: {
+        team_member_user: {
+          user_id: string;
+          user_first_name: string;
+          user_last_name: string;
+          user_username: string;
+          user_avatar: string;
+        };
+      };
+    };
+  };
 };
 
 export type TeamWithTeamMemberType = {
@@ -276,7 +297,7 @@ export type FormType = {
   };
   form_signer: {
     signer_id: string;
-    signer_is_primary_approver: boolean;
+    signer_is_primary_signer: boolean;
     signer_action: string;
     signer_order: boolean;
     signer_team_member: {
