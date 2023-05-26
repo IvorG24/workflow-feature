@@ -5,12 +5,15 @@ import {
   Container,
   Divider,
   Group,
+  NavLink,
   Paper,
   Space,
   Stack,
   Text,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { IconArrowLeft } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import RequestSection from "./RequestSection";
 
@@ -19,9 +22,10 @@ type Props = {
 };
 
 const RequestPage = ({ request }: Props) => {
+  const router = useRouter();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
-  const sections = request.request_form.form_section;
   const requestor = request.request_team_member.team_member_user;
+  const sections = request.request_form.form_section;
 
   const requestDateCreated = new Date(
     request.request_date_created
@@ -42,6 +46,12 @@ const RequestPage = ({ request }: Props) => {
 
   return (
     <Container>
+      <NavLink
+        mb="sm"
+        label="Return to Requests Page"
+        icon={<IconArrowLeft />}
+        onClick={() => router.push("/team-requests/requests")}
+      />
       <Paper p="lg" h="fit-content">
         <Group spacing={4}>
           <Text>Request ID:</Text>
@@ -94,7 +104,19 @@ const RequestPage = ({ request }: Props) => {
             </Box>
           );
         })}
+
         <Space h="xl" />
+        <Divider my="sm" />
+
+        <Button
+          variant="outline"
+          fullWidth
+          onClick={() =>
+            router.push(`/team-requests/requests/${request.request_id}/edit`)
+          }
+        >
+          Edit Request
+        </Button>
         <Divider my="sm" />
         <Stack>
           <Button
@@ -111,7 +133,11 @@ const RequestPage = ({ request }: Props) => {
           >
             Reject Request
           </Button>
-          <Button fullWidth onClick={() => handleUpdateRequest("CANCELED")}>
+          <Button
+            variant="default"
+            fullWidth
+            onClick={() => handleUpdateRequest("CANCELED")}
+          >
             Cancel Request
           </Button>
         </Stack>

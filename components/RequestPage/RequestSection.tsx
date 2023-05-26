@@ -19,10 +19,12 @@ const RequestSection = ({
           <Box key={field.field_id}>
             {field.field_response.map((response) =>
               response.request_response_duplicatable_section_id ===
-              duplicateSectionId ? (
+                duplicateSectionId ||
+              response.request_response_duplicatable_section_id === null ? (
                 <RequestResponse
                   key={response.request_response_id}
                   response={{
+                    id: response.request_response_id,
                     type: field.field_type as FieldType,
                     label: field.field_name,
                     value: response.request_response,

@@ -15,6 +15,7 @@ import { IconClock } from "@tabler/icons-react";
 
 type RequestReponseProps = {
   response: {
+    id: string;
     label: string;
     type: FieldType;
     value: string;
@@ -23,7 +24,11 @@ type RequestReponseProps = {
 };
 
 const RequestResponse = ({ response }: RequestReponseProps) => {
-  const inputProps = { variant: "filled", readOnly: true };
+  const inputProps = {
+    variant: "filled",
+    readOnly: true,
+  };
+
   const renderResponse = (response: RequestReponseProps["response"]) => {
     switch (response.type) {
       case "TEXT":
@@ -54,65 +59,71 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
         return (
           <Switch
             label={response.label}
-            checked={response.value as unknown as boolean}
+            checked={Boolean(response.value)}
             {...inputProps}
           />
         );
       case "DROPDOWN":
+        const dropdownOption = response.options.map((option) => ({
+          value: option.option_value,
+          label: option.option_value,
+        }));
         return (
           <Select
             label={response.label}
+            data={dropdownOption}
             value={response.value}
-            data={[{ value: response.value, label: response.value }]}
             {...inputProps}
           />
         );
       case "MULTISELECT":
+        const multiselectOption = response.options.map((option) => ({
+          value: option.option_value,
+          label: option.option_value,
+        }));
         return (
           <MultiSelect
             label={response.label}
             value={[response.value]}
-            data={[{ value: response.value, label: response.value }]}
+            data={multiselectOption}
             {...inputProps}
           />
         );
       case "DATE":
         return (
           <DateInput
-            value={new Date(response.value)}
             label={response.label}
+            value={new Date(response.value)}
             {...inputProps}
           />
         );
       case "TIME":
         return (
           <TextInput
-            value={response.value}
             label={response.label}
+            value={response.value}
             icon={<IconClock />}
             {...inputProps}
           />
         );
       case "SLIDER":
-        const optionValue = JSON.parse(
+        const sliderOption = JSON.parse(
           response.options.map((option) => option.option_value)[0]
         );
-        const max = optionValue[1];
+        const max = Number(sliderOption[1]);
         const marks = Array.from({ length: max }, (_, index) => ({
           value: index + 1,
           label: index + 1,
         }));
-
         return (
           <Box>
             <Text weight={600}>{response.label}</Text>
             <Slider
               defaultValue={Number(response.value)}
-              min={optionValue[0]}
+              min={sliderOption[0]}
               max={max}
               step={1}
               marks={marks}
-              {...inputProps}
             />
           </Box>
         );
