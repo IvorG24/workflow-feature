@@ -237,17 +237,16 @@ export type RequestWithResponseType = RequestTableRow & {
     comment_last_updated: string;
     comment_type: CommentType;
     comment_team_member: {
-      request_team_member: {
-        team_member_user: {
-          user_id: string;
-          user_first_name: string;
-          user_last_name: string;
-          user_username: string;
-          user_avatar: string;
-        };
+      team_member_id: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_username: string;
+        user_avatar: string;
       };
     };
-  };
+  }[];
 };
 
 export type TeamWithTeamMemberType = {

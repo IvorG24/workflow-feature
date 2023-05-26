@@ -16,11 +16,14 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import RequestAddComment from "./RequestAddComment";
+import RequestComment from "./RequestComment";
 import RequestSection from "./RequestSection";
 
 type Props = {
@@ -33,6 +36,7 @@ const RequestPage = ({ request }: Props) => {
   const isLoading = useIsLoading();
   const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
+  const [commentList, setCommentList] = useState(request.request_comment);
   const requestor = request.request_team_member.team_member_user;
   const sectionList = request.request_form.form_section;
   const approverList = request.request_signer.map(
@@ -142,6 +146,22 @@ const RequestPage = ({ request }: Props) => {
     }
   };
 
+  const openPromptDeleteModal = () =>
+    modals.openConfirmModal({
+      title: "Are you sure you want to delete this request?",
+      children: (
+        <Text size="sm">
+          This action is so important that you are required to confirm it with a
+          modal. Please click one of these buttons to proceed.
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      confirmProps: { color: "red" },
+      onCancel: () => console.log("Cancel"),
+      onConfirm: async () => await handleDeleteRequest(),
+    });
+
   return (
     <Container>
       <NavLink
@@ -150,7 +170,7 @@ const RequestPage = ({ request }: Props) => {
         icon={<IconArrowLeft />}
         onClick={() => router.push("/team-requests/requests")}
       />
-      <Paper p="lg" h="fit-content">
+      <Paper p="lg" h="fit-content" pos="relative">
         <LoadingOverlay visible={isLoading} overlayBlur={2} />
         {isUserOwner && requestStatus === "PENDING" && (
           <>
@@ -179,7 +199,7 @@ const RequestPage = ({ request }: Props) => {
         )}
 
         {isUserOwner && requestStatus === "CANCELED" && (
-          <Button color="red" fullWidth onClick={handleDeleteRequest}>
+          <Button color="red" fullWidth onClick={openPromptDeleteModal}>
             Delete Request
           </Button>
         )}
@@ -278,6 +298,18 @@ const RequestPage = ({ request }: Props) => {
 
         <Space h="xl" />
       </Paper>
+      <RequestAddComment
+        requestId={request.request_id}
+        requestOwnerId={request.request_team_member_id as string}
+        setCommentList={setCommentList}
+      />
+      {commentList.map((comment) => (
+        <RequestComment
+          key={comment.comment_id}
+          comment={comment}
+          setCommentList={setCommentList}
+        />
+      ))}
     </Container>
   );
 };
