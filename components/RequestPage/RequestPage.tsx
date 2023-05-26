@@ -1,10 +1,14 @@
-import { FormStatusType, RequestWithResponseType } from "@/utils/types";
+import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import { useIsLoading, useLoadingActions } from "@/stores/useLoadingStore";
+import { TEMP_TEAM_MEMBER_ID, TEMP_USER_ID } from "@/utils/dummyData";
+import { RequestWithResponseType } from "@/utils/types";
 import {
   Box,
   Button,
   Container,
   Divider,
   Group,
+  LoadingOverlay,
   NavLink,
   Paper,
   Space,
@@ -12,6 +16,7 @@ import {
   Text,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -23,10 +28,15 @@ type Props = {
 
 const RequestPage = ({ request }: Props) => {
   const router = useRouter();
+  const supabaseClient = useSupabaseClient();
+  const isLoading = useIsLoading();
+  const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const requestor = request.request_team_member.team_member_user;
-  const sections = request.request_form.form_section;
-
+  const sectionList = request.request_form.form_section;
+  const approverList = request.request_signer.map(
+    (signer) => signer.request_signer_signer
+  );
   const requestDateCreated = new Date(
     request.request_date_created
   ).toLocaleDateString("en-US", {
@@ -35,13 +45,76 @@ const RequestPage = ({ request }: Props) => {
     day: "numeric",
   });
 
-  const handleUpdateRequest = (status: FormStatusType) => {
-    setRequestStatus(status);
-    notifications.show({
-      title: "Update request successful.",
-      message: `You have ${status} this request`,
-      color: "green",
-    });
+  const isUserOwner = requestor.user_id === TEMP_USER_ID;
+  const isUserApprover = approverList.find(
+    (approver) =>
+      approver.signer_team_member.team_member_id === TEMP_TEAM_MEMBER_ID
+  );
+
+  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
+    try {
+      setIsLoading(true);
+      const approver = isUserApprover;
+      const approverFullName = `${approver?.signer_team_member.team_member_user.user_first_name} ${approver?.signer_team_member.team_member_user.user_last_name}`;
+      if (!approver) {
+        notifications.show({
+          message: "Invalid approver.",
+          color: "red",
+        });
+        return;
+      }
+
+      await approveOrRejectRequest(supabaseClient, {
+        requestAction: status,
+        requestId: request.request_id,
+        isPrimarySigner: approver.signer_is_primary_signer,
+        requestSignerId: approver.signer_id,
+        requestOwnerId: request.request_team_member_id as string,
+        signerFullName: approverFullName,
+        formName: request.request_form.form_name,
+        memberId: TEMP_TEAM_MEMBER_ID,
+      });
+
+      setRequestStatus(status);
+      notifications.show({
+        title: "Update request successful.",
+        message: `You have ${status} this request`,
+        color: "green",
+      });
+    } catch (error) {
+      notifications.show({
+        title: "Updating request failed",
+        message: `Please try again later.`,
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    try {
+      setIsLoading(true);
+      await cancelRequest(supabaseClient, {
+        requestId: request.request_id,
+        memberId: TEMP_TEAM_MEMBER_ID,
+      });
+
+      setRequestStatus("CANCELED");
+      notifications.show({
+        title: "Update request successful.",
+        message: `You have CANCELED this request`,
+        color: "green",
+      });
+    } catch (error) {
+      notifications.show({
+        title: "Updating request failed",
+        message: `Please try again later.`,
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,6 +126,59 @@ const RequestPage = ({ request }: Props) => {
         onClick={() => router.push("/team-requests/requests")}
       />
       <Paper p="lg" h="fit-content">
+        <LoadingOverlay visible={isLoading} overlayBlur={2} />
+        {isUserOwner && requestStatus === "PENDING" && (
+          <>
+            <Divider
+              my="lg"
+              label="Request Owner Actions"
+              labelPosition="center"
+            />
+            <Stack spacing="sm">
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={() =>
+                  router.push(
+                    `/team-requests/requests/${request.request_id}/edit`
+                  )
+                }
+              >
+                Edit Request
+              </Button>
+              <Button variant="default" fullWidth onClick={handleCancelRequest}>
+                Cancel Request
+              </Button>
+            </Stack>
+          </>
+        )}
+
+        {isUserApprover && requestStatus === "PENDING" && (
+          <>
+            <Divider
+              my="lg"
+              label="Request Approver Actions"
+              labelPosition="center"
+            />
+            <Stack>
+              <Button
+                color="green"
+                fullWidth
+                onClick={() => handleUpdateRequest("APPROVED")}
+              >
+                Approve Request
+              </Button>
+              <Button
+                color="red"
+                fullWidth
+                onClick={() => handleUpdateRequest("REJECTED")}
+              >
+                Reject Request
+              </Button>
+            </Stack>
+          </>
+        )}
+        <Divider my="sm" />
         <Group spacing={4}>
           <Text>Request ID:</Text>
           <Text weight={600}>{request.request_id}</Text>
@@ -79,8 +205,22 @@ const RequestPage = ({ request }: Props) => {
           <Text>Status:</Text>
           <Text weight={600}>{requestStatus}</Text>
         </Group>
+        <Group spacing={4}>
+          <Text>Approvers:</Text>
+          <Text weight={600}>
+            {approverList
+              .map(
+                ({
+                  signer_team_member: {
+                    team_member_user: { user_first_name, user_last_name },
+                  },
+                }) => `${user_first_name} ${user_last_name}`
+              )
+              .join(", ")}
+          </Text>
+        </Group>
 
-        {sections.map((section) => {
+        {sectionList.map((section) => {
           const duplicateSectionIdList = section.section_field[0].field_response
             .map(
               (response) => response.request_response_duplicatable_section_id
@@ -106,41 +246,6 @@ const RequestPage = ({ request }: Props) => {
         })}
 
         <Space h="xl" />
-        <Divider my="sm" />
-
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={() =>
-            router.push(`/team-requests/requests/${request.request_id}/edit`)
-          }
-        >
-          Edit Request
-        </Button>
-        <Divider my="sm" />
-        <Stack>
-          <Button
-            color="green"
-            fullWidth
-            onClick={() => handleUpdateRequest("APPROVED")}
-          >
-            Approve Request
-          </Button>
-          <Button
-            color="red"
-            fullWidth
-            onClick={() => handleUpdateRequest("REJECTED")}
-          >
-            Reject Request
-          </Button>
-          <Button
-            variant="default"
-            fullWidth
-            onClick={() => handleUpdateRequest("CANCELED")}
-          >
-            Cancel Request
-          </Button>
-        </Stack>
       </Paper>
     </Container>
   );

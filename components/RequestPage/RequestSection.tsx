@@ -28,7 +28,7 @@ const RequestSection = ({
                     type: field.field_type as FieldType,
                     label: field.field_name,
                     value: response.request_response,
-                    options: field.field_options ? field.field_options : [],
+                    options: field.field_option ? field.field_option : [],
                   }}
                 />
               ) : null

@@ -220,6 +220,7 @@ export type RequestWithResponseType = RequestTableRow & {
       signer_action: string;
       signer_order: number;
       signer_team_member: {
+        team_member_id: string;
         team_member_user: {
           user_first_name: string;
           user_last_name: string;
