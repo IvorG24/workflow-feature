@@ -82,7 +82,7 @@ const RequestFormListPage = ({
         app: "REQUEST",
         page: activePage,
         limit: DEFAULT_FORM_LIST_LIMIT,
-        creator: creatorList.length > 0 ? creatorList : undefined,
+        creator: creatorList,
         status: status,
         sort: isAscendingSort ? "ascending" : "descending",
         search: search,
@@ -92,6 +92,7 @@ const RequestFormListPage = ({
       setFormList(result);
       setFormListCount(count || 0);
     } catch (e) {
+      console.log(e);
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",
