@@ -41,7 +41,7 @@ type SearchForm = {
   search: string;
   creatorList: string[];
   isAscendingSort: boolean;
-  status?: "hidden" | "visible" | "hidden&visible";
+  status?: "hidden" | "visible";
 };
 
 const RequestFormListPage = ({
@@ -81,8 +81,7 @@ const RequestFormListPage = ({
         page: activePage,
         limit: DEFAULT_FORM_LIST_LIMIT,
         creator: creatorList,
-        status:
-          status === "hidden" || status === "visible" ? status : undefined,
+        status: status,
         sort: isAscendingSort ? "ascending" : "descending",
         search: search,
       });
@@ -160,10 +159,6 @@ const RequestFormListPage = ({
 
   const statusData = [
     {
-      value: "hiddenAndVisible",
-      label: "Hidden and visible",
-    },
-    {
       value: "visible",
       label: "Visible only",
     },
@@ -174,13 +169,7 @@ const RequestFormListPage = ({
   ];
 
   return (
-    <Container p={0} pos="relative" fluid>
-      <LoadingOverlay
-        visible={isFetchingFormList}
-        overlayBlur={2}
-        transitionDuration={500}
-      />
-
+    <Container p={0} fluid>
       <Title order={2}>Forms </Title>
 
       <form onSubmit={handleSubmit(handleFilterForms)}>
@@ -268,35 +257,42 @@ const RequestFormListPage = ({
         </Flex>
       </form>
 
-      <Flex
-        justify={formList.length > 0 ? "flex-start" : "center"}
-        align="center"
-        gap="md"
-        wrap="wrap"
-        mih={170}
-        mt="xl"
-      >
-        {formList.length > 0 ? (
-          formList.map((form) => (
-            <FormCard
-              form={form}
-              onDeleteForm={() => {
-                setSelectedForm(form);
-                setIsDeletingForm(true);
-              }}
-              onHideForm={() => {
-                setSelectedForm(form);
-                setIsHidingForm(true);
-              }}
-              key={form.form_id}
-            />
-          ))
-        ) : (
-          <Text align="center" size={24} weight="bolder" color="dark.1">
-            No form/s found
-          </Text>
-        )}
-      </Flex>
+      <Container m={0} p={0} pos="relative" fluid>
+        <LoadingOverlay
+          visible={isFetchingFormList}
+          overlayBlur={2}
+          transitionDuration={500}
+        />
+        <Flex
+          justify={formList.length > 0 ? "flex-start" : "center"}
+          align="center"
+          gap="md"
+          wrap="wrap"
+          mih={170}
+          mt="xl"
+        >
+          {formList.length > 0 ? (
+            formList.map((form) => (
+              <FormCard
+                form={form}
+                onDeleteForm={() => {
+                  setSelectedForm(form);
+                  setIsDeletingForm(true);
+                }}
+                onHideForm={() => {
+                  setSelectedForm(form);
+                  setIsHidingForm(true);
+                }}
+                key={form.form_id}
+              />
+            ))
+          ) : (
+            <Text align="center" size={24} weight="bolder" color="dark.1">
+              No form/s found
+            </Text>
+          )}
+        </Flex>
+      </Container>
 
       <Pagination
         value={activePage}
