@@ -1,3 +1,4 @@
+import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useIsLoading, useLoadingActions } from "@/stores/useLoadingStore";
 import { TEMP_TEAM_MEMBER_ID, TEMP_USER_ID } from "@/utils/dummyData";
@@ -117,6 +118,30 @@ const RequestPage = ({ request }: Props) => {
     }
   };
 
+  const handleDeleteRequest = async () => {
+    try {
+      setIsLoading(true);
+      await deleteRequest(supabaseClient, {
+        requestId: request.request_id,
+      });
+
+      setRequestStatus("DELETED");
+      notifications.show({
+        title: "Delete request successful.",
+        message: `You have DELETED this request`,
+        color: "green",
+      });
+    } catch (error) {
+      notifications.show({
+        title: "Delete request failed.",
+        message: `Please try again later.`,
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Container>
       <NavLink
@@ -151,6 +176,12 @@ const RequestPage = ({ request }: Props) => {
               </Button>
             </Stack>
           </>
+        )}
+
+        {isUserOwner && requestStatus === "CANCELED" && (
+          <Button color="red" fullWidth onClick={handleDeleteRequest}>
+            Delete Request
+          </Button>
         )}
 
         {isUserApprover && requestStatus === "PENDING" && (

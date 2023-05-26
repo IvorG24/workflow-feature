@@ -121,7 +121,8 @@ export const getRequestList = async (
       "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), request_form: request_form_id( form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_signer, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))))",
       { count: "exact" }
     )
-    .eq("request_team_member.team_member_team_id", teamId);
+    .eq("request_team_member.team_member_team_id", teamId)
+    .eq("request_is_disabled", false);
 
   if (requestor) {
     let requestorCondition = "";
