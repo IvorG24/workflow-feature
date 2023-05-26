@@ -82,8 +82,9 @@ const RequestFormListPage = ({
         app: "REQUEST",
         page: activePage,
         limit: DEFAULT_FORM_LIST_LIMIT,
-        creator: creatorList,
         status: status,
+        creator:
+          creatorList && creatorList.length > 0 ? creatorList : undefined,
         sort: isAscendingSort ? "ascending" : "descending",
         search: search,
       });
