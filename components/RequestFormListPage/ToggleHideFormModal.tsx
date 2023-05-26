@@ -26,7 +26,7 @@ const ToggleHideFormModal = ({
           Cancel
         </ConfirmModal.CancelButton>
         <ConfirmModal.ConfirmButton type="button" onClick={onToggleHideForm}>
-          Comfirm
+          Confirm
         </ConfirmModal.ConfirmButton>
       </ConfirmModal.Footer>
     </ConfirmModal>
