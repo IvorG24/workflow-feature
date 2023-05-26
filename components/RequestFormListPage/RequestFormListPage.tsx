@@ -17,6 +17,7 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
+import { useFocusWithin } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -69,6 +70,7 @@ const RequestFormListPage = ({
       mode: "onChange",
     });
 
+  const { ref: creatorRef, focused: creatorRefFocused } = useFocusWithin();
   const handleFilterForms = async (
     { search, creatorList, isAscendingSort, status }: SearchForm = getValues()
   ) => {
@@ -80,7 +82,7 @@ const RequestFormListPage = ({
         app: "REQUEST",
         page: activePage,
         limit: DEFAULT_FORM_LIST_LIMIT,
-        creator: creatorList,
+        creator: creatorList.length > 0 ? creatorList : undefined,
         status: status,
         sort: isAscendingSort ? "ascending" : "descending",
         search: search,
@@ -230,8 +232,11 @@ const RequestFormListPage = ({
                 value={value}
                 onChange={async (value) => {
                   onChange(value);
-                  await handleFilterForms();
+                  if (!creatorRefFocused) await handleFilterForms();
                 }}
+                onDropdownClose={async () => await handleFilterForms()}
+                ref={creatorRef}
+                color={creatorRefFocused ? "green" : "red"}
                 clearable
                 searchable
               />
