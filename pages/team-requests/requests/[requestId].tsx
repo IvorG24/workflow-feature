@@ -29,9 +29,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
 type Props = {
   request: RequestWithResponseType;
-}
+};
 
-const Page = ({ request } : Props) => {
+const Page = ({ request }: Props) => {
   return (
     <>
       <Meta

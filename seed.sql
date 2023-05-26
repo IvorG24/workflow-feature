@@ -73,7 +73,7 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('52da4c49-c855-4130-bb6f-c70f47bf21e4', 'Multiselect 3', 3, '5ef54cb5-f694-4f4e-aee5-ec228dec1da4'),
 ('bab0a354-4a06-4bb2-a8a2-dcdbb7f68fde', '[1,10]', 1, '5ed0f5c1-a97d-465b-ade4-758a5ae351a2');
 
-INSERT INTO signer_table (signer_id, signer_is_primary_approver, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
+INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('b7115738-8089-4e68-ac94-76ce6d0452f5', TRUE, 'Approved', 1, '337658f1-0777-45f2-853f-b6f20551712e', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('7d0781fe-eb57-4225-858d-abb6b93357c7', FALSE, 'Noted', 2, '337658f1-0777-45f2-853f-b6f20551712e', '1e9bb9c7-e4e6-42e4-9377-a33f9b645343');
@@ -83,6 +83,16 @@ INSERT INTO request_table (request_id, request_team_member_id, request_form_id) 
 ('280504f9-9739-45b2-a70d-484be2289861', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'b8408545-4354-47d0-a648-928c6755a94b'),
 ('a9315409-9719-40cb-ada2-3f3ee622049b', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'b8408545-4354-47d0-a648-928c6755a94b'),
 ('6d52c8df-1ed6-41cd-920a-827e3eba0abf', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '337658f1-0777-45f2-853f-b6f20551712e');
+
+INSERT INTO comment_table (comment_id, comment_content, comment_type, comment_team_member_id, comment_request_id) VALUES
+('e5d6d43c-cd56-42d2-874f-2cf327a260fd', 'Request 1 Comment 1', 'REQUEST_COMMENT', 'd9c6c738-8a60-43de-965f-f1f666da1639', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('62764682-7975-437c-b93c-22b38b2c2ea6', 'Request 1 Comment 2', 'REQUEST_COMMENT', '1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('666b0045-ed3f-453c-b32d-2871143f2430', 'Request 1 Comment 3', 'REQUEST_COMMENT', '390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('9a30141f-eb3f-4896-8110-a08ab0fcd6bc', 'Request 2 Comment 1', 'REQUEST_COMMENT', 'd9c6c738-8a60-43de-965f-f1f666da1639', '280504f9-9739-45b2-a70d-484be2289861'),
+('76ae08e1-0905-4ff7-8d9a-ef03e3ecedab', 'Request 2 Comment 2', 'REQUEST_COMMENT', '1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '280504f9-9739-45b2-a70d-484be2289861'),
+('4de364ae-ac61-43e0-822e-dd6bbf9a0946', 'Request 3 Comment 1', 'REQUEST_COMMENT', '390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('6d200a8a-eb47-4ac6-a0b4-ff5d7135d161', 'Request 4 Comment 1', 'REQUEST_COMMENT', 'd9c6c738-8a60-43de-965f-f1f666da1639', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('792e9f15-a8cb-4299-bf8a-7d07bc3a86a4', 'Request 4 Comment 1', 'REQUEST_COMMENT', 'd9c6c738-8a60-43de-965f-f1f666da1639', '6d52c8df-1ed6-41cd-920a-827e3eba0abf');
 
 INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
 ('b3a3bb8f-7a30-431f-a55e-b9b5e50bed95', 'Text field response 1', NULL, '9696114b-9884-4ecf-8000-ab30ecde85aa', '45820673-8b88-4d15-a4bf-12d67f140929'),
