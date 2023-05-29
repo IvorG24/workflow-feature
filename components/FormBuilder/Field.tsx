@@ -10,6 +10,7 @@ import {
   Container,
   Flex,
   Group,
+  MultiSelect,
   NumberInput,
   Paper,
   Radio,
@@ -173,7 +174,7 @@ const Field = ({
     { value: "NUMBER", label: "Number" },
     { value: "TEXTAREA", label: "Text Area" },
     { value: "SELECT", label: "Select" },
-    { value: "MULTICHECKBOX", label: "Multiple Choice" },
+    { value: "MULTISELECT", label: "Multiselect" },
     { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
   ];
@@ -353,14 +354,23 @@ const Field = ({
           />
         )}
 
-        {fieldType === "MULTICHECKBOX" && (
+        {fieldType === "MULTISELECT" && (
           <Controller
             name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
+            control={control}
             render={({ field }) => (
-              <Checkbox.Group
-                label={label}
-                withAsterisk={isFieldRequired}
+              <MultiSelect
                 {...field}
+                value={[]}
+                maw={223}
+                label={label}
+                data={optionsDropdownData}
+                className={`${classes.previewField} ${
+                  mode === "view" ? classes.pointerEventsNone : ""
+                }`}
+                style={{ width: "100%" }}
+                withAsterisk={isFieldRequired}
+                readOnly={mode === "view"}
                 error={
                   fieldPromptError ? (
                     <Text color="red" size="sm">
@@ -368,43 +378,7 @@ const Field = ({
                     </Text>
                   ) : null
                 }
-              >
-                <Box
-                  className={`${classes.radioGroup} ${classes.previewField} ${
-                    mode === "view" && classes.pointerEventsNone
-                  }`}
-                >
-                  {optionsWatch?.map((option) => {
-                    return (
-                      <Flex key={option.option_id}>
-                        <Checkbox
-                          value={option.option_id}
-                          label={option.option_value}
-                          className={`${classes.radio} ${
-                            mode === "view"
-                              ? classes.pointerEventsNone
-                              : classes.checkboxCursor
-                          }`}
-                        />
-                        {option &&
-                          option.option_description &&
-                          option.option_description?.length > 0 && (
-                            <Tooltip
-                              label={option.option_description}
-                              withArrow
-                              multiline
-                              maw={250}
-                            >
-                              <Box>
-                                <IconInfoCircle height={16} color="#495057" />
-                              </Box>
-                            </Tooltip>
-                          )}
-                      </Flex>
-                    );
-                  })}
-                </Box>
-              </Checkbox.Group>
+              />
             )}
             rules={{
               required: {
@@ -512,7 +486,6 @@ const Field = ({
                 )}
               />
             </Radio.Group>
-           
           </>
         )}
       </Box>
@@ -580,7 +553,7 @@ const Field = ({
         </Container>
       )}
 
-      {(fieldType === "SELECT" || fieldType === "MULTICHECKBOX") && (
+      {(fieldType === "SELECT" || fieldType === "MULTISELECT") && (
         <Container fluid p={24}>
           <FieldTypeDropdown
             sectionIndex={sectionIndex}
