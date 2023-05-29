@@ -124,6 +124,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
               max={max}
               step={1}
               marks={marks}
+              disabled
             />
           </Box>
         );
