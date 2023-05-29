@@ -17,10 +17,10 @@ const CommentItem = ({ comment }: Props) => {
             size={42}
             radius={42}
             color={getAvatarColor(
-              Number(`${comment.createdBy.id?.charCodeAt(0)}`)
+              Number(`${comment.comment_team_member_id?.charCodeAt(0)}`)
             )}
           >
-            {upperCase(comment.createdBy.username[0])}
+            {upperCase(comment..username[0])}
             {upperCase(comment.createdBy.username[1])}
           </Avatar>
           <Flex direction="column">
