@@ -147,8 +147,6 @@ const Section = ({
                 field_section_id: section.section_id,
                 form_id: formId,
                 field_is_required: false,
-                field_min: 1,
-                field_max: 5,
                 field_is_positive_metric: true,
                 field_order: fields.length + 1,
               })

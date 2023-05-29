@@ -22,6 +22,7 @@ import {
   Tooltip,
   createStyles,
 } from "@mantine/core";
+import { DatePickerInput, DatePickerType, DateValue } from "@mantine/dates";
 import { useClickOutside } from "@mantine/hooks";
 import {
   IconArrowBigDownLine,
@@ -131,9 +132,6 @@ const Field = ({
   );
   const [isSelectingFieldType, setIsSelectingFieldType] = useState(false);
 
-  // const [fieldMin, setFieldMin] = useState(field.field_min);
-  // const [fieldMax, setFieldMax] = useState(field.field_max);
-
   const ref = useClickOutside(() => {
     if (!isSelectingFieldType) {
       setIsActive(false);
@@ -193,17 +191,19 @@ const Field = ({
   const fieldPromptError = get(errors, fieldPromptName);
 
   if (!isActive) {
-    // const step = 1;
-    // const getMarks = () => {
-    //   const marks = [];
-    //   for (let i = fieldMin; i <= fieldMax; i += step) {
-    //     marks.push({
-    //       value: i,
-    //       label: i.toString(),
-    //     });
-    //   }
-    //   return marks;
-    // };
+    const step = 1;
+    const fieldMin = 1;
+    const fieldMax = 5;
+    const getMarks = () => {
+      const marks = [];
+      for (let i = fieldMin; i <= fieldMax; i += step) {
+        marks.push({
+          value: i,
+          label: i.toString(),
+        });
+      }
+      return marks;
+    };
 
     const label = (
       <FieldLabel
@@ -432,10 +432,10 @@ const Field = ({
                   pt={16}
                   pb={32}
                   defaultValue={1}
-                  // min={fieldMin}
-                  // max={fieldMax}
-                  step={1}
-                  // marks={getMarks()}
+                  min={fieldMin}
+                  max={fieldMax}
+                  step={step}
+                  marks={getMarks()}
                   showLabelOnHover={false}
                 />
               )}
@@ -443,18 +443,18 @@ const Field = ({
           </Box>
         )}
 
-        {/* {fieldType === "DATE" && (
+        {fieldType === "DATE" && (
           <Controller
             name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             control={control}
             render={({ field }) => (
-              <DatePicker
+              <DatePickerInput
                 {...field}
-                value={field.value ? new Date(`${field.value}`) : null}
-                maw={223}
                 label={label}
-                withAsterisk={isFieldRequired}
+                value={field.value ? new Date(`${field.value}`) : null}
                 readOnly={mode === "view"}
+                withAsterisk={isFieldRequired}
+                maw={223}
                 className={`${classes.previewField} ${
                   mode === "view" ? classes.pointerEventsNone : ""
                 }`}
@@ -481,18 +481,15 @@ const Field = ({
             name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             control={control}
             render={({ field }) => {
-              const newValue: Date[] = field.value as Date[];
+              const newValue = [new Date(), new Date()] as
+                | DatePickerType
+                | [Date, Date]
+                | [null, null];
               return (
-                <DatePicker
+                <DatePickerInput
                   {...field}
                   type="range"
-                  value={
-                    mode === "view"
-                      ? newValue[0] && newValue[1]
-                        ? [new Date(newValue[0]), new Date(newValue[1])]
-                        : [null, null]
-                      : (field.value as DatePickerType)
-                  }
+                  value={newValue as [DateValue, DateValue]}
                   maw={223}
                   label={label}
                   withAsterisk={isFieldRequired}
@@ -516,8 +513,9 @@ const Field = ({
                 message: "Field is required",
               },
               validate: {
-                isRequired: (value) => {
-                  const newValue = value as [Date | null, Date | null];
+                isRequired: () => {
+                  const newValue = [new Date(), new Date()];
+
                   if (
                     isFieldRequired &&
                     (newValue[0] === null || newValue[1] === null)
@@ -530,7 +528,7 @@ const Field = ({
               },
             }}
           />
-        )} */}
+        )}
 
         {fieldType === "BOOLEAN" && (
           <>
@@ -764,50 +762,6 @@ const Field = ({
               }
             )}
           />
-
-          {/* <Group mt={16}>
-            <Controller
-              name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_min`}
-              control={control}
-              render={({ field }) => (
-                <NumberInput
-                  {...field}
-                  label="Min"
-                  maw={92}
-                  {...register(
-                    `sections.${sectionIndex}.field_table.${fieldIndex}.field_min`
-                  )}
-                  onChange={(value) => {
-                    field.onChange(Number(value));
-                    setFieldMin(Number(value));
-                  }}
-                  min={1}
-                  max={fieldMax - 1}
-                />
-              )}
-            />
-
-            <Controller
-              name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_max`}
-              control={control}
-              render={({ field }) => (
-                <NumberInput
-                  {...field}
-                  label="Max"
-                  maw={92}
-                  {...register(
-                    `sections.${sectionIndex}.field_table.${fieldIndex}.field_max`
-                  )}
-                  onChange={(value) => {
-                    field.onChange(Number(value));
-                    setFieldMax(Number(value));
-                  }}
-                  min={fieldMin + 1}
-                  max={999999999999}
-                />
-              )}
-            />
-          </Group> */}
 
           {formType === "REVIEW" && (
             <Checkbox
