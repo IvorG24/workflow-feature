@@ -7,7 +7,7 @@ import {
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Box, Container, Stack, Text } from "@mantine/core";
+import { Container, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -16,7 +16,7 @@ import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
 import RequestSection from "./RequestSection";
-import RequestSingerSection from "./RequestSingerSection";
+import RequestSingerSection from "./RequestSignerSection";
 
 type Props = {
   request: RequestWithResponseType;
@@ -175,9 +175,9 @@ const RequestPage = ({ request }: Props) => {
             duplicateSectionIdList.length > 0
               ? duplicateSectionIdList
               : [section.section_id];
-
+          console.log(newSectionIdList);
           return (
-            <Box key={section.section_id}>
+            <>
               {newSectionIdList.map((sectionId) => (
                 <RequestSection
                   key={sectionId}
@@ -185,7 +185,7 @@ const RequestPage = ({ request }: Props) => {
                   section={section}
                 />
               ))}
-            </Box>
+            </>
           );
         })}
 

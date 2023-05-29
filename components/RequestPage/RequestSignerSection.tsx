@@ -13,7 +13,7 @@ type Props = {
   })[];
 };
 
-const RequestSingerSection = ({ signerList }: Props) => {
+const RequestSignerSection = ({ signerList }: Props) => {
   const signerStatusIcon = (status: ReceiverStatusType) => {
     switch (status) {
       case "APPROVED":
@@ -100,4 +100,4 @@ const RequestSingerSection = ({ signerList }: Props) => {
   );
 };
 
-export default RequestSingerSection;
+export default RequestSignerSection;
