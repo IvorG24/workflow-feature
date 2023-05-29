@@ -1,11 +1,20 @@
+import { getAvatarColor } from "@/utils/styling";
 import { RequestType } from "@/utils/types";
-import { Avatar, Tooltip } from "@mantine/core";
+import { Avatar, Tooltip, createStyles } from "@mantine/core";
+import { capitalize } from "lodash";
+
+const useStyles = createStyles(() => ({
+  primaryApprover: {
+    border: "solid 2px #4DABF7",
+  },
+}));
 
 type RequestApproverListProps = {
   approverList: RequestType["request_signer"];
 };
 
 const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
+  const { classes } = useStyles();
   const defaultAvatarProps = { color: "blue", size: "md", radius: "xl" };
   const otherSigners = approverList.slice(3);
 
@@ -18,6 +27,7 @@ const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
               request_signer_id,
               request_signer: {
                 signer_team_member: { team_member_user },
+                signer_is_primary_signer,
               },
             },
             idx
@@ -31,8 +41,16 @@ const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
                 >
                   <Avatar
                     {...defaultAvatarProps}
+                    color={getAvatarColor(
+                      Number(`${team_member_user.user_id.charCodeAt(0)}`)
+                    )}
                     src={team_member_user.user_avatar}
-                  >{`${team_member_user.user_first_name[0]}${team_member_user.user_last_name[0]}`}</Avatar>
+                    className={
+                      signer_is_primary_signer ? classes.primaryApprover : ""
+                    }
+                  >{`${capitalize(
+                    team_member_user.user_first_name[0]
+                  )}${capitalize(team_member_user.user_last_name[0])}`}</Avatar>
                 </Tooltip>
               );
             }

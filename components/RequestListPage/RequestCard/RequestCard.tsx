@@ -1,18 +1,25 @@
 import { getStatusToColor } from "@/utils/styling";
 import { RequestType } from "@/utils/types";
 import {
+  ActionIcon,
   Avatar,
   Badge,
   Box,
+  Button,
   Card,
   CopyButton,
   Divider,
+  Flex,
   Group,
   Stack,
   Text,
   Tooltip,
 } from "@mantine/core";
-import { IconCalendar } from "@tabler/icons-react";
+import {
+  IconCalendar,
+  IconCopy,
+  IconFileDescription,
+} from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import RequestApproverList from "./RequestApproverList";
 
@@ -42,10 +49,7 @@ const RequestCard = ({ request }: RequestCardProps) => {
   };
 
   return (
-    <Card
-      onClick={() => handleRedirectToRequestPage(request.request_id)}
-      radius="lg"
-    >
+    <Card radius="lg" maw={300}>
       <Stack>
         <Group position="apart">
           <Group spacing={8}>
@@ -64,32 +68,52 @@ const RequestCard = ({ request }: RequestCardProps) => {
         </Group>
         <Stack spacing={8}>
           <Box>
-            <Text c="dimmed">Request ID</Text>
-            <CopyButton value={request.request_id}>
-              {({ copied, copy }) => (
-                <Tooltip label={copied ? "Copied" : "Copy"} onClick={copy}>
-                  <Text sx={{ cursor: "pointer" }}>{request.request_id}</Text>
-                </Tooltip>
-              )}
-            </CopyButton>
+            <Text c="dimmed" size={14}>
+              Request ID
+            </Text>
+            <Flex gap={3}>
+              <Tooltip label={request.request_id}>
+                <Text truncate>{request.request_id}</Text>
+              </Tooltip>
+              <CopyButton value={request.request_id}>
+                {({ copied, copy }) => (
+                  <Tooltip label={copied ? "Copied" : "Copy"} onClick={copy}>
+                    <ActionIcon>
+                      <IconCopy />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </CopyButton>
+            </Flex>
           </Box>
-          <Box>
-            <Text c="dimmed">Form title and description</Text>
-            <Text weight={600}>{form.form_name}</Text>
-            <Text>{form.form_description}</Text>
-          </Box>
+          <Stack spacing="xs">
+            <Flex gap="xs">
+              <Tooltip label={form.form_description}>
+                <IconFileDescription stroke={1} />
+              </Tooltip>
+              <Text weight={600}>{form.form_name}</Text>
+            </Flex>
+
+            <Flex gap="xs">
+              <Tooltip label="Date created">
+                <IconCalendar stroke={1} />
+              </Tooltip>
+              <Text>{requestDateCreated}</Text>
+            </Flex>
+          </Stack>
         </Stack>
       </Stack>
       <Card.Section mt="sm">
         <Divider />
         <Group p="sm" position="apart">
           <RequestApproverList approverList={request_signer} />
-          <Group spacing={8}>
-            <Tooltip label="Date created">
-              <IconCalendar stroke={1} />
-            </Tooltip>
-            <Text>{requestDateCreated}</Text>
-          </Group>
+
+          <Button
+            variant="light"
+            onClick={() => handleRedirectToRequestPage(request.request_id)}
+          >
+            View Request
+          </Button>
         </Group>
       </Card.Section>
     </Card>
