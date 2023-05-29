@@ -131,19 +131,6 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
     try {
       setIsSubmitting(true);
       console.log(formData);
-      // const buildFormParams: BuildFormParams = transformIntoBuildFormParams(
-      //   formData,
-      //   user
-      // );
-      // const buildFormResult = await buildForm(supabaseClient, buildFormParams);
-      // if (buildFormResult) {
-      //   await router.push("/team-requests/forms");
-      //   notifications.show({
-      //     message: "Form built successfully",
-      //     color: "green",
-      //   });
-      //   router.reload();
-      // }
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
