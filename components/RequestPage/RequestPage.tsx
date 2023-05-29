@@ -1,45 +1,40 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
-import { useIsLoading, useLoadingActions } from "@/stores/useLoadingStore";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { TEMP_TEAM_MEMBER_ID, TEMP_USER_ID } from "@/utils/dummyData";
-import { RequestWithResponseType } from "@/utils/types";
 import {
-  Box,
-  Button,
-  Container,
-  Divider,
-  Group,
-  LoadingOverlay,
-  NavLink,
-  Paper,
-  Space,
-  Stack,
-  Text,
-} from "@mantine/core";
+  FormStatusType,
+  ReceiverStatusType,
+  RequestWithResponseType,
+} from "@/utils/types";
+import { Box, Container, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconArrowLeft } from "@tabler/icons-react";
-import { useRouter } from "next/router";
 import { useState } from "react";
+import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
+import RequestDetailsSection from "./RequestDetailsSection";
 import RequestSection from "./RequestSection";
+import RequestSingerSection from "./RequestSingerSection";
 
 type Props = {
   request: RequestWithResponseType;
 };
 
 const RequestPage = ({ request }: Props) => {
-  const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  const isLoading = useIsLoading();
+
   const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const requestor = request.request_team_member.team_member_user;
   const sectionList = request.request_form.form_section;
-  const approverList = request.request_signer.map(
-    (signer) => signer.request_signer_signer
-  );
+  const signerList = request.request_signer.map((signer) => {
+    return {
+      ...signer.request_signer_signer,
+      signer_status: signer.request_signer_status as ReceiverStatusType,
+    };
+  });
   const requestDateCreated = new Date(
     request.request_date_created
   ).toLocaleDateString("en-US", {
@@ -49,15 +44,14 @@ const RequestPage = ({ request }: Props) => {
   });
 
   const isUserOwner = requestor.user_id === TEMP_USER_ID;
-  const isUserApprover = approverList.find(
-    (approver) =>
-      approver.signer_team_member.team_member_id === TEMP_TEAM_MEMBER_ID
+  const isUserSigner = signerList.find(
+    (signer) => signer.signer_team_member.team_member_id === TEMP_TEAM_MEMBER_ID
   );
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       setIsLoading(true);
-      const approver = isUserApprover;
+      const approver = isUserSigner;
       const approverFullName = `${approver?.signer_team_member.team_member_user.user_first_name} ${approver?.signer_team_member.team_member_user.user_last_name}`;
       if (!approver) {
         notifications.show({
@@ -162,112 +156,13 @@ const RequestPage = ({ request }: Props) => {
 
   return (
     <Container>
-      <NavLink
-        mb="sm"
-        label="Return to Requests Page"
-        icon={<IconArrowLeft />}
-        onClick={() => router.push("/team-requests/requests")}
-      />
-      <Paper p="lg" h="fit-content" pos="relative">
-        <LoadingOverlay visible={isLoading} overlayBlur={2} />
-        {isUserOwner && requestStatus === "PENDING" && (
-          <>
-            <Divider
-              my="lg"
-              label="Request Owner Actions"
-              labelPosition="center"
-            />
-            <Stack spacing="sm">
-              <Button
-                variant="outline"
-                fullWidth
-                onClick={() =>
-                  router.push(
-                    `/team-requests/requests/${request.request_id}/edit`
-                  )
-                }
-              >
-                Edit Request
-              </Button>
-              <Button variant="default" fullWidth onClick={handleCancelRequest}>
-                Cancel Request
-              </Button>
-            </Stack>
-          </>
-        )}
-
-        {isUserOwner && requestStatus === "CANCELED" && (
-          <Button color="red" fullWidth onClick={openPromptDeleteModal}>
-            Delete Request
-          </Button>
-        )}
-
-        {isUserApprover && requestStatus === "PENDING" && (
-          <>
-            <Divider
-              my="lg"
-              label="Request Approver Actions"
-              labelPosition="center"
-            />
-            <Stack>
-              <Button
-                color="green"
-                fullWidth
-                onClick={() => handleUpdateRequest("APPROVED")}
-              >
-                Approve Request
-              </Button>
-              <Button
-                color="red"
-                fullWidth
-                onClick={() => handleUpdateRequest("REJECTED")}
-              >
-                Reject Request
-              </Button>
-            </Stack>
-          </>
-        )}
-        <Divider my="sm" />
-        <Group spacing={4}>
-          <Text>Request ID:</Text>
-          <Text weight={600}>{request.request_id}</Text>
-        </Group>
-        <Group spacing={4}>
-          <Text>Form name:</Text>
-          <Text weight={600}>{request.request_form.form_name}</Text>
-        </Group>
-        <Group spacing={4}>
-          <Text>Form description:</Text>
-          <Text weight={600}>{request.request_form.form_description}</Text>
-        </Group>
-        <Group spacing={4}>
-          <Text>Submitted by:</Text>
-          <Text
-            weight={600}
-          >{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
-        </Group>
-        <Group spacing={4}>
-          <Text>Submitted on:</Text>
-          <Text weight={600}>{requestDateCreated}</Text>
-        </Group>
-        <Group spacing={4}>
-          <Text>Status:</Text>
-          <Text weight={600}>{requestStatus}</Text>
-        </Group>
-        <Group spacing={4}>
-          <Text>Approvers:</Text>
-          <Text weight={600}>
-            {approverList
-              .map(
-                ({
-                  signer_team_member: {
-                    team_member_user: { user_first_name, user_last_name },
-                  },
-                }) => `${user_first_name} ${user_last_name}`
-              )
-              .join(", ")}
-          </Text>
-        </Group>
+      <Stack spacing="xl">
+        <RequestDetailsSection
+          request={request}
+          requestor={requestor}
+          requestDateCreated={requestDateCreated}
+          requestStatus={requestStatus as FormStatusType}
+        />
 
         {sectionList.map((section) => {
           const duplicateSectionIdList = section.section_field[0].field_response
@@ -294,8 +189,17 @@ const RequestPage = ({ request }: Props) => {
           );
         })}
 
-        <Space h="xl" />
-      </Paper>
+        <RequestActionSection
+          isUserOwner={isUserOwner}
+          requestStatus={requestStatus as FormStatusType}
+          requestId={request.request_id}
+          handleCancelRequest={handleCancelRequest}
+          openPromptDeleteModal={openPromptDeleteModal}
+          isUserSigner={Boolean(isUserSigner)}
+          handleUpdateRequest={handleUpdateRequest}
+        />
+        <RequestSingerSection signerList={signerList} />
+      </Stack>
       <RequestCommentList
         requestData={{
           requestId: request.request_id,

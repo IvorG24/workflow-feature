@@ -116,7 +116,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
           label: index + 1,
         }));
         return (
-          <Box>
+          <Box pb="xl">
             <Text weight={600}>{response.label}</Text>
             <Slider
               defaultValue={Number(response.value)}
