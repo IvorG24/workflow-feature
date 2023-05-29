@@ -75,22 +75,15 @@ export const getFormList = async (
   params: {
     teamId: string;
     app: string;
-    isAll: boolean;
   }
 ) => {
-  const { teamId, app, isAll } = params;
-  let query = supabaseClient
+  const { teamId, app } = params;
+  const { data, error } = await supabaseClient
     .from("form_table")
     .select("*, form_team_member:form_team_member_id!inner(*)")
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_disabled", false)
     .eq("form_app", app);
-
-  if (!isAll) {
-    query = query.eq("form_is_hidden", false);
-  }
-
-  const { data, error } = await query;
   if (error) throw error;
   return data;
 };
@@ -125,7 +118,7 @@ export const getRequestList = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), request_form: request_form_id( form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_approver, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))))",
+      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), request_form: request_form_id( form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_signer, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))))",
       { count: "exact" }
     )
     .eq("request_team_member.team_member_team_id", teamId);
@@ -234,13 +227,14 @@ export const getRequest = async (
   const { data, error } = await supabaseClient
     .from("request_table")
     .select(
-      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_approver, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_form: request_form_id(form_id, form_name, form_description, form_section: section_table(*, section_field: field_table(*, field_response: request_response_table(*)))))"
+      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_comment: comment_table(comment_id, comment_date_created, comment_content, comment_is_edited, comment_last_updated, comment_type, comment_team_member: comment_team_member_id(team_member_user: team_member_user_id(user_first_name, user_last_name))), request_form: request_form_id(form_id, form_name, form_description, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*)))))"
     )
     .eq("request_id", requestId)
     .eq(
       "request_form.form_section.section_field.field_response.request_response_request_id",
       requestId
     )
+    .eq("request_comment.comment_is_disabled", false)
     .single();
 
   if (error) throw error;
@@ -291,4 +285,107 @@ export const getUserTeamMemberId = async (
   if (error) throw error;
 
   return data?.team_member_id;
+};
+
+// Get form list with filter
+export const getFormListWithFilter = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    app: string;
+    page: number;
+    limit: number;
+    creator?: string[];
+    status?: "hidden" | "visible";
+    sort?: "ascending" | "descending";
+    search?: string;
+  }
+) => {
+  const {
+    teamId,
+    app,
+    page,
+    limit,
+    creator,
+    status,
+    sort = "descending",
+    search,
+  } = params;
+
+  const start = (page - 1) * limit;
+  let query = supabaseClient
+    .from("form_table")
+    .select("*, form_team_member:form_team_member_id!inner(*)", {
+      count: "exact",
+    })
+    .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_is_disabled", false)
+    .eq("form_app", app);
+
+  if (creator) {
+    let creatorCondition = "";
+    creator.forEach((value) => {
+      creatorCondition += `form_team_member_id.eq.${value}, `;
+    });
+    query = query.or(creatorCondition.slice(0, -2));
+  }
+
+  if (status) {
+    query = query.eq("form_is_hidden", status === "hidden");
+  }
+
+  if (search) {
+    query = query.ilike("form_name", `%${search}%`);
+  }
+
+  query = query.order("form_date_created", {
+    ascending: sort === "ascending",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return { data, count };
+};
+
+// Get team's all members
+export const getTeamMemberList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
+    )
+    .eq("team_member_team_id", teamId);
+  if (error) throw error;
+
+  return data;
+};
+
+// Get specific form
+export const getForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+  }
+) => {
+  const { formId } = params;
+  const { data, error } = await supabaseClient
+    .from("form_table")
+    .select(
+      "form_name, form_description, form_date_created, form_is_hidden, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
+    )
+    .eq("form_id", formId)
+    .eq("form_is_disabled", false)
+    .single();
+
+  if (error) throw error;
+
+  return data;
 };

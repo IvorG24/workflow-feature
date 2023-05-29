@@ -54,7 +54,6 @@ const HeaderMenu = () => {
     const formList = await getFormList(supabaseClient, {
       teamId: activeTeam.team_id,
       app: activeApp === "REQUEST" ? "REVIEW" : "REQUEST",
-      isAll: false,
     });
     setFormList(formList);
   };

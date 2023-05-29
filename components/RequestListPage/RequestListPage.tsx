@@ -1,4 +1,4 @@
-import { RequestType } from "@/utils/types";
+import { RequestType, TeamMemberWithUserType } from "@/utils/types";
 import { Container, Paper, Text, Title } from "@mantine/core";
 
 // EXAMPLE
@@ -19,15 +19,23 @@ import { Container, Paper, Text, Title } from "@mantine/core";
 type Props = {
   requestList: RequestType[];
   requestListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
 };
 
-const RequestListPage = ({ requestList, requestListCount }: Props) => {
+const RequestListPage = ({
+  requestList,
+  requestListCount,
+  teamMemberList,
+}: Props) => {
   return (
     <Container>
       <Title>Request List Page</Title>
       <Paper p="xl" mt="xl">
         <Text>Count: {requestListCount}</Text>
         <pre>{JSON.stringify(requestList, null, 2)}</pre>
+      </Paper>
+      <Paper p="xl" mt="xl">
+        <pre>{JSON.stringify(teamMemberList, null, 2)}</pre>
       </Paper>
     </Container>
   );
