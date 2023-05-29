@@ -40,11 +40,14 @@ export type FilterFormValues = {
 
 const RequestListPage = ({
   requestList,
-  requestListCount,
+  requestListCount: initialRequestListCount,
   teamMemberList,
 }: Props) => {
   const [visibleRequestList, setVisibleRequestList] = useState(requestList);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
+  const [requestListCount, setRequestListCount] = useState(
+    initialRequestListCount
+  );
   const [activePage, setActivePage] = useState(1);
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
@@ -82,7 +85,7 @@ const RequestListPage = ({
         sort: isAscendingSort ? "ascending" : "descending",
       });
       setVisibleRequestList(data as RequestType[]);
-      console.log(count);
+      setRequestListCount(count || 0);
     } catch (e) {
       notifications.show({
         title: "Something went wrong",
