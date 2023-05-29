@@ -1,11 +1,24 @@
 import { deleteComment } from "@/backend/api/delete";
 import { updateComment } from "@/backend/api/update";
 import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
+import { getAvatarColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
-import { Box, Button, Group, Paper, Spoiler, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Avatar,
+  Box,
+  Flex,
+  Menu,
+  Spoiler,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconDots, IconEdit, IconX } from "@tabler/icons-react";
+import { capitalize } from "lodash";
+import moment from "moment";
 import { Dispatch, SetStateAction, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
@@ -83,47 +96,82 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     });
 
   return (
-    <Paper p="md" mt="xl">
-      <Box pos="relative">
-        {isEditingComment ? (
-          <FormProvider {...editCommentFormMethods}>
-            <RequestCommentForm
-              onSubmit={handleEditComment}
-              textAreaProps={{ disabled: isSubmittingForm }}
-              addCancelButton={{
-                onClickHandler: () => setIsEditingComment(false),
-              }}
-              submitButtonProps={{
-                loading: isSubmittingForm,
-                children: "Save",
-              }}
-            />
-          </FormProvider>
-        ) : (
-          <Stack spacing={8}>
-            <Text
-              weight={600}
-            >{`${commenter.user_first_name} ${commenter.user_last_name}`}</Text>
-            <Spoiler maxHeight={120} showLabel="Show more" hideLabel="Hide">
-              {commentContent}{" "}
+    <Box pos="relative" mt="sm">
+      {isEditingComment ? (
+        <FormProvider {...editCommentFormMethods}>
+          <RequestCommentForm
+            onSubmit={handleEditComment}
+            textAreaProps={{ disabled: isSubmittingForm }}
+            addCancelButton={{
+              onClickHandler: () => setIsEditingComment(false),
+            }}
+            submitButtonProps={{
+              loading: isSubmittingForm,
+              children: "Save",
+            }}
+          />
+        </FormProvider>
+      ) : (
+        <Stack spacing={8}>
+          <Flex mt="lg">
+            <Avatar
+              size={40}
+              src={commenter.user_avatar}
+              color={getAvatarColor(
+                Number(`${commenter.user_id.charCodeAt(1)}`)
+              )}
+              radius="xl"
+            >
+              {capitalize(commenter.user_first_name[0])}
+              {capitalize(commenter.user_last_name[0])}
+            </Avatar>
+            <Stack spacing={0} ml="md">
+              <Text size={14}>
+                {`${commenter.user_first_name} ${commenter.user_last_name}`}
+              </Text>
+              <Text color="dimmed" size={12}>
+                {commenter.user_username}
+              </Text>
+            </Stack>
+            <Text color="dimmed" size={12} ml="xs">
+              ({moment(comment.comment_date_created).fromNow()})
+            </Text>
+            {isUserOwner && (
+              <Menu shadow="md" width={200} position="bottom-end">
+                <Menu.Target>
+                  <ActionIcon ml="auto">
+                    <IconDots />
+                  </ActionIcon>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Item
+                    icon={<IconEdit size={14} />}
+                    onClick={() => setIsEditingComment(true)}
+                  >
+                    Edit
+                  </Menu.Item>
+                  <Menu.Item
+                    icon={<IconX size={14} />}
+                    onClick={openPromptDeleteModal}
+                  >
+                    Delete
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            )}
+          </Flex>
+          <Spoiler maxHeight={120} showLabel="Show more" hideLabel="Hide">
+            <Text size={14}> {commentContent}</Text>
+            <Text color="dimmed" size={12}>
               {comment.comment_last_updated || isCommentEdited
                 ? "(edited)"
                 : ""}
-            </Spoiler>
-            {isUserOwner && (
-              <Group mt="sm" position="right">
-                <Button color="red" onClick={openPromptDeleteModal}>
-                  Delete
-                </Button>
-                <Button onClick={() => setIsEditingComment(true)}>
-                  {isEditingComment ? "Updating comment" : "Edit"}
-                </Button>
-              </Group>
-            )}
-          </Stack>
-        )}
-      </Box>
-    </Paper>
+            </Text>
+          </Spoiler>
+        </Stack>
+      )}
+    </Box>
   );
 };
 

@@ -2,7 +2,7 @@ import { createComment, createNotification } from "@/backend/api/post";
 import { useUserProfile } from "@/stores/useUserStore";
 import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
 import { RequestWithResponseType } from "@/utils/types";
-import { Paper, Stack } from "@mantine/core";
+import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useState } from "react";
@@ -88,29 +88,35 @@ const RequestCommentList = ({
 
   return (
     <Stack>
-      <Paper p="sm" mt="xl">
+      <Paper p="xl" shadow="xs" mt="xl">
+        <Title order={4} color="dimmed">
+          Comments
+        </Title>
+        <Space h="xl" />
         <FormProvider {...addCommentFormMethods}>
           <RequestCommentForm
             onSubmit={handleAddComment}
             textAreaProps={{
-              label: "Add Comment",
               placeholder: "Enter your comment here",
               disabled: isLoading,
             }}
             submitButtonProps={{
               loading: isLoading,
-              children: "Submit",
+              children: "Comment",
             }}
           />
         </FormProvider>
+
+        <Divider my="xl" />
+
+        {commentList.map((comment) => (
+          <RequestComment
+            key={comment.comment_id}
+            comment={comment}
+            setCommentList={setCommentList}
+          />
+        ))}
       </Paper>
-      {commentList.map((comment) => (
-        <RequestComment
-          key={comment.comment_id}
-          comment={comment}
-          setCommentList={setCommentList}
-        />
-      ))}
     </Stack>
   );
 };

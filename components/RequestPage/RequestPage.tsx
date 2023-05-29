@@ -175,7 +175,7 @@ const RequestPage = ({ request }: Props) => {
             duplicateSectionIdList.length > 0
               ? duplicateSectionIdList
               : [section.section_id];
-          console.log(newSectionIdList);
+        
           return (
             <>
               {newSectionIdList.map((sectionId) => (
