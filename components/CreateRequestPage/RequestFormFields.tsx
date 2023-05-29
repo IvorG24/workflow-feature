@@ -23,47 +23,32 @@ type RequestFormFieldsProps = {
 };
 
 const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
-  const inputProps = {
-    variant: "filled",
-    readOnly: true,
-  };
-
   const renderField = (field: RequestFormFieldsProps["field"]) => {
     switch (field.type) {
       case "TEXT":
-        return <TextInput label={field.label} {...inputProps} />;
+        return <TextInput label={field.label} />;
       case "TEXTAREA":
-        return <Textarea label={field.label} {...inputProps} />;
+        return <Textarea label={field.label} />;
       case "NUMBER":
-        return <NumberInput label={field.label} {...inputProps} />;
+        return <NumberInput label={field.label} />;
       case "SWITCH":
-        return <Switch label={field.label} {...inputProps} />;
+        return <Switch label={field.label} />;
       case "DROPDOWN":
         const dropdownOption = field.options.map((option) => ({
           value: option.option_value,
           label: option.option_value,
         }));
-        return (
-          <Select label={field.label} data={dropdownOption} {...inputProps} />
-        );
+        return <Select label={field.label} data={dropdownOption} />;
       case "MULTISELECT":
         const multiselectOption = field.options.map((option) => ({
           value: option.option_value,
           label: option.option_value,
         }));
-        return (
-          <MultiSelect
-            label={field.label}
-            data={multiselectOption}
-            {...inputProps}
-          />
-        );
+        return <MultiSelect label={field.label} data={multiselectOption} />;
       case "DATE":
-        return <DateInput label={field.label} {...inputProps} />;
+        return <DateInput label={field.label} />;
       case "TIME":
-        return (
-          <TextInput label={field.label} icon={<IconClock />} {...inputProps} />
-        );
+        return <TextInput label={field.label} icon={<IconClock />} />;
       case "SLIDER":
         const sliderOption = JSON.parse(
           field.options.map((option) => option.option_value)[0]

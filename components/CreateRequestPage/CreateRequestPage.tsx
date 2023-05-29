@@ -1,6 +1,9 @@
 import { FormType } from "@/utils/types";
-import { Container, Stack } from "@mantine/core";
+import { Box, Button, Container, Stack } from "@mantine/core";
+import { useState } from "react";
 import RequestFormDetails from "./RequestFormDetails";
+import RequestFormSection from "./RequestFormSection";
+import RequestFormSigner from "./RequestFormSigner";
 
 type CreateRequestPageProps = {
   form: FormType;
@@ -13,38 +16,57 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
+  const [sectionList, setSectionList] = useState(form.form_section);
 
-  const sectionList = form.form_section;
-  console.log(sectionList);
+  const handleAddDuplicate = (sectionId: string) => {
+    const sectionMatch = form.form_section.find(
+      (section) => section.section_id === sectionId
+    );
+    if (sectionMatch) {
+      setSectionList((prev) => {
+        const updatedSectionList = [...prev, { ...sectionMatch }];
+        const sortSectionByOrder = updatedSectionList.sort(
+          (a, b) => a.section_order - b.section_order
+        );
+        return sortSectionByOrder;
+      });
+    }
+  };
+  const signerList = form.form_signer.map((signer) => ({
+    ...signer,
+    signer_action: signer.signer_action.toUpperCase(),
+  }));
+
   return (
     <Container>
       <Stack spacing="xl">
         <RequestFormDetails formDetails={formDetails} />
-
-        {/* {sectionList.map((section) => {
-          const duplicateSectionIdList = section.section_field[0].field_response
-            .map(
-              (response) => response.request_response_duplicatable_section_id
-            )
-            .filter((id) => id !== null);
-          // if duplicateSectionIdList is empty, use section_id instead
-          const newSectionIdList =
-            duplicateSectionIdList.length > 0
-              ? duplicateSectionIdList
-              : [section.section_id];
+        {sectionList.map((section, idx) => {
+          // used to render add duplicate button
+          // find the last index of current section, and render add duplicate button if match
+          const sectionIdToFind = section.section_id;
+          const sectionLastIndex = sectionList
+            .map((sectionItem) => sectionItem.section_id)
+            .lastIndexOf(sectionIdToFind);
 
           return (
-            <>
-              {newSectionIdList.map((sectionId) => (
-                <RequestFormSection
-                  key={sectionId}
-                  duplicateSectionId={sectionId}
-                  section={section}
-                />
-              ))}
-            </>
+            <Box key={section.section_id + idx}>
+              <RequestFormSection key={section.section_id} section={section} />
+              {section.section_is_duplicatable && idx === sectionLastIndex && (
+                <Button
+                  mt="md"
+                  variant="outline"
+                  onClick={() => handleAddDuplicate(section.section_id)}
+                  fullWidth
+                >
+                  Add Duplicate
+                </Button>
+              )}
+            </Box>
           );
-        })} */}
+        })}
+
+        <RequestFormSigner signerList={signerList} />
       </Stack>
     </Container>
   );

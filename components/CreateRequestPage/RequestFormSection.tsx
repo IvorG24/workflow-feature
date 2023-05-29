@@ -1,41 +1,35 @@
-import { FieldType, RequestWithResponseType } from "@/utils/types";
-import { Box, Paper, Space, Title } from "@mantine/core";
+import { FieldType, FormType } from "@/utils/types";
+import { Group, Paper, Space, Stack, Title } from "@mantine/core";
 import RequestFormFields from "./RequestFormFields";
 
+type Section = FormType["form_section"][0];
+
 type RequestFormSectionProps = {
-  duplicateSectionId: string | null;
-  section: RequestWithResponseType["request_form"]["form_section"][0];
+  section: Section;
 };
 
-const RequestFormSection = ({
-  duplicateSectionId,
-  section,
-}: RequestFormSectionProps) => {
+const RequestFormSection = ({ section }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
-      <Title order={4} color="dimmed">
-        {section.section_name}
-      </Title>
+      <Group position="apart">
+        <Title order={4} color="dimmed">
+          {section.section_name}
+        </Title>
+      </Group>
       <Space />
-      {section.section_field.map((field) => (
-        <Box key={field.field_id}>
-          {field.field_response.map((response) =>
-            response.request_response_duplicatable_section_id ===
-              duplicateSectionId ||
-            response.request_response_duplicatable_section_id === null ? (
-              <RequestFormFields
-                key={response.request_response_id}
-                field={{
-                  id: response.request_response_id,
-                  type: field.field_type as FieldType,
-                  label: field.field_name,
-                  options: field.field_option ? field.field_option : [],
-                }}
-              />
-            ) : null
-          )}
-        </Box>
-      ))}
+      <Stack>
+        {section.section_field.map((field) => (
+          <RequestFormFields
+            key={field.field_id + section.section_id}
+            field={{
+              id: field.field_id,
+              type: field.field_type as FieldType,
+              label: field.field_name,
+              options: field.field_option ? field.field_option : [],
+            }}
+          />
+        ))}
+      </Stack>
     </Paper>
   );
 };
