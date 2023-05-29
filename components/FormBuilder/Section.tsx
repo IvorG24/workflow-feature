@@ -1,11 +1,11 @@
-// todo: Create deleteQuestion query
-// import deleteQuestion from "@/services/question/deleteQuestion";
+// todo: Create deleteField query
+// import deleteField from "@/services/field/deleteField";
 
 import {
-  QuestionWithFieldArrayId,
+  FieldWithFieldArrayId,
   SectionWithFieldArrayId,
 } from "@/utils/react-hook-form";
-import { Question as QuestionType } from "@/utils/types";
+import { AppType, FieldWithChoices } from "@/utils/types";
 import {
   Box,
   Button,
@@ -19,16 +19,16 @@ import { IconCirclePlus } from "@tabler/icons-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
-import Question from "./Question";
+import Field from "./Field";
 
 export type Mode = "answer" | "edit" | "view";
 
 type Props = {
-  formType: AppId;
+  formType: AppType;
   section: SectionWithFieldArrayId;
   sectionIndex: number;
   onDelete?: (sectionId: string) => void;
-  questions: QuestionType[];
+  fields: FieldWithChoices[];
   formId?: string;
   mode?: Mode;
 } & ContainerProps;
@@ -77,12 +77,12 @@ const Section = ({
   const methods = useFormContext();
 
   const {
-    fields: questions,
-    append: appendQuestion,
-    remove: removeQuestion,
+    fields: fields,
+    append: appendField,
+    remove: removeField,
   } = useFieldArray({
     control: methods.control,
-    name: `sections.${sectionIndex}.question_table`,
+    name: `sections.${sectionIndex}.field_table`,
   });
 
   const watchedData = useWatch({
@@ -90,11 +90,11 @@ const Section = ({
     defaultValue: section,
   });
 
-  // this is to update the question order when a question is removed
+  // this is to update the field order when a field is removed
   useDeepCompareEffect(() => {
-    questions.forEach((question, index) => {
+    fields.forEach((field, index) => {
       methods.setValue(
-        `sections.${sectionIndex}.question_table.${index}.question_order`,
+        `sections.${sectionIndex}.field_table.${index}.field_order`,
         index + 1
       );
     });
@@ -122,14 +122,14 @@ const Section = ({
             {mode === "edit" && <Divider mt={-4} />}
           </Box>
         )}
-        {questions.map((question, questionIndex) => (
-          <Box key={question.id} mt={questionIndex === 0 ? 24 : 16}>
-            <Question
+        {fields.map((field, fieldIndex) => (
+          <Box key={field.id} mt={fieldIndex === 0 ? 24 : 16}>
+            <Field
               formType={formType}
-              questionIndex={questionIndex}
-              question={question as QuestionWithFieldArrayId}
+              fieldIndex={fieldIndex}
+              field={field as FieldWithFieldArrayId}
               sectionIndex={sectionIndex}
-              onDelete={() => removeQuestion(questionIndex)}
+              onDelete={() => removeField(fieldIndex)}
               mode={mode}
             />
           </Box>
@@ -140,24 +140,24 @@ const Section = ({
         <>
           <Button
             onClick={() =>
-              appendQuestion({
-                question_id: uuidv4(),
-                question_prompt: "Question",
-                question_type: formType === "REQUEST" ? "TEXT" : "SLIDER",
-                section_id: section.section_id,
+              appendField({
+                field_id: uuidv4(),
+                field_name: "Field",
+                field_type: formType === "REQUEST" ? "TEXT" : "SLIDER",
+                field_section_id: section.section_id,
                 form_id: formId,
-                question_is_required: false,
-                question_min: 1,
-                question_max: 5,
-                question_is_positive: true,
-                question_order: questions.length + 1,
+                field_is_required: false,
+                field_min: 1,
+                field_max: 5,
+                field_is_positive_metric: true,
+                field_order: fields.length + 1,
               })
             }
             size="xs"
-            mt={questions.length > 0 ? 32 : 64}
+            mt={fields.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}
           >
-            Add a Question
+            Add a Field
           </Button>
 
           <Divider mt={24} />

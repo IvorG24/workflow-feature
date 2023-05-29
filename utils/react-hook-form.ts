@@ -1,13 +1,13 @@
-import { SectionWithField } from "./types";
+import { FieldWithChoices, OptionTableRow, SectionWithField } from "./types";
 
 export type SectionWithFieldArrayId = {
   id: string;
 } & SectionWithField;
 
-export type QuestionWithFieldArrayId = {
+export type FieldWithFieldArrayId = {
   id: string;
-} & QuestionWithChoices;
+} & FieldWithChoices;
 
-export type ChoiceWithFieldArrayId = {
+export type OptionWithFieldArrayId = {
   id: string;
-} & Options;
+} & OptionTableRow;

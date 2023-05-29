@@ -1,4 +1,22 @@
-import { Container } from "@mantine/core";
+import {
+  defaultRequestFormBuilderSection,
+  defaultRequestFormBuilderSigners,
+} from "@/utils/contant";
+import { AppType, TeamMemberWithUserType } from "@/utils/types";
+import {
+  Box,
+  Button,
+  Container,
+  Divider,
+  LoadingOverlay,
+  createStyles,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { IconPlus } from "@tabler/icons-react";
+import { useState } from "react";
+import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
+import FormBuilder, { FormBuilderData } from "../FormBuilder/FormBuilder";
 
 const useStyles = createStyles((theme) => ({
   formNameInput: {
@@ -20,11 +38,15 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const BuildFormPage = () => {
-  const router = useRouter();
-  const supabaseClient = useSupabaseClient();
+type Props = {
+  teamMemberList: TeamMemberWithUserType[];
+};
+
+const BuildFormPage = ({ teamMemberList }: Props) => {
   const formId = uuidv4();
-  const formType: AppId = "REQUEST";
+  const formType: AppType = "REQUEST";
+  const { classes } = useStyles();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultValues: FormBuilderData = {
     formId: formId,
@@ -59,17 +81,17 @@ const BuildFormPage = () => {
       if (section.section_name?.length === 0) {
         error = "Each section should have a name";
       }
-      if (section.question_table.length === 0) {
+      if (section.field_table.length === 0) {
         error = "At least 1 question per section is required";
       } else {
-        section.question_table.map((question) => {
-          if (question.question_prompt.length === 0) {
+        section.field_table.map((field) => {
+          if (field.field_name.length === 0) {
             error = "Question label is required on each question";
           }
           if (
-            (question.question_type === "MULTISELECT" ||
-              question.question_type === "SELECT") &&
-            question.choices.length <= 0
+            (field.field_type === "MULTISELECT" ||
+              field.field_type === "SELECT") &&
+            field.options.length <= 0
           )
             hasNoChoices = true;
         });
@@ -96,7 +118,7 @@ const BuildFormPage = () => {
     }
 
     if (error.length > 0) {
-      showNotification({
+      notifications.show({
         message: error,
         color: "orange",
       });
@@ -106,24 +128,25 @@ const BuildFormPage = () => {
   };
 
   const handleSaveForm = async (formData: FormBuilderData) => {
-    setIsSubmitting(true);
     if (checkForError(formData)) return;
     try {
-      const buildFormParams: BuildFormParams = transformIntoBuildFormParams(
-        formData,
-        user
-      );
-      const buildFormResult = await buildForm(supabaseClient, buildFormParams);
-      if (buildFormResult) {
-        await router.push("/team-requests/forms");
-        showNotification({
-          message: "Form built successfully",
-          color: "green",
-        });
-        router.reload();
-      }
+      setIsSubmitting(true);
+      console.log(formData);
+      // const buildFormParams: BuildFormParams = transformIntoBuildFormParams(
+      //   formData,
+      //   user
+      // );
+      // const buildFormResult = await buildForm(supabaseClient, buildFormParams);
+      // if (buildFormResult) {
+      //   await router.push("/team-requests/forms");
+      //   notifications.show({
+      //     message: "Form built successfully",
+      //     color: "green",
+      //   });
+      //   router.reload();
+      // }
     } catch (error) {
-      showNotification({
+      notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -138,78 +161,79 @@ const BuildFormPage = () => {
         overlayBlur={2}
         sx={{ position: "fixed" }}
       />
-      <Container maw={768} p={0}>
-        <FormBuilder.Container mt="xl">
-          <Box maw={522}>
-            <FormBuilder.FormNameInput />
+      <FormProvider {...methods}>
+        <Container maw={768} p={0}>
+          <FormBuilder.Container mt="xl">
+            <Box maw={522}>
+              <FormBuilder.FormNameInput />
 
-            <FormBuilder.DescriptionInput mt={32} />
-          </Box>
+              <FormBuilder.DescriptionInput mt={32} />
+            </Box>
 
-          {sections.length > 0 &&
-            sections.map((section, sectionIndex) => {
-              return (
-                <FormBuilder.Section
-                  key={section.id}
-                  mt={32}
-                  section={section}
-                  sectionIndex={sectionIndex}
-                  onDelete={() => removeSection(sectionIndex)}
-                  questions={section.question_table}
-                  formId={formId}
-                  formType={formType}
-                  mode={section.section_order === 999 ? "view" : "edit"}
-                />
-              );
-            })}
+            {sections.length > 0 &&
+              sections.map((section, sectionIndex) => {
+                return (
+                  <FormBuilder.Section
+                    key={section.id}
+                    mt={32}
+                    section={section}
+                    sectionIndex={sectionIndex}
+                    onDelete={() => removeSection(sectionIndex)}
+                    fields={section.field_table}
+                    formId={formId}
+                    formType={formType}
+                    mode={section.section_order === 999 ? "view" : "edit"}
+                  />
+                );
+              })}
 
-          {/* add new section divider */}
-          <Divider
-            maw={768}
-            mx="auto"
-            labelPosition="center"
-            mt={24}
-            label={
-              <Button
-                leftIcon={<IconPlus height={20} />}
-                variant="subtle"
-                className={classes.button}
-                onClick={() =>
-                  insertSection(
-                    formType === "REVIEW"
-                      ? sections.length - 1
-                      : sections.length,
-                    {
+            {/* add new section divider */}
+            <Divider
+              maw={768}
+              mx="auto"
+              labelPosition="center"
+              mt={24}
+              label={
+                <Button
+                  leftIcon={<IconPlus height={20} />}
+                  variant="subtle"
+                  className={classes.button}
+                  onClick={() =>
+                    insertSection(sections.length, {
                       section_id: uuidv4(),
-                      section_name: "",
-                      form_id: formId,
+                      section_name: `Section ${sections.length + 1}`,
+                      section_form_id: formId,
                       section_order: sections.length + 1,
-                      question_table: [],
-                    }
-                  )
-                }
-              >
-                Add New Section
-              </Button>
-            }
-          />
+                      section_is_duplicatable: false,
+                      field_table: [],
+                    })
+                  }
+                >
+                  Add New Section
+                </Button>
+              }
+            />
 
-          {formType === "REQUEST" && (
-            <>
-              <FormBuilder.SignerSection
-                mt={32}
-                formId={formId}
-                teamMemberList={teamMemberList}
-              />
-              <FormBuilder.UserSignature mt={32} />
-            </>
-          )}
+            {formType === "REQUEST" && (
+              <>
+                <FormBuilder.SignerSection
+                  mt={32}
+                  formId={formId}
+                  teamMemberList={teamMemberList}
+                />
+                <FormBuilder.UserSignature mt={32} />
+              </>
+            )}
 
-          <FormBuilder.SubmitButton mt={32} onClick={onSaveForm}>
-            Finish Building Form
-          </FormBuilder.SubmitButton>
-        </FormBuilder.Container>
-      </Container>
+            <FormBuilder.SubmitButton
+              mt={32}
+              onClick={() => handleSaveForm(getValues())}
+            >
+              Finish Building Form
+            </FormBuilder.SubmitButton>
+          </FormBuilder.Container>
+        </Container>
+      </FormProvider>
     </Container>
   );
 };

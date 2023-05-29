@@ -1,4 +1,4 @@
-import { Member } from "@/backend/utils/types";
+import { TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
   Autocomplete,
@@ -32,7 +32,7 @@ type Props = {
   signerIndex: number;
   onDelete: (signerIndex: number) => void;
   mode: Mode;
-  teamMemberList: Member[];
+  teamMemberList: TeamMemberWithUserType[];
   onMakePrimaryApprover: (signerIndex: number) => void;
 };
 
@@ -83,6 +83,7 @@ const SignerForm = ({
 
   const { classes } = useStyles({ mode });
 
+  const signerUserId = watch(`signers.${signerIndex}.signer_user_id`);
   const signerUsername = watch(`signers.${signerIndex}.signer_username`);
   const signerAction = watch(`signers.${signerIndex}.action`);
   const signerActionStatus = watch(`signers.${signerIndex}.status`);
@@ -90,19 +91,28 @@ const SignerForm = ({
 
   const signerOptions = teamMemberList.map((member) => {
     return {
-      value: member.user.username || "",
-      label: member.user.username || "",
+      value: member.team_member_user.user_id,
+      label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
     };
   });
 
   useEffect(() => {
     if (mode !== "edit") return;
-    const selectedUserId =
-      teamMemberList.find((member) => member.user.username === signerUsername)
-        ?.user.id || "";
+    const selectedUser = teamMemberList.find(
+      (member) => member.team_member_user.user_id === signerUserId
+    );
 
-    setValue(`signers.${signerIndex}.signer_user_id`, selectedUserId);
-  }, [signerUsername]);
+    if (selectedUser) {
+      setValue(
+        `signers.${signerIndex}.signer_user_id`,
+        selectedUser.team_member_user.user_id
+      );
+      setValue(
+        `signers.${signerIndex}.signer_username`,
+        `${selectedUser.team_member_user.user_first_name} ${selectedUser.team_member_user.user_last_name}`
+      );
+    }
+  }, [signerUserId]);
 
   if (!isActive) {
     return (
@@ -149,20 +159,6 @@ const SignerForm = ({
             </List.Item>
           )}
 
-          {/* {signerActionStatus === "CANCELED" && (
-            <List.Item
-              icon={
-                <Center>
-                  <ThemeIcon color="dark" size="xs" radius="xl">
-                    <IconCircleDashed />
-                  </ThemeIcon>
-                </Center>
-              }
-            >
-              Canceled by {signerUsername}
-            </List.Item>
-          )} */}
-
           {isPrimaryApprover && (
             <Chip size="xs" variant="outline" checked={isPrimaryApprover}>
               Primary
@@ -186,7 +182,7 @@ const SignerForm = ({
       <Container fluid p={24}>
         <Flex gap="md" wrap="wrap">
           <Controller
-            name={`signers.${signerIndex}.signer_username`}
+            name={`signers.${signerIndex}.signer_user_id`}
             control={control}
             render={({ field }) => (
               <Select
@@ -210,8 +206,6 @@ const SignerForm = ({
                 {...field}
                 label="Action"
                 maw={223}
-                // value={actionName}
-                // onChange={(value) => setActionName(value)}
                 data={["approved", "noted", "purchased"]}
                 onDropdownOpen={() => setIsSelectingAction(true)}
                 onDropdownClose={() => {

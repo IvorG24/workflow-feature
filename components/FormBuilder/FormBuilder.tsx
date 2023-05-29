@@ -1,5 +1,6 @@
 import {
   AppType,
+  CommentTableRow,
   SectionWithField,
   TeamWithTeamMemberType,
 } from "@/utils/types";
@@ -9,9 +10,9 @@ import ApproverButtons from "./ApproverButtons";
 import CommentSection from "./CommentSection";
 import Container from "./Container";
 import DescriptionInput from "./DescriptionInput";
+import Question from "./Field";
 import FormNameInput from "./FormNameInput";
 import GoBackLink from "./GoBackLink";
-import Question from "./Question";
 import RevieweeList from "./RevieweeList";
 import Section from "./Section";
 import SignerSection, { RequestSigner } from "./SignerSection";
@@ -31,7 +32,7 @@ export type FormBuilderData = {
   sections: SectionWithField[];
   signers: RequestSigner[];
   is_signature_required: boolean;
-  commentList: Comment[];
+  commentList: CommentTableRow[];
   created_at: string;
 };
 

@@ -1,15 +1,13 @@
-// todo: implement delete choice query
-// import deleteChoice from "@/services/choice/deleteChoice";
-import { AppId } from "@/backend/utils/types";
-import { QuestionWithFieldArrayId } from "@/utils/react-hook-form";
-import { QuestionType } from "@/utils/types";
+// todo: implement delete option query
+// import deleteChoice from "@/services/option/deleteChoice";
+import { FieldWithFieldArrayId } from "@/utils/react-hook-form";
+import { AppType, FieldType } from "@/utils/types";
 import {
   ActionIcon,
   Box,
   Button,
   Checkbox,
   Container,
-  createStyles,
   Flex,
   Group,
   NumberInput,
@@ -19,15 +17,11 @@ import {
   SelectProps,
   Slider,
   Text,
-  Textarea,
   TextInput,
+  Textarea,
   Tooltip,
+  createStyles,
 } from "@mantine/core";
-import {
-  DatePicker,
-  DateRangePicker,
-  DateRangePickerValue,
-} from "@mantine/dates";
 import { useClickOutside } from "@mantine/hooks";
 import {
   IconArrowBigDownLine,
@@ -50,11 +44,11 @@ import OptionContainer from "./OptionContainer";
 import { Mode } from "./Section";
 
 type Props = {
-  formType: AppId;
-  question: QuestionWithFieldArrayId;
-  questionIndex: number;
+  formType: AppType;
+  field: FieldWithFieldArrayId;
+  fieldIndex: number;
   sectionIndex: number;
-  onDelete: (questionIndex: number) => void;
+  onDelete: (fieldIndex: number) => void;
   mode: Mode;
 };
 
@@ -67,7 +61,7 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     cursor: mode === "edit" ? "pointer" : "auto",
     position: "relative",
   },
-  previewQuestion: {
+  previewField: {
     pointerEvents: mode === "edit" ? "none" : "auto",
     label: {
       display: "flex",
@@ -116,34 +110,32 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
   },
 }));
 
-const Question = ({
+const Field = ({
   formType,
-  question,
-  questionIndex,
+  field,
+  fieldIndex,
   sectionIndex,
   onDelete,
   mode = "edit",
 }: Props) => {
   const [isActive, setIsActive] = useState(false);
-  const [questionPrompt, setQuestionPrompt] = useState(
-    question.question_prompt
+  const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
+  const [fieldDescription, setFieldDescription] = useState(
+    field.field_description || ""
   );
-  const [questionDescription, setQuestionDescription] = useState(
-    question.question_description || ""
+  const [isFieldRequired, setIsFieldRequired] = useState(
+    field.field_is_required
   );
-  const [isQuestionRequired, setIsQuestionRequired] = useState(
-    question.question_is_required
+  const [isFieldPositive, setIsFieldPositive] = useState(
+    field.field_is_positive_metric
   );
-  const [isQuestionPositive, setIsQuestionPositive] = useState(
-    question.question_is_positive
-  );
-  const [isSelectingQuestionType, setIsSelectingQuestionType] = useState(false);
+  const [isSelectingFieldType, setIsSelectingFieldType] = useState(false);
 
-  const [questionMin, setQuestionMin] = useState(question.question_min);
-  const [questionMax, setQuestionMax] = useState(question.question_max);
+  // const [fieldMin, setFieldMin] = useState(field.field_min);
+  // const [fieldMax, setFieldMax] = useState(field.field_max);
 
   const ref = useClickOutside(() => {
-    if (!isSelectingQuestionType) {
+    if (!isSelectingFieldType) {
       setIsActive(false);
     }
   });
@@ -156,26 +148,26 @@ const Question = ({
     formState: { errors },
   } = useFormContext<FormBuilderData>();
   const {
-    fields: choices,
+    fields: options,
     append: appendChoice,
     remove: removeChoice,
   } = useFieldArray({
     control: control,
-    name: `sections.${sectionIndex}.question_table.${questionIndex}.choices`,
+    name: `sections.${sectionIndex}.field_table.${fieldIndex}.options`,
   });
 
-  const choicesWatch = watch(
-    `sections.${sectionIndex}.question_table.${questionIndex}.choices`
+  const optionsWatch = watch(
+    `sections.${sectionIndex}.field_table.${fieldIndex}.options`
   );
-  const choicesDropdownData = choicesWatch?.map((choice) => ({
-    value: choice.choice_id,
-    label: choice.choice_text,
+  const optionsDropdownData = optionsWatch?.map((option) => ({
+    value: option.option_id,
+    label: option.option_value,
   }));
 
   const { classes } = useStyles({ mode });
 
-  const questionType = watch(
-    `sections.${sectionIndex}.question_table.${questionIndex}.question_type`
+  const fieldType = watch(
+    `sections.${sectionIndex}.field_table.${fieldIndex}.field_type`
   );
 
   const requestTypeOptions = [
@@ -197,58 +189,58 @@ const Question = ({
   const typeOptions =
     formType === "REQUEST" ? requestTypeOptions : reviewTypeOptions;
 
-  const questionPromptName = `sections.${sectionIndex}.question_table.${questionIndex}.question_response`;
-  const questionPromptError = get(errors, questionPromptName);
+  const fieldPromptName = `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`;
+  const fieldPromptError = get(errors, fieldPromptName);
 
   if (!isActive) {
-    const step = 1;
-    const getMarks = () => {
-      const marks = [];
-      for (let i = questionMin; i <= questionMax; i += step) {
-        marks.push({
-          value: i,
-          label: i.toString(),
-        });
-      }
-      return marks;
-    };
+    // const step = 1;
+    // const getMarks = () => {
+    //   const marks = [];
+    //   for (let i = fieldMin; i <= fieldMax; i += step) {
+    //     marks.push({
+    //       value: i,
+    //       label: i.toString(),
+    //     });
+    //   }
+    //   return marks;
+    // };
 
     const label = (
-      <QuestionLabel
+      <FieldLabel
         formType={formType}
-        isQuestionPositive={isQuestionPositive}
-        questionDescription={questionDescription}
-        questionPrompt={questionPrompt}
-        questionType={questionType}
+        isFieldPositive={isFieldPositive}
+        fieldDescription={fieldDescription}
+        fieldPrompt={fieldPrompt}
+        fieldType={fieldType as FieldType}
       />
     );
     return (
       <Box
         role="button"
-        aria-label="click to edit question"
+        aria-label="click to edit field"
         onClick={() => {
           if (mode === "edit") setIsActive(true);
         }}
         className={classes.notActiveContainer}
       >
-        {questionType === "TEXT" && (
+        {fieldType === "TEXT" && (
           <TextInput
             label={label}
-            className={`${classes.previewQuestion} ${
+            className={`${classes.previewField} ${
               mode === "view" && classes.pointerEventsNone
             }`}
-            withAsterisk={isQuestionRequired}
+            withAsterisk={isFieldRequired}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_response`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
               {
                 required: {
-                  value: isQuestionRequired,
+                  value: isFieldRequired,
                   message: "Field is required",
                 },
               }
             )}
             error={
-              questionPromptError ? (
+              fieldPromptError ? (
                 <Text color="red" size="sm">
                   Field is required
                 </Text>
@@ -258,23 +250,23 @@ const Question = ({
           />
         )}
 
-        {questionType === "NUMBER" && (
+        {fieldType === "NUMBER" && (
           <Controller
-            name={`sections.${sectionIndex}.question_table.${questionIndex}.question_response`}
+            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             control={control}
             render={({ field }) => (
               <NumberInput
                 {...field}
                 label={label}
-                className={`${classes.previewQuestion} ${
+                className={`${classes.previewField} ${
                   mode === "view" && classes.pointerEventsNone
                 }`}
-                withAsterisk={isQuestionRequired}
+                withAsterisk={isFieldRequired}
                 {...register(
-                  `sections.${sectionIndex}.question_table.${questionIndex}.question_response`,
+                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
                   {
                     required: {
-                      value: isQuestionRequired,
+                      value: isFieldRequired,
                       message: "Field is required",
                     },
                   }
@@ -282,7 +274,7 @@ const Question = ({
                 value={Number(field.value)}
                 onChange={(value) => field.onChange(Number(value))}
                 error={
-                  questionPromptError ? (
+                  fieldPromptError ? (
                     <Text color="red" size="sm">
                       Field is required
                     </Text>
@@ -294,31 +286,31 @@ const Question = ({
             )}
             rules={{
               required: {
-                value: isQuestionRequired,
+                value: isFieldRequired,
                 message: "Field is required",
               },
             }}
           />
         )}
 
-        {questionType === "TEXTAREA" && (
+        {fieldType === "TEXTAREA" && (
           <Textarea
             label={label}
-            className={`${classes.previewQuestion} ${
+            className={`${classes.previewField} ${
               mode === "view" ? classes.pointerEventsNone : ""
             }`}
-            withAsterisk={isQuestionRequired}
+            withAsterisk={isFieldRequired}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_response`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
               {
                 required: {
-                  value: isQuestionRequired,
+                  value: isFieldRequired,
                   message: "Field is required",
                 },
               }
             )}
             error={
-              questionPromptError ? (
+              fieldPromptError ? (
                 <Text color="red" size="sm">
                   Field is required
                 </Text>
@@ -327,9 +319,9 @@ const Question = ({
           />
         )}
 
-        {questionType === "SELECT" && (
+        {fieldType === "SELECT" && (
           <Controller
-            name={`sections.${sectionIndex}.question_table.${questionIndex}.question_response`}
+            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             control={control}
             render={({ field }) => (
               <Select
@@ -337,15 +329,15 @@ const Question = ({
                 value={`${field.value}`}
                 maw={223}
                 label={label}
-                data={choicesDropdownData}
-                className={`${classes.previewQuestion} ${
+                data={optionsDropdownData}
+                className={`${classes.previewField} ${
                   mode === "view" ? classes.pointerEventsNone : ""
                 }`}
                 style={{ width: "100%" }}
-                withAsterisk={isQuestionRequired}
+                withAsterisk={isFieldRequired}
                 readOnly={mode === "view"}
                 error={
-                  questionPromptError ? (
+                  fieldPromptError ? (
                     <Text color="red" size="sm">
                       Field is required
                     </Text>
@@ -355,23 +347,23 @@ const Question = ({
             )}
             rules={{
               required: {
-                value: isQuestionRequired,
+                value: isFieldRequired,
                 message: "Field is required",
               },
             }}
           />
         )}
 
-        {questionType === "MULTICHECKBOX" && (
+        {fieldType === "MULTICHECKBOX" && (
           <Controller
-            name={`sections.${sectionIndex}.question_table.${questionIndex}.question_response`}
+            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             render={({ field }) => (
               <Checkbox.Group
                 label={label}
-                withAsterisk={isQuestionRequired}
+                withAsterisk={isFieldRequired}
                 {...field}
                 error={
-                  questionPromptError ? (
+                  fieldPromptError ? (
                     <Text color="red" size="sm">
                       Field is required
                     </Text>
@@ -379,34 +371,36 @@ const Question = ({
                 }
               >
                 <Box
-                  className={`${classes.radioGroup} ${
-                    classes.previewQuestion
-                  } ${mode === "view" && classes.pointerEventsNone}`}
+                  className={`${classes.radioGroup} ${classes.previewField} ${
+                    mode === "view" && classes.pointerEventsNone
+                  }`}
                 >
-                  {choicesWatch?.map((choice) => {
+                  {optionsWatch?.map((option) => {
                     return (
-                      <Flex key={choice.choice_id}>
+                      <Flex key={option.option_id}>
                         <Checkbox
-                          value={choice.choice_id}
-                          label={choice.choice_text}
+                          value={option.option_id}
+                          label={option.option_value}
                           className={`${classes.radio} ${
                             mode === "view"
                               ? classes.pointerEventsNone
                               : classes.checkboxCursor
                           }`}
                         />
-                        {choice.choice_description.length > 0 && (
-                          <Tooltip
-                            label={choice.choice_description}
-                            withArrow
-                            multiline
-                            maw={250}
-                          >
-                            <Box>
-                              <IconInfoCircle height={16} color="#495057" />
-                            </Box>
-                          </Tooltip>
-                        )}
+                        {option &&
+                          option.option_description &&
+                          option.option_description?.length > 0 && (
+                            <Tooltip
+                              label={option.option_description}
+                              withArrow
+                              multiline
+                              maw={250}
+                            >
+                              <Box>
+                                <IconInfoCircle height={16} color="#495057" />
+                              </Box>
+                            </Tooltip>
+                          )}
                       </Flex>
                     );
                   })}
@@ -415,22 +409,22 @@ const Question = ({
             )}
             rules={{
               required: {
-                value: isQuestionRequired,
+                value: isFieldRequired,
                 message: "Field is required",
               },
             }}
           />
         )}
 
-        {questionType === "SLIDER" && (
+        {fieldType === "SLIDER" && (
           <Box
-            className={`${classes.previewQuestion} ${
+            className={`${classes.previewField} ${
               mode === "view" ? classes.pointerEventsNone : ""
             }`}
           >
             <Text className={classes.sliderLabel}>{label}</Text>
             <Controller
-              name={`sections.${sectionIndex}.question_table.${questionIndex}.question_response`}
+              name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
               render={({ field }) => (
                 <Slider
                   {...field}
@@ -438,10 +432,10 @@ const Question = ({
                   pt={16}
                   pb={32}
                   defaultValue={1}
-                  min={questionMin}
-                  max={questionMax}
+                  // min={fieldMin}
+                  // max={fieldMax}
                   step={1}
-                  marks={getMarks()}
+                  // marks={getMarks()}
                   showLabelOnHover={false}
                 />
               )}
@@ -449,9 +443,9 @@ const Question = ({
           </Box>
         )}
 
-        {questionType === "DATE" && (
+        {/* {fieldType === "DATE" && (
           <Controller
-            name={`sections.${sectionIndex}.question_table.${questionIndex}.question_response`}
+            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             control={control}
             render={({ field }) => (
               <DatePicker
@@ -459,13 +453,13 @@ const Question = ({
                 value={field.value ? new Date(`${field.value}`) : null}
                 maw={223}
                 label={label}
-                withAsterisk={isQuestionRequired}
+                withAsterisk={isFieldRequired}
                 readOnly={mode === "view"}
-                className={`${classes.previewQuestion} ${
+                className={`${classes.previewField} ${
                   mode === "view" ? classes.pointerEventsNone : ""
                 }`}
                 error={
-                  questionPromptError ? (
+                  fieldPromptError ? (
                     <Text color="red" size="sm">
                       Field is required
                     </Text>
@@ -475,38 +469,39 @@ const Question = ({
             )}
             rules={{
               required: {
-                value: isQuestionRequired,
+                value: isFieldRequired,
                 message: "Field is required",
               },
             }}
           />
         )}
 
-        {questionType === "DATERANGE" && (
+        {fieldType === "DATERANGE" && (
           <Controller
-            name={`sections.${sectionIndex}.question_table.${questionIndex}.question_response`}
+            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             control={control}
             render={({ field }) => {
               const newValue: Date[] = field.value as Date[];
               return (
-                <DateRangePicker
+                <DatePicker
                   {...field}
+                  type="range"
                   value={
                     mode === "view"
                       ? newValue[0] && newValue[1]
                         ? [new Date(newValue[0]), new Date(newValue[1])]
                         : [null, null]
-                      : (field.value as DateRangePickerValue)
+                      : (field.value as DatePickerType)
                   }
                   maw={223}
                   label={label}
-                  withAsterisk={isQuestionRequired}
+                  withAsterisk={isFieldRequired}
                   readOnly={mode === "view"}
-                  className={`${classes.previewQuestion} ${
+                  className={`${classes.previewField} ${
                     mode === "view" ? classes.pointerEventsNone : ""
                   }`}
                   error={
-                    questionPromptError ? (
+                    fieldPromptError ? (
                       <Text color="red" size="sm">
                         Field is required
                       </Text>
@@ -517,14 +512,14 @@ const Question = ({
             }}
             rules={{
               required: {
-                value: isQuestionRequired,
+                value: isFieldRequired,
                 message: "Field is required",
               },
               validate: {
                 isRequired: (value) => {
                   const newValue = value as [Date | null, Date | null];
                   if (
-                    isQuestionRequired &&
+                    isFieldRequired &&
                     (newValue[0] === null || newValue[1] === null)
                   ) {
                     return "Field is required";
@@ -535,24 +530,24 @@ const Question = ({
               },
             }}
           />
-        )}
+        )} */}
 
-        {questionType === "BOOLEAN" && (
+        {fieldType === "BOOLEAN" && (
           <>
             <Radio.Group
               defaultValue={
                 getValues(
-                  `sections.${sectionIndex}.question_table.${questionIndex}.question_response`
+                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`
                 )
                   ? "yes"
                   : "no"
               }
-              className={`${classes.previewQuestion} ${
+              className={`${classes.previewField} ${
                 mode === "view" && classes.pointerEventsNone
               }`}
               label={label}
               error={
-                questionPromptError ? (
+                fieldPromptError ? (
                   <Text color="red" size="sm">
                     Field is required
                   </Text>
@@ -563,14 +558,14 @@ const Question = ({
                 value="yes"
                 label="Yes"
                 {...register(
-                  `sections.${sectionIndex}.question_table.${questionIndex}.question_response`
+                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`
                 )}
               />
               <Radio
                 value="no"
                 label="No"
                 {...register(
-                  `sections.${sectionIndex}.question_table.${questionIndex}.question_response`
+                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`
                 )}
               />
             </Radio.Group>
@@ -578,9 +573,9 @@ const Question = ({
               display="none"
               defaultChecked={metricBooleanValue === "yes"}
               {...register(
-                `sections.${sectionIndex}.question_table.${questionIndex}.question_response`,
+                `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
                 {
-                  onChange: (e) => setIsQuestionRequired(e.target.checked),
+                  onChange: (e) => setIsFieldRequired(e.target.checked),
                 }
               )}
             /> */}
@@ -594,35 +589,35 @@ const Question = ({
     <Paper ref={ref} shadow="xs" radius="sm" className={classes.paper}>
       <ActionIcon
         className={classes.closeIcon}
-        onClick={() => onDelete(questionIndex)}
+        onClick={() => onDelete(fieldIndex)}
         color="red"
       >
         <IconTrash height={16} />
       </ActionIcon>
 
-      {(questionType === "TEXT" ||
-        questionType === "TEXTAREA" ||
-        questionType === "NUMBER" ||
-        questionType === "DATE" ||
-        questionType === "DATERANGE") && (
+      {(fieldType === "TEXT" ||
+        fieldType === "TEXTAREA" ||
+        fieldType === "NUMBER" ||
+        fieldType === "DATE" ||
+        fieldType === "DATERANGE") && (
         <Container fluid p={24}>
-          <QuestionTypeDropdown
+          <FieldTypeDropdown
             sectionIndex={sectionIndex}
-            questionIndex={questionIndex}
+            fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingQuestionType(true)}
+            onDropdownOpen={() => setIsSelectingFieldType(true)}
             onDropdownClose={() => {
-              setTimeout(() => setIsSelectingQuestionType(false), 100);
+              setTimeout(() => setIsSelectingFieldType(false), 100);
             }}
           />
 
           <TextInput
-            label="Question"
+            label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_prompt`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
-                onChange: (e) => setQuestionPrompt(e.target.value),
+                onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
           />
@@ -631,9 +626,9 @@ const Question = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_description`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
               {
-                onChange: (e) => setQuestionDescription(e.target.value),
+                onChange: (e) => setFieldDescription(e.target.value),
               }
             )}
           />
@@ -642,9 +637,9 @@ const Question = ({
             label="Required"
             mt={24}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_is_required`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_required`,
               {
-                onChange: (e) => setIsQuestionRequired(e.target.checked),
+                onChange: (e) => setIsFieldRequired(e.target.checked),
               }
             )}
             className={classes.checkboxCursor}
@@ -652,43 +647,43 @@ const Question = ({
         </Container>
       )}
 
-      {(questionType === "SELECT" || questionType === "MULTICHECKBOX") && (
+      {(fieldType === "SELECT" || fieldType === "MULTICHECKBOX") && (
         <Container fluid p={24}>
-          <QuestionTypeDropdown
+          <FieldTypeDropdown
             sectionIndex={sectionIndex}
-            questionIndex={questionIndex}
+            fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingQuestionType(true)}
+            onDropdownOpen={() => setIsSelectingFieldType(true)}
             onDropdownClose={() => {
-              setTimeout(() => setIsSelectingQuestionType(false), 100);
+              setTimeout(() => setIsSelectingFieldType(false), 100);
             }}
           />
           <TextInput
-            label="Question"
+            label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_prompt`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
-                onChange: (e) => setQuestionPrompt(e.target.value),
+                onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
           />
 
-          {choices.map((choice, choiceIndex) => (
+          {options.map((option, optionIndex) => (
             <OptionContainer
-              onDelete={() => removeChoice(choiceIndex)}
-              key={choice.id}
+              onDelete={() => removeChoice(optionIndex)}
+              key={option.id}
             >
               <Option
-                label={`Option ${choiceIndex + 1}`}
+                label={`Option ${optionIndex + 1}`}
                 {...register(
-                  `sections.${sectionIndex}.question_table.${questionIndex}.choices.${choiceIndex}.choice_text`
+                  `sections.${sectionIndex}.field_table.${fieldIndex}.options.${optionIndex}.option_value`
                 )}
               />
               <Option
                 label="Description"
                 {...register(
-                  `sections.${sectionIndex}.question_table.${questionIndex}.choices.${choiceIndex}.choice_description`
+                  `sections.${sectionIndex}.field_table.${fieldIndex}.options.${optionIndex}.option_description`
                 )}
               />
             </OptionContainer>
@@ -700,11 +695,11 @@ const Question = ({
             mt={16}
             onClick={() =>
               appendChoice({
-                choice_id: uuidv4(),
-                question_id: question.question_id,
-                choice_text: "option",
-                choice_order: choices.length + 1,
-                choice_description: "",
+                option_id: uuidv4(),
+                option_field_id: field.field_id,
+                option_value: "option",
+                option_order: options.length + 1,
+                option_description: "",
               })
             }
             leftIcon={<IconCirclePlus height={16} />}
@@ -716,9 +711,9 @@ const Question = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_description`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
               {
-                onChange: (e) => setQuestionDescription(e.target.value),
+                onChange: (e) => setFieldDescription(e.target.value),
               }
             )}
           />
@@ -727,9 +722,9 @@ const Question = ({
             label="Required"
             mt={24}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_is_required`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_required`,
               {
-                onChange: (e) => setIsQuestionRequired(e.target.checked),
+                onChange: (e) => setIsFieldRequired(e.target.checked),
               }
             )}
             className={classes.checkboxCursor}
@@ -737,24 +732,24 @@ const Question = ({
         </Container>
       )}
 
-      {questionType === "SLIDER" && (
+      {fieldType === "SLIDER" && (
         <Container fluid p={24}>
-          <QuestionTypeDropdown
+          <FieldTypeDropdown
             sectionIndex={sectionIndex}
-            questionIndex={questionIndex}
+            fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingQuestionType(true)}
+            onDropdownOpen={() => setIsSelectingFieldType(true)}
             onDropdownClose={() => {
-              setTimeout(() => setIsSelectingQuestionType(false), 100);
+              setTimeout(() => setIsSelectingFieldType(false), 100);
             }}
           />
           <TextInput
-            label="Question"
+            label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_prompt`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
-                onChange: (e) => setQuestionPrompt(e.target.value),
+                onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
           />
@@ -763,16 +758,16 @@ const Question = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_description`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
               {
-                onChange: (e) => setQuestionDescription(e.target.value),
+                onChange: (e) => setFieldDescription(e.target.value),
               }
             )}
           />
 
-          <Group mt={16}>
+          {/* <Group mt={16}>
             <Controller
-              name={`sections.${sectionIndex}.question_table.${questionIndex}.question_min`}
+              name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_min`}
               control={control}
               render={({ field }) => (
                 <NumberInput
@@ -780,20 +775,20 @@ const Question = ({
                   label="Min"
                   maw={92}
                   {...register(
-                    `sections.${sectionIndex}.question_table.${questionIndex}.question_min`
+                    `sections.${sectionIndex}.field_table.${fieldIndex}.field_min`
                   )}
                   onChange={(value) => {
                     field.onChange(Number(value));
-                    setQuestionMin(Number(value));
+                    setFieldMin(Number(value));
                   }}
                   min={1}
-                  max={questionMax - 1}
+                  max={fieldMax - 1}
                 />
               )}
             />
 
             <Controller
-              name={`sections.${sectionIndex}.question_table.${questionIndex}.question_max`}
+              name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_max`}
               control={control}
               render={({ field }) => (
                 <NumberInput
@@ -801,27 +796,27 @@ const Question = ({
                   label="Max"
                   maw={92}
                   {...register(
-                    `sections.${sectionIndex}.question_table.${questionIndex}.question_max`
+                    `sections.${sectionIndex}.field_table.${fieldIndex}.field_max`
                   )}
                   onChange={(value) => {
                     field.onChange(Number(value));
-                    setQuestionMax(Number(value));
+                    setFieldMax(Number(value));
                   }}
-                  min={questionMin + 1}
+                  min={fieldMin + 1}
                   max={999999999999}
                 />
               )}
             />
-          </Group>
+          </Group> */}
 
           {formType === "REVIEW" && (
             <Checkbox
-              label="Question is positive"
+              label="Field is positive"
               mt={24}
               {...register(
-                `sections.${sectionIndex}.question_table.${questionIndex}.question_is_positive`,
+                `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_positive_metric`,
                 {
-                  onChange: (e) => setIsQuestionPositive(e.target.checked),
+                  onChange: (e) => setIsFieldPositive(e.target.checked),
                 }
               )}
               className={classes.checkboxCursor}
@@ -830,24 +825,24 @@ const Question = ({
         </Container>
       )}
 
-      {questionType === "BOOLEAN" && (
+      {fieldType === "BOOLEAN" && (
         <Container fluid p={24}>
-          <QuestionTypeDropdown
+          <FieldTypeDropdown
             sectionIndex={sectionIndex}
-            questionIndex={questionIndex}
+            fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingQuestionType(true)}
+            onDropdownOpen={() => setIsSelectingFieldType(true)}
             onDropdownClose={() => {
-              setTimeout(() => setIsSelectingQuestionType(false), 100);
+              setTimeout(() => setIsSelectingFieldType(false), 100);
             }}
           />
           <TextInput
-            label="Question"
+            label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_prompt`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
-                onChange: (e) => setQuestionPrompt(e.target.value),
+                onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
           />
@@ -856,20 +851,20 @@ const Question = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_description`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
               {
-                onChange: (e) => setQuestionDescription(e.target.value),
+                onChange: (e) => setFieldDescription(e.target.value),
               }
             )}
           />
 
           <Checkbox
-            label="Question is positive"
+            label="Field is positive"
             mt={24}
             {...register(
-              `sections.${sectionIndex}.question_table.${questionIndex}.question_is_positive`,
+              `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_positive_metric`,
               {
-                onChange: (e) => setIsQuestionPositive(e.target.checked),
+                onChange: (e) => setIsFieldPositive(e.target.checked),
               }
             )}
             className={classes.checkboxCursor}
@@ -880,25 +875,25 @@ const Question = ({
   );
 };
 
-export default Question;
+export default Field;
 
-type QuestionTypeDropdownProp = {
+type FieldTypeDropdownProp = {
   sectionIndex: number;
-  questionIndex: number;
+  fieldIndex: number;
 } & SelectProps;
 
-export function QuestionTypeDropdown({
+export function FieldTypeDropdown({
   sectionIndex,
-  questionIndex,
+  fieldIndex,
   onDropdownOpen,
   onDropdownClose,
   ...prop
-}: QuestionTypeDropdownProp) {
+}: FieldTypeDropdownProp) {
   const { control } = useFormContext();
 
   return (
     <Controller
-      name={`sections.${sectionIndex}.question_table.${questionIndex}.question_type`}
+      name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_type`}
       control={control}
       render={({ field }) => (
         <Select
@@ -914,32 +909,32 @@ export function QuestionTypeDropdown({
   );
 }
 
-type QuestionLabelProps = {
-  questionPrompt: string;
-  isQuestionPositive: boolean;
-  questionDescription: string;
-  formType: AppId;
-  questionType: QuestionType;
+type FieldLabelProps = {
+  fieldPrompt: string;
+  isFieldPositive: boolean;
+  fieldDescription: string;
+  formType: AppType;
+  fieldType: FieldType;
 };
 
-export const QuestionLabel = ({
-  questionPrompt,
-  isQuestionPositive,
-  questionDescription,
-  questionType,
+export const FieldLabel = ({
+  fieldPrompt,
+  isFieldPositive,
+  fieldDescription,
+  fieldType,
   formType,
-}: QuestionLabelProps) => {
+}: FieldLabelProps) => {
   return (
     <Flex align="flex-start" gap="xs">
-      {questionPrompt}
+      {fieldPrompt}
 
       <Group spacing={5} mt={3}>
-        {isQuestionPositive ? (
+        {isFieldPositive ? (
           <IconArrowBigUpLine
             height={16}
             color="#40C057"
             display={
-              formType === "REVIEW" && questionType !== "TEXTAREA"
+              formType === "REVIEW" && fieldType !== "TEXTAREA"
                 ? "block"
                 : "none"
             }
@@ -949,20 +944,20 @@ export const QuestionLabel = ({
             height={16}
             color="#FA5252"
             display={
-              formType === "REVIEW" && questionType !== "TEXTAREA"
+              formType === "REVIEW" && fieldType !== "TEXTAREA"
                 ? "block"
                 : "none"
             }
           />
         )}
 
-        {questionDescription.length > 0 && (
-          <Tooltip label={questionDescription} withArrow multiline miw={250}>
+        {fieldDescription.length > 0 && (
+          <Tooltip label={fieldDescription} withArrow multiline miw={250}>
             <Box>
               <IconInfoCircle
                 height={16}
                 color="#495057"
-                display={questionDescription.length > 0 ? "block" : "none"}
+                display={fieldDescription.length > 0 ? "block" : "none"}
               />
             </Box>
           </Tooltip>

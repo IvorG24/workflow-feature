@@ -319,13 +319,10 @@ export type FormWithTeamMember = FormTableRow & {
 };
 
 export type SectionWithField = {
-  field_table: FieldTableRow[];
+  field_table: FieldWithChoices[];
 } & SectionTableRow;
 
-export type SectionWithFieldResponse = {
-  field_table: FieldWithResponse[];
-} & SectionTableRow;
-
-export type FieldWithResponse = {
-  response_table: RequestResponseTableRow;
+export type FieldWithChoices = {
+  options: OptionTableRow[];
+  field_response: string;
 } & FieldTableRow;

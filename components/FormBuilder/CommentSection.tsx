@@ -1,4 +1,4 @@
-import { Comment } from "@/backend/utils/types";
+import { CommentTableRow } from "@/utils/types";
 import {
   Box,
   Button,
@@ -20,7 +20,7 @@ type Props = {
   setCommentValue?: Dispatch<SetStateAction<string>>;
   mode?: Mode;
   onCreateComment?: MouseEventHandler<HTMLButtonElement>;
-  commentList: Comment[];
+  commentList: CommentTableRow[];
 } & ContainerProps;
 
 type UseStylesProps = {
@@ -77,7 +77,7 @@ const CommentSection = ({
         <Flex gap="lg" direction="column" mt="md">
           {commentList.length > 0 ? (
             commentList.map((comment) => (
-              <CommentItem comment={comment} key={comment.id} />
+              <CommentItem comment={comment} key={comment.comment_id} />
             ))
           ) : (
             <Text color="dimmed" opacity={0.8}>
