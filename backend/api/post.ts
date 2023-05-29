@@ -214,6 +214,12 @@ export const createComment = async (
   supabaseClient: SupabaseClient<Database>,
   params: CommentTableInsert
 ) => {
-  const { error } = await supabaseClient.from("comment_table").insert(params);
+  const { data, error } = await supabaseClient
+    .from("comment_table")
+    .insert(params)
+    .select("*")
+    .single();
   if (error) throw error;
+
+  return { data, error };
 };

@@ -9,6 +9,7 @@ import {
   LoadingOverlay,
   MantineProvider,
 } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
@@ -54,18 +55,20 @@ export default function App(
           primaryColor: activeApp === "REVIEW" ? "green" : "blue",
         }}
       >
-        <RouterTransition />
+        <ModalsProvider>
+          <RouterTransition />
 
-        <Notifications />
-        <SessionContextProvider
-          supabaseClient={supabaseClient}
-          initialSession={pageProps.initialSession}
-        >
-          <Layout>
-            <LoadingOverlay visible={isLoading} overlayBlur={2} />
-            <Component {...pageProps} />
-          </Layout>
-        </SessionContextProvider>
+          <Notifications />
+          <SessionContextProvider
+            supabaseClient={supabaseClient}
+            initialSession={pageProps.initialSession}
+          >
+            <Layout>
+              <LoadingOverlay visible={isLoading} overlayBlur={2} />
+              <Component {...pageProps} />
+            </Layout>
+          </SessionContextProvider>
+        </ModalsProvider>
       </MantineProvider>
     </ColorSchemeProvider>
   );
