@@ -5,8 +5,8 @@ import {
   cancelRequest,
   updateComment,
 } from "@/backend/api/update";
+import { useUserTeamMemberId } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
 import { RequestWithResponseType } from "@/utils/types";
 import { Button, Container, Paper, Stack, Title } from "@mantine/core";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -17,6 +17,7 @@ type Props = {
 
 const RequestPage = ({ request }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
+  const teamMemberId = useUserTeamMemberId();
 
   const handleApproveRequest = async () => {
     try {
@@ -30,7 +31,7 @@ const RequestPage = ({ request }: Props) => {
         requestOwnerId: "eb4d3419-b70f-44ba-b88f-c3d983cbcf3b",
         signerFullName: "John Doe",
         formName: "All Fields",
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
       });
     } catch (e) {
       console.log(e);
@@ -48,7 +49,7 @@ const RequestPage = ({ request }: Props) => {
         requestOwnerId: "eb4d3419-b70f-44ba-b88f-c3d983cbcf3b",
         signerFullName: "John Doe",
         formName: "All Fields",
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
       });
     } catch (e) {
       console.log(e);
@@ -60,7 +61,7 @@ const RequestPage = ({ request }: Props) => {
       // Check if the request is pending
       await cancelRequest(supabaseClient, {
         requestId: "45820673-8b88-4d15-a4bf-12d67f140929",
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
       });
     } catch (e) {
       console.log(e);
@@ -82,7 +83,7 @@ const RequestPage = ({ request }: Props) => {
     try {
       await createComment(supabaseClient, {
         comment_request_id: "45820673-8b88-4d15-a4bf-12d67f140929",
-        comment_team_member_id: TEMP_TEAM_MEMBER_ID,
+        comment_team_member_id: teamMemberId,
         comment_type: "REQUEST_COMMENT",
         comment_content: "Test Comment",
       });
