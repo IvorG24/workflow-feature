@@ -22,7 +22,7 @@ import {
   Tooltip,
   createStyles,
 } from "@mantine/core";
-import { DatePickerInput, DatePickerType, DateValue } from "@mantine/dates";
+import { DatePickerInput } from "@mantine/dates";
 import { useClickOutside } from "@mantine/hooks";
 import {
   IconArrowBigDownLine,
@@ -176,7 +176,6 @@ const Field = ({
     { value: "MULTICHECKBOX", label: "Multiple Choice" },
     { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
-    { value: "DATERANGE", label: "Daterange" },
   ];
 
   const reviewTypeOptions = [
@@ -476,60 +475,6 @@ const Field = ({
           />
         )}
 
-        {fieldType === "DATERANGE" && (
-          <Controller
-            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-            control={control}
-            render={({ field }) => {
-              const newValue = [new Date(), new Date()] as
-                | DatePickerType
-                | [Date, Date]
-                | [null, null];
-              return (
-                <DatePickerInput
-                  {...field}
-                  type="range"
-                  value={newValue as [DateValue, DateValue]}
-                  maw={223}
-                  label={label}
-                  withAsterisk={isFieldRequired}
-                  readOnly={mode === "view"}
-                  className={`${classes.previewField} ${
-                    mode === "view" ? classes.pointerEventsNone : ""
-                  }`}
-                  error={
-                    fieldPromptError ? (
-                      <Text color="red" size="sm">
-                        Field is required
-                      </Text>
-                    ) : null
-                  }
-                />
-              );
-            }}
-            rules={{
-              required: {
-                value: isFieldRequired,
-                message: "Field is required",
-              },
-              validate: {
-                isRequired: () => {
-                  const newValue = [new Date(), new Date()];
-
-                  if (
-                    isFieldRequired &&
-                    (newValue[0] === null || newValue[1] === null)
-                  ) {
-                    return "Field is required";
-                  } else {
-                    false;
-                  }
-                },
-              },
-            }}
-          />
-        )}
-
         {fieldType === "BOOLEAN" && (
           <>
             <Radio.Group
@@ -567,16 +512,7 @@ const Field = ({
                 )}
               />
             </Radio.Group>
-            {/* <Checkbox
-              display="none"
-              defaultChecked={metricBooleanValue === "yes"}
-              {...register(
-                `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
-                {
-                  onChange: (e) => setIsFieldRequired(e.target.checked),
-                }
-              )}
-            /> */}
+           
           </>
         )}
       </Box>
@@ -596,8 +532,7 @@ const Field = ({
       {(fieldType === "TEXT" ||
         fieldType === "TEXTAREA" ||
         fieldType === "NUMBER" ||
-        fieldType === "DATE" ||
-        fieldType === "DATERANGE") && (
+        fieldType === "DATE") && (
         <Container fluid p={24}>
           <FieldTypeDropdown
             sectionIndex={sectionIndex}
