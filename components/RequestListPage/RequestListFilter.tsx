@@ -156,7 +156,6 @@ const RequestListFilter = ({
             value={value}
             onChange={async (value) => {
               onChange(value);
-              console.log(!statusRefFocused && !value);
               if (!statusRefFocused) handleFilterForms();
             }}
             ref={statusRef}
