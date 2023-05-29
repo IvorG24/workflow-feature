@@ -2,22 +2,13 @@ import { deleteComment } from "@/backend/api/delete";
 import { updateComment } from "@/backend/api/update";
 import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
 import { RequestWithResponseType } from "@/utils/types";
-import {
-  Box,
-  Button,
-  Group,
-  LoadingOverlay,
-  Paper,
-  Spoiler,
-  Stack,
-  Text,
-  Textarea,
-} from "@mantine/core";
+import { Box, Button, Group, Paper, Spoiler, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Dispatch, SetStateAction, useState } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
+import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
 type Comment = RequestWithResponseType["request_comment"][0];
 
@@ -25,31 +16,22 @@ type RequestCommentProps = {
   comment: Comment;
   setCommentList: Dispatch<SetStateAction<Comment[]>>;
 };
-
-type CommentFormProps = {
-  comment: string;
-};
-
 const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const supabaseClient = useSupabaseClient();
   const [commentContent, setCommentContent] = useState(comment.comment_content);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [isCommentEdited, setIsCommentEdited] = useState(false);
   const { team_member_user: commenter } = comment.comment_team_member;
   const isUserOwner = comment.comment_team_member_id === TEMP_TEAM_MEMBER_ID;
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CommentFormProps>({
+  // edit comment
+  const editCommentFormMethods = useForm<CommentFormProps>({
     defaultValues: { comment: comment.comment_content },
   });
-
   const handleEditComment = async (data: CommentFormProps) => {
     try {
-      setIsLoading(true);
+      setIsSubmittingForm(true);
       await updateComment(supabaseClient, {
         commentId: comment.comment_id,
         newComment: data.comment,
@@ -63,7 +45,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         color: "red",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmittingForm(false);
       setIsEditingComment(false);
     }
   };
@@ -103,31 +85,20 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   return (
     <Paper p="md" mt="xl">
       <Box pos="relative">
-        <LoadingOverlay visible={isLoading} overlayBlur={2} />
-
         {isEditingComment ? (
-          <form
-            onSubmit={handleSubmit(handleEditComment)}
-            style={{ position: "relative" }}
-          >
-            <Textarea
-              placeholder="Your comment"
-              label="Add comment"
-              error={errors.comment?.message}
-              {...register("comment", {
-                required: "Comment must not be empty.",
-              })}
+          <FormProvider {...editCommentFormMethods}>
+            <RequestCommentForm
+              onSubmit={handleEditComment}
+              textAreaProps={{ disabled: isSubmittingForm }}
+              addCancelButton={{
+                onClickHandler: () => setIsEditingComment(false),
+              }}
+              submitButtonProps={{
+                loading: isSubmittingForm,
+                children: "Save",
+              }}
             />
-            <Group mt="sm" position="right">
-              <Button
-                variant="default"
-                onClick={() => setIsEditingComment(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Submit</Button>
-            </Group>
-          </form>
+          </FormProvider>
         ) : (
           <Stack spacing={8}>
             <Text
@@ -144,7 +115,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                 <Button color="red" onClick={openPromptDeleteModal}>
                   Delete
                 </Button>
-                <Button onClick={() => setIsEditingComment(true)}>Edit</Button>
+                <Button onClick={() => setIsEditingComment(true)}>
+                  {isEditingComment ? "Updating comment" : "Edit"}
+                </Button>
               </Group>
             )}
           </Stack>

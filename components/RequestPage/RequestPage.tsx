@@ -22,8 +22,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import RequestAddComment from "./RequestAddComment";
-import RequestComment from "./RequestComment";
+import RequestCommentList from "./RequestCommentList";
 import RequestSection from "./RequestSection";
 
 type Props = {
@@ -36,7 +35,6 @@ const RequestPage = ({ request }: Props) => {
   const isLoading = useIsLoading();
   const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
-  const [commentList, setCommentList] = useState(request.request_comment);
   const requestor = request.request_team_member.team_member_user;
   const sectionList = request.request_form.form_section;
   const approverList = request.request_signer.map(
@@ -298,18 +296,13 @@ const RequestPage = ({ request }: Props) => {
 
         <Space h="xl" />
       </Paper>
-      <RequestAddComment
-        requestId={request.request_id}
-        requestOwnerId={request.request_team_member_id as string}
-        setCommentList={setCommentList}
+      <RequestCommentList
+        requestData={{
+          requestId: request.request_id,
+          requestOwnerId: request.request_team_member_id as string,
+        }}
+        requestCommentList={request.request_comment}
       />
-      {commentList.map((comment) => (
-        <RequestComment
-          key={comment.comment_id}
-          comment={comment}
-          setCommentList={setCommentList}
-        />
-      ))}
     </Container>
   );
 };
