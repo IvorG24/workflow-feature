@@ -96,7 +96,7 @@ const RequestListFilter = ({
           requestorList && requestorList.length > 0 ? requestorList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
-        search: search && search !== "" ? search : undefined,
+        search: search,
       };
       const { data, count } = await getRequestList(supabaseClient, {
         ...params,
