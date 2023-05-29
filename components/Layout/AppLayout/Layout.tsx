@@ -29,7 +29,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
   setFormList;
-  const { setUserAvatar, setUserInitials } = useUserActions();
+  const { setUserAvatar, setUserInitials, setUserProfile } = useUserActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
@@ -53,6 +53,9 @@ const Layout = ({ children }: LayoutProps) => {
             user.user_last_name[0]
           )}`
         );
+
+        //set user profile
+        setUserProfile(user);
 
         const userActiveTeam = teamList.find(
           (team) => team.team_id === user.user_active_team_id

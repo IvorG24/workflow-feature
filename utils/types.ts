@@ -236,8 +236,8 @@ export type RequestWithResponseType = RequestTableRow & {
     comment_is_edited: boolean;
     comment_last_updated: string;
     comment_type: CommentType;
+    comment_team_member_id: string;
     comment_team_member: {
-      team_member_id: string;
       team_member_user: {
         user_id: string;
         user_first_name: string;

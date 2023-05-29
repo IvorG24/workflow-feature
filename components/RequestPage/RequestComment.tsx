@@ -35,9 +35,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const [commentContent, setCommentContent] = useState(comment.comment_content);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingComment, setIsEditingComment] = useState(false);
-  const { team_member_id, team_member_user: commenter } =
-    comment.comment_team_member;
-  const isUserOwner = team_member_id === TEMP_TEAM_MEMBER_ID;
+  const [isCommentEdited, setIsCommentEdited] = useState(false);
+  const { team_member_user: commenter } = comment.comment_team_member;
+  const isUserOwner = comment.comment_team_member_id === TEMP_TEAM_MEMBER_ID;
 
   const {
     register,
@@ -55,10 +55,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         newComment: data.comment,
       });
       setCommentContent(data.comment);
-      notifications.show({
-        message: "Comment updated.",
-        color: "green",
-      });
+      setIsCommentEdited(true);
     } catch (e) {
       notifications.show({
         title: "Update comment failed.",
@@ -137,7 +134,10 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
               weight={600}
             >{`${commenter.user_first_name} ${commenter.user_last_name}`}</Text>
             <Spoiler maxHeight={120} showLabel="Show more" hideLabel="Hide">
-              {commentContent}
+              {commentContent}{" "}
+              {comment.comment_last_updated || isCommentEdited
+                ? "(edited)"
+                : ""}
             </Spoiler>
             {isUserOwner && (
               <Group mt="sm" position="right">

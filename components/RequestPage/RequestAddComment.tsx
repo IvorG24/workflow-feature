@@ -1,4 +1,5 @@
 import { createComment, createNotification } from "@/backend/api/post";
+import { useUserProfile } from "@/stores/useUserStore";
 import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
 import { RequestWithResponseType } from "@/utils/types";
 import {
@@ -29,7 +30,9 @@ type CommentFormProps = {
 const RequestAddComment = ({
   requestId,
   requestOwnerId,
+  setCommentList,
 }: RequestCommentProps) => {
+  const userProfile = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const supabaseClient = useSupabaseClient();
   const {
@@ -40,27 +43,47 @@ const RequestAddComment = ({
   } = useForm<CommentFormProps>();
 
   const handleAddComment = async (data: CommentFormProps) => {
+    if (!userProfile) return;
+    const commenterFullName = `${userProfile.user_first_name} ${userProfile.user_last_name}`;
+
     try {
       setIsLoading(true);
-      await createComment(supabaseClient, {
+      const { data: newComment, error } = await createComment(supabaseClient, {
         comment_request_id: requestId,
         comment_team_member_id: TEMP_TEAM_MEMBER_ID,
         comment_type: "REQUEST_COMMENT",
         comment_content: data.comment,
       });
+      if (error) throw error;
 
-      await createNotification(supabaseClient, {
-        notification_app: "REQUEST",
-        notification_type: "REQUEST_COMMENT",
-        notification_content: "John Doe commented on your request",
-        notification_redirect_url: `/team-requests/requests/${requestId}`,
-        notification_team_member_id: requestOwnerId,
-      });
-      notifications.show({
-        message: "Comment created.",
-        color: "green",
-      });
-      reset();
+      if (!error) {
+        const comment = {
+          ...newComment,
+          comment_team_member: {
+            team_member_user: {
+              user_id: requestOwnerId,
+              user_first_name: userProfile.user_first_name,
+              user_last_name: userProfile.user_last_name,
+              user_username: userProfile.user_username,
+              user_avatar: userProfile.user_avatar,
+            },
+          },
+        };
+        setCommentList((prev) => [comment as Comment, ...prev]);
+        reset();
+        await createNotification(supabaseClient, {
+          notification_app: "REQUEST",
+          notification_type: "REQUEST_COMMENT",
+          notification_content: `${commenterFullName} commented on your request`,
+          notification_redirect_url: `/team-requests/requests/${requestId}`,
+          notification_team_member_id: requestOwnerId,
+        });
+        notifications.show({
+          message: "Comment created.",
+          color: "green",
+        });
+        return;
+      }
     } catch (e) {
       notifications.show({
         title: "Submit comment failed.",
