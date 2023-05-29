@@ -1,18 +1,27 @@
-import { getFormList } from "@/backend/api/get";
+import { getFormList, getNotification } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
+import {
+  useNotificationActions,
+  useUnreadNotificationCount,
+} from "@/stores/useNotificationStore";
 import {
   useActiveApp,
   useActiveTeam,
   useTeamActions,
 } from "@/stores/useTeamStore";
-import { useUserAvatar, useUserIntials } from "@/stores/useUserStore";
+import {
+  useUserAvatar,
+  useUserIntials,
+  useUserTeamMemberId,
+} from "@/stores/useUserStore";
+import { NOTIFICATION_LIST_LIMIT } from "@/utils/contant";
 import { Database } from "@/utils/database";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { getAvatarColor } from "@/utils/styling";
+import { AppType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
-  Box,
   Divider,
   Group,
   Indicator,
@@ -30,6 +39,7 @@ import {
 } from "@tabler/icons-react";
 import { startCase } from "lodash";
 import { useRouter } from "next/router";
+import Notification from "./Notification";
 
 const HeaderMenu = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -40,22 +50,44 @@ const HeaderMenu = () => {
   const activeTeam = useActiveTeam();
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
+  const unreadNotificationCount = useUnreadNotificationCount();
+  const teamMemberId = useUserTeamMemberId();
   const { setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
+  const { setNotificationList, setUnreadNotification } =
+    useNotificationActions();
 
   const handleSwitchApp = async () => {
-    setActiveApp(activeApp === "REQUEST" ? "REVIEW" : "REQUEST");
+    const newActiveApp = activeApp === "REQUEST" ? "REVIEW" : "REQUEST";
+
+    setActiveApp(newActiveApp);
     router.push(
       activeApp === "REQUEST"
         ? "/team-reviews/reviews"
         : "/team-requests/requests"
     );
 
+    // fetch form list
     const formList = await getFormList(supabaseClient, {
       teamId: activeTeam.team_id,
-      app: activeApp === "REQUEST" ? "REVIEW" : "REQUEST",
+      app: newActiveApp,
     });
+
+    // set form list
     setFormList(formList);
+
+    // fetch notification list
+    const { data: notificationList, count: unreadNotificationCount } =
+      await getNotification(supabaseClient, {
+        memberId: teamMemberId,
+        app: newActiveApp as AppType,
+        page: 1,
+        limit: NOTIFICATION_LIST_LIMIT,
+      });
+
+    // set notification
+    setNotificationList(notificationList);
+    setUnreadNotification(unreadNotificationCount || 0);
   };
 
   return (
@@ -68,14 +100,19 @@ const HeaderMenu = () => {
         position="bottom-end"
       >
         <Menu.Target>
-          <Indicator disabled={false} size="xs" color="red" label={1}>
+          <Indicator
+            disabled={false}
+            size="xs"
+            color="red"
+            label={unreadNotificationCount || ""}
+          >
             <ActionIcon p={4}>
               <IconBell />
             </ActionIcon>
           </Indicator>
         </Menu.Target>
         <Menu.Dropdown>
-          <Box sx={{ height: 100 }}></Box>
+          <Notification />
         </Menu.Dropdown>
       </Menu>
 

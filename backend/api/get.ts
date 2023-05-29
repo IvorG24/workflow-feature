@@ -1,5 +1,5 @@
 import { Database } from "@/utils/database";
-import { AttachmentBucketType, FormStatusType } from "@/utils/types";
+import { AppType, AttachmentBucketType, FormStatusType } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // Get file url
@@ -388,4 +388,40 @@ export const getForm = async (
   if (error) throw error;
 
   return data;
+};
+
+// Get notification
+export const getNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memberId: string;
+    app: AppType;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { memberId, app, page, limit } = params;
+  const start = (page - 1) * limit;
+
+  const { data: notificationList, error: notificationListError } =
+    await supabaseClient
+      .from("notification_table")
+      .select("*")
+      .eq("notification_team_member_id", memberId)
+      .eq("notification_app", app)
+      .order("notification_date_created", { ascending: false })
+      .limit(limit)
+      .range(start, start + limit - 1);
+  if (notificationListError) throw notificationListError;
+
+  const { count: unreadNotificationCount, error: unreadNotificationError } =
+    await supabaseClient
+      .from("notification_table")
+      .select("*", { count: "exact", head: true })
+      .eq("notification_team_member_id", memberId)
+      .eq("notification_app", app)
+      .eq("notification_is_read", false);
+  if (unreadNotificationError) throw unreadNotificationError;
+
+  return { data: notificationList, count: unreadNotificationCount };
 };
