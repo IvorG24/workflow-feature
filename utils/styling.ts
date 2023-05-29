@@ -21,6 +21,18 @@ export const getAvatarColor = (number: number) => {
   return randomColor;
 };
 
+export const getStatusToColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "pending":
+      return "blue";
+    case "approved":
+      return "green";
+    case "rejected":
+      return "red";
+    case "canceled":
+      return "gray";
+  }
+};
 export const mobileNumberFormatter = (value: string | undefined) =>
   !Number.isNaN(parseFloat(value ? value : "0"))
     ? `${value}`.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3")

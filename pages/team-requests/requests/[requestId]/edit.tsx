@@ -1,7 +1,7 @@
 import { getRequest } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import RequestPage from "@/components/RequestPage/RequestPage";
 import { RequestWithResponseType } from "@/utils/types";
+import { Paper, Title } from "@mantine/core";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
@@ -38,7 +38,10 @@ const Page = ({ request }: Props) => {
         description="Request Page"
         url="/team-requests/requests/[requestId]"
       />
-      <RequestPage request={request} />
+      <Title>Edit Request Page</Title>
+      <Paper p="xl" mt="xl">
+        <pre>{JSON.stringify(request, null, 2)}</pre>
+      </Paper>
     </>
   );
 };

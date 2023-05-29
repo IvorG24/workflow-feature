@@ -92,8 +92,7 @@ const RequestFormListPage = ({
       const result = data as FormWithOwnerType[];
       setFormList(result);
       setFormListCount(count || 0);
-    } catch (e) {
-      console.log(e);
+    } catch {
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",

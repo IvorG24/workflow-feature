@@ -156,13 +156,14 @@ export type RequestType = {
   request_date_created: string;
   request_status: FormStatusType;
   request_team_member: {
-    request_team_member: {
+    team_member_user: {
       user_first_name: string;
       user_last_name: string;
       user_avatar: string | null;
     };
   };
   request_form: {
+    form_id: string;
     form_name: string;
     form_description: string;
   };
@@ -173,6 +174,7 @@ export type RequestType = {
       signer_is_primary_signer: boolean;
       signer_team_member: {
         team_member_user: {
+          user_id: string;
           user_first_name: string;
           user_last_name: string;
           user_avatar: string | null;
@@ -195,6 +197,8 @@ export type RequestWithResponseType = RequestTableRow & {
       section_field: (FieldTableRow & {
         field_option: OptionTableRow[];
         field_response: RequestResponseTableRow[];
+      } & {
+        field_options?: OptionTableRow[] | null;
       })[];
     })[];
   };
@@ -218,6 +222,7 @@ export type RequestWithResponseType = RequestTableRow & {
       signer_action: string;
       signer_order: number;
       signer_team_member: {
+        team_member_id: string;
         team_member_user: {
           user_first_name: string;
           user_last_name: string;
@@ -233,18 +238,17 @@ export type RequestWithResponseType = RequestTableRow & {
     comment_is_edited: boolean;
     comment_last_updated: string;
     comment_type: CommentType;
+    comment_team_member_id: string;
     comment_team_member: {
-      request_team_member: {
-        team_member_user: {
-          user_id: string;
-          user_first_name: string;
-          user_last_name: string;
-          user_username: string;
-          user_avatar: string;
-        };
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_username: string;
+        user_avatar: string;
       };
     };
-  };
+  }[];
 };
 
 export type TeamWithTeamMemberType = {
