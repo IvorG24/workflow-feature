@@ -1,13 +1,11 @@
 import {
   AppType,
-  CommentTableRow,
   SectionWithField,
   TeamWithTeamMemberType,
 } from "@/utils/types";
 import { Container as MantineContainer } from "@mantine/core";
 import { ReactNode } from "react";
 import ApproverButtons from "./ApproverButtons";
-import CommentSection from "./CommentSection";
 import Container from "./Container";
 import DescriptionInput from "./DescriptionInput";
 import Question from "./Field";
@@ -32,7 +30,6 @@ export type FormBuilderData = {
   sections: SectionWithField[];
   signers: RequestSigner[];
   is_signature_required: boolean;
-  commentList: CommentTableRow[];
   created_at: string;
 };
 
@@ -69,5 +66,3 @@ FormBuilder.SignerSection = SignerSection;
 FormBuilder.UserSignature = UserSignature;
 
 FormBuilder.ApproverButtons = ApproverButtons;
-
-FormBuilder.CommentSection = CommentSection;

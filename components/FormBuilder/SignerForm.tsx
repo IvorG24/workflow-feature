@@ -125,13 +125,13 @@ const SignerForm = ({
         className={classes.notActiveContainer}
       >
         <Group noWrap mt="xs">
-          {(!signerActionStatus || signerActionStatus === "ACTION_PENDING") && (
+          {(!signerActionStatus || signerActionStatus === "PENDING") && (
             <List.Item>
               Will be {signerAction} by {signerUsername}
             </List.Item>
           )}
 
-          {signerActionStatus === "ACTION_APPROVED" && (
+          {signerActionStatus === "APPROVED" && (
             <List.Item
               icon={
                 <Center>
@@ -145,7 +145,7 @@ const SignerForm = ({
             </List.Item>
           )}
 
-          {signerActionStatus === "ACTION_REJECTED" && (
+          {signerActionStatus === "REJECTED" && (
             <List.Item
               icon={
                 <Center>

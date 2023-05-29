@@ -1,4 +1,4 @@
-import { Member, ReceiverStatusId } from "@/backend/utils/types";
+import { ReceiverStatusType, TeamMemberWithUserType } from "@/utils/types";
 import {
   Box,
   Button,
@@ -25,14 +25,14 @@ export type RequestSigner = {
   signer_user_id: string;
   signer_username: string;
   action: SignerActions | string;
-  status: ReceiverStatusId;
+  status: ReceiverStatusType;
   is_primary_approver: boolean;
 };
 
 type Props = {
   formId?: string;
   mode?: Mode;
-  teamMemberList?: Member[];
+  teamMemberList?: TeamMemberWithUserType[];
 } & ContainerProps;
 
 type UseStylesProps = {
@@ -128,7 +128,7 @@ const SignerSection = ({
               appendSigner({
                 signer_id: uuidv4(),
                 action: "",
-                status: "ACTION_PENDING",
+                status: "PENDING",
                 is_primary_approver: false,
                 signer_user_id: "",
                 signer_username: "",

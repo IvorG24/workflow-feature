@@ -57,7 +57,6 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
     sections: defaultRequestFormBuilderSection,
     signers: defaultRequestFormBuilderSigners,
     is_signature_required: false,
-    commentList: [],
     created_at: new Date().toISOString(),
   };
 

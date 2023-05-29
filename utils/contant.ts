@@ -36,7 +36,7 @@ export const defaultRequestFormBuilderSigners: RequestSigner[] = [
     signer_username: "",
     signer_user_id: "",
     action: "",
-    status: "ACTION_PENDING",
+    status: "PENDING",
     is_primary_approver: true,
   },
 ];
