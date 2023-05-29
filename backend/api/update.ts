@@ -1,5 +1,9 @@
 import { Database } from "@/utils/database";
-import { TeamTableUpdate, UserTableUpdate } from "@/utils/types";
+import {
+  MemberRoleType,
+  TeamTableUpdate,
+  UserTableUpdate,
+} from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { lowerCase } from "lodash";
 import { getCurrentDate } from "./get";
@@ -196,4 +200,42 @@ export const updateComment = async (
     })
     .eq("comment_id", commentId);
   if (error) throw error;
+};
+
+// Update team member role
+export const updateTeamMemberRole = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memberId: string; role: MemberRoleType }
+) => {
+  const { memberId, role } = params;
+  const { error } = await supabaseClient
+    .from("team_member_table")
+    .update({
+      team_member_role: role,
+    })
+    .eq("team_member_id", memberId);
+  if (error) throw error;
+};
+
+// Transfer ownership
+export const updateTeamOwner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { ownerId: string; memberId: string }
+) => {
+  const { ownerId, memberId } = params;
+  const { error: newOwnerError } = await supabaseClient
+    .from("team_member_table")
+    .update({
+      team_member_role: "OWNER",
+    })
+    .eq("team_member_id", memberId);
+  if (newOwnerError) throw newOwnerError;
+
+  const { error: previousOwnerError } = await supabaseClient
+    .from("team_member_table")
+    .update({
+      team_member_role: "ADMIN",
+    })
+    .eq("team_member_id", ownerId);
+  if (previousOwnerError) throw previousOwnerError;
 };

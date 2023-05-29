@@ -1,11 +1,19 @@
-import { getAllTeamOfUser, getFormList, getUser } from "@/backend/api/get";
+import {
+  getAllTeamOfUser,
+  getFormList,
+  getNotification,
+  getUser,
+  getUserTeamMemberId,
+} from "@/backend/api/get";
 import { updateUserActiveApp } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
+import { useNotificationActions } from "@/stores/useNotificationStore";
 import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
+import { NOTIFICATION_LIST_LIMIT } from "@/utils/contant";
 import { Database } from "@/utils/database";
 import { TEMP_USER_ID } from "@/utils/dummyData";
-import { TeamTableRow } from "@/utils/types";
+import { AppType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -28,8 +36,14 @@ const Layout = ({ children }: LayoutProps) => {
   const activeApp = useActiveApp();
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
-  setFormList;
-  const { setUserAvatar, setUserInitials, setUserProfile } = useUserActions();
+  const {
+    setUserAvatar,
+    setUserInitials,
+    setUserTeamMemberId,
+    setUserProfile,
+  } = useUserActions();
+  const { setNotificationList, setUnreadNotification } =
+    useNotificationActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
@@ -72,13 +86,15 @@ const Layout = ({ children }: LayoutProps) => {
         }
 
         // set the user's active app
+        let activeApp = "";
         if (router.pathname.includes("team-requests")) {
-          setActiveApp("REQUEST");
+          activeApp = "REQUEST";
         } else if (router.pathname.includes("team-reviews")) {
-          setActiveApp("REVIEW");
+          activeApp = "REVIEW";
         } else {
-          setActiveApp(user.user_active_app);
+          activeApp = user.user_active_app;
         }
+        setActiveApp(activeApp);
 
         // fetch form list of active team
         const formList = await getFormList(supabaseClient, {
@@ -88,6 +104,29 @@ const Layout = ({ children }: LayoutProps) => {
 
         // set form list
         setFormList(formList);
+
+        // fetch user team member id
+        const teamMemberId = await getUserTeamMemberId(supabaseClient, {
+          teamId: activeTeamId,
+          userId: TEMP_USER_ID,
+        });
+        // set user team member id
+        if (teamMemberId) {
+          setUserTeamMemberId(teamMemberId);
+
+          // fetch notification list
+          const { data: notificationList, count: unreadNotificationCount } =
+            await getNotification(supabaseClient, {
+              memberId: teamMemberId,
+              app: activeApp as AppType,
+              page: 1,
+              limit: NOTIFICATION_LIST_LIMIT,
+            });
+
+          // set notification
+          setNotificationList(notificationList);
+          setUnreadNotification(unreadNotificationCount || 0);
+        }
       } catch {
         notifications.show({
           title: "Error!",

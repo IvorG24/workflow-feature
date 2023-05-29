@@ -30,7 +30,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     });
 
     return {
-      props: { formList: data, formListCount: count, teamMemberList },
+      props: { formList: data, formListCount: count, teamMemberList, teamId },
     };
   } catch (error) {
     console.error(error);
@@ -47,9 +47,10 @@ type Props = {
   formList: FormWithOwnerType[];
   formListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  teamId: string;
 };
 
-const Page = ({ formList, formListCount, teamMemberList }: Props) => {
+const Page = ({ formList, formListCount, teamMemberList, teamId }: Props) => {
   return (
     <>
       <Meta description="Form List Page" url="/team-requests/forms/" />
@@ -57,6 +58,7 @@ const Page = ({ formList, formListCount, teamMemberList }: Props) => {
         formList={formList}
         formListCount={formListCount}
         teamMemberList={teamMemberList}
+        teamId={teamId}
       />
     </>
   );

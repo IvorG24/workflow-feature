@@ -315,3 +315,7 @@ export type FormType = {
     section_field: (FieldTableRow & { field_option: OptionTableRow[] })[];
   })[];
 };
+
+export type FormWithTeamMember = FormTableRow & {
+  form_team_member: TeamMemberTableRow[];
+};
