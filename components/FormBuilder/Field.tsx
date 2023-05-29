@@ -17,13 +17,14 @@ import {
   Select,
   SelectProps,
   Slider,
+  Switch,
   Text,
   TextInput,
   Textarea,
   Tooltip,
   createStyles,
 } from "@mantine/core";
-import { DatePickerInput } from "@mantine/dates";
+import { DatePickerInput, TimeInput } from "@mantine/dates";
 import { useClickOutside } from "@mantine/hooks";
 import {
   IconArrowBigDownLine,
@@ -177,6 +178,8 @@ const Field = ({
     { value: "MULTISELECT", label: "Multiselect" },
     { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
+    { value: "TIME", label: "Time" },
+    { value: "SWITCH", label: "Switch" },
   ];
 
   const reviewTypeOptions = [
@@ -449,6 +452,71 @@ const Field = ({
           />
         )}
 
+        {fieldType === "SWITCH" && (
+          <Controller
+            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
+            control={control}
+            render={({ field }) => (
+              <Switch
+                {...field}
+                label={label}
+                checked={false}
+                readOnly={mode === "view"}
+                maw={223}
+                className={`${classes.previewField} ${
+                  mode === "view" ? classes.pointerEventsNone : ""
+                }`}
+                error={
+                  fieldPromptError ? (
+                    <Text color="red" size="sm">
+                      Field is required
+                    </Text>
+                  ) : null
+                }
+              />
+            )}
+            rules={{
+              required: {
+                value: isFieldRequired,
+                message: "Field is required",
+              },
+            }}
+          />
+        )}
+
+        {fieldType === "TIME" && (
+          <Controller
+            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
+            control={control}
+            render={({ field }) => (
+              <TimeInput
+                {...field}
+                label={label}
+                value={field.value}
+                readOnly={mode === "view"}
+                withAsterisk={isFieldRequired}
+                maw={223}
+                className={`${classes.previewField} ${
+                  mode === "view" ? classes.pointerEventsNone : ""
+                }`}
+                error={
+                  fieldPromptError ? (
+                    <Text color="red" size="sm">
+                      Field is required
+                    </Text>
+                  ) : null
+                }
+              />
+            )}
+            rules={{
+              required: {
+                value: isFieldRequired,
+                message: "Field is required",
+              },
+            }}
+          />
+        )}
+
         {fieldType === "BOOLEAN" && (
           <>
             <Radio.Group
@@ -505,7 +573,9 @@ const Field = ({
       {(fieldType === "TEXT" ||
         fieldType === "TEXTAREA" ||
         fieldType === "NUMBER" ||
-        fieldType === "DATE") && (
+        fieldType === "DATE" ||
+        fieldType === "SWITCH" ||
+        fieldType === "TIME") && (
         <Container fluid p={24}>
           <FieldTypeDropdown
             sectionIndex={sectionIndex}
@@ -539,17 +609,19 @@ const Field = ({
             )}
           />
 
-          <Checkbox
-            label="Required"
-            mt={24}
-            {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_required`,
-              {
-                onChange: (e) => setIsFieldRequired(e.target.checked),
-              }
-            )}
-            className={classes.checkboxCursor}
-          />
+          {fieldType !== "SWITCH" && (
+            <Checkbox
+              label="Required"
+              mt={24}
+              {...register(
+                `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_required`,
+                {
+                  onChange: (e) => setIsFieldRequired(e.target.checked),
+                }
+              )}
+              className={classes.checkboxCursor}
+            />
+          )}
         </Container>
       )}
 

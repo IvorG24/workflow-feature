@@ -112,8 +112,7 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
       )
         error = "Signer action is required";
       else if (hasNoChoices)
-        error =
-          "At least one option is required in a Select or Multiple Choice";
+        error = "At least one option is required in a Select or Multiselect";
     }
 
     if (error.length > 0) {
