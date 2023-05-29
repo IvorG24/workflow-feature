@@ -56,12 +56,6 @@ const RequestListPage = ({
 
   const { handleSubmit, getValues } = filterFormMethods;
 
-  const isUUID = (str: string) => {
-    const uuidPattern =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidPattern.test(str);
-  };
-
   const handleFilterForms = async (
     {
       search,
@@ -72,12 +66,6 @@ const RequestListPage = ({
     }: FilterFormValues = getValues()
   ) => {
     try {
-      if (!isUUID(search)) {
-        return notifications.show({
-          message: "Search value is not a valid request id",
-          color: "orange",
-        });
-      }
       setIsFetchingRequestList(true);
       const params = {
         teamId: activeTeam.team_id,
