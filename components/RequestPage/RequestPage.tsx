@@ -11,7 +11,7 @@ import { Container, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
@@ -164,7 +164,7 @@ const RequestPage = ({ request }: Props) => {
           requestStatus={requestStatus as FormStatusType}
         />
 
-        {sectionList.map((section) => {
+        {sectionList.map((section, index) => {
           const duplicateSectionIdList = section.section_field[0].field_response
             .map(
               (response) => response.request_response_duplicatable_section_id
@@ -175,9 +175,9 @@ const RequestPage = ({ request }: Props) => {
             duplicateSectionIdList.length > 0
               ? duplicateSectionIdList
               : [section.section_id];
-        
+
           return (
-            <>
+            <React.Fragment key={index}>
               {newSectionIdList.map((sectionId) => (
                 <RequestSection
                   key={sectionId}
@@ -185,7 +185,7 @@ const RequestPage = ({ request }: Props) => {
                   section={section}
                 />
               ))}
-            </>
+            </React.Fragment>
           );
         })}
 
