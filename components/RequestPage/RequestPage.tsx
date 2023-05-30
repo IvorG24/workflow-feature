@@ -24,7 +24,6 @@ type Props = {
 
 const RequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
-  console.log(request);
 
   const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
