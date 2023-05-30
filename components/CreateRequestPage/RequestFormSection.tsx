@@ -1,8 +1,7 @@
-import { FieldType, FormType } from "@/utils/types";
+import { FieldType } from "@/utils/types";
 import { Group, Paper, Space, Stack, Title } from "@mantine/core";
+import { Section } from "./CreateRequestPage";
 import RequestFormFields from "./RequestFormFields";
-
-type Section = FormType["form_section"][0];
 
 type RequestFormSectionProps = {
   section: Section;
@@ -25,6 +24,8 @@ const RequestFormSection = ({ section }: RequestFormSectionProps) => {
               id: field.field_id,
               type: field.field_type as FieldType,
               label: field.field_name,
+              description: field.field_description,
+              is_required: field.field_is_required,
               options: field.field_option ? field.field_option : [],
             }}
           />

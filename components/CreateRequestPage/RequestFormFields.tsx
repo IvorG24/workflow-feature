@@ -1,5 +1,6 @@
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   MultiSelect,
   NumberInput,
@@ -10,45 +11,80 @@ import {
   TextInput,
   Textarea,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
+import { DateInput, TimeInput } from "@mantine/dates";
 import { IconClock } from "@tabler/icons-react";
+import { useRef } from "react";
 
 type RequestFormFieldsProps = {
   field: {
     id: string;
     label: string;
     type: FieldType;
+    description: string | null;
+    is_required: boolean;
     options: OptionTableRow[];
   };
 };
 
 const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
+  const timeInputRef = useRef<HTMLInputElement>(null);
+  const inputProps = {
+    description: field.description,
+    required: field.is_required,
+  };
+
   const renderField = (field: RequestFormFieldsProps["field"]) => {
     switch (field.type) {
       case "TEXT":
-        return <TextInput label={field.label} />;
+        return <TextInput label={field.label} {...inputProps} />;
+
       case "TEXTAREA":
-        return <Textarea label={field.label} />;
+        return <Textarea label={field.label} {...inputProps} />;
+
       case "NUMBER":
-        return <NumberInput label={field.label} />;
+        return <NumberInput label={field.label} {...inputProps} />;
+
       case "SWITCH":
-        return <Switch label={field.label} />;
+        return <Switch label={field.label} {...inputProps} />;
+
       case "DROPDOWN":
         const dropdownOption = field.options.map((option) => ({
           value: option.option_value,
           label: option.option_value,
         }));
-        return <Select label={field.label} data={dropdownOption} />;
+        return (
+          <Select label={field.label} data={dropdownOption} {...inputProps} />
+        );
+
       case "MULTISELECT":
         const multiselectOption = field.options.map((option) => ({
           value: option.option_value,
           label: option.option_value,
         }));
-        return <MultiSelect label={field.label} data={multiselectOption} />;
+        return (
+          <MultiSelect
+            label={field.label}
+            data={multiselectOption}
+            {...inputProps}
+          />
+        );
+
       case "DATE":
-        return <DateInput label={field.label} />;
+        return <DateInput label={field.label} {...inputProps} />;
+
       case "TIME":
-        return <TextInput label={field.label} icon={<IconClock />} />;
+        return (
+          <TimeInput
+            label={field.label}
+            ref={timeInputRef}
+            {...inputProps}
+            rightSection={
+              <ActionIcon onClick={() => timeInputRef.current?.showPicker()}>
+                <IconClock size="1rem" stroke={1.5} />
+              </ActionIcon>
+            }
+          />
+        );
       case "SLIDER":
         const sliderOption = JSON.parse(
           field.options.map((option) => option.option_value)[0]
@@ -66,7 +102,7 @@ const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
               max={max}
               step={1}
               marks={marks}
-              disabled
+              {...inputProps}
             />
           </Box>
         );
