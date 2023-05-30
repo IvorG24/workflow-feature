@@ -47,7 +47,6 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     const sectionMatch = formSections.find(
       (section) => section.section_id === sectionId
     );
-    console.log(sectionId);
     if (sectionMatch) {
       addSection(sectionLastIndex, sectionMatch);
       return;

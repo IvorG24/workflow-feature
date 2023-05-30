@@ -19,7 +19,10 @@ const RequestFormDetails = ({ formDetails }: Props) => {
     form_name,
     form_description,
     form_date_created,
-    form_team_member: { team_member_user: formCreator },
+    form_team_member: {
+      team_member_id: formCreatorMemberId,
+      team_member_user: formCreator,
+    },
   } = formDetails;
 
   const formDateCreated = moment(form_date_created).format("MMM DD, YYYY");
@@ -36,7 +39,7 @@ const RequestFormDetails = ({ formDetails }: Props) => {
         <Avatar
           size={50}
           src={formCreator.user_avatar}
-          color={getAvatarColor(Number(`${formCreator.user_id.charCodeAt(1)}`))}
+          color={getAvatarColor(Number(`${formCreatorMemberId.charCodeAt(1)}`))}
           radius="xl"
         >
           {capitalize(formCreator.user_first_name[0])}

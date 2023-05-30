@@ -239,3 +239,23 @@ export const updateTeamOwner = async (
     .eq("team_member_id", ownerId);
   if (previousOwnerError) throw previousOwnerError;
 };
+
+// Update status
+export const toggleStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    id: string;
+    status: boolean;
+    table: string;
+  }
+) => {
+  const { id, status, table } = params;
+
+  const { error } = await supabaseClient
+    .from(`${table}_table`)
+    .update({
+      [`${table}_is_available`]: status,
+    })
+    .eq(`${table}_id`, id);
+  if (error) throw error;
+};

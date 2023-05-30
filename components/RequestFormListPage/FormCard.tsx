@@ -1,3 +1,4 @@
+import { getAvatarColor } from "@/utils/styling";
 import { FormWithOwnerType } from "@/utils/types";
 import {
   ActionIcon,
@@ -12,6 +13,7 @@ import {
   Title,
   Tooltip,
   createStyles,
+  useMantineColorScheme,
 } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
 import {
@@ -20,6 +22,7 @@ import {
   IconEyeOff,
   IconTrash,
 } from "@tabler/icons-react";
+import { startCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { MouseEventHandler } from "react";
@@ -40,6 +43,7 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
   const { classes } = useStyles();
   const router = useRouter();
   const { ref, hovered: isFormNameHovered } = useHover();
+  const { colorScheme } = useMantineColorScheme();
 
   return (
     <Paper
@@ -95,15 +99,39 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
         )}
         <Flex justify="space-between">
           <Group spacing={4}>
-            {/* todo: change into creator label and avatar */}
-            <Tooltip label="John Doe" openDelay={400}>
+            <Tooltip
+              label={
+                form.form_is_formsly_form
+                  ? "Formsly"
+                  : `${form.form_team_member.team_member_user.user_first_name} ${form.form_team_member.team_member_user.user_last_name}`
+              }
+              openDelay={400}
+            >
               <Avatar
                 src={
-                  "https://avatars.githubusercontent.com/u/10353856?s=460&u=88394dfd67727327c1f7670a1764dc38a8a24831&v=4"
+                  form.form_is_formsly_form
+                    ? `/icon-request-${
+                        colorScheme === "light" ? "light" : "dark"
+                      }.svg`
+                    : form.form_team_member.team_member_user.user_avatar
                 }
                 radius={18}
                 size={18}
-              ></Avatar>
+                color={getAvatarColor(
+                  Number(
+                    `${form.form_team_member.team_member_user.user_id.charCodeAt(
+                      1
+                    )}`
+                  )
+                )}
+              >
+                {startCase(
+                  form.form_team_member.team_member_user.user_first_name[0]
+                )}
+                {startCase(
+                  form.form_team_member.team_member_user.user_last_name[1]
+                )}
+              </Avatar>
             </Tooltip>
             <Tooltip
               label={moment(form.form_date_created).format(
@@ -138,13 +166,15 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
                 {`${form.form_is_hidden ? "Unhide" : "Hide"} Form`}
               </Menu.Item>
 
-              <Menu.Item
-                onClick={onDeleteForm}
-                color="red"
-                icon={<IconTrash size={14} />}
-              >
-                Delete Form
-              </Menu.Item>
+              {!form.form_is_formsly_form ? (
+                <Menu.Item
+                  onClick={onDeleteForm}
+                  color="red"
+                  icon={<IconTrash size={14} />}
+                >
+                  Delete Form
+                </Menu.Item>
+              ) : null}
             </Menu.Dropdown>
           </Menu>
         </Flex>
