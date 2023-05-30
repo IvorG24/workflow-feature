@@ -12,11 +12,13 @@ type Props = {
 const RequestFormPage = ({ form }: Props) => {
   const router = useRouter();
   const { formId } = router.query;
-  console.log(form);
+
   return (
     <Container>
       <Flex justify="space-between">
-        <Title order={2}>Form Preview</Title>
+        <Title order={2} color="dimmed">
+          Form Preview
+        </Title>
         <Button
           onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
         >

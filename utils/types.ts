@@ -297,6 +297,7 @@ export type FormType = {
       user_first_name: string;
       user_last_name: string;
       user_avatar: string;
+      user_username: string;
     };
   };
   form_signer: {

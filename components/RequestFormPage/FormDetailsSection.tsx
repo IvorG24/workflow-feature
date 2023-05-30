@@ -76,6 +76,7 @@ const FormDetailsSection = ({ form }: Props) => {
         </Avatar>
         <Stack spacing={0}>
           <Text>{`${creator.user_first_name} ${creator.user_last_name}`}</Text>
+          <Text color="dimmed">{`${creator.user_username}`}</Text>
         </Stack>
       </Flex>
       <Group spacing="md" mt="xl">
@@ -91,9 +92,7 @@ const FormDetailsSection = ({ form }: Props) => {
             handleToggleVisibility(event.currentTarget.checked)
           }
           label="Form visibility"
-          onLabel="VISIBLE"
-          offLabel="HIDDEN"
-          size="lg"
+          size="md"
         />
       </Group>
     </Paper>
