@@ -42,10 +42,18 @@ const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
         return <Textarea label={field.label} {...inputProps} />;
 
       case "NUMBER":
-        return <NumberInput label={field.label} {...inputProps} />;
+        return (
+          <NumberInput
+            label={field.label}
+            withAsterisk={field.is_required}
+            min={0}
+            max={99999999999999}
+            {...inputProps}
+          />
+        );
 
       case "SWITCH":
-        return <Switch label={field.label} {...inputProps} />;
+        return <Switch {...inputProps} label={field.label} />;
 
       case "DROPDOWN":
         const dropdownOption = field.options.map((option) => ({

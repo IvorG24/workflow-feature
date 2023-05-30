@@ -8,7 +8,7 @@ type Props = {
 
 const RequestFormSigner = ({ signerList }: Props) => {
   const signerStatusMessage = (action: string, fullname: string) => {
-    return `To be ${action} by ${fullname}`;
+    return `Will be signed as ${action} by ${fullname}`;
   };
 
   return (

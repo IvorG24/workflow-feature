@@ -316,7 +316,9 @@ export type FormType = {
     };
   }[];
   form_section: (SectionTableRow & {
-    section_field: (FieldTableRow & { field_option: OptionTableRow[] })[];
+    section_field: (FieldTableRow & {
+      field_option: OptionTableRow[];
+    })[];
   })[];
 };
 
