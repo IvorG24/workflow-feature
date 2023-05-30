@@ -25,6 +25,7 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import DeleteFormModal from "./DeleteFormModal";
@@ -52,6 +53,7 @@ const RequestFormListPage = ({
   teamId,
 }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
+  const router = useRouter();
 
   const [formList, setFormList] =
     useState<FormWithOwnerType[]>(initialFormList);
@@ -285,7 +287,12 @@ const RequestFormListPage = ({
                   setSelectedForm(form);
                   setIsDeletingForm(true);
                 }}
-                onHideForm={() => {
+                onHideForm={async () => {
+                  if (form.form_is_formsly_form) {
+                    await router.push(`/team-requests/forms/${form.form_id}`);
+                    return;
+                  }
+
                   setSelectedForm(form);
                   setIsHidingForm(true);
                 }}

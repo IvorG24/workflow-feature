@@ -101,6 +101,26 @@ export type UserTableInsert =
   Database["public"]["Tables"]["user_table"]["Insert"];
 export type UserTableUpdate =
   Database["public"]["Tables"]["user_table"]["Update"];
+
+export type ItemTableRow = Database["public"]["Tables"]["item_table"]["Row"];
+export type ItemTableInsert =
+  Database["public"]["Tables"]["item_table"]["Insert"];
+export type ItemTableUpdate =
+  Database["public"]["Tables"]["item_table"]["Update"];
+
+export type ItemDescriptionTableRow =
+  Database["public"]["Tables"]["item_description_table"]["Row"];
+export type ItemTDescriptionableInsert =
+  Database["public"]["Tables"]["item_description_table"]["Insert"];
+export type ItemDescriptionTableUpdate =
+  Database["public"]["Tables"]["item_description_table"]["Update"];
+
+export type ItemDescriptionFieldTableRow =
+  Database["public"]["Tables"]["item_description_field_table"]["Row"];
+export type ItemDescriptionFieldTableInsert =
+  Database["public"]["Tables"]["item_description_field_table"]["Insert"];
+export type ItemDescriptionFieldTableUpdate =
+  Database["public"]["Tables"]["item_description_field_table"]["Update"];
 // End: Database Table Types
 
 // Start: Database Enums
@@ -273,7 +293,14 @@ export type TeamWithTeamMemberType = {
 };
 
 export type FormWithOwnerType = FormTableRow & {
-  form_team_member: TeamMemberTableRow;
+  form_team_member: TeamMemberTableRow & {
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+  };
 };
 
 export type TeamMemberWithUserType = {
@@ -291,6 +318,7 @@ export type FormType = {
   form_description: string;
   form_date_created: string;
   form_is_hidden: boolean;
+  form_is_formsly_form: boolean;
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -320,4 +348,20 @@ export type FormType = {
 
 export type FormWithTeamMember = FormTableRow & {
   form_team_member: TeamMemberTableRow[];
+};
+
+export type ItemWithDescriptionType = ItemTableRow & {
+  item_description: ItemDescriptionTableRow[];
+};
+
+export type ItemForm = {
+  generalName: string;
+  descriptions: { description: string }[];
+  unit: string;
+  isAvailable: boolean;
+};
+
+export type ItemDescriptionFieldForm = {
+  value: string;
+  isAvailable: boolean;
 };

@@ -4,6 +4,8 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   InvitationTableInsert,
+  ItemDescriptionFieldTableInsert,
+  ItemTableInsert,
   NotificationTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
@@ -222,4 +224,52 @@ export const createComment = async (
   if (error) throw error;
 
   return { data, error };
+};
+
+// Create item
+export const createItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemData: ItemTableInsert;
+    itemDescription: string[];
+  }
+) => {
+  const { itemData, itemDescription } = params;
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .insert(itemData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const itemDescriptionInput = itemDescription.map((description: string) => {
+    return {
+      item_description_label: description,
+      item_description_item_id: data.item_id,
+      item_description_is_available: true,
+    };
+  });
+  const { data: itemDescriptionData, error: itemDescriptionError } =
+    await supabaseClient
+      .from("item_description_table")
+      .insert(itemDescriptionInput)
+      .select();
+
+  if (itemDescriptionError) throw itemDescriptionError;
+  return { ...data, item_description: itemDescriptionData };
+};
+
+// Create item description field
+export const createItemDescriptionField = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: ItemDescriptionFieldTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("item_description_field_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data;
 };
