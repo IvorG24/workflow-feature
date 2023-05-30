@@ -330,7 +330,6 @@ const Field = ({
               <Select
                 {...field}
                 value={`${field.value}`}
-                maw={223}
                 label={label}
                 data={optionsDropdownData}
                 className={`${classes.previewField} ${
@@ -365,7 +364,6 @@ const Field = ({
               <MultiSelect
                 {...field}
                 value={[]}
-                maw={223}
                 label={label}
                 data={optionsDropdownData}
                 className={`${classes.previewField} ${
@@ -430,7 +428,6 @@ const Field = ({
                 value={field.value ? new Date(`${field.value}`) : null}
                 readOnly={mode === "view"}
                 withAsterisk={isFieldRequired}
-                maw={223}
                 className={`${classes.previewField} ${
                   mode === "view" ? classes.pointerEventsNone : ""
                 }`}
@@ -462,7 +459,6 @@ const Field = ({
                 label={label}
                 checked={false}
                 readOnly={mode === "view"}
-                maw={223}
                 className={`${classes.previewField} ${
                   mode === "view" ? classes.pointerEventsNone : ""
                 }`}
@@ -495,7 +491,6 @@ const Field = ({
                 value={field.value}
                 readOnly={mode === "view"}
                 withAsterisk={isFieldRequired}
-                maw={223}
                 className={`${classes.previewField} ${
                   mode === "view" ? classes.pointerEventsNone : ""
                 }`}
@@ -831,7 +826,6 @@ export function FieldTypeDropdown({
       control={control}
       render={({ field }) => (
         <Select
-          maw={223}
           label="Type"
           data={prop.data}
           {...field}

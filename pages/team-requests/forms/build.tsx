@@ -1,4 +1,4 @@
-import { getTeamMemberList, getUserActiveTeamId } from "@/backend/api/get";
+import { getTeamAdminList, getUserActiveTeamId } from "@/backend/api/get";
 import BuildRequestFormPage from "@/components/BuildRequestFormPage/BuildRequestFormPage";
 import Meta from "@/components/Meta/Meta";
 import { TEMP_USER_ID } from "@/utils/dummyData";
@@ -13,7 +13,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       userId: TEMP_USER_ID,
     });
 
-    const teamMemberList = await getTeamMemberList(supabaseClient, {
+    const teamMemberList = await getTeamAdminList(supabaseClient, {
       teamId,
     });
 

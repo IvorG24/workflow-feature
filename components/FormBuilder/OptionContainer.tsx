@@ -8,7 +8,7 @@ type Props = {
 
 const OptionContainer = ({ onDelete, children, ...props }: Props) => {
   return (
-    <Flex gap="sm" align="center" justify="center" maw={250} {...props}>
+    <Flex gap="sm" align="center" justify="center" {...props}>
       {children}
       <ActionIcon color="red" size="xs" onClick={onDelete} mt={32}>
         <IconCircleMinus height={16} />

@@ -149,12 +149,10 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
       <FormProvider {...methods}>
         <Container maw={768} p={0}>
           <FormBuilder.Container mt="xl">
-            <Box maw={522}>
+            <Box>
               <FormBuilder.FormNameInput />
-
               <FormBuilder.DescriptionInput mt={32} />
             </Box>
-
             {sections.length > 0 &&
               sections.map((section, sectionIndex) => {
                 return (
@@ -171,8 +169,8 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
                   />
                 );
               })}
-
             {/* add new section divider */}
+
             <Divider
               maw={768}
               mx="auto"
@@ -198,7 +196,6 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
                 </Button>
               }
             />
-
             {formType === "REQUEST" && (
               <>
                 <FormBuilder.SignerSection
@@ -209,7 +206,6 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
                 <FormBuilder.UserSignature mt={32} />
               </>
             )}
-
             <FormBuilder.SubmitButton
               mt={32}
               onClick={() => handleSaveForm(getValues())}

@@ -106,6 +106,7 @@ CREATE TABLE form_table(
   form_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   form_is_hidden BOOLEAN DEFAULT FALSE NOT NULL,
   form_is_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
+  form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
   form_app VARCHAR(4000) NOT NULL,
 
   form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
@@ -189,6 +190,39 @@ CREATE TABLE comment_table(
   comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 -- End: Comments
+
+-- Start: Requisition Form
+CREATE TABLE item_table(
+  item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_general_name VARCHAR(4000) NOT NULL,
+  item_unit VARCHAR(4000) NOT NULL,
+  item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE item_description_table(
+  item_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_description_label VARCHAR(4000) NOT NULL,
+  item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE item_description_field_table(
+  item_description_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_description_field_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_description_field_value VARCHAR(4000) NOT NULL,
+  item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
+);
+-- End: Requisition Form
 
 ---------- End: TABLES
 

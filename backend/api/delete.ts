@@ -29,7 +29,7 @@ export const deleteRequest = async (
   if (error) throw error;
 };
 
-// Delete request
+// Delete comment
 export const deleteComment = async (
   supabaseClient: SupabaseClient<Database>,
   params: { commentId: string }
@@ -39,5 +39,28 @@ export const deleteComment = async (
     .from("comment_table")
     .update({ comment_is_disabled: true })
     .eq("comment_id", commentId);
+  if (error) throw error;
+};
+
+// Delete row
+export const deleteRow = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    rowId: string[];
+    table: string;
+  }
+) => {
+  const { rowId, table } = params;
+
+  let condition = "";
+  rowId.forEach((id) => {
+    condition += `${table}_id.eq.${id}, `;
+  });
+
+  const { error } = await supabaseClient
+    .from(`${table}_table`)
+    .update({ [`${table}_is_disabled`]: true })
+    .or(condition.slice(0, -2));
+
   if (error) throw error;
 };

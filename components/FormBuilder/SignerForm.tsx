@@ -186,7 +186,6 @@ const SignerForm = ({
             control={control}
             render={({ field }) => (
               <Select
-                maw={223}
                 label="Signer"
                 data={signerOptions}
                 {...field}
@@ -205,7 +204,6 @@ const SignerForm = ({
               <Autocomplete
                 {...field}
                 label="Action"
-                maw={223}
                 data={["approved", "noted", "purchased"]}
                 onDropdownOpen={() => setIsSelectingAction(true)}
                 onDropdownClose={() => {

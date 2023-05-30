@@ -11,7 +11,7 @@ const Option = forwardRef<HTMLDivElement, OptionProps>(
   ({ label, ...props }: OptionProps, ref) => {
     return (
       <Box ref={ref}>
-        <TextInput label={label} maw={316} mt={16} {...props} />
+        <TextInput label={label} mt={16} {...props} />
       </Box>
     );
   }

@@ -83,7 +83,8 @@ export const getFormList = async (
     .select("*, form_team_member:form_team_member_id!inner(*)")
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_disabled", false)
-    .eq("form_app", app);
+    .eq("form_app", app)
+    .order("form_date_created", { ascending: false });
   if (error) throw error;
   return data;
 };
@@ -178,7 +179,18 @@ export const getUserActiveTeamId = async (
     .maybeSingle();
 
   if (error) throw error;
-  if (!data?.user_active_team_id) throw new Error("Active team not found.");
+  if (!data?.user_active_team_id) {
+    const { data: firstTeam, error: firstTeamError } = await supabaseClient
+      .from("team_member_table")
+      .select("*")
+      .eq("team_member_user_id", userId)
+      .eq("team_member_disabled", false)
+      .maybeSingle();
+    if (firstTeamError) throw firstTeamError;
+
+    if (!firstTeam) throw new Error("No team not found.");
+    return firstTeam.team_member_team_id;
+  }
 
   return data.user_active_team_id;
 };
@@ -320,9 +332,12 @@ export const getFormListWithFilter = async (
   const start = (page - 1) * limit;
   let query = supabaseClient
     .from("form_table")
-    .select("*, form_team_member:form_team_member_id!inner(*)", {
-      count: "exact",
-    })
+    .select(
+      "*, form_team_member:form_team_member_id!inner(*, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar))",
+      {
+        count: "exact",
+      }
+    )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_disabled", false)
     .eq("form_app", app);
@@ -367,7 +382,29 @@ export const getTeamMemberList = async (
     .select(
       "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
     )
-    .eq("team_member_team_id", teamId);
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_disabled", false);
+  if (error) throw error;
+
+  return data;
+};
+
+// Get team's all admin members
+export const getTeamAdminList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
+    )
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_disabled", false)
+    .eq("team_member_role", "ADMIN");
   if (error) throw error;
 
   return data;
@@ -384,7 +421,7 @@ export const getForm = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_name, form_description, form_date_created, form_is_hidden, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
+      "form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
     )
     .eq("form_id", formId)
     .eq("form_is_disabled", false)
@@ -429,4 +466,114 @@ export const getNotification = async (
   if (unreadNotificationError) throw unreadNotificationError;
 
   return { data: notificationList, count: unreadNotificationCount };
+};
+
+// Get item list
+export const getItemList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; limit: number; page: number; search?: string }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("item_table")
+    .select("*, item_description: item_description_table(*)", {
+      count: "exact",
+    })
+    .eq("item_team_id", teamId)
+    .eq("item_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("item_general_name", `%${search}%`);
+  }
+
+  query.order("item_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get item description list
+export const getItemDescriptionList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { itemId: string; limit: number; page: number; search?: string }
+) => {
+  const { itemId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("item_description_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("item_description_item_id", itemId)
+    .eq("item_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("item_description_label", `%${search}%`);
+  }
+
+  query.order("item_description_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get item description field list
+export const getItemDescriptionFieldList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    descriptionId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { descriptionId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("item_description_field_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("item_description_field_item_description_id", descriptionId)
+    .eq("item_description_field_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("item_description_field_value", `%${search}%`);
+  }
+
+  query.order("item_description_field_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
 };
