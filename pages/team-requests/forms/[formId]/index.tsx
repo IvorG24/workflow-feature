@@ -1,10 +1,19 @@
-import { getForm, getItemList, getUserActiveTeamId } from "@/backend/api/get";
+import {
+  getForm,
+  getItemList,
+  getTeamAdminList,
+  getUserActiveTeamId,
+} from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
 import { ROW_PER_PAGE } from "@/utils/contant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
-import { FormType, ItemWithDescriptionType } from "@/utils/types";
+import {
+  FormType,
+  ItemWithDescriptionType,
+  TeamMemberWithUserType,
+} from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
@@ -25,6 +34,10 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         userId: TEMP_USER_ID,
       });
 
+      const teamMemberList = await getTeamAdminList(supabaseClient, {
+        teamId,
+      });
+
       const { data: items, count: itemsCount } = await getItemList(
         supabaseClient,
         {
@@ -35,7 +48,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       );
 
       return {
-        props: { form, items, itemsCount },
+        props: { form, items, itemsCount, teamMemberList },
       };
     }
 
@@ -57,13 +70,26 @@ type Props = {
   form: FormType;
   items?: ItemWithDescriptionType[];
   itemsCount?: number;
+  teamMemberList?: TeamMemberWithUserType[];
 };
 
-const Page = ({ form, items = [], itemsCount = 0 }: Props) => {
+const Page = ({
+  form,
+  items = [],
+  itemsCount = 0,
+  teamMemberList = [],
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition Form":
-        return <RequisitionFormPage items={items} itemsCount={itemsCount} />;
+        return (
+          <RequisitionFormPage
+            items={items}
+            itemsCount={itemsCount}
+            teamMemberList={teamMemberList}
+            form={form}
+          />
+        );
     }
   };
 

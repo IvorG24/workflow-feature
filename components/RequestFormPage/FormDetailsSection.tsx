@@ -11,6 +11,7 @@ import {
   Switch,
   Text,
   Title,
+  createStyles,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -20,6 +21,12 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
+const useStyles = createStyles(() => ({
+  checkbox: {
+    label: { cursor: "pointer" },
+  },
+}));
+
 type Props = {
   form: FormType;
 };
@@ -27,9 +34,11 @@ type Props = {
 const FormDetailsSection = ({ form }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const creator = form.form_team_member.team_member_user;
-  const [isHidden, setIsHidden] = useState(form.form_is_hidden);
   const router = useRouter();
   const formId = router.query.formId as string;
+  const { classes } = useStyles();
+
+  const [isHidden, setIsHidden] = useState(form.form_is_hidden);
 
   const handleToggleVisibility = async (checked: boolean) => {
     try {
@@ -76,7 +85,7 @@ const FormDetailsSection = ({ form }: Props) => {
         </Avatar>
         <Stack spacing={0}>
           <Text>{`${creator.user_first_name} ${creator.user_last_name}`}</Text>
-          <Text color="dimmed">{`${creator.user_username}`}</Text>
+          <Text size={14} color="dimmed">{`${creator.user_username}`}</Text>
         </Stack>
       </Flex>
       <Group spacing="md" mt="xl">
@@ -93,6 +102,7 @@ const FormDetailsSection = ({ form }: Props) => {
           }
           label="Form visibility"
           size="md"
+          className={classes.checkbox}
         />
       </Group>
     </Paper>

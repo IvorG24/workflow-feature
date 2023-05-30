@@ -1,6 +1,7 @@
 import { deleteForm } from "@/backend/api/delete";
 import { getFormListWithFilter } from "@/backend/api/get";
 import { updateFormVisibility } from "@/backend/api/update";
+import { useFormActions } from "@/stores/useFormStore";
 import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/contant";
 import { Database } from "@/utils/database";
 import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
@@ -25,7 +26,6 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import DeleteFormModal from "./DeleteFormModal";
@@ -53,7 +53,6 @@ const RequestFormListPage = ({
   teamId,
 }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
-  const router = useRouter();
 
   const [formList, setFormList] =
     useState<FormWithOwnerType[]>(initialFormList);
@@ -65,6 +64,8 @@ const RequestFormListPage = ({
   const [selectedForm, setSelectedForm] = useState<FormWithOwnerType | null>(
     null
   );
+
+  const { setFormList: storeSetFormList } = useFormActions();
 
   const { register, handleSubmit, getValues, setValue, control } =
     useForm<SearchForm>({
@@ -112,12 +113,13 @@ const RequestFormListPage = ({
         isHidden: !isHidden,
       });
 
-      setFormList((formList) =>
-        formList.map((form) => {
-          if (form.form_id !== id) return form;
-          return { ...form, form_is_hidden: !isHidden };
-        })
-      );
+      const newForm = formList.map((form) => {
+        if (form.form_id !== id) return form;
+        return { ...form, form_is_hidden: !isHidden };
+      });
+
+      setFormList(newForm);
+      storeSetFormList(newForm);
 
       notifications.show({
         title: "Success!",
@@ -288,11 +290,6 @@ const RequestFormListPage = ({
                   setIsDeletingForm(true);
                 }}
                 onHideForm={async () => {
-                  if (form.form_is_formsly_form) {
-                    await router.push(`/team-requests/forms/${form.form_id}`);
-                    return;
-                  }
-
                   setSelectedForm(form);
                   setIsHidingForm(true);
                 }}

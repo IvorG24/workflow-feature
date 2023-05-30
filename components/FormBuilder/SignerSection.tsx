@@ -88,7 +88,7 @@ const SignerSection = ({
 
   return (
     <Container maw={768} className={classes.container} {...props}>
-      <Box maw={522}>
+      <Box>
         <Text weight={600} size={18}>
           Signers
         </Text>

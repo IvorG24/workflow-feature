@@ -1,5 +1,6 @@
 import { FormType } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   MultiSelect,
   NumberInput,
@@ -11,7 +12,8 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
-import { IconClock } from "@tabler/icons-react";
+import { IconCalendar, IconClock } from "@tabler/icons-react";
+import { useRef } from "react";
 
 type Props = {
   field: FormType["form_section"][0]["section_field"][0];
@@ -21,6 +23,8 @@ const FormField = ({ field }: Props) => {
   const inputProps = {
     variant: "filled",
   };
+
+  const ref = useRef<HTMLInputElement>(null);
 
   const renderResponse = (
     field: FormType["form_section"][0]["section_field"][0]
@@ -33,7 +37,13 @@ const FormField = ({ field }: Props) => {
       case "NUMBER":
         return <NumberInput label={field.field_name} {...inputProps} />;
       case "SWITCH":
-        return <Switch label={field.field_name} {...inputProps} />;
+        return (
+          <Switch
+            label={field.field_name}
+            {...inputProps}
+            sx={{ label: { cursor: "pointer" } }}
+          />
+        );
       case "DROPDOWN":
         const dropdownOption = field.field_option.map((option) => ({
           value: option.option_value,
@@ -59,13 +69,29 @@ const FormField = ({ field }: Props) => {
           />
         );
       case "DATE":
-        return <DateInput label={field.field_name} {...inputProps} />;
+        return (
+          <DateInput
+            icon={<IconCalendar size={16} />}
+            label={field.field_name}
+            {...inputProps}
+          />
+        );
       case "TIME":
         return (
           <TimeInput
             label={field.field_name}
-            icon={<IconClock />}
+            icon={<IconClock size={16} />}
             {...inputProps}
+            ref={ref}
+            rightSection={
+              <ActionIcon
+                onClick={() => {
+                  ref.current && ref.current.showPicker();
+                }}
+              >
+                <IconClock size="1rem" stroke={1.5} />
+              </ActionIcon>
+            }
           />
         );
       case "SLIDER":

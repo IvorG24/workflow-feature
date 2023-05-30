@@ -83,8 +83,8 @@ export const getFormList = async (
     .select("*, form_team_member:form_team_member_id!inner(*)")
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_disabled", false)
-    .eq("form_is_hidden", false)
-    .eq("form_app", app);
+    .eq("form_app", app)
+    .order("form_date_created", { ascending: false });
   if (error) throw error;
   return data;
 };
@@ -382,7 +382,29 @@ export const getTeamMemberList = async (
     .select(
       "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
     )
-    .eq("team_member_team_id", teamId);
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_disabled", false);
+  if (error) throw error;
+
+  return data;
+};
+
+// Get team's all admin members
+export const getTeamAdminList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
+    )
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_disabled", false)
+    .eq("team_member_role", "ADMIN");
   if (error) throw error;
 
   return data;
@@ -399,7 +421,7 @@ export const getForm = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
+      "form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
     )
     .eq("form_id", formId)
     .eq("form_is_disabled", false)

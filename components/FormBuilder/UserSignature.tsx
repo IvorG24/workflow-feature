@@ -177,7 +177,7 @@ const UserSignature = ({
           <Text weight={600} size={18}>
             {mode === "view" ? "Approver" : "Requester"}&apos;s signature
           </Text>
-          <Tooltip label={signatureDescription} withArrow multiline maw={250}>
+          <Tooltip label={signatureDescription} withArrow multiline>
             <Box>
               <IconInfoCircle height={16} color="#495057" />
             </Box>
@@ -188,7 +188,6 @@ const UserSignature = ({
           <>
             <Image
               height={200}
-              maw={300}
               fit="contain"
               radius="md"
               src={signatureUrlState || signatureUrl}
@@ -226,7 +225,7 @@ const UserSignature = ({
         )}
         {isDrawing && setNewUserSignatureFile && (
           <>
-            <Paper radius="md" withBorder h={200} maw={300} mt="md">
+            <Paper radius="md" withBorder h={200} mt="md">
               <ReactSignatureCanvas
                 canvasProps={{
                   height: 200,
