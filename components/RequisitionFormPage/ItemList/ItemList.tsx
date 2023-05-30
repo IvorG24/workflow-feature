@@ -88,7 +88,7 @@ const ItemList = ({
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const projectIdList = records.map((item) => item.item_id);
+      const projectIdList = itemList.map((item) => item.item_id);
       setCheckList(projectIdList);
     } else {
       setCheckList([]);
