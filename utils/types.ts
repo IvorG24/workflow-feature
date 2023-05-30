@@ -321,3 +321,12 @@ export type FormType = {
 export type FormWithTeamMember = FormTableRow & {
   form_team_member: TeamMemberTableRow[];
 };
+
+export type SectionWithField = {
+  field_table: FieldWithChoices[];
+} & SectionTableRow;
+
+export type FieldWithChoices = {
+  options: OptionTableRow[];
+  field_response: string;
+} & FieldTableRow;
