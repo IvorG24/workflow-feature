@@ -365,3 +365,11 @@ export type ItemDescriptionFieldForm = {
   value: string;
   isAvailable: boolean;
 };
+export type SectionWithField = {
+  field_table: FieldWithChoices[];
+} & SectionTableRow;
+
+export type FieldWithChoices = {
+  options: OptionTableRow[];
+  field_response: string;
+} & FieldTableRow;

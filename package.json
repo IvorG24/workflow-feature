@@ -41,6 +41,7 @@
     "react-phone-number-input": "^3.2.23",
     "react-signature-canvas": "^1.0.6",
     "typescript": "5.0.4",
+    "use-deep-compare-effect": "^1.8.1",
     "uuidv4": "^6.2.13",
     "validator": "^13.9.0",
     "zustand": "^4.3.8"
