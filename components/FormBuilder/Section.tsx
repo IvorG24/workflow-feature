@@ -29,7 +29,6 @@ type Props = {
   sectionIndex: number;
   onDelete?: (sectionId: string) => void;
   fields: FieldWithChoices[];
-  formId?: string;
   mode?: Mode;
 } & ContainerProps;
 
@@ -69,7 +68,6 @@ const Section = ({
   section,
   sectionIndex,
   onDelete,
-  formId,
   mode = "edit",
   ...props
 }: Props) => {
@@ -82,7 +80,7 @@ const Section = ({
     remove: removeField,
   } = useFieldArray({
     control: methods.control,
-    name: `sections.${sectionIndex}.field_table`,
+    name: `sections.${sectionIndex}.fields`,
   });
 
   const watchedData = useWatch({
@@ -94,7 +92,7 @@ const Section = ({
   useDeepCompareEffect(() => {
     fields.forEach((field, index) => {
       methods.setValue(
-        `sections.${sectionIndex}.field_table.${index}.field_order`,
+        `sections.${sectionIndex}.fields.${index}.field_order`,
         index + 1
       );
     });
@@ -145,7 +143,6 @@ const Section = ({
                 field_name: "Field",
                 field_type: formType === "REQUEST" ? "TEXT" : "SLIDER",
                 field_section_id: section.section_id,
-                form_id: formId,
                 field_is_required: false,
                 field_is_positive_metric: true,
                 field_order: fields.length + 1,

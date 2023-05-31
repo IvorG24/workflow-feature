@@ -5,6 +5,7 @@ type Store = {
   formList: FormTableRow[];
   actions: {
     setFormList: (forms: FormTableRow[]) => void;
+    addForm: (form: FormTableRow) => void;
   };
 };
 
@@ -15,6 +16,12 @@ export const useFormStore = create<Store>((set) => ({
       set((state) => ({
         ...state,
         formList: forms,
+      }));
+    },
+    addForm(form) {
+      set((state) => ({
+        ...state,
+        formList: [...state.formList, form],
       }));
     },
   },

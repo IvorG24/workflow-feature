@@ -66,7 +66,7 @@ const UserSignature = ({
   const { classes } = useStyles({ mode });
   const { register, getValues } = useFormContext<FormBuilderData>();
 
-  const isSignatureRequired = getValues("is_signature_required");
+  const isSignatureRequired = getValues("isSignatureRequired");
 
   const [isDrawing, setIsDrawing] = useState(false);
   const sigCanvas = useRef<ReactSignatureCanvas>(null);
@@ -159,7 +159,7 @@ const UserSignature = ({
 
         <Checkbox
           label="Require requester and approver's signature during request creation and approval"
-          {...register("is_signature_required")}
+          {...register("isSignatureRequired")}
           mt={32}
           className={classes.checkboxCursor}
         />

@@ -1,4 +1,4 @@
-import { ReceiverStatusType, TeamMemberWithUserType } from "@/utils/types";
+import { TeamMemberWithUserType } from "@/utils/types";
 import {
   Box,
   Button,
@@ -11,7 +11,8 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconCircleDashed, IconCirclePlus } from "@tabler/icons-react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
 import { FormBuilderData } from "./FormBuilder";
 import SignerForm from "./SignerForm";
@@ -22,15 +23,15 @@ export type SignerActions = "approved" | "noted" | "purchased";
 
 export type RequestSigner = {
   signer_id: string;
-  signer_user_id: string;
-  signer_username: string;
-  action: SignerActions | string;
-  status: ReceiverStatusType;
-  is_primary_approver: boolean;
+  signer_team_member_id: string;
+  signer_action: SignerActions | string;
+  signer_is_primary_signer: boolean;
+  signer_order: number;
+  signer_form_id: string;
 };
 
 type Props = {
-  formId?: string;
+  formId: string;
   mode?: Mode;
   teamMemberList?: TeamMemberWithUserType[];
 } & ContainerProps;
@@ -63,6 +64,7 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
 const SignerSection = ({
   mode = "edit",
   teamMemberList = [],
+  formId,
   ...props
 }: Props) => {
   const { classes } = useStyles({ mode });
@@ -77,14 +79,25 @@ const SignerSection = ({
     name: "signers",
   });
 
+  const watchedData = useWatch({
+    control: methods.control,
+  });
+
   const handleMakePrimaryApprover = (index: number) => {
     signers.forEach((signer, signerIdx) => {
       methods.setValue(
-        `signers.${signerIdx}.is_primary_approver`,
+        `signers.${signerIdx}.signer_is_primary_signer`,
         signerIdx === index
       );
     });
   };
+
+  // this is to update the field order when a field is removed
+  useDeepCompareEffect(() => {
+    signers.forEach((signer, index) => {
+      methods.setValue(`signers.${index}.signer_order`, index + 1);
+    });
+  }, [watchedData]);
 
   return (
     <Container maw={768} className={classes.container} {...props}>
@@ -127,11 +140,11 @@ const SignerSection = ({
             onClick={() =>
               appendSigner({
                 signer_id: uuidv4(),
-                action: "",
-                status: "PENDING",
-                is_primary_approver: false,
-                signer_user_id: "",
-                signer_username: "",
+                signer_action: "",
+                signer_is_primary_signer: false,
+                signer_team_member_id: "",
+                signer_form_id: formId,
+                signer_order: signers.length + 1,
               })
             }
             size="xs"

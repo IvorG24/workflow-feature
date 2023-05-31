@@ -101,7 +101,7 @@ const FormDetailsSection = ({ form }: Props) => {
             handleToggleVisibility(event.currentTarget.checked)
           }
           label="Form visibility"
-          size="md"
+          size="sm"
           className={classes.checkbox}
         />
       </Group>

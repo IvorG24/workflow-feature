@@ -1,6 +1,6 @@
 import { getRequestList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/contant";
+import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import {
   FormStatusType,
   RequestType,
