@@ -56,6 +56,7 @@ type Props = {
   mode: Mode;
   isActive: boolean;
   onNotActive: () => void;
+  onCancel: () => void;
 };
 
 type UseStylesProps = {
@@ -117,6 +118,7 @@ const Field = ({
   mode = "edit",
   isActive,
   onNotActive,
+  onCancel,
 }: Props) => {
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
   const [fieldDescription, setFieldDescription] = useState(
@@ -629,7 +631,7 @@ const Field = ({
           )}
 
           <FieldAddAndCancel
-            onCancel={() => alert("cancel")}
+            onCancel={() => onCancel()}
             onSave={() => handleSave()}
           />
         </Container>
@@ -728,7 +730,7 @@ const Field = ({
             className={classes.checkboxCursor}
           />
           <FieldAddAndCancel
-            onCancel={() => alert("cancel")}
+            onCancel={() => onCancel()}
             onSave={() => handleSave()}
           />
         </Container>
@@ -784,7 +786,7 @@ const Field = ({
           )}
 
           <FieldAddAndCancel
-            onCancel={() => alert("cancel")}
+            onCancel={() => onCancel()}
             onSave={() => handleSave()}
           />
         </Container>
@@ -838,7 +840,7 @@ const Field = ({
           />
 
           <FieldAddAndCancel
-            onCancel={() => alert("cancel")}
+            onCancel={() => onCancel()}
             onSave={() => handleSave()}
           />
         </Container>
