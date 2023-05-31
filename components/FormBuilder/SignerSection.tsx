@@ -153,7 +153,7 @@ const SignerSection = ({
       {mode === "edit" && (
         <>
           <Button
-            onClick={() =>
+            onClick={() => {
               appendSigner({
                 signer_id: uuidv4(),
                 action: "",
@@ -161,8 +161,9 @@ const SignerSection = ({
                 is_primary_approver: false,
                 signer_user_id: "",
                 signer_username: "",
-              })
-            }
+              });
+              handleChangeActiveSigner(signers.length);
+            }}
             size="xs"
             mt={signers.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}
