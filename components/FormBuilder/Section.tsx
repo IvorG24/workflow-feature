@@ -10,6 +10,7 @@ import {
   ActionIcon,
   Box,
   Button,
+  Checkbox,
   Container,
   ContainerProps,
   Divider,
@@ -183,17 +184,28 @@ const Section = ({
           </Button>
 
           <Divider mt={24} />
-          <Button
-            size="xs"
-            color="red"
-            variant="subtle"
-            mt={16}
-            onClick={() => {
-              onDelete && onDelete(section.section_id);
-            }}
-          >
-            Remove Section
-          </Button>
+
+          <Flex justify="space-between">
+            <Checkbox
+              label="Duplicatable section"
+              {...methods.register(
+                `sections.${sectionIndex}.section_is_duplicatable`
+              )}
+              mt="md"
+            />
+
+            <Button
+              size="xs"
+              color="red"
+              variant="subtle"
+              mt={16}
+              onClick={() => {
+                onDelete && onDelete(section.section_id);
+              }}
+            >
+              Remove Section
+            </Button>
+          </Flex>
         </>
       )}
     </Container>
