@@ -38,7 +38,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
   const [localFormState, setLocalFormState] =
     useLocalStorage<FormWithResponseType | null>({
       key: `${router.query.formId}`,
-      defaultValue: null,
+      defaultValue: form,
     });
 
   const formDetails = {
