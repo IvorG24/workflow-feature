@@ -17,6 +17,7 @@ import {
   Flex,
   TextInput,
   createStyles,
+  useMantineTheme,
 } from "@mantine/core";
 import { IconCirclePlus, IconSettings } from "@tabler/icons-react";
 import { useState } from "react";
@@ -46,7 +47,7 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     backgroundColor:
       theme.colorScheme === "dark"
         ? mode === "edit"
-          ? theme.colors.dark[6]
+          ? theme.colors.dark[7]
           : theme.colors.dark[7]
         : "#fff",
     borderRadius: 4,
@@ -78,7 +79,7 @@ const Section = ({
   const { classes } = useStyles({ mode });
   const methods = useFormContext();
   const [activeField, setActiveField] = useState<number | null>(null);
-
+  const { colorScheme } = useMantineTheme();
   const {
     fields: fields,
     append: appendField,
@@ -154,7 +155,10 @@ const Section = ({
                 onClick={() => handleChangeActiveField(fieldIndex)}
                 mt="lg"
               >
-                <IconSettings color="#2e2e2e" size={18} />
+                <IconSettings
+                  color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
+                  size={18}
+                />
               </ActionIcon>
             )}
           </Flex>
