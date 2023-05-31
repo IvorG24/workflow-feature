@@ -10,7 +10,7 @@ const OptionContainer = ({ onDelete, children, ...props }: Props) => {
   return (
     <Flex gap="sm" align="center" justify="center" maw={250} {...props}>
       {children}
-      <ActionIcon color="red" size="xs" onClick={onDelete} mt={32}>
+      <ActionIcon color="red" onClick={onDelete} mt={40}>
         <IconCircleMinus height={16} />
       </ActionIcon>
     </Flex>
