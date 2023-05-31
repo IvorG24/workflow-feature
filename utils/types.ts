@@ -322,10 +322,10 @@ export type FormType = {
   form_team_member: {
     team_member_id: string;
     team_member_user: {
+      user_username: string;
       user_first_name: string;
       user_last_name: string;
       user_avatar: string;
-      user_username: string;
     };
   };
   form_signer: {
@@ -343,7 +343,48 @@ export type FormType = {
     };
   }[];
   form_section: (SectionTableRow & {
-    section_field: (FieldTableRow & { field_option: OptionTableRow[] })[];
+    section_field: (FieldTableRow & {
+      field_option: OptionTableRow[];
+    })[];
+  })[];
+};
+
+export type FormWithResponseType = {
+  form_name: string;
+  form_description: string;
+  form_date_created: string;
+  form_is_hidden: boolean;
+  form_is_formsly_form: boolean;
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_username: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+  };
+  form_signer: {
+    signer_id: string;
+    signer_is_primary_signer: boolean;
+    signer_action: string;
+    signer_order: boolean;
+    signer_team_member: {
+      team_member_id: string;
+      team_member_user: {
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+      };
+    };
+  }[];
+  form_section: (SectionTableRow & {
+    section_field: (FieldTableRow & {
+      field_section_duplicatable_id?: string;
+    } & {
+      field_option: OptionTableRow[];
+      field_response?: unknown;
+    })[];
   })[];
 };
 
