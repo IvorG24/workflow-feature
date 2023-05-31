@@ -26,6 +26,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { DatePickerInput, TimeInput } from "@mantine/dates";
+import { notifications } from "@mantine/notifications";
 import {
   IconArrowBigDownLine,
   IconArrowBigUpLine,
@@ -185,18 +186,37 @@ const Field = ({
   const fieldPromptName = `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`;
   const fieldPromptError = get(errors, fieldPromptName);
 
-  const handleSave = () => {
-    if (fieldPrompt) {
+  const handleSave = async () => {
+    if (fieldPrompt.length <= 0) {
+      setError(
+        `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
+        { message: "Field name is required" }
+      );
+    }
+
+    if (options.length <= 0) {
+      notifications.show({
+        message: "At least 1 option is required",
+        color: "red",
+      });
+    }
+
+    const optionValueList = optionsWatch.map((option) => option.option_value);
+    const isOptionHasDuplicate =
+      new Set(optionValueList).size !== optionValueList.length;
+    if (isOptionHasDuplicate) {
+      notifications.show({
+        message: "Options must be unique",
+        color: "red",
+      });
+    }
+
+    if (fieldPrompt.length > 0 && options.length > 0 && !isOptionHasDuplicate) {
       setError(
         `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
         { message: "" }
       );
       onNotActive();
-    } else {
-      setError(
-        `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
-        { message: "Field name is required" }
-      );
     }
   };
 
@@ -640,7 +660,15 @@ const Field = ({
               <Option
                 label={`Option ${optionIndex + 1}`}
                 {...register(
-                  `sections.${sectionIndex}.field_table.${fieldIndex}.options.${optionIndex}.option_value`
+                  `sections.${sectionIndex}.field_table.${fieldIndex}.options.${optionIndex}.option_value`,
+                  {
+                    validate: (value, formValues) =>
+                      value !==
+                        formValues.sections?.[sectionIndex].field_table?.[
+                          fieldIndex
+                        ].options?.[optionIndex].option_value ||
+                      "Option must be unique",
+                  }
                 )}
               />
               <Option
