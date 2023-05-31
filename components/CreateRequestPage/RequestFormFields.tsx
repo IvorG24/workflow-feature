@@ -1,4 +1,4 @@
-import { FieldType, OptionTableRow } from "@/utils/types";
+import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -14,46 +14,100 @@ import {
 import { DateInput, TimeInput } from "@mantine/dates";
 import { IconClock } from "@tabler/icons-react";
 import { useRef } from "react";
+import { Controller, useFormContext } from "react-hook-form";
+import { RequestFormValues } from "./CreateRequestPage";
 
 type RequestFormFieldsProps = {
-  field: {
-    id: string;
-    label: string;
-    type: FieldType;
-    description: string | null;
-    is_required: boolean;
+  field: FieldTableRow & {
     options: OptionTableRow[];
   };
+  sectionIndex: number;
+  fieldIndex: number;
 };
 
-const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
+const RequestFormFields = ({
+  field,
+  sectionIndex,
+  fieldIndex,
+}: RequestFormFieldsProps) => {
+  const { register, control } = useFormContext<RequestFormValues>();
   const timeInputRef = useRef<HTMLInputElement>(null);
+
   const inputProps = {
-    description: field.description,
-    required: field.is_required,
+    label: field.field_name,
+    description: field.field_description,
+    required: field.field_is_required,
+  };
+
+  const fieldRules = {
+    required: {
+      value: field.field_is_required,
+      message: "This field is required",
+    },
   };
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
-    switch (field.type) {
+    switch (field.field_type) {
       case "TEXT":
-        return <TextInput label={field.label} {...inputProps} />;
+        return (
+          <TextInput
+            {...inputProps}
+            {...register(
+              `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+              {
+                ...fieldRules,
+              }
+            )}
+            withAsterisk={field.field_is_required}
+          />
+        );
 
       case "TEXTAREA":
-        return <Textarea label={field.label} {...inputProps} />;
+        return (
+          <Textarea
+            {...inputProps}
+            {...register(
+              `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+              {
+                ...fieldRules,
+              }
+            )}
+            withAsterisk={field.field_is_required}
+          />
+        );
 
       case "NUMBER":
         return (
-          <NumberInput
-            label={field.label}
-            withAsterisk={field.is_required}
-            min={0}
-            max={99999999999999}
-            {...inputProps}
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <NumberInput
+                value={value as number}
+                onChange={(value) => onChange(value)}
+                withAsterisk={field.field_is_required}
+                {...inputProps}
+              />
+            )}
+            rules={{ ...fieldRules }}
           />
         );
 
       case "SWITCH":
-        return <Switch {...inputProps} label={field.label} />;
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Switch
+                checked={value as boolean}
+                onChange={(e) => onChange(e.currentTarget.checked)}
+                {...inputProps}
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
+        );
 
       case "DROPDOWN":
         const dropdownOption = field.options.map((option) => ({
@@ -61,7 +115,20 @@ const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
           label: option.option_value,
         }));
         return (
-          <Select label={field.label} data={dropdownOption} {...inputProps} />
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Select
+                value={value as string}
+                onChange={(value) => onChange(value)}
+                data={dropdownOption}
+                withAsterisk={field.field_is_required}
+                {...inputProps}
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
         );
 
       case "MULTISELECT":
@@ -70,27 +137,63 @@ const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
           label: option.option_value,
         }));
         return (
-          <MultiSelect
-            label={field.label}
-            data={multiselectOption}
-            {...inputProps}
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                value={value as string[]}
+                onChange={(value) => onChange(value)}
+                data={multiselectOption}
+                withAsterisk={field.field_is_required}
+                {...inputProps}
+              />
+            )}
+            rules={{ ...fieldRules }}
           />
         );
 
       case "DATE":
-        return <DateInput label={field.label} {...inputProps} />;
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => {
+              const dateValue = value ? new Date(`${value}`) : undefined;
+              return (
+                <DateInput
+                  value={dateValue}
+                  onChange={(value) => onChange(new Date(`${value}`))}
+                  withAsterisk={field.field_is_required}
+                  {...inputProps}
+                />
+              );
+            }}
+            rules={{ ...fieldRules }}
+          />
+        );
 
       case "TIME":
         return (
-          <TimeInput
-            label={field.label}
-            ref={timeInputRef}
-            {...inputProps}
-            rightSection={
-              <ActionIcon onClick={() => timeInputRef.current?.showPicker()}>
-                <IconClock size="1rem" stroke={1.5} />
-              </ActionIcon>
-            }
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field }) => (
+              <TimeInput
+                value={field.value as string}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                ref={timeInputRef}
+                rightSection={
+                  <ActionIcon
+                    onClick={() => timeInputRef.current?.showPicker()}
+                  >
+                    <IconClock size="1rem" stroke={1.5} />
+                  </ActionIcon>
+                }
+              />
+            )}
+            rules={{ required: "This field is required" }}
           />
         );
       case "SLIDER":
@@ -104,13 +207,31 @@ const RequestFormFields = ({ field }: RequestFormFieldsProps) => {
         }));
         return (
           <Box pb="xl">
-            <Text weight={600}>{field.label}</Text>
-            <Slider
-              min={sliderOption[0]}
-              max={max}
-              step={1}
-              marks={marks}
-              {...inputProps}
+            <Text weight={600}>
+              {field.field_name}{" "}
+              {field.field_is_required ? (
+                <Text span c="red">
+                  *
+                </Text>
+              ) : (
+                <></>
+              )}
+            </Text>
+            <Controller
+              control={control}
+              name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+              render={({ field: { value, onChange } }) => (
+                <Slider
+                  value={value as number}
+                  onChange={(value) => onChange(value)}
+                  min={sliderOption[0]}
+                  max={max}
+                  step={1}
+                  marks={marks}
+                  {...inputProps}
+                />
+              )}
+              rules={{ ...fieldRules }}
             />
           </Box>
         );
