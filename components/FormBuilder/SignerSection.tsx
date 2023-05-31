@@ -13,6 +13,7 @@ import {
   Text,
   ThemeIcon,
   createStyles,
+  useMantineTheme,
 } from "@mantine/core";
 import {
   IconCircleDashed,
@@ -75,6 +76,7 @@ const SignerSection = ({
   const { classes } = useStyles({ mode });
   const methods = useFormContext<FormBuilderData>();
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
+  const { colorScheme } = useMantineTheme();
 
   const {
     fields: signers,
@@ -142,7 +144,10 @@ const SignerSection = ({
                 <ActionIcon
                   onClick={() => handleChangeActiveSigner(signerIndex)}
                 >
-                  <IconSettings color="#2e2e2e" size={18} />
+                  <IconSettings
+                    color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
+                    size={18}
+                  />
                 </ActionIcon>
               )}
             </Flex>
