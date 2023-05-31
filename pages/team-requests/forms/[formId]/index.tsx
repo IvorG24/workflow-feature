@@ -7,7 +7,7 @@ import {
 import Meta from "@/components/Meta/Meta";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
-import { ROW_PER_PAGE } from "@/utils/contant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import {
   FormType,

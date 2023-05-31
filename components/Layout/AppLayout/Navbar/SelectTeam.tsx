@@ -14,7 +14,7 @@ import {
   useTeamList,
 } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
-import { NOTIFICATION_LIST_LIMIT } from "@/utils/contant";
+import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { getAvatarColor } from "@/utils/styling";

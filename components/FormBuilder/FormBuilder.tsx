@@ -23,14 +23,13 @@ type Props = {
 
 export type FormBuilderData = {
   formId: string;
-  form_name: string;
-  form_description: string | null;
+  formName: string;
+  formDescription: string;
   formType: AppType;
   revieweeList: TeamWithTeamMemberType[] | null;
   sections: SectionWithField[];
   signers: RequestSigner[];
-  is_signature_required: boolean;
-  created_at: string;
+  isSignatureRequired: boolean;
 };
 
 const FormBuilder = ({ children }: Props) => {

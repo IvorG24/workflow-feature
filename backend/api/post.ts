@@ -1,12 +1,16 @@
+import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { Database } from "@/utils/database";
 import {
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
+  FieldTableInsert,
   InvitationTableInsert,
   ItemDescriptionFieldTableInsert,
   ItemTableInsert,
   NotificationTableInsert,
+  OptionTableInsert,
+  SectionTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
   UserTableInsert,
@@ -272,4 +276,74 @@ export const createItemDescriptionField = async (
   if (error) throw error;
 
   return data;
+};
+
+// Create request form
+export const createRequestForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formBuilderData: FormBuilderData;
+    teamMemberId: string;
+  }
+) => {
+  const { formBuilderData, teamMemberId } = params;
+  const { formDescription, formId, formName, formType, isSignatureRequired } =
+    formBuilderData;
+  const { sections, signers } = formBuilderData;
+
+  // create form
+  const { data: form, error: formError } = await supabaseClient
+    .from("form_table")
+    .insert({
+      form_app: formType,
+      form_description: formDescription,
+      form_name: formName,
+      form_team_member_id: teamMemberId,
+      form_id: formId,
+      form_is_signature_required: isSignatureRequired,
+    })
+    .select()
+    .single();
+  if (formError) throw formError;
+
+  const sectionInput: SectionTableInsert[] = [];
+  const fieldInput: FieldTableInsert[] = [];
+  const optionInput: OptionTableInsert[] = [];
+
+  // separate sections, fields, and options
+  sections.forEach((section) => {
+    const { fields, ...newSection } = section;
+    sectionInput.push(newSection);
+    fields.forEach((field) => {
+      const { options, ...newField } = field;
+      fieldInput.push(newField);
+      options.forEach((option) => optionInput.push(option));
+    });
+  });
+
+  // create section
+  const { error: sectionError } = await supabaseClient
+    .from("section_table")
+    .insert(sectionInput);
+  if (sectionError) throw sectionError;
+
+  // create fields
+  const { error: fieldError } = await supabaseClient
+    .from("field_table")
+    .insert(fieldInput);
+  if (fieldError) throw fieldError;
+
+  // create options
+  const { error: optionError } = await supabaseClient
+    .from("option_table")
+    .insert(optionInput);
+  if (optionError) throw optionError;
+
+  // create signers
+  const { error: signerError } = await supabaseClient
+    .from("signer_table")
+    .insert(signers);
+  if (signerError) throw signerError;
+
+  return form;
 };
