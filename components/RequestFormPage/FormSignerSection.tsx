@@ -1,10 +1,17 @@
 import { FormType, ReceiverStatusType } from "@/utils/types";
-import { Badge, Flex, Paper, Stack, Text, Title } from "@mantine/core";
 import {
-  IconCheck,
+  Chip,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+} from "@mantine/core";
+import {
   IconCircleCheck,
+  IconCircleDashed,
   IconCircleX,
-  IconLoader,
 } from "@tabler/icons-react";
 
 type Props = {
@@ -16,36 +23,21 @@ const FormSignerSection = ({ signerList }: Props) => {
     switch (status) {
       case "APPROVED":
         return (
-          <Flex
-            align="center"
-            p={3}
-            justify="center"
-            sx={{ backgroundColor: "#51CF66", borderRadius: 100 }}
-          >
-            <IconCircleCheck color="white" size={16} />
-          </Flex>
+          <ThemeIcon color="green" size="xs" radius="xl">
+            <IconCircleCheck />
+          </ThemeIcon>
         );
       case "PENDING":
         return (
-          <Flex
-            align="center"
-            p={3}
-            justify="center"
-            sx={{ backgroundColor: "#339AF0", borderRadius: 100 }}
-          >
-            <IconLoader color="white" size={16} />
-          </Flex>
+          <ThemeIcon color="blue" size="xs" radius="xl">
+            <IconCircleDashed />
+          </ThemeIcon>
         );
       case "REJECTED":
         return (
-          <Flex
-            align="center"
-            p={3}
-            justify="center"
-            sx={{ backgroundColor: "#FF6B6B", borderRadius: 100 }}
-          >
-            <IconCircleX color="white" size={16} />
-          </Flex>
+          <ThemeIcon color="red" size="xs" radius="xl">
+            <IconCircleX />
+          </ThemeIcon>
         );
     }
   };
@@ -70,12 +62,12 @@ const FormSignerSection = ({ signerList }: Props) => {
       <Title order={4} color="dimmed">
         Signers
       </Title>
-      <Stack mt="xl">
+      <Stack mt="xl" spacing={0}>
         {signerList.map((signer) => {
           return (
-            <Flex key={signer.signer_id} align="center">
+            <Group key={signer.signer_id} noWrap mt="xs">
               {signerStatusIcon("PENDING")}
-              <Text ml="sm" size="sm">
+              <Text size="sm">
                 {signerStatusMessage(
                   "PENDING",
                   signer.signer_action,
@@ -83,14 +75,15 @@ const FormSignerSection = ({ signerList }: Props) => {
                 )}
               </Text>
               {signer.signer_is_primary_signer ? (
-                <Badge ml="sm" variant="outline">
-                  <Flex align="center" justify="center" gap={2}>
-                    <IconCheck size={14} />
-                    Primary
-                  </Flex>
-                </Badge>
+                <Chip
+                  size="xs"
+                  variant="outline"
+                  checked={signer.signer_is_primary_signer}
+                >
+                  Primary
+                </Chip>
               ) : null}
-            </Flex>
+            </Group>
           );
         })}
       </Stack>

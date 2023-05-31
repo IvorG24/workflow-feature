@@ -1,3 +1,4 @@
+import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { v4 as uuidv4 } from "uuid";
 import { SectionWithField } from "./types";
 
@@ -7,14 +8,16 @@ export const NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
 
 const sectionId = uuidv4();
-export const defaultRequestFormBuilderSection: SectionWithField[] = [
+export const defaultRequestFormBuilderSection = (
+  formId: string
+): SectionWithField[] => [
   {
-    section_form_id: uuidv4(),
+    section_form_id: formId,
     section_id: sectionId,
     section_name: "Section 1",
     section_order: 1,
     section_is_duplicatable: false,
-    field_table: [
+    fields: [
       {
         field_id: uuidv4(),
         field_type: "TEXT",
@@ -25,8 +28,22 @@ export const defaultRequestFormBuilderSection: SectionWithField[] = [
         field_order: 1,
         field_section_id: sectionId,
         options: [],
-        field_response: "",
       },
     ],
   },
 ];
+
+export const defaultRequestFormBuilderSigners = (
+  formId: string
+): RequestSigner[] => {
+  return [
+    {
+      signer_id: uuidv4(),
+      signer_team_member_id: "",
+      signer_action: "",
+      signer_is_primary_signer: true,
+      signer_form_id: formId,
+      signer_order: 1,
+    },
+  ];
+};

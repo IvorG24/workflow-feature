@@ -5,7 +5,7 @@ import {
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestFormListPage from "@/components/RequestFormListPage/RequestFormListPage";
-import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/contant";
+import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";

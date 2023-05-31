@@ -1,7 +1,7 @@
 import { deleteRow } from "@/backend/api/delete";
 import { getItemDescriptionFieldList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
-import { ROW_PER_PAGE } from "@/utils/contant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import {
   ItemDescriptionFieldTableRow,
   ItemDescriptionTableRow,
