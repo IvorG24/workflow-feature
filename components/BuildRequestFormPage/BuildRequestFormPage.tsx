@@ -154,69 +154,69 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
 
               <FormBuilder.DescriptionInput mt={32} />
             </Box>
-
-            {sections.length > 0 &&
-              sections.map((section, sectionIndex) => {
-                return (
-                  <FormBuilder.Section
-                    key={section.id}
-                    mt={32}
-                    section={section}
-                    sectionIndex={sectionIndex}
-                    onDelete={() => removeSection(sectionIndex)}
-                    fields={section.field_table}
-                    formId={formId}
-                    formType={formType}
-                    mode={section.section_order === 999 ? "view" : "edit"}
-                  />
-                );
-              })}
-
-            {/* add new section divider */}
-            <Divider
-              maw={768}
-              mx="auto"
-              labelPosition="center"
-              mt={24}
-              label={
-                <Button
-                  leftIcon={<IconPlus height={20} />}
-                  variant="subtle"
-                  className={classes.button}
-                  onClick={() =>
-                    insertSection(sections.length, {
-                      section_id: uuidv4(),
-                      section_name: "",
-                      section_form_id: formId,
-                      section_order: sections.length + 1,
-                      section_is_duplicatable: false,
-                      field_table: [],
-                    })
-                  }
-                >
-                  Add New Section
-                </Button>
-              }
-            />
-
-            {formType === "REQUEST" && (
-              <>
-                <FormBuilder.SignerSection
-                  mt={32}
-                  formId={formId}
-                  teamMemberList={teamMemberList}
-                />
-                <FormBuilder.UserSignature mt={32} />
-              </>
-            )}
-
-            <FormBuilder.SubmitButton
-              mt={32}
-              onClick={() => handleSaveForm(getValues())}
-            >
-              Finish Building Form
-            </FormBuilder.SubmitButton>
           </FormBuilder.Container>
+
+          {sections.length > 0 &&
+            sections.map((section, sectionIndex) => {
+              return (
+                <FormBuilder.Section
+                  key={section.id}
+                  mt={32}
+                  section={section}
+                  sectionIndex={sectionIndex}
+                  onDelete={() => removeSection(sectionIndex)}
+                  fields={section.field_table}
+                  formId={formId}
+                  formType={formType}
+                  mode={section.section_order === 999 ? "view" : "edit"}
+                />
+              );
+            })}
+
+          {/* add new section divider */}
+          <Divider
+            maw={768}
+            mx="auto"
+            labelPosition="center"
+            mt={24}
+            label={
+              <Button
+                leftIcon={<IconPlus height={20} />}
+                variant="subtle"
+                className={classes.button}
+                onClick={() =>
+                  insertSection(sections.length, {
+                    section_id: uuidv4(),
+                    section_name: "",
+                    section_form_id: formId,
+                    section_order: sections.length + 1,
+                    section_is_duplicatable: false,
+                    field_table: [],
+                  })
+                }
+              >
+                Add New Section
+              </Button>
+            }
+          />
+
+          {formType === "REQUEST" && (
+            <>
+              <FormBuilder.SignerSection
+                mt={32}
+                formId={formId}
+                teamMemberList={teamMemberList}
+              />
+              <FormBuilder.UserSignature mt={32} />
+            </>
+          )}
+
+          <FormBuilder.SubmitButton
+            mt={32}
+            onClick={() => handleSaveForm(getValues())}
+          >
+            Finish Building Form
+          </FormBuilder.SubmitButton>
         </Container>
       </FormProvider>
     </Container>
