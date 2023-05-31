@@ -7,7 +7,7 @@ import {
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Stack, Text } from "@mantine/core";
+import { Container, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -156,7 +156,10 @@ const RequestPage = ({ request }: Props) => {
 
   return (
     <Container>
-      <Stack spacing="xl">
+      <Title order={2} color="dimmed">
+        Request
+      </Title>
+      <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
           request={request}
           requestor={requestor}

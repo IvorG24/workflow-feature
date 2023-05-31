@@ -22,7 +22,7 @@ const Signer = ({ signerList }: Props) => {
       <Title order={4} color="dimmed">
         Signers
       </Title>
-      <Stack mt="xl">
+      <Stack mt="xl" spacing={0}>
         {signerList.map((signer) => {
           return (
             <Group key={signer.signer_id} noWrap mt="xs">

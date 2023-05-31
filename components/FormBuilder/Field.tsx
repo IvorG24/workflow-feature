@@ -26,11 +26,13 @@ import { useClickOutside } from "@mantine/hooks";
 import {
   IconArrowBigDownLine,
   IconArrowBigUpLine,
+  IconCalendar,
   IconCirclePlus,
+  IconClock,
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { FormBuilderData } from "./FormBuilder";
@@ -113,6 +115,7 @@ const Field = ({
   onDelete,
   mode = "edit",
 }: Props) => {
+  const timeInputRef = useRef<HTMLInputElement>(null);
   const [isActive, setIsActive] = useState(false);
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
   const [fieldDescription, setFieldDescription] = useState(
@@ -276,6 +279,7 @@ const Field = ({
             className={`${classes.previewField} ${
               mode === "view" ? classes.pointerEventsNone : ""
             }`}
+            pb="xl"
           >
             <Text className={classes.sliderLabel}>{label}</Text>
             <Slider
@@ -302,6 +306,7 @@ const Field = ({
             className={`${classes.previewField} ${
               mode === "view" ? classes.pointerEventsNone : ""
             }`}
+            icon={<IconCalendar size={16} />}
           />
         )}
 
@@ -314,6 +319,8 @@ const Field = ({
             className={`${classes.previewField} ${
               mode === "view" ? classes.pointerEventsNone : ""
             }`}
+            mt="xs"
+            sx={{ label: { cursor: "pointer" } }}
           />
         )}
 
@@ -326,6 +333,12 @@ const Field = ({
             className={`${classes.previewField} ${
               mode === "view" ? classes.pointerEventsNone : ""
             }`}
+            icon={<IconClock size={16} />}
+            rightSection={
+              <ActionIcon onClick={() => timeInputRef.current?.showPicker()}>
+                <IconClock size="1rem" stroke={1.5} />
+              </ActionIcon>
+            }
           />
         )}
       </Box>

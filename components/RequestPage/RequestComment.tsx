@@ -118,7 +118,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
               size={40}
               src={commenter.user_avatar}
               color={getAvatarColor(
-                Number(`${commenter.user_id.charCodeAt(1)}`)
+                Number(`${commenter.user_id.charCodeAt(0)}`)
               )}
               radius="xl"
             >

@@ -5,7 +5,15 @@ import {
   FormWithResponseType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, LoadingOverlay, Stack } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  LoadingOverlay,
+  Space,
+  Stack,
+  Title,
+} from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/router";
@@ -172,6 +180,10 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
   return (
     <Container>
       <LoadingOverlay visible={isSubmittingForm} overlayBlur={2} />
+      <Title order={2} color="dimmed">
+        Create Request
+      </Title>
+      <Space h="xl" />
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">

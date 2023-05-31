@@ -11,7 +11,7 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { IconClock } from "@tabler/icons-react";
+import { IconCalendar, IconClock } from "@tabler/icons-react";
 
 type RequestReponseProps = {
   response: {
@@ -61,6 +61,8 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
             label={response.label}
             checked={Boolean(response.value)}
             {...inputProps}
+            mt="xs"
+            sx={{ label: { cursor: "pointer" } }}
           />
         );
       case "DROPDOWN":
@@ -95,6 +97,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
             label={response.label}
             value={new Date(response.value)}
             {...inputProps}
+            icon={<IconCalendar size={16} />}
           />
         );
       case "TIME":

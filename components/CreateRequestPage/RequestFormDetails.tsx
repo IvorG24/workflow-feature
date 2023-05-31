@@ -39,7 +39,7 @@ const RequestFormDetails = ({ formDetails }: Props) => {
         <Avatar
           size={50}
           src={formCreator.user_avatar}
-          color={getAvatarColor(Number(`${formCreatorMemberId.charCodeAt(1)}`))}
+          color={getAvatarColor(Number(`${formCreatorMemberId.charCodeAt(0)}`))}
           radius="xl"
         >
           {capitalize(formCreator.user_first_name[0])}
@@ -49,7 +49,10 @@ const RequestFormDetails = ({ formDetails }: Props) => {
           <Text>
             {`${formCreator.user_first_name} ${formCreator.user_last_name}`}
           </Text>
-          <Text color="dimmed"> {formCreator.user_username}</Text>
+          <Text color="dimmed" size={14}>
+            {" "}
+            {formCreator.user_username}
+          </Text>
         </Stack>
       </Flex>
       <Group spacing="md" mt="xl">

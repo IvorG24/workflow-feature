@@ -120,7 +120,7 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
                 color={getAvatarColor(
                   Number(
                     `${form.form_team_member.team_member_user.user_id.charCodeAt(
-                      1
+                     0
                     )}`
                   )
                 )}
