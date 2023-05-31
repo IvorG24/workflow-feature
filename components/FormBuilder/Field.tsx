@@ -25,7 +25,6 @@ import {
   createStyles,
 } from "@mantine/core";
 import { DatePickerInput, TimeInput } from "@mantine/dates";
-import { useClickOutside } from "@mantine/hooks";
 import {
   IconArrowBigDownLine,
   IconArrowBigUpLine,
@@ -53,6 +52,7 @@ type Props = {
   sectionIndex: number;
   onDelete: (fieldIndex: number) => void;
   mode: Mode;
+  isActive: boolean;
 };
 
 type UseStylesProps = {
@@ -120,8 +120,8 @@ const Field = ({
   sectionIndex,
   onDelete,
   mode = "edit",
+  isActive,
 }: Props) => {
-  const [isActive, setIsActive] = useState(false);
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
   const [fieldDescription, setFieldDescription] = useState(
     field.field_description || ""
@@ -132,13 +132,6 @@ const Field = ({
   const [isFieldPositive, setIsFieldPositive] = useState(
     field.field_is_positive_metric
   );
-  const [isSelectingFieldType, setIsSelectingFieldType] = useState(false);
-
-  const ref = useClickOutside(() => {
-    if (!isSelectingFieldType) {
-      setIsActive(false);
-    }
-  });
 
   const {
     watch,
@@ -221,9 +214,6 @@ const Field = ({
       <Box
         role="button"
         aria-label="click to edit field"
-        onClick={() => {
-          if (mode === "edit") setIsActive(true);
-        }}
         className={classes.notActiveContainer}
       >
         {fieldType === "TEXT" && (
@@ -561,7 +551,7 @@ const Field = ({
   }
 
   return (
-    <Paper ref={ref} shadow="xs" radius="sm" className={classes.paper}>
+    <Paper shadow="xs" radius="sm" className={classes.paper}>
       <ActionIcon
         className={classes.closeIcon}
         onClick={() => onDelete(fieldIndex)}
@@ -581,10 +571,6 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
 
           <TextInput
@@ -631,10 +617,6 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
           <TextInput
             label="Field"
@@ -716,10 +698,6 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
           <TextInput
             label="Field"
@@ -765,10 +743,6 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
           <TextInput
             label="Field"

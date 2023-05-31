@@ -18,6 +18,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconCirclePlus, IconSettings } from "@tabler/icons-react";
+import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
@@ -77,6 +78,7 @@ const Section = ({
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext();
+  const [activeField, setActiveField] = useState<number | null>(null);
 
   const {
     fields: fields,
@@ -91,6 +93,10 @@ const Section = ({
     control: methods.control,
     defaultValue: section,
   });
+
+  const handleChangeActiveField = (index: number | null) => {
+    setActiveField(index);
+  };
 
   // this is to update the field order when a field is removed
   useDeepCompareEffect(() => {
@@ -130,18 +136,27 @@ const Section = ({
             gap="xs"
             key={field.id}
             mt={fieldIndex === 0 ? 24 : 16}
+            w="100%"
           >
-            <Field
-              formType={formType}
-              fieldIndex={fieldIndex}
-              field={field as FieldWithFieldArrayId}
-              sectionIndex={sectionIndex}
-              onDelete={() => removeField(fieldIndex)}
-              mode={mode}
-            />
-            <ActionIcon mt="lg">
-              <IconSettings color="#2e2e2e" size={18} />
-            </ActionIcon>
+            <Box w="100%">
+              <Field
+                formType={formType}
+                fieldIndex={fieldIndex}
+                field={field as FieldWithFieldArrayId}
+                sectionIndex={sectionIndex}
+                onDelete={() => removeField(fieldIndex)}
+                mode={mode}
+                isActive={activeField === fieldIndex}
+              />
+            </Box>
+            {activeField === null && (
+              <ActionIcon
+                onClick={() => handleChangeActiveField(fieldIndex)}
+                mt="lg"
+              >
+                <IconSettings color="#2e2e2e" size={18} />
+              </ActionIcon>
+            )}
           </Flex>
         ))}
       </Box>
@@ -149,7 +164,7 @@ const Section = ({
       {mode === "edit" && (
         <>
           <Button
-            onClick={() =>
+            onClick={() => {
               appendField({
                 field_id: uuidv4(),
                 field_name: "Field",
@@ -159,8 +174,9 @@ const Section = ({
                 field_is_required: false,
                 field_is_positive_metric: true,
                 field_order: fields.length + 1,
-              })
-            }
+              });
+              handleChangeActiveField(fields.length);
+            }}
             size="xs"
             mt={fields.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}
