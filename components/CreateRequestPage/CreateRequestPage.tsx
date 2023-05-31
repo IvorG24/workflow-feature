@@ -6,10 +6,11 @@ import {
   RequestResponseTableRow,
 } from "@/utils/types";
 import { Box, Button, Container, LoadingOverlay, Stack } from "@mantine/core";
-import { useLocalStorage, useWindowEvent } from "@mantine/hooks";
+import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import RequestFormDetails from "./RequestFormDetails";
@@ -54,11 +55,12 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
   }));
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues, reset } = requestFormMethods;
+  const { handleSubmit, control, getValues } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
     remove: removeSection,
+    replace: replaceSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -153,26 +155,19 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
 
   useEffect(() => {
     if (localFormState) {
-      reset({ sections: localFormState.form_section }, { keepIsValid: true });
+      replaceSection(localFormState.form_section);
     } else {
-      requestFormMethods.setValue("sections", form.form_section);
+      replaceSection(form.form_section);
     }
-  }, [localFormState, form, requestFormMethods]);
+  }, [form, localFormState, replaceSection, requestFormMethods]);
 
-  // // save form before page reload
-  useWindowEvent("beforeunload", handleBeforeUnload);
-
-  function handleBeforeUnload(event: BeforeUnloadEvent) {
-    event.preventDefault();
-    event.returnValue = ""; // Required for Chrome and Firefox
-
-    // Your custom logic here
+  useBeforeunload(() => {
     const formWithResponse: FormWithResponseType = {
       ...form,
       form_section: getValues("sections"),
     };
     setLocalFormState(formWithResponse);
-  }
+  });
 
   return (
     <Container>
@@ -190,7 +185,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
                 .lastIndexOf(sectionIdToFind);
 
               return (
-                <Box key={section.section_id + idx}>
+                <Box key={section.id}>
                   <RequestFormSection
                     key={section.section_id}
                     section={section}

@@ -43,7 +43,6 @@ const RequestFormFields = ({
     label: field.field_name,
     description: field.field_description,
     required: field.field_is_required,
-    error: fieldError,
   };
 
   const fieldRules = {
@@ -65,6 +64,7 @@ const RequestFormFields = ({
                 ...fieldRules,
               }
             )}
+            error={fieldError}
             withAsterisk={field.field_is_required}
           />
         );
@@ -79,6 +79,7 @@ const RequestFormFields = ({
                 ...fieldRules,
               }
             )}
+            error={fieldError}
             withAsterisk={field.field_is_required}
           />
         );
@@ -93,6 +94,7 @@ const RequestFormFields = ({
                 value={value as number}
                 onChange={(value) => onChange(value)}
                 withAsterisk={field.field_is_required}
+                error={fieldError}
                 {...inputProps}
               />
             )}
@@ -109,6 +111,7 @@ const RequestFormFields = ({
               <Switch
                 checked={value as boolean}
                 onChange={(e) => onChange(e.currentTarget.checked)}
+                error={fieldError}
                 {...inputProps}
               />
             )}
@@ -131,6 +134,7 @@ const RequestFormFields = ({
                 onChange={(value) => onChange(value)}
                 data={dropdownOption}
                 withAsterisk={field.field_is_required}
+                error={fieldError}
                 {...inputProps}
               />
             )}
@@ -153,6 +157,7 @@ const RequestFormFields = ({
                 onChange={(value) => onChange(value)}
                 data={multiselectOption}
                 withAsterisk={field.field_is_required}
+                error={fieldError}
                 {...inputProps}
               />
             )}
@@ -172,6 +177,7 @@ const RequestFormFields = ({
                   value={dateValue}
                   onChange={(value) => onChange(new Date(`${value}`))}
                   withAsterisk={field.field_is_required}
+                  error={fieldError}
                   {...inputProps}
                 />
               );
@@ -191,6 +197,7 @@ const RequestFormFields = ({
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 ref={timeInputRef}
+                error={fieldError}
                 rightSection={
                   <ActionIcon
                     onClick={() => timeInputRef.current?.showPicker()}
@@ -200,7 +207,7 @@ const RequestFormFields = ({
                 }
               />
             )}
-            rules={{ required: "This field is required" }}
+            rules={{ ...fieldRules }}
           />
         );
       case "SLIDER":
