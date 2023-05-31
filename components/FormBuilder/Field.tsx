@@ -167,7 +167,7 @@ const Field = ({
     { value: "TEXT", label: "Text" },
     { value: "NUMBER", label: "Number" },
     { value: "TEXTAREA", label: "Text Area" },
-    { value: "DROPDOWN", label: "DROPDOWN" },
+    { value: "DROPDOWN", label: "Dropdown" },
     { value: "MULTISELECT", label: "Multiselect" },
     { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
@@ -187,18 +187,24 @@ const Field = ({
   const fieldPromptError = get(errors, fieldPromptName);
 
   const handleSave = async () => {
+    let isValid = true;
     if (fieldPrompt.length <= 0) {
       setError(
         `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
         { message: "Field name is required" }
       );
+      isValid = false;
     }
 
-    if (options.length <= 0) {
+    if (
+      options.length <= 0 &&
+      (fieldType === "DROPDOWN" || fieldType === "MULTISELECT")
+    ) {
       notifications.show({
         message: "At least 1 option is required",
         color: "red",
       });
+      isValid = false;
     }
 
     const optionValueList = optionsWatch.map((option) => option.option_value);
@@ -209,9 +215,10 @@ const Field = ({
         message: "Options must be unique",
         color: "red",
       });
+      isValid = false;
     }
 
-    if (fieldPrompt.length > 0 && options.length > 0 && !isOptionHasDuplicate) {
+    if (isValid) {
       setError(
         `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
         { message: "" }
