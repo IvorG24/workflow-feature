@@ -3,8 +3,10 @@ import {
   Box,
   Button,
   Center,
+  Checkbox,
   Container,
   ContainerProps,
+  Divider,
   List,
   Text,
   ThemeIcon,
@@ -138,6 +140,14 @@ const SignerSection = ({
           >
             Add a Signer
           </Button>
+
+          <Divider mt="md" />
+
+          <Checkbox
+            label="Require requester and approver's signature during request creation and approval"
+            {...methods.register("is_signature_required")}
+            my="xl"
+          />
         </>
       )}
     </Container>

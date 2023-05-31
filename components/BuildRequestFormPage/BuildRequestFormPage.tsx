@@ -201,14 +201,11 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
           />
 
           {formType === "REQUEST" && (
-            <>
-              <FormBuilder.SignerSection
-                mt={32}
-                formId={formId}
-                teamMemberList={teamMemberList}
-              />
-              <FormBuilder.UserSignature mt={32} />
-            </>
+            <FormBuilder.SignerSection
+              mt={32}
+              formId={formId}
+              teamMemberList={teamMemberList}
+            />
           )}
 
           <FormBuilder.SubmitButton
