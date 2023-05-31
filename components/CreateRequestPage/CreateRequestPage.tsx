@@ -5,11 +5,11 @@ import {
   FormWithResponseType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Stack } from "@mantine/core";
+import { Box, Button, Container, LoadingOverlay, Stack } from "@mantine/core";
 import { useLocalStorage, useWindowEvent } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import RequestFormDetails from "./RequestFormDetails";
@@ -34,8 +34,9 @@ export type FieldWithResponseArray =
 const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
   const router = useRouter();
   const requestorProfile = useUserProfile();
+  const [isSubmittingForm, setIsSubmmittingForm] = useState(false);
 
-  const [localFormState, setLocalFormState] =
+  const [localFormState, setLocalFormState, removeLocalFormState] =
     useLocalStorage<FormWithResponseType | null>({
       key: `${router.query.formId}`,
       defaultValue: form,
@@ -62,10 +63,10 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     control,
     name: "sections",
   });
-
   const handleCreateRequest = (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
+      setIsSubmmittingForm(true);
       const dummyRequestId = uuidv4();
       const formId = router.query.formId;
       const reducedData = responseFieldReducer(data, dummyRequestId);
@@ -101,6 +102,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
         request_comment: [],
       };
       console.log(newRequest);
+      removeLocalFormState();
     } catch (error) {
       console.log(error);
       notifications.show({
@@ -108,6 +110,8 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
         message: "Please try again later",
         color: "red",
       });
+    } finally {
+      setIsSubmmittingForm(false);
     }
   };
 
@@ -149,13 +153,13 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
 
   useEffect(() => {
     if (localFormState) {
-      reset({ sections: localFormState.form_section });
+      reset({ sections: localFormState.form_section }, { keepIsValid: true });
     } else {
       requestFormMethods.setValue("sections", form.form_section);
     }
-  }, [form, localFormState, requestFormMethods, reset]);
+  }, [localFormState, form, requestFormMethods]);
 
-  // save form before page reload
+  // // save form before page reload
   useWindowEvent("beforeunload", handleBeforeUnload);
 
   function handleBeforeUnload(event: BeforeUnloadEvent) {
@@ -172,6 +176,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
 
   return (
     <Container>
+      <LoadingOverlay visible={isSubmittingForm} overlayBlur={2} />
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
@@ -209,10 +214,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
               );
             })}
             <RequestFormSigner signerList={signerList} />
-            <Stack>
-              <Button type="submit">Submit</Button>
-              <Button variant="outline">Cancel</Button>
-            </Stack>
+            <Button type="submit">Submit</Button>
           </Stack>
         </form>
       </FormProvider>

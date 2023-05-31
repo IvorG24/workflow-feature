@@ -30,13 +30,20 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
 }: RequestFormFieldsProps) => {
-  const { register, control } = useFormContext<RequestFormValues>();
+  const {
+    register,
+    control,
+    formState: { errors },
+  } = useFormContext<RequestFormValues>();
   const timeInputRef = useRef<HTMLInputElement>(null);
+  const fieldError =
+    errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.message;
 
   const inputProps = {
     label: field.field_name,
     description: field.field_description,
     required: field.field_is_required,
+    error: fieldError,
   };
 
   const fieldRules = {
