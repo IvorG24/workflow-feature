@@ -615,15 +615,21 @@ const Field = ({
             fieldIndex={fieldIndex}
             data={typeOptions}
           />
+
           <TextInput
             label="Field"
             mt={16}
             {...register(
               `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.field_table?.[fieldIndex]
+                ?.field_name?.message
+            }
           />
 
           {options.map((option, optionIndex) => (
@@ -700,15 +706,21 @@ const Field = ({
             fieldIndex={fieldIndex}
             data={typeOptions}
           />
+
           <TextInput
             label="Field"
             mt={16}
             {...register(
               `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.field_table?.[fieldIndex]
+                ?.field_name?.message
+            }
           />
 
           <TextInput
@@ -750,15 +762,21 @@ const Field = ({
             fieldIndex={fieldIndex}
             data={typeOptions}
           />
+
           <TextInput
             label="Field"
             mt={16}
             {...register(
               `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.field_table?.[fieldIndex]
+                ?.field_name?.message
+            }
           />
 
           <TextInput
