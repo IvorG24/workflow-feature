@@ -3,6 +3,8 @@ import {
   ActionIcon,
   Autocomplete,
   Box,
+  Button,
+  ButtonProps,
   Center,
   Checkbox,
   Chip,
@@ -15,13 +17,12 @@ import {
   Select,
   ThemeIcon,
 } from "@mantine/core";
-import { useClickOutside } from "@mantine/hooks";
 import {
   IconCircleCheck,
   IconCircleMinus,
   IconTrash,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { MouseEventHandler, useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FormBuilderData } from "./FormBuilder";
 import { Mode } from "./Section";
@@ -34,6 +35,8 @@ type Props = {
   mode: Mode;
   teamMemberList: TeamMemberWithUserType[];
   onMakePrimaryApprover: (signerIndex: number) => void;
+  isActive: boolean;
+  onNotActiveSigner: () => void;
 };
 
 type UseStylesProps = {
@@ -67,17 +70,9 @@ const SignerForm = ({
   mode = "edit",
   teamMemberList,
   onMakePrimaryApprover,
+  isActive,
+  onNotActiveSigner,
 }: Props) => {
-  const [isActive, setIsActive] = useState(false);
-  const [isSelectingSigner, setIsSelectingSigner] = useState(false);
-  const [isSelectingAction, setIsSelectingAction] = useState(false);
-
-  const ref = useClickOutside(() => {
-    if (!isSelectingSigner && !isSelectingAction) {
-      setIsActive(false);
-    }
-  });
-
   const { register, control, watch, setValue } =
     useFormContext<FormBuilderData>();
 
@@ -116,15 +111,8 @@ const SignerForm = ({
 
   if (!isActive) {
     return (
-      <Box
-        role="button"
-        aria-label="click to edit signer"
-        onClick={() => {
-          if (mode === "edit") setIsActive(true);
-        }}
-        className={classes.notActiveContainer}
-      >
-        <Group noWrap mt="xs">
+      <Box role="button" className={classes.notActiveContainer}>
+        <Group noWrap>
           {(!signerActionStatus || signerActionStatus === "PENDING") && (
             <List.Item>
               Will be {signerAction} by {signerUsername}
@@ -170,7 +158,7 @@ const SignerForm = ({
   }
 
   return (
-    <Paper ref={ref} shadow="xs" radius="sm" className={classes.paper}>
+    <Paper shadow="xs" radius="sm" className={classes.paper}>
       <ActionIcon
         className={classes.closeIcon}
         onClick={() => onDelete(signerIndex)}
@@ -190,10 +178,6 @@ const SignerForm = ({
                 label="Signer"
                 data={signerOptions}
                 {...field}
-                onDropdownOpen={() => setIsSelectingSigner(true)}
-                onDropdownClose={() => {
-                  setTimeout(() => setIsSelectingSigner(false), 100);
-                }}
               />
             )}
           />
@@ -207,10 +191,6 @@ const SignerForm = ({
                 label="Action"
                 maw={223}
                 data={["approved", "noted", "purchased"]}
-                onDropdownOpen={() => setIsSelectingAction(true)}
-                onDropdownClose={() => {
-                  setTimeout(() => setIsSelectingAction(false), 100);
-                }}
               />
             )}
           />
@@ -223,9 +203,35 @@ const SignerForm = ({
           onClick={() => onMakePrimaryApprover(signerIndex)}
           className={classes.checkboxCursor}
         />
+
+        <FieldAddAndCancel
+          onCancel={() => alert("cancel")}
+          onSave={() => onNotActiveSigner()}
+        />
       </Container>
     </Paper>
   );
 };
 
 export default SignerForm;
+
+type FieldAddAndCancelProps = {
+  onCancel: MouseEventHandler<HTMLButtonElement>;
+  onSave: MouseEventHandler<HTMLButtonElement>;
+} & ButtonProps;
+
+export const FieldAddAndCancel = ({
+  onCancel,
+  onSave,
+}: FieldAddAndCancelProps) => {
+  return (
+    <Flex mt="xl" justify="center" gap="xl">
+      <Button onClick={onCancel} variant="outline" color="red">
+        Cancel
+      </Button>
+      <Button variant="light" onClick={onSave}>
+        Save
+      </Button>
+    </Flex>
+  );
+};

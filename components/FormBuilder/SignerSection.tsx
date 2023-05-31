@@ -1,5 +1,6 @@
 import { ReceiverStatusType, TeamMemberWithUserType } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   Button,
   Center,
@@ -7,12 +8,18 @@ import {
   Container,
   ContainerProps,
   Divider,
+  Flex,
   List,
   Text,
   ThemeIcon,
   createStyles,
 } from "@mantine/core";
-import { IconCircleDashed, IconCirclePlus } from "@tabler/icons-react";
+import {
+  IconCircleDashed,
+  IconCirclePlus,
+  IconSettings,
+} from "@tabler/icons-react";
+import { useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { FormBuilderData } from "./FormBuilder";
@@ -67,6 +74,7 @@ const SignerSection = ({
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext<FormBuilderData>();
+  const [activeSigner, setActiveSigner] = useState<number | null>(null);
 
   const {
     fields: signers,
@@ -84,6 +92,10 @@ const SignerSection = ({
         signerIdx === index
       );
     });
+  };
+
+  const handleChangeActiveSigner = (index: number | null) => {
+    setActiveSigner(index);
   };
 
   return (
@@ -105,18 +117,35 @@ const SignerSection = ({
           }
         >
           {signers.map((signer, signerIndex) => (
-            <Box key={signer.id} mt={signerIndex === 0 ? 24 : 16}>
-              <SignerForm
-                signerIndex={signerIndex}
-                signer={signer as RequestSigner}
-                onDelete={() => removeSigner(signerIndex)}
-                onMakePrimaryApprover={() =>
-                  handleMakePrimaryApprover(signerIndex)
-                }
-                mode={mode}
-                teamMemberList={teamMemberList}
-              />
-            </Box>
+            <Flex
+              align="center"
+              gap="xs"
+              key={signer.id}
+              mt={signerIndex === 0 ? 24 : 16}
+              w="100%"
+            >
+              <Box>
+                <SignerForm
+                  signerIndex={signerIndex}
+                  signer={signer as RequestSigner}
+                  onDelete={() => removeSigner(signerIndex)}
+                  onMakePrimaryApprover={() =>
+                    handleMakePrimaryApprover(signerIndex)
+                  }
+                  mode={mode}
+                  teamMemberList={teamMemberList}
+                  isActive={activeSigner === signerIndex}
+                  onNotActiveSigner={() => handleChangeActiveSigner(null)}
+                />
+              </Box>
+              {activeSigner === null && (
+                <ActionIcon
+                  onClick={() => handleChangeActiveSigner(signerIndex)}
+                >
+                  <IconSettings color="#2e2e2e" size={18} />
+                </ActionIcon>
+              )}
+            </Flex>
           ))}
         </List>
       </Box>
