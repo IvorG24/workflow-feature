@@ -42,6 +42,7 @@ const FormField = ({ field }: Props) => {
             label={field.field_name}
             {...inputProps}
             sx={{ label: { cursor: "pointer" } }}
+            mt="xs"
           />
         );
       case "DROPDOWN":

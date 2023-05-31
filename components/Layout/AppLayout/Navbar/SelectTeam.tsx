@@ -38,7 +38,7 @@ const SelectItem = forwardRef<HTMLDivElement, TeamSelectItem>(
         <Avatar
           size="xs"
           src={team.team_logo}
-          color={getAvatarColor(Number(`${value.charCodeAt(1)}`))}
+          color={getAvatarColor(Number(`${value.charCodeAt(0)}`))}
         >
           {startCase(label[0])}
           {startCase(label[1])}
@@ -170,7 +170,7 @@ const SelectTeam = () => {
             size="sm"
             src={activeTeam.team_logo}
             color={getAvatarColor(
-              Number(`${activeTeam.team_id.charCodeAt(1)}`)
+              Number(`${activeTeam.team_id.charCodeAt(0)}`)
             )}
           >
             {startCase(activeTeam.team_name[0])}

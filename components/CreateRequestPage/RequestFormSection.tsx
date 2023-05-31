@@ -39,7 +39,7 @@ const RequestFormSection = ({
         )}
       </Group>
       <Space />
-      <Stack>
+      <Stack mt="xl">
         {section.section_field.map((field, idx) => (
           <RequestFormFields
             key={field.field_id + section.section_id}

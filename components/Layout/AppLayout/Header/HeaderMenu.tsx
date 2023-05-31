@@ -122,7 +122,7 @@ const HeaderMenu = () => {
             <Avatar
               size={28}
               src={userAvatar}
-              color={getAvatarColor(Number(`${TEMP_USER_ID.charCodeAt(1)}`))}
+              color={getAvatarColor(Number(`${TEMP_USER_ID.charCodeAt(0)}`))}
             >
               {userInitials}
             </Avatar>

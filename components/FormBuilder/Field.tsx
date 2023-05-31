@@ -27,11 +27,13 @@ import { notifications } from "@mantine/notifications";
 import {
   IconArrowBigDownLine,
   IconArrowBigUpLine,
+  IconCalendar,
   IconCirclePlus,
+  IconClock,
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { MouseEventHandler, useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { FormBuilderData } from "./FormBuilder";
@@ -112,6 +114,7 @@ const Field = ({
   onNotActive,
   onCancel,
 }: Props) => {
+  const timeInputRef = useRef<HTMLInputElement>(null);
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
   const [fieldDescription, setFieldDescription] = useState(
     field.field_description || ""
@@ -324,7 +327,7 @@ const Field = ({
         )}
 
         {fieldType === "SLIDER" && (
-          <Box className={classes.previewField}>
+          <Box className={classes.previewField} pb="xl">
             <Text className={classes.sliderLabel}>{label}</Text>
             <Slider
               {...field}
@@ -347,6 +350,7 @@ const Field = ({
             readOnly={mode === "view"}
             withAsterisk={isFieldRequired}
             className={classes.previewField}
+            icon={<IconCalendar size={16} />}
           />
         )}
 
@@ -357,6 +361,8 @@ const Field = ({
             checked={false}
             readOnly={mode === "view"}
             className={classes.previewField}
+            mt="xs"
+            sx={{ label: { cursor: "pointer" } }}
           />
         )}
 
@@ -367,6 +373,12 @@ const Field = ({
             readOnly={mode === "view"}
             withAsterisk={isFieldRequired}
             className={classes.previewField}
+            icon={<IconClock size={16} />}
+            rightSection={
+              <ActionIcon onClick={() => timeInputRef.current?.showPicker()}>
+                <IconClock size="1rem" stroke={1.5} />
+              </ActionIcon>
+            }
           />
         )}
       </Box>
