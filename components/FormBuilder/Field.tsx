@@ -67,7 +67,6 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     position: "relative",
   },
   previewField: {
-    pointerEvents: mode === "edit" ? "none" : "auto",
     label: {
       display: "flex",
     },
@@ -92,16 +91,9 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     gap: 16,
   },
 
-  radio: {
-    cursor: "pointer",
-  },
   sliderLabel: {
     fontWeight: 600,
     paddingRight: 60,
-  },
-
-  pointerEventsNone: {
-    pointerEvents: "none",
   },
 
   fullWidth: {
@@ -135,6 +127,8 @@ const Field = ({
   const [isFieldPositive, setIsFieldPositive] = useState(
     field.field_is_positive_metric
   );
+
+  const [checkedSwitch, setCheckedSwitch] = useState(false);
 
   const {
     watch,
@@ -222,9 +216,7 @@ const Field = ({
         {fieldType === "TEXT" && (
           <TextInput
             label={label}
-            className={`${classes.previewField} ${
-              mode === "view" && classes.pointerEventsNone
-            }`}
+            className={`${classes.previewField}`}
             withAsterisk={isFieldRequired}
             {...register(
               `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
@@ -242,7 +234,6 @@ const Field = ({
                 </Text>
               ) : null
             }
-            readOnly
           />
         )}
 
@@ -254,9 +245,7 @@ const Field = ({
               <NumberInput
                 {...field}
                 label={label}
-                className={`${classes.previewField} ${
-                  mode === "view" && classes.pointerEventsNone
-                }`}
+                className={classes.previewField}
                 withAsterisk={isFieldRequired}
                 {...register(
                   `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
@@ -267,8 +256,8 @@ const Field = ({
                     },
                   }
                 )}
-                value={Number(field.value)}
-                onChange={(value) => field.onChange(Number(value))}
+                value={Number(field.value || 0)}
+                onChange={(value) => field.onChange(Number(value || 0))}
                 error={
                   fieldPromptError ? (
                     <Text color="red" size="sm">
@@ -292,9 +281,7 @@ const Field = ({
         {fieldType === "TEXTAREA" && (
           <Textarea
             label={label}
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
+            className={classes.previewField}
             withAsterisk={isFieldRequired}
             {...register(
               `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
@@ -326,12 +313,8 @@ const Field = ({
                 maw={223}
                 label={label}
                 data={optionsDropdownData}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
                 style={{ width: "100%" }}
                 withAsterisk={isFieldRequired}
-                readOnly={mode === "view"}
                 error={
                   fieldPromptError ? (
                     <Text color="red" size="sm">
@@ -357,16 +340,13 @@ const Field = ({
             render={({ field }) => (
               <MultiSelect
                 {...field}
-                value={[]}
+                value={field.value as unknown as string[]}
                 maw={223}
                 label={label}
                 data={optionsDropdownData}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
+                className={classes.previewField}
                 style={{ width: "100%" }}
                 withAsterisk={isFieldRequired}
-                readOnly={mode === "view"}
                 error={
                   fieldPromptError ? (
                     <Text color="red" size="sm">
@@ -386,18 +366,13 @@ const Field = ({
         )}
 
         {fieldType === "SLIDER" && (
-          <Box
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
-          >
+          <Box className={classes.previewField}>
             <Text className={classes.sliderLabel}>{label}</Text>
             <Controller
               name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
               render={({ field }) => (
                 <Slider
                   {...field}
-                  className={mode === "view" ? classes.pointerEventsNone : ""}
                   pt={16}
                   pb={32}
                   defaultValue={1}
@@ -421,12 +396,9 @@ const Field = ({
                 {...field}
                 label={label}
                 value={field.value ? new Date(`${field.value}`) : null}
-                readOnly={mode === "view"}
                 withAsterisk={isFieldRequired}
                 maw={223}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
+                className={classes.previewField}
                 error={
                   fieldPromptError ? (
                     <Text color="red" size="sm">
@@ -453,12 +425,12 @@ const Field = ({
               <Switch
                 {...field}
                 label={label}
-                checked={false}
-                readOnly={mode === "view"}
+                checked={checkedSwitch}
+                onChange={(event) =>
+                  setCheckedSwitch(event.currentTarget.checked)
+                }
                 maw={223}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
+                className={classes.previewField}
                 error={
                   fieldPromptError ? (
                     <Text color="red" size="sm">
@@ -486,12 +458,9 @@ const Field = ({
                 {...field}
                 label={label}
                 value={field.value}
-                readOnly={mode === "view"}
                 withAsterisk={isFieldRequired}
                 maw={223}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
+                className={classes.previewField}
                 error={
                   fieldPromptError ? (
                     <Text color="red" size="sm">
@@ -520,9 +489,7 @@ const Field = ({
                   ? "yes"
                   : "no"
               }
-              className={`${classes.previewField} ${
-                mode === "view" && classes.pointerEventsNone
-              }`}
+              className={classes.previewField}
               label={label}
               error={
                 fieldPromptError ? (
@@ -697,6 +664,10 @@ const Field = ({
             )}
             className={classes.checkboxCursor}
           />
+          <FieldAddAndCancel
+            onCancel={() => alert("cancel")}
+            onSave={() => onNotActive()}
+          />
         </Container>
       )}
 
@@ -742,6 +713,11 @@ const Field = ({
               className={classes.checkboxCursor}
             />
           )}
+
+          <FieldAddAndCancel
+            onCancel={() => alert("cancel")}
+            onSave={() => onNotActive()}
+          />
         </Container>
       )}
 
@@ -784,6 +760,11 @@ const Field = ({
               }
             )}
             className={classes.checkboxCursor}
+          />
+
+          <FieldAddAndCancel
+            onCancel={() => alert("cancel")}
+            onSave={() => onNotActive()}
           />
         </Container>
       )}
