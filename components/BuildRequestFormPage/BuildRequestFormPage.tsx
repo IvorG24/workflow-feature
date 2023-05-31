@@ -1,7 +1,11 @@
+import { createRequestForm } from "@/backend/api/post";
+import { useFormActions } from "@/stores/useFormStore";
+import { useUserTeamMemberId } from "@/stores/useUserStore";
 import {
   defaultRequestFormBuilderSection,
   defaultRequestFormBuilderSigners,
-} from "@/utils/contant";
+} from "@/utils/constant";
+import { Database } from "@/utils/database";
 import { AppType, TeamMemberWithUserType } from "@/utils/types";
 import {
   Box,
@@ -12,7 +16,9 @@ import {
   createStyles,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -40,27 +46,33 @@ const useStyles = createStyles((theme) => ({
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
+  formId: string;
 };
 
-const BuildFormPage = ({ teamMemberList }: Props) => {
-  const formId = uuidv4();
+const BuildFormPage = ({ teamMemberList, formId }: Props) => {
+  const router = useRouter();
+  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const teamMemberId = useUserTeamMemberId();
   const formType: AppType = "REQUEST";
   const { classes } = useStyles();
+
+  const { addForm } = useFormActions();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultValues: FormBuilderData = {
     formId: formId,
-    form_name: "",
-    form_description: "",
+    formName: "",
+    formDescription: "",
     formType,
     revieweeList: null,
-    sections: defaultRequestFormBuilderSection,
-    signers: defaultRequestFormBuilderSigners,
-    is_signature_required: false,
-    created_at: new Date().toISOString(),
+    sections: defaultRequestFormBuilderSection(formId),
+    signers: defaultRequestFormBuilderSigners(formId),
+    isSignatureRequired: false,
   };
 
-  const methods = useForm<FormBuilderData>({ defaultValues: defaultValues });
+  const methods = useForm<FormBuilderData>({
+    defaultValues: defaultValues,
+  });
 
   const { getValues, control } = methods;
 
@@ -80,16 +92,16 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
       if (section.section_name?.length === 0) {
         error = "Each section should have a name";
       }
-      if (section.field_table.length === 0) {
+      if (section.fields.length === 0) {
         error = "At least 1 question per section is required";
       } else {
-        section.field_table.map((field) => {
+        section.fields.map((field) => {
           if (field.field_name.length === 0) {
             error = "Question label is required on each question";
           }
           if (
             (field.field_type === "MULTISELECT" ||
-              field.field_type === "SELECT") &&
+              field.field_type === "DROPDOWN") &&
             field.options.length <= 0
           )
             hasNoChoices = true;
@@ -98,21 +110,22 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
     });
 
     if (!error) {
-      if (formData.form_name.length <= 0) error = "Form name is required";
+      if (formData.formName.length <= 0) error = "Form name is required";
       else if (formData.sections.length === 0) {
         error = "At least 1 section is required";
       } else if (
-        formData.signers.filter((signer) => signer.signer_username.length <= 0)
-          .length > 0
+        formData.signers.filter(
+          (signer) => signer.signer_team_member_id.length <= 0
+        ).length > 0
       )
         error = "Signer is required";
       else if (
-        formData.signers.filter((signer) => signer.action.length <= 0).length >
-        0
+        formData.signers.filter((signer) => signer.signer_action.length <= 0)
+          .length > 0
       )
         error = "Signer action is required";
       else if (hasNoChoices)
-        error = "At least one option is required in a Select or Multiselect";
+        error = "At least one option is required in a Dropdown or Multiselect";
     }
 
     if (error.length > 0) {
@@ -129,7 +142,17 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
     if (checkForError(formData)) return;
     try {
       setIsSubmitting(true);
-      console.log(formData);
+      const createdForm = await createRequestForm(supabaseClient, {
+        formBuilderData: formData,
+        teamMemberId: teamMemberId,
+      });
+      addForm(createdForm);
+      notifications.show({
+        message: "Form created.",
+        color: "green",
+      });
+
+      await router.push(`/team-requests/forms/${createdForm.form_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -162,8 +185,7 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
                     section={section}
                     sectionIndex={sectionIndex}
                     onDelete={() => removeSection(sectionIndex)}
-                    fields={section.field_table}
-                    formId={formId}
+                    fields={section.fields}
                     formType={formType}
                     mode={section.section_order === 999 ? "view" : "edit"}
                   />
@@ -188,7 +210,7 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
                       section_form_id: formId,
                       section_order: sections.length + 1,
                       section_is_duplicatable: false,
-                      field_table: [],
+                      fields: [],
                     })
                   }
                 >

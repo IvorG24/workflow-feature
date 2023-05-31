@@ -3,7 +3,6 @@ import {
   ActionIcon,
   Autocomplete,
   Box,
-  Center,
   Checkbox,
   Chip,
   Container,
@@ -13,14 +12,9 @@ import {
   List,
   Paper,
   Select,
-  ThemeIcon,
 } from "@mantine/core";
 import { useClickOutside } from "@mantine/hooks";
-import {
-  IconCircleCheck,
-  IconCircleMinus,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FormBuilderData } from "./FormBuilder";
@@ -83,15 +77,15 @@ const SignerForm = ({
 
   const { classes } = useStyles({ mode });
 
-  const signerUserId = watch(`signers.${signerIndex}.signer_user_id`);
-  const signerUsername = watch(`signers.${signerIndex}.signer_username`);
-  const signerAction = watch(`signers.${signerIndex}.action`);
-  const signerActionStatus = watch(`signers.${signerIndex}.status`);
-  const isPrimaryApprover = watch(`signers.${signerIndex}.is_primary_approver`);
+  const signerUserId = watch(`signers.${signerIndex}.signer_team_member_id`);
+  const signerAction = watch(`signers.${signerIndex}.signer_action`);
+  const isPrimaryApprover = watch(
+    `signers.${signerIndex}.signer_is_primary_signer`
+  );
 
   const signerOptions = teamMemberList.map((member) => {
     return {
-      value: member.team_member_user.user_id,
+      value: member.team_member_id,
       label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
     };
   });
@@ -104,17 +98,16 @@ const SignerForm = ({
 
     if (selectedUser) {
       setValue(
-        `signers.${signerIndex}.signer_user_id`,
-        selectedUser.team_member_user.user_id
-      );
-      setValue(
-        `signers.${signerIndex}.signer_username`,
-        `${selectedUser.team_member_user.user_first_name} ${selectedUser.team_member_user.user_last_name}`
+        `signers.${signerIndex}.signer_team_member_id`,
+        selectedUser.team_member_id
       );
     }
   }, [signerUserId]);
 
   if (!isActive) {
+    const signerFullName = signerOptions.find(
+      (signer) => signer.value === signerUserId
+    );
     return (
       <Box
         role="button"
@@ -125,40 +118,9 @@ const SignerForm = ({
         className={classes.notActiveContainer}
       >
         <Group noWrap mt="xs">
-          {(!signerActionStatus || signerActionStatus === "PENDING") && (
-            <List.Item>
-              Will be {signerAction} by {signerUsername}
-            </List.Item>
-          )}
-
-          {signerActionStatus === "APPROVED" && (
-            <List.Item
-              icon={
-                <Center>
-                  <ThemeIcon color="green" size="xs" radius="xl">
-                    <IconCircleCheck />
-                  </ThemeIcon>
-                </Center>
-              }
-            >
-              Signed as {signerAction} by {signerUsername}
-            </List.Item>
-          )}
-
-          {signerActionStatus === "REJECTED" && (
-            <List.Item
-              icon={
-                <Center>
-                  <ThemeIcon color="red" size="xs" radius="xl">
-                    <IconCircleMinus />
-                  </ThemeIcon>
-                </Center>
-              }
-            >
-              Rejected by {signerUsername}
-            </List.Item>
-          )}
-
+          <List.Item>
+            Will be signed as {signerAction} by {signerFullName?.label}
+          </List.Item>
           {isPrimaryApprover && (
             <Chip size="xs" variant="outline" checked={isPrimaryApprover}>
               Primary
@@ -182,7 +144,7 @@ const SignerForm = ({
       <Container fluid p={24}>
         <Flex gap="md" wrap="wrap">
           <Controller
-            name={`signers.${signerIndex}.signer_user_id`}
+            name={`signers.${signerIndex}.signer_team_member_id`}
             control={control}
             render={({ field }) => (
               <Select
@@ -198,7 +160,7 @@ const SignerForm = ({
           />
 
           <Controller
-            name={`signers.${signerIndex}.action`}
+            name={`signers.${signerIndex}.signer_action`}
             control={control}
             render={({ field }) => (
               <Autocomplete
@@ -217,7 +179,7 @@ const SignerForm = ({
         <Checkbox
           label="Make primary approver"
           mt={24}
-          {...register(`signers.${signerIndex}.is_primary_approver`)}
+          {...register(`signers.${signerIndex}.signer_is_primary_signer`)}
           onClick={() => onMakePrimaryApprover(signerIndex)}
           className={classes.checkboxCursor}
         />

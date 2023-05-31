@@ -1,5 +1,3 @@
-// todo: implement delete option query
-// import deleteChoice from "@/services/option/deleteChoice";
 import { FieldWithFieldArrayId } from "@/utils/react-hook-form";
 import { AppType, FieldType } from "@/utils/types";
 import {
@@ -13,7 +11,6 @@ import {
   MultiSelect,
   NumberInput,
   Paper,
-  Radio,
   Select,
   SelectProps,
   Slider,
@@ -34,12 +31,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import {
-  Controller,
-  get,
-  useFieldArray,
-  useFormContext,
-} from "react-hook-form";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { FormBuilderData } from "./FormBuilder";
 import Option from "./Option";
@@ -126,10 +118,10 @@ const Field = ({
   const [fieldDescription, setFieldDescription] = useState(
     field.field_description || ""
   );
-  const [isFieldRequired, setIsFieldRequired] = useState(
+  const [isFieldRequired, setIsFieldRequired] = useState<boolean>(
     field.field_is_required
   );
-  const [isFieldPositive, setIsFieldPositive] = useState(
+  const [isFieldPositive, setIsFieldPositive] = useState<boolean>(
     field.field_is_positive_metric
   );
   const [isSelectingFieldType, setIsSelectingFieldType] = useState(false);
@@ -140,24 +132,18 @@ const Field = ({
     }
   });
 
-  const {
-    watch,
-    control,
-    register,
-    getValues,
-    formState: { errors },
-  } = useFormContext<FormBuilderData>();
+  const { watch, control, register } = useFormContext<FormBuilderData>();
   const {
     fields: options,
     append: appendChoice,
     remove: removeChoice,
   } = useFieldArray({
     control: control,
-    name: `sections.${sectionIndex}.field_table.${fieldIndex}.options`,
+    name: `sections.${sectionIndex}.fields.${fieldIndex}.options`,
   });
 
   const optionsWatch = watch(
-    `sections.${sectionIndex}.field_table.${fieldIndex}.options`
+    `sections.${sectionIndex}.fields.${fieldIndex}.options`
   );
   const optionsDropdownData = optionsWatch?.map((option) => ({
     value: option.option_id,
@@ -167,14 +153,14 @@ const Field = ({
   const { classes } = useStyles({ mode });
 
   const fieldType = watch(
-    `sections.${sectionIndex}.field_table.${fieldIndex}.field_type`
+    `sections.${sectionIndex}.fields.${fieldIndex}.field_type`
   );
 
   const requestTypeOptions = [
     { value: "TEXT", label: "Text" },
     { value: "NUMBER", label: "Number" },
     { value: "TEXTAREA", label: "Text Area" },
-    { value: "SELECT", label: "Select" },
+    { value: "DROPDOWN", label: "Dropdown" },
     { value: "MULTISELECT", label: "Multiselect" },
     { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
@@ -189,9 +175,6 @@ const Field = ({
 
   const typeOptions =
     formType === "REQUEST" ? requestTypeOptions : reviewTypeOptions;
-
-  const fieldPromptName = `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`;
-  const fieldPromptError = get(errors, fieldPromptName);
 
   if (!isActive) {
     const step = 1;
@@ -233,66 +216,19 @@ const Field = ({
               mode === "view" && classes.pointerEventsNone
             }`}
             withAsterisk={isFieldRequired}
-            {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
-              {
-                required: {
-                  value: isFieldRequired,
-                  message: "Field is required",
-                },
-              }
-            )}
-            error={
-              fieldPromptError ? (
-                <Text color="red" size="sm">
-                  Field is required
-                </Text>
-              ) : null
-            }
-            readOnly
           />
         )}
 
         {fieldType === "NUMBER" && (
-          <Controller
-            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-            control={control}
-            render={({ field }) => (
-              <NumberInput
-                {...field}
-                label={label}
-                className={`${classes.previewField} ${
-                  mode === "view" && classes.pointerEventsNone
-                }`}
-                withAsterisk={isFieldRequired}
-                {...register(
-                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
-                  {
-                    required: {
-                      value: isFieldRequired,
-                      message: "Field is required",
-                    },
-                  }
-                )}
-                value={Number(field.value)}
-                onChange={(value) => field.onChange(Number(value))}
-                error={
-                  fieldPromptError ? (
-                    <Text color="red" size="sm">
-                      Field is required
-                    </Text>
-                  ) : null
-                }
-                min={0}
-                max={999999999999}
-              />
-            )}
-            rules={{
-              required: {
-                value: isFieldRequired,
-                message: "Field is required",
-              },
-            }}
+          <NumberInput
+            {...field}
+            label={label}
+            className={`${classes.previewField} ${
+              mode === "view" && classes.pointerEventsNone
+            }`}
+            withAsterisk={isFieldRequired}
+            min={0}
+            max={999999999999}
           />
         )}
 
@@ -303,90 +239,35 @@ const Field = ({
               mode === "view" ? classes.pointerEventsNone : ""
             }`}
             withAsterisk={isFieldRequired}
-            {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`,
-              {
-                required: {
-                  value: isFieldRequired,
-                  message: "Field is required",
-                },
-              }
-            )}
-            error={
-              fieldPromptError ? (
-                <Text color="red" size="sm">
-                  Field is required
-                </Text>
-              ) : null
-            }
           />
         )}
 
-        {fieldType === "SELECT" && (
-          <Controller
-            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                value={`${field.value}`}
-                label={label}
-                data={optionsDropdownData}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
-                style={{ width: "100%" }}
-                withAsterisk={isFieldRequired}
-                readOnly={mode === "view"}
-                error={
-                  fieldPromptError ? (
-                    <Text color="red" size="sm">
-                      Field is required
-                    </Text>
-                  ) : null
-                }
-              />
-            )}
-            rules={{
-              required: {
-                value: isFieldRequired,
-                message: "Field is required",
-              },
-            }}
+        {fieldType === "DROPDOWN" && (
+          <Select
+            {...field}
+            label={label}
+            data={optionsDropdownData}
+            className={`${classes.previewField} ${
+              mode === "view" ? classes.pointerEventsNone : ""
+            }`}
+            style={{ width: "100%" }}
+            withAsterisk={isFieldRequired}
+            readOnly={mode === "view"}
           />
         )}
 
         {fieldType === "MULTISELECT" && (
-          <Controller
-            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-            control={control}
-            render={({ field }) => (
-              <MultiSelect
-                {...field}
-                value={[]}
-                label={label}
-                data={optionsDropdownData}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
-                style={{ width: "100%" }}
-                withAsterisk={isFieldRequired}
-                readOnly={mode === "view"}
-                error={
-                  fieldPromptError ? (
-                    <Text color="red" size="sm">
-                      Field is required
-                    </Text>
-                  ) : null
-                }
-              />
-            )}
-            rules={{
-              required: {
-                value: isFieldRequired,
-                message: "Field is required",
-              },
-            }}
+          <MultiSelect
+            {...field}
+            value={[]}
+            label={label}
+            data={optionsDropdownData}
+            className={`${classes.previewField} ${
+              mode === "view" ? classes.pointerEventsNone : ""
+            }`}
+            style={{ width: "100%" }}
+            withAsterisk={isFieldRequired}
+            readOnly={mode === "view"}
           />
         )}
 
@@ -397,159 +278,55 @@ const Field = ({
             }`}
           >
             <Text className={classes.sliderLabel}>{label}</Text>
-            <Controller
-              name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-              render={({ field }) => (
-                <Slider
-                  {...field}
-                  className={mode === "view" ? classes.pointerEventsNone : ""}
-                  pt={16}
-                  pb={32}
-                  defaultValue={1}
-                  min={fieldMin}
-                  max={fieldMax}
-                  step={step}
-                  marks={getMarks()}
-                  showLabelOnHover={false}
-                />
-              )}
+            <Slider
+              {...field}
+              className={mode === "view" ? classes.pointerEventsNone : ""}
+              pt={16}
+              pb={32}
+              defaultValue={1}
+              min={fieldMin}
+              max={fieldMax}
+              step={step}
+              marks={getMarks()}
+              showLabelOnHover={false}
             />
           </Box>
         )}
 
         {fieldType === "DATE" && (
-          <Controller
-            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-            control={control}
-            render={({ field }) => (
-              <DatePickerInput
-                {...field}
-                label={label}
-                value={field.value ? new Date(`${field.value}`) : null}
-                readOnly={mode === "view"}
-                withAsterisk={isFieldRequired}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
-                error={
-                  fieldPromptError ? (
-                    <Text color="red" size="sm">
-                      Field is required
-                    </Text>
-                  ) : null
-                }
-              />
-            )}
-            rules={{
-              required: {
-                value: isFieldRequired,
-                message: "Field is required",
-              },
-            }}
+          <DatePickerInput
+            {...field}
+            label={label}
+            readOnly={mode === "view"}
+            withAsterisk={isFieldRequired}
+            className={`${classes.previewField} ${
+              mode === "view" ? classes.pointerEventsNone : ""
+            }`}
           />
         )}
 
         {fieldType === "SWITCH" && (
-          <Controller
-            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-            control={control}
-            render={({ field }) => (
-              <Switch
-                {...field}
-                label={label}
-                checked={false}
-                readOnly={mode === "view"}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
-                error={
-                  fieldPromptError ? (
-                    <Text color="red" size="sm">
-                      Field is required
-                    </Text>
-                  ) : null
-                }
-              />
-            )}
-            rules={{
-              required: {
-                value: isFieldRequired,
-                message: "Field is required",
-              },
-            }}
+          <Switch
+            {...field}
+            label={label}
+            checked={false}
+            readOnly={mode === "view"}
+            className={`${classes.previewField} ${
+              mode === "view" ? classes.pointerEventsNone : ""
+            }`}
           />
         )}
 
         {fieldType === "TIME" && (
-          <Controller
-            name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
-            control={control}
-            render={({ field }) => (
-              <TimeInput
-                {...field}
-                label={label}
-                value={field.value}
-                readOnly={mode === "view"}
-                withAsterisk={isFieldRequired}
-                className={`${classes.previewField} ${
-                  mode === "view" ? classes.pointerEventsNone : ""
-                }`}
-                error={
-                  fieldPromptError ? (
-                    <Text color="red" size="sm">
-                      Field is required
-                    </Text>
-                  ) : null
-                }
-              />
-            )}
-            rules={{
-              required: {
-                value: isFieldRequired,
-                message: "Field is required",
-              },
-            }}
+          <TimeInput
+            {...field}
+            label={label}
+            readOnly={mode === "view"}
+            withAsterisk={isFieldRequired}
+            className={`${classes.previewField} ${
+              mode === "view" ? classes.pointerEventsNone : ""
+            }`}
           />
-        )}
-
-        {fieldType === "BOOLEAN" && (
-          <>
-            <Radio.Group
-              defaultValue={
-                getValues(
-                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`
-                )
-                  ? "yes"
-                  : "no"
-              }
-              className={`${classes.previewField} ${
-                mode === "view" && classes.pointerEventsNone
-              }`}
-              label={label}
-              error={
-                fieldPromptError ? (
-                  <Text color="red" size="sm">
-                    Field is required
-                  </Text>
-                ) : null
-              }
-            >
-              <Radio
-                value="yes"
-                label="Yes"
-                {...register(
-                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`
-                )}
-              />
-              <Radio
-                value="no"
-                label="No"
-                {...register(
-                  `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`
-                )}
-              />
-            </Radio.Group>
-          </>
         )}
       </Box>
     );
@@ -586,7 +363,7 @@ const Field = ({
             label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
@@ -597,7 +374,7 @@ const Field = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
               {
                 onChange: (e) => setFieldDescription(e.target.value),
               }
@@ -609,7 +386,7 @@ const Field = ({
               label="Required"
               mt={24}
               {...register(
-                `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_required`,
+                `sections.${sectionIndex}.fields.${fieldIndex}.field_is_required`,
                 {
                   onChange: (e) => setIsFieldRequired(e.target.checked),
                 }
@@ -620,7 +397,7 @@ const Field = ({
         </Container>
       )}
 
-      {(fieldType === "SELECT" || fieldType === "MULTISELECT") && (
+      {(fieldType === "DROPDOWN" || fieldType === "MULTISELECT") && (
         <Container fluid p={24}>
           <FieldTypeDropdown
             sectionIndex={sectionIndex}
@@ -635,7 +412,7 @@ const Field = ({
             label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
@@ -650,13 +427,13 @@ const Field = ({
               <Option
                 label={`Option ${optionIndex + 1}`}
                 {...register(
-                  `sections.${sectionIndex}.field_table.${fieldIndex}.options.${optionIndex}.option_value`
+                  `sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.option_value`
                 )}
               />
               <Option
                 label="Description"
                 {...register(
-                  `sections.${sectionIndex}.field_table.${fieldIndex}.options.${optionIndex}.option_description`
+                  `sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.option_description`
                 )}
               />
             </OptionContainer>
@@ -684,7 +461,7 @@ const Field = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
               {
                 onChange: (e) => setFieldDescription(e.target.value),
               }
@@ -695,7 +472,7 @@ const Field = ({
             label="Required"
             mt={24}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_required`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_is_required`,
               {
                 onChange: (e) => setIsFieldRequired(e.target.checked),
               }
@@ -720,7 +497,7 @@ const Field = ({
             label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
@@ -731,7 +508,7 @@ const Field = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
               {
                 onChange: (e) => setFieldDescription(e.target.value),
               }
@@ -743,7 +520,7 @@ const Field = ({
               label="Field is positive"
               mt={24}
               {...register(
-                `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_positive_metric`,
+                `sections.${sectionIndex}.fields.${fieldIndex}.field_is_positive_metric`,
                 {
                   onChange: (e) => setIsFieldPositive(e.target.checked),
                 }
@@ -769,7 +546,7 @@ const Field = ({
             label="Field"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
@@ -780,7 +557,7 @@ const Field = ({
             label="Description"
             mt={16}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_description`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
               {
                 onChange: (e) => setFieldDescription(e.target.value),
               }
@@ -791,7 +568,7 @@ const Field = ({
             label="Field is positive"
             mt={24}
             {...register(
-              `sections.${sectionIndex}.field_table.${fieldIndex}.field_is_positive_metric`,
+              `sections.${sectionIndex}.fields.${fieldIndex}.field_is_positive_metric`,
               {
                 onChange: (e) => setIsFieldPositive(e.target.checked),
               }
@@ -822,7 +599,7 @@ export function FieldTypeDropdown({
 
   return (
     <Controller
-      name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_type`}
+      name={`sections.${sectionIndex}.fields.${fieldIndex}.field_type`}
       control={control}
       render={({ field }) => (
         <Select

@@ -408,10 +408,9 @@ export type ItemDescriptionFieldForm = {
   isAvailable: boolean;
 };
 export type SectionWithField = {
-  field_table: FieldWithChoices[];
+  fields: FieldWithChoices[];
 } & SectionTableRow;
 
 export type FieldWithChoices = {
   options: OptionTableRow[];
-  field_response: string;
 } & FieldTableRow;

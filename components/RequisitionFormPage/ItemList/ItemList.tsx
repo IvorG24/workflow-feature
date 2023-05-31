@@ -2,7 +2,7 @@ import { deleteRow } from "@/backend/api/delete";
 import { getItemList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ROW_PER_PAGE } from "@/utils/contant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import {
   ItemDescriptionTableRow,
   ItemWithDescriptionType,

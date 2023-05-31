@@ -35,10 +35,10 @@ const FormNameInput = ({ ...props }: TextInputProps) => {
         size="xl"
         className={classes.formNameInput}
         aria-label="form name"
-        error={errors?.form_name?.message}
+        error={errors?.formName?.message}
         placeholder="Form Name"
         {...props}
-        {...register("form_name", {
+        {...register("formName", {
           required: "Form name is required",
           minLength: {
             value: 3,

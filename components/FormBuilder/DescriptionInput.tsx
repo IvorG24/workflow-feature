@@ -8,7 +8,10 @@ const DescriptionInput = ({ ...props }: TextInputProps) => {
     <TextInput
       label="Description"
       {...props}
-      {...register("form_description")}
+      {...register("formDescription", {
+        required: "Form description is required",
+      })}
+      withAsterisk
     />
   );
 };
