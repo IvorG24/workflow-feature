@@ -11,7 +11,6 @@ import {
   Switch,
   Text,
   Title,
-  createStyles,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -20,12 +19,6 @@ import { capitalize } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useState } from "react";
-
-const useStyles = createStyles(() => ({
-  checkbox: {
-    label: { cursor: "pointer" },
-  },
-}));
 
 type Props = {
   form: FormType;
@@ -36,7 +29,6 @@ const FormDetailsSection = ({ form }: Props) => {
   const creator = form.form_team_member.team_member_user;
   const router = useRouter();
   const formId = router.query.formId as string;
-  const { classes } = useStyles();
 
   const [isHidden, setIsHidden] = useState(form.form_is_hidden);
 
@@ -76,7 +68,7 @@ const FormDetailsSection = ({ form }: Props) => {
           size={50}
           src={creator.user_avatar}
           color={getAvatarColor(
-            Number(`${form.form_team_member.team_member_id.charCodeAt(1)}`)
+            Number(`${form.form_team_member.team_member_id.charCodeAt(0)}`)
           )}
           radius="xl"
         >
@@ -102,7 +94,7 @@ const FormDetailsSection = ({ form }: Props) => {
           }
           label="Form visibility"
           size="sm"
-          className={classes.checkbox}
+          sx={{ label: { cursor: "pointer" } }}
         />
       </Group>
     </Paper>

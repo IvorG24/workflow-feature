@@ -87,7 +87,7 @@ const UploadAvatar = ({
           size={size}
           className={classes.avatar}
           onClick={() => buttonRef.current?.click()}
-          color={id ? getAvatarColor(Number(`${id.charCodeAt(1)}`)) : "gray"}
+          color={id ? getAvatarColor(Number(`${id.charCodeAt(0)}`)) : "gray"}
         >
           {initials ? (
             upperCase(initials)

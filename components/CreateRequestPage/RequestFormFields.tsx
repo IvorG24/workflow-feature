@@ -12,7 +12,7 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
-import { IconClock } from "@tabler/icons-react";
+import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
 import { useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -117,6 +117,8 @@ const RequestFormFields = ({
                 checked={value as boolean}
                 onChange={(e) => onChange(e.currentTarget.checked)}
                 {...inputProps}
+                mt="xs"
+                sx={{ label: { cursor: "pointer" } }}
               />
             )}
             rules={{ ...fieldRules }}
@@ -180,6 +182,7 @@ const RequestFormFields = ({
                   onChange={(value) => onChange(new Date(`${value}`))}
                   withAsterisk={field.field_is_required}
                   {...inputProps}
+                  icon={<IconCalendar size={16} />}
                 />
               );
             }}
@@ -207,6 +210,7 @@ const RequestFormFields = ({
                     <IconClock size="1rem" stroke={1.5} />
                   </ActionIcon>
                 }
+                icon={<IconClock size={16} />}
               />
             )}
             rules={{ ...fieldRules }}
