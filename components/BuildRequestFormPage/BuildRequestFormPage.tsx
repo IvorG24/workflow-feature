@@ -186,7 +186,7 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
                   onClick={() =>
                     insertSection(sections.length, {
                       section_id: uuidv4(),
-                      section_name: `Section ${sections.length + 1}`,
+                      section_name: "",
                       section_form_id: formId,
                       section_order: sections.length + 1,
                       section_is_duplicatable: false,

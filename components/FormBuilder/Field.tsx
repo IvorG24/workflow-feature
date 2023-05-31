@@ -675,7 +675,7 @@ const Field = ({
               appendChoice({
                 option_id: uuidv4(),
                 option_field_id: field.field_id,
-                option_value: "option",
+                option_value: "",
                 option_order: options.length + 1,
                 option_description: "",
               })
