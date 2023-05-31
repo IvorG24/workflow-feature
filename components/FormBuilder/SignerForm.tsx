@@ -73,8 +73,14 @@ const SignerForm = ({
   isActive,
   onNotActiveSigner,
 }: Props) => {
-  const { register, control, watch, setValue } =
-    useFormContext<FormBuilderData>();
+  const {
+    register,
+    control,
+    watch,
+    setValue,
+    setError,
+    formState: { errors },
+  } = useFormContext<FormBuilderData>();
 
   const { classes } = useStyles({ mode });
 
@@ -90,6 +96,25 @@ const SignerForm = ({
       label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
     };
   });
+
+  const handleSave = () => {
+    if (signerUserId.length <= 0) {
+      setError(`signers.${signerIndex}.signer_user_id`, {
+        message: "Signer is required",
+      });
+    }
+
+    if (signerAction.length <= 0) {
+      setError(`signers.${signerIndex}.action`, {
+        message: "Action is required",
+      });
+    }
+    if (signerUserId.length > 0 && signerAction.length > 0) {
+      setError(`signers.${signerIndex}.action`, { message: "" });
+      setError(`signers.${signerIndex}.signer_user_id`, { message: "" });
+      onNotActiveSigner();
+    }
+  };
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -161,7 +186,10 @@ const SignerForm = ({
     <Paper shadow="xs" radius="sm" className={classes.paper}>
       <ActionIcon
         className={classes.closeIcon}
-        onClick={() => onDelete(signerIndex)}
+        onClick={() => {
+          onDelete(signerIndex);
+          onNotActiveSigner();
+        }}
         color="red"
       >
         <IconTrash height={16} />
@@ -172,12 +200,14 @@ const SignerForm = ({
           <Controller
             name={`signers.${signerIndex}.signer_user_id`}
             control={control}
+            rules={{ required: "Signer is required" }}
             render={({ field }) => (
               <Select
                 maw={223}
                 label="Signer"
                 data={signerOptions}
                 {...field}
+                error={errors.signers?.[signerIndex]?.signer_user_id?.message}
               />
             )}
           />
@@ -185,12 +215,14 @@ const SignerForm = ({
           <Controller
             name={`signers.${signerIndex}.action`}
             control={control}
+            rules={{ required: "Action is required" }}
             render={({ field }) => (
               <Autocomplete
                 {...field}
                 label="Action"
                 maw={223}
                 data={["approved", "noted", "purchased"]}
+                error={errors.signers?.[signerIndex]?.action?.message}
               />
             )}
           />
@@ -206,7 +238,7 @@ const SignerForm = ({
 
         <FieldAddAndCancel
           onCancel={() => alert("cancel")}
-          onSave={() => onNotActiveSigner()}
+          onSave={() => handleSave()}
         />
       </Container>
     </Paper>
