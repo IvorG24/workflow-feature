@@ -22,7 +22,7 @@ import {
   IconCircleMinus,
   IconTrash,
 } from "@tabler/icons-react";
-import { MouseEventHandler, useEffect } from "react";
+import { Dispatch, MouseEventHandler, SetStateAction, useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FormBuilderData } from "./FormBuilder";
 import { Mode } from "./Section";
@@ -37,6 +37,8 @@ type Props = {
   onMakePrimaryApprover: (signerIndex: number) => void;
   isActive: boolean;
   onNotActiveSigner: () => void;
+  signerList: string[];
+  onSetSignerList: Dispatch<SetStateAction<string[]>>;
 };
 
 type UseStylesProps = {
@@ -72,6 +74,8 @@ const SignerForm = ({
   onMakePrimaryApprover,
   isActive,
   onNotActiveSigner,
+  signerList,
+  onSetSignerList,
 }: Props) => {
   const {
     register,
@@ -84,13 +88,24 @@ const SignerForm = ({
 
   const { classes } = useStyles({ mode });
 
+  const signerUserIdList = watch(`signers`).map(
+    (signer) => signer.signer_user_id
+  );
   const signerUserId = watch(`signers.${signerIndex}.signer_user_id`);
   const signerUsername = watch(`signers.${signerIndex}.signer_username`);
   const signerAction = watch(`signers.${signerIndex}.action`);
   const signerActionStatus = watch(`signers.${signerIndex}.status`);
   const isPrimaryApprover = watch(`signers.${signerIndex}.is_primary_approver`);
 
-  const signerOptions = teamMemberList.map((member) => {
+  const filteredSignerOptions = teamMemberList.filter(
+    (member) => !signerList?.includes(member.team_member_user.user_id)
+  );
+
+  console.log("++++");
+  console.log(signerList);
+  console.log(signerUserIdList);
+  console.log(filteredSignerOptions);
+  const signerOptions = filteredSignerOptions.map((member) => {
     return {
       value: member.team_member_user.user_id,
       label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
@@ -110,6 +125,7 @@ const SignerForm = ({
       });
     }
     if (signerUserId.length > 0 && signerAction.length > 0) {
+      onSetSignerList(signerUserIdList);
       setError(`signers.${signerIndex}.action`, { message: "" });
       setError(`signers.${signerIndex}.signer_user_id`, { message: "" });
       onNotActiveSigner();

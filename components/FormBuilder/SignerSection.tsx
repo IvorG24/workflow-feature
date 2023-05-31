@@ -77,6 +77,7 @@ const SignerSection = ({
   const methods = useFormContext<FormBuilderData>();
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const { colorScheme } = useMantineTheme();
+  const [signerList, setSignerList] = useState<string[]>([]);
 
   const {
     fields: signers,
@@ -138,6 +139,8 @@ const SignerSection = ({
                   teamMemberList={teamMemberList}
                   isActive={activeSigner === signerIndex}
                   onNotActiveSigner={() => handleChangeActiveSigner(null)}
+                  signerList={signerList}
+                  onSetSignerList={setSignerList}
                 />
               </Box>
               {activeSigner === null && (
