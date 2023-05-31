@@ -1,7 +1,4 @@
-import {
-  defaultRequestFormBuilderSection,
-  defaultRequestFormBuilderSigners,
-} from "@/utils/contant";
+import { defaultRequestFormBuilderSection } from "@/utils/contant";
 import { AppType, TeamMemberWithUserType } from "@/utils/types";
 import {
   Box,
@@ -55,7 +52,7 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
     formType,
     revieweeList: null,
     sections: defaultRequestFormBuilderSection,
-    signers: defaultRequestFormBuilderSigners,
+    signers: [],
     is_signature_required: false,
     created_at: new Date().toISOString(),
   };

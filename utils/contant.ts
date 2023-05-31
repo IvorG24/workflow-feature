@@ -1,4 +1,3 @@
-import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { v4 as uuidv4 } from "uuid";
 import { SectionWithField } from "./types";
 
@@ -28,16 +27,5 @@ export const defaultRequestFormBuilderSection: SectionWithField[] = [
         field_response: "",
       },
     ],
-  },
-];
-
-export const defaultRequestFormBuilderSigners: RequestSigner[] = [
-  {
-    signer_id: uuidv4(),
-    signer_username: "",
-    signer_user_id: "",
-    action: "",
-    status: "PENDING",
-    is_primary_approver: true,
   },
 ];
