@@ -6,6 +6,7 @@ import {
   ActionIcon,
   Box,
   Button,
+  ButtonProps,
   Checkbox,
   Container,
   Flex,
@@ -32,7 +33,7 @@ import {
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { MouseEventHandler, useState } from "react";
 import {
   Controller,
   get,
@@ -53,6 +54,7 @@ type Props = {
   onDelete: (fieldIndex: number) => void;
   mode: Mode;
   isActive: boolean;
+  onNotActive: () => void;
 };
 
 type UseStylesProps = {
@@ -121,6 +123,7 @@ const Field = ({
   onDelete,
   mode = "edit",
   isActive,
+  onNotActive,
 }: Props) => {
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
   const [fieldDescription, setFieldDescription] = useState(
@@ -608,6 +611,11 @@ const Field = ({
               className={classes.checkboxCursor}
             />
           )}
+
+          <FieldAddAndCancel
+            onCancel={() => alert("cancel")}
+            onSave={() => onNotActive()}
+          />
         </Container>
       )}
 
@@ -871,6 +879,27 @@ export const FieldLabel = ({
           </Tooltip>
         )}
       </Group>
+    </Flex>
+  );
+};
+
+type FieldAddAndCancelProps = {
+  onCancel: MouseEventHandler<HTMLButtonElement>;
+  onSave: MouseEventHandler<HTMLButtonElement>;
+} & ButtonProps;
+
+export const FieldAddAndCancel = ({
+  onCancel,
+  onSave,
+}: FieldAddAndCancelProps) => {
+  return (
+    <Flex mt="xl" justify="center" gap="xl">
+      <Button onClick={onCancel} variant="outline" color="red">
+        Cancel
+      </Button>
+      <Button variant="light" onClick={onSave}>
+        Save
+      </Button>
     </Flex>
   );
 };

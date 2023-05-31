@@ -146,6 +146,7 @@ const Section = ({
                 onDelete={() => removeField(fieldIndex)}
                 mode={mode}
                 isActive={activeField === fieldIndex}
+                onNotActive={() => handleChangeActiveField(null)}
               />
             </Box>
             {activeField === null && (
