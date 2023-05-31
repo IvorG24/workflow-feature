@@ -54,7 +54,7 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     backgroundColor:
       theme.colorScheme === "dark"
         ? mode === "edit"
-          ? theme.colors.dark[6]
+          ? theme.colors.dark[7]
           : theme.colors.dark[7]
         : "#fff",
     borderRadius: 4,
