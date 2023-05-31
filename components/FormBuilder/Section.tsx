@@ -7,15 +7,17 @@ import {
 } from "@/utils/react-hook-form";
 import { AppType, FieldWithChoices } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   Button,
   Container,
   ContainerProps,
   Divider,
+  Flex,
   TextInput,
   createStyles,
 } from "@mantine/core";
-import { IconCirclePlus } from "@tabler/icons-react";
+import { IconCirclePlus, IconSettings } from "@tabler/icons-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
@@ -123,7 +125,12 @@ const Section = ({
           </Box>
         )}
         {fields.map((field, fieldIndex) => (
-          <Box key={field.id} mt={fieldIndex === 0 ? 24 : 16}>
+          <Flex
+            align="center"
+            gap="xs"
+            key={field.id}
+            mt={fieldIndex === 0 ? 24 : 16}
+          >
             <Field
               formType={formType}
               fieldIndex={fieldIndex}
@@ -132,7 +139,10 @@ const Section = ({
               onDelete={() => removeField(fieldIndex)}
               mode={mode}
             />
-          </Box>
+            <ActionIcon mt="lg">
+              <IconSettings color="#2e2e2e" size={18} />
+            </ActionIcon>
+          </Flex>
         ))}
       </Box>
 
