@@ -135,8 +135,10 @@ const Field = ({
     control,
     register,
     getValues,
+    setError,
     formState: { errors },
   } = useFormContext<FormBuilderData>();
+
   const {
     fields: options,
     append: appendChoice,
@@ -182,6 +184,21 @@ const Field = ({
 
   const fieldPromptName = `sections.${sectionIndex}.field_table.${fieldIndex}.field_response`;
   const fieldPromptError = get(errors, fieldPromptName);
+
+  const handleSave = () => {
+    if (fieldPrompt) {
+      setError(
+        `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
+        { message: "" }
+      );
+      onNotActive();
+    } else {
+      setError(
+        `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
+        { message: "Field name is required" }
+      );
+    }
+  };
 
   if (!isActive) {
     const step = 1;
@@ -544,7 +561,7 @@ const Field = ({
           />
 
           <TextInput
-            label=""
+            label="Field"
             mt={16}
             {...register(
               `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
@@ -553,6 +570,10 @@ const Field = ({
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.field_table?.[fieldIndex]
+                ?.field_name?.message
+            }
           />
 
           <TextInput
@@ -582,7 +603,7 @@ const Field = ({
 
           <FieldAddAndCancel
             onCancel={() => alert("cancel")}
-            onSave={() => onNotActive()}
+            onSave={() => handleSave()}
           />
         </Container>
       )}
@@ -667,7 +688,7 @@ const Field = ({
           />
           <FieldAddAndCancel
             onCancel={() => alert("cancel")}
-            onSave={() => onNotActive()}
+            onSave={() => handleSave()}
           />
         </Container>
       )}
@@ -717,7 +738,7 @@ const Field = ({
 
           <FieldAddAndCancel
             onCancel={() => alert("cancel")}
-            onSave={() => onNotActive()}
+            onSave={() => handleSave()}
           />
         </Container>
       )}
@@ -765,7 +786,7 @@ const Field = ({
 
           <FieldAddAndCancel
             onCancel={() => alert("cancel")}
-            onSave={() => onNotActive()}
+            onSave={() => handleSave()}
           />
         </Container>
       )}
