@@ -34,7 +34,7 @@ import {
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
-import { MouseEventHandler, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import {
   Controller,
   get,
@@ -132,6 +132,8 @@ const Field = ({
   );
 
   const [checkedSwitch, setCheckedSwitch] = useState(false);
+  const [sliderStart, setSliderStart] = useState<number | "">(1);
+  const [sliderEnd, setSliderEnd] = useState<number | "">(5);
 
   const {
     watch,
@@ -146,6 +148,7 @@ const Field = ({
     fields: options,
     append: appendChoice,
     remove: removeChoice,
+    update: updateChoice,
   } = useFieldArray({
     control: control,
     name: `sections.${sectionIndex}.field_table.${fieldIndex}.options`,
@@ -229,10 +232,34 @@ const Field = ({
     }
   };
 
+  useEffect(() => {
+    if (fieldType === "SLIDER" && optionsWatch.length <= 0) {
+      appendChoice({
+        option_id: uuidv4(),
+        option_field_id: field.field_id,
+        option_value: "[1,5]",
+        option_order: options.length + 1,
+        option_description: "",
+      });
+    }
+  }, [optionsWatch, fieldType]);
+
+  useEffect(() => {
+    if (fieldType === "SLIDER") {
+      updateChoice(0, {
+        option_id: uuidv4(),
+        option_field_id: field.field_id,
+        option_value: `[${sliderStart},${sliderEnd}]`,
+        option_order: options.length + 1,
+        option_description: "",
+      });
+    }
+  }, [sliderStart, sliderEnd]);
+
   if (!isActive) {
     const step = 1;
-    const fieldMin = 1;
-    const fieldMax = 5;
+    const fieldMin = sliderStart || 1;
+    const fieldMax = sliderEnd || 5;
     const getMarks = () => {
       const marks = [];
       for (let i = fieldMin; i <= fieldMax; i += step) {
@@ -765,6 +792,23 @@ const Field = ({
               }
             )}
           />
+
+          <Flex mt="md" gap="md">
+            <NumberInput
+              label="Start"
+              value={sliderStart}
+              onChange={setSliderStart}
+              min={0}
+              max={10}
+            />
+            <NumberInput
+              label="End"
+              value={sliderEnd}
+              min={sliderStart || 0}
+              max={10}
+              onChange={setSliderEnd}
+            />
+          </Flex>
 
           {formType === "REVIEW" && (
             <Checkbox
