@@ -101,10 +101,6 @@ const SignerForm = ({
     (member) => !signerList?.includes(member.team_member_user.user_id)
   );
 
-  console.log("++++");
-  console.log(signerList);
-  console.log(signerUserIdList);
-  console.log(filteredSignerOptions);
   const signerOptions = filteredSignerOptions.map((member) => {
     return {
       value: member.team_member_user.user_id,
