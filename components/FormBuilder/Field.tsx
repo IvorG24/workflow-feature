@@ -164,7 +164,7 @@ const Field = ({
     { value: "TEXT", label: "Text" },
     { value: "NUMBER", label: "Number" },
     { value: "TEXTAREA", label: "Text Area" },
-    { value: "SELECT", label: "Select" },
+    { value: "DROPDOWN", label: "DROPDOWN" },
     { value: "MULTISELECT", label: "Multiselect" },
     { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
@@ -302,7 +302,7 @@ const Field = ({
           />
         )}
 
-        {fieldType === "SELECT" && (
+        {fieldType === "DROPDOWN" && (
           <Controller
             name={`sections.${sectionIndex}.field_table.${fieldIndex}.field_response`}
             control={control}
@@ -544,11 +544,12 @@ const Field = ({
           />
 
           <TextInput
-            label="Field"
+            label=""
             mt={16}
             {...register(
               `sections.${sectionIndex}.field_table.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
@@ -586,7 +587,7 @@ const Field = ({
         </Container>
       )}
 
-      {(fieldType === "SELECT" || fieldType === "MULTISELECT") && (
+      {(fieldType === "DROPDOWN" || fieldType === "MULTISELECT") && (
         <Container fluid p={24}>
           <FieldTypeDropdown
             sectionIndex={sectionIndex}
