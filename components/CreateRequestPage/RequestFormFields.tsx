@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { IconClock } from "@tabler/icons-react";
+import moment from "moment";
 import { useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { RequestFormValues } from "./CreateRequestPage";
@@ -35,7 +36,11 @@ const RequestFormFields = ({
     control,
     formState: { errors },
   } = useFormContext<RequestFormValues>();
+
   const timeInputRef = useRef<HTMLInputElement>(null);
+  // add time value to prevent react error -> changing uncontrolled to controlled error
+  const timeDefaultValue = moment().format("HH:mm");
+
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.message;
 
@@ -189,7 +194,8 @@ const RequestFormFields = ({
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field }) => (
               <TimeInput
-                value={field.value as string}
+                {...inputProps}
+                value={field.value ? (field.value as string) : timeDefaultValue}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 ref={timeInputRef}

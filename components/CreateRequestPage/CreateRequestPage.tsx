@@ -53,7 +53,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     ...signer,
     signer_action: signer.signer_action.toUpperCase(),
   }));
-
+  console.log(form);
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, control, getValues } = requestFormMethods;
   const {
