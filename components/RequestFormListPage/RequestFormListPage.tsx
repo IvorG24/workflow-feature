@@ -1,6 +1,7 @@
 import { deleteForm } from "@/backend/api/delete";
 import { getFormListWithFilter } from "@/backend/api/get";
 import { updateFormVisibility } from "@/backend/api/update";
+import { useFormActions } from "@/stores/useFormStore";
 import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/contant";
 import { Database } from "@/utils/database";
 import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
@@ -64,6 +65,8 @@ const RequestFormListPage = ({
     null
   );
 
+  const { setFormList: storeSetFormList } = useFormActions();
+
   const { register, handleSubmit, getValues, setValue, control } =
     useForm<SearchForm>({
       defaultValues: { isAscendingSort: false },
@@ -110,12 +113,13 @@ const RequestFormListPage = ({
         isHidden: !isHidden,
       });
 
-      setFormList((formList) =>
-        formList.map((form) => {
-          if (form.form_id !== id) return form;
-          return { ...form, form_is_hidden: !isHidden };
-        })
-      );
+      const newForm = formList.map((form) => {
+        if (form.form_id !== id) return form;
+        return { ...form, form_is_hidden: !isHidden };
+      });
+
+      setFormList(newForm);
+      storeSetFormList(newForm);
 
       notifications.show({
         title: "Success!",
@@ -285,7 +289,7 @@ const RequestFormListPage = ({
                   setSelectedForm(form);
                   setIsDeletingForm(true);
                 }}
-                onHideForm={() => {
+                onHideForm={async () => {
                   setSelectedForm(form);
                   setIsHidingForm(true);
                 }}

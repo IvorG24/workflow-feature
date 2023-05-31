@@ -356,7 +356,6 @@ const Field = ({
               <Select
                 {...field}
                 value={`${field.value}`}
-                maw={223}
                 label={label}
                 data={optionsDropdownData}
                 style={{ width: "100%" }}
@@ -387,7 +386,6 @@ const Field = ({
               <MultiSelect
                 {...field}
                 value={field.value as unknown as string[]}
-                maw={223}
                 label={label}
                 data={optionsDropdownData}
                 className={classes.previewField}
@@ -443,7 +441,6 @@ const Field = ({
                 label={label}
                 value={field.value ? new Date(`${field.value}`) : null}
                 withAsterisk={isFieldRequired}
-                maw={223}
                 className={classes.previewField}
                 error={
                   fieldPromptError ? (
@@ -475,7 +472,6 @@ const Field = ({
                 onChange={(event) =>
                   setCheckedSwitch(event.currentTarget.checked)
                 }
-                maw={223}
                 className={classes.previewField}
                 error={
                   fieldPromptError ? (
@@ -505,7 +501,6 @@ const Field = ({
                 label={label}
                 value={field.value}
                 withAsterisk={isFieldRequired}
-                maw={223}
                 className={classes.previewField}
                 error={
                   fieldPromptError ? (
@@ -871,7 +866,6 @@ export function FieldTypeDropdown({
       control={control}
       render={({ field }) => (
         <Select
-          maw={223}
           label="Type"
           data={prop.data}
           {...field}

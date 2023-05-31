@@ -153,9 +153,8 @@ const BuildFormPage = ({ teamMemberList }: Props) => {
       <FormProvider {...methods}>
         <Container maw={768} p={0}>
           <FormBuilder.Container mt="xl">
-            <Box maw={522}>
+            <Box>
               <FormBuilder.FormNameInput />
-
               <FormBuilder.DescriptionInput mt={32} />
             </Box>
           </FormBuilder.Container>

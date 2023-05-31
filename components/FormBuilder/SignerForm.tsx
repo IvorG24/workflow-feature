@@ -215,7 +215,6 @@ const SignerForm = ({
             rules={{ required: "Signer is required" }}
             render={({ field }) => (
               <Select
-                maw={223}
                 label="Signer"
                 data={signerOptions}
                 {...field}
@@ -232,7 +231,6 @@ const SignerForm = ({
               <Autocomplete
                 {...field}
                 label="Action"
-                maw={223}
                 data={["approved", "noted", "purchased"]}
                 error={errors.signers?.[signerIndex]?.action?.message}
               />

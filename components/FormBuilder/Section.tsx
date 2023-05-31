@@ -117,7 +117,7 @@ const Section = ({
       key={section.id}
       {...props}
     >
-      <Box maw={522}>
+      <Box>
         {!(mode === "answer" && !section.section_name) && (
           <Box>
             <TextInput
