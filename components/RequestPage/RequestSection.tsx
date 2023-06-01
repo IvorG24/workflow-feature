@@ -7,10 +7,7 @@ type RequestSectionProps = {
   section: RequestWithResponseType["request_form"]["form_section"][0];
 };
 
-const RequestSection = ({
-  duplicateSectionId,
-  section,
-}: RequestSectionProps) => {
+const RequestSection = ({ section }: RequestSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -20,7 +17,19 @@ const RequestSection = ({
       <Stack spacing="sm">
         {section.section_field.map((field) => (
           <Box key={field.field_id}>
-            {field.field_response.map((response) =>
+            <RequestResponse
+              response={{
+                id: field.field_id,
+                type: field.field_type as FieldType,
+                label: field.field_name,
+                value:
+                  field.field_response.length !== 0
+                    ? field.field_response[0].request_response
+                    : "",
+                options: field.field_option ? field.field_option : [],
+              }}
+            />
+            {/* {field.field_response.map((response) =>
               response.request_response_duplicatable_section_id ===
                 duplicateSectionId ||
               response.request_response_duplicatable_section_id === null ? (
@@ -35,7 +44,7 @@ const RequestSection = ({
                   }}
                 />
               ) : null
-            )}
+            )} */}
           </Box>
         ))}
       </Stack>

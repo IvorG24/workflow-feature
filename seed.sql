@@ -75,7 +75,7 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('bab0a354-4a06-4bb2-a8a2-dcdbb7f68fde', '[1,10]', 1, '5ed0f5c1-a97d-465b-ade4-758a5ae351a2');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
-('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),
+('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('b7115738-8089-4e68-ac94-76ce6d0452f5', TRUE, 'Approved', 1, '337658f1-0777-45f2-853f-b6f20551712e', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('7d0781fe-eb57-4225-858d-abb6b93357c7', FALSE, 'Noted', 2, '337658f1-0777-45f2-853f-b6f20551712e', '1e9bb9c7-e4e6-42e4-9377-a33f9b645343');
 
@@ -96,58 +96,58 @@ INSERT INTO comment_table (comment_id, comment_content, comment_type, comment_te
 ('792e9f15-a8cb-4299-bf8a-7d07bc3a86a4', 'Request 4 Comment 1', 'REQUEST_COMMENT', 'd9c6c738-8a60-43de-965f-f1f666da1639', '6d52c8df-1ed6-41cd-920a-827e3eba0abf');
 
 INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
-('b3a3bb8f-7a30-431f-a55e-b9b5e50bed95', 'Text field response 1', NULL, '9696114b-9884-4ecf-8000-ab30ecde85aa', '45820673-8b88-4d15-a4bf-12d67f140929'),
-('fbc191aa-0fd2-485e-a1c5-9526ab343c94', 'Text area field response 1', NULL, '04141446-2b59-4d57-a81f-1bcbb5f4d4fd', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('b3a3bb8f-7a30-431f-a55e-b9b5e50bed95', '"Text field response 1"', NULL, '9696114b-9884-4ecf-8000-ab30ecde85aa', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('fbc191aa-0fd2-485e-a1c5-9526ab343c94', '"Text area field response 1"', NULL, '04141446-2b59-4d57-a81f-1bcbb5f4d4fd', '45820673-8b88-4d15-a4bf-12d67f140929'),
 ('fbc87253-44c7-441c-b84a-18e25085c200', '100', NULL, '34568491-4c73-4511-8a3e-babc6a54fdde', '45820673-8b88-4d15-a4bf-12d67f140929'),
-('1e9e1cb3-ede1-4831-a9ef-c244043014c6', 'TRUE', NULL, 'f8ad5957-ed6d-48a9-858e-67127599be43', '45820673-8b88-4d15-a4bf-12d67f140929'),
-('19e8c73d-7669-44c0-a43d-1f3eb8c6dea5', 'Dropdown 1', NULL, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794', '45820673-8b88-4d15-a4bf-12d67f140929'),
-('6b686238-b361-4212-8868-17192efac383', 'Multiselect 1', NULL, '297e382a-34ad-4301-9017-4d8f5eaf9728', '45820673-8b88-4d15-a4bf-12d67f140929'),
-('4e7352eb-ed1b-4b1b-bea2-5b22d9e2b12a', '01/01/23', NULL, '2d2b787e-4398-4be2-b5b1-b47d78e2db81', '45820673-8b88-4d15-a4bf-12d67f140929'),
-('fd856744-4092-493a-9953-3f82a48c5ead', '11:11 A.M.', NULL, 'a217e383-7bb1-4f95-a145-6d37145a4477', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('1e9e1cb3-ede1-4831-a9ef-c244043014c6', '"TRUE"', NULL, 'f8ad5957-ed6d-48a9-858e-67127599be43', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('19e8c73d-7669-44c0-a43d-1f3eb8c6dea5', '"Dropdown 1"', NULL, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('6b686238-b361-4212-8868-17192efac383', '["Multiselect 1","Multiselect 2"]', NULL, '297e382a-34ad-4301-9017-4d8f5eaf9728', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('4e7352eb-ed1b-4b1b-bea2-5b22d9e2b12a', '"01/01/23"', NULL, '2d2b787e-4398-4be2-b5b1-b47d78e2db81', '45820673-8b88-4d15-a4bf-12d67f140929'),
+('fd856744-4092-493a-9953-3f82a48c5ead', '"11:11"', NULL, 'a217e383-7bb1-4f95-a145-6d37145a4477', '45820673-8b88-4d15-a4bf-12d67f140929'),
 ('f7688f15-7cb2-4200-8290-546fdeb499b7', '1', NULL, '1b4c7148-faaa-46cd-b361-806e670058e7', '45820673-8b88-4d15-a4bf-12d67f140929'),
 
-('718e01ee-6e6f-446a-be7a-0eb01e9fd192', 'Text field response 2', NULL, '9696114b-9884-4ecf-8000-ab30ecde85aa', '280504f9-9739-45b2-a70d-484be2289861'),
-('7c344881-ac14-4f41-83c9-d4f650455bc5', 'Text area field response 2', NULL, '04141446-2b59-4d57-a81f-1bcbb5f4d4fd', '280504f9-9739-45b2-a70d-484be2289861'),
+('718e01ee-6e6f-446a-be7a-0eb01e9fd192', '"Text field response 2"', NULL, '9696114b-9884-4ecf-8000-ab30ecde85aa', '280504f9-9739-45b2-a70d-484be2289861'),
+('7c344881-ac14-4f41-83c9-d4f650455bc5', '"Text area field response 2"', NULL, '04141446-2b59-4d57-a81f-1bcbb5f4d4fd', '280504f9-9739-45b2-a70d-484be2289861'),
 ('24f9c70d-2253-4669-9184-83ab94562b3b', '200', NULL, '34568491-4c73-4511-8a3e-babc6a54fdde', '280504f9-9739-45b2-a70d-484be2289861'),
-('1ccdc673-05ae-4695-bbeb-b38b006b10e7', 'FALSE', NULL, 'f8ad5957-ed6d-48a9-858e-67127599be43', '280504f9-9739-45b2-a70d-484be2289861'),
-('f6876072-68aa-4ac7-999b-9f8f3fd2cb68', 'Dropdown 2', NULL, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794', '280504f9-9739-45b2-a70d-484be2289861'),
-('9db413ca-bc7f-466e-9589-2024db4bf23c', 'Multiselect 2', NULL, '297e382a-34ad-4301-9017-4d8f5eaf9728', '280504f9-9739-45b2-a70d-484be2289861'),
-('8b2af4a8-1ae8-4b40-8a5d-8a2d002d557d', '02/02/23', NULL, '2d2b787e-4398-4be2-b5b1-b47d78e2db81', '280504f9-9739-45b2-a70d-484be2289861'),
-('c6f51a20-b1b8-4ba9-9ace-22b6c9d2a0bc', '22:22 P.M.', NULL, 'a217e383-7bb1-4f95-a145-6d37145a4477', '280504f9-9739-45b2-a70d-484be2289861'),
+('1ccdc673-05ae-4695-bbeb-b38b006b10e7', '"FALSE"', NULL, 'f8ad5957-ed6d-48a9-858e-67127599be43', '280504f9-9739-45b2-a70d-484be2289861'),
+('f6876072-68aa-4ac7-999b-9f8f3fd2cb68', '"Dropdown 2"', NULL, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794', '280504f9-9739-45b2-a70d-484be2289861'),
+('9db413ca-bc7f-466e-9589-2024db4bf23c', '["Multiselect 3"]', NULL, '297e382a-34ad-4301-9017-4d8f5eaf9728', '280504f9-9739-45b2-a70d-484be2289861'),
+('8b2af4a8-1ae8-4b40-8a5d-8a2d002d557d', '"02/02/23"', NULL, '2d2b787e-4398-4be2-b5b1-b47d78e2db81', '280504f9-9739-45b2-a70d-484be2289861'),
+('c6f51a20-b1b8-4ba9-9ace-22b6c9d2a0bc', '"2:22"', NULL, 'a217e383-7bb1-4f95-a145-6d37145a4477', '280504f9-9739-45b2-a70d-484be2289861'),
 ('26a40562-8c51-477e-8a6c-e1dac26fb287', '2', NULL, '1b4c7148-faaa-46cd-b361-806e670058e7', '280504f9-9739-45b2-a70d-484be2289861'),
 
-('19f062da-2940-44b3-b274-9a82aecbe2ef', 'Text field response 3', NULL, '9696114b-9884-4ecf-8000-ab30ecde85aa', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
-('1030658c-8910-408b-ae75-e9c1cf9ee6dd', 'Text area field response 3', NULL, '04141446-2b59-4d57-a81f-1bcbb5f4d4fd', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('19f062da-2940-44b3-b274-9a82aecbe2ef', '"Text field response 3"', NULL, '9696114b-9884-4ecf-8000-ab30ecde85aa', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('1030658c-8910-408b-ae75-e9c1cf9ee6dd', '"Text area field response 3"', NULL, '04141446-2b59-4d57-a81f-1bcbb5f4d4fd', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
 ('c51154b7-48a0-4599-aa8d-6dcf69875745', '300', NULL, '34568491-4c73-4511-8a3e-babc6a54fdde', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
-('fd466eee-2904-4c63-aa5e-888271e829e3', 'TRUE', NULL, 'f8ad5957-ed6d-48a9-858e-67127599be43', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
-('7bb8ad60-0890-4bb7-bdda-b2c576e6d054', 'Dropdown 3', NULL, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
-('897196fd-9ed9-49e1-a87a-d97eda0bb18a', 'Multiselect 3', NULL, '297e382a-34ad-4301-9017-4d8f5eaf9728', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
-('e1874b02-fbb0-41f7-a305-ce35c7f270d3', '03/03/23', NULL, '2d2b787e-4398-4be2-b5b1-b47d78e2db81', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
-('115dd319-1296-443e-a3ca-b04c1a807bea', '33:33 A.M.', NULL, 'a217e383-7bb1-4f95-a145-6d37145a4477', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('fd466eee-2904-4c63-aa5e-888271e829e3', '"TRUE"', NULL, 'f8ad5957-ed6d-48a9-858e-67127599be43', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('7bb8ad60-0890-4bb7-bdda-b2c576e6d054', '"Dropdown 3"', NULL, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('897196fd-9ed9-49e1-a87a-d97eda0bb18a', '["Multiselect 3"]', NULL, '297e382a-34ad-4301-9017-4d8f5eaf9728', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('e1874b02-fbb0-41f7-a305-ce35c7f270d3', '"03/03/23"', NULL, '2d2b787e-4398-4be2-b5b1-b47d78e2db81', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
+('115dd319-1296-443e-a3ca-b04c1a807bea', '"3:33"', NULL, 'a217e383-7bb1-4f95-a145-6d37145a4477', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
 ('8d5f35a9-3c0d-45e4-83ae-066a1ca3d975', '3', NULL, '1b4c7148-faaa-46cd-b361-806e670058e7', 'a9315409-9719-40cb-ada2-3f3ee622049b'),
 
-('d19a565d-109c-4395-82e7-d75df4dafd92', 'Text field response 1', '700d6cd5-9691-491e-b02f-2cbd73cb64b6', '253f311c-aca6-401d-be77-696aa67a59d5', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('d19a565d-109c-4395-82e7-d75df4dafd92', '"Text field response 1"', '700d6cd5-9691-491e-b02f-2cbd73cb64b6', '253f311c-aca6-401d-be77-696aa67a59d5', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 ('8f792df5-f4fb-44c3-9d05-d699c0cabd47', '1', '700d6cd5-9691-491e-b02f-2cbd73cb64b6', '570a2b3f-bfb8-490e-a7bb-a8d0e4b512eb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('566aa4ee-92c1-433a-8dcf-927a35e55e0c', 'TRUE', '700d6cd5-9691-491e-b02f-2cbd73cb64b6', 'b925b45f-1d3e-4bbc-963b-80c5184702fb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('5d5b6c20-d96a-49d3-92cb-7d3b82bdc645', 'Dropdown 1', '700d6cd5-9691-491e-b02f-2cbd73cb64b6', 'f36180e1-ac98-4d56-ba7d-8eef9a71e0d8', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('566aa4ee-92c1-433a-8dcf-927a35e55e0c', '"TRUE"', '700d6cd5-9691-491e-b02f-2cbd73cb64b6', 'b925b45f-1d3e-4bbc-963b-80c5184702fb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('5d5b6c20-d96a-49d3-92cb-7d3b82bdc645', '"Dropdown 1"', '700d6cd5-9691-491e-b02f-2cbd73cb64b6', 'f36180e1-ac98-4d56-ba7d-8eef9a71e0d8', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 
-('1dd50817-0793-405f-9aef-a4edc29533b0', 'Text field response 2', 'ce57791a-48d0-45aa-8ba1-4896f169c8b7', '253f311c-aca6-401d-be77-696aa67a59d5', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('1dd50817-0793-405f-9aef-a4edc29533b0', '"Text field response 2"', 'ce57791a-48d0-45aa-8ba1-4896f169c8b7', '253f311c-aca6-401d-be77-696aa67a59d5', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 ('6f9e3117-8a54-4e7f-b52d-a1f01be6e39f', '2', 'ce57791a-48d0-45aa-8ba1-4896f169c8b7', '570a2b3f-bfb8-490e-a7bb-a8d0e4b512eb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('cb139450-3885-4f73-8755-30f23274f54a', 'FALSE', 'ce57791a-48d0-45aa-8ba1-4896f169c8b7', 'b925b45f-1d3e-4bbc-963b-80c5184702fb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('cd28c091-7b66-4213-b028-a4141e30ac5a', 'Dropdown 2', 'ce57791a-48d0-45aa-8ba1-4896f169c8b7', 'f36180e1-ac98-4d56-ba7d-8eef9a71e0d8', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('cb139450-3885-4f73-8755-30f23274f54a', '"FALSE"', 'ce57791a-48d0-45aa-8ba1-4896f169c8b7', 'b925b45f-1d3e-4bbc-963b-80c5184702fb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('cd28c091-7b66-4213-b028-a4141e30ac5a', '"Dropdown 2"', 'ce57791a-48d0-45aa-8ba1-4896f169c8b7', 'f36180e1-ac98-4d56-ba7d-8eef9a71e0d8', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 
-('fecbf2df-5e64-4c20-8396-f052f753d1d7', 'Text field response 3', '72d23cc5-72a1-428a-b6ad-33e15810ea5b', '253f311c-aca6-401d-be77-696aa67a59d5', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('fecbf2df-5e64-4c20-8396-f052f753d1d7', '"Text field response 3"', '72d23cc5-72a1-428a-b6ad-33e15810ea5b', '253f311c-aca6-401d-be77-696aa67a59d5', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 ('02a199d9-5e79-45c4-b8b9-ea25536d8ca8', '3', '72d23cc5-72a1-428a-b6ad-33e15810ea5b', '570a2b3f-bfb8-490e-a7bb-a8d0e4b512eb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('502098c8-358d-4406-8b60-1f67ef12fc03', 'TRUE', '72d23cc5-72a1-428a-b6ad-33e15810ea5b', 'b925b45f-1d3e-4bbc-963b-80c5184702fb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('69e5b5d3-d12e-4548-88c5-1d2fde7bf33f', 'Dropdown 3', '72d23cc5-72a1-428a-b6ad-33e15810ea5b', 'f36180e1-ac98-4d56-ba7d-8eef9a71e0d8', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('502098c8-358d-4406-8b60-1f67ef12fc03', '"TRUE"', '72d23cc5-72a1-428a-b6ad-33e15810ea5b', 'b925b45f-1d3e-4bbc-963b-80c5184702fb', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('69e5b5d3-d12e-4548-88c5-1d2fde7bf33f', '"Dropdown 3"', '72d23cc5-72a1-428a-b6ad-33e15810ea5b', 'f36180e1-ac98-4d56-ba7d-8eef9a71e0d8', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 
-('b523400b-cc12-4fc7-8937-ea9f7f7bd930', 'Not duplicatable text response', NULL, 'd22f6df6-1845-4368-9e1b-7cd22fed7a1e', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('ce555508-5a32-4162-96e8-dbb554ac17ed', 'Dropdown 1', NULL, '7c53aa9f-ec53-45f1-ba95-0556b07a71ba', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('30c8d27a-84e7-4aec-9c1d-8fd0d77ce2fd', '01/01/23', NULL, '3ecfcb90-7fdd-4521-82a3-4fb7daab44c0', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('b523400b-cc12-4fc7-8937-ea9f7f7bd930', '"Not duplicatable text response"', NULL, 'd22f6df6-1845-4368-9e1b-7cd22fed7a1e', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('ce555508-5a32-4162-96e8-dbb554ac17ed', '"Dropdown 1"', NULL, '7c53aa9f-ec53-45f1-ba95-0556b07a71ba', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('30c8d27a-84e7-4aec-9c1d-8fd0d77ce2fd', '"01/01/23"', NULL, '3ecfcb90-7fdd-4521-82a3-4fb7daab44c0', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 
-('4adde6bc-7a01-4c40-8ae2-4cebada31a8a', 'Multiselect 1', '38f01ebc-dfaa-44aa-b963-04cd57b1cff4', '5ef54cb5-f694-4f4e-aee5-ec228dec1da4', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('7b8b3f73-e53a-4fb7-824e-c05b89ae566b', '01/01/23', '38f01ebc-dfaa-44aa-b963-04cd57b1cff4', '1f9366fb-b89b-4d41-9a0e-e0264c422f17', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
-('833d72b4-32b8-45f3-8e93-fdd7bfe8997b', '11:11 A.M.', '38f01ebc-dfaa-44aa-b963-04cd57b1cff4', '0b4a3e53-629a-49d8-80e6-bfe1f31c0510', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('4adde6bc-7a01-4c40-8ae2-4cebada31a8a', '["Multiselect 1"]', '38f01ebc-dfaa-44aa-b963-04cd57b1cff4', '5ef54cb5-f694-4f4e-aee5-ec228dec1da4', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('7b8b3f73-e53a-4fb7-824e-c05b89ae566b', '"01/01/23"', '38f01ebc-dfaa-44aa-b963-04cd57b1cff4', '1f9366fb-b89b-4d41-9a0e-e0264c422f17', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
+('833d72b4-32b8-45f3-8e93-fdd7bfe8997b', '"11:11"', '38f01ebc-dfaa-44aa-b963-04cd57b1cff4', '0b4a3e53-629a-49d8-80e6-bfe1f31c0510', '6d52c8df-1ed6-41cd-920a-827e3eba0abf'),
 ('18d9fa34-95c0-4b10-82b3-695e095153b2', '5', '38f01ebc-dfaa-44aa-b963-04cd57b1cff4', '5ed0f5c1-a97d-465b-ade4-758a5ae351a2', '6d52c8df-1ed6-41cd-920a-827e3eba0abf');
 
 INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES

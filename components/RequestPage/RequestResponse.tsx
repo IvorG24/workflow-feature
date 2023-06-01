@@ -10,7 +10,7 @@ import {
   TextInput,
   Textarea,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
+import { DateInput, TimeInput } from "@mantine/dates";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
 
 type RequestReponseProps = {
@@ -30,12 +30,14 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
   };
 
   const renderResponse = (response: RequestReponseProps["response"]) => {
+    const parsedValue = response.value === "" ? "" : JSON.parse(response.value);
+
     switch (response.type) {
       case "TEXT":
         return (
           <TextInput
             label={response.label}
-            value={response.value}
+            value={parsedValue}
             {...inputProps}
           />
         );
@@ -43,7 +45,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
         return (
           <Textarea
             label={response.label}
-            value={response.value}
+            value={parsedValue}
             {...inputProps}
           />
         );
@@ -51,7 +53,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
         return (
           <NumberInput
             label={response.label}
-            value={Number(response.value)}
+            value={parsedValue}
             {...inputProps}
           />
         );
@@ -59,7 +61,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
         return (
           <Switch
             label={response.label}
-            checked={Boolean(response.value)}
+            checked={parsedValue}
             {...inputProps}
             mt="xs"
             sx={{ label: { cursor: "pointer" } }}
@@ -74,7 +76,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
           <Select
             label={response.label}
             data={dropdownOption}
-            value={response.value}
+            value={parsedValue}
             {...inputProps}
           />
         );
@@ -83,10 +85,11 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
           value: option.option_value,
           label: option.option_value,
         }));
+
         return (
           <MultiSelect
             label={response.label}
-            value={[response.value]}
+            value={parsedValue}
             data={multiselectOption}
             {...inputProps}
           />
@@ -95,17 +98,17 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
         return (
           <DateInput
             label={response.label}
-            value={new Date(response.value)}
+            value={parsedValue ? new Date(parsedValue) : undefined}
             {...inputProps}
             icon={<IconCalendar size={16} />}
           />
         );
       case "TIME":
         return (
-          <TextInput
+          <TimeInput
             label={response.label}
-            value={response.value}
-            icon={<IconClock />}
+            value={parsedValue ? parsedValue : undefined}
+            icon={<IconClock size={16} />}
             {...inputProps}
           />
         );
@@ -120,7 +123,9 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
         }));
         return (
           <Box pb="xl">
-            <Text weight={600}>{response.label}</Text>
+            <Text weight={600} size={14}>
+              {response.label}
+            </Text>
             <Slider
               defaultValue={Number(response.value)}
               min={sliderOption[0]}

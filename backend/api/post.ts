@@ -1,3 +1,4 @@
+import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { Database } from "@/utils/database";
 import {
@@ -5,11 +6,14 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   FieldTableInsert,
+  FormType,
   InvitationTableInsert,
   ItemDescriptionFieldTableInsert,
   ItemTableInsert,
   NotificationTableInsert,
   OptionTableInsert,
+  RequestResponseTableInsert,
+  RequestSignerTableInsert,
   SectionTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
@@ -346,4 +350,65 @@ export const createRequestForm = async (
   if (signerError) throw signerError;
 
   return form;
+};
+
+// Create request
+export const createRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestFormValues: RequestFormValues;
+    formId: string;
+    teamMemberId: string;
+    signers: FormType["form_signer"];
+  }
+) => {
+  const { requestFormValues, formId, teamMemberId, signers } = params;
+
+  // create request
+  const { data: request, error: requestError } = await supabaseClient
+    .from("request_table")
+    .insert({ request_form_id: formId, request_team_member_id: teamMemberId })
+    .select()
+    .single();
+  if (requestError) throw requestError;
+
+  // get request response
+  const requestResponseInput: RequestResponseTableInsert[] = [];
+  requestFormValues.sections.forEach((section) => {
+    section.section_field.forEach((field) => {
+      if (field.field_response) {
+        const response = {
+          request_response: JSON.stringify(field.field_response),
+          request_response_duplicatable_section_id:
+            field.field_section_duplicatable_id ?? null,
+          request_response_field_id: field.field_id,
+          request_response_request_id: request.request_id,
+        };
+        requestResponseInput.push(response);
+      }
+    });
+  });
+
+  // create request response
+  const { error: requestResponseError } = await supabaseClient
+    .from("request_response_table")
+    .insert(requestResponseInput);
+  if (requestResponseError) throw requestResponseError;
+
+  // get request signers
+  const requestSignerInput: RequestSignerTableInsert[] = [];
+  signers.forEach((signer) => {
+    requestSignerInput.push({
+      request_signer_signer_id: signer.signer_id,
+      request_signer_request_id: request.request_id,
+    });
+  });
+
+  // create request signers
+  const { error: requestSignerError } = await supabaseClient
+    .from("request_signer_table")
+    .insert(requestSignerInput);
+  if (requestSignerError) throw requestSignerError;
+
+  return request;
 };
