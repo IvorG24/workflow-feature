@@ -10,7 +10,7 @@ type OptionProps = {
 const Option = forwardRef<HTMLDivElement, OptionProps>(
   ({ label, ...props }: OptionProps, ref) => {
     return (
-      <Box ref={ref}>
+      <Box ref={ref} w="90%">
         <TextInput label={label} mt={16} {...props} />
       </Box>
     );

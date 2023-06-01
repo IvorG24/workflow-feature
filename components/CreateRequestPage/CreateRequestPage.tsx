@@ -73,6 +73,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     name: "sections",
   });
   const handleCreateRequest = async (data: RequestFormValues) => {
+    console.log(data);
     try {
       if (!requestorProfile) return;
       setIsLoading(true);

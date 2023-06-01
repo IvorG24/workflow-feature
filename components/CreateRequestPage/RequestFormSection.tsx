@@ -32,8 +32,12 @@ const RequestFormSection = ({
         </Title>
         {sectionDuplicatableId && (
           <Tooltip label="Remove Section">
-            <ActionIcon onClick={() => onRemoveSection(sectionDuplicatableId)}>
-              <IconTrash />
+            <ActionIcon
+              onClick={() => onRemoveSection(sectionDuplicatableId)}
+              variant="light"
+              color="red"
+            >
+              <IconTrash size={16} />
             </ActionIcon>
           </Tooltip>
         )}

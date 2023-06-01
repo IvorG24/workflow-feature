@@ -1,5 +1,5 @@
 import { FormType } from "@/utils/types";
-import { Box, Paper, Space, Stack, Title } from "@mantine/core";
+import { Box, Paper, Space, Stack, Text, Title } from "@mantine/core";
 import FormField from "./FormField";
 
 type Props = {
@@ -12,6 +12,9 @@ const FormSection = ({ section }: Props) => {
       <Title order={4} color="dimmed">
         {section.section_name}
       </Title>
+      <Text color="dimmed" size={12}>
+        {section.section_is_duplicatable ? "(Duplicatable)" : ""}
+      </Text>
       <Space h="xl" />
       <Stack spacing="sm">
         {section.section_field.map((field) => (

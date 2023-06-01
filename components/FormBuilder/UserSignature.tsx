@@ -162,6 +162,7 @@ const UserSignature = ({
           {...register("isSignatureRequired")}
           mt={32}
           className={classes.checkboxCursor}
+          sx={{ input: { cursor: "pointer" } }}
         />
       </Container>
     );
