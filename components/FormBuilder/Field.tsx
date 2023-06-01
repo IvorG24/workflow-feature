@@ -308,6 +308,7 @@ const Field = ({
             style={{ width: "100%" }}
             withAsterisk={isFieldRequired}
             readOnly={mode === "view"}
+            clearable
           />
         )}
 
@@ -408,7 +409,7 @@ const Field = ({
           />
 
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
@@ -464,7 +465,7 @@ const Field = ({
           />
 
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
@@ -495,12 +496,6 @@ const Field = ({
                           .options?.[optionIndex].option_value ||
                       "Option must be unique",
                   }
-                )}
-              />
-              <Option
-                label="Description"
-                {...register(
-                  `sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.option_description`
                 )}
               />
             </OptionContainer>
@@ -562,7 +557,7 @@ const Field = ({
           />
 
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
@@ -635,7 +630,7 @@ const Field = ({
           />
 
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
@@ -785,10 +780,10 @@ export const FieldAddAndCancel = ({
 }: FieldAddAndCancelProps) => {
   return (
     <Flex mt="xl" justify="center" gap="xl">
-      <Button onClick={onCancel} variant="outline" color="red">
+      <Button onClick={onCancel} variant="light" w={80}>
         Cancel
       </Button>
-      <Button variant="light" onClick={onSave}>
+      <Button onClick={onSave} w={80}>
         Save
       </Button>
     </Flex>

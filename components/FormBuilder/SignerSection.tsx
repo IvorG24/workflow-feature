@@ -10,6 +10,7 @@ import {
   Divider,
   Flex,
   List,
+  Space,
   Text,
   ThemeIcon,
   createStyles,
@@ -132,15 +133,10 @@ const SignerSection = ({
             </Center>
           }
         >
+          <Space h="xs" />
           {signers.map((signer, signerIndex) => (
-            <Flex
-              align="center"
-              gap="xs"
-              key={signer.id}
-              mt={signerIndex === 0 ? 24 : 16}
-              w="100%"
-            >
-              <Box>
+            <Flex align="center" key={signer.id} w="100%" mt="xs">
+              <Box w="100%">
                 <SignerForm
                   signerIndex={signerIndex}
                   signer={signer as RequestSigner}
@@ -159,10 +155,12 @@ const SignerSection = ({
               {activeSigner === null && (
                 <ActionIcon
                   onClick={() => handleChangeActiveSigner(signerIndex)}
+                  mt="sm"
                 >
                   <IconSettings
                     color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
                     size={18}
+                    stroke={1.5}
                   />
                 </ActionIcon>
               )}
@@ -198,6 +196,7 @@ const SignerSection = ({
             label="Require requester and approver's signature during request creation and approval"
             {...methods.register("isSignatureRequired")}
             my="xl"
+            sx={{ input: { cursor: "pointer" } }}
           />
         </>
       )}

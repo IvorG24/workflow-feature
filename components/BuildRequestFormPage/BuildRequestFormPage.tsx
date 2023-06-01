@@ -108,7 +108,9 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
 
     if (!error) {
       if (formData.formName.length <= 0) error = "Form name is required";
-      else if (formData.sections.length === 0) {
+      else if (formData.formDescription.length === 0) {
+        error = "Form description is required";
+      } else if (formData.sections.length === 0) {
         error = "At least 1 section is required";
       } else if (formData.signers.length === 0) {
         error = "At least 1 signer is required";

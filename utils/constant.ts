@@ -14,22 +14,10 @@ export const defaultRequestFormBuilderSection = (
   {
     section_form_id: formId,
     section_id: sectionId,
-    section_name: "Section 1",
+    section_name: "",
     section_order: 1,
     section_is_duplicatable: false,
-    fields: [
-      {
-        field_id: uuidv4(),
-        field_type: "TEXT",
-        field_name: "Question 1",
-        field_description: "",
-        field_is_positive_metric: true,
-        field_is_required: false,
-        field_order: 1,
-        field_section_id: sectionId,
-        options: [],
-      },
-    ],
+    fields: [],
   },
 ];
 

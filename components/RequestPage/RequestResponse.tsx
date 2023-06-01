@@ -75,6 +75,7 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
             data={dropdownOption}
             value={parsedValue}
             {...inputProps}
+            clearable
           />
         );
       case "MULTISELECT":

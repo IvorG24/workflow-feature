@@ -172,12 +172,13 @@ const SignerForm = ({
           onNotActiveSigner();
         }}
         color="red"
+        variant="light"
       >
         <IconTrash height={16} />
       </ActionIcon>
 
       <Container fluid p={24}>
-        <Flex gap="md" wrap="wrap">
+        <Flex gap="md" wrap="wrap" w="100%">
           <Controller
             name={`signers.${signerIndex}.signer_team_member_id`}
             control={control}
@@ -190,6 +191,8 @@ const SignerForm = ({
                 error={
                   errors.signers?.[signerIndex]?.signer_team_member_id?.message
                 }
+                sx={{ flex: 1 }}
+                miw={150}
               />
             )}
           />
@@ -204,6 +207,8 @@ const SignerForm = ({
                 label="Action"
                 data={["approved", "noted", "purchased"]}
                 error={errors.signers?.[signerIndex]?.signer_action?.message}
+                sx={{ flex: 1 }}
+                miw={150}
               />
             )}
           />
@@ -239,10 +244,10 @@ export const FieldAddAndCancel = ({
 }: FieldAddAndCancelProps) => {
   return (
     <Flex mt="xl" justify="center" gap="xl">
-      <Button onClick={onCancel} variant="outline" color="red">
+      <Button onClick={onCancel} variant="light" w={80}>
         Cancel
       </Button>
-      <Button variant="light" onClick={onSave}>
+      <Button onClick={onSave} w={80}>
         Save
       </Button>
     </Flex>

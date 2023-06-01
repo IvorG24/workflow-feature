@@ -172,22 +172,27 @@ const RequestPage = ({ request }: Props) => {
             section.section_field[0].field_response.map(
               (response) => response.request_response_duplicatable_section_id
             );
-          // if duplicateSectionIdList is empty, use section_id instead
-          const newSectionIdList =
-            duplicateSectionIdList.length > 0
-              ? duplicateSectionIdList
-              : [section.section_id];
-          return (
-            <React.Fragment key={index}>
-              {newSectionIdList.map((sectionId) => (
-                <RequestSection
-                  key={sectionId}
-                  section={section}
-                  duplicateId={sectionId}
-                />
-              ))}
-            </React.Fragment>
-          );
+          if (duplicateSectionIdList.length > 0) {
+            return (
+              <React.Fragment key={index}>
+                {duplicateSectionIdList.map((sectionId) => (
+                  <RequestSection
+                    key={sectionId}
+                    section={section}
+                    duplicateId={sectionId}
+                  />
+                ))}
+              </React.Fragment>
+            );
+          } else {
+            return (
+              <RequestSection
+                key={section.section_id}
+                section={section}
+                duplicateId={null}
+              />
+            );
+          }
         })}
 
         <RequestActionSection

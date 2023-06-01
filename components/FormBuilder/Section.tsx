@@ -163,16 +163,16 @@ const Section = ({
                   const fieldData = methods.getValues(
                     `sections.${sectionIndex}.fields.${fieldIndex}`
                   );
-                  console.log("edit");
-                  console.log(fieldData);
                   setSavedField(fieldData);
                   handleChangeActiveField(fieldIndex);
                 }}
+                variant="light"
                 mt="lg"
               >
                 <IconSettings
                   color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
                   size={18}
+                  stroke={1.5}
                 />
               </ActionIcon>
             )}
@@ -186,7 +186,7 @@ const Section = ({
             onClick={() => {
               appendField({
                 field_id: uuidv4(),
-                field_name: "Field",
+                field_name: "",
                 field_type: formType === "REQUEST" ? "TEXT" : "SLIDER",
                 field_section_id: section.section_id,
                 field_is_required: false,
@@ -211,6 +211,11 @@ const Section = ({
                 `sections.${sectionIndex}.section_is_duplicatable`
               )}
               mt="md"
+              sx={{
+                input: {
+                  cursor: "pointer",
+                },
+              }}
             />
 
             <Button
