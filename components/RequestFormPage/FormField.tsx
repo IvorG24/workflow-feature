@@ -106,7 +106,9 @@ const FormField = ({ field }: Props) => {
         }));
         return (
           <Box pb="xl">
-            <Text weight={600}>{field.field_name}</Text>
+            <Text weight={600} size={14}>
+              {field.field_name}
+            </Text>
             <Slider min={sliderOption[0]} max={max} step={1} marks={marks} />
           </Box>
         );

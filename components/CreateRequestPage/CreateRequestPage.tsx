@@ -1,23 +1,18 @@
-import { useUserProfile } from "@/stores/useUserStore";
-import { responseFieldReducer } from "@/utils/arrayFunctions";
+import { createRequest } from "@/backend/api/post";
+import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { Database } from "@/utils/database";
 import {
   FormType,
   FormWithResponseType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import {
-  Box,
-  Button,
-  Container,
-  LoadingOverlay,
-  Space,
-  Stack,
-  Title,
-} from "@mantine/core";
+import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -42,8 +37,12 @@ export type FieldWithResponseArray =
 
 const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
   const router = useRouter();
+  const formId = router.query.formId as string;
+  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const teamMemberId = useUserTeamMemberId();
+
   const requestorProfile = useUserProfile();
-  const [isSubmittingForm, setIsSubmmittingForm] = useState(false);
+  const { setIsLoading } = useLoadingActions();
 
   const [localFormState, setLocalFormState, removeLocalFormState] =
     useLocalStorage<FormWithResponseType | null>({
@@ -73,55 +72,32 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     control,
     name: "sections",
   });
-  const handleCreateRequest = (data: RequestFormValues) => {
+  const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
-      setIsSubmmittingForm(true);
-      const dummyRequestId = uuidv4();
-      const formId = router.query.formId;
-      const reducedData = responseFieldReducer(data, dummyRequestId);
-      const updatedSectionList = form.form_section.map((section) => {
-        const fields = reducedData.filter(
-          (f) => f.field_section_id === section.section_id
-        );
-        const updatedSection = { ...section, section_field: fields };
+      setIsLoading(true);
 
-        return updatedSection;
+      const request = await createRequest(supabaseClient, {
+        requestFormValues: data,
+        formId,
+        teamMemberId,
+        signers: form.form_signer,
       });
-      const newRequest = {
-        request_form: {
-          formId: formId,
-          form_name: form.form_name,
-          form_description: form.form_description,
-          form_section: updatedSectionList,
-        },
-        request_team_member: {
-          team_member_user: {
-            user_id: requestorProfile.user_id,
-            user_first_name: requestorProfile.user_first_name,
-            user_last_name: requestorProfile.user_last_name,
-            user_username: requestorProfile.user_username,
-            user_avatar: requestorProfile.user_avatar as string,
-          },
-        },
-        request_signer: form.form_signer.map((signer) => ({
-          request_signer_id: uuidv4(),
-          request_signer_status: "PENDING",
-          request_signer_signer: signer,
-        })),
-        request_comment: [],
-      };
-      console.log(newRequest);
       removeLocalFormState();
+      notifications.show({
+        title: "Success",
+        message: "Request created",
+        color: "green",
+      });
+      router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
-      console.log(error);
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",
         color: "red",
       });
     } finally {
-      setIsSubmmittingForm(false);
+      setIsLoading(false);
     }
   };
 
@@ -179,7 +155,6 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
 
   return (
     <Container>
-      <LoadingOverlay visible={isSubmittingForm} overlayBlur={2} />
       <Title order={2} color="dimmed">
         Create Request
       </Title>
