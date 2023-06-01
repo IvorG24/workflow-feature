@@ -1,12 +1,9 @@
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
-  Box,
   MultiSelect,
   NumberInput,
   Select,
-  Slider,
   Switch,
-  Text,
   TextInput,
   Textarea,
 } from "@mantine/core";
@@ -112,30 +109,30 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
             {...inputProps}
           />
         );
-      case "SLIDER":
-        const sliderOption = JSON.parse(
-          response.options.map((option) => option.option_value)[0]
-        );
-        const max = Number(sliderOption[1]);
-        const marks = Array.from({ length: max }, (_, index) => ({
-          value: index + 1,
-          label: index + 1,
-        }));
-        return (
-          <Box pb="xl">
-            <Text weight={600} size={14}>
-              {response.label}
-            </Text>
-            <Slider
-              defaultValue={Number(response.value)}
-              min={sliderOption[0]}
-              max={max}
-              step={1}
-              marks={marks}
-              disabled
-            />
-          </Box>
-        );
+      // case "SLIDER":
+      //   const sliderOption = JSON.parse(
+      //     response.options.map((option) => option.option_value)[0]
+      //   );
+      //   const max = Number(sliderOption[1]);
+      //   const marks = Array.from({ length: max }, (_, index) => ({
+      //     value: index + 1,
+      //     label: index + 1,
+      //   }));
+      //   return (
+      //     <Box pb="xl">
+      //       <Text weight={600} size={14}>
+      //         {response.label}
+      //       </Text>
+      //       <Slider
+      //         defaultValue={Number(response.value)}
+      //         min={sliderOption[0]}
+      //         max={max}
+      //         step={1}
+      //         marks={marks}
+      //         disabled
+      //       />
+      //     </Box>
+      //   );
     }
   };
 

@@ -1,13 +1,10 @@
 import { FormType } from "@/utils/types";
 import {
   ActionIcon,
-  Box,
   MultiSelect,
   NumberInput,
   Select,
-  Slider,
   Switch,
-  Text,
   TextInput,
   Textarea,
 } from "@mantine/core";
@@ -95,23 +92,23 @@ const FormField = ({ field }: Props) => {
             }
           />
         );
-      case "SLIDER":
-        const sliderOption = JSON.parse(
-          field.field_option.map((option) => option.option_value)[0]
-        );
-        const max = Number(sliderOption[1]);
-        const marks = Array.from({ length: max }, (_, index) => ({
-          value: index + 1,
-          label: index + 1,
-        }));
-        return (
-          <Box pb="xl">
-            <Text weight={600} size={14}>
-              {field.field_name}
-            </Text>
-            <Slider min={sliderOption[0]} max={max} step={1} marks={marks} />
-          </Box>
-        );
+      // case "SLIDER":
+      //   const sliderOption = JSON.parse(
+      //     field.field_option.map((option) => option.option_value)[0]
+      //   );
+      //   const max = Number(sliderOption[1]);
+      //   const marks = Array.from({ length: max }, (_, index) => ({
+      //     value: index + 1,
+      //     label: index + 1,
+      //   }));
+      //   return (
+      //     <Box pb="xl">
+      //       <Text weight={600} size={14}>
+      //         {field.field_name}
+      //       </Text>
+      //       <Slider min={sliderOption[0]} max={max} step={1} marks={marks} />
+      //     </Box>
+      //   );
     }
   };
 
