@@ -1,4 +1,5 @@
 import { Paper } from "@mantine/core";
+import BarChart from "./BarChart";
 
 type RequisitionAnalyticsProps = {
   requisitionData: {
@@ -36,7 +37,11 @@ const RequisitionAnalytics = ({
   );
 
   console.log(dataArray);
-  return <Paper p="xl">ssd</Paper>;
+  return (
+    <Paper p="xl">
+      <BarChart data={dataArray} />
+    </Paper>
+  );
 };
 
 export default RequisitionAnalytics;

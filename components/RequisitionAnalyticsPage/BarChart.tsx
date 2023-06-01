@@ -3,14 +3,14 @@ import React, { useEffect, useRef } from "react";
 
 type DataItem = {
   label: string;
-  value: string;
+  value: number;
 };
 
 type Props = {
   data: DataItem[];
 };
 
-const MyComponent: React.FC<Props> = ({ data }) => {
+const BarChart: React.FC<Props> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ const MyComponent: React.FC<Props> = ({ data }) => {
       const ctx = chartRef.current.getContext("2d");
       if (ctx) {
         const labels = data.map((item) => item.label);
-        const values = data.map((item) => parseFloat(item.value));
+        const values = data.map((item) => parseFloat(`${item.value}`));
 
         new Chart(ctx, {
           type: "bar",
@@ -51,4 +51,4 @@ const MyComponent: React.FC<Props> = ({ data }) => {
   );
 };
 
-export default MyComponent;
+export default BarChart;
