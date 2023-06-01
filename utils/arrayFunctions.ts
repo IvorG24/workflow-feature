@@ -25,25 +25,23 @@ export type DuplicateSectionType = SectionTableRow & {
 };
 
 export const generateDuplicateSection = (originalSection: Section) => {
-  const fieldResponse = originalSection.section_field.flatMap(
-    (field) => field.field_response
-  );
+  const fieldResponse: RequestResponseTableRow[] =
+    originalSection.section_field.flatMap((field) => field.field_response);
 
   const uniqueIdList = fieldResponse.reduce((unique, item) => {
     const { request_response_duplicatable_section_id } = item;
-
     // Check if the item's duplicatable_section_id is already in the unique array
     const isDuplicate = unique.some((uniqueItem) =>
       uniqueItem.includes(`${request_response_duplicatable_section_id}`)
     );
-
     // If the item is not a duplicate, add it to the unique array
     if (!isDuplicate) {
-      unique.push(`${item.request_response_duplicatable_section_id}`);
+      unique.push(`${request_response_duplicatable_section_id}`);
     }
 
     return unique;
   }, [] as string[]);
+
   const duplicateSectionList = uniqueIdList.map((id) => {
     const duplicateSection = {
       ...originalSection,
@@ -66,6 +64,7 @@ export const generateSectionWithDuplicateList = (
   originalSectionList: Section[]
 ) => {
   const sectionWithDuplicateList: DuplicateSectionType[] = [];
+
   originalSectionList.forEach((section) => {
     const hasDuplicates = section.section_field.some((field) =>
       field.field_response.some(
