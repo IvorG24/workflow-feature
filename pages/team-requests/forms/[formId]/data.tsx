@@ -1,57 +1,14 @@
-import {
-  getForm,
-  getItemList,
-  getTeamAdminList,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import { ROW_PER_PAGE } from "@/utils/constant";
-import { TEMP_USER_ID } from "@/utils/dummyData";
-import {
-  FormType,
-  ItemWithDescriptionType,
-  TeamMemberWithUserType,
-} from "@/utils/types";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import RequisitionAnalytics from "@/components/RequisitionAnalyticsPage/RequisitionAnalytics";
+import { TEMP_REQUISITION_FORM_RESPONSE } from "@/utils/dummyData";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async () => {
   try {
-    const supabaseClient = createServerSupabaseClient(ctx);
-
-    const form = await getForm(supabaseClient, {
-      formId: `${ctx.query.formId}`,
-    });
-
-    const formattedForm = form as unknown as FormType;
-    if (
-      formattedForm.form_is_formsly_form &&
-      formattedForm.form_name === "Requisition Form"
-    ) {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: TEMP_USER_ID,
-      });
-
-      const teamMemberList = await getTeamAdminList(supabaseClient, {
-        teamId,
-      });
-
-      const { data: items, count: itemsCount } = await getItemList(
-        supabaseClient,
-        {
-          teamId: teamId,
-          page: 1,
-          limit: ROW_PER_PAGE,
-        }
-      );
-
-      return {
-        props: { form, items, itemsCount, teamMemberList },
-      };
-    }
+    const rfData = TEMP_REQUISITION_FORM_RESPONSE;
 
     return {
-      props: { form },
+      props: { requisition_form_data: rfData },
     };
   } catch (error) {
     console.error(error);
@@ -65,29 +22,27 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 
 type Props = {
-  form: FormType;
-  items?: ItemWithDescriptionType[];
-  itemsCount?: number;
-  teamMemberList?: TeamMemberWithUserType[];
+  requisition_form_data: {
+    request_response_id: string;
+    request_response: string;
+    request_response_request_id: string;
+    request_response_field_id: string;
+  }[];
 };
 
-const RequisitionFormData = ({
-  form,
-}: // items = [],
-// itemsCount = 0,
-// teamMemberList = [],
-Props) => {
-  const formslyForm = () => {
-    switch (form.form_name) {
-      case "Requisition Form":
-        return <>Formsly Req Form</>;
-    }
-  };
+const RequisitionFormData = ({ requisition_form_data }: Props) => {
+  // const formslyForm = () => {
+  //   switch (form.form_name) {
+  //     case "Requisition Form":
+  //       return <>Formsly Req Form</>;
+  //   }
+  // };
   return (
     <>
       <Meta description="Request Page" url="/team-requests/forms/[formId]" />
-      {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <>Req form</> : null}
+      {/* {form.form_is_formsly_form ? formslyForm() : null}
+      {!form.form_is_formsly_form ? <>Req form</> : null} */}
+      <RequisitionAnalytics requisitionData={requisition_form_data} />
     </>
   );
 };
