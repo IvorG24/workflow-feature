@@ -358,7 +358,6 @@ const Field = ({
           <Switch
             {...field}
             label={label}
-            checked={false}
             readOnly={mode === "view"}
             className={classes.previewField}
             mt="xs"
