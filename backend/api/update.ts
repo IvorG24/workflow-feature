@@ -1,3 +1,4 @@
+import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { Database } from "@/utils/database";
 import {
   MemberRoleType,
@@ -257,5 +258,23 @@ export const toggleStatus = async (
       [`${table}_is_available`]: status,
     })
     .eq(`${table}_id`, id);
+  if (error) throw error;
+};
+
+// Upsert form signers
+export const updateFormSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    signers: (RequestSigner & { signer_is_disabled: boolean })[];
+    formId: string;
+  }
+) => {
+  const { signers, formId } = params;
+  const { error: disbaleAllError } = await supabaseClient
+    .from("signer_table")
+    .update({ signer_is_disabled: true })
+    .eq("signer_form_id", formId);
+  if (disbaleAllError) throw disbaleAllError;
+  const { error } = await supabaseClient.from("signer_table").upsert(signers);
   if (error) throw error;
 };
