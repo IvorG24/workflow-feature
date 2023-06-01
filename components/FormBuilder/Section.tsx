@@ -151,7 +151,7 @@ const Section = ({
                 onCancel={() => {
                   handleChangeActiveField(null);
                   methods.setValue(
-                    `sections.${sectionIndex}.field_table.${fieldIndex}`,
+                    `sections.${sectionIndex}.fields.${fieldIndex}`,
                     savedField
                   );
                 }}
@@ -161,7 +161,7 @@ const Section = ({
               <ActionIcon
                 onClick={() => {
                   const fieldData = methods.getValues(
-                    `sections.${sectionIndex}.field_table.${fieldIndex}`
+                    `sections.${sectionIndex}.fields.${fieldIndex}`
                   );
                   console.log("edit");
                   console.log(fieldData);
