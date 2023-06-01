@@ -13,9 +13,7 @@ import {
   Paper,
   Select,
   SelectProps,
-  Slider,
   Switch,
-  Text,
   TextInput,
   Textarea,
   Tooltip,
@@ -165,14 +163,14 @@ const Field = ({
     { value: "TEXTAREA", label: "Text Area" },
     { value: "DROPDOWN", label: "Dropdown" },
     { value: "MULTISELECT", label: "Multiselect" },
-    { value: "SLIDER", label: "Slider" },
+    // { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
     { value: "TIME", label: "Time" },
     { value: "SWITCH", label: "Switch" },
   ];
 
   const reviewTypeOptions = [
-    { value: "SLIDER", label: "Slider" },
+    // { value: "SLIDER", label: "Slider" },
     { value: "BOOLEAN", label: "Boolean" },
   ];
 
@@ -180,19 +178,19 @@ const Field = ({
     formType === "REQUEST" ? requestTypeOptions : reviewTypeOptions;
 
   if (!isActive) {
-    const step = 1;
-    const fieldMin = 1;
-    const fieldMax = 5;
-    const getMarks = () => {
-      const marks = [];
-      for (let i = fieldMin; i <= fieldMax; i += step) {
-        marks.push({
-          value: i,
-          label: i.toString(),
-        });
-      }
-      return marks;
-    };
+    // const step = 1;
+    // const fieldMin = 1;
+    // const fieldMax = 5;
+    // const getMarks = () => {
+    //   const marks = [];
+    //   for (let i = fieldMin; i <= fieldMax; i += step) {
+    //     marks.push({
+    //       value: i,
+    //       label: i.toString(),
+    //     });
+    //   }
+    //   return marks;
+    // };
 
     const label = (
       <FieldLabel
@@ -274,7 +272,7 @@ const Field = ({
           />
         )}
 
-        {fieldType === "SLIDER" && (
+        {/* {fieldType === "SLIDER" && (
           <Box
             className={`${classes.previewField} ${
               mode === "view" ? classes.pointerEventsNone : ""
@@ -295,7 +293,7 @@ const Field = ({
               showLabelOnHover={false}
             />
           </Box>
-        )}
+        )} */}
 
         {fieldType === "DATE" && (
           <DatePickerInput
