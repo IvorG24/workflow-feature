@@ -14,12 +14,11 @@ import {
   Text,
   ThemeIcon,
   createStyles,
-  useMantineTheme,
 } from "@mantine/core";
 import {
   IconCircleDashed,
   IconCirclePlus,
-  IconSettings,
+  IconTrash,
 } from "@tabler/icons-react";
 import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
@@ -79,7 +78,6 @@ const SignerSection = ({
   const { classes } = useStyles({ mode });
   const methods = useFormContext<FormBuilderData>();
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
-  const { colorScheme } = useMantineTheme();
   const [signerList, setSignerList] = useState<string[]>([]);
 
   const {
@@ -135,8 +133,8 @@ const SignerSection = ({
         >
           <Space h="xs" />
           {signers.map((signer, signerIndex) => (
-            <Flex align="center" key={signer.id} w="100%" mt="xs">
-              <Box w="100%">
+            <Flex align="center" gap="md" key={signer.id} w="100%" mt="xs">
+              <Box>
                 <SignerForm
                   signerIndex={signerIndex}
                   signer={signer as RequestSigner}
@@ -154,14 +152,12 @@ const SignerSection = ({
               </Box>
               {activeSigner === null && (
                 <ActionIcon
-                  onClick={() => handleChangeActiveSigner(signerIndex)}
+                  onClick={() => removeSigner(signerIndex)}
+                  variant="light"
                   mt="sm"
+                  color="red"
                 >
-                  <IconSettings
-                    color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
-                    size={18}
-                    stroke={1.5}
-                  />
+                  <IconTrash size={18} stroke={1.5} />
                 </ActionIcon>
               )}
             </Flex>

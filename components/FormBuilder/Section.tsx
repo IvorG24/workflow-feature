@@ -77,7 +77,6 @@ const Section = ({
   const { classes } = useStyles({ mode });
   const methods = useFormContext();
   const [activeField, setActiveField] = useState<number | null>(null);
-  const [savedField, setSavedField] = useState<FieldWithChoices | null>(null);
 
   const { colorScheme } = useMantineTheme();
   const {
@@ -148,22 +147,11 @@ const Section = ({
                 mode={mode}
                 isActive={activeField === fieldIndex}
                 onNotActive={() => handleChangeActiveField(null)}
-                onCancel={() => {
-                  handleChangeActiveField(null);
-                  methods.setValue(
-                    `sections.${sectionIndex}.fields.${fieldIndex}`,
-                    savedField
-                  );
-                }}
               />
             </Box>
             {activeField === null && (
               <ActionIcon
                 onClick={() => {
-                  const fieldData = methods.getValues(
-                    `sections.${sectionIndex}.fields.${fieldIndex}`
-                  );
-                  setSavedField(fieldData);
                   handleChangeActiveField(fieldIndex);
                 }}
                 variant="light"
