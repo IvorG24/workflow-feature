@@ -388,7 +388,10 @@ const Field = ({
     <Paper shadow="xs" radius="sm" className={classes.paper}>
       <ActionIcon
         className={classes.closeIcon}
-        onClick={() => onDelete(fieldIndex)}
+        onClick={() => {
+          onDelete(fieldIndex);
+          onNotActive();
+        }}
         color="red"
       >
         <IconTrash height={16} />
