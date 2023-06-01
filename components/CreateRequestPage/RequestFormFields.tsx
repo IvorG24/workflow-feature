@@ -108,6 +108,7 @@ const RequestFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            defaultValue={false}
             render={({ field: { value, onChange } }) => (
               <Switch
                 checked={value as boolean}

@@ -376,7 +376,7 @@ export const createRequest = async (
   const requestResponseInput: RequestResponseTableInsert[] = [];
   requestFormValues.sections.forEach((section) => {
     section.section_field.forEach((field) => {
-      if (field.field_response) {
+      if (field.field_response !== undefined) {
         const response = {
           request_response: JSON.stringify(field.field_response),
           request_response_duplicatable_section_id:
