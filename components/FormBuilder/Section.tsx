@@ -7,15 +7,20 @@ import {
 } from "@/utils/react-hook-form";
 import { AppType, FieldWithChoices } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   Button,
+  Checkbox,
   Container,
   ContainerProps,
   Divider,
+  Flex,
   TextInput,
   createStyles,
+  useMantineTheme,
 } from "@mantine/core";
-import { IconCirclePlus } from "@tabler/icons-react";
+import { IconCirclePlus, IconSettings } from "@tabler/icons-react";
+import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
@@ -41,10 +46,8 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     backgroundColor:
       theme.colorScheme === "dark"
         ? mode === "edit"
-          ? theme.colors.dark[6]
+          ? theme.colors.dark[7]
           : theme.colors.dark[7]
-        : mode === "edit"
-        ? theme.colors.gray[0]
         : "#fff",
     borderRadius: 4,
     border: `1px solid ${
@@ -73,7 +76,10 @@ const Section = ({
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext();
+  const [activeField, setActiveField] = useState<number | null>(null);
+  const [savedField, setSavedField] = useState<FieldWithChoices | null>(null);
 
+  const { colorScheme } = useMantineTheme();
   const {
     fields: fields,
     append: appendField,
@@ -87,6 +93,10 @@ const Section = ({
     control: methods.control,
     defaultValue: section,
   });
+
+  const handleChangeActiveField = (index: number | null) => {
+    setActiveField(index);
+  };
 
   // this is to update the field order when a field is removed
   useDeepCompareEffect(() => {
@@ -121,23 +131,59 @@ const Section = ({
           </Box>
         )}
         {fields.map((field, fieldIndex) => (
-          <Box key={field.id} mt={fieldIndex === 0 ? 24 : 16}>
-            <Field
-              formType={formType}
-              fieldIndex={fieldIndex}
-              field={field as FieldWithFieldArrayId}
-              sectionIndex={sectionIndex}
-              onDelete={() => removeField(fieldIndex)}
-              mode={mode}
-            />
-          </Box>
+          <Flex
+            align="center"
+            gap="xs"
+            key={field.id}
+            mt={fieldIndex === 0 ? 24 : 16}
+            w="100%"
+          >
+            <Box w="100%">
+              <Field
+                formType={formType}
+                fieldIndex={fieldIndex}
+                field={field as FieldWithFieldArrayId}
+                sectionIndex={sectionIndex}
+                onDelete={() => removeField(fieldIndex)}
+                mode={mode}
+                isActive={activeField === fieldIndex}
+                onNotActive={() => handleChangeActiveField(null)}
+                onCancel={() => {
+                  handleChangeActiveField(null);
+                  methods.setValue(
+                    `sections.${sectionIndex}.fields.${fieldIndex}`,
+                    savedField
+                  );
+                }}
+              />
+            </Box>
+            {activeField === null && (
+              <ActionIcon
+                onClick={() => {
+                  const fieldData = methods.getValues(
+                    `sections.${sectionIndex}.fields.${fieldIndex}`
+                  );
+                  console.log("edit");
+                  console.log(fieldData);
+                  setSavedField(fieldData);
+                  handleChangeActiveField(fieldIndex);
+                }}
+                mt="lg"
+              >
+                <IconSettings
+                  color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
+                  size={18}
+                />
+              </ActionIcon>
+            )}
+          </Flex>
         ))}
       </Box>
 
       {mode === "edit" && (
         <>
           <Button
-            onClick={() =>
+            onClick={() => {
               appendField({
                 field_id: uuidv4(),
                 field_name: "Field",
@@ -146,8 +192,9 @@ const Section = ({
                 field_is_required: false,
                 field_is_positive_metric: true,
                 field_order: fields.length + 1,
-              })
-            }
+              });
+              handleChangeActiveField(fields.length);
+            }}
             size="xs"
             mt={fields.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}
@@ -156,17 +203,28 @@ const Section = ({
           </Button>
 
           <Divider mt={24} />
-          <Button
-            size="xs"
-            color="red"
-            variant="subtle"
-            mt={16}
-            onClick={() => {
-              onDelete && onDelete(section.section_id);
-            }}
-          >
-            Remove Section
-          </Button>
+
+          <Flex justify="space-between">
+            <Checkbox
+              label="Duplicatable section"
+              {...methods.register(
+                `sections.${sectionIndex}.section_is_duplicatable`
+              )}
+              mt="md"
+            />
+
+            <Button
+              size="xs"
+              color="red"
+              variant="subtle"
+              mt={16}
+              onClick={() => {
+                onDelete && onDelete(section.section_id);
+              }}
+            >
+              Remove Section
+            </Button>
+          </Flex>
         </>
       )}
     </Container>

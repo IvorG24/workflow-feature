@@ -1,16 +1,26 @@
 import { TeamMemberWithUserType } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   Button,
   Center,
+  Checkbox,
   Container,
   ContainerProps,
+  Divider,
+  Flex,
   List,
   Text,
   ThemeIcon,
   createStyles,
+  useMantineTheme,
 } from "@mantine/core";
-import { IconCircleDashed, IconCirclePlus } from "@tabler/icons-react";
+import {
+  IconCircleDashed,
+  IconCirclePlus,
+  IconSettings,
+} from "@tabler/icons-react";
+import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
@@ -45,10 +55,8 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     backgroundColor:
       theme.colorScheme === "dark"
         ? mode === "edit"
-          ? theme.colors.dark[6]
+          ? theme.colors.dark[7]
           : theme.colors.dark[7]
-        : mode === "edit"
-        ? theme.colors.gray[0]
         : "#fff",
     borderRadius: 4,
     border: `1px solid ${
@@ -69,6 +77,9 @@ const SignerSection = ({
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext<FormBuilderData>();
+  const [activeSigner, setActiveSigner] = useState<number | null>(null);
+  const { colorScheme } = useMantineTheme();
+  const [signerList, setSignerList] = useState<string[]>([]);
 
   const {
     fields: signers,
@@ -90,6 +101,10 @@ const SignerSection = ({
         signerIdx === index
       );
     });
+  };
+
+  const handleChangeActiveSigner = (index: number | null) => {
+    setActiveSigner(index);
   };
 
   // this is to update the field order when a field is removed
@@ -118,18 +133,40 @@ const SignerSection = ({
           }
         >
           {signers.map((signer, signerIndex) => (
-            <Box key={signer.id} mt={signerIndex === 0 ? 24 : 16}>
-              <SignerForm
-                signerIndex={signerIndex}
-                signer={signer as RequestSigner}
-                onDelete={() => removeSigner(signerIndex)}
-                onMakePrimaryApprover={() =>
-                  handleMakePrimaryApprover(signerIndex)
-                }
-                mode={mode}
-                teamMemberList={teamMemberList}
-              />
-            </Box>
+            <Flex
+              align="center"
+              gap="xs"
+              key={signer.id}
+              mt={signerIndex === 0 ? 24 : 16}
+              w="100%"
+            >
+              <Box>
+                <SignerForm
+                  signerIndex={signerIndex}
+                  signer={signer as RequestSigner}
+                  onDelete={() => removeSigner(signerIndex)}
+                  onMakePrimaryApprover={() =>
+                    handleMakePrimaryApprover(signerIndex)
+                  }
+                  mode={mode}
+                  teamMemberList={teamMemberList}
+                  isActive={activeSigner === signerIndex}
+                  onNotActiveSigner={() => handleChangeActiveSigner(null)}
+                  signerList={signerList}
+                  onSetSignerList={setSignerList}
+                />
+              </Box>
+              {activeSigner === null && (
+                <ActionIcon
+                  onClick={() => handleChangeActiveSigner(signerIndex)}
+                >
+                  <IconSettings
+                    color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
+                    size={18}
+                  />
+                </ActionIcon>
+              )}
+            </Flex>
           ))}
         </List>
       </Box>
@@ -137,7 +174,7 @@ const SignerSection = ({
       {mode === "edit" && (
         <>
           <Button
-            onClick={() =>
+            onClick={() => {
               appendSigner({
                 signer_id: uuidv4(),
                 signer_action: "",
@@ -145,14 +182,23 @@ const SignerSection = ({
                 signer_team_member_id: "",
                 signer_form_id: formId,
                 signer_order: signers.length + 1,
-              })
-            }
+              });
+              handleChangeActiveSigner(signers.length);
+            }}
             size="xs"
             mt={signers.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}
           >
             Add a Signer
           </Button>
+
+          <Divider mt="md" />
+
+          <Checkbox
+            label="Require requester and approver's signature during request creation and approval"
+            {...methods.register("isSignatureRequired")}
+            my="xl"
+          />
         </>
       )}
     </Container>
