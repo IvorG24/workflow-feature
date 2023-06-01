@@ -1,4 +1,5 @@
 import { updateFormVisibility } from "@/backend/api/update";
+import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
@@ -30,16 +31,24 @@ const FormDetailsSection = ({ form }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
 
+  const formList = useFormList();
+  const { setFormList } = useFormActions();
+
   const [isHidden, setIsHidden] = useState(form.form_is_hidden);
 
   const handleToggleVisibility = async (checked: boolean) => {
+    setIsHidden(!checked);
     try {
       await updateFormVisibility(supabaseClient, {
         formId,
         isHidden: !checked,
       });
 
-      setIsHidden(!checked);
+      const newForm = formList.map((form) => {
+        if (form.form_id !== formId) return form;
+        return { ...form, form_is_hidden: !isHidden };
+      });
+      setFormList(newForm);
 
       notifications.show({
         title: "Success!",
@@ -47,6 +56,7 @@ const FormDetailsSection = ({ form }: Props) => {
         color: "green",
       });
     } catch (error) {
+      setIsHidden(checked);
       notifications.show({
         title: "Something went wrong",
         message: "Please try again later",

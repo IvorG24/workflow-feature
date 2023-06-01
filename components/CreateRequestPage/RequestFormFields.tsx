@@ -1,19 +1,15 @@
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
-  Box,
   MultiSelect,
   NumberInput,
   Select,
-  Slider,
   Switch,
-  Text,
   TextInput,
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
-import moment from "moment";
 import { useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { RequestFormValues } from "./CreateRequestPage";
@@ -38,8 +34,6 @@ const RequestFormFields = ({
   } = useFormContext<RequestFormValues>();
 
   const timeInputRef = useRef<HTMLInputElement>(null);
-  // add time value to prevent react error -> changing uncontrolled to controlled error
-  const timeDefaultValue = moment().format("HH:mm");
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.message;
@@ -198,7 +192,6 @@ const RequestFormFields = ({
             render={({ field }) => (
               <TimeInput
                 {...inputProps}
-                value={field.value ? (field.value as string) : timeDefaultValue}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 ref={timeInputRef}
@@ -216,45 +209,45 @@ const RequestFormFields = ({
             rules={{ ...fieldRules }}
           />
         );
-      case "SLIDER":
-        const sliderOption = JSON.parse(
-          field.options.map((option) => option.option_value)[0]
-        );
-        const max = Number(sliderOption[1]);
-        const marks = Array.from({ length: max }, (_, index) => ({
-          value: index + 1,
-          label: index + 1,
-        }));
-        return (
-          <Box pb="xl">
-            <Text weight={600}>
-              {field.field_name}{" "}
-              {field.field_is_required ? (
-                <Text span c="red">
-                  *
-                </Text>
-              ) : (
-                <></>
-              )}
-            </Text>
-            <Controller
-              control={control}
-              name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-              render={({ field: { value, onChange } }) => (
-                <Slider
-                  value={value as number}
-                  onChange={(value) => onChange(value)}
-                  min={sliderOption[0]}
-                  max={max}
-                  step={1}
-                  marks={marks}
-                  {...inputProps}
-                />
-              )}
-              rules={{ ...fieldRules }}
-            />
-          </Box>
-        );
+      // case "SLIDER":
+      //   const sliderOption = JSON.parse(
+      //     field.options.map((option) => option.option_value)[0]
+      //   );
+      //   const max = Number(sliderOption[1]);
+      //   const marks = Array.from({ length: max }, (_, index) => ({
+      //     value: index + 1,
+      //     label: index + 1,
+      //   }));
+      //   return (
+      //     <Box pb="xl">
+      //       <Text weight={600} size={14}>
+      //         {field.field_name}{" "}
+      //         {field.field_is_required ? (
+      //           <Text span c="red">
+      //             *
+      //           </Text>
+      //         ) : (
+      //           <></>
+      //         )}
+      //       </Text>
+      //       <Controller
+      //         control={control}
+      //         name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+      //         render={({ field: { value, onChange } }) => (
+      //           <Slider
+      //             value={value as number}
+      //             onChange={(value) => onChange(value)}
+      //             min={sliderOption[0]}
+      //             max={max}
+      //             step={1}
+      //             marks={marks}
+      //             {...inputProps}
+      //           />
+      //         )}
+      //         rules={{ ...fieldRules }}
+      //       />
+      //     </Box>
+      //   );
     }
   };
 

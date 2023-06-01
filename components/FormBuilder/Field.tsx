@@ -14,9 +14,7 @@ import {
   Paper,
   Select,
   SelectProps,
-  Slider,
   Switch,
-  Text,
   TextInput,
   Textarea,
   Tooltip,
@@ -33,7 +31,7 @@ import {
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
-import { MouseEventHandler, useEffect, useRef, useState } from "react";
+import { MouseEventHandler, useRef, useState } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { FormBuilderData } from "./FormBuilder";
@@ -141,7 +139,7 @@ const Field = ({
     fields: options,
     append: appendChoice,
     remove: removeChoice,
-    update: updateChoice,
+    // update: updateChoice,
   } = useFieldArray({
     control: control,
     name: `sections.${sectionIndex}.fields.${fieldIndex}.options`,
@@ -167,14 +165,14 @@ const Field = ({
     { value: "TEXTAREA", label: "Text Area" },
     { value: "DROPDOWN", label: "Dropdown" },
     { value: "MULTISELECT", label: "Multiselect" },
-    { value: "SLIDER", label: "Slider" },
+    // { value: "SLIDER", label: "Slider" },
     { value: "DATE", label: "Date" },
     { value: "TIME", label: "Time" },
     { value: "SWITCH", label: "Switch" },
   ];
 
   const reviewTypeOptions = [
-    { value: "SLIDER", label: "Slider" },
+    // { value: "SLIDER", label: "Slider" },
     { value: "BOOLEAN", label: "Boolean" },
   ];
 
@@ -220,44 +218,44 @@ const Field = ({
     }
   };
 
-  useEffect(() => {
-    if (fieldType === "SLIDER" && optionsWatch.length <= 0) {
-      appendChoice({
-        option_id: uuidv4(),
-        option_field_id: field.field_id,
-        option_value: "[1,5]",
-        option_order: options.length + 1,
-        option_description: "",
-      });
-    }
-  }, [optionsWatch, fieldType]);
+  // useEffect(() => {
+  //   if (fieldType === "SLIDER" && optionsWatch.length <= 0) {
+  //     appendChoice({
+  //       option_id: uuidv4(),
+  //       option_field_id: field.field_id,
+  //       option_value: "[1,5]",
+  //       option_order: options.length + 1,
+  //       option_description: "",
+  //     });
+  //   }
+  // }, [optionsWatch, fieldType]);
 
-  useEffect(() => {
-    if (fieldType === "SLIDER") {
-      updateChoice(0, {
-        option_id: uuidv4(),
-        option_field_id: field.field_id,
-        option_value: `[${sliderStart},${sliderEnd}]`,
-        option_order: options.length + 1,
-        option_description: "",
-      });
-    }
-  }, [sliderStart, sliderEnd]);
+  // useEffect(() => {
+  //   if (fieldType === "SLIDER") {
+  //     updateChoice(0, {
+  //       option_id: uuidv4(),
+  //       option_field_id: field.field_id,
+  //       option_value: `[${sliderStart},${sliderEnd}]`,
+  //       option_order: options.length + 1,
+  //       option_description: "",
+  //     });
+  //   }
+  // }, [sliderStart, sliderEnd]);
 
   if (!isActive) {
-    const step = 1;
-    const fieldMin = sliderStart || 1;
-    const fieldMax = sliderEnd || 5;
-    const getMarks = () => {
-      const marks = [];
-      for (let i = fieldMin; i <= fieldMax; i += step) {
-        marks.push({
-          value: i,
-          label: i.toString(),
-        });
-      }
-      return marks;
-    };
+    // const step = 1;
+    // const fieldMin = sliderStart || 1;
+    // const fieldMax = sliderEnd || 5;
+    // const getMarks = () => {
+    //   const marks = [];
+    //   for (let i = fieldMin; i <= fieldMax; i += step) {
+    //     marks.push({
+    //       value: i,
+    //       label: i.toString(),
+    //     });
+    //   }
+    //   return marks;
+    // };
 
     const label = (
       <FieldLabel
@@ -316,7 +314,6 @@ const Field = ({
         {fieldType === "MULTISELECT" && (
           <MultiSelect
             {...field}
-            value={[]}
             label={label}
             data={optionsDropdownData}
             className={classes.previewField}
@@ -326,7 +323,7 @@ const Field = ({
           />
         )}
 
-        {fieldType === "SLIDER" && (
+        {/* {fieldType === "SLIDER" && (
           <Box className={classes.previewField} pb="xl">
             <Text className={classes.sliderLabel}>{label}</Text>
             <Slider
@@ -341,7 +338,7 @@ const Field = ({
               showLabelOnHover={false}
             />
           </Box>
-        )}
+        )}   */}
 
         {fieldType === "DATE" && (
           <DatePickerInput

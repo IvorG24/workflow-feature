@@ -143,8 +143,8 @@ export type FieldType =
   | "MULTISELECT"
   | "FILE"
   | "DATE"
-  | "TIME"
-  | "SLIDER";
+  | "TIME";
+// | "SLIDER";
 export type FieldTagType =
   | "POSITIVE_METRIC"
   | "NEGATIVE_METRIC"
