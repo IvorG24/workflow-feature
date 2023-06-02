@@ -186,6 +186,7 @@ const SignerSection = ({
               });
               handleChangeActiveSigner(signers.length);
             }}
+            disabled={activeSigner !== null}
             size="xs"
             mt={signers.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}

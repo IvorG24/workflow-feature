@@ -183,6 +183,7 @@ const Section = ({
               });
               handleChangeActiveField(fields.length);
             }}
+            disabled={activeField !== null}
             size="xs"
             mt={fields.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}
