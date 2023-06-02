@@ -9,6 +9,7 @@ import {
   FormType,
   InvitationTableInsert,
   ItemDescriptionFieldTableInsert,
+  ItemTDescriptionableInsert,
   ItemTableInsert,
   NotificationTableInsert,
   OptionTableInsert,
@@ -240,9 +241,10 @@ export const createItem = async (
   params: {
     itemData: ItemTableInsert;
     itemDescription: string[];
+    formId: string;
   }
 ) => {
-  const { itemData, itemDescription } = params;
+  const { itemData, itemDescription, formId } = params;
   const { data, error } = await supabaseClient
     .from("item_table")
     .insert(itemData)
@@ -250,20 +252,41 @@ export const createItem = async (
     .single();
   if (error) throw error;
 
-  const itemDescriptionInput = itemDescription.map((description: string) => {
-    return {
+  const itemDescriptionInput: ItemTDescriptionableInsert[] = [];
+  const fieldInput: FieldTableInsert[] = [];
+
+  const { data: section, error: sectionError } = await supabaseClient
+    .from("section_table")
+    .select("section_id")
+    .eq("section_form_id", formId)
+    .eq("section_name", "Item")
+    .single();
+  if (sectionError) throw sectionError;
+
+  itemDescription.forEach((description: string) => {
+    itemDescriptionInput.push({
       item_description_label: description,
       item_description_item_id: data.item_id,
       item_description_is_available: true,
-    };
+    });
+    fieldInput.push({
+      field_name: description,
+      field_type: "DROPDOWN",
+      field_order: 3,
+      field_section_id: section.section_id,
+    });
   });
   const { data: itemDescriptionData, error: itemDescriptionError } =
     await supabaseClient
       .from("item_description_table")
       .insert(itemDescriptionInput)
       .select();
-
   if (itemDescriptionError) throw itemDescriptionError;
+
+  const { error: fieldError } = await supabaseClient
+    .from("field_table")
+    .insert(fieldInput);
+  if (fieldError) throw fieldError;
   return { ...data, item_description: itemDescriptionData };
 };
 
@@ -413,4 +436,3 @@ export const createRequest = async (
 
   return request;
 };
-
