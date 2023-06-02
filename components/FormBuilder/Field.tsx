@@ -447,7 +447,7 @@ const Field = ({
             />
           )}
           <Center mt="md">
-            <Button onClick={() => handleDone()} w={80}>
+            <Button onClick={() => handleDone()} w={80} variant="light">
               Done
             </Button>
           </Center>
@@ -540,7 +540,7 @@ const Field = ({
             className={classes.checkboxCursor}
           />
           <Center mt="md">
-            <Button onClick={() => handleDone()} w={80}>
+            <Button onClick={() => handleDone()} w={80} variant="light">
               Done
             </Button>
           </Center>
@@ -614,7 +614,7 @@ const Field = ({
           )}
 
           <Center mt="md">
-            <Button onClick={() => handleDone()} w={80}>
+            <Button onClick={() => handleDone()} w={80} variant="light">
               Done
             </Button>
           </Center>
@@ -669,7 +669,7 @@ const Field = ({
           />
 
           <Center mt="md">
-            <Button onClick={() => handleDone()} w={80}>
+            <Button onClick={() => handleDone()} w={80} variant="light">
               Done
             </Button>
           </Center>

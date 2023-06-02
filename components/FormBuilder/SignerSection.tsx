@@ -133,8 +133,14 @@ const SignerSection = ({
         >
           <Space h="xs" />
           {signers.map((signer, signerIndex) => (
-            <Flex align="center" gap="md" key={signer.id} w="100%" mt="xs">
-              <Box>
+            <Flex
+              align="center"
+              gap="md"
+              key={signer.id}
+              w="100%"
+              mt={activeSigner === signerIndex ? "xs" : 0}
+            >
+              <Box w="100%">
                 <SignerForm
                   signerIndex={signerIndex}
                   signer={signer as RequestSigner}
@@ -156,8 +162,9 @@ const SignerSection = ({
                   variant="light"
                   mt="sm"
                   color="red"
+                  size="sm"
                 >
-                  <IconTrash size={18} stroke={1.5} />
+                  <IconTrash size={14} stroke={1.5} />
                 </ActionIcon>
               )}
             </Flex>
