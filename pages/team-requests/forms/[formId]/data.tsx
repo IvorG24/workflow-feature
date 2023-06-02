@@ -1,57 +1,35 @@
-import {
-  getForm,
-  getItemList,
-  getTeamAdminList,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
+import { getForm } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import { ROW_PER_PAGE } from "@/utils/constant";
-import { TEMP_USER_ID } from "@/utils/dummyData";
+import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
+import RequisitionAnalytics from "@/components/RequisitionAnalyticsPage/RequisitionAnalytics";
 import {
-  FormType,
-  ItemWithDescriptionType,
-  TeamMemberWithUserType,
-} from "@/utils/types";
+  TEMP_REQUISITION_FORM_PURCHASE_DATA,
+  TEMP_REQUISITION_FORM_TEAM_DATA,
+  TEMP_REQUISITION_FORM_USER_DATA,
+} from "@/utils/dummyData";
+import { FormWithResponseType } from "@/utils/types";
+import { Title } from "@mantine/core";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
+    const teamData = TEMP_REQUISITION_FORM_TEAM_DATA;
+    const userData = TEMP_REQUISITION_FORM_USER_DATA;
+    const purchaseData = TEMP_REQUISITION_FORM_PURCHASE_DATA;
     const supabaseClient = createServerSupabaseClient(ctx);
 
     const form = await getForm(supabaseClient, {
       formId: `${ctx.query.formId}`,
     });
 
-    const formattedForm = form as unknown as FormType;
-    if (
-      formattedForm.form_is_formsly_form &&
-      formattedForm.form_name === "Requisition Form"
-    ) {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: TEMP_USER_ID,
-      });
-
-      const teamMemberList = await getTeamAdminList(supabaseClient, {
-        teamId,
-      });
-
-      const { data: items, count: itemsCount } = await getItemList(
-        supabaseClient,
-        {
-          teamId: teamId,
-          page: 1,
-          limit: ROW_PER_PAGE,
-        }
-      );
-
-      return {
-        props: { form, items, itemsCount, teamMemberList },
-      };
-    }
-
     return {
-      props: { form },
+      props: {
+        requisition_form_team_data: teamData,
+        requisition_form_user_data: userData,
+        requisition_form_purchase_data: purchaseData,
+        form,
+      },
     };
   } catch (error) {
     console.error(error);
@@ -64,32 +42,51 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 };
 
+export type RFDataType = {
+  request_response_id: string;
+  request_response: string;
+  request_response_request_id: string;
+  request_response_field_id: string;
+  request_response_date_purchased?: string;
+}[];
+
 type Props = {
-  form: FormType;
-  items?: ItemWithDescriptionType[];
-  itemsCount?: number;
-  teamMemberList?: TeamMemberWithUserType[];
+  requisition_form_team_data: RFDataType;
+  requisition_form_user_data: RFDataType;
+  requisition_form_purchase_data: RFDataType;
+  form: FormWithResponseType;
 };
 
 const RequisitionFormData = ({
+  requisition_form_team_data,
+  requisition_form_user_data,
+  requisition_form_purchase_data,
   form,
-}: // items = [],
-// itemsCount = 0,
-// teamMemberList = [],
-Props) => {
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition Form":
-        return <>Formsly Req Form</>;
+        return (
+          <>
+            {" "}
+            <Title order={3}>{form.form_name}</Title>
+            <RequisitionAnalytics
+              teamRequisitionData={requisition_form_team_data}
+              userRequisitionData={requisition_form_user_data}
+              purchaseRequisitionData={requisition_form_purchase_data}
+            />
+          </>
+        );
     }
   };
   return (
     <>
       <Meta description="Request Page" url="/team-requests/forms/[formId]" />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <>Req form</> : null}
+      {!form.form_is_formsly_form ? <RequestFormPage form={form} /> : null}
     </>
   );
 };
 
 export default RequisitionFormData;
+RequisitionFormData.Layout = "APP";
