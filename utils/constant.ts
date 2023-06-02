@@ -7,13 +7,12 @@ export const DEFAULT_FORM_LIST_LIMIT = 10;
 export const NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
 
-const sectionId = uuidv4();
 export const defaultRequestFormBuilderSection = (
   formId: string
 ): SectionWithField[] => [
   {
     section_form_id: formId,
-    section_id: sectionId,
+    section_id: uuidv4(),
     section_name: "",
     section_order: 1,
     section_is_duplicatable: false,
