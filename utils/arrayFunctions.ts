@@ -42,13 +42,7 @@ export const generateDuplicateSection = (originalSection: Section) => {
     return unique;
   }, [] as string[]);
 
-  const sortedUniqueIdList = uniqueIdList.sort((a, b) => {
-    if (a === "null") return -1; // "null" comes first
-    if (b === "null") return 1; // "null" comes first
-    return a.localeCompare(b);
-  });
-
-  const duplicateSectionList = sortedUniqueIdList.map((id) => {
+  const duplicateSectionList = uniqueIdList.map((id) => {
     const duplicateSection = {
       ...originalSection,
       section_field: originalSection.section_field.map((field) => ({
