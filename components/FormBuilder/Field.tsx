@@ -4,7 +4,7 @@ import {
   ActionIcon,
   Box,
   Button,
-  ButtonProps,
+  Center,
   Checkbox,
   Container,
   Flex,
@@ -31,7 +31,7 @@ import {
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
-import { MouseEventHandler, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { FormBuilderData } from "./FormBuilder";
@@ -48,7 +48,6 @@ type Props = {
   mode: Mode;
   isActive: boolean;
   onNotActive: () => void;
-  onCancel: () => void;
 };
 
 type UseStylesProps = {
@@ -110,7 +109,6 @@ const Field = ({
   mode = "edit",
   isActive,
   onNotActive,
-  onCancel,
 }: Props) => {
   const timeInputRef = useRef<HTMLInputElement>(null);
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
@@ -179,7 +177,7 @@ const Field = ({
   const typeOptions =
     formType === "REQUEST" ? requestTypeOptions : reviewTypeOptions;
 
-  const handleSave = async () => {
+  const handleDone = async () => {
     let isValid = true;
     if (fieldPrompt.length <= 0) {
       setError(`sections.${sectionIndex}.fields.${fieldIndex}.field_name`, {
@@ -448,11 +446,11 @@ const Field = ({
               className={classes.checkboxCursor}
             />
           )}
-
-          <FieldAddAndCancel
-            onCancel={() => onCancel()}
-            onSave={() => handleSave()}
-          />
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80}>
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
 
@@ -541,10 +539,11 @@ const Field = ({
             )}
             className={classes.checkboxCursor}
           />
-          <FieldAddAndCancel
-            onCancel={() => onCancel()}
-            onSave={() => handleSave()}
-          />
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80}>
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
 
@@ -614,10 +613,11 @@ const Field = ({
             />
           )}
 
-          <FieldAddAndCancel
-            onCancel={() => onCancel()}
-            onSave={() => handleSave()}
-          />
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80}>
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
 
@@ -668,10 +668,11 @@ const Field = ({
             className={classes.checkboxCursor}
           />
 
-          <FieldAddAndCancel
-            onCancel={() => onCancel()}
-            onSave={() => handleSave()}
-          />
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80}>
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
     </Paper>
@@ -765,27 +766,6 @@ export const FieldLabel = ({
           </Tooltip>
         )}
       </Group>
-    </Flex>
-  );
-};
-
-type FieldAddAndCancelProps = {
-  onCancel: MouseEventHandler<HTMLButtonElement>;
-  onSave: MouseEventHandler<HTMLButtonElement>;
-} & ButtonProps;
-
-export const FieldAddAndCancel = ({
-  onCancel,
-  onSave,
-}: FieldAddAndCancelProps) => {
-  return (
-    <Flex mt="xl" justify="center" gap="xl">
-      <Button onClick={onCancel} variant="light" w={80}>
-        Cancel
-      </Button>
-      <Button onClick={onSave} w={80}>
-        Save
-      </Button>
     </Flex>
   );
 };
