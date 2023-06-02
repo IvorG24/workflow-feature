@@ -213,6 +213,7 @@ export type RequestWithResponseType = RequestTableRow & {
     formId: string;
     form_name: string;
     form_description: string;
+    form_is_formsly_form: boolean;  
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_option: OptionTableRow[];
@@ -414,3 +415,9 @@ export type SectionWithField = {
 export type FieldWithChoices = {
   options: OptionTableRow[];
 } & FieldTableRow;
+
+export type ItemWithDecsriptionAndField = ItemTableRow & {
+  item_description: (ItemDescriptionTableRow & {
+    item_description_field: ItemDescriptionFieldTableRow[];
+  })[];
+};

@@ -20,12 +20,16 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
+  requisitionFormMethods?: {
+    onGeneralNameChange: (index: number, value: string | null) => void;
+  };
 };
 
 const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
+  requisitionFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -134,7 +138,15 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <Select
                 value={value as string}
-                onChange={(value) => onChange(value)}
+                onChange={(value) => {
+                  onChange(value);
+
+                  if (field.field_name === "General Name")
+                    requisitionFormMethods?.onGeneralNameChange(
+                      sectionIndex,
+                      value
+                    );
+                }}
                 data={dropdownOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}

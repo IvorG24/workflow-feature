@@ -5,9 +5,13 @@ import RequestResponse from "./RequestResponse";
 
 type RequestSectionProps = {
   section: DuplicateSectionType;
+  isRequisitionForm?: boolean;
 };
 
-const RequestSection = ({ section }: RequestSectionProps) => {
+const RequestSection = ({
+  section,
+  isRequisitionForm = false,
+}: RequestSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -16,21 +20,43 @@ const RequestSection = ({ section }: RequestSectionProps) => {
       <Space h="xl" />
       <Stack spacing="sm">
         {section.section_field.map((field) => {
-          return (
-            <Box key={field.field_id}>
-              <RequestResponse
-                response={{
-                  id: field.field_response?.request_response_id as string,
-                  type: field.field_type as FieldType,
-                  label: field.field_name,
-                  value: field.field_response
-                    ? field.field_response.request_response
-                    : "",
-                  options: field.field_option ? field.field_option : [],
-                }}
-              />
-            </Box>
-          );
+          if (isRequisitionForm) {
+            if (field.field_response) {
+              return (
+                <Box key={field.field_id}>
+                  <RequestResponse
+                    response={{
+                      id: field.field_response?.request_response_id as string,
+                      type: field.field_type as FieldType,
+                      label: field.field_name,
+                      value: field.field_response
+                        ? field.field_response.request_response
+                        : "",
+                      options: field.field_option ? field.field_option : [],
+                    }}
+                    isRequisitionForm={isRequisitionForm}
+                  />
+                </Box>
+              );
+            }
+          } else {
+            return (
+              <Box key={field.field_id}>
+                <RequestResponse
+                  response={{
+                    id: field.field_response?.request_response_id as string,
+                    type: field.field_type as FieldType,
+                    label: field.field_name,
+                    value: field.field_response
+                      ? field.field_response.request_response
+                      : "",
+                    options: field.field_option ? field.field_option : [],
+                  }}
+                  isRequisitionForm={isRequisitionForm}
+                />
+              </Box>
+            );
+          }
         })}
       </Stack>
     </Paper>

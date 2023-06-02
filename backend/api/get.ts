@@ -1,5 +1,10 @@
 import { Database } from "@/utils/database";
-import { AppType, AttachmentBucketType, FormStatusType } from "@/utils/types";
+import {
+  AppType,
+  AttachmentBucketType,
+  FormStatusType,
+  ItemWithDecsriptionAndField,
+} from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // Get file url
@@ -240,7 +245,7 @@ export const getRequest = async (
   const { data, error } = await supabaseClient
     .from("request_table")
     .select(
-      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_comment: comment_table(comment_id, comment_date_created, comment_content, comment_is_edited, comment_last_updated, comment_type, comment_team_member_id, comment_team_member: comment_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar))), request_form: request_form_id(form_id, form_name, form_description, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*)))))"
+      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_comment: comment_table(comment_id, comment_date_created, comment_content, comment_is_edited, comment_last_updated, comment_type, comment_team_member_id, comment_team_member: comment_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar))), request_form: request_form_id(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*)))))"
     )
     .eq("request_id", requestId)
     .eq(
@@ -577,4 +582,29 @@ export const getItemDescriptionFieldList = async (
     data,
     count,
   };
+};
+
+// get item
+export const getItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; itemName: string }
+) => {
+  const { teamId, itemName } = params;
+
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select(
+      "*, item_description: item_description_table(*, item_description_field: item_description_field_table(*))"
+    )
+    .eq("item_team_id", teamId)
+    .eq("item_general_name", itemName)
+    .eq("item_description.item_description_is_disabled", false)
+    .eq(
+      "item_description.item_description_field.item_description_field_is_disabled",
+      false
+    )
+    .single();
+  if (error) throw error;
+
+  return data as ItemWithDecsriptionAndField;
 };
