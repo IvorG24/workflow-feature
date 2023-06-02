@@ -20,7 +20,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { IconCirclePlus, IconSettings } from "@tabler/icons-react";
-import { useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
@@ -35,6 +35,8 @@ type Props = {
   onDelete?: (sectionId: string) => void;
   fields: FieldWithChoices[];
   mode?: Mode;
+  activeField: number | null;
+  onSetActiveField: Dispatch<SetStateAction<number | null>>;
 } & ContainerProps;
 
 type UseStylesProps = {
@@ -72,11 +74,12 @@ const Section = ({
   sectionIndex,
   onDelete,
   mode = "edit",
+  activeField,
+  onSetActiveField,
   ...props
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext();
-  const [activeField, setActiveField] = useState<number | null>(null);
 
   const { colorScheme } = useMantineTheme();
   const {
@@ -94,7 +97,7 @@ const Section = ({
   });
 
   const handleChangeActiveField = (index: number | null) => {
-    setActiveField(index);
+    onSetActiveField(index);
   };
 
   // this is to update the field order when a field is removed
@@ -183,6 +186,7 @@ const Section = ({
               });
               handleChangeActiveField(fields.length);
             }}
+            disabled={activeField !== null}
             size="xs"
             mt={fields.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}

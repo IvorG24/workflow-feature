@@ -54,8 +54,10 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
   const { classes } = useStyles();
 
   const { addForm } = useFormActions();
-
+  const [activeField, setActiveField] = useState<number | null>(null);
+  const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const defaultValues: FormBuilderData = {
     formId: formId,
     formName: "",
@@ -196,6 +198,8 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
                   fields={section.fields}
                   formType={formType}
                   mode={section.section_order === 999 ? "view" : "edit"}
+                  activeField={activeField}
+                  onSetActiveField={setActiveField}
                 />
               );
             })}
@@ -232,12 +236,15 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
               mt={32}
               formId={formId}
               teamMemberList={teamMemberList}
+              activeSigner={activeSigner}
+              onSetActiveSigner={setActiveSigner}
             />
           )}
 
           <FormBuilder.SubmitButton
             mt={32}
             onClick={() => handleSaveForm(getValues())}
+            disabled={activeSigner !== null || activeField !== null}
           >
             Finish Building Form
           </FormBuilder.SubmitButton>
