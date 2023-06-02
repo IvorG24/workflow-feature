@@ -52,6 +52,7 @@ const FormField = ({ field }: Props) => {
             label={field.field_name}
             data={dropdownOption}
             {...inputProps}
+            clearable
           />
         );
       case "MULTISELECT":

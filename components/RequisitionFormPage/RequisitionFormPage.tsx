@@ -1,3 +1,5 @@
+import { updateFormSigner } from "@/backend/api/update";
+import { Database } from "@/utils/database";
 import {
   FormType,
   ItemWithDescriptionType,
@@ -13,11 +15,13 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { isEqual } from "lodash";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { FormBuilderData } from "../FormBuilder/FormBuilder";
-import SignerSection from "../FormBuilder/SignerSection";
+import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import ItemDescription from "./ItemDescription/ItemDescription";
 import CreateItem from "./ItemList/CreateItem";
@@ -37,6 +41,7 @@ const RequisitionFormPage = ({
   form,
 }: Props) => {
   const router = useRouter();
+  const supabaseClient = createBrowserSupabaseClient<Database>();
   const { formId } = router.query;
 
   const [isCreatingItem, setIsCreatingItem] = useState(false);
@@ -44,8 +49,39 @@ const RequisitionFormPage = ({
     useState<ItemWithDescriptionType | null>(null);
   const [itemList, setItemList] = useState(items);
   const [itemCount, setItemCount] = useState(itemsCount);
+  const [isSavingSigners, setIsSavingSigner] = useState(false);
+  const [initialSigners, setIntialSigners] = useState(
+    form.form_signer.map((signer) => {
+      const requestSigner = {
+        signer_id: signer.signer_id,
+        signer_team_member_id: signer.signer_team_member.team_member_id,
+        signer_action: signer.signer_action,
+        signer_is_primary_signer: signer.signer_is_primary_signer,
+        signer_order: signer.signer_order,
+        signer_form_id: formId as string,
+      } as RequestSigner;
+      return requestSigner;
+    })
+  );
 
-  const methods = useForm<FormBuilderData["signers"]>({});
+  const methods = useForm<{
+    signers: RequestSigner[];
+    isSignatureRequired: boolean;
+  }>({});
+
+  useEffect(() => {
+    const initialRequestSigners = form.form_signer.map((signer) => {
+      return {
+        signer_id: signer.signer_id,
+        signer_team_member_id: signer.signer_team_member.team_member_id,
+        signer_action: signer.signer_action,
+        signer_is_primary_signer: signer.signer_is_primary_signer,
+        signer_order: signer.signer_order,
+        signer_form_id: `${formId}`,
+      };
+    });
+    methods.setValue("signers", initialRequestSigners);
+  }, [form]);
 
   const newTeamMember = {
     form_team_member: {
@@ -61,6 +97,31 @@ const RequisitionFormPage = ({
   const newForm = {
     ...form,
     ...newTeamMember,
+  };
+
+  const handleSaveSigners = async () => {
+    setIsSavingSigner(true);
+    try {
+      const values = methods.getValues();
+      await updateFormSigner(supabaseClient, {
+        signers: values.signers.map((signer) => {
+          return { ...signer, signer_is_disabled: false };
+        }),
+        formId: formId as string,
+      });
+      setIntialSigners(values.signers);
+      notifications.show({
+        title: "Success",
+        message: "Signers updated",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+    setIsSavingSigner(false);
   };
 
   return (
@@ -113,9 +174,19 @@ const RequisitionFormPage = ({
       </Paper>
 
       <Paper p="xl" shadow="xs" mt="xl">
+        <Title order={3}>Signer Details</Title>
+        <Space h="xl" />
         <FormProvider {...methods}>
           <SignerSection teamMemberList={teamMemberList} formId={`${formId}`} />
         </FormProvider>
+
+        {!isEqual(initialSigners, methods.getValues("signers")) ? (
+          <Center mt="xl">
+            <Button loading={isSavingSigners} onClick={handleSaveSigners}>
+              Save Changes
+            </Button>
+          </Center>
+        ) : null}
       </Paper>
     </Container>
   );

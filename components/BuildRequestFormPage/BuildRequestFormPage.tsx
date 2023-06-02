@@ -1,10 +1,7 @@
 import { createRequestForm } from "@/backend/api/post";
 import { useFormActions } from "@/stores/useFormStore";
 import { useUserTeamMemberId } from "@/stores/useUserStore";
-import {
-  defaultRequestFormBuilderSection,
-  defaultRequestFormBuilderSigners,
-} from "@/utils/constant";
+import { defaultRequestFormBuilderSection } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { AppType, TeamMemberWithUserType } from "@/utils/types";
 import {
@@ -57,8 +54,10 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
   const { classes } = useStyles();
 
   const { addForm } = useFormActions();
-
+  const [activeField, setActiveField] = useState<number | null>(null);
+  const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const defaultValues: FormBuilderData = {
     formId: formId,
     formName: "",
@@ -66,7 +65,7 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
     formType,
     revieweeList: null,
     sections: defaultRequestFormBuilderSection(formId),
-    signers: defaultRequestFormBuilderSigners(formId),
+    signers: [],
     isSignatureRequired: false,
   };
 
@@ -111,8 +110,17 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
 
     if (!error) {
       if (formData.formName.length <= 0) error = "Form name is required";
-      else if (formData.sections.length === 0) {
+      else if (formData.formDescription.length === 0) {
+        error = "Form description is required";
+      } else if (formData.sections.length === 0) {
         error = "At least 1 section is required";
+      } else if (formData.signers.length === 0) {
+        error = "At least 1 signer is required";
+      } else if (
+        formData.signers.filter((signer) => signer.signer_is_primary_signer)
+          .length <= 0
+      ) {
+        error = "At least 1 primary approver is required";
       } else if (
         formData.signers.filter(
           (signer) => signer.signer_team_member_id.length <= 0
@@ -176,65 +184,70 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
               <FormBuilder.FormNameInput />
               <FormBuilder.DescriptionInput mt={32} />
             </Box>
-            {sections.length > 0 &&
-              sections.map((section, sectionIndex) => {
-                return (
-                  <FormBuilder.Section
-                    key={section.id}
-                    mt={32}
-                    section={section}
-                    sectionIndex={sectionIndex}
-                    onDelete={() => removeSection(sectionIndex)}
-                    fields={section.fields}
-                    formType={formType}
-                    mode={section.section_order === 999 ? "view" : "edit"}
-                  />
-                );
-              })}
-            {/* add new section divider */}
-
-            <Divider
-              maw={768}
-              mx="auto"
-              labelPosition="center"
-              mt={24}
-              label={
-                <Button
-                  leftIcon={<IconPlus height={20} />}
-                  variant="subtle"
-                  className={classes.button}
-                  onClick={() =>
-                    insertSection(sections.length, {
-                      section_id: uuidv4(),
-                      section_name: `Section ${sections.length + 1}`,
-                      section_form_id: formId,
-                      section_order: sections.length + 1,
-                      section_is_duplicatable: false,
-                      fields: [],
-                    })
-                  }
-                >
-                  Add New Section
-                </Button>
-              }
-            />
-            {formType === "REQUEST" && (
-              <>
-                <FormBuilder.SignerSection
-                  mt={32}
-                  formId={formId}
-                  teamMemberList={teamMemberList}
-                />
-                <FormBuilder.UserSignature mt={32} />
-              </>
-            )}
-            <FormBuilder.SubmitButton
-              mt={32}
-              onClick={() => handleSaveForm(getValues())}
-            >
-              Finish Building Form
-            </FormBuilder.SubmitButton>
           </FormBuilder.Container>
+
+          {sections.length > 0 &&
+            sections.map((section, sectionIndex) => {
+              return (
+                <FormBuilder.Section
+                  key={section.id}
+                  mt={32}
+                  section={section}
+                  sectionIndex={sectionIndex}
+                  onDelete={() => removeSection(sectionIndex)}
+                  fields={section.fields}
+                  formType={formType}
+                  mode={section.section_order === 999 ? "view" : "edit"}
+                  activeField={activeField}
+                  onSetActiveField={setActiveField}
+                />
+              );
+            })}
+
+          {/* add new section divider */}
+          <Divider
+            maw={768}
+            mx="auto"
+            labelPosition="center"
+            mt={24}
+            label={
+              <Button
+                leftIcon={<IconPlus height={20} />}
+                variant="subtle"
+                className={classes.button}
+                onClick={() =>
+                  insertSection(sections.length, {
+                    section_id: uuidv4(),
+                    section_name: "",
+                    section_form_id: formId,
+                    section_order: sections.length + 1,
+                    section_is_duplicatable: false,
+                    fields: [],
+                  })
+                }
+              >
+                Add New Section
+              </Button>
+            }
+          />
+
+          {formType === "REQUEST" && (
+            <FormBuilder.SignerSection
+              mt={32}
+              formId={formId}
+              teamMemberList={teamMemberList}
+              activeSigner={activeSigner}
+              onSetActiveSigner={setActiveSigner}
+            />
+          )}
+
+          <FormBuilder.SubmitButton
+            mt={32}
+            onClick={() => handleSaveForm(getValues())}
+            disabled={activeSigner !== null || activeField !== null}
+          >
+            Finish Building Form
+          </FormBuilder.SubmitButton>
         </Container>
       </FormProvider>
     </Container>

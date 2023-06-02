@@ -4,6 +4,7 @@ import {
   ActionIcon,
   Box,
   Button,
+  Center,
   Checkbox,
   Container,
   Flex,
@@ -20,7 +21,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { DatePickerInput, TimeInput } from "@mantine/dates";
-import { useClickOutside } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import {
   IconArrowBigDownLine,
   IconArrowBigUpLine,
@@ -45,6 +46,8 @@ type Props = {
   sectionIndex: number;
   onDelete: (fieldIndex: number) => void;
   mode: Mode;
+  isActive: boolean;
+  onNotActive: () => void;
 };
 
 type UseStylesProps = {
@@ -57,7 +60,6 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     position: "relative",
   },
   previewField: {
-    pointerEvents: mode === "edit" ? "none" : "auto",
     label: {
       display: "flex",
     },
@@ -82,16 +84,9 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
     gap: 16,
   },
 
-  radio: {
-    cursor: "pointer",
-  },
   sliderLabel: {
     fontWeight: 600,
     paddingRight: 60,
-  },
-
-  pointerEventsNone: {
-    pointerEvents: "none",
   },
 
   fullWidth: {
@@ -112,9 +107,10 @@ const Field = ({
   sectionIndex,
   onDelete,
   mode = "edit",
+  isActive,
+  onNotActive,
 }: Props) => {
   const timeInputRef = useRef<HTMLInputElement>(null);
-  const [isActive, setIsActive] = useState(false);
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
   const [fieldDescription, setFieldDescription] = useState(
     field.field_description || ""
@@ -125,19 +121,23 @@ const Field = ({
   const [isFieldPositive, setIsFieldPositive] = useState<boolean>(
     field.field_is_positive_metric
   );
-  const [isSelectingFieldType, setIsSelectingFieldType] = useState(false);
 
-  const ref = useClickOutside(() => {
-    if (!isSelectingFieldType) {
-      setIsActive(false);
-    }
-  });
+  const [sliderStart, setSliderStart] = useState<number | "">(1);
+  const [sliderEnd, setSliderEnd] = useState<number | "">(5);
 
-  const { watch, control, register } = useFormContext<FormBuilderData>();
+  const {
+    watch,
+    control,
+    register,
+    setError,
+    formState: { errors },
+  } = useFormContext<FormBuilderData>();
+
   const {
     fields: options,
     append: appendChoice,
     remove: removeChoice,
+    // update: updateChoice,
   } = useFieldArray({
     control: control,
     name: `sections.${sectionIndex}.fields.${fieldIndex}.options`,
@@ -177,10 +177,73 @@ const Field = ({
   const typeOptions =
     formType === "REQUEST" ? requestTypeOptions : reviewTypeOptions;
 
+  const handleDone = async () => {
+    let isValid = true;
+    if (fieldPrompt.length <= 0) {
+      setError(`sections.${sectionIndex}.fields.${fieldIndex}.field_name`, {
+        message: "Field name is required",
+      });
+      isValid = false;
+    }
+
+    if (
+      options.length <= 0 &&
+      (fieldType === "DROPDOWN" || fieldType === "MULTISELECT")
+    ) {
+      notifications.show({
+        message: "At least 1 option is required",
+        color: "red",
+      });
+      isValid = false;
+    }
+
+    const optionValueList = optionsWatch.map((option) => option.option_value);
+    const isOptionHasDuplicate =
+      new Set(optionValueList).size !== optionValueList.length;
+    if (isOptionHasDuplicate) {
+      notifications.show({
+        message: "Options must be unique",
+        color: "red",
+      });
+      isValid = false;
+    }
+
+    if (isValid) {
+      setError(`sections.${sectionIndex}.fields.${fieldIndex}.field_name`, {
+        message: "",
+      });
+      onNotActive();
+    }
+  };
+
+  // useEffect(() => {
+  //   if (fieldType === "SLIDER" && optionsWatch.length <= 0) {
+  //     appendChoice({
+  //       option_id: uuidv4(),
+  //       option_field_id: field.field_id,
+  //       option_value: "[1,5]",
+  //       option_order: options.length + 1,
+  //       option_description: "",
+  //     });
+  //   }
+  // }, [optionsWatch, fieldType]);
+
+  // useEffect(() => {
+  //   if (fieldType === "SLIDER") {
+  //     updateChoice(0, {
+  //       option_id: uuidv4(),
+  //       option_field_id: field.field_id,
+  //       option_value: `[${sliderStart},${sliderEnd}]`,
+  //       option_order: options.length + 1,
+  //       option_description: "",
+  //     });
+  //   }
+  // }, [sliderStart, sliderEnd]);
+
   if (!isActive) {
     // const step = 1;
-    // const fieldMin = 1;
-    // const fieldMax = 5;
+    // const fieldMin = sliderStart || 1;
+    // const fieldMax = sliderEnd || 5;
     // const getMarks = () => {
     //   const marks = [];
     //   for (let i = fieldMin; i <= fieldMax; i += step) {
@@ -205,17 +268,12 @@ const Field = ({
       <Box
         role="button"
         aria-label="click to edit field"
-        onClick={() => {
-          if (mode === "edit") setIsActive(true);
-        }}
         className={classes.notActiveContainer}
       >
         {fieldType === "TEXT" && (
           <TextInput
             label={label}
-            className={`${classes.previewField} ${
-              mode === "view" && classes.pointerEventsNone
-            }`}
+            className={classes.previewField}
             withAsterisk={isFieldRequired}
           />
         )}
@@ -224,9 +282,7 @@ const Field = ({
           <NumberInput
             {...field}
             label={label}
-            className={`${classes.previewField} ${
-              mode === "view" && classes.pointerEventsNone
-            }`}
+            className={classes.previewField}
             withAsterisk={isFieldRequired}
             min={0}
             max={999999999999}
@@ -236,9 +292,7 @@ const Field = ({
         {fieldType === "TEXTAREA" && (
           <Textarea
             label={label}
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
+            className={classes.previewField}
             withAsterisk={isFieldRequired}
           />
         )}
@@ -248,24 +302,20 @@ const Field = ({
             {...field}
             label={label}
             data={optionsDropdownData}
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
+            className={classes.previewField}
             style={{ width: "100%" }}
             withAsterisk={isFieldRequired}
             readOnly={mode === "view"}
+            clearable
           />
         )}
 
         {fieldType === "MULTISELECT" && (
           <MultiSelect
             {...field}
-            value={[]}
             label={label}
             data={optionsDropdownData}
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
+            className={classes.previewField}
             style={{ width: "100%" }}
             withAsterisk={isFieldRequired}
             readOnly={mode === "view"}
@@ -273,16 +323,10 @@ const Field = ({
         )}
 
         {/* {fieldType === "SLIDER" && (
-          <Box
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
-            pb="xl"
-          >
+          <Box className={classes.previewField} pb="xl">
             <Text className={classes.sliderLabel}>{label}</Text>
             <Slider
               {...field}
-              className={mode === "view" ? classes.pointerEventsNone : ""}
               pt={16}
               pb={32}
               defaultValue={1}
@@ -293,7 +337,7 @@ const Field = ({
               showLabelOnHover={false}
             />
           </Box>
-        )} */}
+        )}   */}
 
         {fieldType === "DATE" && (
           <DatePickerInput
@@ -301,9 +345,7 @@ const Field = ({
             label={label}
             readOnly={mode === "view"}
             withAsterisk={isFieldRequired}
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
+            className={classes.previewField}
             icon={<IconCalendar size={16} />}
           />
         )}
@@ -312,11 +354,8 @@ const Field = ({
           <Switch
             {...field}
             label={label}
-            checked={false}
             readOnly={mode === "view"}
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
+            className={classes.previewField}
             mt="xs"
             sx={{ label: { cursor: "pointer" } }}
           />
@@ -328,9 +367,7 @@ const Field = ({
             label={label}
             readOnly={mode === "view"}
             withAsterisk={isFieldRequired}
-            className={`${classes.previewField} ${
-              mode === "view" ? classes.pointerEventsNone : ""
-            }`}
+            className={classes.previewField}
             icon={<IconClock size={16} />}
             rightSection={
               <ActionIcon onClick={() => timeInputRef.current?.showPicker()}>
@@ -344,10 +381,13 @@ const Field = ({
   }
 
   return (
-    <Paper ref={ref} shadow="xs" radius="sm" className={classes.paper}>
+    <Paper shadow="xs" radius="sm" className={classes.paper}>
       <ActionIcon
         className={classes.closeIcon}
-        onClick={() => onDelete(fieldIndex)}
+        onClick={() => {
+          onDelete(fieldIndex);
+          onNotActive();
+        }}
         color="red"
       >
         <IconTrash height={16} />
@@ -364,21 +404,22 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
 
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.fields?.[fieldIndex]?.field_name
+                ?.message
+            }
           />
 
           <TextInput
@@ -405,6 +446,11 @@ const Field = ({
               className={classes.checkboxCursor}
             />
           )}
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80} variant="light">
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
 
@@ -414,20 +460,22 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
+
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.fields?.[fieldIndex]?.field_name
+                ?.message
+            }
           />
 
           {options.map((option, optionIndex) => (
@@ -438,13 +486,14 @@ const Field = ({
               <Option
                 label={`Option ${optionIndex + 1}`}
                 {...register(
-                  `sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.option_value`
-                )}
-              />
-              <Option
-                label="Description"
-                {...register(
-                  `sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.option_description`
+                  `sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.option_value`,
+                  {
+                    validate: (value, formValues) =>
+                      value !==
+                        formValues.sections?.[sectionIndex].fields?.[fieldIndex]
+                          .options?.[optionIndex].option_value ||
+                      "Option must be unique",
+                  }
                 )}
               />
             </OptionContainer>
@@ -458,7 +507,7 @@ const Field = ({
               appendChoice({
                 option_id: uuidv4(),
                 option_field_id: field.field_id,
-                option_value: "option",
+                option_value: "",
                 option_order: options.length + 1,
                 option_description: "",
               })
@@ -490,6 +539,11 @@ const Field = ({
             )}
             className={classes.checkboxCursor}
           />
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80} variant="light">
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
 
@@ -499,20 +553,22 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
+
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.fields?.[fieldIndex]?.field_name
+                ?.message
+            }
           />
 
           <TextInput
@@ -525,6 +581,23 @@ const Field = ({
               }
             )}
           />
+
+          <Flex mt="md" gap="md">
+            <NumberInput
+              label="Start"
+              value={sliderStart}
+              onChange={setSliderStart}
+              min={0}
+              max={10}
+            />
+            <NumberInput
+              label="End"
+              value={sliderEnd}
+              min={sliderStart || 0}
+              max={10}
+              onChange={setSliderEnd}
+            />
+          </Flex>
 
           {formType === "REVIEW" && (
             <Checkbox
@@ -539,6 +612,12 @@ const Field = ({
               className={classes.checkboxCursor}
             />
           )}
+
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80} variant="light">
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
 
@@ -548,20 +627,22 @@ const Field = ({
             sectionIndex={sectionIndex}
             fieldIndex={fieldIndex}
             data={typeOptions}
-            onDropdownOpen={() => setIsSelectingFieldType(true)}
-            onDropdownClose={() => {
-              setTimeout(() => setIsSelectingFieldType(false), 100);
-            }}
           />
+
           <TextInput
-            label="Field"
+            label="Name"
             mt={16}
             {...register(
               `sections.${sectionIndex}.fields.${fieldIndex}.field_name`,
               {
+                required: "Field name is required",
                 onChange: (e) => setFieldPrompt(e.target.value),
               }
             )}
+            error={
+              errors.sections?.[sectionIndex]?.fields?.[fieldIndex]?.field_name
+                ?.message
+            }
           />
 
           <TextInput
@@ -586,6 +667,12 @@ const Field = ({
             )}
             className={classes.checkboxCursor}
           />
+
+          <Center mt="md">
+            <Button onClick={() => handleDone()} w={80} variant="light">
+              Done
+            </Button>
+          </Center>
         </Container>
       )}
     </Paper>

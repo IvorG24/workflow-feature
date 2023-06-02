@@ -1,6 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
 import { TEMP_TEAM_MEMBER_ID, TEMP_USER_ID } from "@/utils/dummyData";
 import {
   FormStatusType,
@@ -11,7 +12,7 @@ import { Container, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
@@ -24,11 +25,10 @@ type Props = {
 
 const RequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
-
   const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const requestor = request.request_team_member.team_member_user;
-  const sectionList = request.request_form.form_section;
+
   const signerList = request.request_signer.map((signer) => {
     return {
       ...signer.request_signer_signer,
@@ -47,6 +47,10 @@ const RequestPage = ({ request }: Props) => {
   const isUserSigner = signerList.find(
     (signer) => signer.signer_team_member.team_member_id === TEMP_TEAM_MEMBER_ID
   );
+
+  const originalSectionList = request.request_form.form_section;
+  const sectionWithDuplicateList =
+    generateSectionWithDuplicateList(originalSectionList);
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
@@ -167,28 +171,9 @@ const RequestPage = ({ request }: Props) => {
           requestStatus={requestStatus as FormStatusType}
         />
 
-        {sectionList.map((section, index) => {
-          const duplicateSectionIdList =
-            section.section_field[0].field_response.map(
-              (response) => response.request_response_duplicatable_section_id
-            );
-          // if duplicateSectionIdList is empty, use section_id instead
-          const newSectionIdList =
-            duplicateSectionIdList.length > 0
-              ? duplicateSectionIdList
-              : [section.section_id];
-          return (
-            <React.Fragment key={index}>
-              {newSectionIdList.map((sectionId) => (
-                <RequestSection
-                  key={sectionId}
-                  section={section}
-                  duplicateId={sectionId}
-                />
-              ))}
-            </React.Fragment>
-          );
-        })}
+        {sectionWithDuplicateList.map((section, idx) => (
+          <RequestSection key={section.section_id + idx} section={section} />
+        ))}
 
         <RequestActionSection
           isUserOwner={isUserOwner}

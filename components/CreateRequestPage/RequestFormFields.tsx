@@ -36,7 +36,8 @@ const RequestFormFields = ({
   const timeInputRef = useRef<HTMLInputElement>(null);
 
   const fieldError =
-    errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.message;
+    errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
+      ?.message;
 
   const inputProps = {
     label: field.field_name,
@@ -95,6 +96,7 @@ const RequestFormFields = ({
                 onChange={(value) => onChange(value)}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
+                error={fieldError}
               />
             )}
             rules={{ ...fieldRules }}
@@ -113,6 +115,7 @@ const RequestFormFields = ({
                 {...inputProps}
                 mt="xs"
                 sx={{ label: { cursor: "pointer" } }}
+                error={fieldError}
               />
             )}
             rules={{ ...fieldRules }}
@@ -135,6 +138,8 @@ const RequestFormFields = ({
                 data={dropdownOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
+                clearable
+                error={fieldError}
               />
             )}
             rules={{ ...fieldRules }}
@@ -157,6 +162,7 @@ const RequestFormFields = ({
                 data={multiselectOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
+                error={fieldError}
               />
             )}
             rules={{ ...fieldRules }}
@@ -177,6 +183,7 @@ const RequestFormFields = ({
                   withAsterisk={field.field_is_required}
                   {...inputProps}
                   icon={<IconCalendar size={16} />}
+                  error={fieldError}
                 />
               );
             }}
