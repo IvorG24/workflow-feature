@@ -44,8 +44,8 @@ type Props = {
   formId: string;
   mode?: Mode;
   teamMemberList?: TeamMemberWithUserType[];
-  activeSigner: number | null;
-  onSetActiveSigner: Dispatch<SetStateAction<number | null>>;
+  activeSigner?: number | null;
+  onSetActiveSigner?: Dispatch<SetStateAction<number | null>>;
 } & ContainerProps;
 
 type UseStylesProps = {
@@ -107,7 +107,7 @@ const SignerSection = ({
   };
 
   const handleChangeActiveSigner = (index: number | null) => {
-    onSetActiveSigner(index);
+    if (onSetActiveSigner) onSetActiveSigner(index);
   };
 
   // this is to update the field order when a field is removed
