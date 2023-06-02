@@ -14,13 +14,10 @@ const InputAddRemove = ({ canAdd, canRemove, onAdd, onRemove }: Props) => {
       {canRemove && (
         <ActionIcon
           onClick={onRemove}
-          variant="light"
           size="lg"
           radius={100}
-          sx={(theme) => ({
-            backgroundColor:
-              theme.colorScheme === "dark" ? theme.colors.dark[5] : "#FFFFFF",
-          })}
+          variant="light"
+          color="blue"
         >
           <Text size="lg" fw={700}>
             -
@@ -30,13 +27,10 @@ const InputAddRemove = ({ canAdd, canRemove, onAdd, onRemove }: Props) => {
       {canAdd && (
         <ActionIcon
           onClick={onAdd}
-          variant="light"
           size="lg"
           radius={100}
-          sx={(theme) => ({
-            backgroundColor:
-              theme.colorScheme === "dark" ? theme.colors.dark[5] : "#FFFFFF",
-          })}
+          variant="light"
+          color="blue"
         >
           <Text size="lg" fw={700}>
             +

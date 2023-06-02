@@ -18,6 +18,7 @@ import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
+import { useRouter } from "next/router";
 
 type Props = {
   setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
@@ -31,6 +32,8 @@ const CreateItem = ({
   setItemCount,
 }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
+  const router = useRouter();
+  const formId = router.query.formId as string;
 
   const activeTeam = useActiveTeam();
 
@@ -64,6 +67,7 @@ const CreateItem = ({
           item_unit: data.unit,
           item_team_id: activeTeam.team_id,
         },
+        formId: formId
       });
       setItemList((prev) => {
         prev.unshift(newItem);
