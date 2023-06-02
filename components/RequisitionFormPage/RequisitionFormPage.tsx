@@ -63,6 +63,7 @@ const RequisitionFormPage = ({
       return requestSigner;
     })
   );
+  const [activeSigner, setActiveSigner] = useState<number | null>(null);
 
   const methods = useForm<{
     signers: RequestSigner[];
@@ -177,7 +178,12 @@ const RequisitionFormPage = ({
         <Title order={3}>Signer Details</Title>
         <Space h="xl" />
         <FormProvider {...methods}>
-          <SignerSection teamMemberList={teamMemberList} formId={`${formId}`} />
+          <SignerSection
+            teamMemberList={teamMemberList}
+            formId={`${formId}`}
+            activeSigner={activeSigner}
+            onSetActiveSigner={setActiveSigner}
+          />
         </FormProvider>
 
         {!isEqual(initialSigners, methods.getValues("signers")) ? (

@@ -18,9 +18,13 @@ type RequestReponseProps = {
     value: string;
     options: OptionTableRow[];
   };
+  isRequisitionForm?: boolean;
 };
 
-const RequestResponse = ({ response }: RequestReponseProps) => {
+const RequestResponse = ({
+  response,
+  isRequisitionForm = false,
+}: RequestReponseProps) => {
   const inputProps = {
     variant: "filled",
     readOnly: true,
@@ -137,7 +141,18 @@ const RequestResponse = ({ response }: RequestReponseProps) => {
     }
   };
 
-  return <>{renderResponse(response)}</>;
+  return (
+    <>
+      {!isRequisitionForm ? renderResponse(response) : null}
+      {isRequisitionForm ? (
+        <TextInput
+          label={response.label}
+          value={JSON.parse(response.value)}
+          {...inputProps}
+        />
+      ) : null}
+    </>
+  );
 };
 
 export default RequestResponse;
