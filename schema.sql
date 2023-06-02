@@ -116,6 +116,7 @@ CREATE TABLE signer_table (
   signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
   signer_action VARCHAR(4000) NOT NULL,
   signer_order INT NOT NULL,
+  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
   signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL

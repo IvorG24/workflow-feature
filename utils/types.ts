@@ -332,7 +332,7 @@ export type FormType = {
     signer_id: string;
     signer_is_primary_signer: boolean;
     signer_action: string;
-    signer_order: boolean;
+    signer_order: number;
     signer_team_member: {
       team_member_id: string;
       team_member_user: {
@@ -368,7 +368,7 @@ export type FormWithResponseType = {
     signer_id: string;
     signer_is_primary_signer: boolean;
     signer_action: string;
-    signer_order: boolean;
+    signer_order: number;
     signer_team_member: {
       team_member_id: string;
       team_member_user: {

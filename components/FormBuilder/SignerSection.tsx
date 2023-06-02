@@ -14,14 +14,13 @@ import {
   Text,
   ThemeIcon,
   createStyles,
-  useMantineTheme,
 } from "@mantine/core";
 import {
   IconCircleDashed,
   IconCirclePlus,
-  IconSettings,
+  IconTrash,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
@@ -45,6 +44,8 @@ type Props = {
   formId: string;
   mode?: Mode;
   teamMemberList?: TeamMemberWithUserType[];
+  activeSigner?: number | null;
+  onSetActiveSigner?: Dispatch<SetStateAction<number | null>>;
 } & ContainerProps;
 
 type UseStylesProps = {
@@ -74,12 +75,13 @@ const SignerSection = ({
   mode = "edit",
   teamMemberList = [],
   formId,
+  activeSigner,
+  onSetActiveSigner,
   ...props
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext<FormBuilderData>();
-  const [activeSigner, setActiveSigner] = useState<number | null>(null);
-  const { colorScheme } = useMantineTheme();
+
   const [signerList, setSignerList] = useState<string[]>([]);
 
   const {
@@ -105,7 +107,7 @@ const SignerSection = ({
   };
 
   const handleChangeActiveSigner = (index: number | null) => {
-    setActiveSigner(index);
+    if (onSetActiveSigner) onSetActiveSigner(index);
   };
 
   // this is to update the field order when a field is removed
@@ -135,7 +137,13 @@ const SignerSection = ({
         >
           <Space h="xs" />
           {signers.map((signer, signerIndex) => (
-            <Flex align="center" key={signer.id} w="100%" mt="xs">
+            <Flex
+              align="center"
+              gap="md"
+              key={signer.id}
+              w="100%"
+              mt={activeSigner === signerIndex ? "xs" : 0}
+            >
               <Box w="100%">
                 <SignerForm
                   signerIndex={signerIndex}
@@ -154,14 +162,13 @@ const SignerSection = ({
               </Box>
               {activeSigner === null && (
                 <ActionIcon
-                  onClick={() => handleChangeActiveSigner(signerIndex)}
+                  onClick={() => removeSigner(signerIndex)}
+                  variant="light"
                   mt="sm"
+                  color="red"
+                  size="sm"
                 >
-                  <IconSettings
-                    color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
-                    size={18}
-                    stroke={1.5}
-                  />
+                  <IconTrash size={14} stroke={1.5} />
                 </ActionIcon>
               )}
             </Flex>
@@ -183,6 +190,7 @@ const SignerSection = ({
               });
               handleChangeActiveSigner(signers.length);
             }}
+            disabled={activeSigner !== null}
             size="xs"
             mt={signers.length > 0 ? 32 : 64}
             leftIcon={<IconCirclePlus height={16} />}

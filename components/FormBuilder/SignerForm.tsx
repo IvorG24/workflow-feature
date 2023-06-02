@@ -4,7 +4,7 @@ import {
   Autocomplete,
   Box,
   Button,
-  ButtonProps,
+  Center,
   Checkbox,
   Chip,
   Container,
@@ -16,7 +16,7 @@ import {
   Select,
 } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
-import { Dispatch, MouseEventHandler, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FormBuilderData } from "./FormBuilder";
 import { Mode } from "./Section";
@@ -102,7 +102,7 @@ const SignerForm = ({
     };
   });
 
-  const handleSave = () => {
+  const handleDone = () => {
     if (signerUserId.length <= 0) {
       setError(`signers.${signerIndex}.signer_team_member_id`, {
         message: "Signer is required",
@@ -222,34 +222,14 @@ const SignerForm = ({
           className={classes.checkboxCursor}
         />
 
-        <FieldAddAndCancel
-          onCancel={() => alert("cancel")}
-          onSave={() => handleSave()}
-        />
+        <Center mt="md">
+          <Button onClick={() => handleDone()} w={80} variant="light">
+            Done
+          </Button>
+        </Center>
       </Container>
     </Paper>
   );
 };
 
 export default SignerForm;
-
-type FieldAddAndCancelProps = {
-  onCancel: MouseEventHandler<HTMLButtonElement>;
-  onSave: MouseEventHandler<HTMLButtonElement>;
-} & ButtonProps;
-
-export const FieldAddAndCancel = ({
-  onCancel,
-  onSave,
-}: FieldAddAndCancelProps) => {
-  return (
-    <Flex mt="xl" justify="center" gap="xl">
-      <Button onClick={onCancel} variant="light" w={80}>
-        Cancel
-      </Button>
-      <Button onClick={onSave} w={80}>
-        Save
-      </Button>
-    </Flex>
-  );
-};
