@@ -15,12 +15,16 @@ type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
   onRemoveSection: (sectionDuplicatableId: string) => void;
+  requisitionFormMethods?: {
+    onGeneralNameChange: (index: number, value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
   section,
   sectionIndex,
   onRemoveSection,
+  requisitionFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -53,6 +57,7 @@ const RequestFormSection = ({
             }}
             sectionIndex={sectionIndex}
             fieldIndex={idx}
+            requisitionFormMethods={requisitionFormMethods}
           />
         ))}
       </Stack>
