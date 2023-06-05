@@ -1,4 +1,4 @@
-import { RFDataType } from "@/pages/team-requests/forms/[formId]/data";
+import { RFDataType } from "@/pages/team-requests/forms/[formId]/analytics";
 import { Box, Container, Tabs, Text } from "@mantine/core";
 import { IconTrendingUp, IconUser, IconUsers } from "@tabler/icons-react";
 import moment from "moment";

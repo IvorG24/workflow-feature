@@ -10,6 +10,7 @@ import {
   Center,
   Container,
   Flex,
+  Group,
   Paper,
   Space,
   Text,
@@ -131,11 +132,21 @@ const RequisitionFormPage = ({
         <Title order={2} color="dimmed">
           Form Preview
         </Title>
-        <Button
-          onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
-        >
-          Create Request
-        </Button>
+        <Group>
+          <Button
+            onClick={() =>
+              router.push(`/team-requests/forms/${formId}/analytics`)
+            }
+            variant="light"
+          >
+            Analytics
+          </Button>
+          <Button
+            onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
+          >
+            Create Request
+          </Button>
+        </Group>
       </Flex>
       <Space h="xl" />
       <FormDetailsSection form={newForm} />
