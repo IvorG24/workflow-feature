@@ -106,7 +106,13 @@ const ItemDescriptionFieldTable = ({
           limit: ROW_PER_PAGE,
         }
       );
-      setRecords(data);
+      const newData = data.map((data) => {
+        return {
+          ...data,
+          id: data.item_description_field_id,
+        };
+      });
+      setRecords(newData);
       setCount(Number(count));
     } catch {
       showNotification({
@@ -153,13 +159,14 @@ const ItemDescriptionFieldTable = ({
 
   const handleUpdateStatus = async (fieldId: string, value: boolean) => {
     const savedRecords = records;
+
     try {
       setRecords((prev) =>
         prev.map((field) => {
           if (field.item_description_field_id !== fieldId) return field;
           return {
             ...field,
-            item_description_is_available: value,
+            item_description_field_is_available: value,
           };
         })
       );
@@ -282,7 +289,7 @@ const ItemDescriptionFieldTable = ({
           },
           { accessor: "item_description_field_value", title: "Value" },
           {
-            accessor: "status",
+            accessor: "item_description_field_is_available",
             title: "Status",
             textAlignment: "center",
             render: ({

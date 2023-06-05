@@ -4,7 +4,6 @@ import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetail
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
@@ -49,7 +48,7 @@ const CreateRequisitionRequestPage = ({
   const teamMemberId = useUserTeamMemberId();
 
   const requestorProfile = useUserProfile();
-  const team = useActiveTeam();
+
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
@@ -163,8 +162,7 @@ const CreateRequisitionRequestPage = ({
 
     if (value) {
       const item = await getItem(supabaseClient, {
-        teamId: team.team_id,
-        itemName: value,
+        itemId: value,
       });
       const generalField = [
         {

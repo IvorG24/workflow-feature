@@ -128,7 +128,9 @@ const RequestFormFields = ({
 
       case "DROPDOWN":
         const dropdownOption = field.options.map((option) => ({
-          value: option.option_value,
+          value: requisitionFormMethods
+            ? option.option_id
+            : option.option_value,
           label: option.option_value,
         }));
         return (
@@ -152,6 +154,7 @@ const RequestFormFields = ({
                 {...inputProps}
                 clearable
                 error={fieldError}
+                searchable={Boolean(requisitionFormMethods)}
               />
             )}
             rules={{ ...fieldRules }}

@@ -23,9 +23,10 @@ import { useState } from "react";
 
 type Props = {
   form: FormType;
+  formVisibilityRestriction?: () => Promise<string | boolean | undefined>;
 };
 
-const FormDetailsSection = ({ form }: Props) => {
+const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const creator = form.form_team_member.team_member_user;
   const router = useRouter();
@@ -99,9 +100,24 @@ const FormDetailsSection = ({ form }: Props) => {
       <Group spacing="md" mt="xl">
         <Switch
           checked={!isHidden}
-          onChange={(event) =>
-            handleToggleVisibility(event.currentTarget.checked)
-          }
+          onChange={async (event) => {
+            if (
+              formVisibilityRestriction &&
+              event.currentTarget.checked === true
+            ) {
+              const result = await formVisibilityRestriction();
+              if (result === true) {
+                handleToggleVisibility(true);
+              } else {
+                notifications.show({
+                  message: result,
+                  color: "orange",
+                });
+              }
+            } else {
+              handleToggleVisibility(event.currentTarget.checked);
+            }
+          }}
           label="Form visibility"
           size="sm"
           sx={{ label: { cursor: "pointer" } }}

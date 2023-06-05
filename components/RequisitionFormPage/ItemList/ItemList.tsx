@@ -140,6 +140,8 @@ const ItemList = ({
         table: "item",
       });
 
+      setSelectedItem(null);
+
       showNotification({
         title: "Success!",
         message: "Item/s deleted",
