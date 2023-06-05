@@ -20,10 +20,11 @@ export type UpdateTeamInfoForm = {
   teamLogo: string;
 };
 
-const TeamPage = ({ team }: Props) => {
+const TeamPage = ({ team: initialTeam }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
   const teamList = useTeamList();
+  const [team, setTeam] = useState<TeamWithTeamMemberType>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
@@ -70,6 +71,21 @@ const TeamPage = ({ team }: Props) => {
         }
       });
       setTeamList(newTeamList);
+
+      updateTeamMethods.reset({
+        teamName,
+        teamLogo: imageUrl ? imageUrl : team.team_logo,
+      });
+
+      setTeam((team) => {
+        return {
+          ...team,
+          team_name: teamName,
+          team_logo: imageUrl ? imageUrl : team.team_logo,
+        };
+      });
+
+      setTeamLogo(null);
 
       notifications.show({
         title: "Success!",
