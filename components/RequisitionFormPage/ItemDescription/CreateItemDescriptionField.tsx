@@ -1,3 +1,4 @@
+import { checkItemDescription } from "@/backend/api/get";
 import { createItemDescriptionField } from "@/backend/api/post";
 import { Database } from "@/utils/database";
 import {
@@ -92,6 +93,18 @@ const CreateItemDescriptionField = ({
                 maxLength: {
                   message: "Value must be shorter than 500 characters",
                   value: 500,
+                },
+                validate: {
+                  duplicate: async (value) => {
+                    const isExisting = await checkItemDescription(
+                      supabaseClient,
+                      {
+                        itemDescription: value,
+                        descriptionId: descriptionId,
+                      }
+                    );
+                    return isExisting ? "Value already exists" : true;
+                  },
                 },
               })}
               withAsterisk

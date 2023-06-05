@@ -509,6 +509,25 @@ export const getItemList = async (
   };
 };
 
+// Get all items
+export const getAllItems = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select("*, item_description: item_description_table(*)")
+    .eq("item_team_id", teamId)
+    .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
+    .order("item_general_name", { ascending: false });
+
+  if (error) throw error;
+
+  return data;
+};
+
 // Get item description list
 export const getItemDescriptionList = async (
   supabaseClient: SupabaseClient<Database>,
@@ -598,6 +617,7 @@ export const getItem = async (
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)
+    .eq("item_is_disabled", false)
     .eq("item_description.item_description_is_disabled", false)
     .eq(
       "item_description.item_description_field.item_description_field_is_disabled",
@@ -607,4 +627,74 @@ export const getItem = async (
   if (error) throw error;
 
   return data as ItemWithDecsriptionAndField;
+};
+
+// check if requisition form can be activated
+export const checkRequisitionFormStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; formId: string }
+) => {
+  const { teamId, formId } = params;
+
+  const { count: itemCount, error: itemError } = await supabaseClient
+    .from("item_table")
+    .select("*", { count: "exact", head: true })
+    .eq("item_team_id", teamId)
+    .eq("item_is_available", true)
+    .eq("item_is_disabled", false);
+
+  if (itemError) throw itemError;
+
+  if (!itemCount) {
+    return "There must be at least one available item" as string;
+  }
+
+  const { count: signerCount, error: signerError } = await supabaseClient
+    .from("signer_table")
+    .select("*", { count: "exact", head: true })
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false)
+    .eq("signer_is_primary_signer", true);
+  if (signerError) throw signerError;
+  if (!signerCount) {
+    return "You need to add a primary signer first" as string;
+  }
+
+  return true as boolean;
+};
+
+// check if item name already exists
+export const checkItemName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { itemName: string; teamId: string }
+) => {
+  const { itemName, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("item_table")
+    .select("*", { count: "exact", head: true })
+    .eq("item_general_name", itemName)
+    .eq("item_is_disabled", false)
+    .eq("item_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// check if item description already exists
+export const checkItemDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { itemDescription: string; descriptionId: string }
+) => {
+  const { itemDescription, descriptionId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("item_description_field_table")
+    .select("*", { count: "exact", head: true })
+    .eq("item_description_field_value", itemDescription)
+    .eq("item_description_field_is_disabled", false)
+    .eq("item_description_field_item_description_id", descriptionId);
+  if (error) throw error;
+
+  return Boolean(count);
 };

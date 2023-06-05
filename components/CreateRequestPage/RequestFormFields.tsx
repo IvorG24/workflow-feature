@@ -152,6 +152,7 @@ const RequestFormFields = ({
                 {...inputProps}
                 clearable
                 error={fieldError}
+                searchable={Boolean(requisitionFormMethods)}
               />
             )}
             rules={{ ...fieldRules }}
