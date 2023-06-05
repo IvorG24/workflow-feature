@@ -1,8 +1,7 @@
-import { getForm, getItemList, getUserActiveTeamId } from "@/backend/api/get";
+import { getAllItems, getForm, getUserActiveTeamId } from "@/backend/api/get";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
 import Meta from "@/components/Meta/Meta";
-import { ROW_PER_PAGE } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -25,10 +24,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         userId: TEMP_USER_ID,
       });
 
-      const { data: items } = await getItemList(supabaseClient, {
+      const items = await getAllItems(supabaseClient, {
         teamId: teamId,
-        page: 1,
-        limit: ROW_PER_PAGE,
       });
 
       const options = items.map((item, index) => {

@@ -36,9 +36,7 @@ const ItemDescriptionField = ({ description }: Props) => {
         <CreateItemDescriptionField
           setIsCreating={setIsCreating}
           setItemDescriptionFieldList={setItemDescriptionFieldList}
-          setsetItemDecsriptionFieldCount={
-            setsetItemDecsriptionFieldCount
-          }
+          setsetItemDecsriptionFieldCount={setsetItemDecsriptionFieldCount}
           label={description.item_description_label}
           descriptionId={description.item_description_id}
         />

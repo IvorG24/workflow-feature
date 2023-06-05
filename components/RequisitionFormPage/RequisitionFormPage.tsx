@@ -1,4 +1,6 @@
+import { checkRequisitionFormStatus } from "@/backend/api/get";
 import { updateFormSigner } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
@@ -10,6 +12,7 @@ import {
   Center,
   Container,
   Flex,
+  Group,
   Paper,
   Space,
   Text,
@@ -43,6 +46,7 @@ const RequisitionFormPage = ({
   const router = useRouter();
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const { formId } = router.query;
+  const team = useActiveTeam();
 
   const [isCreatingItem, setIsCreatingItem] = useState(false);
   const [selectedItem, setSelectedItem] =
@@ -125,20 +129,48 @@ const RequisitionFormPage = ({
     setIsSavingSigner(false);
   };
 
+  const handleFormVisibilityRestriction = async () => {
+    try {
+      const result = await checkRequisitionFormStatus(supabaseClient, {
+        teamId: team.team_id,
+        formId: `${formId}`,
+      });
+      return result;
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <Container>
       <Flex justify="space-between">
         <Title order={2} color="dimmed">
           Form Preview
         </Title>
-        <Button
-          onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
-        >
-          Create Request
-        </Button>
+        <Group>
+          <Button
+            onClick={() =>
+              router.push(`/team-requests/forms/${formId}/analytics`)
+            }
+            variant="light"
+          >
+            Analytics
+          </Button>
+          <Button
+            onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
+          >
+            Create Request
+          </Button>
+        </Group>
       </Flex>
       <Space h="xl" />
-      <FormDetailsSection form={newForm} />
+      <FormDetailsSection
+        form={newForm}
+        formVisibilityRestriction={handleFormVisibilityRestriction}
+      />
       <Space h="xl" />
       <Paper p="xl" shadow="xs">
         {!isCreatingItem ? (
