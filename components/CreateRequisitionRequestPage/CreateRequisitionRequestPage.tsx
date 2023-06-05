@@ -4,6 +4,7 @@ import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetail
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
@@ -46,6 +47,7 @@ const CreateRequisitionRequestPage = ({
   const formId = router.query.formId as string;
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const teamMemberId = useUserTeamMemberId();
+  const team = useActiveTeam();
 
   const requestorProfile = useUserProfile();
 
@@ -162,7 +164,8 @@ const CreateRequisitionRequestPage = ({
 
     if (value) {
       const item = await getItem(supabaseClient, {
-        itemId: value,
+        teamId: team.team_id,
+        itemName: value,
       });
       const generalField = [
         {

@@ -1,3 +1,4 @@
+import { checkItemName } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
@@ -15,10 +16,10 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
-import { useRouter } from "next/router";
 
 type Props = {
   setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
@@ -67,7 +68,7 @@ const CreateItem = ({
           item_unit: data.unit,
           item_team_id: activeTeam.team_id,
         },
-        formId: formId
+        formId: formId,
       });
       setItemList((prev) => {
         prev.unshift(newItem);
@@ -112,6 +113,15 @@ const CreateItem = ({
                   message: "General Name must be shorter than 500 characters",
                   value: 500,
                 },
+                validate: {
+                  duplicate: async (value) => {
+                    const isExisting = await checkItemName(supabaseClient, {
+                      itemName: value,
+                      teamId: activeTeam.team_id,
+                    });
+                    return isExisting ? "Item already exists" : true;
+                  },
+                },
               })}
               withAsterisk
               w="100%"
@@ -122,7 +132,7 @@ const CreateItem = ({
               {...register("unit", {
                 required: { message: "Unit is required", value: true },
                 maxLength: {
-                  message: "Unmit must be shorter than 500 characters",
+                  message: "Unit must be shorter than 500 characters",
                   value: 500,
                 },
               })}
