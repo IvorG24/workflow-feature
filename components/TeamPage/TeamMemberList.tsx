@@ -52,7 +52,30 @@ const TeamMemberList = ({
 
   const { register, handleSubmit } = useFormContext<SearchTeamMemberForm>();
 
-  const rows = team.team_member.map((member) => {
+  const sortByRole = (
+    members: TeamWithTeamMemberType["team_member"]
+  ): TeamWithTeamMemberType["team_member"] => {
+    const roleOrder: Record<string, number> = {
+      OWNER: 1,
+      ADMIN: 2,
+      MEMBER: 3,
+    };
+
+    return members.sort((a, b) => {
+      const roleA = roleOrder[a.team_member_role] || Infinity;
+      const roleB = roleOrder[b.team_member_role] || Infinity;
+
+      if (roleA === roleB) {
+        return a.team_member_user.user_first_name.localeCompare(
+          b.team_member_user.user_first_name
+        );
+      }
+
+      return roleA - roleB;
+    });
+  };
+
+  const rows = sortByRole(team.team_member).map((member) => {
     const { team_member_role: role, team_member_user: user } = member;
     const fullname = `${user.user_first_name} ${user.user_last_name}`;
     return (
