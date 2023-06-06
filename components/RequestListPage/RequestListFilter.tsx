@@ -12,6 +12,7 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
+import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues } from "./RequestListPage";
 
@@ -19,6 +20,12 @@ type RequestListFilterProps = {
   requestList: RequestType[];
   teamMemberList: TeamMemberWithUserType[];
   handleFilterForms: () => void;
+};
+
+type FilterSelectedValuesType = {
+  formFilter: string[];
+  statusFilter: string[];
+  requestorFilter: string[];
 };
 
 const RequestListFilter = ({
@@ -34,10 +41,15 @@ const RequestListFilter = ({
     searchable: true,
     nothingFound: "Nothing found",
   };
-
   const { ref: requestorRef, focused: requestorRefFocused } = useFocusWithin();
   const { ref: formRef, focused: formRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
+  const [filterSelectedValues, setFilterSelectedValues] =
+    useState<FilterSelectedValuesType>({
+      formFilter: [],
+      statusFilter: [],
+      requestorFilter: [],
+    });
 
   const memberList = teamMemberList.map((member) => ({
     value: member.team_member_id,
@@ -66,6 +78,17 @@ const RequestListFilter = ({
 
   const { register, getValues, control, setValue } =
     useFormContext<FilterFormValues>();
+
+  const handleFilterChange = async (
+    key: keyof FilterSelectedValuesType,
+    value: string[]
+  ) => {
+    const filterMatch = filterSelectedValues[`${key}`];
+    if (value !== filterMatch) {
+      handleFilterForms();
+    }
+    setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
+  };
 
   return (
     <Group>
@@ -119,9 +142,9 @@ const RequestListFilter = ({
             value={value}
             onChange={(value) => {
               onChange(value);
-              if (!formRefFocused) handleFilterForms();
+              if (!formRefFocused) handleFilterChange("formFilter", value);
             }}
-            onDropdownClose={() => handleFilterForms()}
+            onDropdownClose={() => handleFilterChange("formFilter", value)}
             {...inputFilterProps}
           />
         )}
@@ -138,9 +161,10 @@ const RequestListFilter = ({
             value={value}
             onChange={(value) => {
               onChange(value);
-              if (!requestorRefFocused) handleFilterForms();
+              if (!requestorRefFocused)
+                handleFilterChange("requestorFilter", value);
             }}
-            onDropdownClose={() => handleFilterForms()}
+            onDropdownClose={() => handleFilterChange("requestorFilter", value)}
             {...inputFilterProps}
           />
         )}
@@ -153,13 +177,15 @@ const RequestListFilter = ({
           <MultiSelect
             data={statusList}
             placeholder="Status"
-            value={value}
-            onChange={async (value) => {
-              onChange(value);
-              if (!statusRefFocused) handleFilterForms();
-            }}
             ref={statusRef}
-            onDropdownClose={() => handleFilterForms()}
+            value={value}
+            onChange={(value) => {
+              onChange(value);
+              if (!statusRefFocused) handleFilterChange("statusFilter", value);
+            }}
+            onDropdownClose={() =>
+              handleFilterChange("statusFilter", value as string[])
+            }
             {...inputFilterProps}
           />
         )}
