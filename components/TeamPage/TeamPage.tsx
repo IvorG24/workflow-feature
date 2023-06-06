@@ -8,11 +8,12 @@ import {
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import { MemberRoleType, TeamWithTeamMemberType } from "@/utils/types";
-import { Container, Title } from "@mantine/core";
+import { Container, Space, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import InviteMember from "./InviteMember";
 import TeamInfoForm from "./TeamInfoForm";
 import TeamMemberList from "./TeamMemberList";
 
@@ -37,8 +38,15 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
   const [team, setTeam] = useState<TeamWithTeamMemberType>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
+  const [isInvitingMember, setIsInvitingMember] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
+
+  const [emailList, setEmailList] = useState<string[]>([]);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
+
+  const memberEmailList = team.team_member.map(
+    (member) => member.team_member_user.user_email
+  );
 
   const updateTeamMethods = useForm<UpdateTeamInfoForm>({
     defaultValues: { teamName: team.team_name, teamLogo: team.team_logo },
@@ -121,14 +129,8 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
   };
 
   const handleInvite = async () => {
-    const emailList = [
-      "member1@gmail.com",
-      "member2@gmail.com",
-      "member3@gmail.com",
-    ];
-
     try {
-      setIsUpdatingTeamMembers(true);
+      setIsInvitingMember(true);
       const invitationData = emailList.map((email) => {
         return {
           invitation_from_team_member_id: teamMemberId,
@@ -137,6 +139,7 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
       });
       await createTeamInvitation(supabaseClient, invitationData);
 
+      setEmailList([]);
       notifications.show({
         title: "Success!",
         message: "Successfully invited team member/s",
@@ -149,7 +152,7 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
         color: "red",
       });
     } finally {
-      setIsUpdatingTeamMembers(false);
+      setIsInvitingMember(false);
     }
   };
 
@@ -299,6 +302,16 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
           onTransferOwnership={handleTransferOwnership}
         />
       </FormProvider>
+
+      <InviteMember
+        isInvitingMember={isInvitingMember}
+        onInviteMember={handleInvite}
+        onSetEmailList={setEmailList}
+        memberEmailList={memberEmailList}
+        emailList={emailList}
+      />
+
+      <Space mt={32} />
     </Container>
   );
 };
