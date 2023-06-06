@@ -47,9 +47,10 @@ const CreateRequisitionRequestPage = ({
   const formId = router.query.formId as string;
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const teamMemberId = useUserTeamMemberId();
+  const team = useActiveTeam();
 
   const requestorProfile = useUserProfile();
-  const team = useActiveTeam();
+
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {

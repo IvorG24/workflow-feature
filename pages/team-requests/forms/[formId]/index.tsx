@@ -47,8 +47,15 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         }
       );
 
+      const newItems = items.map((item) => {
+        return {
+          id: item.item_id,
+          ...item,
+        };
+      });
+
       return {
-        props: { form, items, itemsCount, teamMemberList },
+        props: { form, items: newItems, itemsCount, teamMemberList },
       };
     }
 
