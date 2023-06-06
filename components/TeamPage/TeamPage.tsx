@@ -124,8 +124,10 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
     }
   };
 
+  // todo: fetch team members with keyword
   const handleSearchTeamMember = async (data: SearchTeamMemberForm) => {
-    console.log(data);
+    const { keyword } = data;
+    console.log(keyword);
   };
 
   const handleInvite = async () => {
