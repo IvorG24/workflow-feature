@@ -1,8 +1,4 @@
-import {
-  AppType,
-  SectionWithField,
-  TeamWithTeamMemberType,
-} from "@/utils/types";
+import { AppType, SectionWithField, TeamMemberType } from "@/utils/types";
 import { Container as MantineContainer } from "@mantine/core";
 import { ReactNode } from "react";
 import ApproverButtons from "./ApproverButtons";
@@ -26,7 +22,7 @@ export type FormBuilderData = {
   formName: string;
   formDescription: string;
   formType: AppType;
-  revieweeList: TeamWithTeamMemberType[] | null;
+  revieweeList: TeamMemberType[] | null;
   sections: SectionWithField[];
   signers: RequestSigner[];
   isSignatureRequired: boolean;

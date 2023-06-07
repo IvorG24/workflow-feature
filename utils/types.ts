@@ -213,7 +213,7 @@ export type RequestWithResponseType = RequestTableRow & {
     formId: string;
     form_name: string;
     form_description: string;
-    form_is_formsly_form: boolean;  
+    form_is_formsly_form: boolean;
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_option: OptionTableRow[];
@@ -272,25 +272,16 @@ export type RequestWithResponseType = RequestTableRow & {
   }[];
 };
 
-export type TeamWithTeamMemberType = {
-  team_id: string;
-  team_name: string;
-  team_is_request_signature_required: boolean;
-  team_logo: string;
-  team_user_id: string;
-  team_member: {
-    team_member_id: string;
-    team_member_role: MemberRoleType;
-    team_member_user: {
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_email: string;
-      user_job_title: string;
-      user_phone_number: string;
-      user_avatar: string;
-    };
-  }[];
+export type TeamMemberType = {
+  team_member_id: string;
+  team_member_role: MemberRoleType;
+  team_member_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
+    user_email: string;
+  };
 };
 
 export type FormWithOwnerType = FormTableRow & {
