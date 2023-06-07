@@ -55,6 +55,7 @@ const InviteMember = ({
           <Flex direction={{ base: "column", sm: "row" }} gap={12}>
             <MultiSelect
               data={emailListData}
+              value={emailListData.map((email) => email.value)}
               placeholder="juandelacruz@email.ph"
               searchable
               creatable

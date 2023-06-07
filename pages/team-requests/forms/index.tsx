@@ -1,6 +1,6 @@
 import {
+  getAllTeamMembers,
   getFormListWithFilter,
-  getTeamMemberList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
@@ -25,7 +25,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       limit: DEFAULT_FORM_LIST_LIMIT,
     });
 
-    const teamMemberList = await getTeamMemberList(supabaseClient, {
+    const teamMemberList = await getAllTeamMembers(supabaseClient, {
       teamId,
     });
 

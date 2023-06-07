@@ -1,7 +1,7 @@
-import { useUserStore } from "@/stores/useUserStore";
+import { useUserTeamMemberId } from "@/stores/useUserStore";
 import { DEFAULT_TEAM_MEMBER_LIST_LIMIT } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
-import { MemberRoleType, TeamWithTeamMemberType } from "@/utils/types";
+import { MemberRoleType, TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -18,43 +18,43 @@ import {
 } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
 import { lowerCase, startCase } from "lodash";
-import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import TeamMemberMenu from "./TeamMemberMenu";
 import { SearchTeamMemberForm } from "./TeamPage";
 
 type Props = {
-  team: TeamWithTeamMemberType;
+  teamMemberList: TeamMemberType[];
   isUpdatingTeamMembers: boolean;
   onSearchTeamMember: (data: SearchTeamMemberForm) => void;
   onRemoveFromTeam: (memberId: string) => void;
   onUpdateMemberRole: (memberId: string, role: MemberRoleType) => void;
   onTransferOwnership: (ownerId: string, memberId: string) => void;
+  page: number;
+  handlePageChange: (page: number) => void;
 };
 
 const TeamMemberList = ({
-  team,
+  teamMemberList,
   isUpdatingTeamMembers,
   onSearchTeamMember,
   onRemoveFromTeam,
   onUpdateMemberRole,
   onTransferOwnership,
+  page,
+  handlePageChange,
 }: Props) => {
-  const [page, setPage] = useState(1);
   const totalPage = Math.ceil(
-    team.team_member.length / DEFAULT_TEAM_MEMBER_LIST_LIMIT
+    teamMemberList.length / DEFAULT_TEAM_MEMBER_LIST_LIMIT
   );
 
-  const { userProfile } = useUserStore();
-  const authUser = team.team_member?.find(
-    (member) => member.team_member_user.user_id === userProfile?.user_id
-  ) as TeamWithTeamMemberType["team_member"][0];
+  const teamMemberId = useUserTeamMemberId();
+  const authUser = teamMemberList.find(
+    (member) => member.team_member_id === teamMemberId
+  ) as TeamMemberType;
 
   const { register, handleSubmit } = useFormContext<SearchTeamMemberForm>();
 
-  const sortByRole = (
-    members: TeamWithTeamMemberType["team_member"]
-  ): TeamWithTeamMemberType["team_member"] => {
+  const sortByRole = (members: TeamMemberType[]): TeamMemberType[] => {
     const roleOrder: Record<string, number> = {
       OWNER: 1,
       ADMIN: 2,
@@ -75,42 +75,45 @@ const TeamMemberList = ({
     });
   };
 
-  const rows = sortByRole(team.team_member).map((member) => {
-    const { team_member_role: role, team_member_user: user } = member;
-    const fullname = `${user.user_first_name} ${user.user_last_name}`;
-    return (
-      <tr key={user.user_id}>
-        <td>
-          <Group>
-            <Avatar
-              color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
-              src={user.user_avatar}
-              alt="Member avatar"
-              size={24}
-              radius={12}
-            >
-              {startCase(user.user_first_name[0])}
-              {startCase(user.user_first_name[1])}
-            </Avatar>
+  const start = (page - 1) * DEFAULT_TEAM_MEMBER_LIST_LIMIT;
+  const rows = sortByRole(teamMemberList)
+    .slice(start, start + DEFAULT_TEAM_MEMBER_LIST_LIMIT)
+    .map((member) => {
+      const { team_member_role: role, team_member_user: user } = member;
+      const fullname = `${user.user_first_name} ${user.user_last_name}`;
+      return (
+        <tr key={user.user_id}>
+          <td>
+            <Group>
+              <Avatar
+                color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
+                src={user.user_avatar}
+                alt="Member avatar"
+                size={24}
+                radius={12}
+              >
+                {startCase(user.user_first_name[0])}
+                {startCase(user.user_last_name[0])}
+              </Avatar>
 
-            <Text>{startCase(fullname)}</Text>
-          </Group>
-        </td>
+              <Text>{startCase(fullname)}</Text>
+            </Group>
+          </td>
 
-        <td>{startCase(lowerCase(role))}</td>
+          <td>{startCase(lowerCase(role))}</td>
 
-        <td>
-          <TeamMemberMenu
-            member={member}
-            authUser={authUser}
-            onUpdateMemberRole={onUpdateMemberRole}
-            onRemoveFromTeam={onRemoveFromTeam}
-            onTransferOwnership={onTransferOwnership}
-          />
-        </td>
-      </tr>
-    );
-  });
+          <td>
+            <TeamMemberMenu
+              member={member}
+              authUser={authUser}
+              onUpdateMemberRole={onUpdateMemberRole}
+              onRemoveFromTeam={onRemoveFromTeam}
+              onTransferOwnership={onTransferOwnership}
+            />
+          </td>
+        </tr>
+      );
+    });
 
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
@@ -154,7 +157,7 @@ const TeamMemberList = ({
 
           <Pagination
             value={page}
-            onChange={setPage}
+            onChange={handlePageChange}
             total={totalPage}
             size="sm"
             sx={{ alignSelf: "flex-end" }}

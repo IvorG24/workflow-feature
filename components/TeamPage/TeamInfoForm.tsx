@@ -1,5 +1,5 @@
 import { isValidTeamName } from "@/utils/string";
-import { TeamWithTeamMemberType } from "@/utils/types";
+import { TeamTableRow } from "@/utils/types";
 import {
   Button,
   Container,
@@ -18,7 +18,7 @@ import UploadAvatar from "../UploadAvatar/UploadAvatar";
 import { UpdateTeamInfoForm } from "./TeamPage";
 
 type Props = {
-  team: TeamWithTeamMemberType;
+  team: TeamTableRow;
   isUpdatingTeam: boolean;
   onUpdateTeam: (data: UpdateTeamInfoForm) => void;
   teamLogoFile: File | null;
