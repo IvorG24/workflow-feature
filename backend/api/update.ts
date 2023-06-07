@@ -117,7 +117,8 @@ export const approveOrRejectRequest = async (
   const { error: updateSignerError } = await supabaseClient
     .from("request_signer_table")
     .update({ request_signer_status: requestAction })
-    .eq("request_signer_id", requestSignerId);
+    .eq("request_signer_signer_id", requestSignerId)
+    .eq("request_signer_request_id", requestId);
   if (updateSignerError) throw updateSignerError;
 
   // create comment

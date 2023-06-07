@@ -13,6 +13,15 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       requestId: `${ctx.query.requestId}`,
     });
 
+    if(!request){
+      return {
+        redirect: {
+          destination: "/404",
+          permanent: false,
+        },
+      };
+    }
+
     return {
       props: { request },
     };

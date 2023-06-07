@@ -1,8 +1,9 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useUserTeamMemberId } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
-import { TEMP_TEAM_MEMBER_ID, TEMP_USER_ID } from "@/utils/dummyData";
+import { TEMP_USER_ID } from "@/utils/dummyData";
 import {
   FormStatusType,
   ReceiverStatusType,
@@ -12,6 +13,8 @@ import { Container, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { lowerCase } from "lodash";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -24,17 +27,21 @@ type Props = {
 };
 
 const RequestPage = ({ request }: Props) => {
+  const router = useRouter();
   const supabaseClient = useSupabaseClient();
+  const teamMemberId = useUserTeamMemberId();
   const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
+  const [signerList, setSignerList] = useState(
+    request.request_signer.map((signer) => {
+      return {
+        ...signer.request_signer_signer,
+        signer_status: signer.request_signer_status as ReceiverStatusType,
+      };
+    })
+  );
   const requestor = request.request_team_member.team_member_user;
 
-  const signerList = request.request_signer.map((signer) => {
-    return {
-      ...signer.request_signer_signer,
-      signer_status: signer.request_signer_status as ReceiverStatusType,
-    };
-  });
   const requestDateCreated = new Date(
     request.request_date_created
   ).toLocaleDateString("en-US", {
@@ -45,7 +52,7 @@ const RequestPage = ({ request }: Props) => {
 
   const isUserOwner = requestor.user_id === TEMP_USER_ID;
   const isUserSigner = signerList.find(
-    (signer) => signer.signer_team_member.team_member_id === TEMP_TEAM_MEMBER_ID
+    (signer) => signer.signer_team_member.team_member_id === teamMemberId
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -55,11 +62,11 @@ const RequestPage = ({ request }: Props) => {
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       setIsLoading(true);
-      const approver = isUserSigner;
-      const approverFullName = `${approver?.signer_team_member.team_member_user.user_first_name} ${approver?.signer_team_member.team_member_user.user_last_name}`;
-      if (!approver) {
+      const signer = isUserSigner;
+      const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
+      if (!signer) {
         notifications.show({
-          message: "Invalid approver.",
+          message: "Invalid signer.",
           color: "red",
         });
         return;
@@ -68,18 +75,30 @@ const RequestPage = ({ request }: Props) => {
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
-        isPrimarySigner: approver.signer_is_primary_signer,
-        requestSignerId: approver.signer_id,
+        isPrimarySigner: signer.signer_is_primary_signer,
+        requestSignerId: signer.signer_id,
         requestOwnerId: request.request_team_member_id as string,
-        signerFullName: approverFullName,
+        signerFullName: signerFullName,
         formName: request.request_form.form_name,
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
       });
 
-      setRequestStatus(status);
+      if (signer.signer_is_primary_signer) {
+        setRequestStatus(status);
+      }
+
+      setSignerList((prev) =>
+        prev.map((signer) => {
+          if (signer.signer_id !== signer.signer_id) return signer;
+          return {
+            ...signer,
+            signer_status: status,
+          };
+        })
+      );
       notifications.show({
         title: "Update request successful.",
-        message: `You have ${status} this request`,
+        message: `You have ${lowerCase(status)} this request`,
         color: "green",
       });
     } catch (error) {
@@ -98,13 +117,13 @@ const RequestPage = ({ request }: Props) => {
       setIsLoading(true);
       await cancelRequest(supabaseClient, {
         requestId: request.request_id,
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
       });
 
       setRequestStatus("CANCELED");
       notifications.show({
         title: "Update request successful.",
-        message: `You have CANCELED this request`,
+        message: `You have canceled this request`,
         color: "green",
       });
     } catch (error) {
@@ -128,9 +147,10 @@ const RequestPage = ({ request }: Props) => {
       setRequestStatus("DELETED");
       notifications.show({
         title: "Delete request successful.",
-        message: `You have DELETED this request`,
+        message: `You have deleted this request`,
         color: "green",
       });
+      router.push("/team-requests/requests");
     } catch (error) {
       notifications.show({
         title: "Delete request failed.",
@@ -175,15 +195,19 @@ const RequestPage = ({ request }: Props) => {
           <RequestSection key={section.section_id + idx} section={section} />
         ))}
 
-        <RequestActionSection
-          isUserOwner={isUserOwner}
-          requestStatus={requestStatus as FormStatusType}
-          requestId={request.request_id}
-          handleCancelRequest={handleCancelRequest}
-          openPromptDeleteModal={openPromptDeleteModal}
-          isUserSigner={Boolean(isUserSigner)}
-          handleUpdateRequest={handleUpdateRequest}
-        />
+        {(isUserOwner &&
+          (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
+        (isUserSigner && requestStatus === "PENDING") ? (
+          <RequestActionSection
+            isUserOwner={isUserOwner}
+            requestStatus={requestStatus as FormStatusType}
+            requestId={request.request_id}
+            handleCancelRequest={handleCancelRequest}
+            openPromptDeleteModal={openPromptDeleteModal}
+            isUserSigner={Boolean(isUserSigner)}
+            handleUpdateRequest={handleUpdateRequest}
+          />
+        ) : null}
         <RequestSingerSection signerList={signerList} />
       </Stack>
       <RequestCommentList
