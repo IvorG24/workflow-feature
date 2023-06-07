@@ -141,7 +141,9 @@ const RequestFormListPage = ({
         formId: id,
       });
 
-      setFormList((formList) => formList.filter((form) => form.form_id !== id));
+      const newFormList = formList.filter((form) => form.form_id !== id);
+      setFormList(newFormList);
+      storeSetFormList(newFormList);
 
       notifications.show({
         title: "Success!",

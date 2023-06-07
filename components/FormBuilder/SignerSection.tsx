@@ -11,10 +11,12 @@ import {
   Flex,
   List,
   Space,
+  Stack,
   Text,
   ThemeIcon,
   createStyles,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import {
   IconCircleDashed,
   IconCirclePlus,
@@ -40,14 +42,6 @@ export type RequestSigner = {
   signer_form_id: string;
 };
 
-type Props = {
-  formId: string;
-  mode?: Mode;
-  teamMemberList?: TeamMemberWithUserType[];
-  activeSigner?: number | null;
-  onSetActiveSigner?: Dispatch<SetStateAction<number | null>>;
-} & ContainerProps;
-
 type UseStylesProps = {
   mode: Mode;
 };
@@ -71,18 +65,28 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
   },
 }));
 
+type Props = {
+  formId: string;
+  mode?: Mode;
+  teamMemberList?: TeamMemberWithUserType[];
+  activeSigner?: number | null;
+  onSetActiveSigner?: Dispatch<SetStateAction<number | null>>;
+  initialSignerIds?: string[];
+} & ContainerProps;
+
 const SignerSection = ({
   mode = "edit",
   teamMemberList = [],
   formId,
   activeSigner,
   onSetActiveSigner,
+  initialSignerIds = [],
   ...props
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext<FormBuilderData>();
 
-  const [signerList, setSignerList] = useState<string[]>([]);
+  const [signerList, setSignerList] = useState<string[]>(initialSignerIds);
 
   const {
     fields: signers,
@@ -97,7 +101,7 @@ const SignerSection = ({
     control: methods.control,
   });
 
-  const handleMakePrimaryApprover = (index: number) => {
+  const handleMakePrimarySigner = (index: number) => {
     signers.forEach((signer, signerIdx) => {
       methods.setValue(
         `signers.${signerIdx}.signer_is_primary_signer`,
@@ -136,43 +140,53 @@ const SignerSection = ({
           }
         >
           <Space h="xs" />
-          {signers.map((signer, signerIndex) => (
-            <Flex
-              align="center"
-              gap="md"
-              key={signer.id}
-              w="100%"
-              mt={activeSigner === signerIndex ? "xs" : 0}
-            >
-              <Box w="100%">
-                <SignerForm
-                  signerIndex={signerIndex}
-                  signer={signer as RequestSigner}
-                  onDelete={() => removeSigner(signerIndex)}
-                  onMakePrimaryApprover={() =>
-                    handleMakePrimaryApprover(signerIndex)
-                  }
-                  mode={mode}
-                  teamMemberList={teamMemberList}
-                  isActive={activeSigner === signerIndex}
-                  onNotActiveSigner={() => handleChangeActiveSigner(null)}
-                  signerList={signerList}
-                  onSetSignerList={setSignerList}
-                />
-              </Box>
-              {activeSigner === null && (
-                <ActionIcon
-                  onClick={() => removeSigner(signerIndex)}
-                  variant="light"
-                  mt="sm"
-                  color="red"
-                  size="sm"
-                >
-                  <IconTrash size={14} stroke={1.5} />
-                </ActionIcon>
-              )}
-            </Flex>
-          ))}
+          <Stack spacing="xs">
+            {signers.map((signer, signerIndex) => (
+              <Flex
+                align="center"
+                gap="md"
+                key={signer.id}
+                w="100%"
+                mt={activeSigner === signerIndex ? "xs" : 0}
+              >
+                <Box w="100%">
+                  <SignerForm
+                    signerIndex={signerIndex}
+                    signer={signer as RequestSigner}
+                    onDelete={() => {
+                      removeSigner(signerIndex);
+                    }}
+                    onMakePrimarySigner={() =>
+                      handleMakePrimarySigner(signerIndex)
+                    }
+                    mode={mode}
+                    teamMemberList={teamMemberList}
+                    isActive={activeSigner === signerIndex}
+                    onNotActiveSigner={() => handleChangeActiveSigner(null)}
+                    signerList={signerList}
+                    onSetSignerList={setSignerList}
+                    handleMakePrimarySigner={handleMakePrimarySigner}
+                    isTransferVisible={activeSigner === null}
+                  />
+                </Box>
+                {activeSigner === null && (
+                  <ActionIcon
+                    onClick={() => {
+                      removeSigner(signerIndex);
+                      setSignerList((prev) =>
+                        prev.filter((_, index) => index !== signerIndex)
+                      );
+                    }}
+                    variant="light"
+                    color="red"
+                    size="sm"
+                  >
+                    <IconTrash size={14} stroke={1.5} />
+                  </ActionIcon>
+                )}
+              </Flex>
+            ))}
+          </Stack>
         </List>
       </Box>
 
@@ -180,15 +194,22 @@ const SignerSection = ({
         <>
           <Button
             onClick={() => {
-              appendSigner({
-                signer_id: uuidv4(),
-                signer_action: "",
-                signer_is_primary_signer: false,
-                signer_team_member_id: "",
-                signer_form_id: formId,
-                signer_order: signers.length + 1,
-              });
-              handleChangeActiveSigner(signers.length);
+              if (signers.length !== teamMemberList.length) {
+                appendSigner({
+                  signer_id: uuidv4(),
+                  signer_action: "",
+                  signer_is_primary_signer: false,
+                  signer_team_member_id: "",
+                  signer_form_id: formId,
+                  signer_order: signers.length + 1,
+                });
+                handleChangeActiveSigner(signers.length);
+              } else {
+                notifications.show({
+                  message: "There are no more available signer",
+                  color: "orange",
+                });
+              }
             }}
             disabled={activeSigner !== null}
             size="xs"
@@ -201,7 +222,7 @@ const SignerSection = ({
           <Divider mt="md" />
 
           <Checkbox
-            label="Require requester and approver's signature during request creation and approval"
+            label="Require requester and signer's signature during request creation and approval"
             {...methods.register("isSignatureRequired")}
             my="xl"
             sx={{ input: { cursor: "pointer" } }}

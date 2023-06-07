@@ -1,6 +1,6 @@
 import { deleteComment } from "@/backend/api/delete";
 import { updateComment } from "@/backend/api/update";
-import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
+import { useUserTeamMemberId } from "@/stores/useUserStore";
 import { getAvatarColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
@@ -31,12 +31,15 @@ type RequestCommentProps = {
 };
 const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const supabaseClient = useSupabaseClient();
+  const teamMemberId = useUserTeamMemberId();
+
   const [commentContent, setCommentContent] = useState(comment.comment_content);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [isCommentEdited, setIsCommentEdited] = useState(false);
+
   const { team_member_user: commenter } = comment.comment_team_member;
-  const isUserOwner = comment.comment_team_member_id === TEMP_TEAM_MEMBER_ID;
+  const isUserOwner = comment.comment_team_member_id === teamMemberId;
 
   // edit comment
   const editCommentFormMethods = useForm<CommentFormProps>({
