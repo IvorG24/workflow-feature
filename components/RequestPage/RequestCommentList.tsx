@@ -1,6 +1,6 @@
 import { createComment, createNotification } from "@/backend/api/post";
-import { useUserProfile } from "@/stores/useUserStore";
-import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
+import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { TEMP_USER_ID } from "@/utils/dummyData";
 import { RequestWithResponseType } from "@/utils/types";
 import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -25,6 +25,7 @@ const RequestCommentList = ({
   requestCommentList,
 }: RequestCommentListProps) => {
   const userProfile = useUserProfile();
+  const teamMemberId = useUserTeamMemberId();
   const supabaseClient = useSupabaseClient();
   const [isLoading, setIsLoading] = useState(false);
   const [commentList, setCommentList] = useState(requestCommentList);
@@ -39,7 +40,7 @@ const RequestCommentList = ({
       setIsLoading(true);
       const { data: newComment, error } = await createComment(supabaseClient, {
         comment_request_id: requestData.requestId,
-        comment_team_member_id: TEMP_TEAM_MEMBER_ID,
+        comment_team_member_id: teamMemberId,
         comment_type: "REQUEST_COMMENT",
         comment_content: data.comment,
       });
@@ -50,7 +51,7 @@ const RequestCommentList = ({
           ...newComment,
           comment_team_member: {
             team_member_user: {
-              user_id: requestData.requestOwnerId,
+              user_id: TEMP_USER_ID,
               user_first_name: userProfile.user_first_name,
               user_last_name: userProfile.user_last_name,
               user_username: userProfile.user_username,
@@ -60,13 +61,15 @@ const RequestCommentList = ({
         };
         setCommentList((prev) => [comment as Comment, ...prev]);
         // create notification
-        await createNotification(supabaseClient, {
-          notification_app: "REQUEST",
-          notification_type: "REQUEST_COMMENT",
-          notification_content: `${commenterFullName} commented on your request`,
-          notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
-          notification_team_member_id: requestData.requestOwnerId,
-        });
+        if (teamMemberId !== requestData.requestOwnerId) {
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "REQUEST_COMMENT",
+            notification_content: `${commenterFullName} commented on your request`,
+            notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
+            notification_team_member_id: requestData.requestOwnerId,
+          });
+        }
         notifications.show({
           message: "Comment created.",
           color: "green",

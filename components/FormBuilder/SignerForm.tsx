@@ -15,25 +15,12 @@ import {
   Paper,
   Select,
 } from "@mantine/core";
-import { IconTrash } from "@tabler/icons-react";
+import { IconArrowsExchange, IconTrash } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FormBuilderData } from "./FormBuilder";
 import { Mode } from "./Section";
 import { RequestSigner } from "./SignerSection";
-
-type Props = {
-  signer: RequestSigner;
-  signerIndex: number;
-  onDelete: (signerIndex: number) => void;
-  mode: Mode;
-  teamMemberList: TeamMemberWithUserType[];
-  onMakePrimaryApprover: (signerIndex: number) => void;
-  isActive: boolean;
-  onNotActiveSigner: () => void;
-  signerList: string[];
-  onSetSignerList: Dispatch<SetStateAction<string[]>>;
-};
 
 type UseStylesProps = {
   mode: Mode;
@@ -60,16 +47,33 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
   },
 }));
 
+type Props = {
+  signer: RequestSigner;
+  signerIndex: number;
+  onDelete: (signerIndex: number) => void;
+  mode: Mode;
+  teamMemberList: TeamMemberWithUserType[];
+  onMakePrimarySigner: (signerIndex: number) => void;
+  isActive: boolean;
+  onNotActiveSigner: () => void;
+  signerList: string[];
+  onSetSignerList: Dispatch<SetStateAction<string[]>>;
+  handleMakePrimarySigner: (index: number) => void;
+  isTransferVisible: boolean;
+};
+
 const SignerForm = ({
   signerIndex,
   onDelete,
   mode = "edit",
   teamMemberList,
-  onMakePrimaryApprover,
+  onMakePrimarySigner,
   isActive,
   onNotActiveSigner,
   signerList,
   onSetSignerList,
+  handleMakePrimarySigner,
+  isTransferVisible,
 }: Props) => {
   const {
     register,
@@ -87,12 +91,12 @@ const SignerForm = ({
   );
   const signerUserId = watch(`signers.${signerIndex}.signer_team_member_id`);
   const signerAction = watch(`signers.${signerIndex}.signer_action`);
-  const isPrimaryApprover = watch(
+  const isPrimarySigner = watch(
     `signers.${signerIndex}.signer_is_primary_signer`
   );
 
   const filteredSignerOptions = teamMemberList.filter(
-    (member) => !signerList?.includes(member.team_member_user.user_id)
+    (member) => !signerList?.includes(member.team_member_id)
   );
 
   const signerOptions = filteredSignerOptions.map((member) => {
@@ -137,9 +141,10 @@ const SignerForm = ({
   }, [signerUserId]);
 
   if (!isActive) {
-    const signerFullName = signerOptions.find(
-      (signer) => signer.value === signerUserId
+    const signer = teamMemberList.find(
+      (member) => member.team_member_id === signerUserId
     );
+
     return (
       <Box
         role="button"
@@ -149,15 +154,28 @@ const SignerForm = ({
         }}
         className={classes.notActiveContainer}
       >
-        <Group noWrap mt="xs">
+        <Group noWrap>
           <List.Item>
-            Will be signed as {signerAction} by {signerFullName?.label}
+            Will be signed as {signerAction} by{" "}
+            {`${signer?.team_member_user.user_first_name} ${signer?.team_member_user.user_last_name}`}
           </List.Item>
-          {isPrimaryApprover && (
-            <Chip size="xs" variant="outline" checked={isPrimaryApprover}>
+          {isPrimarySigner && (
+            <Chip size="xs" variant="outline" checked={isPrimarySigner}>
               Primary
             </Chip>
           )}
+          {!isPrimarySigner && isTransferVisible ? (
+            <ActionIcon
+              onClick={() => {
+                handleMakePrimarySigner(signerIndex);
+              }}
+              variant="light"
+              color="blue"
+              size="sm"
+            >
+              <IconArrowsExchange size={14} stroke={1.5} />
+            </ActionIcon>
+          ) : null}
         </Group>
       </Box>
     );
@@ -215,10 +233,10 @@ const SignerForm = ({
         </Flex>
 
         <Checkbox
-          label="Make primary approver"
+          label="Make primary signer"
           mt={24}
           {...register(`signers.${signerIndex}.signer_is_primary_signer`)}
-          onClick={() => onMakePrimaryApprover(signerIndex)}
+          onClick={() => onMakePrimarySigner(signerIndex)}
           className={classes.checkboxCursor}
         />
 

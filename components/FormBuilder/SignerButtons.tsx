@@ -6,7 +6,7 @@ type Props = {
   onReject?: MouseEventHandler<HTMLButtonElement>;
 };
 
-const ApproverButtons = ({ onApprove, onReject }: Props) => {
+const SignerButtons = ({ onApprove, onReject }: Props) => {
   return (
     <Flex gap="xl" justify="center" mt="xl">
       <Button
@@ -25,4 +25,4 @@ const ApproverButtons = ({ onApprove, onReject }: Props) => {
   );
 };
 
-export default ApproverButtons;
+export default SignerButtons;

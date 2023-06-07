@@ -158,7 +158,7 @@ const UserSignature = ({
         </Text>
 
         <Checkbox
-          label="Require requester and approver's signature during request creation and approval"
+          label="Require requester and signer's signature during request creation and approval"
           {...register("isSignatureRequired")}
           mt={32}
           className={classes.checkboxCursor}
@@ -176,7 +176,7 @@ const UserSignature = ({
       <Container maw={768} className={classes.container} {...props}>
         <Group>
           <Text weight={600} size={18}>
-            {mode === "view" ? "Approver" : "Requester"}&apos;s signature
+            {mode === "view" ? "Signer" : "Requester"}&apos;s signature
           </Text>
           <Tooltip label={signatureDescription} withArrow multiline>
             <Box>
