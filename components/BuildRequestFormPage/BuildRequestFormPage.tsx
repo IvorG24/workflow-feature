@@ -162,7 +162,6 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
 
       await router.push(`/team-requests/forms/${createdForm.form_id}`);
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

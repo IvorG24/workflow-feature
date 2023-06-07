@@ -4,6 +4,7 @@ import {
   AttachmentBucketType,
   FormStatusType,
   ItemWithDecsriptionAndField,
+  TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -47,12 +48,15 @@ export const getAllTeamOfUser = async (
     .from("team_member_table")
     .select("*, team:team_table(*)")
     .eq("team_member_disabled", false)
-    .eq("team_member_user_id", userId)
-    .order("team_member_date_created", { ascending: false });
+    .eq("team_member_user_id", userId);
   if (error) throw error;
-  const teamList = data.map((teamMember) => {
-    return teamMember.team;
-  });
+  const teamList = data
+    .map((teamMember) => {
+      return teamMember.team as TeamTableRow;
+    })
+    .sort((a, b) => {
+      return Date.parse(b.team_date_created) - Date.parse(a.team_date_created);
+    });
 
   return teamList;
 };
