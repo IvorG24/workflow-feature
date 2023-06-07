@@ -1,0 +1,95 @@
+import {
+  getAllTeamMembers,
+  getRequestList,
+  getUserActiveTeamId,
+} from "@/backend/api/get";
+import Dashboard from "@/components/Dashboard/Dashboard";
+import Meta from "@/components/Meta/Meta";
+import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
+import {
+  TEMP_REQUISITION_FORM_PURCHASE_DATA,
+  TEMP_REQUISITION_FORM_TEAM_DATA,
+  TEMP_REQUISITION_FORM_USER_DATA,
+  TEMP_USER_ID,
+} from "@/utils/dummyData";
+import { RequestType, TeamMemberWithUserType } from "@/utils/types";
+import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { GetServerSideProps } from "next";
+import { RFDataType } from "./forms/[formId]/analytics";
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  try {
+    const supabaseClient = createServerSupabaseClient(ctx);
+    const teamId = await getUserActiveTeamId(supabaseClient, {
+      userId: TEMP_USER_ID,
+    });
+
+    const { data, count } = await getRequestList(supabaseClient, {
+      teamId: teamId,
+      page: 1,
+      limit: DEFAULT_REQUEST_LIST_LIMIT,
+    });
+
+    const teamMemberList = await getAllTeamMembers(supabaseClient, {
+      teamId,
+    });
+
+    const teamData = TEMP_REQUISITION_FORM_TEAM_DATA;
+    const userData = TEMP_REQUISITION_FORM_USER_DATA;
+    const purchaseData = TEMP_REQUISITION_FORM_PURCHASE_DATA;
+
+    return {
+      props: {
+        requestList: data,
+        requestListCount: count,
+        teamMemberList,
+        requisition_form_team_data: teamData,
+        requisition_form_user_data: userData,
+        requisition_form_purchase_data: purchaseData,
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      redirect: {
+        destination: "/500",
+        permanent: false,
+      },
+    };
+  }
+};
+
+type Props = {
+  requestList: RequestType[];
+  requestListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
+  requisition_form_team_data: RFDataType;
+  requisition_form_user_data: RFDataType;
+  requisition_form_purchase_data: RFDataType;
+};
+
+const Page = ({
+  requestList,
+  requestListCount,
+  teamMemberList,
+  requisition_form_team_data,
+  requisition_form_user_data,
+  requisition_form_purchase_data,
+}: Props) => {
+  return (
+    <>
+      <Meta description="Request List Page" url="/team-requests/requests" />
+      <Dashboard
+        requestList={requestList}
+        requestListCount={requestListCount}
+        teamMemberList={teamMemberList}
+        teamRequisitionData={requisition_form_team_data}
+        userRequisitionData={requisition_form_user_data}
+        purchaseRequisitionData={requisition_form_purchase_data}
+      />
+    </>
+  );
+};
+
+export default Page;
+Page.Layout = "APP";
