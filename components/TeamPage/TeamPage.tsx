@@ -1,5 +1,4 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getTeamMemberList } from "@/backend/api/get";
 import { createTeamInvitation, uploadImage } from "@/backend/api/post";
 import {
   updateTeam,
@@ -8,7 +7,7 @@ import {
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMemberId } from "@/stores/useUserStore";
-import { DEFAULT_TEAM_MEMBER_LIST_LIMIT } from "@/utils/constant";
+
 import { Database } from "@/utils/database";
 import { MemberRoleType, TeamMemberType, TeamTableRow } from "@/utils/types";
 import { Container, Space, Title } from "@mantine/core";
@@ -32,14 +31,9 @@ export type SearchTeamMemberForm = {
 type Props = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
-  teamMembersCount: number;
 };
 
-const TeamPage = ({
-  team: initialTeam,
-  teamMembers,
-  teamMembersCount,
-}: Props) => {
+const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
   const teamList = useTeamList();
@@ -47,7 +41,7 @@ const TeamPage = ({
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
-  const [count, setCount] = useState(teamMembersCount);
+
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const [isInvitingMember, setIsInvitingMember] = useState(false);
@@ -139,25 +133,15 @@ const TeamPage = ({
 
   const handleSearchTeamMember = async (data: SearchTeamMemberForm) => {
     setIsUpdatingTeamMembers(true);
+    setPage(1);
     const { keyword } = data;
-    try {
-      const { data: newMemberList, count: newCount } = await getTeamMemberList(
-        supabaseClient,
-        {
-          teamId: team.team_id,
-          search: keyword,
-          page: page,
-          limit: DEFAULT_TEAM_MEMBER_LIST_LIMIT,
-        }
-      );
-      setTeamMemberList(newMemberList);
-      setCount(newCount || 0);
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
+    const newMemberList = teamMembers.filter(
+      (member) =>
+        member.team_member_user.user_first_name.includes(keyword) ||
+        member.team_member_user.user_last_name.includes(keyword) ||
+        member.team_member_user.user_email.includes(keyword)
+    );
+    setTeamMemberList(newMemberList);
     setIsUpdatingTeamMembers(false);
   };
 
@@ -280,7 +264,6 @@ const TeamPage = ({
       setTeamMemberList((prev) => {
         return prev.filter((member) => member.team_member_id !== memberId);
       });
-      setCount((prev) => prev - 1);
 
       notifications.show({
         title: "Success!",
@@ -302,24 +285,13 @@ const TeamPage = ({
     setPage(page);
     setIsUpdatingTeamMembers(true);
     const keyword = searchTeamMemberMethods.getValues("keyword");
-    try {
-      const { data: newMemberList, count: newCount } = await getTeamMemberList(
-        supabaseClient,
-        {
-          teamId: team.team_id,
-          search: keyword,
-          page: page,
-          limit: DEFAULT_TEAM_MEMBER_LIST_LIMIT,
-        }
-      );
-      setTeamMemberList(newMemberList);
-      setCount(newCount || 0);
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
+    const newMemberList = teamMembers.filter(
+      (member) =>
+        member.team_member_user.user_first_name.includes(keyword) ||
+        member.team_member_user.user_last_name.includes(keyword) ||
+        member.team_member_user.user_email.includes(keyword)
+    );
+    setTeamMemberList(newMemberList);
     setIsUpdatingTeamMembers(false);
   };
 
@@ -347,7 +319,6 @@ const TeamPage = ({
           onTransferOwnership={handleTransferOwnership}
           page={page}
           handlePageChange={handlePageChange}
-          count={count}
         />
       </FormProvider>
 

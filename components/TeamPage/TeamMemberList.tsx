@@ -31,7 +31,6 @@ type Props = {
   onTransferOwnership: (ownerId: string, memberId: string) => void;
   page: number;
   handlePageChange: (page: number) => void;
-  count: number;
 };
 
 const TeamMemberList = ({
@@ -43,9 +42,10 @@ const TeamMemberList = ({
   onTransferOwnership,
   page,
   handlePageChange,
-  count,
 }: Props) => {
-  const totalPage = Math.ceil(count / DEFAULT_TEAM_MEMBER_LIST_LIMIT);
+  const totalPage = Math.ceil(
+    teamMemberList.length / DEFAULT_TEAM_MEMBER_LIST_LIMIT
+  );
 
   const teamMemberId = useUserTeamMemberId();
   const authUser = teamMemberList.find(
@@ -75,42 +75,45 @@ const TeamMemberList = ({
     });
   };
 
-  const rows = sortByRole(teamMemberList).map((member) => {
-    const { team_member_role: role, team_member_user: user } = member;
-    const fullname = `${user.user_first_name} ${user.user_last_name}`;
-    return (
-      <tr key={user.user_id}>
-        <td>
-          <Group>
-            <Avatar
-              color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
-              src={user.user_avatar}
-              alt="Member avatar"
-              size={24}
-              radius={12}
-            >
-              {startCase(user.user_first_name[0])}
-              {startCase(user.user_last_name[0])}
-            </Avatar>
+  const start = (page - 1) * DEFAULT_TEAM_MEMBER_LIST_LIMIT;
+  const rows = sortByRole(teamMemberList)
+    .slice(start, start + DEFAULT_TEAM_MEMBER_LIST_LIMIT)
+    .map((member) => {
+      const { team_member_role: role, team_member_user: user } = member;
+      const fullname = `${user.user_first_name} ${user.user_last_name}`;
+      return (
+        <tr key={user.user_id}>
+          <td>
+            <Group>
+              <Avatar
+                color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
+                src={user.user_avatar}
+                alt="Member avatar"
+                size={24}
+                radius={12}
+              >
+                {startCase(user.user_first_name[0])}
+                {startCase(user.user_last_name[0])}
+              </Avatar>
 
-            <Text>{startCase(fullname)}</Text>
-          </Group>
-        </td>
+              <Text>{startCase(fullname)}</Text>
+            </Group>
+          </td>
 
-        <td>{startCase(lowerCase(role))}</td>
+          <td>{startCase(lowerCase(role))}</td>
 
-        <td>
-          <TeamMemberMenu
-            member={member}
-            authUser={authUser}
-            onUpdateMemberRole={onUpdateMemberRole}
-            onRemoveFromTeam={onRemoveFromTeam}
-            onTransferOwnership={onTransferOwnership}
-          />
-        </td>
-      </tr>
-    );
-  });
+          <td>
+            <TeamMemberMenu
+              member={member}
+              authUser={authUser}
+              onUpdateMemberRole={onUpdateMemberRole}
+              onRemoveFromTeam={onRemoveFromTeam}
+              onTransferOwnership={onTransferOwnership}
+            />
+          </td>
+        </tr>
+      );
+    });
 
   return (
     <Container p={0} mt="xl" pos="relative" fluid>

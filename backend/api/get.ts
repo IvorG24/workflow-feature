@@ -381,6 +381,7 @@ export const getAllTeamMembers = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
+    search?: string;
   }
 ) => {
   const { teamId } = params;
@@ -706,14 +707,10 @@ export const getTeamMemberList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
-    page: number;
-    limit: number;
     search?: string;
   }
 ) => {
-  const { teamId, page, limit, search = "" } = params;
-
-  const start = (page - 1) * limit;
+  const { teamId, search = "" } = params;
 
   let query = supabaseClient
     .from("team_member_table")
@@ -731,12 +728,9 @@ export const getTeamMemberList = async (
       { foreignTable: "team_member_user_id" }
     );
   }
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.order("team_member_role", { ascending: true });
 
-  const { data, error, count } = await query;
+  const { data, error } = await query;
   if (error) throw error;
 
-  return { data: data as TeamMemberType[], count };
+  return data as TeamMemberType[];
 };

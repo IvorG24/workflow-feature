@@ -5,7 +5,6 @@ import {
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TeamPage from "@/components/TeamPage/TeamPage";
-import { DEFAULT_TEAM_MEMBER_LIST_LIMIT } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { TeamMemberType, TeamTableRow } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -31,15 +30,12 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       };
     }
 
-    const { data: teamMembers, count: teamMembersCount } =
-      await getTeamMemberList(supabaseClient, {
-        teamId: team.team_id,
-        page: 1,
-        limit: DEFAULT_TEAM_MEMBER_LIST_LIMIT,
-      });
+    const teamMembers = await getTeamMemberList(supabaseClient, {
+      teamId: team.team_id,
+    });
 
     return {
-      props: { team, teamMembers, teamMembersCount },
+      props: { team, teamMembers },
     };
   } catch (error) {
     console.error(error);
@@ -55,18 +51,13 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 type Props = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
-  teamMembersCount: number;
 };
 
-const Page = ({ team, teamMembers, teamMembersCount }: Props) => {
+const Page = ({ team, teamMembers }: Props) => {
   return (
     <>
       <Meta description="Team Page" url="/team" />
-      <TeamPage
-        team={team}
-        teamMembers={teamMembers}
-        teamMembersCount={teamMembersCount}
-      />
+      <TeamPage team={team} teamMembers={teamMembers} />
     </>
   );
 };
