@@ -5,6 +5,7 @@ import {
   FormStatusType,
   ItemWithDecsriptionAndField,
   TeamMemberType,
+  TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -50,9 +51,13 @@ export const getAllTeamOfUser = async (
     .eq("team_member_is_disabled", false)
     .eq("team_member_user_id", userId);
   if (error) throw error;
-  const teamList = data.map((teamMember) => {
-    return teamMember.team;
-  });
+  const teamList = data
+    .map((teamMember) => {
+      return teamMember.team as TeamTableRow;
+    })
+    .sort((a, b) => {
+      return Date.parse(b.team_date_created) - Date.parse(a.team_date_created);
+    });
 
   return teamList;
 };
