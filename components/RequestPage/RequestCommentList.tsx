@@ -1,6 +1,5 @@
 import { createComment, createNotification } from "@/backend/api/post";
 import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
-import { TEMP_USER_ID } from "@/utils/dummyData";
 import { RequestWithResponseType } from "@/utils/types";
 import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -12,21 +11,21 @@ import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
 type Comment = RequestWithResponseType["request_comment"][0];
 
-type RequestCommentListProps = {
+type Props = {
   requestData: {
     requestId: string;
     requestOwnerId: string;
+    teamId: string;
   };
   requestCommentList: Comment[];
 };
 
-const RequestCommentList = ({
-  requestData,
-  requestCommentList,
-}: RequestCommentListProps) => {
+const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const userProfile = useUserProfile();
   const teamMemberId = useUserTeamMemberId();
   const supabaseClient = useSupabaseClient();
+
+  const user = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [commentList, setCommentList] = useState(requestCommentList);
 
@@ -51,23 +50,20 @@ const RequestCommentList = ({
           ...newComment,
           comment_team_member: {
             team_member_user: {
-              user_id: TEMP_USER_ID,
-              user_first_name: userProfile.user_first_name,
-              user_last_name: userProfile.user_last_name,
-              user_username: userProfile.user_username,
-              user_avatar: userProfile.user_avatar,
+              ...userProfile,
             },
           },
         };
         setCommentList((prev) => [comment as Comment, ...prev]);
-        // create notification
-        if (teamMemberId !== requestData.requestOwnerId) {
+        if (requestData.requestOwnerId !== user?.user_id) {
+          // create notification
           await createNotification(supabaseClient, {
             notification_app: "REQUEST",
             notification_type: "REQUEST_COMMENT",
             notification_content: `${commenterFullName} commented on your request`,
             notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
-            notification_team_member_id: requestData.requestOwnerId,
+            notification_user_id: requestData.requestOwnerId,
+            notification_team_id: requestData.teamId,
           });
         }
         notifications.show({

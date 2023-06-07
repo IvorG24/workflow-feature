@@ -26,6 +26,7 @@ const CreateTeamPage = () => {
           <InviteForm
             changeStep={setActiveStep}
             ownerData={ownerData as TeamMemberTableRow}
+            teamName={newTeam?.team_name}
           />
         );
 

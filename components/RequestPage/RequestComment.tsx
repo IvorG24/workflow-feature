@@ -31,6 +31,7 @@ type RequestCommentProps = {
 };
 const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const supabaseClient = useSupabaseClient();
+
   const teamMemberId = useUserTeamMemberId();
 
   const [commentContent, setCommentContent] = useState(comment.comment_content);
@@ -94,7 +95,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
       confirmProps: { color: "red" },
-      onCancel: () => console.log("Cancel"),
       onConfirm: async () => await handleDeleteComment(),
     });
 
