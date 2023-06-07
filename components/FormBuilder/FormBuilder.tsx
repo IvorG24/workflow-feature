@@ -1,7 +1,6 @@
 import { AppType, SectionWithField, TeamMemberType } from "@/utils/types";
 import { Container as MantineContainer } from "@mantine/core";
 import { ReactNode } from "react";
-import ApproverButtons from "./ApproverButtons";
 import Container from "./Container";
 import DescriptionInput from "./DescriptionInput";
 import Question from "./Field";
@@ -9,6 +8,7 @@ import FormNameInput from "./FormNameInput";
 import GoBackLink from "./GoBackLink";
 import RevieweeList from "./RevieweeList";
 import Section from "./Section";
+import SignerButtons from "./SignerButtons";
 import SignerSection, { RequestSigner } from "./SignerSection";
 import SubmitButton from "./SubmitButton";
 import UserSignature from "./UserSignature";
@@ -60,4 +60,4 @@ FormBuilder.SignerSection = SignerSection;
 
 FormBuilder.UserSignature = UserSignature;
 
-FormBuilder.ApproverButtons = ApproverButtons;
+FormBuilder.SignerButtons = SignerButtons;

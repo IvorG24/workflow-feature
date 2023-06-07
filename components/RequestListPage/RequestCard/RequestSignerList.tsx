@@ -4,24 +4,24 @@ import { Avatar, Tooltip, createStyles } from "@mantine/core";
 import { capitalize } from "lodash";
 
 const useStyles = createStyles(() => ({
-  primaryApprover: {
+  primarySigner: {
     border: "solid 2px #4DABF7",
   },
 }));
 
-type RequestApproverListProps = {
-  approverList: RequestType["request_signer"];
+type RequestSignerListProps = {
+  signerList: RequestType["request_signer"];
 };
 
-const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
+const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
   const { classes } = useStyles();
   const defaultAvatarProps = { color: "blue", size: "md", radius: "xl" };
-  const otherSigners = approverList.slice(3);
+  const otherSigners = signerList.slice(3);
 
   return (
     <Tooltip.Group openDelay={300} closeDelay={100}>
       <Avatar.Group spacing="sm">
-        {approverList.map(
+        {signerList.map(
           (
             {
               request_signer_id,
@@ -46,7 +46,7 @@ const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
                     )}
                     src={team_member_user.user_avatar}
                     className={
-                      signer_is_primary_signer ? classes.primaryApprover : ""
+                      signer_is_primary_signer ? classes.primarySigner : ""
                     }
                   >{`${capitalize(
                     team_member_user.user_first_name[0]
@@ -56,7 +56,7 @@ const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
             }
           }
         )}
-        {approverList.length > 3 && (
+        {signerList.length > 3 && (
           <Tooltip
             withArrow
             label={otherSigners.map(
@@ -72,7 +72,7 @@ const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
               )
             )}
           >
-            <Avatar {...defaultAvatarProps}>+{approverList.length - 3}</Avatar>
+            <Avatar {...defaultAvatarProps}>+{signerList.length - 3}</Avatar>
           </Tooltip>
         )}
       </Avatar.Group>
@@ -80,4 +80,4 @@ const RequestApproverList = ({ approverList }: RequestApproverListProps) => {
   );
 };
 
-export default RequestApproverList;
+export default RequestSignerList;

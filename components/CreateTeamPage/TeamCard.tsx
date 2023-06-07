@@ -4,8 +4,7 @@ import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useNotificationActions } from "@/stores/useNotificationStore";
 import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
-import { useUserActions } from "@/stores/useUserStore";
-import { TEMP_USER_ID } from "@/utils/dummyData";
+import { useUserActions, useUserProfile } from "@/stores/useUserStore";
 import { TeamTableRow } from "@/utils/types";
 import { Button, Paper, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -21,6 +20,7 @@ const TeamCard = ({ team }: TeamCardProps) => {
   const supabaseClient = createBrowserSupabaseClient();
 
   const activeApp = useActiveApp();
+  const user = useUserProfile();
 
   const { setActiveTeam } = useTeamActions();
   const { setIsLoading } = useLoadingActions();
@@ -31,18 +31,19 @@ const TeamCard = ({ team }: TeamCardProps) => {
 
   const handleRedirectToTeamDashboard = async () => {
     try {
+      if (!user) return;
       setIsLoading(true);
 
       setActiveTeam(team);
       await updateUserActiveTeam(supabaseClient, {
-        userId: TEMP_USER_ID,
+        userId: user.user_id,
         teamId: team.team_id,
       });
 
       // fetch user team member id
       const teamMemberId = await getUserTeamMemberId(supabaseClient, {
         teamId: team.team_id,
-        userId: TEMP_USER_ID,
+        userId: user.user_id,
       });
       // set user team member id
       if (teamMemberId) {

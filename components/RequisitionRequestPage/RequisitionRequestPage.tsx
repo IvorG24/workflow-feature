@@ -6,8 +6,8 @@ import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSectio
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSingerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
-import { TEMP_TEAM_MEMBER_ID, TEMP_USER_ID } from "@/utils/dummyData";
 import {
   FormStatusType,
   ReceiverStatusType,
@@ -17,6 +17,7 @@ import { Container, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { lowerCase } from "lodash";
 import { useState } from "react";
 
 type Props = {
@@ -25,8 +26,13 @@ type Props = {
 
 const RequisitionRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
+
   const { setIsLoading } = useLoadingActions();
+  const teamMemberId = useUserTeamMemberId();
+  const user = useUserProfile();
+
   const [requestStatus, setRequestStatus] = useState(request.request_status);
+
   const requestor = request.request_team_member.team_member_user;
 
   const signerList = request.request_signer.map((signer) => {
@@ -43,9 +49,9 @@ const RequisitionRequestPage = ({ request }: Props) => {
     day: "numeric",
   });
 
-  const isUserOwner = requestor.user_id === TEMP_USER_ID;
+  const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
-    (signer) => signer.signer_team_member.team_member_id === TEMP_TEAM_MEMBER_ID
+    (signer) => signer.signer_team_member.team_member_id === teamMemberId
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -55,11 +61,11 @@ const RequisitionRequestPage = ({ request }: Props) => {
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       setIsLoading(true);
-      const approver = isUserSigner;
-      const approverFullName = `${approver?.signer_team_member.team_member_user.user_first_name} ${approver?.signer_team_member.team_member_user.user_last_name}`;
-      if (!approver) {
+      const signer = isUserSigner;
+      const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
+      if (!signer) {
         notifications.show({
-          message: "Invalid approver.",
+          message: "Invalid signer.",
           color: "red",
         });
         return;
@@ -68,18 +74,19 @@ const RequisitionRequestPage = ({ request }: Props) => {
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
-        isPrimarySigner: approver.signer_is_primary_signer,
-        requestSignerId: approver.signer_id,
-        requestOwnerId: request.request_team_member_id as string,
-        signerFullName: approverFullName,
+        isPrimarySigner: signer.signer_is_primary_signer,
+        requestSignerId: signer.signer_id,
+        requestOwnerId: request.request_team_member.team_member_user.user_id,
+        signerFullName: signerFullName,
         formName: request.request_form.form_name,
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
+        teamId: request.request_team_member.team_member_team_id,
       });
 
       setRequestStatus(status);
       notifications.show({
         title: "Update request successful.",
-        message: `You have ${status} this request`,
+        message: `You have ${lowerCase(status)} this request`,
         color: "green",
       });
     } catch (error) {
@@ -98,13 +105,13 @@ const RequisitionRequestPage = ({ request }: Props) => {
       setIsLoading(true);
       await cancelRequest(supabaseClient, {
         requestId: request.request_id,
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
       });
 
       setRequestStatus("CANCELED");
       notifications.show({
         title: "Update request successful.",
-        message: `You have CANCELED this request`,
+        message: `You have canceled this request`,
         color: "green",
       });
     } catch (error) {
@@ -128,7 +135,7 @@ const RequisitionRequestPage = ({ request }: Props) => {
       setRequestStatus("DELETED");
       notifications.show({
         title: "Delete request successful.",
-        message: `You have DELETED this request`,
+        message: `You have deleted this request`,
         color: "green",
       });
     } catch (error) {
@@ -154,7 +161,6 @@ const RequisitionRequestPage = ({ request }: Props) => {
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
       confirmProps: { color: "red" },
-      onCancel: () => console.log("Cancel"),
       onConfirm: async () => await handleDeleteRequest(),
     });
 
@@ -179,21 +185,27 @@ const RequisitionRequestPage = ({ request }: Props) => {
           />
         ))}
 
-        <RequestActionSection
-          isUserOwner={isUserOwner}
-          requestStatus={requestStatus as FormStatusType}
-          requestId={request.request_id}
-          handleCancelRequest={handleCancelRequest}
-          openPromptDeleteModal={openPromptDeleteModal}
-          isUserSigner={Boolean(isUserSigner)}
-          handleUpdateRequest={handleUpdateRequest}
-        />
+        {(isUserOwner &&
+          (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
+        (isUserSigner && requestStatus === "PENDING") ? (
+          <RequestActionSection
+            isUserOwner={isUserOwner}
+            requestStatus={requestStatus as FormStatusType}
+            requestId={request.request_id}
+            handleCancelRequest={handleCancelRequest}
+            openPromptDeleteModal={openPromptDeleteModal}
+            isUserSigner={Boolean(isUserSigner)}
+            handleUpdateRequest={handleUpdateRequest}
+          />
+        ) : null}
+
         <RequestSingerSection signerList={signerList} />
       </Stack>
       <RequestCommentList
         requestData={{
           requestId: request.request_id,
-          requestOwnerId: request.request_team_member_id as string,
+          requestOwnerId: request.request_team_member.team_member_user.user_id,
+          teamId: request.request_team_member.team_member_team_id,
         }}
         requestCommentList={request.request_comment}
       />

@@ -47,6 +47,7 @@ const RequisitionFormPage = ({
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const { formId } = router.query;
   const team = useActiveTeam();
+  const initialSignerIds: string[] = [];
 
   const [isCreatingItem, setIsCreatingItem] = useState(false);
   const [selectedItem, setSelectedItem] =
@@ -56,6 +57,7 @@ const RequisitionFormPage = ({
   const [isSavingSigners, setIsSavingSigner] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
     form.form_signer.map((signer) => {
+      initialSignerIds.push(signer.signer_team_member.team_member_id);
       const requestSigner = {
         signer_id: signer.signer_id,
         signer_team_member_id: signer.signer_team_member.team_member_id,
@@ -215,6 +217,7 @@ const RequisitionFormPage = ({
             formId={`${formId}`}
             activeSigner={activeSigner}
             onSetActiveSigner={setActiveSigner}
+            initialSignerIds={initialSignerIds}
           />
         </FormProvider>
 

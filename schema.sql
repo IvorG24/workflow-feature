@@ -86,12 +86,15 @@ CREATE TABLE notification_table (
   notification_type VARCHAR(4000) NOT NULL,
   notification_app VARCHAR(4000) NOT NULL,
 
-  notification_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+  notification_team_id UUID REFERENCES team_table(team_id),
+  notification_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
 CREATE TABLE invitation_table (
   invitation_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   invitation_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   invitation_to_email VARCHAR(4000) NOT NULL,
+  invitation_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  invitation_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
 
   invitation_from_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );

@@ -1,4 +1,4 @@
-import { getAvatarColor } from "@/utils/styling";
+import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Avatar,
@@ -11,7 +11,7 @@ import {
   Title,
 } from "@mantine/core";
 import { IconCalendar } from "@tabler/icons-react";
-import { capitalize } from "lodash";
+import { capitalize, lowerCase } from "lodash";
 
 type Props = {
   request: RequestWithResponseType;
@@ -60,7 +60,9 @@ const RequestDetailsSection = ({
       </Group>
       <Group spacing="md" mt="xs">
         <Text>Status:</Text>
-        <Badge>{requestStatus}</Badge>
+        <Badge color={getStatusToColor(lowerCase(requestStatus))}>
+          {requestStatus}
+        </Badge>
       </Group>
     </Paper>
   );

@@ -163,23 +163,23 @@ INSERT INTO request_response_table (request_response_id, request_response, reque
 
 INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
 ('a28e7cab-a4f1-4b65-903b-15ddd3fbac85', 'PENDING', '45820673-8b88-4d15-a4bf-12d67f140929', 'dd0149ad-9a49-4480-b7fa-62b55df3134e'),
-('2782ebc2-8498-40e5-9100-d163827f0f49', 'APPROVED', '280504f9-9739-45b2-a70d-484be2289861', 'dd0149ad-9a49-4480-b7fa-62b55df3134e'),
-('8c1ce26f-058b-423b-8a4d-6043590091f2', 'REJECTED', 'a9315409-9719-40cb-ada2-3f3ee622049b', 'dd0149ad-9a49-4480-b7fa-62b55df3134e'),
+('2782ebc2-8498-40e5-9100-d163827f0f49', 'PENDING', '280504f9-9739-45b2-a70d-484be2289861', 'dd0149ad-9a49-4480-b7fa-62b55df3134e'),
+('8c1ce26f-058b-423b-8a4d-6043590091f2', 'PENDING', 'a9315409-9719-40cb-ada2-3f3ee622049b', 'dd0149ad-9a49-4480-b7fa-62b55df3134e'),
 
 ('73fac67e-7bf5-48b4-a272-53163830689c', 'PENDING', '6d52c8df-1ed6-41cd-920a-827e3eba0abf', 'b7115738-8089-4e68-ac94-76ce6d0452f5'),
-('6b3ab922-2556-4c06-ac1f-4a11b8a58a05', 'APPROVED', '6d52c8df-1ed6-41cd-920a-827e3eba0abf', '7d0781fe-eb57-4225-858d-abb6b93357c7');
+('6b3ab922-2556-4c06-ac1f-4a11b8a58a05', 'PENDING', '6d52c8df-1ed6-41cd-920a-827e3eba0abf', '7d0781fe-eb57-4225-858d-abb6b93357c7');
 
 INSERT INTO invitation_table (invitation_id, invitation_to_email, invitation_from_team_member_id) VALUES
 ('01c5621b-7442-4ae3-809b-b09697bdbbeb', 'janedoe@gmail.com', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),
 ('f0b53ba1-e6cf-4074-b362-c0bca03e748d', 'loremipsum@gmail.com', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),
 ('80176876-068c-4b7f-b143-e41f78fd16c9', 'dolorsit@gmail.com', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b');
 
-INSERT INTO notification_table (notification_id, notification_content, notification_is_read, notification_redirect_url, notification_type, notification_app, notification_team_member_id) VALUES
-('9aeefd48-41b1-4eb3-aeec-8858cec974a5', 'Test notification invite', TRUE, '/', 'INVITE', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),
-('08df0d02-13e0-49f2-9bae-9ca9d6b25161', 'Test notification request', TRUE, '/', 'REQUEST', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),
-('f5caeebf-8158-450a-88da-d7a098155a14', 'Test notification approve', TRUE, '/', 'APPROVE', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),
-('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b'),
-('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b');
+INSERT INTO notification_table (notification_id, notification_content, notification_is_read, notification_redirect_url, notification_type, notification_app, notification_team_id, notification_user_id) VALUES
+('9aeefd48-41b1-4eb3-aeec-8858cec974a5', 'Test notification invite', TRUE, '/', 'INVITE', 'GENERAL', NULL, '9f4e60c0-6583-490f-a998-846a31d433d7'),
+('08df0d02-13e0-49f2-9bae-9ca9d6b25161', 'Test notification request', TRUE, '/', 'REQUEST', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '8d01bf49-186f-49e2-8b13-b14220446622'),
+('f5caeebf-8158-450a-88da-d7a098155a14', 'Test notification approve', TRUE, '/', 'APPROVE', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '8d01bf49-186f-49e2-8b13-b14220446622'),
+('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '8d01bf49-186f-49e2-8b13-b14220446622'),
+('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '8d01bf49-186f-49e2-8b13-b14220446622');
 
 INSERT INTO item_table (item_id, item_general_name, item_unit, item_team_id) VALUES 
 ('5bc0f573-9c7f-4053-a387-21e744399b0c', 'Wood', 'piece', 'a5a28977-6956-45c1-a624-b9e90911502e'),

@@ -120,7 +120,7 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
         formData.signers.filter((signer) => signer.signer_is_primary_signer)
           .length <= 0
       ) {
-        error = "At least 1 primary approver is required";
+        error = "At least 1 primary signer is required";
       } else if (
         formData.signers.filter(
           (signer) => signer.signer_team_member_id.length <= 0

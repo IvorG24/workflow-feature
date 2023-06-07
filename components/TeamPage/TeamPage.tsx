@@ -148,13 +148,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
   const handleInvite = async () => {
     try {
       setIsInvitingMember(true);
-      const invitationData = emailList.map((email) => {
-        return {
-          invitation_from_team_member_id: teamMemberId,
-          invitation_to_email: email,
-        };
+
+      await createTeamInvitation(supabaseClient, {
+        emailList,
+        teamMemberId,
+        teamName: team.team_name,
       });
-      await createTeamInvitation(supabaseClient, invitationData);
 
       setEmailList([]);
       notifications.show({

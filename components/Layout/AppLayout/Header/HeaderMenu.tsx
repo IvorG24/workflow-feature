@@ -12,11 +12,10 @@ import {
 import {
   useUserAvatar,
   useUserIntials,
-  useUserTeamMemberId,
+  useUserProfile,
 } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { TEMP_USER_ID } from "@/utils/dummyData";
 import { getAvatarColor } from "@/utils/styling";
 import { AppType } from "@/utils/types";
 import {
@@ -51,7 +50,7 @@ const HeaderMenu = () => {
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
   const unreadNotificationCount = useUnreadNotificationCount();
-  const teamMemberId = useUserTeamMemberId();
+  const user = useUserProfile();
   const { setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
   const { setNotificationList, setUnreadNotification } =
@@ -76,18 +75,21 @@ const HeaderMenu = () => {
     // set form list
     setFormList(formList);
 
-    // fetch notification list
-    const { data: notificationList, count: unreadNotificationCount } =
-      await getNotification(supabaseClient, {
-        memberId: teamMemberId,
-        app: newActiveApp as AppType,
-        page: 1,
-        limit: NOTIFICATION_LIST_LIMIT,
-      });
+    if (user) {
+      // fetch notification list
+      const { data: notificationList, count: unreadNotificationCount } =
+        await getNotification(supabaseClient, {
+          userId: user.user_id,
+          app: newActiveApp as AppType,
+          page: 1,
+          limit: NOTIFICATION_LIST_LIMIT,
+          teamId: activeTeam.team_id,
+        });
 
-    // set notification
-    setNotificationList(notificationList);
-    setUnreadNotification(unreadNotificationCount || 0);
+      // set notification
+      setNotificationList(notificationList);
+      setUnreadNotification(unreadNotificationCount || 0);
+    }
   };
 
   return (
@@ -122,7 +124,7 @@ const HeaderMenu = () => {
             <Avatar
               size={28}
               src={userAvatar}
-              color={getAvatarColor(Number(`${TEMP_USER_ID.charCodeAt(0)}`))}
+              color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
             >
               {userInitials}
             </Avatar>
