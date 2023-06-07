@@ -1,4 +1,5 @@
 import { deleteRow } from "@/backend/api/delete";
+import { getTeamMemberList } from "@/backend/api/get";
 import { createTeamInvitation, uploadImage } from "@/backend/api/post";
 import {
   updateTeam,
@@ -6,8 +7,10 @@ import {
   updateTeamOwner,
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
+import { useUserTeamMemberId } from "@/stores/useUserStore";
+import { DEFAULT_TEAM_MEMBER_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { MemberRoleType, TeamWithTeamMemberType } from "@/utils/types";
+import { MemberRoleType, TeamMemberType, TeamTableRow } from "@/utils/types";
 import { Container, Space, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -16,11 +19,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import InviteMember from "./InviteMember";
 import TeamInfoForm from "./TeamInfoForm";
 import TeamMemberList from "./TeamMemberList";
-
-type Props = {
-  team: TeamWithTeamMemberType;
-  teamMemberId: string;
-};
 
 export type UpdateTeamInfoForm = {
   teamName: string;
@@ -31,25 +29,40 @@ export type SearchTeamMemberForm = {
   keyword: string;
 };
 
-const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
+type Props = {
+  team: TeamTableRow;
+  teamMembers: TeamMemberType[];
+  teamMembersCount: number;
+};
+
+const TeamPage = ({
+  team: initialTeam,
+  teamMembers,
+  teamMembersCount,
+}: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
   const teamList = useTeamList();
-  const [team, setTeam] = useState<TeamWithTeamMemberType>(initialTeam);
+  const teamMemberId = useUserTeamMemberId();
+
+  const [team, setTeam] = useState<TeamTableRow>(initialTeam);
+  const [teamMemberList, setTeamMemberList] = useState(teamMembers);
+  const [count, setCount] = useState(teamMembersCount);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const [isInvitingMember, setIsInvitingMember] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
+  const [page, setPage] = useState(1);
 
   const [emailList, setEmailList] = useState<string[]>([]);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
-  const memberEmailList = team.team_member.map(
+  const memberEmailList = teamMemberList.map(
     (member) => member.team_member_user.user_email
   );
 
   const updateTeamMethods = useForm<UpdateTeamInfoForm>({
-    defaultValues: { teamName: team.team_name, teamLogo: team.team_logo },
+    defaultValues: { teamName: team.team_name, teamLogo: team.team_logo || "" },
   });
   const searchTeamMemberMethods = useForm<SearchTeamMemberForm>();
 
@@ -96,7 +109,7 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
 
       updateTeamMethods.reset({
         teamName,
-        teamLogo: imageUrl ? imageUrl : team.team_logo,
+        teamLogo: imageUrl ? imageUrl : team.team_logo || "",
       });
 
       setTeam((team) => {
@@ -124,10 +137,28 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
     }
   };
 
-  // todo: fetch team members with keyword
   const handleSearchTeamMember = async (data: SearchTeamMemberForm) => {
+    setIsUpdatingTeamMembers(true);
     const { keyword } = data;
-    console.log(keyword);
+    try {
+      const { data: newMemberList, count: newCount } = await getTeamMemberList(
+        supabaseClient,
+        {
+          teamId: team.team_id,
+          search: keyword,
+          page: page,
+          limit: DEFAULT_TEAM_MEMBER_LIST_LIMIT,
+        }
+      );
+      setTeamMemberList(newMemberList);
+      setCount(newCount || 0);
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+    setIsUpdatingTeamMembers(false);
   };
 
   const handleInvite = async () => {
@@ -170,18 +201,14 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
         role,
       });
 
-      setTeam((team) => {
-        return {
-          ...team,
-          team_member: team.team_member.map((member) => {
-            if (member.team_member_id === memberId)
-              return {
-                ...member,
-                team_member_role: role,
-              };
-            else return member;
-          }),
-        };
+      setTeamMemberList((prev) => {
+        return prev.map((member) => {
+          if (member.team_member_id !== memberId) return member;
+          return {
+            ...member,
+            team_member_role: role,
+          };
+        });
       });
 
       notifications.show({
@@ -209,23 +236,20 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
         memberId,
       });
 
-      setTeam((team) => {
-        return {
-          ...team,
-          team_member: team.team_member.map((member) => {
-            if (member.team_member_id === ownerId)
-              return {
-                ...member,
-                team_member_role: "ADMIN",
-              };
-            else if (member.team_member_id === memberId)
-              return {
-                ...member,
-                team_member_role: "OWNER",
-              };
-            else return member;
-          }),
-        };
+      setTeamMemberList((prev) => {
+        return prev.map((member) => {
+          if (member.team_member_id === ownerId)
+            return {
+              ...member,
+              team_member_role: "ADMIN",
+            };
+          else if (member.team_member_id === memberId)
+            return {
+              ...member,
+              team_member_role: "OWNER",
+            };
+          else return member;
+        });
       });
 
       notifications.show({
@@ -248,20 +272,15 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
     try {
       setIsUpdatingTeamMembers(true);
 
-      // todo: not working, needs to fix team_member_table's team_member_disabled into team_member_is_disabled
       await deleteRow(supabaseClient, {
         rowId: [memberId],
         table: "team_member",
       });
 
-      setTeam((team) => {
-        return {
-          ...team,
-          team_member: team.team_member.filter(
-            (member) => member.team_member_id !== memberId
-          ),
-        };
+      setTeamMemberList((prev) => {
+        return prev.filter((member) => member.team_member_id !== memberId);
       });
+      setCount((prev) => prev - 1);
 
       notifications.show({
         title: "Success!",
@@ -269,7 +288,6 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
         color: "green",
       });
     } catch (e) {
-      console.log(e);
       notifications.show({
         title: "Error!",
         message: "Unable remove member from team",
@@ -280,8 +298,33 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
     }
   };
 
+  const handlePageChange = async (page: number) => {
+    setPage(page);
+    setIsUpdatingTeamMembers(true);
+    const keyword = searchTeamMemberMethods.getValues("keyword");
+    try {
+      const { data: newMemberList, count: newCount } = await getTeamMemberList(
+        supabaseClient,
+        {
+          teamId: team.team_id,
+          search: keyword,
+          page: page,
+          limit: DEFAULT_TEAM_MEMBER_LIST_LIMIT,
+        }
+      );
+      setTeamMemberList(newMemberList);
+      setCount(newCount || 0);
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+    setIsUpdatingTeamMembers(false);
+  };
+
   return (
-    <Container fluid>
+    <Container>
       <Title order={2}>Manage Team</Title>
 
       <FormProvider {...updateTeamMethods}>
@@ -296,12 +339,15 @@ const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
 
       <FormProvider {...searchTeamMemberMethods}>
         <TeamMemberList
-          team={team}
+          teamMemberList={teamMemberList}
           isUpdatingTeamMembers={isUpdatingTeamMembers}
           onSearchTeamMember={handleSearchTeamMember}
           onRemoveFromTeam={handleRemoveFromTeam}
           onUpdateMemberRole={handleUpdateMemberRole}
           onTransferOwnership={handleTransferOwnership}
+          page={page}
+          handlePageChange={handlePageChange}
+          count={count}
         />
       </FormProvider>
 

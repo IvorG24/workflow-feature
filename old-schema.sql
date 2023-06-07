@@ -220,7 +220,7 @@ CREATE TABLE team_member_table(
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   team_member_member_role_id VARCHAR(4000) REFERENCES member_role_table(member_role_id) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
-  team_member_disabled BOOL DEFAULT FALSE NOT NULL,
+  team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
   -- Make sure user is only a member of a team once.
   UNIQUE (team_member_team_id, team_member_user_id)
 );
@@ -555,7 +555,7 @@ json_build_object(
 ) as "team",
 tmm.team_member_member_role_id as "role",
 tmm.team_member_date_created as "memberDateJoined",
-tmm.team_member_disabled as "memberIsDisabled"
+tmm.team_member_is_disabled as "memberIsDisabled"
 FROM team_member_table tmm
 JOIN user_metadata_view um ON tmm.team_member_user_id = um."id"
 JOIN team_metadata_view tm ON tmm.team_member_team_id = tm."id";

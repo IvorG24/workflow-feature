@@ -1,4 +1,4 @@
-import { MemberRoleType, TeamWithTeamMemberType } from "@/utils/types";
+import { MemberRoleType, TeamMemberType } from "@/utils/types";
 import { ActionIcon, Menu } from "@mantine/core";
 import {
   IconArrowsLeftRight,
@@ -8,11 +8,10 @@ import {
   IconUserShare,
   IconUserUp,
 } from "@tabler/icons-react";
-import router from "next/router";
 
 type Props = {
-  member: TeamWithTeamMemberType["team_member"][0];
-  authUser: TeamWithTeamMemberType["team_member"][0];
+  member: TeamMemberType;
+  authUser: TeamMemberType;
   onUpdateMemberRole: (memberId: string, role: MemberRoleType) => void;
   onRemoveFromTeam: (memberId: string) => void;
   onTransferOwnership: (ownerId: string, memberId: string) => void;
@@ -52,11 +51,6 @@ const TeamMemberMenu = ({
         <Menu.Item
           c="indigo"
           icon={<IconUserShare {...defaultMenuIconProps} />}
-          onClick={() =>
-            router.push(
-              `/team-reviews/users/${member.team_member_user.user_id}`
-            )
-          }
         >
           View Profile
         </Menu.Item>

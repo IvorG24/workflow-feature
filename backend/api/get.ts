@@ -4,6 +4,7 @@ import {
   AttachmentBucketType,
   FormStatusType,
   ItemWithDecsriptionAndField,
+  TeamMemberType,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -46,7 +47,7 @@ export const getAllTeamOfUser = async (
   const { data, error } = await supabaseClient
     .from("team_member_table")
     .select("*, team:team_table(*)")
-    .eq("team_member_disabled", false)
+    .eq("team_member_is_disabled", false)
     .eq("team_member_user_id", userId);
   if (error) throw error;
   const teamList = data.map((teamMember) => {
@@ -189,7 +190,7 @@ export const getUserActiveTeamId = async (
       .from("team_member_table")
       .select("*")
       .eq("team_member_user_id", userId)
-      .eq("team_member_disabled", false)
+      .eq("team_member_is_disabled", false)
       .maybeSingle();
     if (firstTeamError) throw firstTeamError;
 
@@ -274,13 +275,9 @@ export const getTeam = async (
   const { teamId } = params;
   const { data, error } = await supabaseClient
     .from("team_table")
-    .select(
-      "team_id, team_name, team_is_request_signature_required, team_logo, team_user_id, team_member: team_member_table(team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_email, user_job_title, user_phone_number, user_avatar))"
-    )
+    .select("*")
     .eq("team_id", teamId)
     .eq("team_is_disabled", false)
-    .eq("team_member.team_member_disabled", false)
-    .eq("team_member.team_member_user.user_is_disabled", false)
     .maybeSingle();
 
   if (error) throw error;
@@ -374,8 +371,8 @@ export const getFormListWithFilter = async (
   return { data, count };
 };
 
-// Get team's all members
-export const getTeamMemberList = async (
+// Get all team members
+export const getAllTeamMembers = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
@@ -388,7 +385,7 @@ export const getTeamMemberList = async (
       "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
     )
     .eq("team_member_team_id", teamId)
-    .eq("team_member_disabled", false);
+    .eq("team_member_is_disabled", false);
   if (error) throw error;
 
   return data;
@@ -408,7 +405,7 @@ export const getTeamAdminList = async (
       "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
     )
     .eq("team_member_team_id", teamId)
-    .eq("team_member_disabled", false)
+    .eq("team_member_is_disabled", false)
     .eq("team_member_role", "ADMIN");
   if (error) throw error;
 
@@ -697,4 +694,44 @@ export const checkItemDescription = async (
   if (error) throw error;
 
   return Boolean(count);
+};
+
+// Get team member list
+export const getTeamMemberList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    search?: string;
+  }
+) => {
+  const { teamId, page, limit, search = "" } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_member_table")
+    .select(
+      "team_member_id, team_member_role, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)",
+      { count: "exact" }
+    )
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_is_disabled", false)
+    .eq("team_member_user.user_is_disabled", false);
+
+  if (search) {
+    query = query.or(
+      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
+      { foreignTable: "team_member_user_id" }
+    );
+  }
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.order("team_member_role", { ascending: true });
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return { data: data as TeamMemberType[], count };
 };
