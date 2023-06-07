@@ -130,11 +130,12 @@ export const getRequestList = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)), request_form: request_form_id(form_id, form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_signer, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar))))",
+      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_form: request_form_id!inner(form_id, form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_signer, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar))))",
       { count: "exact" }
     )
     .eq("request_team_member.team_member_team_id", teamId)
-    .eq("request_is_disabled", false);
+    .eq("request_is_disabled", false)
+    .eq("request_form.form_is_disabled", false);
 
   if (requestor) {
     let requestorCondition = "";
@@ -254,6 +255,7 @@ export const getRequest = async (
       "*, request_team_member: request_team_member_id(team_member_team_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_comment: comment_table(comment_id, comment_date_created, comment_content, comment_is_edited, comment_last_updated, comment_type, comment_team_member_id, comment_team_member: comment_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar))), request_form: request_form_id(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*)))))"
     )
     .eq("request_id", requestId)
+    .eq("request_is_disabled", false)
     .eq(
       "request_form.form_section.section_field.field_response.request_response_request_id",
       requestId
@@ -263,8 +265,7 @@ export const getRequest = async (
       foreignTable: "comment_table",
       ascending: false,
     })
-    .single();
-
+    .maybeSingle();
   if (error) throw error;
 
   return data;

@@ -32,12 +32,12 @@ type RequestCommentProps = {
 const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const supabaseClient = useSupabaseClient();
 
+  const teamMemberId = useUserTeamMemberId();
+
   const [commentContent, setCommentContent] = useState(comment.comment_content);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [isCommentEdited, setIsCommentEdited] = useState(false);
-
-  const teamMemberId = useUserTeamMemberId();
 
   const { team_member_user: commenter } = comment.comment_team_member;
   const isUserOwner = comment.comment_team_member_id === teamMemberId;

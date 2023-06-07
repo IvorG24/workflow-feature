@@ -22,8 +22,9 @@ type Props = {
 
 const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const userProfile = useUserProfile();
-  const supabaseClient = useSupabaseClient();
   const teamMemberId = useUserTeamMemberId();
+  const supabaseClient = useSupabaseClient();
+
   const user = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [commentList, setCommentList] = useState(requestCommentList);
