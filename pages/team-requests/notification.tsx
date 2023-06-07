@@ -14,6 +14,7 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
     const supabaseClient = createServerSupabaseClient(ctx);
+    const tab = ctx.query.tab || "all";
 
     const teamId = await getUserActiveTeamId(supabaseClient, {
       userId: TEMP_USER_ID,
@@ -26,16 +27,25 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
     if (!teamMemberId) throw new Error("No team member found");
 
-    const { data: notificationList, count: unreadNotificationCount } =
-      await getNotification(supabaseClient, {
+    const { data: fetchedNotificationList } = await getNotification(
+      supabaseClient,
+      {
         app: "REQUEST",
         limit: NOTIFICATION_LIST_LIMIT,
         memberId: teamMemberId,
         page: 1,
-      });
+      }
+    );
+
+    const notificationList =
+      tab === "unread"
+        ? fetchedNotificationList.filter(
+            (notification) => !notification.notification_is_read
+          )
+        : fetchedNotificationList;
 
     return {
-      props: { teamMemberId, notificationList, unreadNotificationCount },
+      props: { teamMemberId, notificationList, tab },
     };
   } catch (error) {
     console.error(error);
@@ -51,22 +61,18 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 type Props = {
   teamMemberId: string;
   notificationList: NotificationTableRow[];
-  unreadNotificationCount: number;
+  tab: "all" | "unread";
 };
 
-const Page = ({
-  notificationList,
-  unreadNotificationCount,
-  teamMemberId,
-}: Props) => {
+const Page = ({ notificationList, teamMemberId, tab }: Props) => {
   return (
     <>
       <Meta description="Notification Page" url="/team-requests/notification" />
       <NotificationPage
         app="REQUEST"
         notificationList={notificationList}
-        unreadNotificationCount={unreadNotificationCount}
         teamMemberId={teamMemberId}
+        tab={tab}
       />
     </>
   );
