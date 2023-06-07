@@ -22,7 +22,7 @@ const TeamCard = ({ team }: TeamCardProps) => {
           You have successfully created your team.
         </Title>
         <Button size="md" onClick={() => handleRedirectToTeamDashboard()}>
-          Go to team Dashboard
+          Go to team {team.team_name}
         </Button>
       </Stack>
     </Paper>

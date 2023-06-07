@@ -51,7 +51,7 @@ const InviteForm = ({ changeStep, ownerData }: InviteFormProps) => {
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    defaultValues: { invites: [{ email: "juandelacruz@mail.com" }] },
+    defaultValues: { invites: [{ email: "" }] },
   });
   const { fields, append, remove, replace } = useFieldArray({
     control,
@@ -117,7 +117,7 @@ const InviteForm = ({ changeStep, ownerData }: InviteFormProps) => {
                 <Box key={invite.id} mt="xs">
                   <Group>
                     <TextInput
-                      icon={<IconMail />}
+                      icon={<IconMail size={16} />}
                       placeholder="Add member email address"
                       {...register(`invites.${index}.email`, {
                         validate: {
@@ -138,7 +138,7 @@ const InviteForm = ({ changeStep, ownerData }: InviteFormProps) => {
                       color="red"
                       onClick={() => handleRemoveInvite(index)}
                     >
-                      <IconTrash />
+                      <IconTrash size={16} />
                     </ActionIcon>
                   </Group>
                   <Text color="red" size="xs">

@@ -95,7 +95,7 @@ const CreateTeamForm = ({
       )[0];
 
       if (teamData && ownerData) {
-        const updatedTeamList = [...teamList, teamData];
+        const updatedTeamList = [teamData, ...teamList];
         setNewTeam(teamData);
         setOwnerData(ownerData);
         setTeamList(updatedTeamList);
