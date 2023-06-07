@@ -1,60 +1,80 @@
+import { deleteRow } from "@/backend/api/delete";
 import { createTeamInvitation, uploadImage } from "@/backend/api/post";
 import {
   updateTeam,
   updateTeamMemberRole,
   updateTeamOwner,
 } from "@/backend/api/update";
-import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { TeamWithTeamMemberType } from "@/utils/types";
-import {
-  Button,
-  Container,
-  FileInput,
-  Paper,
-  Stack,
-  Title,
-} from "@mantine/core";
+import { MemberRoleType, TeamWithTeamMemberType } from "@/utils/types";
+import { Container, Space, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import InviteMember from "./InviteMember";
+import TeamInfoForm from "./TeamInfoForm";
+import TeamMemberList from "./TeamMemberList";
 
 type Props = {
   team: TeamWithTeamMemberType;
   teamMemberId: string;
 };
 
-const TeamPage = ({ team, teamMemberId }: Props) => {
+export type UpdateTeamInfoForm = {
+  teamName: string;
+  teamLogo: string;
+};
+
+export type SearchTeamMemberForm = {
+  keyword: string;
+};
+
+const TeamPage = ({ team: initialTeam, teamMemberId }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
-  const { setIsLoading } = useLoadingActions();
   const teamList = useTeamList();
+  const [team, setTeam] = useState<TeamWithTeamMemberType>(initialTeam);
+  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+  const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
+  const [isInvitingMember, setIsInvitingMember] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
 
-  const [image, setImage] = useState<File | null>(null);
+  const [emailList, setEmailList] = useState<string[]>([]);
+  const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
-  const handleUpdateTeam = async () => {
-    const tempNewTeamName = "New Team Name";
-    setIsLoading(true);
+  const memberEmailList = team.team_member.map(
+    (member) => member.team_member_user.user_email
+  );
+
+  const updateTeamMethods = useForm<UpdateTeamInfoForm>({
+    defaultValues: { teamName: team.team_name, teamLogo: team.team_logo },
+  });
+  const searchTeamMemberMethods = useForm<SearchTeamMemberForm>();
+
+  const handleUpdateTeam = async (data: UpdateTeamInfoForm) => {
+    const { teamName } = data;
     try {
+      setIsUpdatingTeam(true);
+
       let imageUrl = "";
-      if (image) {
+      if (teamLogo) {
         imageUrl = await uploadImage(supabaseClient, {
           id: team.team_id,
-          image: image,
+          image: teamLogo,
           bucket: "TEAM_LOGOS",
         });
 
         await updateTeam(supabaseClient, {
           team_id: team.team_id,
-          team_name: tempNewTeamName,
+          team_name: teamName,
           team_logo: imageUrl,
         });
       } else {
         await updateTeam(supabaseClient, {
           team_id: team.team_id,
-          team_name: tempNewTeamName,
+          team_name: teamName,
         });
       }
 
@@ -62,7 +82,7 @@ const TeamPage = ({ team, teamMemberId }: Props) => {
         if (stateTeam.team_id === team.team_id) {
           const newActiveTeam = {
             ...stateTeam,
-            team_name: tempNewTeamName,
+            team_name: teamName,
             team_logo: imageUrl ? imageUrl : stateTeam.team_logo,
           };
           setActiveTeam(newActiveTeam);
@@ -71,7 +91,22 @@ const TeamPage = ({ team, teamMemberId }: Props) => {
           return stateTeam;
         }
       });
+
       setTeamList(newTeamList);
+
+      updateTeamMethods.reset({
+        teamName,
+        teamLogo: imageUrl ? imageUrl : team.team_logo,
+      });
+
+      setTeam((team) => {
+        return {
+          ...team,
+          team_name: teamName,
+          team_logo: imageUrl ? imageUrl : team.team_logo,
+        };
+      });
+      setTeamLogo(null);
 
       notifications.show({
         title: "Success!",
@@ -84,19 +119,20 @@ const TeamPage = ({ team, teamMemberId }: Props) => {
         message: "Unable to update team",
         color: "red",
       });
+    } finally {
+      setIsUpdatingTeam(false);
     }
-    setIsLoading(false);
+  };
+
+  // todo: fetch team members with keyword
+  const handleSearchTeamMember = async (data: SearchTeamMemberForm) => {
+    const { keyword } = data;
+    console.log(keyword);
   };
 
   const handleInvite = async () => {
-    const emailList = [
-      "member1@gmail.com",
-      "member2@gmail.com",
-      "member3@gmail.com",
-    ];
-
-    setIsLoading(true);
     try {
+      setIsInvitingMember(true);
       const invitationData = emailList.map((email) => {
         return {
           invitation_from_team_member_id: teamMemberId,
@@ -105,6 +141,7 @@ const TeamPage = ({ team, teamMemberId }: Props) => {
       });
       await createTeamInvitation(supabaseClient, invitationData);
 
+      setEmailList([]);
       notifications.show({
         title: "Success!",
         message: "Successfully invited team member/s",
@@ -116,49 +153,167 @@ const TeamPage = ({ team, teamMemberId }: Props) => {
         message: "Unable to invite team member/s",
         color: "red",
       });
+    } finally {
+      setIsInvitingMember(false);
     }
-    setIsLoading(false);
   };
 
-  const handleUpdateMemberRole = async () => {
+  const handleUpdateMemberRole = async (
+    memberId: string,
+    role: MemberRoleType
+  ) => {
     try {
+      setIsUpdatingTeamMembers(true);
+
       await updateTeamMemberRole(supabaseClient, {
-        memberId: "390dbc5f-c3ba-4f86-81ca-7cc9746b6e31",
-        role: "ADMIN",
+        memberId,
+        role,
       });
-    } catch (e) {
-      console.log(e);
+
+      setTeam((team) => {
+        return {
+          ...team,
+          team_member: team.team_member.map((member) => {
+            if (member.team_member_id === memberId)
+              return {
+                ...member,
+                team_member_role: role,
+              };
+            else return member;
+          }),
+        };
+      });
+
+      notifications.show({
+        title: "Success!",
+        message: "Successfully updated team member role",
+        color: "green",
+      });
+    } catch {
+      notifications.show({
+        title: "Error!",
+        message: "Unable to update team member role",
+        color: "red",
+      });
+    } finally {
+      setIsUpdatingTeamMembers(false);
     }
   };
 
-  const handleTransferOwnership = async () => {
+  const handleTransferOwnership = async (ownerId: string, memberId: string) => {
     try {
+      setIsUpdatingTeamMembers(true);
+
       await updateTeamOwner(supabaseClient, {
-        ownerId: "eb4d3419-b70f-44ba-b88f-c3d983cbcf3b",
-        memberId: "d9c6c738-8a60-43de-965f-f1f666da1639",
+        ownerId,
+        memberId,
+      });
+
+      setTeam((team) => {
+        return {
+          ...team,
+          team_member: team.team_member.map((member) => {
+            if (member.team_member_id === ownerId)
+              return {
+                ...member,
+                team_member_role: "ADMIN",
+              };
+            else if (member.team_member_id === memberId)
+              return {
+                ...member,
+                team_member_role: "OWNER",
+              };
+            else return member;
+          }),
+        };
+      });
+
+      notifications.show({
+        title: "Success!",
+        message: "Successfully transferred team ownership",
+        color: "green",
+      });
+    } catch {
+      notifications.show({
+        title: "Error!",
+        message: "Unable to transfer team ownership",
+        color: "red",
+      });
+    } finally {
+      setIsUpdatingTeamMembers(false);
+    }
+  };
+
+  const handleRemoveFromTeam = async (memberId: string) => {
+    try {
+      setIsUpdatingTeamMembers(true);
+
+      // todo: not working, needs to fix team_member_table's team_member_disabled into team_member_is_disabled
+      await deleteRow(supabaseClient, {
+        rowId: [memberId],
+        table: "team_member",
+      });
+
+      setTeam((team) => {
+        return {
+          ...team,
+          team_member: team.team_member.filter(
+            (member) => member.team_member_id !== memberId
+          ),
+        };
+      });
+
+      notifications.show({
+        title: "Success!",
+        message: "Successfully removed member from team",
+        color: "green",
       });
     } catch (e) {
       console.log(e);
+      notifications.show({
+        title: "Error!",
+        message: "Unable remove member from team",
+        color: "red",
+      });
+    } finally {
+      setIsUpdatingTeamMembers(false);
     }
   };
 
   return (
-    <Container>
-      <Title>Team Page</Title>
-      <Stack mt="xl">
-        <FileInput label="Team Logo" onChange={setImage} value={image} />
-        <Button onClick={handleUpdateTeam}>Update Team</Button>
-        <Button onClick={handleInvite}>Invite Team Member</Button>
-      </Stack>
-      <Stack mt="xl">
-        <Button onClick={handleUpdateMemberRole}>
-          Change Team Member Role
-        </Button>
-        <Button onClick={handleTransferOwnership}>Transfer Ownership</Button>
-      </Stack>
-      <Paper p="xl" mt="xl">
-        <pre>{JSON.stringify(team, null, 2)}</pre>
-      </Paper>
+    <Container fluid>
+      <Title order={2}>Manage Team</Title>
+
+      <FormProvider {...updateTeamMethods}>
+        <TeamInfoForm
+          team={team}
+          isUpdatingTeam={isUpdatingTeam}
+          onUpdateTeam={handleUpdateTeam}
+          teamLogoFile={teamLogo}
+          onTeamLogoFileChange={setTeamLogo}
+        />
+      </FormProvider>
+
+      <FormProvider {...searchTeamMemberMethods}>
+        <TeamMemberList
+          team={team}
+          isUpdatingTeamMembers={isUpdatingTeamMembers}
+          onSearchTeamMember={handleSearchTeamMember}
+          onRemoveFromTeam={handleRemoveFromTeam}
+          onUpdateMemberRole={handleUpdateMemberRole}
+          onTransferOwnership={handleTransferOwnership}
+        />
+      </FormProvider>
+
+      <InviteMember
+        isInvitingMember={isInvitingMember}
+        onInviteMember={handleInvite}
+        onSetEmailList={setEmailList}
+        memberEmailList={memberEmailList}
+        emailList={emailList}
+      />
+
+      <Space mt={32} />
     </Container>
   );
 };
