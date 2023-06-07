@@ -1,12 +1,12 @@
 import {
   getTeam,
+  getTeamMemberList,
   getUserActiveTeamId,
-  getUserTeamMemberId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TeamPage from "@/components/TeamPage/TeamPage";
 import { TEMP_USER_ID } from "@/utils/dummyData";
-import { TeamWithTeamMemberType } from "@/utils/types";
+import { TeamMemberType, TeamTableRow } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
@@ -21,17 +21,21 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     const team = await getTeam(supabaseClient, {
       teamId: teamId,
     });
-    if (!team) throw new Error("No team found");
+    if (!team) {
+      return {
+        redirect: {
+          destination: "/404",
+          permanent: false,
+        },
+      };
+    }
 
-    const teamMemberId = await getUserTeamMemberId(supabaseClient, {
-      teamId: teamId,
-      userId: TEMP_USER_ID,
+    const teamMembers = await getTeamMemberList(supabaseClient, {
+      teamId: team.team_id,
     });
 
-    if (!teamMemberId) throw new Error("No team member found");
-
     return {
-      props: { team, teamMemberId },
+      props: { team, teamMembers },
     };
   } catch (error) {
     console.error(error);
@@ -45,15 +49,15 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 
 type Props = {
-  team: TeamWithTeamMemberType;
-  teamMemberId: string;
+  team: TeamTableRow;
+  teamMembers: TeamMemberType[];
 };
 
-const Page = ({ team, teamMemberId }: Props) => {
+const Page = ({ team, teamMembers }: Props) => {
   return (
     <>
       <Meta description="Team Page" url="/team" />
-      <TeamPage team={team} teamMemberId={teamMemberId} />
+      <TeamPage team={team} teamMembers={teamMembers} />
     </>
   );
 };

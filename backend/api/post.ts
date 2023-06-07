@@ -436,3 +436,59 @@ export const createRequest = async (
 
   return request;
 };
+
+// Create formsly premade forms
+export const createFormslyPremadeForms = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { teamMemberId } = params;
+
+  const { data: formData, error: formError } = await supabaseClient
+    .from("form_table")
+    .insert({
+      form_name: "Requisition Form",
+      form_description: "Formsly premade requisition form",
+      form_app: "REQUEST",
+      form_team_member_id: teamMemberId,
+      form_is_hidden: true,
+      form_is_formsly_form: true,
+    })
+    .select()
+    .single();
+  if (formError) throw formError;
+
+  const { data: sectionData, error: sectionError } = await supabaseClient
+    .from("section_table")
+    .insert({
+      section_name: "Item",
+      section_order: 1,
+      section_is_duplicatable: true,
+      section_form_id: formData.form_id,
+    })
+    .select()
+    .single();
+  if (sectionError) throw sectionError;
+
+  const { error: fieldError } = await supabaseClient
+    .from("field_table")
+    .insert([
+      {
+        field_name: "General Name",
+        field_type: "DROPDOWN",
+        field_order: 1,
+        field_section_id: sectionData.section_id,
+        field_is_required: true,
+      },
+      {
+        field_name: "Quantity",
+        field_type: "NUMBER",
+        field_order: 2,
+        field_section_id: sectionData.section_id,
+        field_is_required: true,
+      },
+    ]);
+  if (fieldError) throw fieldError;
+};

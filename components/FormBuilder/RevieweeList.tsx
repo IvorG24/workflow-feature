@@ -1,5 +1,5 @@
 import { getAvatarColor } from "@/utils/styling";
-import { TeamWithTeamMemberType } from "@/utils/types";
+import { TeamMemberType } from "@/utils/types";
 import {
   Avatar,
   Container,
@@ -12,7 +12,7 @@ import {
 import { startCase, upperCase } from "lodash";
 
 type Props = {
-  revieweeList: TeamWithTeamMemberType["team_member"];
+  revieweeList: TeamMemberType[];
 } & ContainerProps;
 
 const RevieweeList = ({ revieweeList, ...props }: Props) => {
