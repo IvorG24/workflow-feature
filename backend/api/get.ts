@@ -251,7 +251,7 @@ export const getRequest = async (
   const { data, error } = await supabaseClient
     .from("request_table")
     .select(
-      "*, request_team_member: request_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_comment: comment_table(comment_id, comment_date_created, comment_content, comment_is_edited, comment_last_updated, comment_type, comment_team_member_id, comment_team_member: comment_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar))), request_form: request_form_id(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*)))))"
+      "*, request_team_member: request_team_member_id(team_member_team_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_comment: comment_table(comment_id, comment_date_created, comment_content, comment_is_edited, comment_last_updated, comment_type, comment_team_member_id, comment_team_member: comment_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar))), request_form: request_form_id(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*)))))"
     )
     .eq("request_id", requestId)
     .eq(
@@ -445,21 +445,23 @@ export const getForm = async (
 export const getNotification = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    memberId: string;
+    userId: string;
     app: AppType;
     page: number;
     limit: number;
+    teamId: string;
   }
 ) => {
-  const { memberId, app, page, limit } = params;
+  const { userId, app, page, limit, teamId } = params;
   const start = (page - 1) * limit;
 
   const { data: notificationList, error: notificationListError } =
     await supabaseClient
       .from("notification_table")
       .select("*")
-      .eq("notification_team_member_id", memberId)
-      .eq("notification_app", app)
+      .eq("notification_user_id", userId)
+      .or(`notification_team_id.eq.${teamId}, notification_team_id.is.${null}`)
+      .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
       .order("notification_date_created", { ascending: false })
       .limit(limit)
       .range(start, start + limit - 1);
@@ -469,8 +471,9 @@ export const getNotification = async (
     await supabaseClient
       .from("notification_table")
       .select("*", { count: "exact", head: true })
-      .eq("notification_team_member_id", memberId)
-      .eq("notification_app", app)
+      .eq("notification_user_id", userId)
+      .or(`notification_team_id.eq.${teamId}, notification_team_id.is.${null}`)
+      .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
       .eq("notification_is_read", false);
   if (unreadNotificationError) throw unreadNotificationError;
 
@@ -733,4 +736,28 @@ export const getTeamMemberList = async (
   if (error) throw error;
 
   return data as TeamMemberType[];
+};
+
+// Get invitation
+export const getInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    invitationId: string;
+    userEmail: string;
+  }
+) => {
+  const { invitationId, userEmail } = params;
+  const { data, error } = await supabaseClient
+    .from("invitation_table")
+    .select(
+      "*, invitation_from_team_member: invitation_from_team_member_id(*, team_member_team: team_member_team_id(*))"
+    )
+    .eq("invitation_id", invitationId)
+    .eq("invitation_to_email", userEmail)
+    .eq("invitation_is_disabled", false)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
 };

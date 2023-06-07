@@ -1,6 +1,5 @@
 import { createComment, createNotification } from "@/backend/api/post";
-import { useUserProfile } from "@/stores/useUserStore";
-import { TEMP_TEAM_MEMBER_ID } from "@/utils/dummyData";
+import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
 import { RequestWithResponseType } from "@/utils/types";
 import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -12,20 +11,20 @@ import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
 type Comment = RequestWithResponseType["request_comment"][0];
 
-type RequestCommentListProps = {
+type Props = {
   requestData: {
     requestId: string;
     requestOwnerId: string;
+    teamId: string;
   };
   requestCommentList: Comment[];
 };
 
-const RequestCommentList = ({
-  requestData,
-  requestCommentList,
-}: RequestCommentListProps) => {
+const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const userProfile = useUserProfile();
   const supabaseClient = useSupabaseClient();
+  const teamMemberId = useUserTeamMemberId();
+  const user = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [commentList, setCommentList] = useState(requestCommentList);
 
@@ -39,7 +38,7 @@ const RequestCommentList = ({
       setIsLoading(true);
       const { data: newComment, error } = await createComment(supabaseClient, {
         comment_request_id: requestData.requestId,
-        comment_team_member_id: TEMP_TEAM_MEMBER_ID,
+        comment_team_member_id: teamMemberId,
         comment_type: "REQUEST_COMMENT",
         comment_content: data.comment,
       });
@@ -50,23 +49,22 @@ const RequestCommentList = ({
           ...newComment,
           comment_team_member: {
             team_member_user: {
-              user_id: requestData.requestOwnerId,
-              user_first_name: userProfile.user_first_name,
-              user_last_name: userProfile.user_last_name,
-              user_username: userProfile.user_username,
-              user_avatar: userProfile.user_avatar,
+              ...userProfile,
             },
           },
         };
         setCommentList((prev) => [comment as Comment, ...prev]);
-        // create notification
-        await createNotification(supabaseClient, {
-          notification_app: "REQUEST",
-          notification_type: "REQUEST_COMMENT",
-          notification_content: `${commenterFullName} commented on your request`,
-          notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
-          notification_team_member_id: requestData.requestOwnerId,
-        });
+        if (requestData.requestOwnerId !== user?.user_id) {
+          // create notification
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "REQUEST_COMMENT",
+            notification_content: `${commenterFullName} commented on your request`,
+            notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
+            notification_user_id: requestData.requestOwnerId,
+            notification_team_id: requestData.teamId,
+          });
+        }
         notifications.show({
           message: "Comment created.",
           color: "green",

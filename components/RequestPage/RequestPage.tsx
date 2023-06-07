@@ -1,8 +1,8 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
-import { TEMP_TEAM_MEMBER_ID, TEMP_USER_ID } from "@/utils/dummyData";
 import {
   FormStatusType,
   ReceiverStatusType,
@@ -28,6 +28,8 @@ const RequestPage = ({ request }: Props) => {
   const { setIsLoading } = useLoadingActions();
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const requestor = request.request_team_member.team_member_user;
+  const user = useUserProfile();
+  const teamMemberId = useUserTeamMemberId();
 
   const signerList = request.request_signer.map((signer) => {
     return {
@@ -43,9 +45,9 @@ const RequestPage = ({ request }: Props) => {
     day: "numeric",
   });
 
-  const isUserOwner = requestor.user_id === TEMP_USER_ID;
+  const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
-    (signer) => signer.signer_team_member.team_member_id === TEMP_TEAM_MEMBER_ID
+    (signer) => signer.signer_team_member.team_member_id === teamMemberId
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -70,10 +72,11 @@ const RequestPage = ({ request }: Props) => {
         requestId: request.request_id,
         isPrimarySigner: approver.signer_is_primary_signer,
         requestSignerId: approver.signer_id,
-        requestOwnerId: request.request_team_member_id as string,
+        requestOwnerId: request.request_team_member.team_member_user.user_id,
         signerFullName: approverFullName,
         formName: request.request_form.form_name,
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
+        teamId: request.request_team_member.team_member_team_id,
       });
 
       setRequestStatus(status);
@@ -98,7 +101,7 @@ const RequestPage = ({ request }: Props) => {
       setIsLoading(true);
       await cancelRequest(supabaseClient, {
         requestId: request.request_id,
-        memberId: TEMP_TEAM_MEMBER_ID,
+        memberId: teamMemberId,
       });
 
       setRequestStatus("CANCELED");
@@ -154,7 +157,6 @@ const RequestPage = ({ request }: Props) => {
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
       confirmProps: { color: "red" },
-      onCancel: () => console.log("Cancel"),
       onConfirm: async () => await handleDeleteRequest(),
     });
 
@@ -189,7 +191,8 @@ const RequestPage = ({ request }: Props) => {
       <RequestCommentList
         requestData={{
           requestId: request.request_id,
-          requestOwnerId: request.request_team_member_id as string,
+          requestOwnerId: request.request_team_member.team_member_user.user_id,
+          teamId: request.request_team_member.team_member_team_id,
         }}
         requestCommentList={request.request_comment}
       />

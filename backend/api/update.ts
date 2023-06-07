@@ -98,6 +98,7 @@ export const approveOrRejectRequest = async (
     signerFullName: string;
     formName: string;
     memberId: string;
+    teamId: string;
   }
 ) => {
   const {
@@ -109,6 +110,7 @@ export const approveOrRejectRequest = async (
     formName,
     requestAction,
     memberId,
+    teamId,
   } = params;
 
   const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -138,7 +140,8 @@ export const approveOrRejectRequest = async (
       requestAction
     )} your ${formName} request`,
     notification_redirect_url: `/team-requests/requests/${requestId}`,
-    notification_team_member_id: requestOwnerId,
+    notification_user_id: requestOwnerId,
+    notification_team_id: teamId,
   });
 
   // update request status if the signer is the primary signer
@@ -158,7 +161,8 @@ export const approveOrRejectRequest = async (
         requestAction
       )}`,
       notification_redirect_url: `/team-requests/requests/${requestId}`,
-      notification_team_member_id: requestOwnerId,
+      notification_user_id: requestOwnerId,
+      notification_team_id: teamId,
     });
   }
 };
@@ -277,4 +281,51 @@ export const updateFormSigner = async (
   if (disbaleAllError) throw disbaleAllError;
   const { error } = await supabaseClient.from("signer_table").upsert(signers);
   if (error) throw error;
+};
+
+// Update notification status
+export const updateNotificationStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    notificationId: string;
+  }
+) => {
+  const { notificationId } = params;
+  const { error } = await supabaseClient
+    .from("notification_table")
+    .update({ notification_is_read: true })
+    .eq("notification_id", notificationId);
+  if (error) throw error;
+};
+
+// Accept team invitation
+export const acceptTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { invitationId: string; teamId: string; userId: string }
+) => {
+  const { invitationId, teamId, userId } = params;
+  const { error: invitationError } = await supabaseClient
+    .from("invitation_table")
+    .update({ invitation_status: "ACCEPTED" })
+    .eq("invitation_id", invitationId);
+  if (invitationError) throw invitationError;
+
+  const { error: teamMemberError } = await supabaseClient
+    .from("team_member_table")
+    .insert({ team_member_team_id: teamId, team_member_user_id: userId })
+    .select();
+  if (teamMemberError) throw teamMemberError;
+};
+
+// Decline team invitation
+export const declineTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { invitationId: string }
+) => {
+  const { invitationId } = params;
+  const { error: invitationError } = await supabaseClient
+    .from("invitation_table")
+    .update({ invitation_status: "DECLINED" })
+    .eq("invitation_id", invitationId);
+  if (invitationError) throw invitationError;
 };

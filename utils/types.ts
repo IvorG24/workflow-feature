@@ -168,6 +168,7 @@ export type NotificationType =
   | "INVITE"
   | "REVIEW"
   | "COMMENT";
+export type InvitationStatuType = "ACCEPTED" | "DECLINED" | "PENDING";
 // End: Database Enums
 
 // Start: Joined Types
@@ -210,7 +211,7 @@ export type UserWithSignatureType = UserTableRow & {
 
 export type RequestWithResponseType = RequestTableRow & {
   request_form: {
-    formId: string;
+    form_id: string;
     form_name: string;
     form_description: string;
     form_is_formsly_form: boolean;
@@ -225,6 +226,7 @@ export type RequestWithResponseType = RequestTableRow & {
   };
 } & {
   request_team_member: {
+    team_member_team_id: string;
     team_member_user: {
       user_id: string;
       user_first_name: string;
@@ -411,4 +413,10 @@ export type ItemWithDecsriptionAndField = ItemTableRow & {
   item_description: (ItemDescriptionTableRow & {
     item_description_field: ItemDescriptionFieldTableRow[];
   })[];
+};
+
+export type InvitationWithTeam = InvitationTableRow & {
+  invitation_from_team_member: TeamMemberTableRow & {
+    team_member_team: TeamTableRow;
+  };
 };
