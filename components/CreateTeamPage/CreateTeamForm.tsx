@@ -1,4 +1,9 @@
-import { createTeam, createTeamMember, uploadImage } from "@/backend/api/post";
+import {
+  createFormslyPremadeForms,
+  createTeam,
+  createTeamMember,
+  uploadImage,
+} from "@/backend/api/post";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { TeamMemberTableRow, TeamTableRow } from "@/utils/types";
@@ -94,8 +99,12 @@ const CreateTeamForm = ({
         })
       )[0];
 
+      await createFormslyPremadeForms(supabaseClient, {
+        teamMemberId: ownerData.team_member_id,
+      });
+
       if (teamData && ownerData) {
-        const updatedTeamList = [...teamList, teamData];
+        const updatedTeamList = [teamData, ...teamList];
         setNewTeam(teamData);
         setOwnerData(ownerData);
         setTeamList(updatedTeamList);
