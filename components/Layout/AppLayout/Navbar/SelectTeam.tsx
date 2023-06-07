@@ -162,7 +162,6 @@ const SelectTeam = () => {
         data={formatTeamOptions()}
         value={activeTeam.team_id}
         onChange={handleOnChange}
-        searchable
         maxDropdownHeight={400}
         nothingFound="Team not found"
         icon={

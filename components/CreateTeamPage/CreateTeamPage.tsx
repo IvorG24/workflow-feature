@@ -1,49 +1,51 @@
-import { Container, Title } from "@mantine/core";
-
-// const guideFunction = async () => {
-//   const teamId = uuidv4();
-
-//   let imageUrl = "";
-//   if (image) {
-//     imageUrl = await uploadImage(supabaseClient, {
-//       id: teamId,
-//       image: image,
-//       bucket: "TEAM_LOGOS",
-//     });
-//   }
-
-//   const teamData = await createTeam(supabaseClient, {
-//     team_id: teamId,
-//     team_name: "Test Team",
-//     team_user_id: TEMP_USER_ID,
-//     team_logo: imageUrl,
-//   });
-
-//   const ownerData = (
-//     await createTeamMember(supabaseClient, {
-//       team_member_team_id: teamData.team_id,
-//       team_member_user_id: TEMP_USER_ID,
-//       team_member_member_role: "OWNER",
-//     })
-//   )[0];
-
-// const invitationData = await createTeamInvitation(supabaseClient, [
-//   {
-//     invitation_from_team_member_id: ownerData.team_member_id,
-//     invitation_to_email: "testemail@gmail.com",
-//   },
-// ]);
-
-//   setTeam(teamData);
-//   setMember(ownerData);
-//   setInvitation(invitationData);
-//   setUrl(imageUrl);
-// };
+import { TeamMemberTableRow, TeamTableRow } from "@/utils/types";
+import { Container, Stepper, Title } from "@mantine/core";
+import { useState } from "react";
+import CreateTeamForm from "./CreateTeamForm";
+import InviteForm from "./InviteForm";
+import TeamCard from "./TeamCard";
 
 const CreateTeamPage = () => {
+  const [activeStep, setActiveStep] = useState(1);
+  const [newTeam, setNewTeam] = useState<TeamTableRow | null>(null);
+  const [ownerData, setOwnerData] = useState<TeamMemberTableRow | null>(null);
+
+  const renderSteps = (activeStep: number) => {
+    switch (activeStep) {
+      case 1:
+        return (
+          <CreateTeamForm
+            changeStep={setActiveStep}
+            setNewTeam={setNewTeam}
+            setOwnerData={setOwnerData}
+          />
+        );
+
+      case 2:
+        return (
+          <InviteForm
+            changeStep={setActiveStep}
+            ownerData={ownerData as TeamMemberTableRow}
+          />
+        );
+
+      case 3:
+        return <TeamCard team={newTeam as TeamTableRow} />;
+
+      default:
+        break;
+    }
+  };
+
   return (
     <Container>
       <Title>Create Team Page</Title>
+      <Stepper my="xl" iconSize={42} active={activeStep} breakpoint="sm">
+        <Stepper.Step label="Step 1" description="Create team" />
+        <Stepper.Step label="Step 2" description="Invite members" />
+        <Stepper.Step label="Step 3" description="Go to team" />
+      </Stepper>
+      {renderSteps(activeStep)}
     </Container>
   );
 };

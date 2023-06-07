@@ -68,7 +68,7 @@ CREATE TABLE team_member_table(
   team_member_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
-  team_member_disabled BOOL DEFAULT FALSE NOT NULL,
+  team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
 
   team_member_user_id UUID REFERENCES user_table(user_id) NOT NULL,
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
