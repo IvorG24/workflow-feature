@@ -16,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       userId: TEMP_USER_ID,
     });
 
-    const { data: fetchedNotificationList } = await getNotificationList(
+    const { data: notificationList } = await getNotificationList(
       supabaseClient,
       {
         app: "REQUEST",
@@ -24,12 +24,12 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         page: 1,
         userId: TEMP_USER_ID,
         teamId,
-        unreadOnly: false,
+        unreadOnly: tab === "unread",
       }
     );
 
     return {
-      props: { notificationList: fetchedNotificationList, tab },
+      props: { notificationList, tab },
     };
   } catch (error) {
     console.error(error);
@@ -48,7 +48,6 @@ type Props = {
 };
 
 const Page = ({ notificationList, tab }: Props) => {
-  console.log(notificationList);
   return (
     <>
       <Meta description="Notification Page" url="/team-requests/notification" />

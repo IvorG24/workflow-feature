@@ -1,4 +1,4 @@
-import { getAllNotification, getUserActiveTeamId } from "@/backend/api/get";
+import { getNotificationList, getUserActiveTeamId } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import NotificationPage from "@/components/NotificationPage/NotificationPage";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
@@ -16,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       userId: TEMP_USER_ID,
     });
 
-    const { data: fetchedNotificationList } = await getAllNotification(
+    const { data: notificationList } = await getNotificationList(
       supabaseClient,
       {
         app: "REVIEW",
@@ -24,15 +24,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         page: 1,
         userId: TEMP_USER_ID,
         teamId,
+        unreadOnly: tab === "unread",
       }
     );
-
-    const notificationList =
-      tab === "unread"
-        ? fetchedNotificationList.filter(
-            (notification) => !notification.notification_is_read
-          )
-        : fetchedNotificationList;
 
     return {
       props: { notificationList, tab },
