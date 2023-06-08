@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestCard from "./RequestCard/RequestCard";
 import RequestListFilter from "./RequestListFilter";
@@ -43,7 +43,8 @@ const RequestListPage = ({
   requestListCount: initialRequestListCount,
   teamMemberList,
 }: Props) => {
-  const [visibleRequestList, setVisibleRequestList] = useState(requestList);
+  const [visibleRequestList, setVisibleRequestList] =
+    useState<RequestType[]>(requestList);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestListCount, setRequestListCount] = useState(
     initialRequestListCount
@@ -96,6 +97,10 @@ const RequestListPage = ({
       setIsFetchingRequestList(false);
     }
   };
+
+  useEffect(() => {
+    setVisibleRequestList(requestList || []);
+  }, [requestList]);
 
   return (
     <Container fluid>
