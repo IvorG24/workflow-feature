@@ -3,12 +3,12 @@ import { createAttachment, uploadImage } from "@/backend/api/post";
 import { udpateUser } from "@/backend/api/update";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { TEMP_USER_ID } from "@/utils/dummyData";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize } from "lodash";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import UploadSignature from "../UploadSignature/UploadSignature";
@@ -38,6 +38,7 @@ type Props = {
 
 const UserSettingsPage = ({ user }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
+  const router = useRouter();
 
   const { setUserAvatar, setUserInitials } = useUserActions();
 
@@ -62,7 +63,12 @@ const UserSettingsPage = ({ user }: Props) => {
         setSignatureUrl(url);
         setIsUpdatingSignature(false);
       } catch (e) {
-        console.log(e);
+        notifications.show({
+          title: "Error!",
+          message: "Unable to fetch signature",
+          color: "red",
+        });
+        router.push("/500");
       }
     };
     if (user.user_signature_attachment) {
@@ -159,7 +165,7 @@ const UserSettingsPage = ({ user }: Props) => {
           attachmentData: {
             attachment_name: signature.name,
             attachment_bucket: "USER_SIGNATURES",
-            attachment_value: TEMP_USER_ID,
+            attachment_value: user.user_id,
             attachment_id: user.user_signature_attachment_id
               ? user.user_signature_attachment_id
               : undefined,
@@ -169,7 +175,7 @@ const UserSettingsPage = ({ user }: Props) => {
       );
 
       await udpateUser(supabaseClient, {
-        user_id: TEMP_USER_ID,
+        user_id: user.user_id,
         user_signature_attachment_id: signatureAttachment.attachment_id,
       });
 

@@ -106,14 +106,68 @@ export const createTeamMember = async (
 // Create Team Invitation/s
 export const createTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
-  params: InvitationTableInsert[]
+  params: {
+    emailList: string[];
+    teamMemberId: string;
+    teamName: string;
+  }
 ) => {
-  const { data, error } = await supabaseClient
+  const { emailList, teamMemberId, teamName } = params;
+
+  const invitationInput: InvitationTableInsert[] = [];
+  const notificationInput: NotificationTableInsert[] = [];
+
+  for (const email of emailList) {
+    const invitationId = uuidv4();
+    // check if there is already an invitation
+    const { count: checkInvitationCount, error: checkInvitationError } =
+      await supabaseClient
+        .from("invitation_table")
+        .select("*", { count: "exact", head: true })
+        .eq("invitation_to_email", email)
+        .eq("invitation_from_team_member_id", teamMemberId)
+        .eq("invitation_is_disabled", false)
+        .eq("invitation_status", "PENDING");
+    if (checkInvitationError) throw checkInvitationError;
+
+    if (!checkInvitationCount) {
+      invitationInput.push({
+        invitation_id: invitationId,
+        invitation_to_email: email,
+        invitation_from_team_member_id: teamMemberId,
+      });
+    }
+
+    // check if user exists
+    const { data: checkUserData, error: checkUserError } = await supabaseClient
+      .from("user_table")
+      .select("*")
+      .eq("user_email", email)
+      .maybeSingle();
+    if (checkUserError) throw checkUserError;
+    if (checkUserData) {
+      notificationInput.push({
+        notification_app: "GENERAL",
+        notification_content: `You have been invited to join ${teamName}`,
+        notification_redirect_url: `/team/invitation/${invitationId}`,
+        notification_type: "INVITE",
+        notification_user_id: checkUserData.user_id,
+      });
+    }
+  }
+
+  const { data: invitationData, error: invitationError } = await supabaseClient
     .from("invitation_table")
-    .insert(params)
+    .insert(invitationInput)
     .select();
-  if (error) throw error;
-  return data;
+  if (invitationError) throw invitationError;
+
+  const { error: notificationError } = await supabaseClient
+    .from("notification_table")
+    .insert(notificationInput);
+  if (notificationError) throw notificationError;
+
+  return invitationData;
 };
 
 // Sign Up User

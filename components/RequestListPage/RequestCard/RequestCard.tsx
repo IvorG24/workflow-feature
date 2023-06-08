@@ -1,4 +1,4 @@
-import { getStatusToColor } from "@/utils/styling";
+import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestType } from "@/utils/types";
 import {
   ActionIcon,
@@ -21,7 +21,7 @@ import {
   IconFileDescription,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import RequestApproverList from "./RequestApproverList";
+import RequestSignerList from "./RequestSignerList";
 
 type RequestCardProps = {
   request: RequestType;
@@ -53,7 +53,13 @@ const RequestCard = ({ request }: RequestCardProps) => {
       <Stack>
         <Group position="apart">
           <Group spacing={8}>
-            <Avatar src={requestor.user_avatar} {...defaultAvatarProps}>
+            <Avatar
+              src={requestor.user_avatar}
+              {...defaultAvatarProps}
+              color={getAvatarColor(
+                Number(`${requestor.user_id.charCodeAt(0)}`)
+              )}
+            >
               {requestor.user_first_name[0] + requestor.user_last_name[0]}
             </Avatar>
             <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
@@ -106,7 +112,7 @@ const RequestCard = ({ request }: RequestCardProps) => {
       <Card.Section mt="sm">
         <Divider />
         <Group p="sm" position="apart">
-          <RequestApproverList approverList={request_signer} />
+          <RequestSignerList signerList={request_signer} />
 
           <Button
             variant="light"

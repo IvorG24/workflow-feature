@@ -46,6 +46,10 @@ type SearchForm = {
   status?: "hidden" | "visible";
 };
 
+type FormFilterValues = {
+  creatorFilter: string[];
+};
+
 const RequestFormListPage = ({
   formList: initialFormList,
   formListCount: initialFormListCount,
@@ -64,6 +68,9 @@ const RequestFormListPage = ({
   const [selectedForm, setSelectedForm] = useState<FormWithOwnerType | null>(
     null
   );
+  const [formFilterValues, setFormFilterValues] = useState<FormFilterValues>({
+    creatorFilter: [],
+  });
 
   const { setFormList: storeSetFormList } = useFormActions();
 
@@ -106,6 +113,17 @@ const RequestFormListPage = ({
     }
   };
 
+  const handleFilterChange = async (
+    key: keyof FormFilterValues,
+    value: string[]
+  ) => {
+    const filterMatch = formFilterValues[`${key}`];
+    if (value !== filterMatch) {
+      await handleFilterForms();
+    }
+    setFormFilterValues((prev) => ({ ...prev, [`${key}`]: value }));
+  };
+
   const handleUpdateFormVisibility = async (id: string, isHidden: boolean) => {
     try {
       await updateFormVisibility(supabaseClient, {
@@ -141,7 +159,9 @@ const RequestFormListPage = ({
         formId: id,
       });
 
-      setFormList((formList) => formList.filter((form) => form.form_id !== id));
+      const newFormList = formList.filter((form) => form.form_id !== id);
+      setFormList(newFormList);
+      storeSetFormList(newFormList);
 
       notifications.show({
         title: "Success!",
@@ -237,9 +257,12 @@ const RequestFormListPage = ({
                 value={value}
                 onChange={async (value) => {
                   onChange(value);
-                  if (!creatorRefFocused) await handleFilterForms();
+                  if (!creatorRefFocused)
+                    handleFilterChange("creatorFilter", value);
                 }}
-                onDropdownClose={async () => await handleFilterForms()}
+                onDropdownClose={() =>
+                  handleFilterChange("creatorFilter", value)
+                }
                 ref={creatorRef}
                 color={creatorRefFocused ? "green" : "red"}
                 clearable

@@ -27,18 +27,19 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import validator from "validator";
 
-type InviteFormProps = {
-  changeStep: Dispatch<SetStateAction<number>>;
-  ownerData: TeamMemberTableRow;
-};
-
 type FormValues = {
   invites: {
     email: string;
   }[];
 };
 
-const InviteForm = ({ changeStep, ownerData }: InviteFormProps) => {
+type Props = {
+  changeStep: Dispatch<SetStateAction<number>>;
+  ownerData: TeamMemberTableRow;
+  teamName: string | undefined;
+};
+
+const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
   const supabaseClient = useSupabaseClient();
   const [isSendingInvites, setIsSendingInvites] = useState(false);
   const [invitationList, setInvitationList] = useState<InvitationTableRow[]>(
@@ -61,15 +62,16 @@ const InviteForm = ({ changeStep, ownerData }: InviteFormProps) => {
 
   const handleSendInvite = async (data: FormValues) => {
     try {
+      if (!teamName) return;
+
       setIsSendingInvites(true);
-      const invitationParams = data.invites.map((invite) => ({
-        invitation_from_team_member_id: ownerData.team_member_id,
-        invitation_to_email: invite.email,
-      }));
-      const invitationData = await createTeamInvitation(
-        supabaseClient,
-        invitationParams
-      );
+      const emailList = data.invites.map((invite) => invite.email);
+      const invitationData = await createTeamInvitation(supabaseClient, {
+        emailList,
+        teamMemberId: ownerData.team_member_id,
+        teamName: teamName,
+      });
+
       if (invitationData.length > 0) {
         setInvitationList((prev) => [...prev, ...invitationData]);
         replace([{ email: "" }]);
