@@ -43,15 +43,15 @@ const RequestListPage = ({
   requestListCount: initialRequestListCount,
   teamMemberList,
 }: Props) => {
+  const activeTeam = useActiveTeam();
+  const supabaseClient = useSupabaseClient();
   const [visibleRequestList, setVisibleRequestList] =
     useState<RequestType[]>(requestList);
+  const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestListCount, setRequestListCount] = useState(
     initialRequestListCount
   );
-  const [activePage, setActivePage] = useState(1);
-  const supabaseClient = useSupabaseClient();
-  const activeTeam = useActiveTeam();
 
   const filterFormMethods = useForm<FilterFormValues>({
     defaultValues: { isAscendingSort: false },
