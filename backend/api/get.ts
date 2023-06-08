@@ -780,7 +780,9 @@ export const getNotificationList = async (
 
   let query = supabaseClient
     .from("notification_table")
-    .select("*")
+    .select("*", {
+      count: "exact",
+    })
     .eq("notification_user_id", userId)
     .or(`notification_team_id.eq.${teamId}, notification_team_id.is.${null}`)
     .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`);
