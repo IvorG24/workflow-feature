@@ -1,42 +1,22 @@
 import { NotificationTableRow } from "@/utils/types";
-import {
-  ActionIcon,
-  Button,
-  Container,
-  Flex,
-  LoadingOverlay,
-  Text,
-  TextInput,
-} from "@mantine/core";
-import { IconCheck, IconSearch } from "@tabler/icons-react";
+import { Button, Container, Flex, LoadingOverlay, Text } from "@mantine/core";
+import { IconCheck } from "@tabler/icons-react";
 import { MouseEventHandler } from "react";
-import { useFormContext } from "react-hook-form";
 import NotificationItem from "./NotificationItem";
 
 type Props = {
   notificationList: NotificationTableRow[];
-  onSearchNotification: (data: SearchNotificationData) => void;
   onMarkAllAsRead: MouseEventHandler<HTMLButtonElement>;
   onMarkAsRead: (notificationId: string) => void;
   isLoading: boolean;
 };
 
-export type SearchNotificationData = {
-  keyword: string;
-};
-
 const NotificationList = ({
   notificationList,
-  onSearchNotification,
   onMarkAllAsRead,
   onMarkAsRead,
   isLoading,
 }: Props) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useFormContext<SearchNotificationData>();
   return (
     <Container m={0} p={0} mt="xl" pos="relative" fluid>
       <LoadingOverlay
@@ -46,35 +26,16 @@ const NotificationList = ({
       />
       <Flex
         justify="space-between"
-        align="flex-start"
+        align="center"
         gap="md"
         direction={{ base: "column", sm: "row" }}
       >
-        <form onSubmit={handleSubmit(onSearchNotification)}>
-          <TextInput
-            placeholder="Search notifications"
-            rightSection={
-              <ActionIcon size="xs" type="submit">
-                <IconSearch />
-              </ActionIcon>
-            }
-            w={{ lg: 450, base: "100%" }}
-            {...register("keyword", {
-              required: true,
-              minLength: {
-                value: 2,
-                message: "Keyword must have at least 2 characters",
-              },
-            })}
-            error={errors.keyword?.message}
-          />
-        </form>
-
         <Button
           variant="subtle"
           size="xs"
           onClick={onMarkAllAsRead}
           leftIcon={<IconCheck height={20} />}
+          ml="auto"
         >
           <Text color="blue" size={12} weight={400}>
             Mark all as read

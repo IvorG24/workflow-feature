@@ -1,6 +1,7 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { Database } from "@/utils/database";
 import {
+  AppType,
   MemberRoleType,
   TeamTableUpdate,
   UserTableUpdate,
@@ -329,4 +330,21 @@ export const declineTeamInvitation = async (
     .update({ invitation_status: "DECLINED" })
     .eq("invitation_id", invitationId);
   if (invitationError) throw invitationError;
+};
+
+// Read all notification
+export const readAllNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    appType: AppType;
+  }
+) => {
+  const { userId, appType } = params;
+  const { error } = await supabaseClient
+    .from("notification_table")
+    .update({ notification_is_read: true })
+    .eq("notification_user_id", userId)
+    .or(`notification_app.eq.${appType}, notification_app.is.null`);
+  if (error) throw error;
 };
