@@ -1,6 +1,5 @@
 import { checkUsername } from "@/backend/api/get";
-import { useUserIntials } from "@/stores/useUserStore";
-import { TEMP_USER_ID } from "@/utils/dummyData";
+import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -35,7 +34,7 @@ const PersonalInfo = ({
   isUpdatingPersonalInfo,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
-
+  const user = useUserProfile();
   const userInitials = useUserIntials();
 
   const {
@@ -70,7 +69,7 @@ const PersonalInfo = ({
                   setError("user_avatar", { message: error })
                 }
                 initials={userInitials}
-                id={TEMP_USER_ID}
+                id={user?.user_id}
               />
               <Button size="xs">View Public Profile</Button>
             </Flex>

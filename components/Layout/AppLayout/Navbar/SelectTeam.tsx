@@ -13,10 +13,9 @@ import {
   useTeamActions,
   useTeamList,
 } from "@/stores/useTeamStore";
-import { useUserActions } from "@/stores/useUserStore";
+import { useUserActions, useUserProfile } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { TEMP_USER_ID } from "@/utils/dummyData";
 import { getAvatarColor } from "@/utils/styling";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
@@ -59,6 +58,7 @@ const SelectTeam = () => {
   const teamList = useTeamList();
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
+  const user = useUserProfile();
 
   const { setActiveTeam } = useTeamActions();
   const { setFormList } = useFormActions();
@@ -88,35 +88,36 @@ const SelectTeam = () => {
         return team;
       }
     });
-    if (newActiveTeam) {
+    if (newActiveTeam && user) {
       setActiveTeam(newActiveTeam);
       await updateUserActiveTeam(supabaseClient, {
-        userId: TEMP_USER_ID,
+        userId: user.user_id,
         teamId: newActiveTeam.team_id,
       });
 
       // fetch user team member id
       const teamMemberId = await getUserTeamMemberId(supabaseClient, {
         teamId: newActiveTeam.team_id,
-        userId: TEMP_USER_ID,
+        userId: user.user_id,
       });
       // set user team member id
       if (teamMemberId) {
         setUserTeamMemberId(teamMemberId);
-
-        // fetch notification list
-        const { data: notificationList, count: unreadNotificationCount } =
-          await getNotification(supabaseClient, {
-            memberId: teamMemberId,
-            app: activeApp as AppType,
-            page: 1,
-            limit: NOTIFICATION_LIST_LIMIT,
-          });
-
-        // set notification
-        setNotificationList(notificationList);
-        setUnreadNotification(unreadNotificationCount || 0);
       }
+
+      // fetch notification list
+      const { data: notificationList, count: unreadNotificationCount } =
+        await getNotification(supabaseClient, {
+          userId: user.user_id,
+          app: activeApp as AppType,
+          page: 1,
+          limit: NOTIFICATION_LIST_LIMIT,
+          teamId: newActiveTeam.team_id,
+        });
+
+      // set notification
+      setNotificationList(notificationList);
+      setUnreadNotification(unreadNotificationCount || 0);
     }
 
     // fetch form list

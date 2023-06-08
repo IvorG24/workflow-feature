@@ -108,26 +108,28 @@ const Layout = ({ children }: LayoutProps) => {
         // fetch user team member id
         const teamMemberId = await getUserTeamMemberId(supabaseClient, {
           teamId: activeTeamId,
-          userId: TEMP_USER_ID,
+          userId: user.user_id,
         });
         // set user team member id
         if (teamMemberId) {
           setUserTeamMemberId(teamMemberId);
-
-          // fetch notification list
-          const { data: notificationList, count: unreadNotificationCount } =
-            await getNotification(supabaseClient, {
-              memberId: teamMemberId,
-              app: activeApp as AppType,
-              page: 1,
-              limit: NOTIFICATION_LIST_LIMIT,
-            });
-
-          // set notification
-          setNotificationList(notificationList);
-          setUnreadNotification(unreadNotificationCount || 0);
         }
-      } catch {
+
+        // fetch notification list
+        const { data: notificationList, count: unreadNotificationCount } =
+          await getNotification(supabaseClient, {
+            userId: user.user_id,
+            app: activeApp as AppType,
+            page: 1,
+            limit: NOTIFICATION_LIST_LIMIT,
+            teamId: activeTeamId,
+          });
+
+        // set notification
+        setNotificationList(notificationList);
+        setUnreadNotification(unreadNotificationCount || 0);
+      } catch  {
+       
         notifications.show({
           title: "Error!",
           message: "Unable to fetch team",

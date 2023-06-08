@@ -1,9 +1,8 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
-import { TEMP_USER_ID } from "@/utils/dummyData";
 import {
   FormStatusType,
   ReceiverStatusType,
@@ -29,8 +28,11 @@ type Props = {
 const RequestPage = ({ request }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
+
+  const user = useUserProfile();
   const teamMemberId = useUserTeamMemberId();
   const { setIsLoading } = useLoadingActions();
+
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(
     request.request_signer.map((signer) => {
@@ -40,6 +42,7 @@ const RequestPage = ({ request }: Props) => {
       };
     })
   );
+
   const requestor = request.request_team_member.team_member_user;
 
   const requestDateCreated = new Date(
@@ -50,7 +53,7 @@ const RequestPage = ({ request }: Props) => {
     day: "numeric",
   });
 
-  const isUserOwner = requestor.user_id === TEMP_USER_ID;
+  const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) => signer.signer_team_member.team_member_id === teamMemberId
   );
@@ -77,10 +80,11 @@ const RequestPage = ({ request }: Props) => {
         requestId: request.request_id,
         isPrimarySigner: signer.signer_is_primary_signer,
         requestSignerId: signer.signer_id,
-        requestOwnerId: request.request_team_member_id as string,
+        requestOwnerId: request.request_team_member.team_member_user.user_id,
         signerFullName: signerFullName,
         formName: request.request_form.form_name,
         memberId: teamMemberId,
+        teamId: request.request_team_member.team_member_team_id,
       });
 
       if (signer.signer_is_primary_signer) {
@@ -174,7 +178,6 @@ const RequestPage = ({ request }: Props) => {
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
       confirmProps: { color: "red" },
-      onCancel: () => console.log("Cancel"),
       onConfirm: async () => await handleDeleteRequest(),
     });
 
@@ -213,7 +216,8 @@ const RequestPage = ({ request }: Props) => {
       <RequestCommentList
         requestData={{
           requestId: request.request_id,
-          requestOwnerId: request.request_team_member_id as string,
+          requestOwnerId: request.request_team_member.team_member_user.user_id,
+          teamId: request.request_team_member.team_member_team_id,
         }}
         requestCommentList={request.request_comment}
       />
