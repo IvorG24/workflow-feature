@@ -1,4 +1,4 @@
-import { getNotification, getUserActiveTeamId } from "@/backend/api/get";
+import { getAllNotification, getUserActiveTeamId } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import NotificationPage from "@/components/NotificationPage/NotificationPage";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
@@ -16,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       userId: TEMP_USER_ID,
     });
 
-    const { data: fetchedNotificationList } = await getNotification(
+    const { data: fetchedNotificationList } = await getAllNotification(
       supabaseClient,
       {
         app: "REVIEW",

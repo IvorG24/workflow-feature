@@ -1,4 +1,4 @@
-import { getFormList, getNotification } from "@/backend/api/get";
+import { getAllNotification, getFormList } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
 import {
   useNotificationActions,
@@ -78,7 +78,7 @@ const HeaderMenu = () => {
     if (user) {
       // fetch notification list
       const { data: notificationList, count: unreadNotificationCount } =
-        await getNotification(supabaseClient, {
+        await getAllNotification(supabaseClient, {
           userId: user.user_id,
           app: newActiveApp as AppType,
           page: 1,
