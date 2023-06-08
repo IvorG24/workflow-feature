@@ -8,6 +8,8 @@ export const DEFAULT_TEAM_MEMBER_LIST_LIMIT = 10;
 export const NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
 
+export const SIGN_IN_PAGE_PATH = "/sign-in";
+
 export const defaultRequestFormBuilderSection = (
   formId: string
 ): SectionWithField[] => [

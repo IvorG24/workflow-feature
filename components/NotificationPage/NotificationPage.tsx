@@ -9,7 +9,6 @@ import NotificationList, { SearchNotificationData } from "./NotificationList";
 
 type Props = {
   app: AppType;
-  teamMemberId: string;
   notificationList: NotificationTableRow[];
   tab: "all" | "unread";
 };

@@ -1,8 +1,4 @@
-import {
-  getNotification,
-  getUserActiveTeamId,
-  getUserTeamMemberId,
-} from "@/backend/api/get";
+import { getNotification, getUserActiveTeamId } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import NotificationPage from "@/components/NotificationPage/NotificationPage";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
@@ -20,20 +16,14 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       userId: TEMP_USER_ID,
     });
 
-    const teamMemberId = await getUserTeamMemberId(supabaseClient, {
-      teamId: teamId,
-      userId: TEMP_USER_ID,
-    });
-
-    if (!teamMemberId) throw new Error("No team member found");
-
     const { data: fetchedNotificationList } = await getNotification(
       supabaseClient,
       {
         app: "REQUEST",
         limit: NOTIFICATION_LIST_LIMIT,
-        memberId: teamMemberId,
         page: 1,
+        userId: TEMP_USER_ID,
+        teamId,
       }
     );
 
@@ -45,7 +35,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         : fetchedNotificationList;
 
     return {
-      props: { teamMemberId, notificationList, tab },
+      props: { notificationList, tab },
     };
   } catch (error) {
     console.error(error);
@@ -59,19 +49,18 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 
 type Props = {
-  teamMemberId: string;
   notificationList: NotificationTableRow[];
   tab: "all" | "unread";
 };
 
-const Page = ({ notificationList, teamMemberId, tab }: Props) => {
+const Page = ({ notificationList, tab }: Props) => {
+  console.log(notificationList);
   return (
     <>
       <Meta description="Notification Page" url="/team-requests/notification" />
       <NotificationPage
         app="REQUEST"
         notificationList={notificationList}
-        teamMemberId={teamMemberId}
         tab={tab}
       />
     </>
