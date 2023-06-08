@@ -275,13 +275,17 @@ export const updateFormSigner = async (
   }
 ) => {
   const { signers, formId } = params;
-  const { error: disbaleAllError } = await supabaseClient
+  const { error: disableAllError } = await supabaseClient
     .from("signer_table")
     .update({ signer_is_disabled: true })
     .eq("signer_form_id", formId);
-  if (disbaleAllError) throw disbaleAllError;
-  const { error } = await supabaseClient.from("signer_table").upsert(signers);
-  if (error) throw error;
+  if (disableAllError) throw disableAllError;
+  const { data: signerData, error: signerError } = await supabaseClient
+    .from("signer_table")
+    .upsert(signers)
+    .select("*");
+  if (signerError) throw signerError;
+  console.log(signerData);
 };
 
 // Update notification status

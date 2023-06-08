@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { isEqual } from "lodash";
+import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -107,9 +107,20 @@ const RequisitionFormPage = ({
   };
 
   const handleSaveSigners = async () => {
+    const values = methods.getValues();
+    const primarySigner = values.signers.filter(
+      (signer) => signer.signer_is_primary_signer
+    );
+    if (isEmpty(primarySigner)) {
+      notifications.show({
+        message: "There must be atleast one primary signer",
+        color: "orange",
+      });
+      return;
+    }
+
     setIsSavingSigner(true);
     try {
-      const values = methods.getValues();
       await updateFormSigner(supabaseClient, {
         signers: values.signers.map((signer) => {
           return { ...signer, signer_is_disabled: false };
@@ -221,7 +232,8 @@ const RequisitionFormPage = ({
           />
         </FormProvider>
 
-        {!isEqual(initialSigners, methods.getValues("signers")) ? (
+        {!isEqual(initialSigners, methods.getValues("signers")) &&
+        activeSigner === null ? (
           <Center mt="xl">
             <Button loading={isSavingSigners} onClick={handleSaveSigners}>
               Save Changes

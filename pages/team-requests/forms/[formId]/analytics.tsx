@@ -1,6 +1,5 @@
 import { getForm } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionAnalytics from "@/components/RequisitionAnalyticsPage/RequisitionAnalytics";
 import {
   TEMP_REQUISITION_FORM_PURCHASE_DATA,
@@ -86,7 +85,7 @@ const RequisitionFormData = ({
         url="/team-requests/forms/[formId]/analytics"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <RequestFormPage form={form} /> : null}
+      {/* {!form.form_is_formsly_form ? <RequestFormPage form={form} /> : null} */}
     </>
   );
 };
