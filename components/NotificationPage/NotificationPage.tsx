@@ -1,6 +1,9 @@
+import { updateNotificationStatus } from "@/backend/api/update";
+import { Database } from "@/utils/database";
 import { AppType, NotificationTableRow } from "@/utils/types";
 import { Container, Tabs, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize, toLower } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -19,6 +22,7 @@ const NotificationPage = ({
   tab,
 }: Props) => {
   const router = useRouter();
+  const supabaseClient = createBrowserSupabaseClient<Database>();
 
   const [notificationList, setNotificationList] = useState(
     initialNotificationList
@@ -60,6 +64,18 @@ const NotificationPage = ({
     );
   };
 
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      await updateNotificationStatus(supabaseClient, { notificationId });
+    } catch {
+      notifications.show({
+        title: "Something went wrong",
+        message: "Please try again later",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <FormProvider {...searchNotificationMethod}>
       <Container p={0} fluid>
@@ -86,6 +102,7 @@ const NotificationPage = ({
             notificationList={notificationList}
             onSearchNotification={handleSearchNotification}
             onMarkAllAsRead={handleMarkAllAsRead}
+            onMarkAsRead={handleMarkAsRead}
             isLoading={isLoading}
           />
         </Tabs>

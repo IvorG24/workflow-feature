@@ -21,9 +21,10 @@ import { useRouter } from "next/router";
 
 type Props = {
   notification: NotificationTableRow;
+  onReadNotification: () => void;
 };
 
-const NotificationItem = ({ notification }: Props) => {
+const NotificationItem = ({ notification, onReadNotification }: Props) => {
   const router = useRouter();
   const tab = router.query.tab || "all";
 
@@ -41,7 +42,10 @@ const NotificationItem = ({ notification }: Props) => {
     <Container
       m={0}
       p={0}
-      onClick={() => router.push(notification.notification_redirect_url || "")}
+      onClick={async () => {
+        await router.push(notification.notification_redirect_url || "");
+        onReadNotification();
+      }}
       sx={{ cursor: "pointer" }}
       fluid
     >

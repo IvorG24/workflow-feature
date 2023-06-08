@@ -17,6 +17,7 @@ type Props = {
   notificationList: NotificationTableRow[];
   onSearchNotification: (data: SearchNotificationData) => void;
   onMarkAllAsRead: MouseEventHandler<HTMLButtonElement>;
+  onMarkAsRead: (notificationId: string) => void;
   isLoading: boolean;
 };
 
@@ -28,6 +29,7 @@ const NotificationList = ({
   notificationList,
   onSearchNotification,
   onMarkAllAsRead,
+  onMarkAsRead,
   isLoading,
 }: Props) => {
   const {
@@ -84,6 +86,9 @@ const NotificationList = ({
         {notificationList.map((notification) => (
           <NotificationItem
             notification={notification}
+            onReadNotification={() =>
+              onMarkAsRead(notification.notification_id)
+            }
             key={notification.notification_id}
           />
         ))}
