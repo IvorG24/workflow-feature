@@ -46,6 +46,10 @@ type SearchForm = {
   status?: "hidden" | "visible";
 };
 
+type FormFilterValues = {
+  creatorFilter: string[];
+};
+
 const RequestFormListPage = ({
   formList: initialFormList,
   formListCount: initialFormListCount,
@@ -64,6 +68,9 @@ const RequestFormListPage = ({
   const [selectedForm, setSelectedForm] = useState<FormWithOwnerType | null>(
     null
   );
+  const [formFilterValues, setFormFilterValues] = useState<FormFilterValues>({
+    creatorFilter: [],
+  });
 
   const { setFormList: storeSetFormList } = useFormActions();
 
@@ -104,6 +111,17 @@ const RequestFormListPage = ({
     } finally {
       setIsFetchingFormList(false);
     }
+  };
+
+  const handleFilterChange = async (
+    key: keyof FormFilterValues,
+    value: string[]
+  ) => {
+    const filterMatch = formFilterValues[`${key}`];
+    if (value !== filterMatch) {
+      await handleFilterForms();
+    }
+    setFormFilterValues((prev) => ({ ...prev, [`${key}`]: value }));
   };
 
   const handleUpdateFormVisibility = async (id: string, isHidden: boolean) => {
@@ -239,9 +257,12 @@ const RequestFormListPage = ({
                 value={value}
                 onChange={async (value) => {
                   onChange(value);
-                  if (!creatorRefFocused) await handleFilterForms();
+                  if (!creatorRefFocused)
+                    handleFilterChange("creatorFilter", value);
                 }}
-                onDropdownClose={async () => await handleFilterForms()}
+                onDropdownClose={() =>
+                  handleFilterChange("creatorFilter", value)
+                }
                 ref={creatorRef}
                 color={creatorRefFocused ? "green" : "red"}
                 clearable
