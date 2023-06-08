@@ -25,19 +25,19 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       formId: `${ctx.query.formId}`,
     });
 
+    const teamId = await getUserActiveTeamId(supabaseClient, {
+      userId: TEMP_USER_ID,
+    });
+
+    const teamMemberList = await getTeamAdminList(supabaseClient, {
+      teamId,
+    });
+
     const formattedForm = form as unknown as FormType;
     if (
       formattedForm.form_is_formsly_form &&
       formattedForm.form_name === "Requisition Form"
     ) {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: TEMP_USER_ID,
-      });
-
-      const teamMemberList = await getTeamAdminList(supabaseClient, {
-        teamId,
-      });
-
       const { data: items, count: itemsCount } = await getItemList(
         supabaseClient,
         {
@@ -60,7 +60,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     }
 
     return {
-      props: { form },
+      props: { form, teamMemberList },
     };
   } catch (error) {
     console.error(error);
@@ -77,7 +77,7 @@ type Props = {
   form: FormType;
   items?: ItemWithDescriptionType[];
   itemsCount?: number;
-  teamMemberList?: TeamMemberWithUserType[];
+  teamMemberList: TeamMemberWithUserType[];
 };
 
 const Page = ({
@@ -104,7 +104,9 @@ const Page = ({
     <>
       <Meta description="Request Page" url="/team-requests/forms/[formId]" />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <RequestFormPage form={form} /> : null}
+      {!form.form_is_formsly_form ? (
+        <RequestFormPage form={form} teamMemberList={teamMemberList} />
+      ) : null}
     </>
   );
 };
