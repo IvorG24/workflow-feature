@@ -1,17 +1,26 @@
 import { getNotificationList } from "@/backend/api/get";
-import { updateNotificationStatus } from "@/backend/api/update";
+import {
+  readAllNotification,
+  updateNotificationStatus,
+} from "@/backend/api/update";
 import { useUserStore } from "@/stores/useUserStore";
 import { DEFAULT_NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { AppType, NotificationTableRow } from "@/utils/types";
-import { Container, Pagination, Tabs, Title } from "@mantine/core";
+import {
+  Center,
+  Container,
+  Pagination,
+  Tabs,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize, toLower } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import NotificationList, { SearchNotificationData } from "./NotificationList";
+import NotificationList from "./NotificationList";
 
 type Props = {
   app: AppType;
@@ -42,39 +51,32 @@ const NotificationPage = ({
   const [activePage, setActivePage] = useState(Number(initialPage));
   const [isLoading, setIsLoading] = useState(false);
 
-  const searchNotificationMethod = useForm<SearchNotificationData>({
-    defaultValues: { keyword: "" },
-  });
-
-  const handleSearchNotification = (data: SearchNotificationData) => {
-    // todo: fetch notification with keyword
-
+  const handleMarkAllAsRead = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const { keyword } = data;
-      console.log(keyword);
+      await readAllNotification(supabaseClient, {
+        userId: userId,
+        appType: app,
+      });
+      setNotificationList((notificationList) =>
+        notificationList.map((notification) => {
+          return {
+            ...notification,
+            notification_is_read: true,
+          };
+        })
+      );
+      notifications.show({
+        message: "Set all notifications to read",
+        color: "green",
+      });
     } catch {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const handleMarkAllAsRead = () => {
-    // todo: update all notifications as read
-
-    setNotificationList((notificationList) =>
-      notificationList.map((notification) => {
-        return {
-          ...notification,
-          notification_is_read: true,
-        };
-      })
-    );
+    setIsLoading(false);
   };
 
   const handleMarkAsRead = async (notificationId: string) => {
@@ -117,55 +119,60 @@ const NotificationPage = ({
   };
 
   return (
-    <FormProvider {...searchNotificationMethod}>
-      <Container p={0} fluid>
-        <Title order={2}>{capitalize(app)} Notifications </Title>
-        <Tabs
-          defaultValue={tab}
-          onTabChange={(value) =>
-            router
-              .replace(
-                `/team-${
-                  app === "REQUEST" ? `${toLower(app)}s` : toLower(app)
-                }/notification?tab=${value}`
-              )
-              .then(() => router.reload())
-          }
-          mt="lg"
-        >
-          <Tabs.List>
-            <Tabs.Tab value="all">All</Tabs.Tab>
-            <Tabs.Tab value="unread">Unread</Tabs.Tab>
-          </Tabs.List>
+    <Container p={0}>
+      <Title order={2}>{capitalize(app)} Notifications </Title>
 
+      <Tabs
+        defaultValue={tab}
+        onTabChange={(value) =>
+          router
+            .replace(
+              `/team-${
+                app === "REQUEST" ? `${toLower(app)}s` : toLower(app)
+              }/notification?tab=${value}`
+            )
+            .then(() => router.reload())
+        }
+        mt="lg"
+      >
+        <Tabs.List>
+          <Tabs.Tab value="all">All</Tabs.Tab>
+          <Tabs.Tab value="unread">Unread</Tabs.Tab>
+        </Tabs.List>
+
+        {notificationList.length !== 0 ? (
           <NotificationList
             notificationList={notificationList}
-            onSearchNotification={handleSearchNotification}
             onMarkAllAsRead={handleMarkAllAsRead}
             onMarkAsRead={handleMarkAsRead}
             isLoading={isLoading}
           />
-        </Tabs>
+        ) : null}
+        {notificationList.length === 0 ? (
+          <Center mt="xl">
+            <Text c="dimmed">No notifications yet</Text>
+          </Center>
+        ) : null}
+      </Tabs>
 
-        <Pagination
-          value={activePage}
-          total={Math.ceil(
-            totalNotificationCount / DEFAULT_NOTIFICATION_LIST_LIMIT
-          )}
-          onChange={async (value) => {
-            setActivePage(value);
-            await router.push(
-              `/team-${
-                app === "REQUEST" ? `${toLower(app)}s` : toLower(app)
-              }/notification?tab=${tab}&page=${value}`
-            );
-            await handleGetNotificationList(value);
-          }}
-          mt="xl"
-          position="right"
-        />
-      </Container>
-    </FormProvider>
+      <Pagination
+        value={activePage}
+        total={Math.ceil(
+          totalNotificationCount / DEFAULT_NOTIFICATION_LIST_LIMIT
+        )}
+        onChange={async (value) => {
+          setActivePage(value);
+          await router.push(
+            `/team-${
+              app === "REQUEST" ? `${toLower(app)}s` : toLower(app)
+            }/notification?tab=${tab}&page=${value}`
+          );
+          await handleGetNotificationList(value);
+        }}
+        mt="xl"
+        position="right"
+      />
+    </Container>
   );
 };
 

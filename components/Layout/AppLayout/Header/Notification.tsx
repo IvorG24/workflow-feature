@@ -35,7 +35,7 @@ const Notification = () => {
       <Group position="apart">
         <Text weight={600}>Notifications</Text>
       </Group>
-      <ScrollArea h={300} type="scroll">
+      <ScrollArea mah={300} type="scroll">
         <Stack p={8}>
           {notificationList.map((notification) => (
             <Stack
