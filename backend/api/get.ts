@@ -443,7 +443,7 @@ export const getForm = async (
 };
 
 // Get notification
-export const getNotification = async (
+export const getAllNotification = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
@@ -761,4 +761,40 @@ export const getInvitation = async (
   if (error) throw error;
 
   return data;
+};
+
+// Get notification list
+export const getNotificationList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    app: AppType;
+    page: number;
+    limit: number;
+    teamId: string;
+    unreadOnly: boolean;
+  }
+) => {
+  const { userId, app, page, limit, teamId, unreadOnly } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("notification_table")
+    .select("*")
+    .eq("notification_user_id", userId)
+    .or(`notification_team_id.eq.${teamId}, notification_team_id.is.${null}`)
+    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`);
+
+  if (unreadOnly) {
+    query = query.eq("notification_is_read", false);
+  }
+
+  query = query.order("notification_date_created", { ascending: false });
+  query = query.limit(limit);
+  query = query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return { data, count };
 };

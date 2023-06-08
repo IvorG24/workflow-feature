@@ -1,7 +1,7 @@
 import {
+  getAllNotification,
   getAllTeamOfUser,
   getFormList,
-  getNotification,
   getUser,
   getUserTeamMemberId,
 } from "@/backend/api/get";
@@ -117,7 +117,7 @@ const Layout = ({ children }: LayoutProps) => {
 
         // fetch notification list
         const { data: notificationList, count: unreadNotificationCount } =
-          await getNotification(supabaseClient, {
+          await getAllNotification(supabaseClient, {
             userId: user.user_id,
             app: activeApp as AppType,
             page: 1,
@@ -128,8 +128,7 @@ const Layout = ({ children }: LayoutProps) => {
         // set notification
         setNotificationList(notificationList);
         setUnreadNotification(unreadNotificationCount || 0);
-      } catch  {
-       
+      } catch {
         notifications.show({
           title: "Error!",
           message: "Unable to fetch team",

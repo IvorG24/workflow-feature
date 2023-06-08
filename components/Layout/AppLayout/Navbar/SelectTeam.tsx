@@ -1,6 +1,6 @@
 import {
+  getAllNotification,
   getFormList,
-  getNotification,
   getUserTeamMemberId,
 } from "@/backend/api/get";
 import { updateUserActiveTeam } from "@/backend/api/update";
@@ -107,7 +107,7 @@ const SelectTeam = () => {
 
       // fetch notification list
       const { data: notificationList, count: unreadNotificationCount } =
-        await getNotification(supabaseClient, {
+        await getAllNotification(supabaseClient, {
           userId: user.user_id,
           app: activeApp as AppType,
           page: 1,
