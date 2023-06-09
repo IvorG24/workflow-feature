@@ -18,6 +18,7 @@ type RequestFormSectionProps = {
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
+  formslyFormName?: string;
 };
 
 const RequestFormSection = ({
@@ -25,6 +26,7 @@ const RequestFormSection = ({
   sectionIndex,
   onRemoveSection,
   orderToPurchaseFormMethods,
+  formslyFormName = "",
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -58,6 +60,7 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             orderToPurchaseFormMethods={orderToPurchaseFormMethods}
+            formslyFormName={formslyFormName}
           />
         ))}
       </Stack>

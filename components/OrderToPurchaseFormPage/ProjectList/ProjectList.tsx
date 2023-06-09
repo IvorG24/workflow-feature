@@ -1,5 +1,5 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getProjectList } from "@/backend/api/get";
+import { getNameList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -100,13 +100,14 @@ const ProjectList = ({
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
-      const { data, count } = await getProjectList(supabaseClient, {
+      const { data, count } = await getNameList(supabaseClient, {
+        table: "project",
         teamId: activeTeam.team_id,
         search,
         limit: ROW_PER_PAGE,
         page: page,
       });
-      setProjectList(data);
+      setProjectList(data as ProjectTableRow[]);
       setProjectCount(Number(count));
     } catch {
       showNotification({

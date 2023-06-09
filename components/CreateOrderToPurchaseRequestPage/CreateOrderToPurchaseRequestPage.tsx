@@ -212,6 +212,7 @@ const CreateOrderToPurchasesRequestPage = ({
           field_section_duplicatable_id: duplicatableSectionId,
           field_option: options,
           field_response: "",
+          field_is_read_only: false,
         };
       });
 
@@ -272,6 +273,7 @@ const CreateOrderToPurchasesRequestPage = ({
                     orderToPurchaseFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                     }}
+                    formslyFormName="Order to Purchase"
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

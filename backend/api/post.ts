@@ -14,12 +14,14 @@ import {
   NotificationTableInsert,
   OptionTableInsert,
   ProjectTableInsert,
+  PurchasingProcessorTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   SectionTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
   UserTableInsert,
+  VendorTableInsert,
   WarehouseProcessorTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -566,7 +568,7 @@ export const createProject = async (
   return data;
 };
 
-// Create WarehouseProcessor
+// Create Warehouse Processor
 export const createWarehouseProcessor = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -577,6 +579,40 @@ export const createWarehouseProcessor = async (
   const { data, error } = await supabaseClient
     .from("warehouse_processor_table")
     .insert(warehouseProcessorData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create Vendor
+export const createVendor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    vendorData: VendorTableInsert;
+  }
+) => {
+  const { vendorData } = params;
+  const { data, error } = await supabaseClient
+    .from("vendor_table")
+    .insert(vendorData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create Purchasing Processor
+export const createPurchasingProcessor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    purchasingProcessorData: PurchasingProcessorTableInsert;
+  }
+) => {
+  const { purchasingProcessorData } = params;
+  const { data, error } = await supabaseClient
+    .from("purchasing_processor_table")
+    .insert(purchasingProcessorData)
     .select()
     .single();
   if (error) throw error;

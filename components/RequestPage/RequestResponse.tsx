@@ -18,12 +18,12 @@ type RequestReponseProps = {
     value: string;
     options: OptionTableRow[];
   };
-  isOrderToPurchaseForm?: boolean;
+  isFormslyForm?: boolean;
 };
 
 const RequestResponse = ({
   response,
-  isOrderToPurchaseForm = false,
+  isFormslyForm = false,
 }: RequestReponseProps) => {
   const inputProps = {
     variant: "filled",
@@ -143,8 +143,8 @@ const RequestResponse = ({
 
   return (
     <>
-      {!isOrderToPurchaseForm ? renderResponse(response) : null}
-      {isOrderToPurchaseForm ? (
+      {!isFormslyForm ? renderResponse(response) : null}
+      {isFormslyForm ? (
         <TextInput
           label={response.label}
           value={

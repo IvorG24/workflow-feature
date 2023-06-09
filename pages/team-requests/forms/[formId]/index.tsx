@@ -1,13 +1,14 @@
 import {
   getForm,
   getItemList,
-  getProjectList,
+  getNameList,
+  getProcessorList,
   getTeamAdminList,
   getUserActiveTeamId,
-  getWarehouseProcessorList,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
+import PurchaseOrderFormPage from "@/components/PurchaeOrderFormPage/PurchaseOrderFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
@@ -15,7 +16,9 @@ import {
   FormType,
   ItemWithDescriptionType,
   ProjectTableRow,
+  PurchasingProcessorTableRow,
   TeamMemberWithUserType,
+  VendorTableRow,
   WarehouseProcessorTableRow,
 } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -51,9 +54,10 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         }
       );
 
-      const { data: projects, count: projectListCount } = await getProjectList(
+      const { data: projects, count: projectListCount } = await getNameList(
         supabaseClient,
         {
+          table: "project",
           teamId: teamId,
           page: 1,
           limit: ROW_PER_PAGE,
@@ -61,7 +65,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       );
 
       const { data: warehouseProcessors, count: warehouseProcessorListCount } =
-        await getWarehouseProcessorList(supabaseClient, {
+        await getProcessorList(supabaseClient, {
+          processor: "warehouse",
           teamId: teamId,
           page: 1,
           limit: ROW_PER_PAGE,
@@ -79,13 +84,44 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           warehouseProcessorListCount,
         },
       };
-    }
+    } else if (
+      formattedForm.form_is_formsly_form &&
+      formattedForm.form_name === "Purchase Order"
+    ) {
+      const { data: vendors, count: vendorListCount } = await getNameList(
+        supabaseClient,
+        {
+          table: "vendor",
+          teamId: teamId,
+          page: 1,
+          limit: ROW_PER_PAGE,
+        }
+      );
 
+      const {
+        data: purchasingProcessors,
+        count: purchasingProcessorListCount,
+      } = await getProcessorList(supabaseClient, {
+        processor: "purchasing",
+        teamId: teamId,
+        page: 1,
+        limit: ROW_PER_PAGE,
+      });
+      return {
+        props: {
+          form,
+          teamMemberList,
+          vendors,
+          vendorListCount,
+          purchasingProcessors,
+          purchasingProcessorListCount,
+        },
+      };
+    }
     return {
       props: { form, teamMemberList },
     };
   } catch (error) {
-    console.error(error);
     return {
       redirect: {
         destination: "/500",
@@ -97,24 +133,34 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
 type Props = {
   form: FormType;
+  teamMemberList: TeamMemberWithUserType[];
+
   items?: ItemWithDescriptionType[];
   itemListCount?: number;
   projects?: ProjectTableRow[];
   projectListCount?: number;
   warehouseProcessors?: WarehouseProcessorTableRow[];
   warehouseProcessorListCount?: number;
-  teamMemberList: TeamMemberWithUserType[];
+  vendors?: VendorTableRow[];
+  vendorListCount?: number;
+  purchasingProcessors?: PurchasingProcessorTableRow[];
+  purchasingProcessorListCount?: number;
 };
 
 const Page = ({
   form,
+  teamMemberList = [],
+
   items = [],
   itemListCount = 0,
   projects = [],
   projectListCount = 0,
   warehouseProcessors = [],
   warehouseProcessorListCount = 0,
-  teamMemberList = [],
+  vendors = [],
+  vendorListCount = 0,
+  purchasingProcessors = [],
+  purchasingProcessorListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -129,6 +175,17 @@ const Page = ({
             warehouseProcessorListCount={warehouseProcessorListCount}
             teamMemberList={teamMemberList}
             form={form}
+          />
+        );
+      case "Purchase Order":
+        return (
+          <PurchaseOrderFormPage
+            teamMemberList={teamMemberList}
+            form={form}
+            vendors={vendors}
+            vendorListCount={vendorListCount}
+            purchasingProcessors={purchasingProcessors}
+            purchasingProcessorListCount={purchasingProcessorListCount}
           />
         );
     }

@@ -135,6 +135,20 @@ export type WarehouseProcessorTableInsert =
   Database["public"]["Tables"]["warehouse_processor_table"]["Insert"];
 export type WarehouseProcessorTableUpdate =
   Database["public"]["Tables"]["warehouse_processor_table"]["Update"];
+
+export type VendorTableRow =
+  Database["public"]["Tables"]["vendor_table"]["Row"];
+export type VendorTableInsert =
+  Database["public"]["Tables"]["vendor_table"]["Insert"];
+export type VendorTableUpdate =
+  Database["public"]["Tables"]["vendor_table"]["Update"];
+
+export type PurchasingProcessorTableRow =
+  Database["public"]["Tables"]["purchasing_processor_table"]["Row"];
+export type PurchasingProcessorTableInsert =
+  Database["public"]["Tables"]["purchasing_processor_table"]["Insert"];
+export type PurchasingProcessorTableUpdate =
+  Database["public"]["Tables"]["purchasing_processor_table"]["Update"];
 // End: Database Table Types
 
 // Start: Database Enums
