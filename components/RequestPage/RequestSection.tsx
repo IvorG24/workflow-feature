@@ -5,12 +5,12 @@ import RequestResponse from "./RequestResponse";
 
 type RequestSectionProps = {
   section: DuplicateSectionType;
-  isOrderToPurchaseForm?: boolean;
+  isFormslyForm?: boolean;
 };
 
 const RequestSection = ({
   section,
-  isOrderToPurchaseForm = false,
+  isFormslyForm = false,
 }: RequestSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -20,7 +20,7 @@ const RequestSection = ({
       <Space h="xl" />
       <Stack spacing="sm">
         {section.section_field.map((field) => {
-          if (isOrderToPurchaseForm) {
+          if (isFormslyForm) {
             if (field.field_response) {
               return (
                 <Box key={field.field_id}>
@@ -34,7 +34,7 @@ const RequestSection = ({
                         : "",
                       options: field.field_option ? field.field_option : [],
                     }}
-                    isOrderToPurchaseForm={isOrderToPurchaseForm}
+                    isFormslyForm={isFormslyForm}
                   />
                 </Box>
               );
@@ -52,7 +52,7 @@ const RequestSection = ({
                       : "",
                     options: field.field_option ? field.field_option : [],
                   }}
-                  isOrderToPurchaseForm={isOrderToPurchaseForm}
+                  isFormslyForm={isFormslyForm}
                 />
               </Box>
             );

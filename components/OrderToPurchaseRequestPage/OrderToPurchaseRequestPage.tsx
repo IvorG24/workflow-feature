@@ -181,7 +181,7 @@ const OrderToPurchaseRequestPage = ({ request }: Props) => {
           <RequestSection
             key={section.section_id + idx}
             section={section}
-            isOrderToPurchaseForm={true}
+            isFormslyForm={true}
           />
         ))}
 

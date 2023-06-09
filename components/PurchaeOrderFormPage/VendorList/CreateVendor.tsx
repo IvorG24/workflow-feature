@@ -1,8 +1,8 @@
 import { checkName } from "@/backend/api/get";
-import { createProject } from "@/backend/api/post";
+import { createVendor } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { ProjectTableRow } from "@/utils/types";
+import { VendorTableRow } from "@/utils/types";
 import {
   Button,
   Checkbox,
@@ -20,15 +20,15 @@ import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
 type Props = {
-  setIsCreatingProject: Dispatch<SetStateAction<boolean>>;
-  setProjectList: Dispatch<SetStateAction<ProjectTableRow[]>>;
-  setProjectCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingVendor: Dispatch<SetStateAction<boolean>>;
+  setVendorList: Dispatch<SetStateAction<VendorTableRow[]>>;
+  setVendorCount: Dispatch<SetStateAction<number>>;
 };
 
-const CreateProject = ({
-  setIsCreatingProject,
-  setProjectList,
-  setProjectCount,
+const CreateVendor = ({
+  setIsCreatingVendor,
+  setVendorList,
+  setVendorCount,
 }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const activeTeam = useActiveTeam();
@@ -45,28 +45,28 @@ const CreateProject = ({
 
   const onSubmit = async (data: { name: string; isAvailable: boolean }) => {
     try {
-      const newProject = await createProject(supabaseClient, {
-        projectData: {
-          project_name: data.name,
-          project_is_available: data.isAvailable,
-          project_team_id: activeTeam.team_id,
+      const newVendor = await createVendor(supabaseClient, {
+        vendorData: {
+          vendor_name: data.name,
+          vendor_is_available: data.isAvailable,
+          vendor_team_id: activeTeam.team_id,
         },
       });
-      setProjectList((prev) => {
-        prev.unshift(newProject);
+      setVendorList((prev) => {
+        prev.unshift(newVendor);
         return prev;
       });
-      setProjectCount((prev) => prev + 1);
+      setVendorCount((prev) => prev + 1);
       notifications.show({
         title: "Success!",
-        message: "Project created successfully",
+        message: "Vendor created successfully",
         color: "green",
       });
-      setIsCreatingProject(false);
+      setIsCreatingVendor(false);
     } catch {
       notifications.show({
         title: "Error!",
-        message: "There was an error on creating project",
+        message: "There was an error on creating vendor",
         color: "red",
       });
     }
@@ -78,7 +78,7 @@ const CreateProject = ({
       <LoadingOverlay visible={formState.isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Add Project
+          Add Vendor
         </Title>
         <Divider mb="xl" />
 
@@ -98,11 +98,11 @@ const CreateProject = ({
                 validate: {
                   duplicate: async (value) => {
                     const isExisting = await checkName(supabaseClient, {
-                      table: "project",
+                      table: "vendor",
                       name: value,
                       teamId: activeTeam.team_id,
                     });
-                    return isExisting ? "Project already exists" : true;
+                    return isExisting ? "Vendor already exists" : true;
                   },
                 },
               })}
@@ -127,7 +127,7 @@ const CreateProject = ({
             miw={100}
             mt={30}
             mr={14}
-            onClick={() => setIsCreatingProject(false)}
+            onClick={() => setIsCreatingVendor(false)}
           >
             Cancel
           </Button>
@@ -137,4 +137,4 @@ const CreateProject = ({
   );
 };
 
-export default CreateProject;
+export default CreateVendor;

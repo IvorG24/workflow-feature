@@ -801,28 +801,34 @@ export const getNotificationList = async (
   return { data, count };
 };
 
-// Get project list
-export const getProjectList = async (
+// Get list of db that only have name column
+export const getNameList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
+  params: {
+    table: string;
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
 ) => {
-  const { teamId, search, limit, page } = params;
+  const { table, teamId, search, limit, page } = params;
 
   const start = (page - 1) * limit;
 
   let query = supabaseClient
-    .from("project_table")
+    .from(`${table}_table`)
     .select("*", {
       count: "exact",
     })
-    .eq("project_team_id", teamId)
-    .eq("project_is_disabled", false);
+    .eq(`${table}_team_id`, teamId)
+    .eq(`${table}_is_disabled`, false);
 
   if (search) {
-    query = query.ilike("project_name", `%${search}%`);
+    query = query.ilike(`${table}_name`, `%${search}%`);
   }
 
-  query.order("project_date_created", { ascending: false });
+  query.order(`${table}_date_created`, { ascending: false });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
@@ -836,67 +842,73 @@ export const getProjectList = async (
   };
 };
 
-// Get all projects
-export const getAllProjects = async (
+// Get all db that only have name column
+export const getAllNames = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { table: string; teamId: string }
 ) => {
-  const { teamId } = params;
+  const { table, teamId } = params;
   const { data, error } = await supabaseClient
-    .from("project_table")
+    .from(`${table}_table`)
     .select("*")
-    .eq("project_team_id", teamId)
-    .eq("project_is_disabled", false)
-    .eq("project_is_available", true)
-    .order("project_name", { ascending: true });
+    .eq(`${table}_team_id`, teamId)
+    .eq(`${table}_is_disabled`, false)
+    .eq(`${table}_is_available`, true)
+    .order(`${table}_name`, { ascending: true });
 
   if (error) throw error;
 
   return data;
 };
 
-// check if project name already exists
-export const checkProjectName = async (
+// check if db that only have name column's name already exists
+export const checkName = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { projectName: string; teamId: string }
+  params: { table: string; name: string; teamId: string }
 ) => {
-  const { projectName, teamId } = params;
+  const { table, name, teamId } = params;
 
   const { count, error } = await supabaseClient
-    .from("project_table")
+    .from(`${table}_table`)
     .select("*", { count: "exact", head: true })
-    .eq("project_name", projectName)
-    .eq("project_is_disabled", false)
-    .eq("project_team_id", teamId);
+    .eq(`${table}_name`, name)
+    .eq(`${table}_is_disabled`, false)
+    .eq(`${table}_team_id`, teamId);
   if (error) throw error;
 
   return Boolean(count);
 };
 
-// Get warehouse processor list
-export const getWarehouseProcessorList = async (
+// Get processor list
+export const getProcessorList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
+  params: {
+    processor: string;
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
 ) => {
-  const { teamId, search, limit, page } = params;
+  const { processor, teamId, search, limit, page } = params;
 
   const start = (page - 1) * limit;
 
   let query = supabaseClient
-    .from("warehouse_processor_table")
-    .select("*", {
-      count: "exact",
+    .from(`${processor}_processor_table`)
+    .select(`*`, {
+      count: `exact`,
     })
-    .eq("warehouse_processor_team_id", teamId)
-    .eq("warehouse_processor_is_disabled", false);
+    .eq(`${processor}_processor_team_id`, teamId)
+    .eq(`${processor}_processor_is_disabled`, false);
 
   if (search) {
     query = query.or(
-      `warehouse_processor_first_name.ilike.%${search}%, warehouse_processor_last_name.ilike.%${search}%, warehouse_processor_employee_number.ilike.%${search}%`
+      `${processor}_processor_first_name.ilike.%${search}%, ${processor}_processor_last_name.ilike.%${search}%, ${processor}_processor_employee_number.ilike.%${search}%`
     );
   }
 
-  query.order("warehouse_processor_date_created", { ascending: false });
+  query.order(`${processor}_processor_date_created`, { ascending: false });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
@@ -910,45 +922,46 @@ export const getWarehouseProcessorList = async (
   };
 };
 
-// Get all warehouse processors
-export const getAllWarehouesProcessors = async (
+// Get  processors
+export const getAllProcessors = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { processor: string; teamId: string }
 ) => {
-  const { teamId } = params;
+  const { processor, teamId } = params;
   const { data, error } = await supabaseClient
-    .from("warehouse_processor_table")
-    .select("*")
-    .eq("warehouse_processor_team_id", teamId)
-    .eq("warehouse_processor_is_disabled", false)
-    .eq("warehouse_processor_is_available", true)
-    .order("warehouse_processor_first_name", { ascending: true });
+    .from(`${processor}_processor_table`)
+    .select(`*`)
+    .eq(`${processor}_processor_team_id`, teamId)
+    .eq(`${processor}_processor_is_disabled`, false)
+    .eq(`${processor}_processor_is_available`, true)
+    .order(`${processor}_processor_first_name`, { ascending: true });
 
   if (error) throw error;
 
   return data;
 };
 
-// check if warehouse procesor already exists
-export const checkWarehouseProcessor = async (
+// check if procesor already exists
+export const checkProcessor = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
+    processor: string;
     firstName: string;
     lastName: string;
     employeeNumber: string;
     teamId: string;
   }
 ) => {
-  const { firstName, lastName, employeeNumber, teamId } = params;
+  const { processor, firstName, lastName, employeeNumber, teamId } = params;
 
   const { count, error } = await supabaseClient
-    .from("warehouse_processor_table")
-    .select("*", { count: "exact", head: true })
-    .eq("warehouse_processor_first_name", firstName)
-    .eq("warehouse_processor_last_name", lastName)
-    .eq("warehouse_processor_employee_number", employeeNumber)
-    .eq("warehouse_processor_is_disabled", false)
-    .eq("warehouse_processor_team_id", teamId);
+    .from(`${processor}_processor_table`)
+    .select(`*`, { count: `exact`, head: true })
+    .eq(`${processor}_processor_first_name`, firstName)
+    .eq(`${processor}_processor_last_name`, lastName)
+    .eq(`${processor}_processor_employee_number`, employeeNumber)
+    .eq(`${processor}_processor_is_disabled`, false)
+    .eq(`${processor}_processor_team_id`, teamId);
   if (error) throw error;
 
   return Boolean(count);

@@ -46,6 +46,8 @@ const Page = ({ request }: Props) => {
     switch (request.request_form.form_name) {
       case "Order to Purchase":
         return <OrderToPurchaseRequestPage request={request} />;
+      case "Purchase Order":
+        return <RequestPage request={request} isFormslyForm />;
     }
   };
   return (

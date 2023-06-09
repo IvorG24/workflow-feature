@@ -72,6 +72,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     control,
     name: "sections",
   });
+
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;

@@ -140,6 +140,7 @@ CREATE TABLE field_table (
   field_type VARCHAR(4000) NOT NULL,
   field_order INT NOT NULL,
   field_is_positive_metric BOOLEAN DEFAULT TRUE NOT NULL,
+  field_is_read_only BOOLEAN DEFAULT FALSE NOT NULL,
 
   field_section_id UUID REFERENCES section_table(section_id) NOT NULL
 );
@@ -249,6 +250,32 @@ CREATE TABLE warehouse_processor_table(
   warehouse_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 -- End: Order to Purchase Form
+
+-- Start: Purchase Order Form
+
+CREATE TABLE purchasing_processor_table(
+  purchasing_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  purchasing_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  purchasing_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  purchasing_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  purchasing_processor_first_name VARCHAR(4000) NOT NULL,
+  purchasing_processor_last_name VARCHAR(4000) NOT NULL,
+  purchasing_processor_employee_number VARCHAR(4000) NOT NULL,
+
+  purchasing_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE vendor_table(
+  vendor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  vendor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  vendor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  vendor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  vendor_name VARCHAR(4000) NOT NULL,
+
+  vendor_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Purchase Order Form
 
 ---------- End: TABLES
 
