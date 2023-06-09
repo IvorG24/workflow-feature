@@ -18,12 +18,12 @@ type RequestReponseProps = {
     value: string;
     options: OptionTableRow[];
   };
-  isRequisitionForm?: boolean;
+  isOrderToPurchaseForm?: boolean;
 };
 
 const RequestResponse = ({
   response,
-  isRequisitionForm = false,
+  isOrderToPurchaseForm = false,
 }: RequestReponseProps) => {
   const inputProps = {
     variant: "filled",
@@ -143,11 +143,15 @@ const RequestResponse = ({
 
   return (
     <>
-      {!isRequisitionForm ? renderResponse(response) : null}
-      {isRequisitionForm ? (
+      {!isOrderToPurchaseForm ? renderResponse(response) : null}
+      {isOrderToPurchaseForm ? (
         <TextInput
           label={response.label}
-          value={JSON.parse(response.value)}
+          value={
+            response.type === "DATE"
+              ? new Date(JSON.parse(response.value)).toLocaleDateString()
+              : JSON.parse(response.value)
+          }
           {...inputProps}
         />
       ) : null}

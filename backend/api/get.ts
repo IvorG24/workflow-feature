@@ -528,7 +528,7 @@ export const getAllItems = async (
     .eq("item_team_id", teamId)
     .eq("item_is_disabled", false)
     .eq("item_is_available", true)
-    .order("item_general_name", { ascending: false });
+    .order("item_general_name", { ascending: true });
 
   if (error) throw error;
 
@@ -636,8 +636,8 @@ export const getItem = async (
   return data as ItemWithDecsriptionAndField;
 };
 
-// check if requisition form can be activated
-export const checkRequisitionFormStatus = async (
+// check if Order to Purchase form can be activated
+export const checkOrderToPurchaseFormStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; formId: string }
 ) => {
@@ -799,4 +799,157 @@ export const getNotificationList = async (
   if (error) throw error;
 
   return { data, count };
+};
+
+// Get project list
+export const getProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; limit: number; page: number; search?: string }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("project_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("project_team_id", teamId)
+    .eq("project_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("project_name", `%${search}%`);
+  }
+
+  query.order("project_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get all projects
+export const getAllProjects = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("project_table")
+    .select("*")
+    .eq("project_team_id", teamId)
+    .eq("project_is_disabled", false)
+    .eq("project_is_available", true)
+    .order("project_name", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+};
+
+// check if project name already exists
+export const checkProjectName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { projectName: string; teamId: string }
+) => {
+  const { projectName, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("project_table")
+    .select("*", { count: "exact", head: true })
+    .eq("project_name", projectName)
+    .eq("project_is_disabled", false)
+    .eq("project_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get warehouse processor list
+export const getWarehouseProcessorList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; limit: number; page: number; search?: string }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("warehouse_processor_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("warehouse_processor_team_id", teamId)
+    .eq("warehouse_processor_is_disabled", false);
+
+  if (search) {
+    query = query.or(
+      `warehouse_processor_first_name.ilike.%${search}%, warehouse_processor_last_name.ilike.%${search}%, warehouse_processor_employee_number.ilike.%${search}%`
+    );
+  }
+
+  query.order("warehouse_processor_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get all warehouse processors
+export const getAllWarehouesProcessors = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("warehouse_processor_table")
+    .select("*")
+    .eq("warehouse_processor_team_id", teamId)
+    .eq("warehouse_processor_is_disabled", false)
+    .eq("warehouse_processor_is_available", true)
+    .order("warehouse_processor_first_name", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+};
+
+// check if warehouse procesor already exists
+export const checkWarehouseProcessor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    firstName: string;
+    lastName: string;
+    employeeNumber: string;
+    teamId: string;
+  }
+) => {
+  const { firstName, lastName, employeeNumber, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("warehouse_processor_table")
+    .select("*", { count: "exact", head: true })
+    .eq("warehouse_processor_first_name", firstName)
+    .eq("warehouse_processor_last_name", lastName)
+    .eq("warehouse_processor_employee_number", employeeNumber)
+    .eq("warehouse_processor_is_disabled", false)
+    .eq("warehouse_processor_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
 };

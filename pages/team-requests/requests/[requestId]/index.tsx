@@ -1,7 +1,7 @@
 import { getRequest } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
+import OrderToPurchaseRequestPage from "@/components/OrderToPurchaseRequestPage/OrderToPurchaseRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
-import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import { RequestWithResponseType } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
@@ -44,8 +44,8 @@ type Props = {
 const Page = ({ request }: Props) => {
   const formslyForm = () => {
     switch (request.request_form.form_name) {
-      case "Requisition Form":
-        return <RequisitionRequestPage request={request} />;
+      case "Order to Purchase":
+        return <OrderToPurchaseRequestPage request={request} />;
     }
   };
   return (

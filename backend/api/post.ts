@@ -13,12 +13,14 @@ import {
   ItemTableInsert,
   NotificationTableInsert,
   OptionTableInsert,
+  ProjectTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   SectionTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
   UserTableInsert,
+  WarehouseProcessorTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -503,8 +505,8 @@ export const createFormslyPremadeForms = async (
   const { data: formData, error: formError } = await supabaseClient
     .from("form_table")
     .insert({
-      form_name: "Requisition Form",
-      form_description: "Formsly premade requisition form",
+      form_name: "Order to Purchase",
+      form_description: "Formsly premade Order to Purchase form",
       form_app: "REQUEST",
       form_team_member_id: teamMemberId,
       form_is_hidden: true,
@@ -545,4 +547,38 @@ export const createFormslyPremadeForms = async (
       },
     ]);
   if (fieldError) throw fieldError;
+};
+
+// Create Project
+export const createProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectData: ProjectTableInsert;
+  }
+) => {
+  const { projectData } = params;
+  const { data, error } = await supabaseClient
+    .from("project_table")
+    .insert(projectData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create WarehouseProcessor
+export const createWarehouseProcessor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    warehouseProcessorData: WarehouseProcessorTableInsert;
+  }
+) => {
+  const { warehouseProcessorData } = params;
+  const { data, error } = await supabaseClient
+    .from("warehouse_processor_table")
+    .insert(warehouseProcessorData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 };

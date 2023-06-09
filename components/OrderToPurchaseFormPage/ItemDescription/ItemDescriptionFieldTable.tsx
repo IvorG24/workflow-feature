@@ -106,13 +106,7 @@ const ItemDescriptionFieldTable = ({
           limit: ROW_PER_PAGE,
         }
       );
-      const newData = data.map((data) => {
-        return {
-          ...data,
-          id: data.item_description_field_id,
-        };
-      });
-      setRecords(newData);
+      setRecords(data);
       setCount(Number(count));
     } catch {
       showNotification({
@@ -192,7 +186,7 @@ const ItemDescriptionFieldTable = ({
             List of {description.item_description_label}
           </Title>
           <TextInput
-            miw={300}
+              miw={250}
             placeholder="Value"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
@@ -253,6 +247,7 @@ const ItemDescriptionFieldTable = ({
         </Group>
       </Flex>
       <DataTable
+        idAccessor="item_description_field_id"
         mt="xs"
         withBorder
         fw="bolder"
@@ -277,7 +272,6 @@ const ItemDescriptionFieldTable = ({
             render: ({ item_description_field_id }) => (
               <Checkbox
                 className={classes.checkbox}
-                key={item_description_field_id}
                 size="xs"
                 checked={checkList.includes(item_description_field_id)}
                 onChange={() => {
