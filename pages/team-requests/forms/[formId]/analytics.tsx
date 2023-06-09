@@ -1,11 +1,10 @@
 import { getForm } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
-import RequisitionAnalytics from "@/components/RequisitionAnalyticsPage/RequisitionAnalytics";
+import OrderToPurchaseAnalytics from "@/components/OrderToPurchaseAnalyticsPage/OrderToPurchaseAnalytics";
 import {
-  TEMP_REQUISITION_FORM_PURCHASE_DATA,
-  TEMP_REQUISITION_FORM_TEAM_DATA,
-  TEMP_REQUISITION_FORM_USER_DATA,
+  TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA,
+  TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA,
+  TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA,
 } from "@/utils/dummyData";
 import { FormWithResponseType } from "@/utils/types";
 import { Title } from "@mantine/core";
@@ -14,9 +13,9 @@ import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
-    const teamData = TEMP_REQUISITION_FORM_TEAM_DATA;
-    const userData = TEMP_REQUISITION_FORM_USER_DATA;
-    const purchaseData = TEMP_REQUISITION_FORM_PURCHASE_DATA;
+    const teamData = TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA;
+    const userData = TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA;
+    const purchaseData = TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA;
     const supabaseClient = createServerSupabaseClient(ctx);
 
     const form = await getForm(supabaseClient, {
@@ -25,9 +24,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
     return {
       props: {
-        requisition_form_team_data: teamData,
-        requisition_form_user_data: userData,
-        requisition_form_purchase_data: purchaseData,
+        order_to_purchase_form_team_data: teamData,
+        order_to_purchase_form_user_data: userData,
+        order_to_purchase_form_purchase_data: purchaseData,
         form,
       },
     };
@@ -42,7 +41,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 };
 
-export type RFDataType = {
+export type OTPDataType = {
   request_response_id: string;
   request_response: string;
   request_response_request_id: string;
@@ -51,29 +50,29 @@ export type RFDataType = {
 }[];
 
 type Props = {
-  requisition_form_team_data: RFDataType;
-  requisition_form_user_data: RFDataType;
-  requisition_form_purchase_data: RFDataType;
+  order_to_purchase_form_team_data: OTPDataType;
+  order_to_purchase_form_user_data: OTPDataType;
+  order_to_purchase_form_purchase_data: OTPDataType;
   form: FormWithResponseType;
 };
 
-const RequisitionFormData = ({
-  requisition_form_team_data,
-  requisition_form_user_data,
-  requisition_form_purchase_data,
+const OrderToPurchaseFormData = ({
+  order_to_purchase_form_team_data,
+  order_to_purchase_form_user_data,
+  order_to_purchase_form_purchase_data,
   form,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition Form":
+      case "Order To Purchase":
         return (
           <>
             {" "}
             <Title order={3}>{form.form_name}</Title>
-            <RequisitionAnalytics
-              teamRequisitionData={requisition_form_team_data}
-              userRequisitionData={requisition_form_user_data}
-              purchaseRequisitionData={requisition_form_purchase_data}
+            <OrderToPurchaseAnalytics
+              teamOrderToPurchaseData={order_to_purchase_form_team_data}
+              userOrderToPurchaseData={order_to_purchase_form_user_data}
+              purchaseOrderToPurchaseData={order_to_purchase_form_purchase_data}
             />
           </>
         );
@@ -86,10 +85,10 @@ const RequisitionFormData = ({
         url="/team-requests/forms/[formId]/analytics"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <RequestFormPage form={form} /> : null}
+      {/* {!form.form_is_formsly_form ? <RequestFormPage form={form} /> : null} */}
     </>
   );
 };
 
-export default RequisitionFormData;
-RequisitionFormData.Layout = "APP";
+export default OrderToPurchaseFormData;
+OrderToPurchaseFormData.Layout = "APP";

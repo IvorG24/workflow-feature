@@ -1,11 +1,13 @@
-import { checkRequisitionFormStatus } from "@/backend/api/get";
+import { checkOrderToPurchaseFormStatus } from "@/backend/api/get";
 import { updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
   ItemWithDescriptionType,
+  ProjectTableRow,
   TeamMemberWithUserType,
+  WarehouseProcessorTableRow,
 } from "@/utils/types";
 import {
   Button,
@@ -20,7 +22,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { isEqual } from "lodash";
+import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -29,17 +31,29 @@ import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import ItemDescription from "./ItemDescription/ItemDescription";
 import CreateItem from "./ItemList/CreateItem";
 import ItemList from "./ItemList/ItemList";
+import CreateProject from "./ProjectList/CreateProject";
+import ProjectList from "./ProjectList/ProjectList";
+import CreateWarehouseProcessor from "./WarehouseProcessorList/CreateWarehouseProcessor";
+import WarehouseProcessorList from "./WarehouseProcessorList/WarehouseProcessorList";
 
 type Props = {
   items: ItemWithDescriptionType[];
-  itemsCount: number;
+  itemListCount: number;
+  projects: ProjectTableRow[];
+  projectListCount: number;
+  warehouseProcessors: WarehouseProcessorTableRow[];
+  warehouseProcessorListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
 };
 
-const RequisitionFormPage = ({
+const OrderToPurchaseFormPage = ({
   items,
-  itemsCount,
+  itemListCount,
+  projects,
+  projectListCount,
+  warehouseProcessors,
+  warehouseProcessorListCount,
   teamMemberList,
   form,
 }: Props) => {
@@ -53,7 +67,20 @@ const RequisitionFormPage = ({
   const [selectedItem, setSelectedItem] =
     useState<ItemWithDescriptionType | null>(null);
   const [itemList, setItemList] = useState(items);
-  const [itemCount, setItemCount] = useState(itemsCount);
+  const [itemCount, setItemCount] = useState(itemListCount);
+
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [projectList, setProjectList] = useState(projects);
+  const [projectCount, setProjectCount] = useState(projectListCount);
+
+  const [isCreatingWarehouseProcessor, setIsCreatingWarehouseProcessor] =
+    useState(false);
+  const [warehouseProcessorList, setWarehouseProcessorList] =
+    useState(warehouseProcessors);
+  const [warehouseProcessorCount, setWarehouseProcessorCount] = useState(
+    warehouseProcessorListCount
+  );
+
   const [isSavingSigners, setIsSavingSigner] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
     form.form_signer.map((signer) => {
@@ -107,9 +134,20 @@ const RequisitionFormPage = ({
   };
 
   const handleSaveSigners = async () => {
+    const values = methods.getValues();
+    const primarySigner = values.signers.filter(
+      (signer) => signer.signer_is_primary_signer
+    );
+    if (isEmpty(primarySigner)) {
+      notifications.show({
+        message: "There must be atleast one primary signer",
+        color: "orange",
+      });
+      return;
+    }
+
     setIsSavingSigner(true);
     try {
-      const values = methods.getValues();
       await updateFormSigner(supabaseClient, {
         signers: values.signers.map((signer) => {
           return { ...signer, signer_is_disabled: false };
@@ -133,7 +171,7 @@ const RequisitionFormPage = ({
 
   const handleFormVisibilityRestriction = async () => {
     try {
-      const result = await checkRequisitionFormStatus(supabaseClient, {
+      const result = await checkOrderToPurchaseFormStatus(supabaseClient, {
         teamId: team.team_id,
         formId: `${formId}`,
       });
@@ -207,6 +245,44 @@ const RequisitionFormPage = ({
           />
         ) : null}
       </Paper>
+      <Space h="xl" />
+      <Paper p="xl" shadow="xs">
+        {!isCreatingProject ? (
+          <ProjectList
+            projectList={projectList}
+            setProjectList={setProjectList}
+            projectCount={projectCount}
+            setProjectCount={setProjectCount}
+            setIsCreatingProject={setIsCreatingProject}
+          />
+        ) : null}
+        {isCreatingProject ? (
+          <CreateProject
+            setIsCreatingProject={setIsCreatingProject}
+            setProjectList={setProjectList}
+            setProjectCount={setProjectCount}
+          />
+        ) : null}
+      </Paper>
+      <Space h="xl" />
+      <Paper p="xl" shadow="xs">
+        {!isCreatingWarehouseProcessor ? (
+          <WarehouseProcessorList
+            warehouseProcessorList={warehouseProcessorList}
+            setWarehouseProcessorList={setWarehouseProcessorList}
+            warehouseProcessorCount={warehouseProcessorCount}
+            setWarehouseProcessorCount={setWarehouseProcessorCount}
+            setIsCreatingWarehouseProcessor={setIsCreatingWarehouseProcessor}
+          />
+        ) : null}
+        {isCreatingWarehouseProcessor ? (
+          <CreateWarehouseProcessor
+            setIsCreatingWarehouseProcessor={setIsCreatingWarehouseProcessor}
+            setWarehouseProcessorList={setWarehouseProcessorList}
+            setWarehouseProcessorCount={setWarehouseProcessorCount}
+          />
+        ) : null}
+      </Paper>
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Signer Details</Title>
@@ -221,7 +297,8 @@ const RequisitionFormPage = ({
           />
         </FormProvider>
 
-        {!isEqual(initialSigners, methods.getValues("signers")) ? (
+        {!isEqual(initialSigners, methods.getValues("signers")) &&
+        activeSigner === null ? (
           <Center mt="xl">
             <Button loading={isSavingSigners} onClick={handleSaveSigners}>
               Save Changes
@@ -233,4 +310,4 @@ const RequisitionFormPage = ({
   );
 };
 
-export default RequisitionFormPage;
+export default OrderToPurchaseFormPage;

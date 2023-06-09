@@ -4,8 +4,10 @@ import {
   useNotificationList,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
+import { useActiveApp } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
+  Button,
   Center,
   Group,
   Indicator,
@@ -14,14 +16,18 @@ import {
   Text,
 } from "@mantine/core";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { lowerCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 
 const Notification = () => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const router = useRouter();
+
   const notificationList = useNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
+  const activeApp = useActiveApp();
+
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
   return (
@@ -29,7 +35,7 @@ const Notification = () => {
       <Group position="apart">
         <Text weight={600}>Notifications</Text>
       </Group>
-      <ScrollArea h={300} type="scroll">
+      <ScrollArea mah={300} type="scroll">
         <Stack p={8}>
           {notificationList.map((notification) => (
             <Stack
@@ -71,6 +77,17 @@ const Notification = () => {
             </Center>
           ) : null}
         </Stack>
+        <Center>
+          <Button
+            variant="subtle"
+            compact
+            onClick={() =>
+              router.push(`/team-${lowerCase(activeApp)}s/notification`)
+            }
+          >
+            View all
+          </Button>
+        </Center>
       </ScrollArea>
     </Stack>
   );

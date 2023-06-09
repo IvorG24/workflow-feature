@@ -121,6 +121,20 @@ export type ItemDescriptionFieldTableInsert =
   Database["public"]["Tables"]["item_description_field_table"]["Insert"];
 export type ItemDescriptionFieldTableUpdate =
   Database["public"]["Tables"]["item_description_field_table"]["Update"];
+
+export type ProjectTableRow =
+  Database["public"]["Tables"]["project_table"]["Row"];
+export type ProjectTableInsert =
+  Database["public"]["Tables"]["project_table"]["Insert"];
+export type ProjectTableUpdate =
+  Database["public"]["Tables"]["project_table"]["Update"];
+
+export type WarehouseProcessorTableRow =
+  Database["public"]["Tables"]["warehouse_processor_table"]["Row"];
+export type WarehouseProcessorTableInsert =
+  Database["public"]["Tables"]["warehouse_processor_table"]["Insert"];
+export type WarehouseProcessorTableUpdate =
+  Database["public"]["Tables"]["warehouse_processor_table"]["Update"];
 // End: Database Table Types
 
 // Start: Database Enums

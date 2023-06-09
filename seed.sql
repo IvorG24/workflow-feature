@@ -20,7 +20,7 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden) VALUES
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
-('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition Form', 'formsly premade requisition form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true);
+('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
@@ -29,9 +29,11 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('5da6140a-bec6-4afa-aeec-2fcb84c17669', 'Duplicatable Section 1', 1, true, '337658f1-0777-45f2-853f-b6f20551712e'),
 ('8ef2c6a0-797d-4e36-8246-cfa0f783afb5', 'Normal Section 2', 2, false, '337658f1-0777-45f2-853f-b6f20551712e'),
 ('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, true, '337658f1-0777-45f2-853f-b6f20551712e'),
-('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 1, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829');
+('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829');
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required) VALUES
+-- All Fields Form
 ('9696114b-9884-4ecf-8000-ab30ecde85aa', 'Text field', 'TEXT', 1, '80017528-ddb2-419d-92be-cdfa867b8f42', false),
 ('04141446-2b59-4d57-a81f-1bcbb5f4d4fd', 'Text area field', 'TEXTAREA', 2, '80017528-ddb2-419d-92be-cdfa867b8f42', false),
 ('34568491-4c73-4511-8a3e-babc6a54fdde', 'Number field', 'NUMBER', 3, '80017528-ddb2-419d-92be-cdfa867b8f42', false),
@@ -42,6 +44,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('a217e383-7bb1-4f95-a145-6d37145a4477', 'Time field', 'TIME', 8, 'e36be46d-4eec-4d5a-bb71-fd2d539c599e', false),
 -- ('1b4c7148-faaa-46cd-b361-806e670058e7', 'Slider field', 'SLIDER', 9, 'e36be46d-4eec-4d5a-bb71-fd2d539c599e', false),
 
+-- Duplicatable Section Form
 ('253f311c-aca6-401d-be77-696aa67a59d5', 'Text field', 'TEXT', 1, '5da6140a-bec6-4afa-aeec-2fcb84c17669', false),
 ('570a2b3f-bfb8-490e-a7bb-a8d0e4b512eb', 'Number field', 'NUMBER', 2, '5da6140a-bec6-4afa-aeec-2fcb84c17669', false),
 ('b925b45f-1d3e-4bbc-963b-80c5184702fb', 'Switch field', 'SWITCH', 3, '5da6140a-bec6-4afa-aeec-2fcb84c17669', false),
@@ -55,6 +58,12 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('1f9366fb-b89b-4d41-9a0e-e0264c422f17', 'Date field', 'DATE', 9, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false),
 ('0b4a3e53-629a-49d8-80e6-bfe1f31c0510', 'Time field', 'TIME', 10, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false),
 -- ('5ed0f5c1-a97d-465b-ade4-758a5ae351a2', 'Slider field', 'SLIDER', 11, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false),
+
+-- Order to Purchase Form
+('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 1, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true),
+('c88f075a-e97a-4d8c-aab0-1540c32e5b9b', 'Warehouse Processor', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true),
+('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true),
+('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true),
 
 ('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 1, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true),
 ('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 2, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true),
@@ -82,8 +91,12 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('0af76533-83d1-460c-bf02-f2b5523cdd22', 'Dropdown 3', 3, '7c53aa9f-ec53-45f1-ba95-0556b07a71ba'),
 ('763721ed-2c20-4e87-a7f1-bfd1eaa848e0', 'Multiselect 1', 1, '5ef54cb5-f694-4f4e-aee5-ec228dec1da4'),
 ('c6d92f18-f06d-4f8c-ae89-3cef183b42e9', 'Multiselect 2', 2, '5ef54cb5-f694-4f4e-aee5-ec228dec1da4'),
-('52da4c49-c855-4130-bb6f-c70f47bf21e4', 'Multiselect 3', 3, '5ef54cb5-f694-4f4e-aee5-ec228dec1da4');
+('52da4c49-c855-4130-bb6f-c70f47bf21e4', 'Multiselect 3', 3, '5ef54cb5-f694-4f4e-aee5-ec228dec1da4'),
 -- ('bab0a354-4a06-4bb2-a8a2-dcdbb7f68fde', '[1,10]', 1, '5ed0f5c1-a97d-465b-ade4-758a5ae351a2');
+
+-- Order to Purchase Form
+('f97eb24f-53b2-452b-966e-9a2f1dfd812d', 'Cash', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
+('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
@@ -211,3 +224,16 @@ INSERT INTO item_description_field_table (item_description_field_id, item_descri
 ('ed3fe8d0-a9c5-4e67-a9da-2d8617a8a550', 'Petron',  'f63b2370-0174-4a89-a047-a2680717d91a'),
 ('0055da68-32c8-40f9-ad6e-d7be663dad70', 'Metal', '0e5e970a-63aa-4b88-902a-e410a3611015'),
 ('1fc0f954-bd1a-46e8-905b-6a9c367a6cc0', '5', '0554d368-42e8-4b3b-a5d0-8fc68a7129ec');
+
+INSERT INTO project_table (project_id, project_name, project_team_id) VALUES
+('5918cc87-8f77-4b90-8db1-30705318d0ba', 'LUZ-22-010 PHILIP MORRIS', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('925ee08f-9dc6-4188-a7a4-befa1de9757f', 'MIN-15-077  MW SIGUIL HYDRO', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('45d921f4-19cb-4d42-b441-ee80a04e8e68', 'MIN-18-036 LAKEMAINIT', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('da7466c2-b5f3-48b6-b092-866804143d93', 'MERALCO HDD', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+INSERT INTO warehouse_processor_table (warehouse_processor_id, warehouse_processor_first_name, warehouse_processor_last_name, warehouse_processor_employee_number, warehouse_processor_team_id) VALUES 
+('239d5de1-ba78-46ae-a0f5-7471c4cba265', 'Christian', 'Dillon', '5760', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('721bf5bb-d621-412b-b945-5af719ae70a6', 'Jayson', 'Robertson', '3145', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('5ef4ee74-32e2-40cd-b6e5-c183fd18ce8d', 'Daren', 'Moran', '5471', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('2410e2f7-55a2-4ad2-83ce-8dd722801087', 'Nicholas', 'Hanson', '7021', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('235a8fa3-83dd-4899-bc03-b1a65c385f92', 'Jennie', 'Christian', '8977', 'a5a28977-6956-45c1-a624-b9e90911502e');

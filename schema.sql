@@ -195,7 +195,7 @@ CREATE TABLE comment_table(
 );
 -- End: Comments
 
--- Start: Requisition Form
+-- Start: Order to Purchase Form
 CREATE TABLE item_table(
   item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -226,7 +226,29 @@ CREATE TABLE item_description_field_table(
 
   item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
 );
--- End: Requisition Form
+
+CREATE TABLE project_table(
+  project_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  project_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  project_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  project_name VARCHAR(4000) NOT NULL,
+
+  project_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE warehouse_processor_table(
+  warehouse_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  warehouse_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  warehouse_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  warehouse_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  warehouse_processor_first_name VARCHAR(4000) NOT NULL,
+  warehouse_processor_last_name VARCHAR(4000) NOT NULL,
+  warehouse_processor_employee_number VARCHAR(4000) NOT NULL,
+
+  warehouse_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+-- End: Order to Purchase Form
 
 ---------- End: TABLES
 

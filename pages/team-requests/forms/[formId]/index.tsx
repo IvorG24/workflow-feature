@@ -1,18 +1,22 @@
 import {
   getForm,
   getItemList,
+  getProjectList,
   getTeamAdminList,
   getUserActiveTeamId,
+  getWarehouseProcessorList,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
+import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
-import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import {
   FormType,
   ItemWithDescriptionType,
+  ProjectTableRow,
   TeamMemberWithUserType,
+  WarehouseProcessorTableRow,
 } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
@@ -25,20 +29,20 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       formId: `${ctx.query.formId}`,
     });
 
+    const teamId = await getUserActiveTeamId(supabaseClient, {
+      userId: TEMP_USER_ID,
+    });
+
+    const teamMemberList = await getTeamAdminList(supabaseClient, {
+      teamId,
+    });
+
     const formattedForm = form as unknown as FormType;
     if (
       formattedForm.form_is_formsly_form &&
-      formattedForm.form_name === "Requisition Form"
+      formattedForm.form_name === "Order to Purchase"
     ) {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: TEMP_USER_ID,
-      });
-
-      const teamMemberList = await getTeamAdminList(supabaseClient, {
-        teamId,
-      });
-
-      const { data: items, count: itemsCount } = await getItemList(
+      const { data: items, count: itemListCount } = await getItemList(
         supabaseClient,
         {
           teamId: teamId,
@@ -47,20 +51,38 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         }
       );
 
-      const newItems = items.map((item) => {
-        return {
-          id: item.item_id,
-          ...item,
-        };
-      });
+      const { data: projects, count: projectListCount } = await getProjectList(
+        supabaseClient,
+        {
+          teamId: teamId,
+          page: 1,
+          limit: ROW_PER_PAGE,
+        }
+      );
+
+      const { data: warehouseProcessors, count: warehouseProcessorListCount } =
+        await getWarehouseProcessorList(supabaseClient, {
+          teamId: teamId,
+          page: 1,
+          limit: ROW_PER_PAGE,
+        });
 
       return {
-        props: { form, items: newItems, itemsCount, teamMemberList },
+        props: {
+          form,
+          items,
+          itemListCount,
+          teamMemberList,
+          projects,
+          projectListCount,
+          warehouseProcessors,
+          warehouseProcessorListCount,
+        },
       };
     }
 
     return {
-      props: { form },
+      props: { form, teamMemberList },
     };
   } catch (error) {
     console.error(error);
@@ -76,23 +98,35 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 type Props = {
   form: FormType;
   items?: ItemWithDescriptionType[];
-  itemsCount?: number;
-  teamMemberList?: TeamMemberWithUserType[];
+  itemListCount?: number;
+  projects?: ProjectTableRow[];
+  projectListCount?: number;
+  warehouseProcessors?: WarehouseProcessorTableRow[];
+  warehouseProcessorListCount?: number;
+  teamMemberList: TeamMemberWithUserType[];
 };
 
 const Page = ({
   form,
   items = [],
-  itemsCount = 0,
+  itemListCount = 0,
+  projects = [],
+  projectListCount = 0,
+  warehouseProcessors = [],
+  warehouseProcessorListCount = 0,
   teamMemberList = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition Form":
+      case "Order to Purchase":
         return (
-          <RequisitionFormPage
+          <OrderToPurchaseFormPage
             items={items}
-            itemsCount={itemsCount}
+            itemListCount={itemListCount}
+            projects={projects}
+            projectListCount={projectListCount}
+            warehouseProcessors={warehouseProcessors}
+            warehouseProcessorListCount={warehouseProcessorListCount}
             teamMemberList={teamMemberList}
             form={form}
           />
@@ -104,7 +138,9 @@ const Page = ({
     <>
       <Meta description="Request Page" url="/team-requests/forms/[formId]" />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <RequestFormPage form={form} /> : null}
+      {!form.form_is_formsly_form ? (
+        <RequestFormPage form={form} teamMemberList={teamMemberList} />
+      ) : null}
     </>
   );
 };

@@ -1,6 +1,7 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { Database } from "@/utils/database";
 import {
+  AppType,
   MemberRoleType,
   TeamTableUpdate,
   UserTableUpdate,
@@ -275,13 +276,17 @@ export const updateFormSigner = async (
   }
 ) => {
   const { signers, formId } = params;
-  const { error: disbaleAllError } = await supabaseClient
+  const { error: disableAllError } = await supabaseClient
     .from("signer_table")
     .update({ signer_is_disabled: true })
     .eq("signer_form_id", formId);
-  if (disbaleAllError) throw disbaleAllError;
-  const { error } = await supabaseClient.from("signer_table").upsert(signers);
-  if (error) throw error;
+  if (disableAllError) throw disableAllError;
+  const { data: signerData, error: signerError } = await supabaseClient
+    .from("signer_table")
+    .upsert(signers)
+    .select("*");
+  if (signerError) throw signerError;
+  return signerData;
 };
 
 // Update notification status
@@ -329,4 +334,21 @@ export const declineTeamInvitation = async (
     .update({ invitation_status: "DECLINED" })
     .eq("invitation_id", invitationId);
   if (invitationError) throw invitationError;
+};
+
+// Read all notification
+export const readAllNotification = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    appType: AppType;
+  }
+) => {
+  const { userId, appType } = params;
+  const { error } = await supabaseClient
+    .from("notification_table")
+    .update({ notification_is_read: true })
+    .eq("notification_user_id", userId)
+    .or(`notification_app.eq.${appType}, notification_app.is.null`);
+  if (error) throw error;
 };

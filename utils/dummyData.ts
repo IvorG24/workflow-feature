@@ -4,7 +4,7 @@
 export const TEMP_USER_ID = "8d01bf49-186f-49e2-8b13-b14220446622";
 export const TEMP_USER_EMAIL = "johndoe@gmail.com";
 
-export const TEMP_REQUISITION_FORM_TEAM_DATA = [
+export const TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA = [
   {
     request_response_id: "1bf165e6-cca2-414b-877a-5a8cadba4c66",
     request_response: "Gaming Console",
@@ -127,7 +127,7 @@ export const TEMP_REQUISITION_FORM_TEAM_DATA = [
   },
 ];
 
-export const TEMP_REQUISITION_FORM_USER_DATA = [
+export const TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA = [
   {
     request_response_id: "ce79ed1b-b876-4127-aec6-8c5611f9078e",
     request_response: "Fitness Tracker",
@@ -190,7 +190,7 @@ export const TEMP_REQUISITION_FORM_USER_DATA = [
   },
 ];
 
-export const TEMP_REQUISITION_FORM_PURCHASE_DATA = [
+export const TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA = [
   {
     request_response_id: "1e477809-ba83-4656-9231-1212d914a532",
     request_response: "Gaming Console",
