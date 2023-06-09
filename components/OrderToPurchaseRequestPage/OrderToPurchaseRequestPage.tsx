@@ -24,7 +24,7 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const RequisitionRequestPage = ({ request }: Props) => {
+const OrderToPurchaseRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
 
   const { setIsLoading } = useLoadingActions();
@@ -181,7 +181,7 @@ const RequisitionRequestPage = ({ request }: Props) => {
           <RequestSection
             key={section.section_id + idx}
             section={section}
-            isRequisitionForm={true}
+            isOrderToPurchaseForm={true}
           />
         ))}
 
@@ -213,4 +213,4 @@ const RequisitionRequestPage = ({ request }: Props) => {
   );
 };
 
-export default RequisitionRequestPage;
+export default OrderToPurchaseRequestPage;

@@ -34,13 +34,15 @@ export type FieldWithResponseArray = Field & {
 
 type Props = {
   form: FormType;
-  options: OptionTableRow[];
+  itemOptions: OptionTableRow[];
+
   conditionalFields: Field[];
 };
 
-const CreateRequisitionRequestPage = ({
+const CreateOrderToPurchasesRequestPage = ({
   form,
-  options,
+  itemOptions,
+
   conditionalFields,
 }: Props) => {
   const router = useRouter();
@@ -119,7 +121,7 @@ const CreateRequisitionRequestPage = ({
         (field) => ({
           ...field,
           field_section_duplicatable_id: sectionDuplicatableId,
-          field_option: options,
+          field_option: itemOptions,
         })
       );
       const newSection = {
@@ -144,17 +146,22 @@ const CreateRequisitionRequestPage = ({
   };
 
   useEffect(() => {
-    const newFields = form.form_section[0].section_field.map((field) => {
+    const newFields = form.form_section[1].section_field.map((field) => {
       return {
         ...field,
-        field_option: options,
+        field_option: itemOptions,
       };
     });
-    replaceSection({
-      ...form.form_section[0],
-      section_field: newFields,
-    });
-  }, [form, replaceSection, requestFormMethods, options]);
+    replaceSection([
+      {
+        ...form.form_section[0],
+      },
+      {
+        ...form.form_section[1],
+        section_field: newFields,
+      },
+    ]);
+  }, [form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleGeneralNameChange = async (
     index: number,
@@ -262,7 +269,7 @@ const CreateRequisitionRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    requisitionFormMethods={{
+                    orderToPurchaseFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                     }}
                   />
@@ -291,4 +298,4 @@ const CreateRequisitionRequestPage = ({
   );
 };
 
-export default CreateRequisitionRequestPage;
+export default CreateOrderToPurchasesRequestPage;

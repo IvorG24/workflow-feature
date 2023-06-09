@@ -20,7 +20,7 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
-  requisitionFormMethods?: {
+  orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
 };
@@ -29,7 +29,7 @@ const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
-  requisitionFormMethods,
+  orderToPurchaseFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -142,7 +142,7 @@ const RequestFormFields = ({
                   onChange(value);
 
                   if (field.field_name === "General Name")
-                    requisitionFormMethods?.onGeneralNameChange(
+                    orderToPurchaseFormMethods?.onGeneralNameChange(
                       sectionIndex,
                       value
                     );
@@ -152,7 +152,7 @@ const RequestFormFields = ({
                 {...inputProps}
                 clearable
                 error={fieldError}
-                searchable={Boolean(requisitionFormMethods)}
+                searchable={Boolean(orderToPurchaseFormMethods)}
               />
             )}
             rules={{ ...fieldRules }}

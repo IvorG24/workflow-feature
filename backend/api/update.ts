@@ -286,7 +286,7 @@ export const updateFormSigner = async (
     .upsert(signers)
     .select("*");
   if (signerError) throw signerError;
-  console.log(signerData);
+  return signerData;
 };
 
 // Update notification status

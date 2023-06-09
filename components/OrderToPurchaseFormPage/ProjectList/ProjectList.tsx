@@ -1,12 +1,9 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getItemList } from "@/backend/api/get";
+import { getProjectList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import {
-  ItemDescriptionTableRow,
-  ItemWithDescriptionType,
-} from "@/utils/types";
+import { ProjectTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -49,21 +46,19 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  itemList: ItemWithDescriptionType[];
-  setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
-  itemCount: number;
-  setItemCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
-  setSelectedItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
+  projectList: ProjectTableRow[];
+  setProjectList: Dispatch<SetStateAction<ProjectTableRow[]>>;
+  projectCount: number;
+  setProjectCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingProject: Dispatch<SetStateAction<boolean>>;
 };
 
-const ItemList = ({
-  itemList,
-  setItemList,
-  itemCount,
-  setItemCount,
-  setIsCreatingItem,
-  setSelectedItem,
+const ProjectList = ({
+  projectList,
+  setProjectList,
+  projectCount,
+  setProjectCount,
+  setIsCreatingProject,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -78,17 +73,17 @@ const ItemList = ({
 
   const headerCheckboxKey = uniqueId();
 
-  const handleCheckRow = (itemId: string) => {
-    if (checkList.includes(itemId)) {
-      setCheckList(checkList.filter((id) => id !== itemId));
+  const handleCheckRow = (projectId: string) => {
+    if (checkList.includes(projectId)) {
+      setCheckList(checkList.filter((id) => id !== projectId));
     } else {
-      setCheckList([...checkList, itemId]);
+      setCheckList([...checkList, projectId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const projectIdList = itemList.map((item) => item.item_id);
+      const projectIdList = projectList.map((project) => project.project_id);
       setCheckList(projectIdList);
     } else {
       setCheckList([]);
@@ -105,17 +100,17 @@ const ItemList = ({
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
-      const { data, count } = await getItemList(supabaseClient, {
+      const { data, count } = await getProjectList(supabaseClient, {
         teamId: activeTeam.team_id,
         search,
         limit: ROW_PER_PAGE,
         page: page,
       });
-      setItemList(data as ItemWithDescriptionType[]);
-      setItemCount(Number(count));
+      setProjectList(data);
+      setProjectCount(Number(count));
     } catch {
       showNotification({
-        message: "Error on fetching item list",
+        message: "Error on fetching project list",
         color: "red",
       });
     }
@@ -124,55 +119,53 @@ const ItemList = ({
 
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = itemList;
+    const savedRecord = projectList;
 
     try {
-      const updatedItemList = itemList.filter((item) => {
-        if (!checkList.includes(item.item_id)) {
-          return item;
+      const updatedProjectList = projectList.filter((project) => {
+        if (!checkList.includes(project.project_id)) {
+          return project;
         }
       });
-      setItemList(updatedItemList);
+      setProjectList(updatedProjectList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "item",
+        table: "project",
       });
-
-      setSelectedItem(null);
 
       showNotification({
         title: "Success!",
-        message: "Item/s deleted",
+        message: "Project/s deleted",
         color: "green",
       });
     } catch {
-      setItemList(savedRecord);
+      setProjectList(savedRecord);
       setCheckList(saveCheckList);
       showNotification({
         title: "Error!",
-        message: "Item/s failed to delete",
+        message: "Project/s failed to delete",
         color: "red",
       });
     }
   };
 
-  const handleUpdateStatus = async (itemId: string, value: boolean) => {
-    const savedRecord = itemList;
+  const handleUpdateStatus = async (projectId: string, value: boolean) => {
+    const savedRecord = projectList;
     try {
-      setItemList((prev) =>
-        prev.map((item) => {
-          if (item.item_id !== itemId) return item;
+      setProjectList((prev) =>
+        prev.map((project) => {
+          if (project.project_id !== projectId) return project;
           return {
-            ...item,
-            item_is_available: value,
+            ...project,
+            project_is_available: value,
           };
         })
       );
       await toggleStatus(supabaseClient, {
-        table: "item",
-        id: itemId,
+        table: "project",
+        id: projectId,
         status: value,
       });
     } catch {
@@ -180,21 +173,8 @@ const ItemList = ({
         message: "Error on changing status",
         color: "red",
       });
-      setItemList(savedRecord);
+      setProjectList(savedRecord);
     }
-  };
-
-  const formatItemField = (itemFieldLabel: ItemDescriptionTableRow[]) => {
-    let description = "";
-    itemFieldLabel.forEach((fieldLabel) => {
-      description += `${fieldLabel.item_description_label}, `;
-    });
-    return description.slice(0, -2);
-  };
-
-  const handleColumnClick = (item_id: string) => {
-    const selectedItem = itemList.find((item) => item.item_id === item_id);
-    setSelectedItem(selectedItem || null);
   };
 
   return (
@@ -202,11 +182,11 @@ const ItemList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Items
+            List of Projects
           </Title>
           <TextInput
-            miw={300}
-            placeholder="General Name"
+            miw={250}
+            placeholder="Project Name"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -242,7 +222,9 @@ const ItemList = ({
                   children: (
                     <Text size={14}>
                       Are you sure you want to delete{" "}
-                      {checkList.length === 1 ? "this item?" : "these items?"}
+                      {checkList.length === 1
+                        ? "this project?"
+                        : "these projects?"}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -257,20 +239,21 @@ const ItemList = ({
           <Button
             rightIcon={<IconPlus size={16} />}
             className={classes.flexGrow}
-            onClick={() => setIsCreatingItem(true)}
+            onClick={() => setIsCreatingProject(true)}
           >
             Add
           </Button>
         </Group>
       </Flex>
       <DataTable
+        idAccessor="project_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={itemList}
+        records={projectList}
         columns={[
           {
             accessor: "checkbox",
@@ -279,89 +262,49 @@ const ItemList = ({
                 key={headerCheckboxKey}
                 className={classes.checkbox}
                 checked={
-                  checkList.length > 0 && checkList.length === itemList.length
+                  checkList.length > 0 &&
+                  checkList.length === projectList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
               />
             ),
-            render: ({ item_id }) => (
+            render: ({ project_id }) => (
               <Checkbox
                 className={classes.checkbox}
-                key={item_id}
                 size="xs"
-                checked={checkList.includes(item_id)}
+                checked={checkList.includes(project_id)}
                 onChange={() => {
-                  handleCheckRow(item_id);
+                  handleCheckRow(project_id);
                 }}
               />
             ),
             width: 40,
           },
           {
-            accessor: "item_general_name",
-            title: "General Name",
-            render: ({ item_general_name, item_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-                key={item_id}
-              >
-                {item_general_name}
-              </Text>
-            ),
-          },
-          {
-            accessor: "item_unit",
-            title: "Unit",
-            render: ({ item_unit, item_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-                key={item_id}
-              >
-                {item_unit}
-              </Text>
-            ),
-          },
-          {
-            accessor: "description",
-            title: "Description",
-            render: ({ item_id, item_description }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-                key={item_id}
-              >
-                {formatItemField(item_description)}
-              </Text>
-            ),
+            accessor: "project_name",
+            title: "Project Name",
+            render: ({ project_name }) => <Text>{project_name}</Text>,
           },
           {
             accessor: "status",
             title: "Status",
             textAlignment: "center",
-            render: ({ item_is_available, item_id }) => (
-              <Center key={item_id}>
+            render: ({ project_is_available, project_id }) => (
+              <Center>
                 <Checkbox
-                  checked={item_is_available}
+                  checked={project_is_available}
                   className={classes.checkbox}
                   size="xs"
                   onChange={(e) =>
-                    handleUpdateStatus(item_id, e.currentTarget.checked)
+                    handleUpdateStatus(project_id, e.currentTarget.checked)
                   }
                 />
               </Center>
             ),
           },
         ]}
-        totalRecords={itemCount}
+        totalRecords={projectCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -373,4 +316,4 @@ const ItemList = ({
   );
 };
 
-export default ItemList;
+export default ProjectList;
