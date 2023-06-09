@@ -5,17 +5,16 @@ import {
 } from "@/backend/api/get";
 import Dashboard from "@/components/Dashboard/Dashboard";
 import Meta from "@/components/Meta/Meta";
-import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import {
-  TEMP_REQUISITION_FORM_PURCHASE_DATA,
-  TEMP_REQUISITION_FORM_TEAM_DATA,
-  TEMP_REQUISITION_FORM_USER_DATA,
+  TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA,
+  TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA,
+  TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA,
   TEMP_USER_ID,
 } from "@/utils/dummyData";
 import { RequestType, TeamMemberWithUserType } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
-import { RFDataType } from "./forms/[formId]/analytics";
+import { OTPDataType } from "./forms/[formId]/analytics";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
@@ -27,16 +26,16 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     const { data, count } = await getRequestList(supabaseClient, {
       teamId: teamId,
       page: 1,
-      limit: DEFAULT_REQUEST_LIST_LIMIT,
+      limit: 9999999,
     });
 
     const teamMemberList = await getAllTeamMembers(supabaseClient, {
       teamId,
     });
 
-    const teamData = TEMP_REQUISITION_FORM_TEAM_DATA;
-    const userData = TEMP_REQUISITION_FORM_USER_DATA;
-    const purchaseData = TEMP_REQUISITION_FORM_PURCHASE_DATA;
+    const teamData = TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA;
+    const userData = TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA;
+    const purchaseData = TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA;
 
     return {
       props: {
@@ -63,9 +62,9 @@ type Props = {
   requestList: RequestType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
-  requisition_form_team_data: RFDataType;
-  requisition_form_user_data: RFDataType;
-  requisition_form_purchase_data: RFDataType;
+  requisition_form_team_data: OTPDataType;
+  requisition_form_user_data: OTPDataType;
+  requisition_form_purchase_data: OTPDataType;
 };
 
 const Page = ({
