@@ -35,6 +35,7 @@ const RequestStatistics = () => {
       w={{ base: "100%", sm: 500, md: "fit-content" }}
       p={{ base: "sm", sm: "md" }}
       mt="xl"
+      h="fit-content"
     >
       <Group px={{ base: 0, sm: "md" }} position="apart">
         <Title order={3}>Request Statistics</Title>

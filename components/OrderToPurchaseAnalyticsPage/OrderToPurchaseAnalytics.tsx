@@ -70,7 +70,7 @@ const OrderToPurchaseAnalytics = ({
     : null;
 
   return (
-    <Container p="xl" h="100%" fluid>
+    <Container h="100%" fluid>
       <Tabs defaultValue="user order">
         <Tabs.List>
           <Tabs.Tab value="user order" icon={<IconUser size="0.8rem" />}>
@@ -89,7 +89,7 @@ const OrderToPurchaseAnalytics = ({
 
         <Tabs.Panel value="user order" pt="xs">
           {userDataArray && (
-            <Box h="fit-content">
+            <Box w="100%" h="fit-content">
               <Text>User Order Per Item</Text>
               <BarChart data={userDataArray} />
             </Box>

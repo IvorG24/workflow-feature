@@ -18,7 +18,7 @@ const BarChart: React.FC<Props> = ({ data }) => {
       const svg = d3.select(chartRef.current);
       const width = 500;
       const height = 300;
-      const margin = { top: 20, right: 20, bottom: 30, left: 120 };
+      const margin = { top: 20, right: 20, bottom: 30, left: 85 };
       const innerWidth = width - margin.left - margin.right;
       const innerHeight = height - margin.top - margin.bottom;
 
