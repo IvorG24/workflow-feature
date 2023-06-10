@@ -5,6 +5,7 @@ import {
   getForm,
   getUserActiveTeamId,
 } from "@/backend/api/get";
+import CreateInvoiceRequestPage from "@/components/CreateInvoiceRequestPage/CreateInvoiceRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
 import CreatePurchaseOrderRequestPage from "@/components/CreatePurchaseOrderRequestPage/CreatePurchaseOrderRequestPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
@@ -109,7 +110,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           },
         };
       }
-      //  Purchas Order
+      //  Purchase Order
       else if (formattedForm.form_name === "Purchase Order") {
         // vendors
         const vendors = await getAllNames(supabaseClient, {
@@ -175,6 +176,55 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           },
         };
       }
+      //  Invoice
+      else if (formattedForm.form_name === "Invoice") {
+        // accounting processors
+        const accountingProcessors = await getAllProcessors(supabaseClient, {
+          processor: "accounting",
+          teamId: teamId,
+        });
+        const accountingProcessorOptions = accountingProcessors.map(
+          (accountingProcessor, index) => {
+            return {
+              option_description: null,
+              option_field_id:
+                formattedForm.form_section[0].section_field[0].field_id,
+              option_id: accountingProcessor.accounting_processor_id,
+              option_order: index,
+              option_value: `${accountingProcessor.accounting_processor_first_name} ${accountingProcessor.accounting_processor_last_name} (${accountingProcessor.accounting_processor_employee_number})`,
+            };
+          }
+        );
+
+        return {
+          props: {
+            form: {
+              ...formattedForm,
+              form_section: [
+                {
+                  ...formattedForm.form_section[0],
+                  section_field: [
+                    {
+                      ...formattedForm.form_section[0].section_field[0],
+                    },
+                    {
+                      ...formattedForm.form_section[0].section_field[1],
+                    },
+                    {
+                      ...formattedForm.form_section[0].section_field[2],
+                      field_option: accountingProcessorOptions,
+                    },
+                    ...formattedForm.form_section[0].section_field.slice(
+                      3,
+                      formattedForm.form_section[0].section_field.length
+                    ),
+                  ],
+                },
+              ],
+            },
+          },
+        };
+      }
     }
 
     return {
@@ -225,6 +275,8 @@ const Page = ({ form, itemOptions }: Props) => {
         );
       case "Purchase Order":
         return <CreatePurchaseOrderRequestPage form={form} />;
+      case "Invoice":
+        return <CreateInvoiceRequestPage form={form} />;
     }
   };
   return (

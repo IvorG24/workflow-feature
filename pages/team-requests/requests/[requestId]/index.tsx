@@ -48,6 +48,8 @@ const Page = ({ request }: Props) => {
         return <OrderToPurchaseRequestPage request={request} />;
       case "Purchase Order":
         return <RequestPage request={request} isFormslyForm />;
+      case "Invoice":
+        return <RequestPage request={request} isFormslyForm />;
     }
   };
   return (

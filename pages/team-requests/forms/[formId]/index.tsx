@@ -6,13 +6,15 @@ import {
   getTeamAdminList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
+import InvoiceFormPage from "@/components/InvoiceFormPage/InvoiceFormPage";
 import Meta from "@/components/Meta/Meta";
 import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
-import PurchaseOrderFormPage from "@/components/PurchaeOrderFormPage/PurchaseOrderFormPage";
+import PurchaseOrderFormPage from "@/components/PurchaseOrderFormPage/PurchaseOrderFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import {
+  AccountingProcessorTableRow,
   FormType,
   ItemWithDescriptionType,
   ProjectTableRow,
@@ -41,82 +43,98 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     });
 
     const formattedForm = form as unknown as FormType;
-    if (
-      formattedForm.form_is_formsly_form &&
-      formattedForm.form_name === "Order to Purchase"
-    ) {
-      const { data: items, count: itemListCount } = await getItemList(
-        supabaseClient,
-        {
-          teamId: teamId,
-          page: 1,
-          limit: ROW_PER_PAGE,
-        }
-      );
+    if (formattedForm.form_is_formsly_form) {
+      if (formattedForm.form_name === "Order to Purchase") {
+        const { data: items, count: itemListCount } = await getItemList(
+          supabaseClient,
+          {
+            teamId: teamId,
+            page: 1,
+            limit: ROW_PER_PAGE,
+          }
+        );
 
-      const { data: projects, count: projectListCount } = await getNameList(
-        supabaseClient,
-        {
-          table: "project",
-          teamId: teamId,
-          page: 1,
-          limit: ROW_PER_PAGE,
-        }
-      );
+        const { data: projects, count: projectListCount } = await getNameList(
+          supabaseClient,
+          {
+            table: "project",
+            teamId: teamId,
+            page: 1,
+            limit: ROW_PER_PAGE,
+          }
+        );
 
-      const { data: warehouseProcessors, count: warehouseProcessorListCount } =
-        await getProcessorList(supabaseClient, {
+        const {
+          data: warehouseProcessors,
+          count: warehouseProcessorListCount,
+        } = await getProcessorList(supabaseClient, {
           processor: "warehouse",
           teamId: teamId,
           page: 1,
           limit: ROW_PER_PAGE,
         });
 
-      return {
-        props: {
-          form,
-          items,
-          itemListCount,
-          teamMemberList,
-          projects,
-          projectListCount,
-          warehouseProcessors,
-          warehouseProcessorListCount,
-        },
-      };
-    } else if (
-      formattedForm.form_is_formsly_form &&
-      formattedForm.form_name === "Purchase Order"
-    ) {
-      const { data: vendors, count: vendorListCount } = await getNameList(
-        supabaseClient,
-        {
-          table: "vendor",
+        return {
+          props: {
+            form,
+            items,
+            itemListCount,
+            teamMemberList,
+            projects,
+            projectListCount,
+            warehouseProcessors,
+            warehouseProcessorListCount,
+          },
+        };
+      } else if (formattedForm.form_name === "Purchase Order") {
+        const { data: vendors, count: vendorListCount } = await getNameList(
+          supabaseClient,
+          {
+            table: "vendor",
+            teamId: teamId,
+            page: 1,
+            limit: ROW_PER_PAGE,
+          }
+        );
+
+        const {
+          data: purchasingProcessors,
+          count: purchasingProcessorListCount,
+        } = await getProcessorList(supabaseClient, {
+          processor: "purchasing",
           teamId: teamId,
           page: 1,
           limit: ROW_PER_PAGE,
-        }
-      );
-
-      const {
-        data: purchasingProcessors,
-        count: purchasingProcessorListCount,
-      } = await getProcessorList(supabaseClient, {
-        processor: "purchasing",
-        teamId: teamId,
-        page: 1,
-        limit: ROW_PER_PAGE,
-      });
-      return {
-        props: {
-          form,
-          teamMemberList,
-          vendors,
-          vendorListCount,
-          purchasingProcessors,
-          purchasingProcessorListCount,
-        },
-      };
+        });
+        return {
+          props: {
+            form,
+            teamMemberList,
+            vendors,
+            vendorListCount,
+            purchasingProcessors,
+            purchasingProcessorListCount,
+          },
+        };
+      } else if (formattedForm.form_name === "Invoice") {
+        const {
+          data: accountingProcessors,
+          count: accountingProcessorListCount,
+        } = await getProcessorList(supabaseClient, {
+          processor: "accounting",
+          teamId: teamId,
+          page: 1,
+          limit: ROW_PER_PAGE,
+        });
+        return {
+          props: {
+            form,
+            teamMemberList,
+            accountingProcessors,
+            accountingProcessorListCount,
+          },
+        };
+      }
     }
     return {
       props: { form, teamMemberList },
@@ -145,6 +163,8 @@ type Props = {
   vendorListCount?: number;
   purchasingProcessors?: PurchasingProcessorTableRow[];
   purchasingProcessorListCount?: number;
+  accountingProcessors?: AccountingProcessorTableRow[];
+  accountingProcessorListCount?: number;
 };
 
 const Page = ({
@@ -161,6 +181,8 @@ const Page = ({
   vendorListCount = 0,
   purchasingProcessors = [],
   purchasingProcessorListCount = 0,
+  accountingProcessors = [],
+  accountingProcessorListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -186,6 +208,15 @@ const Page = ({
             vendorListCount={vendorListCount}
             purchasingProcessors={purchasingProcessors}
             purchasingProcessorListCount={purchasingProcessorListCount}
+          />
+        );
+      case "Invoice":
+        return (
+          <InvoiceFormPage
+            teamMemberList={teamMemberList}
+            form={form}
+            accountingProcessors={accountingProcessors}
+            accountingProcessorListCount={accountingProcessorListCount}
           />
         );
     }

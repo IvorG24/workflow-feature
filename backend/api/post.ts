@@ -2,6 +2,7 @@ import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestP
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { Database } from "@/utils/database";
 import {
+  AccountingProcessorTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
@@ -613,6 +614,23 @@ export const createPurchasingProcessor = async (
   const { data, error } = await supabaseClient
     .from("purchasing_processor_table")
     .insert(purchasingProcessorData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create Accounting Processor
+export const createAccountingProcessor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    accountingProcessorData: AccountingProcessorTableInsert;
+  }
+) => {
+  const { accountingProcessorData } = params;
+  const { data, error } = await supabaseClient
+    .from("accounting_processor_table")
+    .insert(accountingProcessorData)
     .select()
     .single();
   if (error) throw error;
