@@ -293,6 +293,22 @@ CREATE TABLE accounting_processor_table(
 
 -- End: Invoice Form
 
+-- Start: Invoice Form
+
+CREATE TABLE warehouse_receiver_table(
+  warehouse_receiver_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  warehouse_receiver_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  warehouse_receiver_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  warehouse_receiver_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  warehouse_receiver_first_name VARCHAR(4000) NOT NULL,
+  warehouse_receiver_last_name VARCHAR(4000) NOT NULL,
+  warehouse_receiver_employee_number VARCHAR(4000) NOT NULL,
+
+  warehouse_receiver_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Invoice Form
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS

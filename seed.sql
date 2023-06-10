@@ -22,7 +22,9 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('bba77187-c35d-4a6d-bf03-431e2ff2212e', 'Purchase Order', 'formsly premade Purchase Order form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
-('a732196f-9779-45e2-85fa-7320397e5b0a', 'Invoice', 'formsly premade Invoice form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true);
+('a732196f-9779-45e2-85fa-7320397e5b0a', 'Invoice', 'formsly premade Invoice form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
+('6f7b3e6c-002e-4a74-8a67-ea21a11dc178', 'Account Payable Voucher', 'formsly premade Account Payable Voucher form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
+('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'formsly premade Receiving Inspecting Report form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
@@ -34,7 +36,9 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', 'Main', 1, false, 'bba77187-c35d-4a6d-bf03-431e2ff2212e'),
-('991d9830-ae1b-4c14-bdba-6167b64f50f7', 'Main', 1, false, 'a732196f-9779-45e2-85fa-7320397e5b0a');
+('991d9830-ae1b-4c14-bdba-6167b64f50f7', 'Main', 1, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
+('5a936443-46ef-471f-8c87-6bc82b1568c3', 'Main', 1, false, '6f7b3e6c-002e-4a74-8a67-ea21a11dc178'),
+('00341355-1ece-47e6-88a2-060fbab8b11a', 'Main', 1, false, '5782d70a-5f6b-486c-a77f-401066afd005');
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
 -- All Fields Form
@@ -91,14 +95,28 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('5dd83e41-c884-4466-b856-0a1ed5182774', 'Expected Delivery Date', 'DATE', 9, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
 
 -- Invoice Form
-('df0cb109-e34d-498f-ac51-af2139628ac0', 'OTP Order ID', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, true),
+('df0cb109-e34d-498f-ac51-af2139628ac0', 'Order to Purchase ID', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, true),
 ('671c4cb1-75cc-4be4-b87d-ec6e3f8ec90a', 'Purchase Order ID', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, true),
 ('dc494a3b-824c-4e5d-8fe1-6a7fab240880', 'Accounting Processor', 'DROPDOWN', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Invoice Received Date', 'DATE', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('4c201ab9-92d9-47dd-a661-a7bb2c4e3923', 'Invoice Attachment', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Invoice Pay by Date', 'DATE', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('e18d1ebd-860a-4e46-8c88-15c1e4b9222f', 'Invoice Payable Amount', 'NUMBER', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
-('3368de3f-ff94-4549-bd99-69bb5457ff13', 'CV Attachment', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false);
+('3368de3f-ff94-4549-bd99-69bb5457ff13', 'CV Attachment', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+
+-- Account Payable Voucher Form
+('72e63b67-7c13-4961-a277-2c8bcd222f6f', 'Order to Purchase ID', 'TEXT', 1, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
+('cec2b402-15d3-48ab-aee3-f28e5ae6b695', 'Purchase Order ID', 'TEXT', 1, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
+('c4ddbd67-73a7-4a86-b374-249dabae692e', 'Invoice ID', 'TEXT', 1, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
+
+-- Receiving Inspecting Report Form
+('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Order to Purchase ID', 'TEXT', 1, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true),
+('ae1a746d-47c7-4184-a9a2-1c23d0440353', 'Purchase Order ID', 'TEXT', 1, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true),
+('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Invoice ID', 'TEXT', 1, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true),
+('8bd25524-eea4-4771-bb12-4af7205ea4b9', 'Account Payable Voucher ID', 'TEXT', 1, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true),
+('e9f687cb-fcbe-4a87-aa88-2d43df8659bd', 'Warehouse Receiver', 'DROPDOWN', 1, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
+('b74ff20b-33d5-444f-b39d-07745ba0d332', 'Receiving Status', 'DROPDOWN', 1, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false);
+
 
 INSERT INTO option_table (option_id, option_value, option_order, option_field_id) VALUES
 ('7961d4d4-6c04-46e7-b995-472856fff590', 'Dropdown 1', 1, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794'),
@@ -121,7 +139,12 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 
 -- Order to Purchase Form
 ('f97eb24f-53b2-452b-966e-9a2f1dfd812d', 'Cash', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
-('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01');
+('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
+
+-- Receiving Inspecting Report Form
+('448d9bb2-f09c-4a9f-9b03-632bc849c3aa', 'Not Received', 1, 'b74ff20b-33d5-444f-b39d-07745ba0d332'),
+('5376f40c-2dae-400a-9cb5-ed3d0fa003b7', 'Partially Received', 2, 'b74ff20b-33d5-444f-b39d-07745ba0d332'),
+('78717371-9d2d-4e9c-ad86-cd39e51929ad', 'Fully Received', 3, 'b74ff20b-33d5-444f-b39d-07745ba0d332');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
@@ -282,3 +305,10 @@ INSERT INTO accounting_processor_table (accounting_processor_id, accounting_proc
 ('7cbd3185-4440-4313-a19b-9013d7a77964', 'Leonardo', 'Lambert', '1233', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('1e26f8eb-d604-42ff-94bb-0b71f44abc6c', 'Mckinley', 'Hatfield', '5431', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('45f41256-4e34-41fd-a8fe-48a6fda93d5f', 'Rudy', 'Tate', '6754', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+INSERT INTO warehouse_receiver_table (warehouse_receiver_id, warehouse_receiver_first_name, warehouse_receiver_last_name, warehouse_receiver_employee_number, warehouse_receiver_team_id) VALUES 
+('a3a46ce3-478c-4d8e-9b54-8410bb1f9d30', 'Darwin', 'Henderson', '5423', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('f41276a8-5329-4674-b7b6-7447521b7cfa', 'Jacinto', 'Little', '5678', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('6025ff26-3646-4c41-9341-f6fd3bce04b2', 'Kellie', 'Chan', '0988', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('2278e890-3a02-404b-b690-645242080e13', 'Paulette', 'Ward', '1232', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('82559661-66d8-4822-b9de-d7907d8e1a93', 'Judy', 'Robertson', '6787', 'a5a28977-6956-45c1-a624-b9e90911502e');

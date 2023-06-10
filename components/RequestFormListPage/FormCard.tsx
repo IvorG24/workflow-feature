@@ -50,11 +50,12 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
       withBorder
       miw={{ base: "100%", xs: 245 }}
       mih={170}
+      maw={245}
       shadow="sm"
       p="xl"
       py="md"
     >
-      <Flex direction="column" justify="space-between" mih={138}>
+      <Flex direction="column" justify="space-between" mih={150}>
         <Flex direction="column">
           <Anchor
             onClick={() => router.push(`/team-requests/forms/${form.form_id}`)}
@@ -120,7 +121,7 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
                 color={getAvatarColor(
                   Number(
                     `${form.form_team_member.team_member_user.user_id.charCodeAt(
-                     0
+                      0
                     )}`
                   )
                 )}

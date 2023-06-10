@@ -2,12 +2,15 @@ import {
   getAllItems,
   getAllNames,
   getAllProcessors,
+  getAllReceivers,
   getForm,
   getUserActiveTeamId,
 } from "@/backend/api/get";
+import CreateAccountPayableVoucherRequestPage from "@/components/CreateAccountPayableVoucherRequestPage/CreateAccountPayableVoucherRequestPage";
 import CreateInvoiceRequestPage from "@/components/CreateInvoiceRequestPage/CreateInvoiceRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
 import CreatePurchaseOrderRequestPage from "@/components/CreatePurchaseOrderRequestPage/CreatePurchaseOrderRequestPage";
+import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { TEMP_USER_ID } from "@/utils/dummyData";
@@ -225,6 +228,50 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           },
         };
       }
+      // Receiving Inspecting Report
+      else if (formattedForm.form_name === "Receiving Inspecting Report") {
+        // warehouse receiver
+        const warehouseReceivers = await getAllReceivers(supabaseClient, {
+          receiver: "warehouse",
+          teamId: teamId,
+        });
+        const warehouseReceiverOptions = warehouseReceivers.map(
+          (warehouseReceiver, index) => {
+            return {
+              option_description: null,
+              option_field_id:
+                formattedForm.form_section[0].section_field[0].field_id,
+              option_id: warehouseReceiver.warehouse_receiver_id,
+              option_order: index,
+              option_value: `${warehouseReceiver.warehouse_receiver_first_name} ${warehouseReceiver.warehouse_receiver_last_name} (${warehouseReceiver.warehouse_receiver_employee_number})`,
+            };
+          }
+        );
+
+        return {
+          props: {
+            form: {
+              ...formattedForm,
+              form_section: [
+                {
+                  ...formattedForm.form_section[0],
+                  section_field: [
+                    ...formattedForm.form_section[0].section_field.slice(0, 4),
+                    {
+                      ...formattedForm.form_section[0].section_field[4],
+                      field_option: warehouseReceiverOptions,
+                    },
+                    ...formattedForm.form_section[0].section_field.slice(
+                      5,
+                      formattedForm.form_section[0].section_field.length
+                    ),
+                  ],
+                },
+              ],
+            },
+          },
+        };
+      }
     }
 
     return {
@@ -277,6 +324,10 @@ const Page = ({ form, itemOptions }: Props) => {
         return <CreatePurchaseOrderRequestPage form={form} />;
       case "Invoice":
         return <CreateInvoiceRequestPage form={form} />;
+      case "Account Payable Voucher":
+        return <CreateAccountPayableVoucherRequestPage form={form} />;
+      case "Receiving Inspecting Report":
+        return <CreateReceivingInspectingReportPage form={form} />;
     }
   };
   return (

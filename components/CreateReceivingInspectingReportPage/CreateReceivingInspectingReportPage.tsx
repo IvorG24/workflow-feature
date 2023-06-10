@@ -32,7 +32,7 @@ type Props = {
   form: FormType;
 };
 
-const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
+const CreateReceivingInspectingReportPage = ({ form }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createBrowserSupabaseClient<Database>();
@@ -54,30 +54,18 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
   }));
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, setValue, watch, control } = requestFormMethods;
+  const { handleSubmit, setValue, control } = requestFormMethods;
   const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
     name: "sections",
   });
- 
-  const amountWatch =
-    watch(`sections.${0}.section_field.${3}.field_response`) || 0;
-  const downPaymentWatch =
-    watch(`sections.${0}.section_field.${6}.field_response`) || 0;
-
-  useEffect(() => {
-    const computationValue =
-      (amountWatch as number) * ((downPaymentWatch as number) / 100);
-    setValue(
-      `sections.${0}.section_field.${7}.field_response`,
-      computationValue
-    );
-  }, [amountWatch, downPaymentWatch, setValue]);
-
 
   useEffect(() => {
     replaceSection(form.form_section);
     setValue(`sections.${0}.section_field.${0}.field_response`, "test_id");
+    setValue(`sections.${0}.section_field.${1}.field_response`, "test_id");
+    setValue(`sections.${0}.section_field.${2}.field_response`, "test_id");
+    setValue(`sections.${0}.section_field.${3}.field_response`, "test_id");
   }, [form, replaceSection]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
@@ -126,8 +114,8 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-        
-                    formslyFormName="Purchase Order"
+       
+                    formslyFormName="Account Payable Voucher"
                   />
                 </Box>
               );
@@ -141,4 +129,4 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
   );
 };
 
-export default CreatePurchaseOrderRequestPage;
+export default CreateReceivingInspectingReportPage;
