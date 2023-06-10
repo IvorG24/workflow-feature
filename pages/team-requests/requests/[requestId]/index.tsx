@@ -50,6 +50,10 @@ const Page = ({ request }: Props) => {
         return <RequestPage request={request} isFormslyForm />;
       case "Invoice":
         return <RequestPage request={request} isFormslyForm />;
+      case "Account Payable Voucher":
+        return <RequestPage request={request} isFormslyForm />;
+      case "Receiving Inspecting Report":
+        return <RequestPage request={request} isFormslyForm />;
     }
   };
   return (

@@ -157,6 +157,13 @@ export type AccountingProcessorTableInsert =
 export type AccountingProcessorTableUpdate =
   Database["public"]["Tables"]["accounting_processor_table"]["Update"];
 
+export type WarehouseReceiverTableRow =
+  Database["public"]["Tables"]["warehouse_receiver_table"]["Row"];
+export type WarehouseReceiverTableInsert =
+  Database["public"]["Tables"]["warehouse_receiver_table"]["Insert"];
+export type WarehouseReceiverTableUpdate =
+  Database["public"]["Tables"]["warehouse_receiver_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums

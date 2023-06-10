@@ -24,6 +24,7 @@ import {
   UserTableInsert,
   VendorTableInsert,
   WarehouseProcessorTableInsert,
+  WarehouseReceiverTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -631,6 +632,23 @@ export const createAccountingProcessor = async (
   const { data, error } = await supabaseClient
     .from("accounting_processor_table")
     .insert(accountingProcessorData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create Warehouse Receiver
+export const createWarehouseReceiver = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    warehouseReceiverData: WarehouseReceiverTableInsert;
+  }
+) => {
+  const { warehouseReceiverData } = params;
+  const { data, error } = await supabaseClient
+    .from("warehouse_receiver_table")
+    .insert(warehouseReceiverData)
     .select()
     .single();
   if (error) throw error;

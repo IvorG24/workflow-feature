@@ -3,6 +3,7 @@ import {
   getItemList,
   getNameList,
   getProcessorList,
+  getReceiverList,
   getTeamAdminList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
@@ -10,6 +11,7 @@ import InvoiceFormPage from "@/components/InvoiceFormPage/InvoiceFormPage";
 import Meta from "@/components/Meta/Meta";
 import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
 import PurchaseOrderFormPage from "@/components/PurchaseOrderFormPage/PurchaseOrderFormPage";
+import ReceivingInspectingReportFormPage from "@/components/ReceivingInspectingReportFormPage/ReceivingInspectingReportFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
@@ -22,6 +24,7 @@ import {
   TeamMemberWithUserType,
   VendorTableRow,
   WarehouseProcessorTableRow,
+  WarehouseReceiverTableRow,
 } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
@@ -134,6 +137,22 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             accountingProcessorListCount,
           },
         };
+      } else if (formattedForm.form_name === "Receiving Inspecting Report") {
+        const { data: warehouseReceivers, count: warehouseReceiverListCount } =
+          await getReceiverList(supabaseClient, {
+            receiver: "warehouse",
+            teamId: teamId,
+            page: 1,
+            limit: ROW_PER_PAGE,
+          });
+        return {
+          props: {
+            form,
+            teamMemberList,
+            warehouseReceivers,
+            warehouseReceiverListCount,
+          },
+        };
       }
     }
     return {
@@ -165,6 +184,8 @@ type Props = {
   purchasingProcessorListCount?: number;
   accountingProcessors?: AccountingProcessorTableRow[];
   accountingProcessorListCount?: number;
+  warehouseReceivers?: WarehouseReceiverTableRow[];
+  warehouseReceiverListCount?: number;
 };
 
 const Page = ({
@@ -183,6 +204,8 @@ const Page = ({
   purchasingProcessorListCount = 0,
   accountingProcessors = [],
   accountingProcessorListCount = 0,
+  warehouseReceivers = [],
+  warehouseReceiverListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -217,6 +240,17 @@ const Page = ({
             form={form}
             accountingProcessors={accountingProcessors}
             accountingProcessorListCount={accountingProcessorListCount}
+          />
+        );
+      case "Account Payable Voucher":
+        return <RequestFormPage form={form} teamMemberList={teamMemberList} />;
+      case "Receiving Inspecting Report":
+        return (
+          <ReceivingInspectingReportFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            warehouseReceivers={warehouseReceivers}
+            warehouseReceiverListCount={warehouseReceiverListCount}
           />
         );
     }

@@ -14,7 +14,7 @@ import RequestFormFields from "./RequestFormFields";
 type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
-  onRemoveSection: (sectionDuplicatableId: string) => void;
+  onRemoveSection?: (sectionDuplicatableId: string) => void;
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
@@ -39,7 +39,7 @@ const RequestFormSection = ({
         {sectionDuplicatableId && (
           <Tooltip label="Remove Section">
             <ActionIcon
-              onClick={() => onRemoveSection(sectionDuplicatableId)}
+              onClick={() => onRemoveSection && onRemoveSection(sectionDuplicatableId)}
               variant="light"
               color="red"
             >

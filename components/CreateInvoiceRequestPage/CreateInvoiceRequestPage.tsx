@@ -112,10 +112,8 @@ const CreateInvoiceRequestPage = ({ form }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    onRemoveSection={(sectionDuplicatableId: string) =>
-                      console.log(sectionDuplicatableId)
-                    }
-                    formslyFormName="Purchase Order"
+        
+                    formslyFormName="Invoice"
                   />
                 </Box>
               );

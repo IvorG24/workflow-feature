@@ -922,7 +922,7 @@ export const getProcessorList = async (
   };
 };
 
-// Get  processors
+// Get processors
 export const getAllProcessors = async (
   supabaseClient: SupabaseClient<Database>,
   params: { processor: string; teamId: string }
@@ -962,6 +962,94 @@ export const checkProcessor = async (
     .eq(`${processor}_processor_employee_number`, employeeNumber)
     .eq(`${processor}_processor_is_disabled`, false)
     .eq(`${processor}_processor_team_id`, teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get receiver list
+export const getReceiverList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    receiver: string;
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { receiver, teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from(`${receiver}_receiver_table`)
+    .select(`*`, {
+      count: `exact`,
+    })
+    .eq(`${receiver}_receiver_team_id`, teamId)
+    .eq(`${receiver}_receiver_is_disabled`, false);
+
+  if (search) {
+    query = query.or(
+      `${receiver}_receiver_first_name.ilike.%${search}%, ${receiver}_receiver_last_name.ilike.%${search}%, ${receiver}_receiver_employee_number.ilike.%${search}%`
+    );
+  }
+
+  query.order(`${receiver}_receiver_date_created`, { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get receivers
+export const getAllReceivers = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { receiver: string; teamId: string }
+) => {
+  const { receiver, teamId } = params;
+  const { data, error } = await supabaseClient
+    .from(`${receiver}_receiver_table`)
+    .select(`*`)
+    .eq(`${receiver}_receiver_team_id`, teamId)
+    .eq(`${receiver}_receiver_is_disabled`, false)
+    .eq(`${receiver}_receiver_is_available`, true)
+    .order(`${receiver}_receiver_first_name`, { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+};
+
+// check if receiver already exists
+export const checkReceiver = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    receiver: string;
+    firstName: string;
+    lastName: string;
+    employeeNumber: string;
+    teamId: string;
+  }
+) => {
+  const { receiver, firstName, lastName, employeeNumber, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from(`${receiver}_receiver_table`)
+    .select(`*`, { count: `exact`, head: true })
+    .eq(`${receiver}_receiver_first_name`, firstName)
+    .eq(`${receiver}_receiver_last_name`, lastName)
+    .eq(`${receiver}_receiver_employee_number`, employeeNumber)
+    .eq(`${receiver}_receiver_is_disabled`, false)
+    .eq(`${receiver}_receiver_team_id`, teamId);
   if (error) throw error;
 
   return Boolean(count);
