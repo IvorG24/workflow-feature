@@ -277,6 +277,22 @@ CREATE TABLE vendor_table(
 
 -- End: Purchase Order Form
 
+-- Start: Invoice Form
+
+CREATE TABLE accounting_processor_table(
+  accounting_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  accounting_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  accounting_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  accounting_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  accounting_processor_first_name VARCHAR(4000) NOT NULL,
+  accounting_processor_last_name VARCHAR(4000) NOT NULL,
+  accounting_processor_employee_number VARCHAR(4000) NOT NULL,
+
+  accounting_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Invoice Form
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS

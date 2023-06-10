@@ -21,7 +21,8 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
-('bba77187-c35d-4a6d-bf03-431e2ff2212e', 'Purchase Order', 'formsly premade Purchase Order form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true);
+('bba77187-c35d-4a6d-bf03-431e2ff2212e', 'Purchase Order', 'formsly premade Purchase Order form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
+('a732196f-9779-45e2-85fa-7320397e5b0a', 'Invoice', 'formsly premade Invoice form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
@@ -32,7 +33,8 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, true, '337658f1-0777-45f2-853f-b6f20551712e'),
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
-('e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', 'Main', 1, false, 'bba77187-c35d-4a6d-bf03-431e2ff2212e');
+('e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', 'Main', 1, false, 'bba77187-c35d-4a6d-bf03-431e2ff2212e'),
+('991d9830-ae1b-4c14-bdba-6167b64f50f7', 'Main', 1, false, 'a732196f-9779-45e2-85fa-7320397e5b0a');
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
 -- All Fields Form
@@ -86,7 +88,17 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('ce33edb3-a69b-4cde-b735-c6e2f7228e10', 'Payment Terms', 'TEXT', 6, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
 ('ef9e3fbb-3f37-4513-b455-c6b8098cf428', 'Down Payment Percentage', 'NUMBER', 7, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
 ('4ede3ad7-6763-4f42-9681-ef7f9d6c2872', 'Down Payment Computation', 'NUMBER', 8, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, true),
-('5dd83e41-c884-4466-b856-0a1ed5182774', 'Expected Delivery Date', 'DATE', 9, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false);
+('5dd83e41-c884-4466-b856-0a1ed5182774', 'Expected Delivery Date', 'DATE', 9, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
+
+-- Invoice Form
+('df0cb109-e34d-498f-ac51-af2139628ac0', 'OTP Order ID', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, true),
+('671c4cb1-75cc-4be4-b87d-ec6e3f8ec90a', 'Purchase Order ID', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, true),
+('dc494a3b-824c-4e5d-8fe1-6a7fab240880', 'Accounting Processor', 'DROPDOWN', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Invoice Received Date', 'DATE', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('4c201ab9-92d9-47dd-a661-a7bb2c4e3923', 'Invoice Attachment', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Invoice Pay by Date', 'DATE', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('e18d1ebd-860a-4e46-8c88-15c1e4b9222f', 'Invoice Payable Amount', 'NUMBER', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('3368de3f-ff94-4549-bd99-69bb5457ff13', 'CV Attachment', 'TEXT', 1, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false);
 
 INSERT INTO option_table (option_id, option_value, option_order, option_field_id) VALUES
 ('7961d4d4-6c04-46e7-b995-472856fff590', 'Dropdown 1', 1, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794'),
@@ -263,3 +275,10 @@ INSERT INTO purchasing_processor_table (purchasing_processor_id, purchasing_proc
 ('04c12e38-d79d-4a82-8e23-ef60356b90d9', 'Lorie', 'Blackburn', '5471', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('f9cd72ab-d3a5-4c13-9ca6-d6db021df329', 'Rosanne', 'Vincent', '7021', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('2dde9900-5f34-4821-a3fd-6a9740aff772', 'Lowell', 'Bautista', '8977', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+INSERT INTO accounting_processor_table (accounting_processor_id, accounting_processor_first_name, accounting_processor_last_name, accounting_processor_employee_number, accounting_processor_team_id) VALUES 
+('ef8bb978-96a6-40c2-bcdc-226fb30c691f', 'Ralph', 'Freeman', '3698', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('7f5d7d26-414a-45cf-ac8a-5a66584ae52e', 'Erik', 'Guerra', '6259', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('7cbd3185-4440-4313-a19b-9013d7a77964', 'Leonardo', 'Lambert', '1233', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('1e26f8eb-d604-42ff-94bb-0b71f44abc6c', 'Mckinley', 'Hatfield', '5431', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('45f41256-4e34-41fd-a8fe-48a6fda93d5f', 'Rudy', 'Tate', '6754', 'a5a28977-6956-45c1-a624-b9e90911502e');

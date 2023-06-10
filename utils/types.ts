@@ -149,6 +149,14 @@ export type PurchasingProcessorTableInsert =
   Database["public"]["Tables"]["purchasing_processor_table"]["Insert"];
 export type PurchasingProcessorTableUpdate =
   Database["public"]["Tables"]["purchasing_processor_table"]["Update"];
+
+export type AccountingProcessorTableRow =
+  Database["public"]["Tables"]["accounting_processor_table"]["Row"];
+export type AccountingProcessorTableInsert =
+  Database["public"]["Tables"]["accounting_processor_table"]["Insert"];
+export type AccountingProcessorTableUpdate =
+  Database["public"]["Tables"]["accounting_processor_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
