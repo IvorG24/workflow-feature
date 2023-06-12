@@ -59,21 +59,20 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
     control,
     name: "sections",
   });
- 
+
   const amountWatch =
-    watch(`sections.${0}.section_field.${3}.field_response`) || 0;
+    watch(`sections.${1}.section_field.${2}.field_response`) || 0;
   const downPaymentWatch =
-    watch(`sections.${0}.section_field.${6}.field_response`) || 0;
+    watch(`sections.${1}.section_field.${5}.field_response`) || 0;
 
   useEffect(() => {
     const computationValue =
       (amountWatch as number) * ((downPaymentWatch as number) / 100);
     setValue(
-      `sections.${0}.section_field.${7}.field_response`,
+      `sections.${1}.section_field.${6}.field_response`,
       computationValue
     );
   }, [amountWatch, downPaymentWatch, setValue]);
-
 
   useEffect(() => {
     replaceSection(form.form_section);
@@ -126,7 +125,6 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-        
                     formslyFormName="Purchase Order"
                   />
                 </Box>
