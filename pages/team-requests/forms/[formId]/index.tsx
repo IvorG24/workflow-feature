@@ -7,6 +7,8 @@ import {
   getTeamAdminList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
+import AuditFormPage from "@/components/AuditFormPage/AuditFormPage";
+import ChequeReferenceFormPage from "@/components/ChequeReferenceFormPage/ChequeReferenceFormPage";
 import InvoiceFormPage from "@/components/InvoiceFormPage/InvoiceFormPage";
 import Meta from "@/components/Meta/Meta";
 import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
@@ -17,11 +19,13 @@ import { ROW_PER_PAGE } from "@/utils/constant";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import {
   AccountingProcessorTableRow,
+  AuditProcessorTableRow,
   FormType,
   ItemWithDescriptionType,
   ProjectTableRow,
   PurchasingProcessorTableRow,
   TeamMemberWithUserType,
+  TreasuryProcessorTableRow,
   VendorTableRow,
   WarehouseProcessorTableRow,
   WarehouseReceiverTableRow,
@@ -153,6 +157,38 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             warehouseReceiverListCount,
           },
         };
+      } else if (formattedForm.form_name === "Cheque Reference") {
+        const { data: treasuryProcessors, count: treasuryProcessorListCount } =
+          await getProcessorList(supabaseClient, {
+            processor: "treasury",
+            teamId: teamId,
+            page: 1,
+            limit: ROW_PER_PAGE,
+          });
+        return {
+          props: {
+            form,
+            teamMemberList,
+            treasuryProcessors,
+            treasuryProcessorListCount,
+          },
+        };
+      } else if (formattedForm.form_name === "Audit") {
+        const { data: auditProcessors, count: auditProcessorListCount } =
+          await getProcessorList(supabaseClient, {
+            processor: "audit",
+            teamId: teamId,
+            page: 1,
+            limit: ROW_PER_PAGE,
+          });
+        return {
+          props: {
+            form,
+            teamMemberList,
+            auditProcessors,
+            auditProcessorListCount,
+          },
+        };
       }
     }
     return {
@@ -186,6 +222,10 @@ type Props = {
   accountingProcessorListCount?: number;
   warehouseReceivers?: WarehouseReceiverTableRow[];
   warehouseReceiverListCount?: number;
+  treasuryProcessors?: TreasuryProcessorTableRow[];
+  treasuryProcessorListCount?: number;
+  auditProcessors?: AuditProcessorTableRow[];
+  auditProcessorListCount?: number;
 };
 
 const Page = ({
@@ -206,6 +246,10 @@ const Page = ({
   accountingProcessorListCount = 0,
   warehouseReceivers = [],
   warehouseReceiverListCount = 0,
+  treasuryProcessors = [],
+  treasuryProcessorListCount = 0,
+  auditProcessors = [],
+  auditProcessorListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -251,6 +295,24 @@ const Page = ({
             teamMemberList={teamMemberList}
             warehouseReceivers={warehouseReceivers}
             warehouseReceiverListCount={warehouseReceiverListCount}
+          />
+        );
+      case "Cheque Reference":
+        return (
+          <ChequeReferenceFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            treasuryProcessors={treasuryProcessors}
+            treasuryProcessorListCount={treasuryProcessorListCount}
+          />
+        );
+      case "Audit":
+        return (
+          <AuditFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            auditProcessors={auditProcessors}
+            auditProcessorListCount={auditProcessorListCount}
           />
         );
     }

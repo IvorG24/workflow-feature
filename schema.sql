@@ -293,7 +293,7 @@ CREATE TABLE accounting_processor_table(
 
 -- End: Invoice Form
 
--- Start: Invoice Form
+-- Start: Receiving Inspecting Report Form
 
 CREATE TABLE warehouse_receiver_table(
   warehouse_receiver_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -307,7 +307,39 @@ CREATE TABLE warehouse_receiver_table(
   warehouse_receiver_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
--- End: Invoice Form
+-- End: Receiving Inspecting Report Form
+
+-- Start: Cheque Reference Form
+
+CREATE TABLE treasury_processor_table(
+  treasury_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  treasury_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  treasury_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  treasury_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  treasury_processor_first_name VARCHAR(4000) NOT NULL,
+  treasury_processor_last_name VARCHAR(4000) NOT NULL,
+  treasury_processor_employee_number VARCHAR(4000) NOT NULL,
+
+  treasury_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Cheque Reference Form
+
+-- Start: Audit Form
+
+CREATE TABLE audit_processor_table(
+  audit_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  audit_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  audit_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  audit_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  audit_processor_first_name VARCHAR(4000) NOT NULL,
+  audit_processor_last_name VARCHAR(4000) NOT NULL,
+  audit_processor_employee_number VARCHAR(4000) NOT NULL,
+
+  audit_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Audit Form
 
 ---------- End: TABLES
 

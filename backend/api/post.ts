@@ -5,6 +5,7 @@ import {
   AccountingProcessorTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
+  AuditProcessorTableInsert,
   CommentTableInsert,
   FieldTableInsert,
   FormType,
@@ -21,6 +22,7 @@ import {
   SectionTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
+  TreasuryProcessorTableInsert,
   UserTableInsert,
   VendorTableInsert,
   WarehouseProcessorTableInsert,
@@ -649,6 +651,40 @@ export const createWarehouseReceiver = async (
   const { data, error } = await supabaseClient
     .from("warehouse_receiver_table")
     .insert(warehouseReceiverData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create Treasury Processor
+export const createTreasuryProcessor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    treasuryProcessorData: TreasuryProcessorTableInsert;
+  }
+) => {
+  const { treasuryProcessorData } = params;
+  const { data, error } = await supabaseClient
+    .from("treasury_processor_table")
+    .insert(treasuryProcessorData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create Audit Processor
+export const createAuditProcessor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    auditProcessorData: AuditProcessorTableInsert;
+  }
+) => {
+  const { auditProcessorData } = params;
+  const { data, error } = await supabaseClient
+    .from("audit_processor_table")
+    .insert(auditProcessorData)
     .select()
     .single();
   if (error) throw error;

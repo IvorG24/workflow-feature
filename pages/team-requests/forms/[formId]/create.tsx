@@ -179,7 +179,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           },
         };
       }
-      //  Invoice
+      // Invoice
       else if (formattedForm.form_name === "Invoice") {
         // accounting processors
         const accountingProcessors = await getAllProcessors(supabaseClient, {
@@ -207,12 +207,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
                 {
                   ...formattedForm.form_section[0],
                   section_field: [
-                    {
-                      ...formattedForm.form_section[0].section_field[0],
-                    },
-                    {
-                      ...formattedForm.form_section[0].section_field[1],
-                    },
+                    ...formattedForm.form_section[0].section_field.slice(0, 2),
+
                     {
                       ...formattedForm.form_section[0].section_field[2],
                       field_option: accountingProcessorOptions,
@@ -263,6 +259,92 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
                     },
                     ...formattedForm.form_section[0].section_field.slice(
                       5,
+                      formattedForm.form_section[0].section_field.length
+                    ),
+                  ],
+                },
+              ],
+            },
+          },
+        };
+      }
+      // Cheque Reference
+      else if (formattedForm.form_name === "Cheque Reference") {
+        // warehouse receiver
+        const treasuryProcessors = await getAllProcessors(supabaseClient, {
+          processor: "treasury",
+          teamId: teamId,
+        });
+        const treasuryProcessorOptions = treasuryProcessors.map(
+          (treasuryProcessor, index) => {
+            return {
+              option_description: null,
+              option_field_id:
+                formattedForm.form_section[0].section_field[0].field_id,
+              option_id: treasuryProcessor.treasury_processor_id,
+              option_order: index,
+              option_value: `${treasuryProcessor.treasury_processor_first_name} ${treasuryProcessor.treasury_processor_last_name} (${treasuryProcessor.treasury_processor_employee_number})`,
+            };
+          }
+        );
+
+        return {
+          props: {
+            form: {
+              ...formattedForm,
+              form_section: [
+                {
+                  ...formattedForm.form_section[0],
+                  section_field: [
+                    {
+                      ...formattedForm.form_section[0].section_field[0],
+                      field_option: treasuryProcessorOptions,
+                    },
+                    ...formattedForm.form_section[0].section_field.slice(
+                      1,
+                      formattedForm.form_section[0].section_field.length
+                    ),
+                  ],
+                },
+              ],
+            },
+          },
+        };
+      }
+      // Audit
+      else if (formattedForm.form_name === "Audit") {
+        // accounting processors
+        const auditProcessors = await getAllProcessors(supabaseClient, {
+          processor: "audit",
+          teamId: teamId,
+        });
+        const accountingProcessorOptions = auditProcessors.map(
+          (auditProcessor, index) => {
+            return {
+              option_description: null,
+              option_field_id:
+                formattedForm.form_section[0].section_field[0].field_id,
+              option_id: auditProcessor.audit_processor_id,
+              option_order: index,
+              option_value: `${auditProcessor.audit_processor_first_name} ${auditProcessor.audit_processor_last_name} (${auditProcessor.audit_processor_employee_number})`,
+            };
+          }
+        );
+
+        return {
+          props: {
+            form: {
+              ...formattedForm,
+              form_section: [
+                {
+                  ...formattedForm.form_section[0],
+                  section_field: [
+                    {
+                      ...formattedForm.form_section[0].section_field[0],
+                      field_option: accountingProcessorOptions,
+                    },
+                    ...formattedForm.form_section[0].section_field.slice(
+                      1,
                       formattedForm.form_section[0].section_field.length
                     ),
                   ],
@@ -328,6 +410,12 @@ const Page = ({ form, itemOptions }: Props) => {
         return <CreateAccountPayableVoucherRequestPage form={form} />;
       case "Receiving Inspecting Report":
         return <CreateReceivingInspectingReportPage form={form} />;
+      case "Cheque Reference":
+        return (
+          <CreateRequestPage form={form} formslyFormName="Cheque Reference" />
+        );
+      case "Audit":
+        return <CreateRequestPage form={form} formslyFormName="Audit" />;
     }
   };
   return (

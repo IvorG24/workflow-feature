@@ -23,13 +23,13 @@ import RequestSingerSection from "./RequestSignerSection";
 
 type Props = {
   request: RequestWithResponseType;
-  isFormslyForm?: boolean
+  isFormslyForm?: boolean;
 };
 
 const RequestPage = ({ request, isFormslyForm = false }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-
+ 
   const user = useUserProfile();
   const teamMemberId = useUserTeamMemberId();
   const { setIsLoading } = useLoadingActions();
@@ -196,7 +196,11 @@ const RequestPage = ({ request, isFormslyForm = false }: Props) => {
         />
 
         {sectionWithDuplicateList.map((section, idx) => (
-          <RequestSection key={section.section_id + idx} section={section} isFormslyForm={isFormslyForm}/>
+          <RequestSection
+            key={section.section_id + idx}
+            section={section}
+            isFormslyForm={isFormslyForm}
+          />
         ))}
 
         {(isUserOwner &&
