@@ -113,7 +113,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           },
         };
       }
-      //  Purchase Order
+      // Purchase Order
       else if (formattedForm.form_name === "Purchase Order") {
         // vendors
         const vendors = await getAllNames(supabaseClient, {
@@ -156,21 +156,21 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
               form_section: [
                 {
                   ...formattedForm.form_section[0],
+                },
+                {
+                  ...formattedForm.form_section[1],
                   section_field: [
                     {
-                      ...formattedForm.form_section[0].section_field[0],
-                    },
-                    {
-                      ...formattedForm.form_section[0].section_field[1],
+                      ...formattedForm.form_section[1].section_field[0],
                       field_option: purchasingProcessorOptions,
                     },
                     {
-                      ...formattedForm.form_section[0].section_field[2],
+                      ...formattedForm.form_section[1].section_field[1],
                       field_option: vendorOptions,
                     },
-                    ...formattedForm.form_section[0].section_field.slice(
-                      3,
-                      formattedForm.form_section[0].section_field.length
+                    ...formattedForm.form_section[1].section_field.slice(
+                      2,
+                      formattedForm.form_section[1].section_field.length
                     ),
                   ],
                 },
@@ -206,16 +206,17 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
               form_section: [
                 {
                   ...formattedForm.form_section[0],
+                },
+                {
+                  ...formattedForm.form_section[1],
                   section_field: [
-                    ...formattedForm.form_section[0].section_field.slice(0, 2),
-
                     {
-                      ...formattedForm.form_section[0].section_field[2],
+                      ...formattedForm.form_section[1].section_field[0],
                       field_option: accountingProcessorOptions,
                     },
-                    ...formattedForm.form_section[0].section_field.slice(
-                      3,
-                      formattedForm.form_section[0].section_field.length
+                    ...formattedForm.form_section[1].section_field.slice(
+                      1,
+                      formattedForm.form_section[1].section_field.length
                     ),
                   ],
                 },
@@ -251,15 +252,17 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
               form_section: [
                 {
                   ...formattedForm.form_section[0],
+                },
+                {
+                  ...formattedForm.form_section[1],
                   section_field: [
-                    ...formattedForm.form_section[0].section_field.slice(0, 4),
                     {
-                      ...formattedForm.form_section[0].section_field[4],
+                      ...formattedForm.form_section[1].section_field[0],
                       field_option: warehouseReceiverOptions,
                     },
-                    ...formattedForm.form_section[0].section_field.slice(
-                      5,
-                      formattedForm.form_section[0].section_field.length
+                    ...formattedForm.form_section[1].section_field.slice(
+                      1,
+                      formattedForm.form_section[1].section_field.length
                     ),
                   ],
                 },
@@ -305,6 +308,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
                       formattedForm.form_section[0].section_field.length
                     ),
                   ],
+                },
+                {
+                  ...formattedForm.form_section[1],
                 },
               ],
             },
