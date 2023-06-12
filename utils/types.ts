@@ -164,6 +164,20 @@ export type WarehouseReceiverTableInsert =
 export type WarehouseReceiverTableUpdate =
   Database["public"]["Tables"]["warehouse_receiver_table"]["Update"];
 
+export type TreasuryProcessorTableRow =
+  Database["public"]["Tables"]["treasury_processor_table"]["Row"];
+export type TreasuryProcessorTableInsert =
+  Database["public"]["Tables"]["treasury_processor_table"]["Insert"];
+export type TreasuryProcessorTableUpdate =
+  Database["public"]["Tables"]["treasury_processor_table"]["Update"];
+
+export type AuditProcessorTableRow =
+  Database["public"]["Tables"]["audit_processor_table"]["Row"];
+export type AuditProcessorTableInsert =
+  Database["public"]["Tables"]["audit_processor_table"]["Insert"];
+export type AuditProcessorTableUpdate =
+  Database["public"]["Tables"]["audit_processor_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums

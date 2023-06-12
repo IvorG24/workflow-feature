@@ -39,7 +39,9 @@ const RequestFormSection = ({
         {sectionDuplicatableId && (
           <Tooltip label="Remove Section">
             <ActionIcon
-              onClick={() => onRemoveSection && onRemoveSection(sectionDuplicatableId)}
+              onClick={() =>
+                onRemoveSection && onRemoveSection(sectionDuplicatableId)
+              }
               variant="light"
               color="red"
             >

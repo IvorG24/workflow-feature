@@ -6,11 +6,13 @@ import RequestResponse from "./RequestResponse";
 type RequestSectionProps = {
   section: DuplicateSectionType;
   isFormslyForm?: boolean;
+  isOnlyWithResponse?: boolean;
 };
 
 const RequestSection = ({
   section,
   isFormslyForm = false,
+  isOnlyWithResponse = false,
 }: RequestSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -20,7 +22,7 @@ const RequestSection = ({
       <Space h="xl" />
       <Stack spacing="sm">
         {section.section_field.map((field) => {
-          if (isFormslyForm) {
+          if (isFormslyForm && isOnlyWithResponse) {
             if (field.field_response) {
               return (
                 <Box key={field.field_id}>

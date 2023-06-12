@@ -182,6 +182,7 @@ const OrderToPurchaseRequestPage = ({ request }: Props) => {
             key={section.section_id + idx}
             section={section}
             isFormslyForm={true}
+            isOnlyWithResponse
           />
         ))}
 
