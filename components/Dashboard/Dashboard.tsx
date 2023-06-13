@@ -134,7 +134,7 @@ const Dashboard = ({
         onChange={handleFilterRequestList}
         clearable
       />
-      <Flex gap="sm">
+      <Flex gap="sm" wrap="wrap">
         {requestStatusMeterData.map((meter, idx) => (
           <RequestCountByStatus key={meter.label + idx} {...meter} />
         ))}
@@ -142,7 +142,10 @@ const Dashboard = ({
       <Flex gap="xl" wrap="wrap">
         <RequestStatistics requestList={visibleRequestList} />
         {requestorList.length > 0 && (
-          <RequestorTable requestorList={reducedRequestorList} />
+          <RequestorTable
+            requestorList={reducedRequestorList}
+            totalRequest={requestCount}
+          />
         )}
         {isFormslyForm && (
           <Paper
