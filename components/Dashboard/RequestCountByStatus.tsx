@@ -1,21 +1,19 @@
 import { getStatusToColor } from "@/utils/styling";
-import { RequestType } from "@/utils/types";
 import { Group, Paper, RingProgress, Stack, Text } from "@mantine/core";
 import { lowerCase, startCase } from "lodash";
 
 type RequestCountByStatusProps = {
-  requestList: RequestType[];
-  status: string;
-  totalRequestListCount: number;
+  label: string;
+  value: number;
+  totalCount: number;
 };
 
 const RequestCountByStatus = ({
-  requestList,
-  status,
-  totalRequestListCount,
+  label,
+  value,
+  totalCount,
 }: RequestCountByStatusProps) => {
-  const requestListCount = requestList.length;
-  const percentage = (requestListCount / totalRequestListCount) * 100;
+  const percentage = (value / totalCount) * 100;
 
   return (
     <Paper
@@ -25,9 +23,9 @@ const RequestCountByStatus = ({
     >
       <Group spacing="md" position="apart">
         <Stack justify="center" spacing={4}>
-          <Text>{`${startCase(lowerCase(status))} Requests`}</Text>
+          <Text>{`${startCase(lowerCase(label))} Requests`}</Text>
           <Text weight={600} size={32}>
-            {requestListCount}
+            {value}
           </Text>
         </Stack>
         <RingProgress
@@ -40,7 +38,7 @@ const RequestCountByStatus = ({
           sections={[
             {
               value: percentage,
-              color: `${getStatusToColor(lowerCase(status))}`,
+              color: `${getStatusToColor(lowerCase(label))}`,
             },
           ]}
         />

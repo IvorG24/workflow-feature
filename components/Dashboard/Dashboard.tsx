@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { lowerCase } from "lodash";
 import { useState } from "react";
 import OrderToPurchaseAnalytics from "../OrderToPurchaseAnalyticsPage/OrderToPurchaseAnalytics";
 import RequestCountByStatus from "./RequestCountByStatus";
@@ -32,6 +33,8 @@ export type RequestorListType =
   (RequestType["request_team_member"]["team_member_user"] & {
     count: number;
   })[];
+
+const status = ["Approved", "Rejected", "Pending", "Canceled"];
 
 const Dashboard = ({
   requestList,
@@ -74,23 +77,21 @@ const Dashboard = ({
     return accumulator;
   }, [] as RequestorListType);
 
-  // get request list by status
-  const pendingRequestList =
-    visibleRequestList.filter(
-      (request) => request.request_status === "PENDING"
-    ) || [];
-  const approvedRequestList =
-    visibleRequestList.filter(
-      (request) => request.request_status === "APPROVED"
-    ) || [];
-  const rejectedRequestList =
-    visibleRequestList.filter(
-      (request) => request.request_status === "REJECTED"
-    ) || [];
-  const canceledRequestList =
-    visibleRequestList.filter(
-      (request) => request.request_status === "CANCELED"
-    ) || [];
+  // get request status meter data
+  const requestStatusMeterData = status.map((status) => {
+    const requestMatch =
+      visibleRequestList.filter(
+        (request) => lowerCase(request.request_status) === lowerCase(status)
+      ) || [];
+
+    const meterData = {
+      label: status,
+      value: requestMatch.length,
+      totalCount: requestCount,
+    };
+
+    return meterData;
+  });
 
   // filter data by selected request form
   const handleFilterRequestList = async (value: string) => {
@@ -133,27 +134,10 @@ const Dashboard = ({
         onChange={handleFilterRequestList}
         clearable
       />
-      <Flex gap="xl" wrap="wrap">
-        <RequestCountByStatus
-          requestList={pendingRequestList}
-          status={"PENDING"}
-          totalRequestListCount={requestCount}
-        />
-        <RequestCountByStatus
-          requestList={approvedRequestList}
-          status={"APPROVED"}
-          totalRequestListCount={requestCount}
-        />
-        <RequestCountByStatus
-          requestList={rejectedRequestList}
-          status={"REJECTED"}
-          totalRequestListCount={requestCount}
-        />
-        <RequestCountByStatus
-          requestList={canceledRequestList}
-          status={"CANCELED"}
-          totalRequestListCount={requestCount}
-        />
+      <Flex gap="sm">
+        {requestStatusMeterData.map((meter, idx) => (
+          <RequestCountByStatus key={meter.label + idx} {...meter} />
+        ))}
       </Flex>
       <Flex gap="xl" wrap="wrap">
         <RequestStatistics requestList={visibleRequestList} />
