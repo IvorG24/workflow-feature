@@ -1,3 +1,5 @@
+import { SIGN_IN_PAGE_PATH } from "@/utils/constant";
+import { Database } from "@/utils/database";
 import {
   ActionIcon,
   Box,
@@ -11,6 +13,7 @@ import {
   useMantineColorScheme,
   useMantineTheme,
 } from "@mantine/core";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { IconMoonStars, IconSun } from "@tabler/icons-react";
 import { lowerCase } from "lodash";
 import Image from "next/image";
@@ -26,6 +29,12 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();
   const router = useRouter();
+  const supabaseClient = createBrowserSupabaseClient<Database>();
+
+  const handleLogout = async () => {
+    await supabaseClient.auth.signOut();
+    await router.push(SIGN_IN_PAGE_PATH);
+  };
 
   return (
     <MantineHeader height={{ base: 50, md: 70 }} px="md">
@@ -65,7 +74,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
               )}
             </ActionIcon>
           </Group>
-          <Button>Log out</Button>
+          <Button onClick={handleLogout}>Log out</Button>
         </Flex>
       </Box>
     </MantineHeader>
