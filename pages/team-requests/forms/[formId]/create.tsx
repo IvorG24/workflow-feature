@@ -13,368 +13,367 @@ import CreatePurchaseOrderRequestPage from "@/components/CreatePurchaseOrderRequ
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
-import { TEMP_USER_ID } from "@/utils/dummyData";
+import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  try {
-    const supabaseClient = createServerSupabaseClient(ctx);
-
-    const form = await getForm(supabaseClient, {
-      formId: `${ctx.query.formId}`,
-    });
-
-    const formattedForm = form as unknown as FormType;
-
-    if (formattedForm.form_is_formsly_form) {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: TEMP_USER_ID,
+export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+  async ({ supabaseClient, user, context }) => {
+    try {
+      const form = await getForm(supabaseClient, {
+        formId: `${context.query.formId}`,
       });
 
-      // Order to Purchase Form
-      if (formattedForm.form_name === "Order to Purchase") {
-        // items
-        const items = await getAllItems(supabaseClient, {
-          teamId: teamId,
+      const formattedForm = form as unknown as FormType;
+
+      if (formattedForm.form_is_formsly_form) {
+        const teamId = await getUserActiveTeamId(supabaseClient, {
+          userId: user.id,
         });
-        const itemOptions = items.map((item, index) => {
+
+        // Order to Purchase Form
+        if (formattedForm.form_name === "Order to Purchase") {
+          // items
+          const items = await getAllItems(supabaseClient, {
+            teamId: teamId,
+          });
+          const itemOptions = items.map((item, index) => {
+            return {
+              option_description: null,
+              option_field_id:
+                formattedForm.form_section[1].section_field[0].field_id,
+              option_id: item.item_id,
+              option_order: index,
+              option_value: item.item_general_name,
+            };
+          });
+
+          // projects
+          const projects = await getAllNames(supabaseClient, {
+            table: "project",
+            teamId: teamId,
+          });
+          const projectOptions = projects.map((project, index) => {
+            return {
+              option_description: null,
+              option_field_id:
+                formattedForm.form_section[0].section_field[0].field_id,
+              option_id: project.project_id,
+              option_order: index,
+              option_value: project.project_name,
+            };
+          });
+
+          // warehouse processors
+          const warehouseProcessors = await getAllProcessors(supabaseClient, {
+            processor: "warehouse",
+            teamId: teamId,
+          });
+          const warehouseProcessorOptions = warehouseProcessors.map(
+            (warehouseProcessor, index) => {
+              return {
+                option_description: null,
+                option_field_id:
+                  formattedForm.form_section[0].section_field[0].field_id,
+                option_id: warehouseProcessor.warehouse_processor_id,
+                option_order: index,
+                option_value: `${warehouseProcessor.warehouse_processor_first_name} ${warehouseProcessor.warehouse_processor_last_name} (${warehouseProcessor.warehouse_processor_employee_number})`,
+              };
+            }
+          );
+
           return {
-            option_description: null,
-            option_field_id:
-              formattedForm.form_section[1].section_field[0].field_id,
-            option_id: item.item_id,
-            option_order: index,
-            option_value: item.item_general_name,
+            props: {
+              form: {
+                ...formattedForm,
+                form_section: [
+                  {
+                    ...formattedForm.form_section[0],
+                    section_field: [
+                      {
+                        ...formattedForm.form_section[0].section_field[0],
+                        field_option: projectOptions,
+                      },
+                      {
+                        ...formattedForm.form_section[0].section_field[1],
+                        field_option: warehouseProcessorOptions,
+                      },
+                      ...formattedForm.form_section[0].section_field.slice(
+                        2,
+                        formattedForm.form_section[0].section_field.length
+                      ),
+                    ],
+                  },
+                  formattedForm.form_section[1],
+                ],
+              },
+              itemOptions,
+            },
           };
-        });
+        }
+        // Purchase Order
+        else if (formattedForm.form_name === "Purchase Order") {
+          // vendors
+          const vendors = await getAllNames(supabaseClient, {
+            table: "vendor",
+            teamId: teamId,
+          });
+          const vendorOptions = vendors.map((vendor, index) => {
+            return {
+              option_description: null,
+              option_field_id:
+                formattedForm.form_section[0].section_field[0].field_id,
+              option_id: vendor.vendor_id,
+              option_order: index,
+              option_value: vendor.vendor_name,
+            };
+          });
 
-        // projects
-        const projects = await getAllNames(supabaseClient, {
-          table: "project",
-          teamId: teamId,
-        });
-        const projectOptions = projects.map((project, index) => {
+          // purchasing processors
+          const purchasingProcessors = await getAllProcessors(supabaseClient, {
+            processor: "purchasing",
+            teamId: teamId,
+          });
+          const purchasingProcessorOptions = purchasingProcessors.map(
+            (purchasingProcessor, index) => {
+              return {
+                option_description: null,
+                option_field_id:
+                  formattedForm.form_section[0].section_field[0].field_id,
+                option_id: purchasingProcessor.purchasing_processor_id,
+                option_order: index,
+                option_value: `${purchasingProcessor.purchasing_processor_first_name} ${purchasingProcessor.purchasing_processor_last_name} (${purchasingProcessor.purchasing_processor_employee_number})`,
+              };
+            }
+          );
+
           return {
-            option_description: null,
-            option_field_id:
-              formattedForm.form_section[0].section_field[0].field_id,
-            option_id: project.project_id,
-            option_order: index,
-            option_value: project.project_name,
-          };
-        });
-
-        // warehouse processors
-        const warehouseProcessors = await getAllProcessors(supabaseClient, {
-          processor: "warehouse",
-          teamId: teamId,
-        });
-        const warehouseProcessorOptions = warehouseProcessors.map(
-          (warehouseProcessor, index) => {
-            return {
-              option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
-              option_id: warehouseProcessor.warehouse_processor_id,
-              option_order: index,
-              option_value: `${warehouseProcessor.warehouse_processor_first_name} ${warehouseProcessor.warehouse_processor_last_name} (${warehouseProcessor.warehouse_processor_employee_number})`,
-            };
-          }
-        );
-
-        return {
-          props: {
-            form: {
-              ...formattedForm,
-              form_section: [
-                {
-                  ...formattedForm.form_section[0],
-                  section_field: [
-                    {
-                      ...formattedForm.form_section[0].section_field[0],
-                      field_option: projectOptions,
-                    },
-                    {
-                      ...formattedForm.form_section[0].section_field[1],
-                      field_option: warehouseProcessorOptions,
-                    },
-                    ...formattedForm.form_section[0].section_field.slice(
-                      2,
-                      formattedForm.form_section[0].section_field.length
-                    ),
-                  ],
-                },
-                formattedForm.form_section[1],
-              ],
+            props: {
+              form: {
+                ...formattedForm,
+                form_section: [
+                  {
+                    ...formattedForm.form_section[0],
+                  },
+                  {
+                    ...formattedForm.form_section[1],
+                    section_field: [
+                      {
+                        ...formattedForm.form_section[1].section_field[0],
+                        field_option: purchasingProcessorOptions,
+                      },
+                      {
+                        ...formattedForm.form_section[1].section_field[1],
+                        field_option: vendorOptions,
+                      },
+                      ...formattedForm.form_section[1].section_field.slice(
+                        2,
+                        formattedForm.form_section[1].section_field.length
+                      ),
+                    ],
+                  },
+                ],
+              },
             },
-            itemOptions,
-          },
-        };
-      }
-      // Purchase Order
-      else if (formattedForm.form_name === "Purchase Order") {
-        // vendors
-        const vendors = await getAllNames(supabaseClient, {
-          table: "vendor",
-          teamId: teamId,
-        });
-        const vendorOptions = vendors.map((vendor, index) => {
+          };
+        }
+        // Invoice
+        else if (formattedForm.form_name === "Invoice") {
+          // accounting processors
+          const accountingProcessors = await getAllProcessors(supabaseClient, {
+            processor: "accounting",
+            teamId: teamId,
+          });
+          const accountingProcessorOptions = accountingProcessors.map(
+            (accountingProcessor, index) => {
+              return {
+                option_description: null,
+                option_field_id:
+                  formattedForm.form_section[0].section_field[0].field_id,
+                option_id: accountingProcessor.accounting_processor_id,
+                option_order: index,
+                option_value: `${accountingProcessor.accounting_processor_first_name} ${accountingProcessor.accounting_processor_last_name} (${accountingProcessor.accounting_processor_employee_number})`,
+              };
+            }
+          );
+
           return {
-            option_description: null,
-            option_field_id:
-              formattedForm.form_section[0].section_field[0].field_id,
-            option_id: vendor.vendor_id,
-            option_order: index,
-            option_value: vendor.vendor_name,
+            props: {
+              form: {
+                ...formattedForm,
+                form_section: [
+                  {
+                    ...formattedForm.form_section[0],
+                  },
+                  {
+                    ...formattedForm.form_section[1],
+                    section_field: [
+                      {
+                        ...formattedForm.form_section[1].section_field[0],
+                        field_option: accountingProcessorOptions,
+                      },
+                      ...formattedForm.form_section[1].section_field.slice(
+                        1,
+                        formattedForm.form_section[1].section_field.length
+                      ),
+                    ],
+                  },
+                ],
+              },
+            },
           };
-        });
+        }
+        // Receiving Inspecting Report
+        else if (formattedForm.form_name === "Receiving Inspecting Report") {
+          // warehouse receiver
+          const warehouseReceivers = await getAllReceivers(supabaseClient, {
+            receiver: "warehouse",
+            teamId: teamId,
+          });
+          const warehouseReceiverOptions = warehouseReceivers.map(
+            (warehouseReceiver, index) => {
+              return {
+                option_description: null,
+                option_field_id:
+                  formattedForm.form_section[0].section_field[0].field_id,
+                option_id: warehouseReceiver.warehouse_receiver_id,
+                option_order: index,
+                option_value: `${warehouseReceiver.warehouse_receiver_first_name} ${warehouseReceiver.warehouse_receiver_last_name} (${warehouseReceiver.warehouse_receiver_employee_number})`,
+              };
+            }
+          );
 
-        // purchasing processors
-        const purchasingProcessors = await getAllProcessors(supabaseClient, {
-          processor: "purchasing",
-          teamId: teamId,
-        });
-        const purchasingProcessorOptions = purchasingProcessors.map(
-          (purchasingProcessor, index) => {
-            return {
-              option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
-              option_id: purchasingProcessor.purchasing_processor_id,
-              option_order: index,
-              option_value: `${purchasingProcessor.purchasing_processor_first_name} ${purchasingProcessor.purchasing_processor_last_name} (${purchasingProcessor.purchasing_processor_employee_number})`,
-            };
-          }
-        );
-
-        return {
-          props: {
-            form: {
-              ...formattedForm,
-              form_section: [
-                {
-                  ...formattedForm.form_section[0],
-                },
-                {
-                  ...formattedForm.form_section[1],
-                  section_field: [
-                    {
-                      ...formattedForm.form_section[1].section_field[0],
-                      field_option: purchasingProcessorOptions,
-                    },
-                    {
-                      ...formattedForm.form_section[1].section_field[1],
-                      field_option: vendorOptions,
-                    },
-                    ...formattedForm.form_section[1].section_field.slice(
-                      2,
-                      formattedForm.form_section[1].section_field.length
-                    ),
-                  ],
-                },
-              ],
+          return {
+            props: {
+              form: {
+                ...formattedForm,
+                form_section: [
+                  {
+                    ...formattedForm.form_section[0],
+                  },
+                  {
+                    ...formattedForm.form_section[1],
+                    section_field: [
+                      {
+                        ...formattedForm.form_section[1].section_field[0],
+                        field_option: warehouseReceiverOptions,
+                      },
+                      ...formattedForm.form_section[1].section_field.slice(
+                        1,
+                        formattedForm.form_section[1].section_field.length
+                      ),
+                    ],
+                  },
+                ],
+              },
             },
-          },
-        };
-      }
-      // Invoice
-      else if (formattedForm.form_name === "Invoice") {
-        // accounting processors
-        const accountingProcessors = await getAllProcessors(supabaseClient, {
-          processor: "accounting",
-          teamId: teamId,
-        });
-        const accountingProcessorOptions = accountingProcessors.map(
-          (accountingProcessor, index) => {
-            return {
-              option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
-              option_id: accountingProcessor.accounting_processor_id,
-              option_order: index,
-              option_value: `${accountingProcessor.accounting_processor_first_name} ${accountingProcessor.accounting_processor_last_name} (${accountingProcessor.accounting_processor_employee_number})`,
-            };
-          }
-        );
+          };
+        }
+        // Cheque Reference
+        else if (formattedForm.form_name === "Cheque Reference") {
+          // warehouse receiver
+          const treasuryProcessors = await getAllProcessors(supabaseClient, {
+            processor: "treasury",
+            teamId: teamId,
+          });
+          const treasuryProcessorOptions = treasuryProcessors.map(
+            (treasuryProcessor, index) => {
+              return {
+                option_description: null,
+                option_field_id:
+                  formattedForm.form_section[0].section_field[0].field_id,
+                option_id: treasuryProcessor.treasury_processor_id,
+                option_order: index,
+                option_value: `${treasuryProcessor.treasury_processor_first_name} ${treasuryProcessor.treasury_processor_last_name} (${treasuryProcessor.treasury_processor_employee_number})`,
+              };
+            }
+          );
 
-        return {
-          props: {
-            form: {
-              ...formattedForm,
-              form_section: [
-                {
-                  ...formattedForm.form_section[0],
-                },
-                {
-                  ...formattedForm.form_section[1],
-                  section_field: [
-                    {
-                      ...formattedForm.form_section[1].section_field[0],
-                      field_option: accountingProcessorOptions,
-                    },
-                    ...formattedForm.form_section[1].section_field.slice(
-                      1,
-                      formattedForm.form_section[1].section_field.length
-                    ),
-                  ],
-                },
-              ],
+          return {
+            props: {
+              form: {
+                ...formattedForm,
+                form_section: [
+                  {
+                    ...formattedForm.form_section[0],
+                    section_field: [
+                      {
+                        ...formattedForm.form_section[0].section_field[0],
+                        field_option: treasuryProcessorOptions,
+                      },
+                      ...formattedForm.form_section[0].section_field.slice(
+                        1,
+                        formattedForm.form_section[0].section_field.length
+                      ),
+                    ],
+                  },
+                  {
+                    ...formattedForm.form_section[1],
+                  },
+                ],
+              },
             },
-          },
-        };
-      }
-      // Receiving Inspecting Report
-      else if (formattedForm.form_name === "Receiving Inspecting Report") {
-        // warehouse receiver
-        const warehouseReceivers = await getAllReceivers(supabaseClient, {
-          receiver: "warehouse",
-          teamId: teamId,
-        });
-        const warehouseReceiverOptions = warehouseReceivers.map(
-          (warehouseReceiver, index) => {
-            return {
-              option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
-              option_id: warehouseReceiver.warehouse_receiver_id,
-              option_order: index,
-              option_value: `${warehouseReceiver.warehouse_receiver_first_name} ${warehouseReceiver.warehouse_receiver_last_name} (${warehouseReceiver.warehouse_receiver_employee_number})`,
-            };
-          }
-        );
+          };
+        }
+        // Audit
+        else if (formattedForm.form_name === "Audit") {
+          // accounting processors
+          const auditProcessors = await getAllProcessors(supabaseClient, {
+            processor: "audit",
+            teamId: teamId,
+          });
+          const accountingProcessorOptions = auditProcessors.map(
+            (auditProcessor, index) => {
+              return {
+                option_description: null,
+                option_field_id:
+                  formattedForm.form_section[0].section_field[0].field_id,
+                option_id: auditProcessor.audit_processor_id,
+                option_order: index,
+                option_value: `${auditProcessor.audit_processor_first_name} ${auditProcessor.audit_processor_last_name} (${auditProcessor.audit_processor_employee_number})`,
+              };
+            }
+          );
 
-        return {
-          props: {
-            form: {
-              ...formattedForm,
-              form_section: [
-                {
-                  ...formattedForm.form_section[0],
-                },
-                {
-                  ...formattedForm.form_section[1],
-                  section_field: [
-                    {
-                      ...formattedForm.form_section[1].section_field[0],
-                      field_option: warehouseReceiverOptions,
-                    },
-                    ...formattedForm.form_section[1].section_field.slice(
-                      1,
-                      formattedForm.form_section[1].section_field.length
-                    ),
-                  ],
-                },
-              ],
+          return {
+            props: {
+              form: {
+                ...formattedForm,
+                form_section: [
+                  {
+                    ...formattedForm.form_section[0],
+                    section_field: [
+                      {
+                        ...formattedForm.form_section[0].section_field[0],
+                        field_option: accountingProcessorOptions,
+                      },
+                      ...formattedForm.form_section[0].section_field.slice(
+                        1,
+                        formattedForm.form_section[0].section_field.length
+                      ),
+                    ],
+                  },
+                ],
+              },
             },
-          },
-        };
+          };
+        }
       }
-      // Cheque Reference
-      else if (formattedForm.form_name === "Cheque Reference") {
-        // warehouse receiver
-        const treasuryProcessors = await getAllProcessors(supabaseClient, {
-          processor: "treasury",
-          teamId: teamId,
-        });
-        const treasuryProcessorOptions = treasuryProcessors.map(
-          (treasuryProcessor, index) => {
-            return {
-              option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
-              option_id: treasuryProcessor.treasury_processor_id,
-              option_order: index,
-              option_value: `${treasuryProcessor.treasury_processor_first_name} ${treasuryProcessor.treasury_processor_last_name} (${treasuryProcessor.treasury_processor_employee_number})`,
-            };
-          }
-        );
 
-        return {
-          props: {
-            form: {
-              ...formattedForm,
-              form_section: [
-                {
-                  ...formattedForm.form_section[0],
-                  section_field: [
-                    {
-                      ...formattedForm.form_section[0].section_field[0],
-                      field_option: treasuryProcessorOptions,
-                    },
-                    ...formattedForm.form_section[0].section_field.slice(
-                      1,
-                      formattedForm.form_section[0].section_field.length
-                    ),
-                  ],
-                },
-                {
-                  ...formattedForm.form_section[1],
-                },
-              ],
-            },
-          },
-        };
-      }
-      // Audit
-      else if (formattedForm.form_name === "Audit") {
-        // accounting processors
-        const auditProcessors = await getAllProcessors(supabaseClient, {
-          processor: "audit",
-          teamId: teamId,
-        });
-        const accountingProcessorOptions = auditProcessors.map(
-          (auditProcessor, index) => {
-            return {
-              option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
-              option_id: auditProcessor.audit_processor_id,
-              option_order: index,
-              option_value: `${auditProcessor.audit_processor_first_name} ${auditProcessor.audit_processor_last_name} (${auditProcessor.audit_processor_employee_number})`,
-            };
-          }
-        );
-
-        return {
-          props: {
-            form: {
-              ...formattedForm,
-              form_section: [
-                {
-                  ...formattedForm.form_section[0],
-                  section_field: [
-                    {
-                      ...formattedForm.form_section[0].section_field[0],
-                      field_option: accountingProcessorOptions,
-                    },
-                    ...formattedForm.form_section[0].section_field.slice(
-                      1,
-                      formattedForm.form_section[0].section_field.length
-                    ),
-                  ],
-                },
-              ],
-            },
-          },
-        };
-      }
+      return {
+        props: { form },
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
     }
-
-    return {
-      props: { form },
-    };
-  } catch (error) {
-    console.error(error);
-    return {
-      redirect: {
-        destination: "/500",
-        permanent: false,
-      },
-    };
   }
-};
+);
 
 type Props = {
   form: FormWithResponseType;

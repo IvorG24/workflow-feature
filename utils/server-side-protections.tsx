@@ -1,4 +1,3 @@
-import { getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseClient, User } from "@supabase/supabase-js";
@@ -58,7 +57,6 @@ export const withAuthAndOnboarding = <P extends { [key: string]: any }>(
     context: GetServerSidePropsContext;
     supabaseClient: SupabaseClient<Database>;
     user: User;
-    teamId: string;
   }) => Promise<GetServerSidePropsResult<P>>
 ): GetServerSideProps<P> => {
   return async (
@@ -98,11 +96,7 @@ export const withAuthAndOnboarding = <P extends { [key: string]: any }>(
 
       const user = session.user;
 
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
-
-      return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
+      return getServerSidePropsFunc({ context, supabaseClient, user });
     } catch (error) {
       console.error(error);
       return {

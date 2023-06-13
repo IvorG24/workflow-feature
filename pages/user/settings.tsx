@@ -1,32 +1,31 @@
 import { getUserWithSignature } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import UserSettingsPage from "@/components/UserSettingsPage/UserSettingsPage";
-import { TEMP_USER_ID } from "@/utils/dummyData";
+import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { UserWithSignatureType } from "@/utils/types";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  try {
-    const supabaseClient = createServerSupabaseClient(ctx);
+export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+  async ({ supabaseClient, user: { id } }) => {
+    try {
+      const user = await getUserWithSignature(supabaseClient, {
+        userId: id,
+      });
 
-    const user = await getUserWithSignature(supabaseClient, {
-      userId: TEMP_USER_ID,
-    });
-
-    return {
-      props: { user },
-    };
-  } catch (error) {
-    console.error(error);
-    return {
-      redirect: {
-        destination: "/500",
-        permanent: false,
-      },
-    };
+      return {
+        props: { user },
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
   }
-};
+);
 
 type Props = {
   user: UserWithSignatureType;
