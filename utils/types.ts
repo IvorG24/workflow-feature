@@ -135,6 +135,49 @@ export type WarehouseProcessorTableInsert =
   Database["public"]["Tables"]["warehouse_processor_table"]["Insert"];
 export type WarehouseProcessorTableUpdate =
   Database["public"]["Tables"]["warehouse_processor_table"]["Update"];
+
+export type VendorTableRow =
+  Database["public"]["Tables"]["vendor_table"]["Row"];
+export type VendorTableInsert =
+  Database["public"]["Tables"]["vendor_table"]["Insert"];
+export type VendorTableUpdate =
+  Database["public"]["Tables"]["vendor_table"]["Update"];
+
+export type PurchasingProcessorTableRow =
+  Database["public"]["Tables"]["purchasing_processor_table"]["Row"];
+export type PurchasingProcessorTableInsert =
+  Database["public"]["Tables"]["purchasing_processor_table"]["Insert"];
+export type PurchasingProcessorTableUpdate =
+  Database["public"]["Tables"]["purchasing_processor_table"]["Update"];
+
+export type AccountingProcessorTableRow =
+  Database["public"]["Tables"]["accounting_processor_table"]["Row"];
+export type AccountingProcessorTableInsert =
+  Database["public"]["Tables"]["accounting_processor_table"]["Insert"];
+export type AccountingProcessorTableUpdate =
+  Database["public"]["Tables"]["accounting_processor_table"]["Update"];
+
+export type WarehouseReceiverTableRow =
+  Database["public"]["Tables"]["warehouse_receiver_table"]["Row"];
+export type WarehouseReceiverTableInsert =
+  Database["public"]["Tables"]["warehouse_receiver_table"]["Insert"];
+export type WarehouseReceiverTableUpdate =
+  Database["public"]["Tables"]["warehouse_receiver_table"]["Update"];
+
+export type TreasuryProcessorTableRow =
+  Database["public"]["Tables"]["treasury_processor_table"]["Row"];
+export type TreasuryProcessorTableInsert =
+  Database["public"]["Tables"]["treasury_processor_table"]["Insert"];
+export type TreasuryProcessorTableUpdate =
+  Database["public"]["Tables"]["treasury_processor_table"]["Update"];
+
+export type AuditProcessorTableRow =
+  Database["public"]["Tables"]["audit_processor_table"]["Row"];
+export type AuditProcessorTableInsert =
+  Database["public"]["Tables"]["audit_processor_table"]["Insert"];
+export type AuditProcessorTableUpdate =
+  Database["public"]["Tables"]["audit_processor_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums

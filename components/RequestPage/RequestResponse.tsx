@@ -18,12 +18,12 @@ type RequestReponseProps = {
     value: string;
     options: OptionTableRow[];
   };
-  isOrderToPurchaseForm?: boolean;
+  isFormslyForm?: boolean;
 };
 
 const RequestResponse = ({
   response,
-  isOrderToPurchaseForm = false,
+  isFormslyForm = false,
 }: RequestReponseProps) => {
   const inputProps = {
     variant: "filled",
@@ -31,6 +31,7 @@ const RequestResponse = ({
   };
 
   const renderResponse = (response: RequestReponseProps["response"]) => {
+
     const parsedValue = response.value === "" ? "" : JSON.parse(response.value);
 
     switch (response.type) {
@@ -73,7 +74,14 @@ const RequestResponse = ({
           value: option.option_value,
           label: option.option_value,
         }));
-        return (
+
+        return isFormslyForm ? (
+          <TextInput
+            label={response.label}
+            value={parsedValue}
+            {...inputProps}
+          />
+        ) : (
           <Select
             label={response.label}
             data={dropdownOption}
@@ -141,22 +149,7 @@ const RequestResponse = ({
     }
   };
 
-  return (
-    <>
-      {!isOrderToPurchaseForm ? renderResponse(response) : null}
-      {isOrderToPurchaseForm ? (
-        <TextInput
-          label={response.label}
-          value={
-            response.type === "DATE"
-              ? new Date(JSON.parse(response.value)).toLocaleDateString()
-              : JSON.parse(response.value)
-          }
-          {...inputProps}
-        />
-      ) : null}
-    </>
-  );
+  return <>{renderResponse(response)}</>;
 };
 
 export default RequestResponse;

@@ -14,10 +14,11 @@ import RequestFormFields from "./RequestFormFields";
 type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
-  onRemoveSection: (sectionDuplicatableId: string) => void;
+  onRemoveSection?: (sectionDuplicatableId: string) => void;
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
+  formslyFormName?: string;
 };
 
 const RequestFormSection = ({
@@ -25,6 +26,7 @@ const RequestFormSection = ({
   sectionIndex,
   onRemoveSection,
   orderToPurchaseFormMethods,
+  formslyFormName = "",
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -37,7 +39,9 @@ const RequestFormSection = ({
         {sectionDuplicatableId && (
           <Tooltip label="Remove Section">
             <ActionIcon
-              onClick={() => onRemoveSection(sectionDuplicatableId)}
+              onClick={() =>
+                onRemoveSection && onRemoveSection(sectionDuplicatableId)
+              }
               variant="light"
               color="red"
             >
@@ -58,6 +62,7 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             orderToPurchaseFormMethods={orderToPurchaseFormMethods}
+            formslyFormName={formslyFormName}
           />
         ))}
       </Stack>

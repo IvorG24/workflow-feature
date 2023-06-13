@@ -1,8 +1,8 @@
 import { checkProcessor } from "@/backend/api/get";
-import { createWarehouseProcessor } from "@/backend/api/post";
+import { createAccountingProcessor } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { WarehouseProcessorTableRow } from "@/utils/types";
+import { AccountingProcessorTableRow } from "@/utils/types";
 import {
   Button,
   Checkbox,
@@ -19,7 +19,7 @@ import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
-type WarehouseProcessorFormType = {
+type AccountingProcessorFormType = {
   firstName: string;
   lastName: string;
   employeeNumber: string;
@@ -27,23 +27,23 @@ type WarehouseProcessorFormType = {
 };
 
 type Props = {
-  setIsCreatingWarehouseProcessor: Dispatch<SetStateAction<boolean>>;
-  setWarehouseProcessorList: Dispatch<
-    SetStateAction<WarehouseProcessorTableRow[]>
+  setIsCreatingAccountingProcessor: Dispatch<SetStateAction<boolean>>;
+  setAccountingProcessorList: Dispatch<
+    SetStateAction<AccountingProcessorTableRow[]>
   >;
-  setWarehouseProcessorCount: Dispatch<SetStateAction<number>>;
+  setAccountingProcessorCount: Dispatch<SetStateAction<number>>;
 };
 
-const CreateWarehouseProcessor = ({
-  setIsCreatingWarehouseProcessor,
-  setWarehouseProcessorList,
-  setWarehouseProcessorCount,
+const CreateAccountingProcessor = ({
+  setIsCreatingAccountingProcessor,
+  setAccountingProcessorList,
+  setAccountingProcessorCount,
 }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
   const activeTeam = useActiveTeam();
 
   const { register, formState, handleSubmit } =
-    useForm<WarehouseProcessorFormType>({
+    useForm<AccountingProcessorFormType>({
       defaultValues: {
         firstName: "",
         lastName: "",
@@ -52,9 +52,9 @@ const CreateWarehouseProcessor = ({
       },
     });
 
-  const onSubmit = async (data: WarehouseProcessorFormType) => {
+  const onSubmit = async (data: AccountingProcessorFormType) => {
     const isAlreadyExisting = await checkProcessor(supabaseClient, {
-      processor: "warehouse",
+      processor: "accounting",
       firstName: data.firstName,
       lastName: data.lastName,
       employeeNumber: data.employeeNumber,
@@ -62,39 +62,39 @@ const CreateWarehouseProcessor = ({
     });
     if (isAlreadyExisting) {
       notifications.show({
-        message: "Warehouse Processor already exists",
+        message: "Accounting Processor already exists",
         color: "orange",
       });
       return;
     }
     try {
-      const newWarehouseProcessor = await createWarehouseProcessor(
+      const newAccountingProcessor = await createAccountingProcessor(
         supabaseClient,
         {
-          warehouseProcessorData: {
-            warehouse_processor_first_name: data.firstName,
-            warehouse_processor_last_name: data.lastName,
-            warehouse_processor_employee_number: data.employeeNumber,
-            warehouse_processor_is_available: data.isAvailable,
-            warehouse_processor_team_id: activeTeam.team_id,
+          accountingProcessorData: {
+            accounting_processor_first_name: data.firstName,
+            accounting_processor_last_name: data.lastName,
+            accounting_processor_employee_number: data.employeeNumber,
+            accounting_processor_is_available: data.isAvailable,
+            accounting_processor_team_id: activeTeam.team_id,
           },
         }
       );
-      setWarehouseProcessorList((prev) => {
-        prev.unshift(newWarehouseProcessor);
+      setAccountingProcessorList((prev) => {
+        prev.unshift(newAccountingProcessor);
         return prev;
       });
-      setWarehouseProcessorCount((prev) => prev + 1);
+      setAccountingProcessorCount((prev) => prev + 1);
       notifications.show({
         title: "Success!",
-        message: "WarehouseProcessor created successfully",
+        message: "Accounting Processor created successfully",
         color: "green",
       });
-      setIsCreatingWarehouseProcessor(false);
+      setIsCreatingAccountingProcessor(false);
     } catch {
       notifications.show({
         title: "Error!",
-        message: "There was an error on creating warehouseProcessor",
+        message: "There was an error on creating accountingProcessor",
         color: "red",
       });
     }
@@ -106,7 +106,7 @@ const CreateWarehouseProcessor = ({
       <LoadingOverlay visible={formState.isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Add WarehouseProcessor
+          Add Accounting Processor
         </Title>
         <Divider mb="xl" />
 
@@ -183,7 +183,7 @@ const CreateWarehouseProcessor = ({
             miw={100}
             mt={30}
             mr={14}
-            onClick={() => setIsCreatingWarehouseProcessor(false)}
+            onClick={() => setIsCreatingAccountingProcessor(false)}
           >
             Cancel
           </Button>
@@ -193,4 +193,4 @@ const CreateWarehouseProcessor = ({
   );
 };
 
-export default CreateWarehouseProcessor;
+export default CreateAccountingProcessor;

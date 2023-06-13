@@ -3,7 +3,7 @@ import { getProcessorList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { WarehouseProcessorTableRow } from "@/utils/types";
+import { TreasuryProcessorTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -46,21 +46,21 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  warehouseProcessorList: WarehouseProcessorTableRow[];
-  setWarehouseProcessorList: Dispatch<
-    SetStateAction<WarehouseProcessorTableRow[]>
+  treasuryProcessorList: TreasuryProcessorTableRow[];
+  setTreasuryProcessorList: Dispatch<
+    SetStateAction<TreasuryProcessorTableRow[]>
   >;
-  warehouseProcessorCount: number;
-  setWarehouseProcessorCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingWarehouseProcessor: Dispatch<SetStateAction<boolean>>;
+  treasuryProcessorCount: number;
+  setTreasuryProcessorCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingTreasuryProcessor: Dispatch<SetStateAction<boolean>>;
 };
 
-const WarehouseProcessorList = ({
-  warehouseProcessorList,
-  setWarehouseProcessorList,
-  warehouseProcessorCount,
-  setWarehouseProcessorCount,
-  setIsCreatingWarehouseProcessor,
+const TreasuryProcessorList = ({
+  treasuryProcessorList,
+  setTreasuryProcessorList,
+  treasuryProcessorCount,
+  setTreasuryProcessorCount,
+  setIsCreatingTreasuryProcessor,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -75,20 +75,20 @@ const WarehouseProcessorList = ({
 
   const headerCheckboxKey = uniqueId();
 
-  const handleCheckRow = (warehouseProcessorId: string) => {
-    if (checkList.includes(warehouseProcessorId)) {
-      setCheckList(checkList.filter((id) => id !== warehouseProcessorId));
+  const handleCheckRow = (treasuryProcessorId: string) => {
+    if (checkList.includes(treasuryProcessorId)) {
+      setCheckList(checkList.filter((id) => id !== treasuryProcessorId));
     } else {
-      setCheckList([...checkList, warehouseProcessorId]);
+      setCheckList([...checkList, treasuryProcessorId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const warehouseProcessorIdList = warehouseProcessorList.map(
-        (warehouseProcessor) => warehouseProcessor.warehouse_processor_id
+      const treasuryProcessorIdList = treasuryProcessorList.map(
+        (treasuryProcessor) => treasuryProcessor.treasury_processor_id
       );
-      setCheckList(warehouseProcessorIdList);
+      setCheckList(treasuryProcessorIdList);
     } else {
       setCheckList([]);
     }
@@ -105,17 +105,17 @@ const WarehouseProcessorList = ({
     setIsLoading(true);
     try {
       const { data, count } = await getProcessorList(supabaseClient, {
-        processor: "warehouse",
+        processor: "treasury",
         teamId: activeTeam.team_id,
         search,
         limit: ROW_PER_PAGE,
         page: page,
       });
-      setWarehouseProcessorList(data as WarehouseProcessorTableRow[]);
-      setWarehouseProcessorCount(Number(count));
+      setTreasuryProcessorList(data as TreasuryProcessorTableRow[]);
+      setTreasuryProcessorCount(Number(count));
     } catch {
       showNotification({
-        message: "Error on fetching warehouse processor list",
+        message: "Error on fetching treasury processor list",
         color: "red",
       });
     }
@@ -124,63 +124,66 @@ const WarehouseProcessorList = ({
 
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = warehouseProcessorList;
+    const savedRecord = treasuryProcessorList;
 
     try {
-      const updatedWarehouseProcessorList = warehouseProcessorList.filter(
-        (warehouseProcessor) => {
-          if (!checkList.includes(warehouseProcessor.warehouse_processor_id)) {
-            return warehouseProcessor;
+      const updatedTreasuryProcessorList = treasuryProcessorList.filter(
+        (treasuryProcessor) => {
+          if (
+            !checkList.includes(treasuryProcessor.treasury_processor_id)
+          ) {
+            return treasuryProcessor;
           }
         }
       );
-      setWarehouseProcessorList(updatedWarehouseProcessorList);
+      setTreasuryProcessorList(updatedTreasuryProcessorList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "warehouse_processor",
+        table: "treasury_processor",
       });
 
       showNotification({
         title: "Success!",
-        message: "Warehouse Processor/s deleted",
+        message: "Treasury Processor/s deleted",
         color: "green",
       });
     } catch {
-      setWarehouseProcessorList(savedRecord);
+      setTreasuryProcessorList(savedRecord);
       setCheckList(saveCheckList);
       showNotification({
         title: "Error!",
-        message: "Warehouse Processor/s failed to delete",
+        message: "Treasury Processor/s failed to delete",
         color: "red",
       });
     }
   };
 
   const handleUpdateStatus = async (
-    warehouseProcessorId: string,
+    treasuryProcessorId: string,
     value: boolean
   ) => {
-    const savedRecord = warehouseProcessorList;
+    const savedRecord = treasuryProcessorList;
     try {
-      setWarehouseProcessorList((prev) =>
-        prev.map((warehouseProcessor) => {
+      setTreasuryProcessorList((prev) =>
+        prev.map((treasuryProcessor) => {
           if (
-            warehouseProcessor.warehouse_processor_id !== warehouseProcessorId
+            treasuryProcessor.treasury_processor_id !==
+            treasuryProcessorId
           )
-            return warehouseProcessor;
+            return treasuryProcessor;
 
           return {
-            ...warehouseProcessor,
-            warehouse_processor_is_available: value,
+            ...treasuryProcessor,
+            treasury_processor_is_available: value,
           };
         })
       );
 
       await toggleStatus(supabaseClient, {
-        table: "warehouse_processor",
-        id: warehouseProcessorId,
+        table: "treasury_processor",
+        id: treasuryProcessorId,
         status: value,
       });
     } catch {
@@ -188,7 +191,7 @@ const WarehouseProcessorList = ({
         message: "Error on changing status",
         color: "red",
       });
-      setWarehouseProcessorList(savedRecord);
+      setTreasuryProcessorList(savedRecord);
     }
   };
 
@@ -197,7 +200,7 @@ const WarehouseProcessorList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Warehouse Processors
+            List of Treasury Processors
           </Title>
           <TextInput
             miw={250}
@@ -238,8 +241,8 @@ const WarehouseProcessorList = ({
                     <Text size={14}>
                       Are you sure you want to delete{" "}
                       {checkList.length === 1
-                        ? "this warehouse processor?"
-                        : "these warehouse processors?"}
+                        ? "this treasury processor?"
+                        : "these treasury processors?"}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -254,21 +257,21 @@ const WarehouseProcessorList = ({
           <Button
             rightIcon={<IconPlus size={16} />}
             className={classes.flexGrow}
-            onClick={() => setIsCreatingWarehouseProcessor(true)}
+            onClick={() => setIsCreatingTreasuryProcessor(true)}
           >
             Add
           </Button>
         </Group>
       </Flex>
       <DataTable
-        idAccessor="warehouse_processor_id"
+        idAccessor="treasury_processor_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={warehouseProcessorList}
+        records={treasuryProcessorList}
         columns={[
           {
             accessor: "checkbox",
@@ -278,43 +281,43 @@ const WarehouseProcessorList = ({
                 className={classes.checkbox}
                 checked={
                   checkList.length > 0 &&
-                  checkList.length === warehouseProcessorList.length
+                  checkList.length === treasuryProcessorList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
               />
             ),
-            render: ({ warehouse_processor_id }) => (
+            render: ({ treasury_processor_id }) => (
               <Checkbox
                 className={classes.checkbox}
                 size="xs"
-                checked={checkList.includes(warehouse_processor_id)}
+                checked={checkList.includes(treasury_processor_id)}
                 onChange={() => {
-                  handleCheckRow(warehouse_processor_id);
+                  handleCheckRow(treasury_processor_id);
                 }}
               />
             ),
             width: 40,
           },
           {
-            accessor: "warehouse_processor_employee_number",
+            accessor: "treasury_processor_employee_number",
             title: "Employee Number",
-            render: ({ warehouse_processor_employee_number }) => (
-              <Text>{warehouse_processor_employee_number}</Text>
+            render: ({ treasury_processor_employee_number }) => (
+              <Text>{treasury_processor_employee_number}</Text>
             ),
           },
           {
-            accessor: "warehouse_processor_first_name",
+            accessor: "treasury_processor_first_name",
             title: "First Name",
-            render: ({ warehouse_processor_first_name }) => (
-              <Text>{warehouse_processor_first_name}</Text>
+            render: ({ treasury_processor_first_name }) => (
+              <Text>{treasury_processor_first_name}</Text>
             ),
           },
           {
-            accessor: "warehouse_processor_last_name",
+            accessor: "treasury_processor_last_name",
             title: "Last Name",
-            render: ({ warehouse_processor_last_name }) => (
-              <Text>{warehouse_processor_last_name}</Text>
+            render: ({ treasury_processor_last_name }) => (
+              <Text>{treasury_processor_last_name}</Text>
             ),
           },
           {
@@ -322,17 +325,17 @@ const WarehouseProcessorList = ({
             title: "Status",
             textAlignment: "center",
             render: ({
-              warehouse_processor_is_available,
-              warehouse_processor_id,
+              treasury_processor_is_available,
+              treasury_processor_id,
             }) => (
               <Center>
                 <Checkbox
-                  checked={warehouse_processor_is_available}
+                  checked={treasury_processor_is_available}
                   className={classes.checkbox}
                   size="xs"
                   onChange={(e) =>
                     handleUpdateStatus(
-                      warehouse_processor_id,
+                      treasury_processor_id,
                       e.currentTarget.checked
                     )
                   }
@@ -341,7 +344,7 @@ const WarehouseProcessorList = ({
             ),
           },
         ]}
-        totalRecords={warehouseProcessorCount}
+        totalRecords={treasuryProcessorCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -353,4 +356,4 @@ const WarehouseProcessorList = ({
   );
 };
 
-export default WarehouseProcessorList;
+export default TreasuryProcessorList;

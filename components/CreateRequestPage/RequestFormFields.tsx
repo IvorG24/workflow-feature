@@ -23,6 +23,7 @@ type RequestFormFieldsProps = {
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
+  formslyFormName?: string;
 };
 
 const RequestFormFields = ({
@@ -30,11 +31,13 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   orderToPurchaseFormMethods,
+  formslyFormName = "",
 }: RequestFormFieldsProps) => {
   const {
     register,
     control,
     formState: { errors },
+
   } = useFormContext<RequestFormValues>();
 
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +50,7 @@ const RequestFormFields = ({
     label: field.field_name,
     description: field.field_description,
     required: field.field_is_required,
+    disabled: field.field_is_read_only,
     error: fieldError,
   };
 
@@ -152,7 +156,7 @@ const RequestFormFields = ({
                 {...inputProps}
                 clearable
                 error={fieldError}
-                searchable={Boolean(orderToPurchaseFormMethods)}
+                searchable={formslyFormName !== ""}
               />
             )}
             rules={{ ...fieldRules }}

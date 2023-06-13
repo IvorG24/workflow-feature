@@ -26,16 +26,17 @@ export type RequestFormValues = {
   sections: Section[];
 };
 
-type CreateRequestPageProps = {
-  form: FormType;
-};
-
 export type FieldWithResponseArray =
   FormType["form_section"][0]["section_field"][0] & {
     field_response: RequestResponseTableRow[];
   };
 
-const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
+type Props = {
+  form: FormType;
+  formslyFormName?: string;
+};
+
+const CreateRequestPage = ({ form, formslyFormName = "" }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createBrowserSupabaseClient<Database>();
@@ -72,6 +73,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
     control,
     name: "sections",
   });
+
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
@@ -178,6 +180,7 @@ const CreateRequestPage = ({ form }: CreateRequestPageProps) => {
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
+                    formslyFormName={formslyFormName}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
