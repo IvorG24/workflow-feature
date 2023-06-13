@@ -125,7 +125,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
     //   .attr("text-anchor", "middle")
     //   .attr("fill", "white")
     //   .style("font-size", "12px");
-  }, []);
+  }, [data]);
 
   return <Box ref={chartRef} w="100%" />;
 };

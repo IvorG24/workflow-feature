@@ -34,7 +34,7 @@ const RequestCountByStatus = ({
           thickness={18}
           label={
             <Text size="lg" weight={700} align="center">
-              {`${percentage ? percentage : 0}%`}
+              {`${percentage ? percentage.toFixed(0) : 0}%`}
             </Text>
           }
           sections={[

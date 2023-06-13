@@ -156,7 +156,7 @@ const Dashboard = ({
         />
       </Flex>
       <Flex gap="xl" wrap="wrap">
-        <RequestStatistics />
+        <RequestStatistics requestList={visibleRequestList} />
         {requestorList.length > 0 && (
           <RequestorTable requestorList={reducedRequestorList} />
         )}

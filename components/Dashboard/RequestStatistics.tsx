@@ -1,4 +1,5 @@
 import { getStatusToColor } from "@/utils/styling";
+import { RequestType } from "@/utils/types";
 import {
   ActionIcon,
   Flex,
@@ -10,26 +11,99 @@ import {
 } from "@mantine/core";
 import { IconSquareRoundedFilled } from "@tabler/icons-react";
 import { lowerCase } from "lodash";
+import moment from "moment";
+import { useEffect, useState } from "react";
 import StackedBarChart from "./StackedBarChart";
 
 const status = ["Approved", "Rejected", "Pending"];
 
-const dummyChartData = [
-  { month: "Jan", approved: 60, rejected: 20, pending: 20 },
-  { month: "Feb", approved: 75, rejected: 10, pending: 15 },
-  { month: "Mar", approved: 40, rejected: 30, pending: 30 },
-  { month: "Apr", approved: 55, rejected: 25, pending: 20 },
-  { month: "May", approved: 70, rejected: 15, pending: 15 },
-  { month: "Jun", approved: 45, rejected: 30, pending: 25 },
-  { month: "Jul", approved: 65, rejected: 10, pending: 25 },
-  { month: "Aug", approved: 50, rejected: 20, pending: 30 },
-  { month: "Sep", approved: 35, rejected: 30, pending: 35 },
-  { month: "Oct", approved: 60, rejected: 15, pending: 25 },
-  { month: "Nov", approved: 75, rejected: 5, pending: 20 },
-  { month: "Dec", approved: 40, rejected: 35, pending: 25 },
-];
+type ChartData = {
+  month: string;
+  approved: number;
+  rejected: number;
+  pending: number;
+}[];
 
-const RequestStatistics = () => {
+type RequestStatisticsProps = {
+  requestList: RequestType[];
+};
+
+const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
+  const initialChartData = [
+    { month: "Jan", approved: 0, rejected: 0, pending: 0 },
+    { month: "Feb", approved: 0, rejected: 0, pending: 0 },
+    { month: "Mar", approved: 0, rejected: 0, pending: 0 },
+    { month: "Apr", approved: 0, rejected: 0, pending: 0 },
+    { month: "May", approved: 0, rejected: 0, pending: 0 },
+    { month: "Jun", approved: 0, rejected: 0, pending: 0 },
+    { month: "Jul", approved: 0, rejected: 0, pending: 0 },
+    { month: "Aug", approved: 0, rejected: 0, pending: 0 },
+    { month: "Sep", approved: 0, rejected: 0, pending: 0 },
+    { month: "Oct", approved: 0, rejected: 0, pending: 0 },
+    { month: "Nov", approved: 0, rejected: 0, pending: 0 },
+    { month: "Dec", approved: 0, rejected: 0, pending: 0 },
+  ];
+  const [chartData, setChartData] = useState<ChartData>([]);
+
+  useEffect(() => {
+    const reducedRequestList = requestList.reduce((acc, request) => {
+      const requestMonthCreated = moment(request.request_date_created).format(
+        "MMM"
+      );
+      const status = request.request_status.toLowerCase();
+      const duplicateIndex = acc.findIndex(
+        (duplicate) => duplicate.month === requestMonthCreated
+      );
+
+      if (duplicateIndex >= 0) {
+        switch (status) {
+          case "approved":
+            acc[duplicateIndex].approved++;
+            break;
+          case "rejected":
+            acc[duplicateIndex].rejected++;
+            break;
+          case "pending":
+            acc[duplicateIndex].pending++;
+            break;
+
+          default:
+            break;
+        }
+      } else {
+        acc[acc.length] = {
+          month: requestMonthCreated,
+          approved: status === "approved" ? 1 : 0,
+          rejected: status === "rejected" ? 1 : 0,
+          pending: status === "pending" ? 1 : 0,
+        };
+      }
+
+      return acc;
+    }, [] as ChartData);
+
+    const updatedChartData = initialChartData.map((chartData) => {
+      const dataMatch = reducedRequestList.find(
+        (requestData) => requestData.month === chartData.month
+      );
+
+      if (dataMatch) {
+        const { approved, rejected, pending } = dataMatch;
+        const totalCount = approved + rejected + pending;
+
+        return {
+          ...dataMatch,
+          approved: (dataMatch.approved / totalCount) * 100,
+          rejected: (dataMatch.rejected / totalCount) * 100,
+          pending: (dataMatch.pending / totalCount) * 100,
+        };
+      } else {
+        return chartData;
+      }
+    });
+    setChartData(updatedChartData);
+  }, [requestList]);
+
   return (
     <Paper
       w={{ base: "100%", sm: 500, md: "fit-content" }}
@@ -55,7 +129,7 @@ const RequestStatistics = () => {
         w={{ base: 300, sm: 480, md: 700 }}
         h="fit-content"
       >
-        <StackedBarChart data={dummyChartData} />
+        <StackedBarChart data={chartData} />
       </ScrollArea>
     </Paper>
   );
