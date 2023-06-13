@@ -14,11 +14,10 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { User, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
 import UploadAvatar from "../UploadAvatar/UploadAvatar";
 
 type OnboardUserParams = {
@@ -32,14 +31,11 @@ type OnboardUserParams = {
   user_job_title: string;
 };
 
-type TempUser = { id: string; email: string };
-
-const tempUser: TempUser = {
-  id: uuidv4(),
-  email: "johndoe10232@gmail.com",
+type Props = {
+  user: User;
 };
 
-const OnboardingPage = () => {
+const OnboardingPage = ({ user }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
@@ -53,7 +49,7 @@ const OnboardingPage = () => {
     setError,
     control,
   } = useForm<OnboardUserParams>({
-    defaultValues: { user_id: tempUser.id, user_email: tempUser.email },
+    defaultValues: { user_id: user.id, user_email: user.email },
     reValidateMode: "onChange",
   });
 
