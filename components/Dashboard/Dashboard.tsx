@@ -3,15 +3,7 @@ import { OTPDataType } from "@/pages/team-requests/forms/[formId]/analytics";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { RequestType, TeamMemberWithUserType } from "@/utils/types";
-import {
-  Container,
-  LoadingOverlay,
-  Paper,
-  Select,
-  Tabs,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Container, LoadingOverlay, Select, Tabs, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
@@ -20,8 +12,8 @@ import {
   IconReportAnalytics,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import OrderToPurchaseAnalytics from "../OrderToPurchaseAnalyticsPage/OrderToPurchaseAnalytics";
 import Overview from "./OverviewTab/Overview";
+import OrderToPurchaseAnalytics from "./RequisitionTab/OrderToPurchaseAnalytics";
 import ResponseData from "./ResponseTab/ResponseDataChart";
 
 type DashboardProps = {
@@ -130,20 +122,11 @@ const Dashboard = ({
 
         <Tabs.Panel value="requisition" pt="xs">
           {isFormslyForm ? (
-            <Paper
-              mt="xl"
-              p="xl"
-              w={{ base: "100%", sm: 500, md: "fit-content" }}
-            >
-              <Title order={3} mb="md">
-                Requisition Data
-              </Title>
-              <OrderToPurchaseAnalytics
-                teamOrderToPurchaseData={teamRequisitionData}
-                userOrderToPurchaseData={userRequisitionData}
-                purchaseOrderToPurchaseData={purchaseRequisitionData}
-              />
-            </Paper>
+            <OrderToPurchaseAnalytics
+              teamOrderToPurchaseData={teamRequisitionData}
+              userOrderToPurchaseData={userRequisitionData}
+              purchaseOrderToPurchaseData={purchaseRequisitionData}
+            />
           ) : (
             <Text>No data available.</Text>
           )}

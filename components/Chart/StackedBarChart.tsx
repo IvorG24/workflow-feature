@@ -46,7 +46,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
           bottomLeft: 20,
           bottomRight: 20,
         },
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: "transparent",
       },
       {
@@ -61,7 +61,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
           bottomLeft: 20,
           bottomRight: 20,
         },
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: "transparent",
       },
       {
@@ -76,7 +76,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
           bottomLeft: 20,
           bottomRight: 20,
         },
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: "transparent",
       },
     ],
