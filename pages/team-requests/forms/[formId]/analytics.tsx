@@ -1,6 +1,6 @@
 import { getForm } from "@/backend/api/get";
+import OrderToPurchaseAnalytics from "@/components/Dashboard/RequisitionTab/OrderToPurchaseAnalytics";
 import Meta from "@/components/Meta/Meta";
-import OrderToPurchaseAnalytics from "@/components/OrderToPurchaseAnalyticsPage/OrderToPurchaseAnalytics";
 import {
   TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA,
   TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA,

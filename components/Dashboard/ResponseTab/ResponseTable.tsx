@@ -1,3 +1,4 @@
+import { ResponseDataType } from "@/utils/types";
 import {
   Box,
   Group,
@@ -8,7 +9,6 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
-import { ResponseDataType } from "./ResponseDataChart";
 
 const useStyles = createStyles(() => ({
   withBorderBottom: {
