@@ -76,7 +76,10 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
 
   useEffect(() => {
     replaceSection(form.form_section);
-    setValue(`sections.${0}.section_field.${0}.field_response`, "test_id");
+    setValue(
+      `sections.${0}.section_field.${0}.field_response`,
+      router.query.otpId
+    );
   }, [form, replaceSection]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {

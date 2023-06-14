@@ -1,6 +1,7 @@
 import { FormType } from "@/utils/types";
 import {
   ActionIcon,
+  FileInput,
   MultiSelect,
   NumberInput,
   Select,
@@ -9,7 +10,7 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
+import { IconCalendar, IconClock, IconFile } from "@tabler/icons-react";
 import { useRef } from "react";
 
 type Props = {
@@ -19,6 +20,7 @@ type Props = {
 const FormField = ({ field }: Props) => {
   const inputProps = {
     variant: "filled",
+    withAsterisk: field.field_is_required,
   };
 
   const ref = useRef<HTMLInputElement>(null);
@@ -110,6 +112,16 @@ const FormField = ({ field }: Props) => {
       //       <Slider min={sliderOption[0]} max={max} step={1} marks={marks} />
       //     </Box>
       //   );
+      case "FILE":
+        return (
+          <FileInput
+            {...inputProps}
+            label={field.field_name}
+            icon={<IconFile size={16} />}
+            clearable
+            multiple={false}
+          />
+        );
     }
   };
 

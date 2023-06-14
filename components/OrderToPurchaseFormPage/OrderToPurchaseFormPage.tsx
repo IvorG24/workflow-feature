@@ -26,6 +26,7 @@ import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import ItemDescription from "./ItemDescription/ItemDescription";
@@ -121,6 +122,7 @@ const OrderToPurchaseFormPage = ({
     form_team_member: {
       team_member_id: form.form_team_member.team_member_id,
       team_member_user: {
+        user_id: uuidv4(),
         user_first_name: "Formsly",
         user_last_name: "",
         user_avatar: "/icon-request-light.svg",

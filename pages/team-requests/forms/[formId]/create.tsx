@@ -1,4 +1,5 @@
 import {
+  checkRequest,
   getAllItems,
   getAllNames,
   getAllProcessors,
@@ -115,6 +116,19 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       }
       // Purchase Order
       else if (formattedForm.form_name === "Purchase Order") {
+        const isRequestIdValid = await checkRequest(supabaseClient, {
+          requestId: [`${ctx.query.otpId}`],
+        });
+
+        if (!isRequestIdValid) {
+          return {
+            redirect: {
+              destination: "/404",
+              permanent: false,
+            },
+          };
+        }
+
         // vendors
         const vendors = await getAllNames(supabaseClient, {
           table: "vendor",
@@ -181,6 +195,19 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       }
       // Invoice
       else if (formattedForm.form_name === "Invoice") {
+        const isRequestIdValid = await checkRequest(supabaseClient, {
+          requestId: [`${ctx.query.otpId}`, `${ctx.query.poId}`],
+        });
+
+        if (!isRequestIdValid) {
+          return {
+            redirect: {
+              destination: "/404",
+              permanent: false,
+            },
+          };
+        }
+
         // accounting processors
         const accountingProcessors = await getAllProcessors(supabaseClient, {
           processor: "accounting",
@@ -225,8 +252,51 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           },
         };
       }
+      // Account Payable Voucher
+      else if (formattedForm.form_name === "Account Payable Voucher ") {
+        const isRequestIdValid = await checkRequest(supabaseClient, {
+          requestId: [
+            `${ctx.query.otpId}`,
+            `${ctx.query.poId}`,
+            `${ctx.query.invoiceId}`,
+          ],
+        });
+
+        if (!isRequestIdValid) {
+          return {
+            redirect: {
+              destination: "/404",
+              permanent: false,
+            },
+          };
+        }
+
+        return {
+          props: {
+            form,
+          },
+        };
+      }
       // Receiving Inspecting Report
       else if (formattedForm.form_name === "Receiving Inspecting Report") {
+        const isRequestIdValid = await checkRequest(supabaseClient, {
+          requestId: [
+            `${ctx.query.otpId}`,
+            `${ctx.query.poId}`,
+            `${ctx.query.invoiceId}`,
+            `${ctx.query.apvId}`,
+          ],
+        });
+
+        if (!isRequestIdValid) {
+          return {
+            redirect: {
+              destination: "/404",
+              permanent: false,
+            },
+          };
+        }
+
         // warehouse receiver
         const warehouseReceivers = await getAllReceivers(supabaseClient, {
           receiver: "warehouse",
