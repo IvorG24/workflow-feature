@@ -15,7 +15,7 @@ import CreateReceivingInspectingReportPage from "@/components/CreateReceivingIns
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { TEMP_USER_ID } from "@/utils/dummyData";
-import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
+import { FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
@@ -27,15 +27,13 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       formId: `${ctx.query.formId}`,
     });
 
-    const formattedForm = form as unknown as FormType;
-
-    if (formattedForm.form_is_formsly_form) {
+    if (form.form_is_formsly_form) {
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: TEMP_USER_ID,
       });
 
       // Order to Purchase Form
-      if (formattedForm.form_name === "Order to Purchase") {
+      if (form.form_name === "Order to Purchase") {
         // items
         const items = await getAllItems(supabaseClient, {
           teamId: teamId,
@@ -43,8 +41,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         const itemOptions = items.map((item, index) => {
           return {
             option_description: null,
-            option_field_id:
-              formattedForm.form_section[1].section_field[0].field_id,
+            option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item.item_id,
             option_order: index,
             option_value: item.item_general_name,
@@ -59,8 +56,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         const projectOptions = projects.map((project, index) => {
           return {
             option_description: null,
-            option_field_id:
-              formattedForm.form_section[0].section_field[0].field_id,
+            option_field_id: form.form_section[0].section_field[0].field_id,
             option_id: project.project_id,
             option_order: index,
             option_value: project.project_name,
@@ -76,8 +72,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           (warehouseProcessor, index) => {
             return {
               option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: warehouseProcessor.warehouse_processor_id,
               option_order: index,
               option_value: `${warehouseProcessor.warehouse_processor_first_name} ${warehouseProcessor.warehouse_processor_last_name} (${warehouseProcessor.warehouse_processor_employee_number})`,
@@ -88,26 +83,26 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         return {
           props: {
             form: {
-              ...formattedForm,
+              ...form,
               form_section: [
                 {
-                  ...formattedForm.form_section[0],
+                  ...form.form_section[0],
                   section_field: [
                     {
-                      ...formattedForm.form_section[0].section_field[0],
+                      ...form.form_section[0].section_field[0],
                       field_option: projectOptions,
                     },
                     {
-                      ...formattedForm.form_section[0].section_field[1],
+                      ...form.form_section[0].section_field[1],
                       field_option: warehouseProcessorOptions,
                     },
-                    ...formattedForm.form_section[0].section_field.slice(
+                    ...form.form_section[0].section_field.slice(
                       2,
-                      formattedForm.form_section[0].section_field.length
+                      form.form_section[0].section_field.length
                     ),
                   ],
                 },
-                formattedForm.form_section[1],
+                form.form_section[1],
               ],
             },
             itemOptions,
@@ -115,7 +110,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         };
       }
       // Purchase Order
-      else if (formattedForm.form_name === "Purchase Order") {
+      else if (form.form_name === "Purchase Order") {
         const isRequestIdValid = await checkRequest(supabaseClient, {
           requestId: [`${ctx.query.otpId}`],
         });
@@ -137,8 +132,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         const vendorOptions = vendors.map((vendor, index) => {
           return {
             option_description: null,
-            option_field_id:
-              formattedForm.form_section[0].section_field[0].field_id,
+            option_field_id: form.form_section[0].section_field[0].field_id,
             option_id: vendor.vendor_id,
             option_order: index,
             option_value: vendor.vendor_name,
@@ -154,8 +148,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           (purchasingProcessor, index) => {
             return {
               option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: purchasingProcessor.purchasing_processor_id,
               option_order: index,
               option_value: `${purchasingProcessor.purchasing_processor_first_name} ${purchasingProcessor.purchasing_processor_last_name} (${purchasingProcessor.purchasing_processor_employee_number})`,
@@ -166,25 +159,25 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         return {
           props: {
             form: {
-              ...formattedForm,
+              ...form,
               form_section: [
                 {
-                  ...formattedForm.form_section[0],
+                  ...form.form_section[0],
                 },
                 {
-                  ...formattedForm.form_section[1],
+                  ...form.form_section[1],
                   section_field: [
                     {
-                      ...formattedForm.form_section[1].section_field[0],
+                      ...form.form_section[1].section_field[0],
                       field_option: purchasingProcessorOptions,
                     },
                     {
-                      ...formattedForm.form_section[1].section_field[1],
+                      ...form.form_section[1].section_field[1],
                       field_option: vendorOptions,
                     },
-                    ...formattedForm.form_section[1].section_field.slice(
+                    ...form.form_section[1].section_field.slice(
                       2,
-                      formattedForm.form_section[1].section_field.length
+                      form.form_section[1].section_field.length
                     ),
                   ],
                 },
@@ -194,7 +187,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         };
       }
       // Invoice
-      else if (formattedForm.form_name === "Invoice") {
+      else if (form.form_name === "Invoice") {
         const isRequestIdValid = await checkRequest(supabaseClient, {
           requestId: [`${ctx.query.otpId}`, `${ctx.query.poId}`],
         });
@@ -217,8 +210,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           (accountingProcessor, index) => {
             return {
               option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: accountingProcessor.accounting_processor_id,
               option_order: index,
               option_value: `${accountingProcessor.accounting_processor_first_name} ${accountingProcessor.accounting_processor_last_name} (${accountingProcessor.accounting_processor_employee_number})`,
@@ -229,21 +221,21 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         return {
           props: {
             form: {
-              ...formattedForm,
+              ...form,
               form_section: [
                 {
-                  ...formattedForm.form_section[0],
+                  ...form.form_section[0],
                 },
                 {
-                  ...formattedForm.form_section[1],
+                  ...form.form_section[1],
                   section_field: [
                     {
-                      ...formattedForm.form_section[1].section_field[0],
+                      ...form.form_section[1].section_field[0],
                       field_option: accountingProcessorOptions,
                     },
-                    ...formattedForm.form_section[1].section_field.slice(
+                    ...form.form_section[1].section_field.slice(
                       1,
-                      formattedForm.form_section[1].section_field.length
+                      form.form_section[1].section_field.length
                     ),
                   ],
                 },
@@ -253,7 +245,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         };
       }
       // Account Payable Voucher
-      else if (formattedForm.form_name === "Account Payable Voucher ") {
+      else if (form.form_name === "Account Payable Voucher ") {
         const isRequestIdValid = await checkRequest(supabaseClient, {
           requestId: [
             `${ctx.query.otpId}`,
@@ -278,7 +270,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         };
       }
       // Receiving Inspecting Report
-      else if (formattedForm.form_name === "Receiving Inspecting Report") {
+      else if (form.form_name === "Receiving Inspecting Report") {
         const isRequestIdValid = await checkRequest(supabaseClient, {
           requestId: [
             `${ctx.query.otpId}`,
@@ -306,8 +298,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           (warehouseReceiver, index) => {
             return {
               option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: warehouseReceiver.warehouse_receiver_id,
               option_order: index,
               option_value: `${warehouseReceiver.warehouse_receiver_first_name} ${warehouseReceiver.warehouse_receiver_last_name} (${warehouseReceiver.warehouse_receiver_employee_number})`,
@@ -318,21 +309,21 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         return {
           props: {
             form: {
-              ...formattedForm,
+              ...form,
               form_section: [
                 {
-                  ...formattedForm.form_section[0],
+                  ...form.form_section[0],
                 },
                 {
-                  ...formattedForm.form_section[1],
+                  ...form.form_section[1],
                   section_field: [
                     {
-                      ...formattedForm.form_section[1].section_field[0],
+                      ...form.form_section[1].section_field[0],
                       field_option: warehouseReceiverOptions,
                     },
-                    ...formattedForm.form_section[1].section_field.slice(
+                    ...form.form_section[1].section_field.slice(
                       1,
-                      formattedForm.form_section[1].section_field.length
+                      form.form_section[1].section_field.length
                     ),
                   ],
                 },
@@ -342,7 +333,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         };
       }
       // Cheque Reference
-      else if (formattedForm.form_name === "Cheque Reference") {
+      else if (form.form_name === "Cheque Reference") {
         // warehouse receiver
         const treasuryProcessors = await getAllProcessors(supabaseClient, {
           processor: "treasury",
@@ -352,8 +343,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           (treasuryProcessor, index) => {
             return {
               option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: treasuryProcessor.treasury_processor_id,
               option_order: index,
               option_value: `${treasuryProcessor.treasury_processor_first_name} ${treasuryProcessor.treasury_processor_last_name} (${treasuryProcessor.treasury_processor_employee_number})`,
@@ -364,23 +354,23 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         return {
           props: {
             form: {
-              ...formattedForm,
+              ...form,
               form_section: [
                 {
-                  ...formattedForm.form_section[0],
+                  ...form.form_section[0],
                   section_field: [
                     {
-                      ...formattedForm.form_section[0].section_field[0],
+                      ...form.form_section[0].section_field[0],
                       field_option: treasuryProcessorOptions,
                     },
-                    ...formattedForm.form_section[0].section_field.slice(
+                    ...form.form_section[0].section_field.slice(
                       1,
-                      formattedForm.form_section[0].section_field.length
+                      form.form_section[0].section_field.length
                     ),
                   ],
                 },
                 {
-                  ...formattedForm.form_section[1],
+                  ...form.form_section[1],
                 },
               ],
             },
@@ -388,7 +378,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         };
       }
       // Audit
-      else if (formattedForm.form_name === "Audit") {
+      else if (form.form_name === "Audit") {
         // accounting processors
         const auditProcessors = await getAllProcessors(supabaseClient, {
           processor: "audit",
@@ -398,8 +388,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
           (auditProcessor, index) => {
             return {
               option_description: null,
-              option_field_id:
-                formattedForm.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: auditProcessor.audit_processor_id,
               option_order: index,
               option_value: `${auditProcessor.audit_processor_first_name} ${auditProcessor.audit_processor_last_name} (${auditProcessor.audit_processor_employee_number})`,
@@ -410,18 +399,18 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         return {
           props: {
             form: {
-              ...formattedForm,
+              ...form,
               form_section: [
                 {
-                  ...formattedForm.form_section[0],
+                  ...form.form_section[0],
                   section_field: [
                     {
-                      ...formattedForm.form_section[0].section_field[0],
+                      ...form.form_section[0].section_field[0],
                       field_option: accountingProcessorOptions,
                     },
-                    ...formattedForm.form_section[0].section_field.slice(
+                    ...form.form_section[0].section_field.slice(
                       1,
-                      formattedForm.form_section[0].section_field.length
+                      form.form_section[0].section_field.length
                     ),
                   ],
                 },

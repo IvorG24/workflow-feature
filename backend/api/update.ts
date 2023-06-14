@@ -154,18 +154,6 @@ export const approveOrRejectRequest = async (
       .eq("request_id", requestId)
       .select();
     if (updateRequestError) throw updateRequestError;
-
-    // create notification
-    await createNotification(supabaseClient, {
-      notification_app: "REQUEST",
-      notification_type: present[requestAction],
-      notification_content: `Your ${formName} request is ${lowerCase(
-        requestAction
-      )}`,
-      notification_redirect_url: `/team-requests/requests/${requestId}`,
-      notification_user_id: requestOwnerId,
-      notification_team_id: teamId,
-    });
   }
 };
 

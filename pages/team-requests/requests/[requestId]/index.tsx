@@ -19,7 +19,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     const request = await getRequest(supabaseClient, {
       requestId: `${ctx.query.requestId}`,
     });
-    const formattedRequest = request as unknown as RequestWithResponseType;
 
     const teamId = await getUserActiveTeamId(supabaseClient, {
       userId: TEMP_USER_ID,
@@ -27,9 +26,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
     const connectedFormID = await getFormslyFormId(supabaseClient, {
       formName:
-        FORM_CONNECTION[
-          formattedRequest.request_form.form_name as ConnectedFormsType
-        ],
+        FORM_CONNECTION[request.request_form.form_name as ConnectedFormsType],
       teamId,
     });
 

@@ -49,9 +49,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       teamId,
     });
 
-    const formattedForm = form as unknown as FormType;
-    if (formattedForm.form_is_formsly_form) {
-      if (formattedForm.form_name === "Order to Purchase") {
+    if (form.form_is_formsly_form) {
+      if (form.form_name === "Order to Purchase") {
         const { data: items, count: itemListCount } = await getItemList(
           supabaseClient,
           {
@@ -93,7 +92,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             warehouseProcessorListCount,
           },
         };
-      } else if (formattedForm.form_name === "Purchase Order") {
+      } else if (form.form_name === "Purchase Order") {
         const { data: vendors, count: vendorListCount } = await getNameList(
           supabaseClient,
           {
@@ -123,7 +122,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             purchasingProcessorListCount,
           },
         };
-      } else if (formattedForm.form_name === "Invoice") {
+      } else if (form.form_name === "Invoice") {
         const {
           data: accountingProcessors,
           count: accountingProcessorListCount,
@@ -141,7 +140,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             accountingProcessorListCount,
           },
         };
-      } else if (formattedForm.form_name === "Receiving Inspecting Report") {
+      } else if (form.form_name === "Receiving Inspecting Report") {
         const { data: warehouseReceivers, count: warehouseReceiverListCount } =
           await getReceiverList(supabaseClient, {
             receiver: "warehouse",
@@ -157,7 +156,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             warehouseReceiverListCount,
           },
         };
-      } else if (formattedForm.form_name === "Cheque Reference") {
+      } else if (form.form_name === "Cheque Reference") {
         const { data: treasuryProcessors, count: treasuryProcessorListCount } =
           await getProcessorList(supabaseClient, {
             processor: "treasury",
@@ -173,7 +172,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             treasuryProcessorListCount,
           },
         };
-      } else if (formattedForm.form_name === "Audit") {
+      } else if (form.form_name === "Audit") {
         const { data: auditProcessors, count: auditProcessorListCount } =
           await getProcessorList(supabaseClient, {
             processor: "audit",

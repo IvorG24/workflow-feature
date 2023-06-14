@@ -57,7 +57,7 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 
 -- Cheque Reference
 ('2217dcb5-0604-4455-b15a-6beb4ee4fa9f', 'Treasury', 1, false, '913a09d8-88f9-4139-a039-a77394405b62'),
-('5ec2a535-7855-48dd-ab14-318a5344409d', 'Cheque', 1, false, '913a09d8-88f9-4139-a039-a77394405b62'),
+('5ec2a535-7855-48dd-ab14-318a5344409d', 'Cheque', 2, false, '913a09d8-88f9-4139-a039-a77394405b62'),
 
 -- Audit
 ('8efd8c64-d1e7-45d4-a761-631db06d9a08', 'Main', 1, false, 'd2e3e618-7f9b-4439-8f76-72a05a0bf305');
@@ -96,15 +96,15 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
-('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 1, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 2, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('59a6093c-5733-44c0-8a99-e12011207ff8', 'Length', 'DROPDOWN', 3, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d527a714-a49a-4162-a851-f73553f6bea1', 'Width', 'DROPDOWN', 3, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('743ac520-e8a8-4801-a89b-abe4d666ff68', 'Height', 'DROPDOWN', 3, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84b92308-11bf-47b4-b006-00894ea3640d', 'Type', 'DROPDOWN', 3, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('2d0a3a6c-107d-4f86-bf3d-87a98607f832', 'Brand', 'DROPDOWN', 3, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('ed1f9bbd-deab-4576-b83d-965b16b98522', 'Material', 'DROPDOWN', 3, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84e06984-45eb-4947-913e-7882e20f3bfd', 'Size', 'DROPDOWN', 3, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('59a6093c-5733-44c0-8a99-e12011207ff8', 'Length', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d527a714-a49a-4162-a851-f73553f6bea1', 'Width', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('743ac520-e8a8-4801-a89b-abe4d666ff68', 'Height', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('84b92308-11bf-47b4-b006-00894ea3640d', 'Type', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('2d0a3a6c-107d-4f86-bf3d-87a98607f832', 'Brand', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('ed1f9bbd-deab-4576-b83d-965b16b98522', 'Material', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('84e06984-45eb-4947-913e-7882e20f3bfd', 'Size', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
 
 -- Purchase Order Form
 ('1582b98c-c8a0-4a2c-a802-771a7f3bc248', 'Order to Purchase ID', 'LINK', 1, 'f052f7da-a130-41db-a6ef-6150fbb9cd06', true, true),
@@ -192,7 +192,7 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 
 -- Audit Form
 ('c252a774-c364-4a37-8563-42467ff17a9f', 'Pass', 1, '01ce24b8-780b-46af-8b15-864da9c20528'),
-('762aace6-aa47-4ece-a6a3-dc251ded05fd', 'Fail', 3, '01ce24b8-780b-46af-8b15-864da9c20528');
+('762aace6-aa47-4ece-a6a3-dc251ded05fd', 'Fail', 2, '01ce24b8-780b-46af-8b15-864da9c20528');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
