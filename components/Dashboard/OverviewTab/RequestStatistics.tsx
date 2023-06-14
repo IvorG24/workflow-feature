@@ -1,21 +1,16 @@
 import { getStatusToColor } from "@/utils/styling";
 import { RequestType } from "@/utils/types";
+import { ActionIcon, Flex, Group, Paper, Text, Title } from "@mantine/core";
 import {
-  ActionIcon,
-  Flex,
-  Group,
-  Paper,
-  ScrollArea,
-  Text,
-  Title,
-} from "@mantine/core";
-import { IconSquareRoundedFilled } from "@tabler/icons-react";
+  IconChartHistogram,
+  IconSquareRoundedFilled,
+} from "@tabler/icons-react";
 import { lowerCase } from "lodash";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import StackedBarChart from "./StackedBarChart";
+import StackedBarChart from "../../Chart/StackedBarChart";
 
-const status = ["Approved", "Rejected", "Pending"];
+const status = ["Approved", "Pending", "Rejected"];
 
 type ChartData = {
   month: string;
@@ -106,13 +101,16 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
 
   return (
     <Paper
-      w={{ base: "100%", sm: 500, md: "fit-content" }}
-      p={{ base: "sm", sm: "md" }}
+      w={{ base: "100%", sm: 500, md: 700 }}
+      p={{ base: "sm", sm: "lg" }}
       mt="xl"
       h="fit-content"
     >
-      <Group px={{ base: 0, sm: "md" }} position="apart">
-        <Title order={3}>Request Statistics</Title>
+      <Group mb="md" align="center" position="apart">
+        <Group>
+          <IconChartHistogram />
+          <Title order={3}>Request Statistics</Title>
+        </Group>
         <Flex gap="sm">
           {status.map((stat, idx) => (
             <Group spacing={4} key={stat + idx}>
@@ -124,13 +122,7 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
           ))}
         </Flex>
       </Group>
-      <ScrollArea
-        type="always"
-        w={{ base: 300, sm: 480, md: 700 }}
-        h="fit-content"
-      >
-        <StackedBarChart data={chartData} />
-      </ScrollArea>
+      <StackedBarChart data={chartData} />
     </Paper>
   );
 };

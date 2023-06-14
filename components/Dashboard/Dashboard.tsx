@@ -5,20 +5,24 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { RequestType, TeamMemberWithUserType } from "@/utils/types";
 import {
   Container,
-  Flex,
   LoadingOverlay,
   Paper,
   Select,
+  Tabs,
+  Text,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { lowerCase } from "lodash";
+import {
+  IconChartHistogram,
+  IconMessageCircle,
+  IconReportAnalytics,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import OrderToPurchaseAnalytics from "../OrderToPurchaseAnalyticsPage/OrderToPurchaseAnalytics";
-import RequestCountByStatus from "./RequestCountByStatus";
-import RequestStatistics from "./RequestStatistics";
-import RequestorTable from "./RequestorTable";
+import Overview from "./OverviewTab/Overview";
+import ResponseData from "./ResponseTab/ResponseDataChart";
 
 type DashboardProps = {
   requestList: RequestType[];
@@ -28,13 +32,6 @@ type DashboardProps = {
   userRequisitionData?: OTPDataType;
   purchaseRequisitionData?: OTPDataType;
 };
-
-export type RequestorListType =
-  (RequestType["request_team_member"]["team_member_user"] & {
-    count: number;
-  })[];
-
-const status = ["Approved", "Rejected", "Pending", "Canceled"];
 
 const Dashboard = ({
   requestList,
@@ -55,43 +52,6 @@ const Dashboard = ({
   const isFormslyForm = formList.find(
     (form) => form.form_id === selectedForm
   )?.form_is_formsly_form;
-
-  // get all requestor and display in RequestorTable
-  const requestorList =
-    visibleRequestList.map(
-      (request) => request.request_team_member.team_member_user
-    ) || [];
-  const reducedRequestorList = requestorList.reduce((accumulator, user) => {
-    const { user_id } = user;
-    const duplicateIndex = accumulator.findIndex(
-      (duplicate) => duplicate.user_id === user_id
-    );
-    if (duplicateIndex >= 0) {
-      accumulator[duplicateIndex].count++;
-    } else {
-      accumulator[accumulator.length] = {
-        ...user,
-        count: 1,
-      };
-    }
-    return accumulator;
-  }, [] as RequestorListType);
-
-  // get request status meter data
-  const requestStatusMeterData = status.map((status) => {
-    const requestMatch =
-      visibleRequestList.filter(
-        (request) => lowerCase(request.request_status) === lowerCase(status)
-      ) || [];
-
-    const meterData = {
-      label: status,
-      value: requestMatch.length,
-      totalCount: requestCount,
-    };
-
-    return meterData;
-  });
 
   // filter data by selected request form
   const handleFilterRequestList = async (value: string) => {
@@ -124,8 +84,8 @@ const Dashboard = ({
       <Select
         maw={300}
         mb="sm"
-        label="Filter data by form"
-        placeholder="Select form"
+        label="Select Form"
+        placeholder="All forms"
         data={formList.map((form) => ({
           value: form.form_id,
           label: form.form_name,
@@ -134,36 +94,61 @@ const Dashboard = ({
         onChange={handleFilterRequestList}
         clearable
       />
-      <Flex gap="sm" wrap="wrap">
-        {requestStatusMeterData.map((meter, idx) => (
-          <RequestCountByStatus key={meter.label + idx} {...meter} />
-        ))}
-      </Flex>
-      <Flex gap="xl" wrap="wrap">
-        <RequestStatistics requestList={visibleRequestList} />
-        {requestorList.length > 0 && (
-          <RequestorTable
-            requestorList={reducedRequestorList}
-            totalRequest={requestCount}
-          />
-        )}
-        {isFormslyForm && (
-          <Paper
-            mt="xl"
-            p="xl"
-            w={{ base: "100%", sm: 500, md: "fit-content" }}
+
+      <Tabs defaultValue="overview">
+        <Tabs.List>
+          <Tabs.Tab
+            value="overview"
+            icon={<IconReportAnalytics size="0.8rem" />}
           >
-            <Title order={3} mb="md">
-              Requisition Data
-            </Title>
-            <OrderToPurchaseAnalytics
-              teamOrderToPurchaseData={teamRequisitionData}
-              userOrderToPurchaseData={userRequisitionData}
-              purchaseOrderToPurchaseData={purchaseRequisitionData}
-            />
-          </Paper>
-        )}
-      </Flex>
+            Overview
+          </Tabs.Tab>
+          <Tabs.Tab
+            value="responses"
+            icon={<IconMessageCircle size="0.8rem" />}
+          >
+            Responses
+          </Tabs.Tab>
+          <Tabs.Tab
+            value="requisition"
+            icon={<IconChartHistogram size="0.8rem" />}
+          >
+            Requisition
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="overview" pt="xs">
+          <Overview
+            requestList={visibleRequestList}
+            requestCount={requestCount}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="responses" pt="xs">
+          <ResponseData selectedForm={selectedForm} />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="requisition" pt="xs">
+          {isFormslyForm ? (
+            <Paper
+              mt="xl"
+              p="xl"
+              w={{ base: "100%", sm: 500, md: "fit-content" }}
+            >
+              <Title order={3} mb="md">
+                Requisition Data
+              </Title>
+              <OrderToPurchaseAnalytics
+                teamOrderToPurchaseData={teamRequisitionData}
+                userOrderToPurchaseData={userRequisitionData}
+                purchaseOrderToPurchaseData={purchaseRequisitionData}
+              />
+            </Paper>
+          ) : (
+            <Text>No data available.</Text>
+          )}
+        </Tabs.Panel>
+      </Tabs>
     </Container>
   );
 };

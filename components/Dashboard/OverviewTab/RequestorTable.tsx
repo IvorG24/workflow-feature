@@ -1,7 +1,6 @@
 import { getAvatarColor } from "@/utils/styling";
 import {
   Avatar,
-  Box,
   Group,
   Paper,
   Progress,
@@ -10,7 +9,8 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
-import { RequestorListType } from "./Dashboard";
+import { IconTrophy } from "@tabler/icons-react";
+import { RequestorListType } from "./Overview";
 
 const useStyles = createStyles(() => ({
   withBorderBottom: {
@@ -30,12 +30,13 @@ const RequestorTable = ({
   const { classes } = useStyles();
   return (
     <Paper w={{ base: "100%", sm: 320 }} mt="xl" h="fit-content" withBorder>
-      <Box p="sm" className={classes.withBorderBottom}>
+      <Group p="sm" className={classes.withBorderBottom}>
+        <IconTrophy />
         <Title order={4}>Requestor Ranking</Title>
-      </Box>
+      </Group>
 
       <Stack p="sm" my="sm">
-        {requestorList.map((requestor) => (
+        {requestorList.map((requestor, idx) => (
           <Stack key={requestor.user_id}>
             <Group position="apart">
               <Group spacing="xs">
@@ -59,6 +60,7 @@ const RequestorTable = ({
             <Progress
               size="sm"
               value={(requestor.count / totalRequest) * 100}
+              color={idx % 2 === 0 ? "#339AF0" : "#FF6B6B"}
             />
           </Stack>
         ))}
