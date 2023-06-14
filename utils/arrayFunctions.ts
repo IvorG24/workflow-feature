@@ -1,7 +1,13 @@
+import { lowerCase } from "lodash";
+import moment from "moment";
 import {
   FieldTableRow,
+  FieldType,
+  FieldWithResponseType,
   OptionTableRow,
   RequestResponseTableRow,
+  ResponseDataType,
+  SearchKeywordResponseType,
   SectionTableRow,
 } from "./types";
 
@@ -93,4 +99,103 @@ export const generateSectionWithDuplicateList = (
   });
 
   return sectionWithDuplicateList;
+};
+
+export const parseResponse = (field_type: string, responseValue: string) => {
+  switch (field_type) {
+    case "DATE":
+      return moment(responseValue).format("MMM D, YYYY");
+
+    default:
+      return JSON.parse(responseValue);
+  }
+};
+
+export const responseFieldReducer = (response: FieldWithResponseType) => {
+  const reducedFieldWithResponse = response.reduce((acc, field) => {
+    const index = acc.findIndex((d) => d.id === field.field_id);
+
+    const reducedResponses = field.field_response.reduce((acc, response) => {
+      const parseResponseValue =
+        field.field_type === "MULTISELECT"
+          ? JSON.parse(response.request_response)[0]
+          : JSON.parse(response.request_response);
+
+      const responseMatchIndex = acc.findIndex(
+        (responseItem) =>
+          lowerCase(responseItem.label) === lowerCase(parseResponseValue)
+      );
+
+      if (responseMatchIndex >= 0) {
+        acc[responseMatchIndex].count++;
+      } else {
+        if (field.field_type === "MULTISELECT") {
+          const responseValues = JSON.parse(response.request_response);
+          responseValues.forEach((value: string) => {
+            acc[acc.length] = {
+              label: parseResponse(field.field_type, JSON.stringify(value)),
+              count: 1,
+            };
+          });
+        } else {
+          acc[acc.length] = {
+            label: parseResponse(field.field_type, response.request_response),
+            count: 1,
+          };
+        }
+      }
+
+      return acc;
+    }, [] as ResponseDataType[0]["responseList"]);
+
+    const options = field.field_option.map((option) => option.option_value);
+
+    if (index >= 0) {
+      acc[index].responseList = reducedResponses;
+    } else {
+      acc[acc.length] = {
+        id: field.field_id,
+        type: field.field_type as FieldType,
+        label: field.field_name,
+        optionList: options,
+        responseList: reducedResponses,
+      };
+    }
+
+    return acc;
+  }, [] as ResponseDataType);
+
+  return reducedFieldWithResponse;
+};
+
+export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
+  return data.reduce((acc, item) => {
+    const existingItem = acc.find(
+      (x) => x.id === item.request_response_field_id
+    );
+    const label = item.response_field.field_name;
+    const parseResponse = JSON.parse(item.request_response);
+    const responseItem = { label: parseResponse, count: 1 };
+
+    if (existingItem) {
+      const duplicateResponseIndex = existingItem.responseList.findIndex(
+        (d) => d.label === parseResponse
+      );
+      if (duplicateResponseIndex >= 0) {
+        existingItem.responseList[duplicateResponseIndex].count++;
+      } else {
+        existingItem.responseList.push(responseItem);
+      }
+    } else {
+      const newItem: ResponseDataType[0] = {
+        id: item.request_response_field_id,
+        type: item.response_field.field_type as FieldType,
+        label,
+        optionList: [],
+        responseList: [responseItem],
+      };
+      acc[acc.length] = newItem;
+    }
+    return acc;
+  }, [] as ResponseDataType);
 };

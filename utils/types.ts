@@ -525,8 +525,27 @@ export type RequestByFormType = RequestTableRow & {
     };
   })[];
 };
+
 export type ConnectedFormsType =
   | "Order to Purchase"
   | "Purchase Order"
   | "Invoice"
   | "Account Payable Voucher";
+
+export type SearchKeywordResponseType = RequestResponseTableRow & {
+  request_form: {
+    request_id: string;
+    request_form_id: string;
+  };
+} & { response_field: FieldTableRow };
+
+export type FieldWithResponseType =
+  RequestByFormType["request_form"]["form_section"][0]["section_field"];
+
+export type ResponseDataType = {
+  id: string;
+  type: FieldType;
+  label: string;
+  optionList: string[];
+  responseList: { label: string; count: number }[];
+}[];

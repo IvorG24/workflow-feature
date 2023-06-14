@@ -1123,3 +1123,27 @@ export const checkRequest = async (
   if (error) throw error;
   return count === requestId.length;
 };
+
+// Get response data by keyword
+export const getResponseDataByKeyword = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    keyword: string;
+    formId: string;
+  }
+) => {
+  const { keyword, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "*, response_field: request_response_field_id!inner(*), request_form: request_response_request_id!inner(request_id, request_form_id)"
+    )
+    .eq("request_form.request_form_id", formId)
+    .in("response_field.field_type", ["TEXT", "TEXTAREA"])
+    .ilike("request_response", `%${keyword}%`);
+
+  console.log(error);
+  if (error) throw error;
+
+  return data;
+};

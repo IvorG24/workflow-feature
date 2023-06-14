@@ -1,106 +1,47 @@
-import { getRequestListByForm } from "@/backend/api/get";
-import { FieldType, RequestByFormType } from "@/utils/types";
 import {
-  Alert,
+  getRequestListByForm,
+  getResponseDataByKeyword,
+} from "@/backend/api/get";
+import {
+  responseFieldReducer,
+  searchResponseReducer,
+} from "@/utils/arrayFunctions";
+import {
+  FieldWithResponseType,
+  ResponseDataType,
+  SearchKeywordResponseType,
+} from "@/utils/types";
+import {
+  Button,
   Container,
   Flex,
+  Group,
   LoadingOverlay,
+  Paper,
+  Text,
   TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle, IconSearch } from "@tabler/icons-react";
-import { lowerCase } from "lodash";
-import moment from "moment";
+import {
+  IconBrandSupabase,
+  IconMessageSearch,
+  IconSearch,
+} from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import ResponseTable from "./ResponseTable";
-
-export type ResponseDataType = {
-  id: string;
-  isPositiveMetric: boolean;
-  type: FieldType;
-  label: string;
-  optionList: string[];
-  responseList: { label: string; count: number }[];
-}[];
 
 type ResponseDataProps = {
   selectedForm: string | null;
 };
 
-type FieldWithResponseType =
-  RequestByFormType["request_form"]["form_section"][0]["section_field"];
+type FormValues = {
+  search: string;
+};
 
 const dynamicTypes = ["TEXT", "TEXTAREA"];
-
-const parseResponse = (field_type: string, responseValue: string) => {
-  switch (field_type) {
-    case "DATE":
-      return moment(responseValue).format("MMM D, YYYY");
-
-    default:
-      return JSON.parse(responseValue);
-  }
-};
-
-const responseFieldReducer = (response: FieldWithResponseType) => {
-  const reducedFieldWithResponse = response.reduce((acc, field) => {
-    const index = acc.findIndex((d) => d.id === field.field_id);
-
-    const reducedResponses = field.field_response.reduce((acc, response) => {
-      const parseResponseValue =
-        field.field_type === "MULTISELECT"
-          ? JSON.parse(response.request_response)[0]
-          : JSON.parse(response.request_response);
-
-      const responseMatchIndex = acc.findIndex(
-        (responseItem) =>
-          lowerCase(responseItem.label) === lowerCase(parseResponseValue)
-      );
-
-      if (responseMatchIndex >= 0) {
-        acc[responseMatchIndex].count++;
-      } else {
-        if (field.field_type === "MULTISELECT") {
-          const responseValues = JSON.parse(response.request_response);
-          responseValues.forEach((value: string) => {
-            acc[acc.length] = {
-              label: parseResponse(field.field_type, JSON.stringify(value)),
-              count: 1,
-            };
-          });
-        } else {
-          acc[acc.length] = {
-            label: parseResponse(field.field_type, response.request_response),
-            count: 1,
-          };
-        }
-      }
-
-      return acc;
-    }, [] as ResponseDataType[0]["responseList"]);
-
-    const options = field.field_option.map((option) => option.option_value);
-
-    if (index >= 0) {
-      acc[index].responseList = reducedResponses;
-    } else {
-      acc[acc.length] = {
-        id: field.field_id,
-        isPositiveMetric: field.field_is_positive_metric,
-        type: field.field_type as FieldType,
-        label: field.field_name,
-        optionList: options,
-        responseList: reducedResponses,
-      };
-    }
-
-    return acc;
-  }, [] as ResponseDataType);
-
-  return reducedFieldWithResponse;
-};
 
 const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   const supabaseClient = useSupabaseClient();
@@ -109,6 +50,50 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   const [responseData, setResponseData] = useState<ResponseDataType | null>(
     null
   );
+  const [searchKeywordResponse, setSearchKeywordResponse] =
+    useState<ResponseDataType | null>(null);
+
+  const {
+    handleSubmit,
+    register,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<FormValues>();
+
+  const keywordValue = useWatch({
+    control,
+    name: "search",
+  });
+
+  const handleSearchByKeyword = async (data: FormValues) => {
+    try {
+      setIsFetchingData(true);
+      if (selectedForm === null) {
+        return notifications.show({
+          title: "Please select a form",
+          message: "Choose a form from the form filter.",
+          color: "orange",
+        });
+      }
+      const searchData = await getResponseDataByKeyword(supabaseClient, {
+        formId: selectedForm as string,
+        keyword: data.search,
+      });
+      const reducedSearchData = searchResponseReducer(
+        searchData as SearchKeywordResponseType[]
+      );
+      setSearchKeywordResponse(reducedSearchData);
+    } catch (error) {
+      notifications.show({
+        title: "Can't fetch data at the moment.",
+        message: "Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingData(false);
+    }
+  };
 
   const handleFetchResponseData = async () => {
     try {
@@ -120,23 +105,19 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
           color: "orange",
         });
       }
-
       const requestList = await getRequestListByForm(supabaseClient, {
         formId: selectedForm,
       });
-
       const sectionList = requestList.flatMap(
         (request) => request.request_form.form_section
       );
       const fieldWithResponse: FieldWithResponseType = [];
-
       sectionList.forEach((section) =>
         section.section_field.forEach((field) => fieldWithResponse.push(field))
       );
-
       const reducedFieldWithResponse = responseFieldReducer(fieldWithResponse);
       const nonDynamicResponseList = reducedFieldWithResponse.filter(
-        (field) => !dynamicTypes.includes(field.type)
+        (field: ResponseDataType[0]) => !dynamicTypes.includes(field.type)
       );
       setResponseData(nonDynamicResponseList);
     } catch (error) {
@@ -154,6 +135,7 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
     if (prevSelectedFormProp.current !== selectedForm) {
       //re-fetch data
       handleFetchResponseData();
+      reset();
     } else if (!selectedForm) {
       setResponseData(null);
     }
@@ -162,30 +144,57 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   return (
     <Container mt="sm" fluid>
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
-      <Alert mb="md" icon={<IconAlertCircle size="1rem" />} title="Notice!">
-        Text and Textarea fields are dynamic types and require manual data
-        generation for responses. Please use the keyword search to generate the
-        desired response data.
-      </Alert>
-      <Flex gap="md" align="center" wrap="wrap">
-        <TextInput
-          w={320}
-          placeholder="Search response data by keyword"
-          icon={<IconSearch size="16px" />}
-        />
-      </Flex>
+      <form onSubmit={handleSubmit(handleSearchByKeyword)}>
+        <Group spacing={8}>
+          <TextInput
+            w="100%"
+            maw={320}
+            placeholder="Search response data by keyword"
+            icon={<IconSearch size="16px" />}
+            {...register("search", {
+              required: "Search keyword must not be empty.",
+            })}
+            error={errors.search?.message}
+          />
+          <Button type="submit">Search</Button>
+        </Group>
+      </form>
 
-      <Flex wrap="wrap" gap="md">
-        {responseData && responseData.length > 0 ? (
-          responseData.map((response, idx) => (
-            <ResponseTable key={response.label + idx} response={response} />
-          ))
-        ) : (
-          <Title mt="xl" order={3} align="center">
-            No data available.
-          </Title>
-        )}
-      </Flex>
+      {keywordValue && searchKeywordResponse && (
+        <Paper mt="sm" p="md" w="fit-content">
+          <Group>
+            <IconMessageSearch />
+            <Title order={3}>Keyword Search Data</Title>
+          </Group>
+
+          <Flex wrap="wrap" gap="md">
+            {searchKeywordResponse.map((response, idx) => (
+              <ResponseTable key={response.label + idx} response={response} />
+            ))}
+          </Flex>
+          {searchKeywordResponse.length <= 0 && (
+            <Text mt="xl">No matching results found.</Text>
+          )}
+        </Paper>
+      )}
+
+      {responseData && responseData.length > 0 ? (
+        <Paper mt="sm" p="md" w="fit-content">
+          <Group>
+            <IconBrandSupabase />
+            <Title order={3}>Field Response Data</Title>
+          </Group>
+          <Flex wrap="wrap" gap="md">
+            {responseData.map((response, idx) => (
+              <ResponseTable key={response.label + idx} response={response} />
+            ))}
+          </Flex>
+        </Paper>
+      ) : (
+        <Title mt="xl" order={3} align="center">
+          No data available.
+        </Title>
+      )}
     </Container>
   );
 };
