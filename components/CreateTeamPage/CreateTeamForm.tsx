@@ -9,23 +9,25 @@ import { useUserProfile } from "@/stores/useUserStore";
 import { TeamMemberTableRow, TeamTableRow } from "@/utils/types";
 import {
   Button,
-  FileInput,
+  Center,
   Flex,
   LoadingOverlay,
   Paper,
   Stack,
+  Switch,
   TextInput,
   Title,
   rem,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconArrowLeft, IconUpload } from "@tabler/icons-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import validator from "validator";
+import UploadLogo from "../UploadLogo/UploadAvatar";
 
 type CreateFormProps = {
   changeStep: Dispatch<SetStateAction<number>>;
@@ -36,6 +38,7 @@ type CreateFormProps = {
 type FormValues = {
   teamName: string;
   teamLogo: File | null;
+  isWithFormslyForms: boolean;
 };
 
 const isValidImage = (mimeType: string) => {
@@ -99,9 +102,11 @@ const CreateTeamForm = ({
         })
       )[0];
 
-      await createFormslyPremadeForms(supabaseClient, {
-        teamMemberId: ownerData.team_member_id,
-      });
+      if (data.isWithFormslyForms) {
+        await createFormslyPremadeForms(supabaseClient, {
+          teamMemberId: ownerData.team_member_id,
+        });
+      }
 
       if (teamData && ownerData) {
         const updatedTeamList = [teamData, ...teamList];
@@ -123,32 +128,25 @@ const CreateTeamForm = ({
   return (
     <Paper p="xl" mt="xl">
       <form onSubmit={handleSubmit(handleCreateTeam)}>
-        {" "}
         <LoadingOverlay visible={isCreatingTeam} overlayBlur={2} />
         <Stack spacing="lg">
           <Title order={4}>Enter team details</Title>
-          <TextInput
-            label="Team Name"
-            withAsterisk
-            {...register("teamName", { required: true })}
-            error={errors.teamName?.message}
-          />
-
           <Controller
             control={control}
             name="teamLogo"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <FileInput
-                label="Team Logo"
-                description="Only JPEG and PNG images are allowed."
-                placeholder="Upload team logo"
-                value={value}
-                onChange={(value) => onChange(value)}
-                error={error?.message}
-                icon={<IconUpload size={rem(14)} />}
-                accept="image/png,image/jpeg"
-                clearable
-              />
+            render={({ field: { onChange, value } }) => (
+              <Center mt="lg">
+                <UploadLogo
+                  onChange={(value) => onChange(value)}
+                  value={value}
+                  onError={(error: string) =>
+                    notifications.show({
+                      message: error,
+                      color: "red",
+                    })
+                  }
+                />
+              </Center>
             )}
             rules={{
               validate: (v) => {
@@ -162,6 +160,29 @@ const CreateTeamForm = ({
               },
             }}
           />
+
+          <TextInput
+            label="Team Name"
+            withAsterisk
+            {...register("teamName", { required: true })}
+            error={errors.teamName?.message}
+          />
+
+          <Controller
+            control={control}
+            name="isWithFormslyForms"
+            render={({ field: { value, onChange } }) => (
+              <Switch
+                checked={value as boolean}
+                onChange={(e) => onChange(e.currentTarget.checked)}
+                mt="xs"
+                sx={{ label: { cursor: "pointer" } }}
+                error={errors.isWithFormslyForms?.message}
+                label="Create with Formsly pre-made forms"
+              />
+            )}
+          />
+
           <Flex gap="md" wrap="wrap">
             <Button
               sx={{ flex: 1 }}
