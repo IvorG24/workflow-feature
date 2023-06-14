@@ -7,6 +7,7 @@ import {
   Center,
   Checkbox,
   Container,
+  FileInput,
   Flex,
   Group,
   MultiSelect,
@@ -28,6 +29,7 @@ import {
   IconCalendar,
   IconCirclePlus,
   IconClock,
+  IconFile,
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
@@ -167,6 +169,7 @@ const Field = ({
     { value: "DATE", label: "Date" },
     { value: "TIME", label: "Time" },
     { value: "SWITCH", label: "Switch" },
+    { value: "FILE", label: "File" },
   ];
 
   const reviewTypeOptions = [
@@ -376,6 +379,19 @@ const Field = ({
             }
           />
         )}
+
+        {fieldType === "FILE" && (
+          <FileInput
+            {...field}
+            label={label}
+            readOnly={mode === "view"}
+            withAsterisk={isFieldRequired}
+            className={classes.previewField}
+            icon={<IconFile size={16} />}
+            clearable
+            multiple={false}
+          />
+        )}
       </Box>
     );
   }
@@ -398,7 +414,8 @@ const Field = ({
         fieldType === "NUMBER" ||
         fieldType === "DATE" ||
         fieldType === "SWITCH" ||
-        fieldType === "TIME") && (
+        fieldType === "TIME" ||
+        fieldType === "FILE") && (
         <Container fluid p={24}>
           <FieldTypeDropdown
             sectionIndex={sectionIndex}

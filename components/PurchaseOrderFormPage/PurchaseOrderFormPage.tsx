@@ -31,6 +31,7 @@ import CreatePurchasingProcessor from "./PurchasingProcessorList/CreatePurchasin
 import PurchasingProcessorList from "./PurchasingProcessorList/PurchasingProcessorList";
 import CreateVendor from "./VendorList/CreateVendor";
 import VendorList from "./VendorList/VendorList";
+import { v4 as uuidv4 } from "uuid";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
@@ -107,6 +108,7 @@ const PurchaseOrderFormPage = ({
     form_team_member: {
       team_member_id: form.form_team_member.team_member_id,
       team_member_user: {
+        user_id: uuidv4(),
         user_first_name: "Formsly",
         user_last_name: "",
         user_avatar: "/icon-request-light.svg",
@@ -185,11 +187,7 @@ const PurchaseOrderFormPage = ({
           >
             Analytics
           </Button>
-          <Button
-            onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
-          >
-            Create Request
-          </Button>
+        
         </Group>
       </Flex>
       <Space h="xl" />

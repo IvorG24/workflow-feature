@@ -1,5 +1,8 @@
+import { requestPath } from "@/utils/string";
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
+  ActionIcon,
+  Flex,
   MultiSelect,
   NumberInput,
   Select,
@@ -8,7 +11,12 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
+import {
+  IconCalendar,
+  IconClock,
+  IconExternalLink,
+  IconFile,
+} from "@tabler/icons-react";
 
 type RequestReponseProps = {
   response: {
@@ -31,10 +39,29 @@ const RequestResponse = ({
   };
 
   const renderResponse = (response: RequestReponseProps["response"]) => {
-
     const parsedValue = response.value === "" ? "" : JSON.parse(response.value);
 
     switch (response.type) {
+      case "LINK":
+        return (
+          <Flex w="100%" align="flex-end" gap="xs">
+            <TextInput
+              label={response.label}
+              value={parsedValue}
+              {...inputProps}
+              style={{ flex: 1 }}
+            />
+            <ActionIcon
+              mb={4}
+              p={4}
+              variant="light"
+              color="blue"
+              onClick={() => window.open(requestPath(parsedValue), "_blank")}
+            >
+              <IconExternalLink />
+            </ActionIcon>
+          </Flex>
+        );
       case "TEXT":
         return (
           <TextInput
@@ -146,6 +173,28 @@ const RequestResponse = ({
       //       />
       //     </Box>
       //   );
+      case "FILE":
+        return (
+          <Flex w="100%" align="flex-end" gap="xs">
+            <TextInput
+              {...inputProps}
+              label={response.label}
+              value={parsedValue ? parsedValue : undefined}
+              icon={<IconFile size={16} />}
+              multiple={false}
+              style={{ flex: 1 }}
+            />
+            <ActionIcon
+              mb={4}
+              p={4}
+              variant="light"
+              color="blue"
+              onClick={() => window.open(parsedValue, "_blank")}
+            >
+              <IconExternalLink />
+            </ActionIcon>
+          </Flex>
+        );
     }
   };
 

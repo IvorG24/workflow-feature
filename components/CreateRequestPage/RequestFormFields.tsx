@@ -1,6 +1,9 @@
+import { requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  FileInput,
+  Flex,
   MultiSelect,
   NumberInput,
   Select,
@@ -9,7 +12,13 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
+import {
+  IconCalendar,
+  IconClock,
+  IconExternalLink,
+  IconFile,
+  IconLink,
+} from "@tabler/icons-react";
 import { useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { RequestFormValues } from "./CreateRequestPage";
@@ -37,7 +46,6 @@ const RequestFormFields = ({
     register,
     control,
     formState: { errors },
-
   } = useFormContext<RequestFormValues>();
 
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +58,8 @@ const RequestFormFields = ({
     label: field.field_name,
     description: field.field_description,
     required: field.field_is_required,
-    disabled: field.field_is_read_only,
+    readOnly: field.field_is_read_only,
+    variant: field.field_is_read_only ? "filled" : "default",
     error: fieldError,
   };
 
@@ -63,6 +72,39 @@ const RequestFormFields = ({
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
     switch (field.field_type) {
+      case "LINK":
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value } }) => {
+              return (
+                <Flex w="100%" align="flex-end" gap="xs">
+                  <TextInput
+                    {...inputProps}
+                    error={fieldError}
+                    withAsterisk={field.field_is_required}
+                    value={`${value}`}
+                    icon={<IconLink size={16} />}
+                    style={{ flex: 1 }}
+                  />
+                  <ActionIcon
+                    mb={4}
+                    p={4}
+                    variant="light"
+                    color="blue"
+                    onClick={() =>
+                      window.open(requestPath(`${value}`), "_blank")
+                    }
+                  >
+                    <IconExternalLink />
+                  </ActionIcon>
+                </Flex>
+              );
+            }}
+            rules={{ ...fieldRules }}
+          />
+        );
       case "TEXT":
         return (
           <TextInput
@@ -272,6 +314,28 @@ const RequestFormFields = ({
       //       />
       //     </Box>
       //   );
+
+      case "FILE":
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field }) => (
+              <FileInput
+                {...inputProps}
+                icon={<IconFile size={16} />}
+                clearable
+                multiple={false}
+                onChange={field.onChange}
+                error={fieldError}
+                accept={
+                  formslyFormName === "Invoice" ? "application/pdf" : undefined
+                }
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
+        );
     }
   };
 
