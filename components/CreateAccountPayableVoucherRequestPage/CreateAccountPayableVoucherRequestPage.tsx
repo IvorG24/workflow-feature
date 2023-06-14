@@ -62,9 +62,18 @@ const CreateAccountPayableVoucherRequestPage = ({ form }: Props) => {
 
   useEffect(() => {
     replaceSection(form.form_section);
-    setValue(`sections.${0}.section_field.${0}.field_response`, "test_id");
-    setValue(`sections.${0}.section_field.${1}.field_response`, "test_id");
-    setValue(`sections.${0}.section_field.${2}.field_response`, "test_id");
+    setValue(
+      `sections.${0}.section_field.${0}.field_response`,
+      router.query.otpId
+    );
+    setValue(
+      `sections.${0}.section_field.${1}.field_response`,
+      router.query.poId
+    );
+    setValue(
+      `sections.${0}.section_field.${2}.field_response`,
+      router.query.invoiceId
+    );
   }, [form, replaceSection]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
@@ -113,7 +122,6 @@ const CreateAccountPayableVoucherRequestPage = ({ form }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-           
                     formslyFormName="Account Payable Voucher"
                   />
                 </Box>

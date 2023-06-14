@@ -200,7 +200,8 @@ export type FieldType =
   | "MULTISELECT"
   | "FILE"
   | "DATE"
-  | "TIME";
+  | "TIME"
+  | "LINK";
 // | "SLIDER";
 export type FieldTagType =
   | "POSITIVE_METRIC"
@@ -374,6 +375,7 @@ export type FormType = {
   form_team_member: {
     team_member_id: string;
     team_member_user: {
+      user_id: string;
       user_username: string;
       user_first_name: string;
       user_last_name: string;
@@ -410,6 +412,7 @@ export type FormWithResponseType = {
   form_team_member: {
     team_member_id: string;
     team_member_user: {
+      user_id: string;
       user_username: string;
       user_first_name: string;
       user_last_name: string;
@@ -522,3 +525,8 @@ export type RequestByFormType = RequestTableRow & {
     };
   })[];
 };
+export type ConnectedFormsType =
+  | "Order to Purchase"
+  | "Purchase Order"
+  | "Invoice"
+  | "Account Payable Voucher";

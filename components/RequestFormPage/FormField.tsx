@@ -1,6 +1,8 @@
 import { FormType } from "@/utils/types";
 import {
   ActionIcon,
+  FileInput,
+  Flex,
   MultiSelect,
   NumberInput,
   Select,
@@ -9,7 +11,12 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
+import {
+  IconCalendar,
+  IconClock,
+  IconExternalLink,
+  IconFile,
+} from "@tabler/icons-react";
 import { useRef } from "react";
 
 type Props = {
@@ -19,6 +26,7 @@ type Props = {
 const FormField = ({ field }: Props) => {
   const inputProps = {
     variant: "filled",
+    withAsterisk: field.field_is_required,
   };
 
   const ref = useRef<HTMLInputElement>(null);
@@ -27,6 +35,19 @@ const FormField = ({ field }: Props) => {
     field: FormType["form_section"][0]["section_field"][0]
   ) => {
     switch (field.field_type) {
+      case "LINK":
+        return (
+          <Flex w="100%" align="flex-end" gap="xs">
+            <TextInput
+              label={field.field_name}
+              {...inputProps}
+              style={{ flex: 1 }}
+            />
+            <ActionIcon mb={4} p={4} variant="light" color="blue">
+              <IconExternalLink />
+            </ActionIcon>
+          </Flex>
+        );
       case "TEXT":
         return <TextInput label={field.field_name} {...inputProps} />;
       case "TEXTAREA":
@@ -110,6 +131,16 @@ const FormField = ({ field }: Props) => {
       //       <Slider min={sliderOption[0]} max={max} step={1} marks={marks} />
       //     </Box>
       //   );
+      case "FILE":
+        return (
+          <FileInput
+            {...inputProps}
+            label={field.field_name}
+            icon={<IconFile size={16} />}
+            clearable
+            multiple={false}
+          />
+        );
     }
   };
 

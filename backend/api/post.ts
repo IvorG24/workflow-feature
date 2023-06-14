@@ -69,6 +69,29 @@ export const uploadImage = async (
   return `${data.publicUrl}?id=${uuidv4()}`;
 };
 
+// Upload File
+export const uploadFile = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    id: string;
+    file: Blob | File;
+    bucket: AttachmentBucketType;
+  }
+) => {
+  const { id, file, bucket } = params;
+
+  // upload file
+  const { error: uploadError } = await supabaseClient.storage
+    .from(bucket)
+    .upload(`${id}`, file, { upsert: true });
+  if (uploadError) throw uploadError;
+
+  // get public url
+  const { data } = supabaseClient.storage.from(bucket).getPublicUrl(`${id}`);
+
+  return `${data.publicUrl}?id=${uuidv4()}`;
+};
+
 // Create User
 export const createUser = async (
   supabaseClient: SupabaseClient<Database>,
@@ -459,12 +482,28 @@ export const createRequest = async (
 
   // get request response
   const requestResponseInput: RequestResponseTableInsert[] = [];
-  requestFormValues.sections.forEach((section) => {
-    section.section_field.forEach((field) => {
-      const responseValue = field.field_response;
+  for (const section of requestFormValues.sections) {
+    for (const field of section.section_field) {
+      let responseValue = field.field_response;
       if (typeof responseValue === "boolean" || responseValue) {
+        if (field.field_type === "FILE") {
+          const fileResponse = responseValue as File;
+          if (fileResponse["type"].split("/")[0] === "image") {
+            responseValue = await uploadImage(supabaseClient, {
+              id: field.field_id,
+              image: fileResponse,
+              bucket: "REQUEST_ATTACHMENTS",
+            });
+          } else {
+            responseValue = await uploadFile(supabaseClient, {
+              id: field.field_id,
+              file: fileResponse,
+              bucket: "REQUEST_ATTACHMENTS",
+            });
+          }
+        }
         const response = {
-          request_response: JSON.stringify(field.field_response),
+          request_response: JSON.stringify(responseValue),
           request_response_duplicatable_section_id:
             field.field_section_duplicatable_id ?? null,
           request_response_field_id: field.field_id,
@@ -472,8 +511,8 @@ export const createRequest = async (
         };
         requestResponseInput.push(response);
       }
-    });
-  });
+    }
+  }
 
   // create request response
   const { error: requestResponseError } = await supabaseClient

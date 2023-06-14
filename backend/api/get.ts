@@ -1074,3 +1074,52 @@ export const getRequestListByForm = async (
 
   return data as RequestByFormType[];
 };
+
+// Get specific formsly form id by name and team id
+export const getFormslyFormId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formName: string;
+    teamId: string;
+  }
+) => {
+  const { formName, teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("form_table")
+    .select(
+      "form_id, form_team_member: form_team_member_id(team_member_team_id)"
+    )
+    .eq("form_name", formName)
+    .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_is_formsly_form", true)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data ? data.form_id : "";
+};
+
+// Check if the request id exists and already approved
+export const checkRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string[];
+  }
+) => {
+  const { requestId } = params;
+
+  let requestCondition = "";
+  requestId.forEach((id) => {
+    requestCondition += `request_id.eq.${id}, `;
+  });
+
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", { count: "exact" })
+    .or(requestCondition.slice(0, -2))
+    .eq("request_status", "APPROVED")
+    .eq("request_is_disabled", false);
+
+  if (error) throw error;
+  return count === requestId.length;
+};
