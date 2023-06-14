@@ -54,7 +54,7 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
   const { classes } = useStyles();
 
   const { addForm } = useFormActions();
-  const [activeField, setActiveField] = useState<number | null>(null);
+  const [activeField, setActiveField] = useState<string | null>(null);
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

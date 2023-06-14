@@ -35,8 +35,8 @@ type Props = {
   onDelete?: (sectionId: string) => void;
   fields: FieldWithChoices[];
   mode?: Mode;
-  activeField: number | null;
-  onSetActiveField: Dispatch<SetStateAction<number | null>>;
+  activeField: string | null;
+  onSetActiveField: Dispatch<SetStateAction<string | null>>;
 } & ContainerProps;
 
 type UseStylesProps = {
@@ -80,7 +80,6 @@ const Section = ({
 }: Props) => {
   const { classes } = useStyles({ mode });
   const methods = useFormContext();
-
   const { colorScheme } = useMantineTheme();
   const {
     fields: fields,
@@ -95,10 +94,6 @@ const Section = ({
     control: methods.control,
     defaultValue: section,
   });
-
-  const handleChangeActiveField = (index: number | null) => {
-    onSetActiveField(index);
-  };
 
   // this is to update the field order when a field is removed
   useDeepCompareEffect(() => {
@@ -132,51 +127,57 @@ const Section = ({
             {mode === "edit" && <Divider mt={-4} />}
           </Box>
         )}
-        {fields.map((field, fieldIndex) => (
-          <Flex
-            align="center"
-            gap="xs"
-            key={field.id}
-            mt={fieldIndex === 0 ? 24 : 16}
-            w="100%"
-          >
-            <Box w="100%">
-              <Field
-                formType={formType}
-                fieldIndex={fieldIndex}
-                field={field as FieldWithFieldArrayId}
-                sectionIndex={sectionIndex}
-                onDelete={() => removeField(fieldIndex)}
-                mode={mode}
-                isActive={activeField === fieldIndex}
-                onNotActive={() => handleChangeActiveField(null)}
-              />
-            </Box>
-            {activeField === null && (
-              <ActionIcon
-                onClick={() => {
-                  handleChangeActiveField(fieldIndex);
-                }}
-                variant="light"
-                mt="lg"
-              >
-                <IconSettings
-                  color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
-                  size={18}
-                  stroke={1.5}
+        {fields.map((field, fieldIndex) => {
+          const field_id = methods.getValues(
+            `sections.${sectionIndex}.fields.${fieldIndex}.field_id`
+          );
+          return (
+            <Flex
+              align="center"
+              gap="xs"
+              key={field.id}
+              mt={fieldIndex === 0 ? 24 : 16}
+              w="100%"
+            >
+              <Box w="100%">
+                <Field
+                  formType={formType}
+                  fieldIndex={fieldIndex}
+                  field={field as FieldWithFieldArrayId}
+                  sectionIndex={sectionIndex}
+                  onDelete={() => removeField(fieldIndex)}
+                  mode={mode}
+                  isActive={activeField === field_id}
+                  onNotActive={() => onSetActiveField(null)}
                 />
-              </ActionIcon>
-            )}
-          </Flex>
-        ))}
+              </Box>
+              {activeField === null && (
+                <ActionIcon
+                  onClick={() => {
+                    onSetActiveField(field_id);
+                  }}
+                  variant="light"
+                  mt="lg"
+                >
+                  <IconSettings
+                    color={colorScheme === "dark" ? "#c3c3c3" : "#2e2e2e"}
+                    size={18}
+                    stroke={1.5}
+                  />
+                </ActionIcon>
+              )}
+            </Flex>
+          );
+        })}
       </Box>
 
       {mode === "edit" && (
         <>
           <Button
             onClick={() => {
+              const fieldId = uuidv4();
               appendField({
-                field_id: uuidv4(),
+                field_id: fieldId,
                 field_name: "",
                 field_type: formType === "REQUEST" ? "TEXT" : "SLIDER",
                 field_section_id: section.section_id,
@@ -184,7 +185,7 @@ const Section = ({
                 field_is_positive_metric: true,
                 field_order: fields.length + 1,
               });
-              handleChangeActiveField(fields.length);
+              onSetActiveField(fieldId);
             }}
             disabled={activeField !== null}
             size="xs"
