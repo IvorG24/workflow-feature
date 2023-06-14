@@ -6,11 +6,11 @@ import {
 import Meta from "@/components/Meta/Meta";
 import RequestFormListPage from "@/components/RequestFormListPage/RequestFormListPage";
 import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/constant";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
   async ({ supabaseClient, user }) => {
     try {
       const teamId = await getUserActiveTeamId(supabaseClient, {

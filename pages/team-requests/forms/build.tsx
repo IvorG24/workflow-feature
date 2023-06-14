@@ -1,12 +1,12 @@
 import { getTeamAdminList, getUserActiveTeamId } from "@/backend/api/get";
 import BuildRequestFormPage from "@/components/BuildRequestFormPage/BuildRequestFormPage";
 import Meta from "@/components/Meta/Meta";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import { TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 import { v4 as uuidv4 } from "uuid";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
   async ({ supabaseClient, user }) => {
     try {
       const teamId = await getUserActiveTeamId(supabaseClient, {

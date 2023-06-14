@@ -16,7 +16,7 @@ import PurchaseOrderFormPage from "@/components/PurchaseOrderFormPage/PurchaseOr
 import ReceivingInspectingReportFormPage from "@/components/ReceivingInspectingReportFormPage/ReceivingInspectingReportFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import {
   AccountingProcessorTableRow,
   AuditProcessorTableRow,
@@ -32,7 +32,7 @@ import {
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
   async ({ supabaseClient, user, context }) => {
     try {
       const form = await getForm(supabaseClient, {
