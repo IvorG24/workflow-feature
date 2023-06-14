@@ -9,6 +9,20 @@ export const NOTIFICATION_LIST_LIMIT = 10;
 export const DEFAULT_NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
 
+export const UNHIDEABLE_FORMLY_FORMS = [
+  "Purchase Order",
+  "Invoice",
+  "Account Payable Voucher",
+  "Receiving Inspecting Report",
+];
+
+export const FORM_CONNECTION = {
+  "Order to Purchase": "Purchase Order",
+  "Purchase Order": "Invoice",
+  Invoice: "Account Payable Voucher",
+  "Account Payable Voucher": "Receiving Inspecting Report",
+};
+
 export const SIGN_IN_PAGE_PATH = "/sign-in";
 
 export const defaultRequestFormBuilderSection = (

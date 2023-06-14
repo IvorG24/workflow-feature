@@ -62,8 +62,14 @@ const CreateInvoiceRequestPage = ({ form }: Props) => {
 
   useEffect(() => {
     replaceSection(form.form_section);
-    setValue(`sections.${0}.section_field.${0}.field_response`, "test_id");
-    setValue(`sections.${0}.section_field.${1}.field_response`, "test_id");
+    setValue(
+      `sections.${0}.section_field.${0}.field_response`,
+      router.query.otpId
+    );
+    setValue(
+      `sections.${0}.section_field.${1}.field_response`,
+      router.query.poId
+    );
   }, [form, replaceSection]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
@@ -112,7 +118,6 @@ const CreateInvoiceRequestPage = ({ form }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-        
                     formslyFormName="Invoice"
                   />
                 </Box>

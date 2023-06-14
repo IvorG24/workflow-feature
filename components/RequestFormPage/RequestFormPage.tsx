@@ -1,4 +1,5 @@
 import { updateFormSigner } from "@/backend/api/update";
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { FormType, TeamMemberWithUserType } from "@/utils/types";
 import {
@@ -6,6 +7,7 @@ import {
   Center,
   Container,
   Flex,
+  Group,
   Paper,
   Space,
   Stack,
@@ -110,11 +112,28 @@ const RequestFormPage = ({ form, teamMemberList }: Props) => {
         <Title order={2} color="dimmed">
           Form Preview
         </Title>
-        <Button
-          onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
-        >
-          Create Request
-        </Button>
+        <Group>
+          <Button
+            onClick={() =>
+              router.push(`/team-requests/forms/${formId}/analytics`)
+            }
+            variant="light"
+          >
+            Analytics
+          </Button>
+
+          {!form.form_is_formsly_form ||
+          (form.form_is_formsly_form &&
+            !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)) ? (
+            <Button
+              onClick={() =>
+                router.push(`/team-requests/forms/${formId}/create`)
+              }
+            >
+              Create Request
+            </Button>
+          ) : null}
+        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <FormDetailsSection form={form} />

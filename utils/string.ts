@@ -11,3 +11,7 @@ export const isValidTeamName = (name: string): boolean => {
 
   return true;
 };
+
+export const requestPath = (requestId: string) => {
+  return `http://${window.location.host}/team-requests/requests/${requestId}`;
+};

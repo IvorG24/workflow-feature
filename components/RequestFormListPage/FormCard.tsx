@@ -1,3 +1,4 @@
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { FormWithOwnerType } from "@/utils/types";
 import {
@@ -44,6 +45,8 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
   const router = useRouter();
   const { ref, hovered: isFormNameHovered } = useHover();
   const { colorScheme } = useMantineColorScheme();
+
+ 
 
   return (
     <Paper
@@ -147,11 +150,13 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
           </Group>
 
           <Menu shadow="md" width={200} position="bottom-end">
-            <Menu.Target>
-              <ActionIcon size="xs">
-                <IconDotsVertical size={12} />
-              </ActionIcon>
-            </Menu.Target>
+            {!UNHIDEABLE_FORMLY_FORMS.includes(form.form_name) ? (
+              <Menu.Target>
+                <ActionIcon size="xs">
+                  <IconDotsVertical size={12} />
+                </ActionIcon>
+              </Menu.Target>
+            ) : null}
 
             <Menu.Dropdown>
               <Menu.Item

@@ -13,19 +13,30 @@ import {
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Stack, Text, Title } from "@mantine/core";
+import {
+  Button,
+  Container,
+  Flex,
+  Group,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 type Props = {
   request: RequestWithResponseType;
+  connectedFormID: string;
 };
 
-const OrderToPurchaseRequestPage = ({ request }: Props) => {
+const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
   const supabaseClient = useSupabaseClient();
+  const router = useRouter();
 
   const { setIsLoading } = useLoadingActions();
   const teamMemberId = useUserTeamMemberId();
@@ -166,9 +177,24 @@ const OrderToPurchaseRequestPage = ({ request }: Props) => {
 
   return (
     <Container>
-      <Title order={2} color="dimmed">
-        Request
-      </Title>
+      <Flex justify="space-between">
+        <Title order={2} color="dimmed">
+          Request
+        </Title>
+        {requestStatus === "APPROVED" ? (
+          <Group>
+            <Button
+              onClick={() =>
+                router.push(
+                  `/team-requests/forms/${connectedFormID}/create?otpId=${request.request_id}`
+                )
+              }
+            >
+              Create Purchase Order
+            </Button>
+          </Group>
+        ) : null}
+      </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
           request={request}

@@ -3,12 +3,22 @@ import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
+import { FORM_CONNECTION } from "@/utils/constant";
 import {
+  ConnectedFormsType,
   FormStatusType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Stack, Text, Title } from "@mantine/core";
+import {
+  Button,
+  Container,
+  Flex,
+  Group,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -24,12 +34,17 @@ import RequestSingerSection from "./RequestSignerSection";
 type Props = {
   request: RequestWithResponseType;
   isFormslyForm?: boolean;
+  connectedFormID?: string;
 };
 
-const RequestPage = ({ request, isFormslyForm = false }: Props) => {
+const RequestPage = ({
+  request,
+  isFormslyForm = false,
+  connectedFormID,
+}: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
- 
+
   const user = useUserProfile();
   const teamMemberId = useUserTeamMemberId();
   const { setIsLoading } = useLoadingActions();
@@ -182,11 +197,65 @@ const RequestPage = ({ request, isFormslyForm = false }: Props) => {
       onConfirm: async () => await handleDeleteRequest(),
     });
 
+  const handleRedirectToConnectedRequest = () => {
+    switch (request.request_form.form_name) {
+      case "Order to Purchase":
+        return router.push(
+          `/team-requests/forms/${connectedFormID}/create?otpId=${request.request_id}`
+        );
+      case "Purchase Order":
+        return router.push(
+          `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
+            request.request_form.form_section[0].section_field[0]
+              .field_response[0].request_response
+          )}&poId=${request.request_id}`
+        );
+      case "Invoice":
+        return router.push(
+          `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
+            request.request_form.form_section[0].section_field[0]
+              .field_response[0].request_response
+          )}&poId=${JSON.parse(
+            request.request_form.form_section[0].section_field[1]
+              .field_response[0].request_response
+          )}&invoiceId=${request.request_id}`
+        );
+      case "Account Payable Voucher":
+        return router.push(
+          `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
+            request.request_form.form_section[0].section_field[0]
+              .field_response[0].request_response
+          )}&poId=${JSON.parse(
+            request.request_form.form_section[0].section_field[1]
+              .field_response[0].request_response
+          )}&invoiceId=${JSON.parse(
+            request.request_form.form_section[0].section_field[2]
+              .field_response[0].request_response
+          )}&apvId=${request.request_id}`
+        );
+    }
+  };
+
   return (
     <Container>
-      <Title order={2} color="dimmed">
-        Request
-      </Title>
+      <Flex justify="space-between">
+        <Title order={2} color="dimmed">
+          Request
+        </Title>
+        {connectedFormID && requestStatus === "APPROVED" ? (
+          <Group>
+            <Button onClick={handleRedirectToConnectedRequest}>
+              Create{" "}
+              {
+                FORM_CONNECTION[
+                  request.request_form.form_name as ConnectedFormsType
+                ]
+              }
+            </Button>
+          </Group>
+        ) : null}
+      </Flex>
+
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
           request={request}
