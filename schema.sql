@@ -215,6 +215,7 @@ CREATE TABLE item_description_table(
   item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
+  item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
   item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
 );
 

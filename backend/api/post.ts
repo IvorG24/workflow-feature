@@ -350,18 +350,28 @@ export const createItem = async (
   if (sectionError) throw sectionError;
 
   itemDescription.forEach((description: string) => {
+    const fieldId = uuidv4();
     itemDescriptionInput.push({
       item_description_label: description,
       item_description_item_id: data.item_id,
       item_description_is_available: true,
+      item_description_field_id: fieldId,
     });
     fieldInput.push({
+      field_id: fieldId,
       field_name: description,
       field_type: "DROPDOWN",
       field_order: 7,
       field_section_id: section.section_id,
+      field_is_required: true,
     });
   });
+
+  const { error: fieldError } = await supabaseClient
+    .from("field_table")
+    .insert(fieldInput);
+  if (fieldError) throw fieldError;
+
   const { data: itemDescriptionData, error: itemDescriptionError } =
     await supabaseClient
       .from("item_description_table")
@@ -369,10 +379,6 @@ export const createItem = async (
       .select();
   if (itemDescriptionError) throw itemDescriptionError;
 
-  const { error: fieldError } = await supabaseClient
-    .from("field_table")
-    .insert(fieldInput);
-  if (fieldError) throw fieldError;
   return { ...data, item_description: itemDescriptionData };
 };
 
