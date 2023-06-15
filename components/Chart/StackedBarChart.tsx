@@ -19,15 +19,16 @@ ChartJs.register(
   Legend
 );
 
-type DataItem = {
+export type StackedBarChartDataType = {
   month: string;
   approved: number;
   rejected: number;
   pending: number;
+  canceled: number;
 };
 
 type StackedBarChartProps = {
-  data: DataItem[];
+  data: StackedBarChartDataType[];
 };
 
 const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
@@ -79,6 +80,21 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
         borderWidth: 2,
         borderColor: "transparent",
       },
+      {
+        label: "Canceled",
+        data: data.map((d) => d.canceled),
+        backgroundColor: "#ADB5BD",
+        barPercentage: 0.7,
+        borderSkipped: false,
+        borderRadius: {
+          topLeft: 20,
+          topRight: 20,
+          bottomLeft: 20,
+          bottomRight: 20,
+        },
+        borderWidth: 2,
+        borderColor: "transparent",
+      },
     ],
   };
 
@@ -90,10 +106,16 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
       },
       y: { stacked: true },
     },
-    animation: false as const,
     plugins: {
       legend: {
-        display: false,
+        position: "right" as const,
+        align: "start" as const,
+        labels: {
+          boxWidth: 20,
+          boxHeight: 15,
+          usePointStyle: true,
+          pointStyle: "rectRounded",
+        },
       },
     },
   };

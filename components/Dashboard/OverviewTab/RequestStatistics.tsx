@@ -1,44 +1,46 @@
-import { getStatusToColor } from "@/utils/styling";
 import { RequestType } from "@/utils/types";
-import { ActionIcon, Flex, Group, Paper, Text, Title } from "@mantine/core";
-import {
-  IconChartHistogram,
-  IconSquareRoundedFilled,
-} from "@tabler/icons-react";
-import { lowerCase } from "lodash";
+import { Group, Paper, Title } from "@mantine/core";
+import { IconFileAnalytics } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import StackedBarChart from "../../Chart/StackedBarChart";
-
-const status = ["Approved", "Pending", "Rejected"];
-
-type ChartData = {
-  month: string;
-  approved: number;
-  rejected: number;
-  pending: number;
-}[];
+import StackedBarChart, {
+  StackedBarChartDataType,
+} from "../../Chart/StackedBarChart";
 
 type RequestStatisticsProps = {
   requestList: RequestType[];
 };
 
-const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
-  const initialChartData = [
-    { month: "Jan", approved: 0, rejected: 0, pending: 0 },
-    { month: "Feb", approved: 0, rejected: 0, pending: 0 },
-    { month: "Mar", approved: 0, rejected: 0, pending: 0 },
-    { month: "Apr", approved: 0, rejected: 0, pending: 0 },
-    { month: "May", approved: 0, rejected: 0, pending: 0 },
-    { month: "Jun", approved: 0, rejected: 0, pending: 0 },
-    { month: "Jul", approved: 0, rejected: 0, pending: 0 },
-    { month: "Aug", approved: 0, rejected: 0, pending: 0 },
-    { month: "Sep", approved: 0, rejected: 0, pending: 0 },
-    { month: "Oct", approved: 0, rejected: 0, pending: 0 },
-    { month: "Nov", approved: 0, rejected: 0, pending: 0 },
-    { month: "Dec", approved: 0, rejected: 0, pending: 0 },
+const generateInitialChartData = () => {
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
-  const [chartData, setChartData] = useState<ChartData>([]);
+
+  const initialChartData = months.map((month) => ({
+    month,
+    approved: 0,
+    rejected: 0,
+    pending: 0,
+    canceled: 0,
+  }));
+
+  return initialChartData;
+};
+
+const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
+  const initialChartData = generateInitialChartData();
+  const [chartData, setChartData] = useState<StackedBarChartDataType[]>([]);
 
   useEffect(() => {
     const reducedRequestList = requestList.reduce((acc, request) => {
@@ -61,6 +63,9 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
           case "pending":
             acc[duplicateIndex].pending++;
             break;
+          case "canceled":
+            acc[duplicateIndex].canceled++;
+            break;
 
           default:
             break;
@@ -71,11 +76,12 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
           approved: status === "approved" ? 1 : 0,
           rejected: status === "rejected" ? 1 : 0,
           pending: status === "pending" ? 1 : 0,
+          canceled: status === "canceled" ? 1 : 0,
         };
       }
 
       return acc;
-    }, [] as ChartData);
+    }, [] as StackedBarChartDataType[]);
 
     const updatedChartData = initialChartData.map((chartData) => {
       const dataMatch = reducedRequestList.find(
@@ -83,14 +89,15 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
       );
 
       if (dataMatch) {
-        const { approved, rejected, pending } = dataMatch;
-        const totalCount = approved + rejected + pending;
+        const { approved, rejected, pending, canceled } = dataMatch;
+        const totalCount = approved + rejected + pending + canceled;
 
         return {
           ...dataMatch,
           approved: (dataMatch.approved / totalCount) * 100,
           rejected: (dataMatch.rejected / totalCount) * 100,
           pending: (dataMatch.pending / totalCount) * 100,
+          canceled: (dataMatch.canceled / totalCount) * 100,
         };
       } else {
         return chartData;
@@ -105,22 +112,11 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
       p={{ base: "sm", sm: "lg" }}
       mt="xl"
       h="fit-content"
+      withBorder
     >
-      <Group mb="md" align="center" position="apart">
-        <Group>
-          <IconChartHistogram />
-          <Title order={3}>Request Statistics</Title>
-        </Group>
-        <Flex gap="sm">
-          {status.map((stat, idx) => (
-            <Group spacing={4} key={stat + idx}>
-              <ActionIcon color={`${getStatusToColor(lowerCase(stat))}`}>
-                <IconSquareRoundedFilled />
-              </ActionIcon>
-              <Text size="xs">{stat}</Text>
-            </Group>
-          ))}
-        </Flex>
+      <Group mb="sm">
+        <IconFileAnalytics />
+        <Title order={3}>Request Statistics</Title>
       </Group>
       <StackedBarChart data={chartData} />
     </Paper>

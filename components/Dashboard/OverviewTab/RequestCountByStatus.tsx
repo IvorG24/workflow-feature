@@ -20,6 +20,7 @@ const RequestCountByStatus = ({
       py={{ base: 8, sm: 16 }}
       px={{ base: 16, sm: 24 }}
       w={{ base: "100%", sm: 360 }}
+      withBorder
     >
       <Group spacing="md" position="apart">
         <Stack justify="center" spacing={4}>

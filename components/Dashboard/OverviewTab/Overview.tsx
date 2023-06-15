@@ -1,4 +1,4 @@
-import { RequestType } from "@/utils/types";
+import { RequestType, RequestorListType } from "@/utils/types";
 import { Box, Flex } from "@mantine/core";
 import { lowerCase } from "lodash";
 import RequestCountByStatus from "./RequestCountByStatus";
@@ -10,33 +10,71 @@ type OverviewProps = {
   requestCount: number;
 };
 
-export type RequestorListType =
-  (RequestType["request_team_member"]["team_member_user"] & {
-    count: number;
-  })[];
-
 const status = ["Pending", "Approved", "Rejected", "Canceled"];
+
+const incrementRequestorStatusCount = (
+  requestor: RequestorListType[0],
+  status: string
+) => {
+  switch (status) {
+    case "approved":
+      requestor.request.approved++;
+      break;
+
+    case "rejected":
+      requestor.request.rejected++;
+      break;
+    case "pending":
+      requestor.request.pending++;
+      break;
+
+    case "canceled":
+      requestor.request.canceled++;
+      break;
+
+    default:
+      break;
+  }
+
+  return requestor;
+};
 
 const Overview = ({ requestList, requestCount }: OverviewProps) => {
   // get all requestor and display in RequestorTable
-  const requestorList =
-    requestList.map(
-      (request) => request.request_team_member.team_member_user
-    ) || [];
-  const reducedRequestorList = requestorList.reduce((accumulator, user) => {
-    const { user_id } = user;
-    const duplicateIndex = accumulator.findIndex(
-      (duplicate) => duplicate.user_id === user_id
+  const reducedRequestorList = requestList.reduce((acc, request) => {
+    const user = request.request_team_member.team_member_user;
+    const duplicateIndex = acc.findIndex(
+      (duplicate) => duplicate.user_id === user.user_id
     );
+    const requestStatus = request.request_status.toLowerCase();
+
     if (duplicateIndex >= 0) {
-      accumulator[duplicateIndex].count++;
+      const updateRequestor = incrementRequestorStatusCount(
+        acc[duplicateIndex],
+        requestStatus
+      );
+      updateRequestor.request.total++;
+
+      acc[duplicateIndex] = updateRequestor;
     } else {
-      accumulator[accumulator.length] = {
+      const newRequestor: RequestorListType[0] = {
         ...user,
-        count: 1,
+        request: {
+          total: 1,
+          approved: 0,
+          rejected: 0,
+          pending: 0,
+          canceled: 0,
+        },
       };
+      const updatedNewRequestor = incrementRequestorStatusCount(
+        newRequestor,
+        requestStatus
+      );
+      acc[acc.length] = updatedNewRequestor;
     }
-    return accumulator;
+
+    return acc;
   }, [] as RequestorListType);
 
   // get request status meter data
@@ -64,7 +102,7 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
       </Flex>
       <Flex gap="xl" wrap="wrap">
         <RequestStatistics requestList={requestList} />
-        {requestorList.length > 0 && (
+        {reducedRequestorList.length > 0 && (
           <RequestorTable
             requestorList={reducedRequestorList}
             totalRequest={requestCount}

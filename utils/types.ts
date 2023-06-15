@@ -549,3 +549,14 @@ export type ResponseDataType = {
   optionList: string[];
   responseList: { label: string; count: number }[];
 }[];
+
+export type RequestorListType =
+  (RequestType["request_team_member"]["team_member_user"] & {
+    request: {
+      total: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+      canceled: number;
+    };
+  })[];
