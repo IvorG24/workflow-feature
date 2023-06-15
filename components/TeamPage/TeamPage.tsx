@@ -6,7 +6,7 @@ import {
   updateTeamOwner,
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
-import { useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 
 import { Database } from "@/utils/database";
 import { MemberRoleType, TeamMemberType, TeamTableRow } from "@/utils/types";
@@ -37,7 +37,7 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
   const teamList = useTeamList();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
@@ -147,11 +147,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
 
   const handleInvite = async () => {
     try {
+      if (!teamMember) return;
       setIsInvitingMember(true);
 
       await createTeamInvitation(supabaseClient, {
         emailList,
-        teamMemberId,
+        teamMemberId: teamMember.team_member_id,
         teamName: team.team_name,
       });
 

@@ -5,7 +5,7 @@ import RequestFormSection from "@/components/CreateRequestPage/RequestFormSectio
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
@@ -41,7 +41,7 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createBrowserSupabaseClient<Database>();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const team = useActiveTeam();
 
   const requestorProfile = useUserProfile();
@@ -75,12 +75,14 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
+      if (!teamMember) return;
+
       setIsLoading(true);
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId,
-        teamMemberId,
+        teamMemberId: teamMember.team_member_id,
         signers: form.form_signer,
       });
 
