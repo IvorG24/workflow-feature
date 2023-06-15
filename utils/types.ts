@@ -470,9 +470,10 @@ export type FieldWithChoices = {
   options: OptionTableRow[];
 } & FieldTableRow;
 
-export type ItemWithDecsriptionAndField = ItemTableRow & {
+export type ItemWithDescriptionAndField = ItemTableRow & {
   item_description: (ItemDescriptionTableRow & {
     item_description_field: ItemDescriptionFieldTableRow[];
+    item_field: FieldTableRow;
   })[];
 };
 

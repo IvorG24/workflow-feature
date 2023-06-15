@@ -461,10 +461,6 @@ const Page = ({ form, itemOptions }: Props) => {
                 },
               ],
             }}
-            conditionalFields={form.form_section[1].section_field.slice(
-              2,
-              form.form_section[1].section_field.length
-            )}
           />
         );
       case "Purchase Order":

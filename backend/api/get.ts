@@ -4,7 +4,7 @@ import {
   AttachmentBucketType,
   FormStatusType,
   FormType,
-  ItemWithDecsriptionAndField,
+  ItemWithDescriptionAndField,
   RequestByFormType,
   RequestWithResponseType,
   TeamMemberType,
@@ -688,20 +688,26 @@ export const getItem = async (
   const { data, error } = await supabaseClient
     .from("item_table")
     .select(
-      "*, item_description: item_description_table(*, item_description_field: item_description_field_table(*))"
+      "*, item_description: item_description_table(*, item_description_field: item_description_field_table(*), item_field: item_description_field_id(*))"
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)
     .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
     .eq("item_description.item_description_is_disabled", false)
+    .eq("item_description.item_description_is_available", true)
     .eq(
       "item_description.item_description_field.item_description_field_is_disabled",
       false
     )
+    .eq(
+      "item_description.item_description_field.item_description_field_is_available",
+      true
+    )
     .single();
   if (error) throw error;
 
-  return data as ItemWithDecsriptionAndField;
+  return data as ItemWithDescriptionAndField;
 };
 
 // check if Order to Purchase form can be activated
