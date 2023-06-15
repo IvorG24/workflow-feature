@@ -548,7 +548,7 @@ export type ResponseDataType = {
   type: FieldType;
   label: string;
   optionList: string[];
-  responseList: { label: string; count: number }[];
+  responseList: { label: string; value: number }[];
 }[];
 
 export type RequestorListType =
@@ -561,3 +561,8 @@ export type RequestorListType =
       canceled: number;
     };
   })[];
+
+export type LineChartDataType = {
+  label: string;
+  value: number;
+};

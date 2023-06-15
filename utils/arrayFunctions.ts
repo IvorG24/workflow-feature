@@ -111,8 +111,8 @@ export const parseResponse = (field_type: string, responseValue: string) => {
   }
 };
 
-export const responseFieldReducer = (response: FieldWithResponseType) => {
-  const reducedFieldWithResponse = response.reduce((acc, field) => {
+export const responseFieldReducer = (responseData: FieldWithResponseType) => {
+  const reducedFieldWithResponse = responseData.reduce((acc, field) => {
     const index = acc.findIndex((d) => d.id === field.field_id);
 
     const reducedResponses = field.field_response.reduce((acc, response) => {
@@ -127,20 +127,20 @@ export const responseFieldReducer = (response: FieldWithResponseType) => {
       );
 
       if (responseMatchIndex >= 0) {
-        acc[responseMatchIndex].count++;
+        acc[responseMatchIndex].value++;
       } else {
         if (field.field_type === "MULTISELECT") {
           const responseValues = JSON.parse(response.request_response);
           responseValues.forEach((value: string) => {
             acc[acc.length] = {
-              label: parseResponse(field.field_type, JSON.stringify(value)),
-              count: 1,
+              label: value,
+              value: 1,
             };
           });
         } else {
           acc[acc.length] = {
-            label: parseResponse(field.field_type, response.request_response),
-            count: 1,
+            label: parseResponseValue,
+            value: 1,
           };
         }
       }
@@ -175,14 +175,14 @@ export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
     );
     const label = item.response_field.field_name;
     const parseResponse = JSON.parse(item.request_response);
-    const responseItem = { label: parseResponse, count: 1 };
+    const responseItem = { label: parseResponse, value: 1 };
 
     if (existingItem) {
       const duplicateResponseIndex = existingItem.responseList.findIndex(
         (d) => d.label === parseResponse
       );
       if (duplicateResponseIndex >= 0) {
-        existingItem.responseList[duplicateResponseIndex].count++;
+        existingItem.responseList[duplicateResponseIndex].value++;
       } else {
         existingItem.responseList.push(responseItem);
       }

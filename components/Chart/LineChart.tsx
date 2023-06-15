@@ -1,3 +1,4 @@
+import { LineChartDataType } from "@/utils/types";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -21,13 +22,8 @@ ChartJS.register(
   Legend
 );
 
-type DataItem = {
-  label: string;
-  value: number;
-};
-
 type LineChartProps = {
-  data: DataItem[];
+  data: LineChartDataType[];
   legendLabel?: string;
 };
 

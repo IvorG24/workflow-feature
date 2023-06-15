@@ -71,7 +71,7 @@ const Dashboard = ({
   };
 
   return (
-    <Container fluid>
+    <Container p={0} fluid>
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
       <Select
         maw={300}

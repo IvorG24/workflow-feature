@@ -12,6 +12,7 @@ import {
   SearchKeywordResponseType,
 } from "@/utils/types";
 import {
+  Alert,
   Button,
   Container,
   Flex,
@@ -25,12 +26,13 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
+  IconAlertCircle,
   IconBrandSupabase,
   IconMessageSearch,
   IconSearch,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import ResponseTable from "./ResponseTable";
 
 type ResponseDataProps = {
@@ -41,7 +43,7 @@ type FormValues = {
   search: string;
 };
 
-const dynamicTypes = ["TEXT", "TEXTAREA"];
+const filteredTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
 
 const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   const supabaseClient = useSupabaseClient();
@@ -53,22 +55,12 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   const [searchKeywordResponse, setSearchKeywordResponse] =
     useState<ResponseDataType | null>(null);
 
-  const {
-    handleSubmit,
-    register,
-    reset,
-    control,
-    formState: { errors },
-  } = useForm<FormValues>();
-
-  const keywordValue = useWatch({
-    control,
-    name: "search",
-  });
+  const { handleSubmit, register, reset } = useForm<FormValues>();
 
   const handleSearchByKeyword = async (data: FormValues) => {
     try {
       setIsFetchingData(true);
+      if (!data.search) return;
       if (selectedForm === null) {
         return notifications.show({
           title: "Please select a form",
@@ -98,13 +90,7 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   const handleFetchResponseData = async () => {
     try {
       setIsFetchingData(true);
-      if (selectedForm === null) {
-        return notifications.show({
-          title: "Please select a form",
-          message: "Choose a form from the form filter.",
-          color: "orange",
-        });
-      }
+      if (!selectedForm) return;
       const requestList = await getRequestListByForm(supabaseClient, {
         formId: selectedForm,
       });
@@ -117,7 +103,7 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
       );
       const reducedFieldWithResponse = responseFieldReducer(fieldWithResponse);
       const nonDynamicResponseList = reducedFieldWithResponse.filter(
-        (field: ResponseDataType[0]) => !dynamicTypes.includes(field.type)
+        (field: ResponseDataType[0]) => !filteredTypes.includes(field.type)
       );
       setResponseData(nonDynamicResponseList);
     } catch (error) {
@@ -142,26 +128,34 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   }, [selectedForm]);
 
   return (
-    <Container mt="sm" fluid>
-      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
+    <Container mt="sm" p={0} fluid>
       <form onSubmit={handleSubmit(handleSearchByKeyword)}>
         <Group spacing={8}>
           <TextInput
             w="100%"
-            maw={320}
+            maw={300}
             placeholder="Search response data by keyword"
             icon={<IconSearch size="16px" />}
-            {...register("search", {
-              required: "Search keyword must not be empty.",
-            })}
-            error={errors.search?.message}
+            {...register("search")}
           />
           <Button type="submit">Search</Button>
         </Group>
       </form>
 
-      {keywordValue && searchKeywordResponse && (
-        <Paper mt="sm" p="md" w="fit-content">
+      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
+      {!selectedForm && (
+        <Alert mt="sm" color="yellow" icon={<IconAlertCircle size="1rem" />}>
+          Please select a form to generate data.
+        </Alert>
+      )}
+
+      {searchKeywordResponse && (
+        <Paper
+          mt="sm"
+          p="md"
+          w={{ base: "100%", sm: "fit-content" }}
+          withBorder
+        >
           <Group>
             <IconMessageSearch />
             <Title order={3}>Keyword Search Data</Title>
@@ -179,12 +173,17 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
       )}
 
       {responseData && responseData.length > 0 ? (
-        <Paper mt="sm" p="md" w="fit-content">
+        <Paper
+          mt="sm"
+          p="md"
+          w={{ base: "100%", sm: "fit-content" }}
+          withBorder
+        >
           <Group>
             <IconBrandSupabase />
             <Title order={3}>Field Response Data</Title>
           </Group>
-          <Flex wrap="wrap" gap="md">
+          <Flex w="100%" wrap="wrap" gap="md">
             {responseData.map((response, idx) => (
               <ResponseTable key={response.label + idx} response={response} />
             ))}
