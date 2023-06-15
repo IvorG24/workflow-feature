@@ -1,15 +1,15 @@
-import { UserTableRow } from "@/utils/types";
+import { TeamMemberTableRow, UserTableRow } from "@/utils/types";
 import { create } from "zustand";
 
 type Store = {
   userAvatar: string | null;
   userInitials: string;
   userProfile: UserTableRow | null;
-  userTeamMemberId: string;
+  userTeamMember: TeamMemberTableRow | null;
   actions: {
     setUserAvatar: (avatar: string | null) => void;
     setUserInitials: (initials: string) => void;
-    setUserTeamMemberId: (id: string) => void;
+    setUserTeamMember: (member: TeamMemberTableRow) => void;
     setUserProfile: (profile: UserTableRow) => void;
   };
 };
@@ -18,7 +18,7 @@ export const useUserStore = create<Store>((set) => ({
   userAvatar: null,
   userInitials: "",
   userProfile: null,
-  userTeamMemberId: "",
+  userTeamMember: null,
   actions: {
     setUserAvatar(avatar) {
       set((state) => ({
@@ -38,10 +38,10 @@ export const useUserStore = create<Store>((set) => ({
         userProfile: profile,
       }));
     },
-    setUserTeamMemberId(id) {
+    setUserTeamMember(teamMember) {
       set((state) => ({
         ...state,
-        userTeamMemberId: id,
+        userTeamMember: teamMember,
       }));
     },
   },
@@ -49,7 +49,7 @@ export const useUserStore = create<Store>((set) => ({
 
 export const useUserAvatar = () => useUserStore((state) => state.userAvatar);
 export const useUserIntials = () => useUserStore((state) => state.userInitials);
-export const useUserTeamMemberId = () =>
-  useUserStore((state) => state.userTeamMemberId);
+export const useUserTeamMember = () =>
+  useUserStore((state) => state.userTeamMember);
 export const useUserActions = () => useUserStore((state) => state.actions);
 export const useUserProfile = () => useUserStore((state) => state.userProfile);

@@ -71,8 +71,7 @@ const CreateTeamForm = ({
       setIsCreatingTeam(true);
       if (!user) {
         return notifications.show({
-          title: "Invalid user.",
-          message: "Please login and try again.",
+          message: "Invalid User. Please login and try again.",
           color: "red",
         });
       }
@@ -117,8 +116,7 @@ const CreateTeamForm = ({
       }
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please reload the page and try again.",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

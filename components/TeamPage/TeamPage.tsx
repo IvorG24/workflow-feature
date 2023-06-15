@@ -6,7 +6,7 @@ import {
   updateTeamOwner,
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
-import { useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 
 import { Database } from "@/utils/database";
 import { MemberRoleType, TeamMemberType, TeamTableRow } from "@/utils/types";
@@ -37,7 +37,7 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
   const supabaseClient = createBrowserSupabaseClient<Database>();
 
   const teamList = useTeamList();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
@@ -116,14 +116,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       setTeamLogo(null);
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully updated team",
+        message: "Team updated.",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to update team",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -147,24 +145,23 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
 
   const handleInvite = async () => {
     try {
+      if (!teamMember) return;
       setIsInvitingMember(true);
 
       await createTeamInvitation(supabaseClient, {
         emailList,
-        teamMemberId,
+        teamMemberId: teamMember.team_member_id,
         teamName: team.team_name,
       });
 
       setEmailList([]);
       notifications.show({
-        title: "Success!",
-        message: "Successfully invited team member/s",
+        message: "Team member/s invited.",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to invite team member/s",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -195,14 +192,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       });
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully updated team member role",
+        message: "Team member role updated.",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to update team member role",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -236,14 +231,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       });
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully transferred team ownership",
+        message: "Team ownership transferred",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to transfer team ownership",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -265,14 +258,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       });
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully removed member from team",
+        message: "Team member removed.",
         color: "green",
       });
     } catch (e) {
       notifications.show({
-        title: "Error!",
-        message: "Unable remove member from team",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

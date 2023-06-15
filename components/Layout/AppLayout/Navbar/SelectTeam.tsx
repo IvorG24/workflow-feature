@@ -1,7 +1,7 @@
 import {
   getAllNotification,
   getFormList,
-  getUserTeamMemberId,
+  getUserTeamMemberData,
 } from "@/backend/api/get";
 import { updateUserActiveTeam } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
@@ -65,7 +65,7 @@ const SelectTeam = () => {
   const { setIsLoading } = useLoadingActions();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
-  const { setUserTeamMemberId } = useUserActions();
+  const { setUserTeamMember } = useUserActions();
 
   const formatTeamOptions = () => {
     const teamOptions = teamList.map((team) => {
@@ -96,13 +96,13 @@ const SelectTeam = () => {
       });
 
       // fetch user team member id
-      const teamMemberId = await getUserTeamMemberId(supabaseClient, {
+      const teamMember = await getUserTeamMemberData(supabaseClient, {
         teamId: newActiveTeam.team_id,
         userId: user.user_id,
       });
       // set user team member id
-      if (teamMemberId) {
-        setUserTeamMemberId(teamMemberId);
+      if (teamMember) {
+        setUserTeamMember(teamMember);
       }
 
       // fetch notification list

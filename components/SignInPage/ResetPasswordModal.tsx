@@ -39,7 +39,6 @@ const ResetPasswordModal = ({ opened, onClose }: ResetPasswordModalProps) => {
       setIsLoading(true);
       await sendResetPasswordEmail(supabaseClient, data.email);
       notifications.show({
-        title: "Password reset sent.",
         message: "Please check your email inbox.",
         color: "green",
         withCloseButton: true,
@@ -49,8 +48,7 @@ const ResetPasswordModal = ({ opened, onClose }: ResetPasswordModalProps) => {
       reset();
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

@@ -67,7 +67,7 @@ const NotificationPage = ({
         })
       );
       notifications.show({
-        message: "Set all notifications to read",
+        message: "All notifications read.",
         color: "green",
       });
     } catch {
@@ -84,8 +84,7 @@ const NotificationPage = ({
       await updateNotificationStatus(supabaseClient, { notificationId });
     } catch {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -109,8 +108,7 @@ const NotificationPage = ({
       setTotalNotificationCount(count || 0);
     } catch {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

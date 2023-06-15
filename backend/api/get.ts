@@ -330,7 +330,7 @@ export const getTeam = async (
 };
 
 // Get user's team member id
-export const getUserTeamMemberId = async (
+export const getUserTeamMemberData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
@@ -340,14 +340,14 @@ export const getUserTeamMemberId = async (
   const { userId, teamId } = params;
   const { data, error } = await supabaseClient
     .from("team_member_table")
-    .select("team_member_id")
+    .select("*")
     .eq("team_member_user_id", userId)
     .eq("team_member_team_id", teamId)
     .maybeSingle();
 
   if (error) throw error;
 
-  return data?.team_member_id;
+  return data;
 };
 
 // Get form list with filter

@@ -61,15 +61,13 @@ const CreateItemDescriptionField = ({
       });
       setsetItemDescriptionFieldCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Field created successfully",
+        message: "Field created.",
         color: "green",
       });
       setIsCreating(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating field",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

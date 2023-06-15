@@ -51,7 +51,7 @@ const SignInPage = () => {
       });
       if (error?.toLowerCase().includes("invalid login credentials")) {
         notifications.show({
-          message: "Invalid login credentials",
+          message: "Invalid login credentials.",
           color: "red",
         });
         return;
@@ -70,8 +70,7 @@ const SignInPage = () => {
       router.push("/onboarding");
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

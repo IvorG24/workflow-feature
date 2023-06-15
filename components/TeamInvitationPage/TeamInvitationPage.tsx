@@ -58,12 +58,12 @@ const TeamInvitationPage = ({ invitation }: Props) => {
       setTeamList(teamList);
 
       notifications.show({
-        message: "Successfully accepted the invitation",
+        message: "Invitation accepted.",
         color: "green",
       });
     } catch {
       notifications.show({
-        message: "Failed to accept invitation.",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -78,12 +78,12 @@ const TeamInvitationPage = ({ invitation }: Props) => {
       });
       setStatus("DECLINED");
       notifications.show({
-        message: "Successfully declined the invitation",
+        message: "Invitation declined.",
         color: "green",
       });
     } catch {
       notifications.show({
-        message: "Failed to decline invitation.",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

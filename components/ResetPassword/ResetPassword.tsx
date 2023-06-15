@@ -40,7 +40,7 @@ const ResetPasswordPage = () => {
       setIsLoading(true);
       if (!user) {
         notifications.show({
-          message: "Unauthorized submission",
+          message: "Unauthorized submission.",
           color: "red",
         });
         router.push("/sign-in");
@@ -49,14 +49,13 @@ const ResetPasswordPage = () => {
       const updatePassword = await resetPassword(supabaseClient, data.password);
       if (!updatePassword) throw new Error();
       notifications.show({
-        message: "Your password has been updated.",
+        message: "Password updated.",
         color: "green",
       });
       router.push("/team-reviews/reviews");
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

@@ -492,7 +492,11 @@ export const createRequest = async (
   for (const section of requestFormValues.sections) {
     for (const field of section.section_field) {
       let responseValue = field.field_response;
-      if (typeof responseValue === "boolean" || responseValue) {
+      if (
+        typeof responseValue === "boolean" ||
+        responseValue ||
+        field.field_type === "SWITCH"
+      ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
           if (fileResponse["type"].split("/")[0] === "image") {
@@ -508,6 +512,8 @@ export const createRequest = async (
               bucket: "REQUEST_ATTACHMENTS",
             });
           }
+        } else if (field.field_type === "SWITCH" && !field.field_response) {
+          responseValue = false;
         }
         const response = {
           request_response: JSON.stringify(responseValue),

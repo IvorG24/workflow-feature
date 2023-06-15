@@ -194,8 +194,8 @@ const Field = ({
       (fieldType === "DROPDOWN" || fieldType === "MULTISELECT")
     ) {
       notifications.show({
-        message: "At least 1 option is required",
-        color: "red",
+        message: "At least 1 option is required.",
+        color: "orange",
       });
       isValid = false;
     }
@@ -205,8 +205,8 @@ const Field = ({
       new Set(optionValueList).size !== optionValueList.length;
     if (isOptionHasDuplicate) {
       notifications.show({
-        message: "Options must be unique",
-        color: "red",
+        message: "Options must be unique.",
+        color: "orange",
       });
       isValid = false;
     }

@@ -62,7 +62,7 @@ const CreateWarehouseProcessor = ({
     });
     if (isAlreadyExisting) {
       notifications.show({
-        message: "Warehouse Processor already exists",
+        message: "Warehouse Processor already exists.",
         color: "orange",
       });
       return;
@@ -86,15 +86,13 @@ const CreateWarehouseProcessor = ({
       });
       setWarehouseProcessorCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "WarehouseProcessor created successfully",
+        message: "Warehouse Processor created.",
         color: "green",
       });
       setIsCreatingWarehouseProcessor(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating warehouseProcessor",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

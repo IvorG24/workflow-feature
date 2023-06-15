@@ -53,15 +53,15 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
       setFormList(newForm);
 
       notifications.show({
-        title: "Success!",
-        message: `Updated form to as ${!checked ? "hidden" : "visible"}`,
+        message: `Form visibility udpated to ${
+          !checked ? "hidden" : "visible"
+        }`,
         color: "green",
       });
     } catch (error) {
       setIsHidden(checked);
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

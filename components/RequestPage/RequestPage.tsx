@@ -1,7 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
 import { FORM_CONNECTION } from "@/utils/constant";
 import {
@@ -46,7 +46,7 @@ const RequestPage = ({
   const supabaseClient = useSupabaseClient();
 
   const user = useUserProfile();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const { setIsLoading } = useLoadingActions();
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
@@ -71,7 +71,8 @@ const RequestPage = ({
 
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
-    (signer) => signer.signer_team_member.team_member_id === teamMemberId
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -80,13 +81,14 @@ const RequestPage = ({
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
+      if (!teamMember) return;
       setIsLoading(true);
       const signer = isUserSigner;
       const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
       if (!signer) {
         notifications.show({
           message: "Invalid signer.",
-          color: "red",
+          color: "orange",
         });
         return;
       }
@@ -99,7 +101,7 @@ const RequestPage = ({
         requestOwnerId: request.request_team_member.team_member_user.user_id,
         signerFullName: signerFullName,
         formName: request.request_form.form_name,
-        memberId: teamMemberId,
+        memberId: teamMember?.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
       });
 
@@ -117,14 +119,12 @@ const RequestPage = ({
         })
       );
       notifications.show({
-        title: "Update request successful.",
-        message: `You have ${lowerCase(status)} this request`,
+        message: `Request ${lowerCase(status)}.`,
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Updating request failed",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -134,22 +134,21 @@ const RequestPage = ({
 
   const handleCancelRequest = async () => {
     try {
+      if (!teamMember) return;
       setIsLoading(true);
       await cancelRequest(supabaseClient, {
         requestId: request.request_id,
-        memberId: teamMemberId,
+        memberId: teamMember.team_member_id,
       });
 
       setRequestStatus("CANCELED");
       notifications.show({
-        title: "Update request successful.",
-        message: `You have canceled this request`,
+        message: "Request canceled",
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Updating request failed",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -166,15 +165,13 @@ const RequestPage = ({
 
       setRequestStatus("DELETED");
       notifications.show({
-        title: "Delete request successful.",
-        message: `You have deleted this request`,
+        message: "Request deleted.",
         color: "green",
       });
       router.push("/team-requests/requests");
     } catch (error) {
       notifications.show({
-        title: "Delete request failed.",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

@@ -18,7 +18,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -112,8 +112,8 @@ const AuditProcessorList = ({
       setAuditProcessorList(data as AuditProcessorTableRow[]);
       setAuditProcessorCount(Number(count));
     } catch {
-      showNotification({
-        message: "Error on fetching audit processor list",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -140,17 +140,15 @@ const AuditProcessorList = ({
         table: "audit_processor",
       });
 
-      showNotification({
-        title: "Success!",
-        message: "Audit Processor/s deleted",
+      notifications.show({
+        message: "Audit Processor/s deleted.",
         color: "green",
       });
     } catch {
       setAuditProcessorList(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Audit Processor/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -180,8 +178,8 @@ const AuditProcessorList = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setAuditProcessorList(savedRecord);

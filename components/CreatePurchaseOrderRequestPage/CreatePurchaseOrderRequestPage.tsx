@@ -3,7 +3,7 @@ import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetail
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
@@ -36,7 +36,7 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createBrowserSupabaseClient<Database>();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
 
   const requestorProfile = useUserProfile();
 
@@ -85,25 +85,26 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
+      if (!teamMember) return;
+
       setIsLoading(true);
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId,
-        teamMemberId,
+        teamMemberId: teamMember.team_member_id,
+
         signers: form.form_signer,
       });
 
       notifications.show({
-        title: "Success",
-        message: "Request created",
+        message: "Request created.",
         color: "green",
       });
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

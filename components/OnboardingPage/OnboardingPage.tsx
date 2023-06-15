@@ -77,14 +77,12 @@ const OnboardingPage = () => {
 
       await router.push("/team/create");
       notifications.show({
-        title: "Success!",
-        message: "Profile completed",
+        message: "Profile completed.",
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

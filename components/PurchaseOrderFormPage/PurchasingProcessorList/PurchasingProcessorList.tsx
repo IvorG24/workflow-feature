@@ -18,7 +18,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -114,7 +114,7 @@ const PurchasingProcessorList = ({
       setPurchasingProcessorList(data as PurchasingProcessorTableRow[]);
       setPurchasingProcessorCount(Number(count));
     } catch {
-      showNotification({
+      notifications.show({
         message: "Error on fetching purchasing processor list",
         color: "red",
       });
@@ -144,17 +144,15 @@ const PurchasingProcessorList = ({
         table: "purchasing_processor",
       });
 
-      showNotification({
-        title: "Success!",
-        message: "Purchasing Processor/s deleted",
+      notifications.show({
+        message: "Purchasing Processor/s deleted.",
         color: "green",
       });
     } catch {
       setPurchasingProcessorList(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Purchasing Processor/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -187,8 +185,8 @@ const PurchasingProcessorList = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setPurchasingProcessorList(savedRecord);

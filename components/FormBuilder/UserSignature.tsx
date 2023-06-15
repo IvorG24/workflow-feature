@@ -12,7 +12,7 @@ import {
   Tooltip,
   createStyles,
 } from "@mantine/core";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -74,7 +74,7 @@ const UserSignature = ({
 
   const handleChangeSignatureFile = (signatureFile: File) => {
     if (!setNewUserSignatureFile) {
-      showNotification({
+      notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -89,15 +89,15 @@ const UserSignature = ({
   const handleOnEndDrawSignature = async () => {
     try {
       if (!setNewUserSignatureFile) {
-        showNotification({
+        notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
         return;
       }
       if (sigCanvas.current?.isEmpty()) {
-        showNotification({
-          message: "Please draw a signature",
+        notifications.show({
+          message: "Please draw a signature.",
           color: "red",
         });
         return;
@@ -118,8 +118,8 @@ const UserSignature = ({
       setNewUserSignatureFile(file);
     } catch (error) {
       console.error(error);
-      showNotification({
-        message: "Failed to draw signature",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -127,7 +127,7 @@ const UserSignature = ({
 
   const handleOnClickDraw = () => {
     if (!setNewUserSignatureFile) {
-      showNotification({
+      notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
@@ -140,7 +140,7 @@ const UserSignature = ({
 
   const handleCancelDrawing = () => {
     if (!setNewUserSignatureFile) {
-      showNotification({
+      notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });

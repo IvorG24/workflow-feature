@@ -18,7 +18,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -114,8 +114,8 @@ const TreasuryProcessorList = ({
       setTreasuryProcessorList(data as TreasuryProcessorTableRow[]);
       setTreasuryProcessorCount(Number(count));
     } catch {
-      showNotification({
-        message: "Error on fetching treasury processor list",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -129,9 +129,7 @@ const TreasuryProcessorList = ({
     try {
       const updatedTreasuryProcessorList = treasuryProcessorList.filter(
         (treasuryProcessor) => {
-          if (
-            !checkList.includes(treasuryProcessor.treasury_processor_id)
-          ) {
+          if (!checkList.includes(treasuryProcessor.treasury_processor_id)) {
             return treasuryProcessor;
           }
         }
@@ -144,17 +142,15 @@ const TreasuryProcessorList = ({
         table: "treasury_processor",
       });
 
-      showNotification({
-        title: "Success!",
-        message: "Treasury Processor/s deleted",
+      notifications.show({
+        message: "Treasury Processor/s deleted.",
         color: "green",
       });
     } catch {
       setTreasuryProcessorList(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Treasury Processor/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -168,10 +164,7 @@ const TreasuryProcessorList = ({
     try {
       setTreasuryProcessorList((prev) =>
         prev.map((treasuryProcessor) => {
-          if (
-            treasuryProcessor.treasury_processor_id !==
-            treasuryProcessorId
-          )
+          if (treasuryProcessor.treasury_processor_id !== treasuryProcessorId)
             return treasuryProcessor;
 
           return {
@@ -187,8 +180,8 @@ const TreasuryProcessorList = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setTreasuryProcessorList(savedRecord);
