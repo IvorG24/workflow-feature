@@ -91,8 +91,7 @@ const RequestListPage = ({
       setRequestListCount(count || 0);
     } catch (e) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

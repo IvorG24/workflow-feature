@@ -206,7 +206,7 @@ const SignerSection = ({
                 handleChangeActiveSigner(signers.length);
               } else {
                 notifications.show({
-                  message: "There are no more available signer",
+                  message: "There are no more available signer.",
                   color: "orange",
                 });
               }

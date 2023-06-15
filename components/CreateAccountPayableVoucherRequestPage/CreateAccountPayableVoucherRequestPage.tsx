@@ -90,15 +90,13 @@ const CreateAccountPayableVoucherRequestPage = ({ form }: Props) => {
       });
 
       notifications.show({
-        title: "Success",
-        message: "Request created",
+        message: "Request created.",
         color: "green",
       });
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

@@ -23,8 +23,8 @@ import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import { v4 as uuidv4 } from "uuid";
+import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import AccountingProcessorList from "./AccountingProcessorList/AccountingProcessorList";
 import CreateAccountingProcessor from "./AccountingProcessorList/CreateAccountingProcessor";
@@ -133,8 +133,7 @@ const InvoiceFormPage = ({
       });
       setIntialSigners(values.signers);
       notifications.show({
-        title: "Success",
-        message: "Signers updated",
+        message: "Signers updated.",
         color: "green",
       });
     } catch (e) {

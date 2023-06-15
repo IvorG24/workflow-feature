@@ -58,15 +58,13 @@ const CreateVendor = ({
       });
       setVendorCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Vendor created successfully",
+        message: "Vendor created.",
         color: "green",
       });
       setIsCreatingVendor(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating vendor",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

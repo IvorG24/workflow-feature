@@ -78,7 +78,7 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
       if (!signer) {
         notifications.show({
           message: "Invalid signer.",
-          color: "red",
+          color: "orange",
         });
         return;
       }
@@ -98,14 +98,12 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
 
       setRequestStatus(status);
       notifications.show({
-        title: "Update request successful.",
-        message: `You have ${lowerCase(status)} this request`,
+        message: `Requet ${lowerCase(status)}.`,
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Updating request failed",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -124,14 +122,12 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
 
       setRequestStatus("CANCELED");
       notifications.show({
-        title: "Update request successful.",
-        message: `You have canceled this request`,
+        message: `Request cancelled.`,
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Updating request failed",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -148,14 +144,12 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
 
       setRequestStatus("DELETED");
       notifications.show({
-        title: "Delete request successful.",
-        message: `You have deleted this request`,
+        message: "Request deleted.",
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Delete request failed.",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

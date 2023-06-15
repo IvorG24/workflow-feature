@@ -116,14 +116,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       setTeamLogo(null);
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully updated team",
+        message: "Team updated.",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to update team",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -158,14 +156,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
 
       setEmailList([]);
       notifications.show({
-        title: "Success!",
-        message: "Successfully invited team member/s",
+        message: "Team member/s invited.",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to invite team member/s",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -196,14 +192,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       });
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully updated team member role",
+        message: "Team member role updated.",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to update team member role",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -237,14 +231,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       });
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully transferred team ownership",
+        message: "Team ownership transferred",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "Unable to transfer team ownership",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -266,14 +258,12 @@ const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
       });
 
       notifications.show({
-        title: "Success!",
-        message: "Successfully removed member from team",
+        message: "Team member removed.",
         color: "green",
       });
     } catch (e) {
       notifications.show({
-        title: "Error!",
-        message: "Unable remove member from team",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

@@ -18,7 +18,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -110,7 +110,7 @@ const VendorList = ({
       setVendorList(data as VendorTableRow[]);
       setVendorCount(Number(count));
     } catch {
-      showNotification({
+      notifications.show({
         message: "Error on fetching vendor list",
         color: "red",
       });
@@ -136,17 +136,15 @@ const VendorList = ({
         table: "vendor",
       });
 
-      showNotification({
-        title: "Success!",
-        message: "Vendor/s deleted",
+      notifications.show({
+        message: "Vendor/s deleted.",
         color: "green",
       });
     } catch {
       setVendorList(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Vendor/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -170,8 +168,8 @@ const VendorList = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setVendorList(savedRecord);

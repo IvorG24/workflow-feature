@@ -89,15 +89,13 @@ const CreateRequestPage = ({ form, formslyFormName = "" }: Props) => {
       });
       removeLocalFormState();
       notifications.show({
-        title: "Success",
-        message: "Request created",
+        message: "Request created.",
         color: "green",
       });
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

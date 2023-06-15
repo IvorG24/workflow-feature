@@ -77,8 +77,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
       }
     } catch (e) {
       notifications.show({
-        title: "Submit comment failed.",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

@@ -76,15 +76,13 @@ const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
         setInvitationList((prev) => [...prev, ...invitationData]);
         replace([{ email: "" }]);
         notifications.show({
-          title: "Success!",
-          message: "Invites to join your team have been sent.",
+          message: "Invitation sent.",
           color: "green",
         });
       }
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please reload the page and try again.",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

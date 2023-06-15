@@ -116,7 +116,7 @@ const ReceivingInspectingReportFormPage = ({
     );
     if (isEmpty(primarySigner)) {
       notifications.show({
-        message: "There must be atleast one primary signer",
+        message: "There must be atleast one primary signer.",
         color: "orange",
       });
       return;
@@ -132,8 +132,7 @@ const ReceivingInspectingReportFormPage = ({
       });
       setIntialSigners(values.signers);
       notifications.show({
-        title: "Success",
-        message: "Signers updated",
+        message: "Signers updated.",
         color: "green",
       });
     } catch (e) {

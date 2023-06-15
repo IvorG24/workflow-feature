@@ -21,7 +21,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -114,7 +114,7 @@ const ItemList = ({
       setItemList(data as ItemWithDescriptionType[]);
       setItemCount(Number(count));
     } catch {
-      showNotification({
+      notifications.show({
         message: "Error on fetching item list",
         color: "red",
       });
@@ -142,17 +142,15 @@ const ItemList = ({
 
       setSelectedItem(null);
 
-      showNotification({
-        title: "Success!",
-        message: "Item/s deleted",
+      notifications.show({
+        message: "Item/s deleted.",
         color: "green",
       });
     } catch {
       setItemList(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Item/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -176,8 +174,8 @@ const ItemList = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setItemList(savedRecord);

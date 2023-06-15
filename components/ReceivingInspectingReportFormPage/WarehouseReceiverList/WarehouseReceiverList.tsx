@@ -18,7 +18,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -114,8 +114,8 @@ const WarehouseReceiverList = ({
       setWarehouseReceiverList(data as WarehouseReceiverTableRow[]);
       setWarehouseReceiverCount(Number(count));
     } catch {
-      showNotification({
-        message: "Error on fetching warehouse receiver list",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -142,17 +142,15 @@ const WarehouseReceiverList = ({
         table: "warehouse_receiver",
       });
 
-      showNotification({
-        title: "Success!",
-        message: "Accounting Processor/s deleted",
+      notifications.show({
+        message: "Accounting Processor/s deleted.",
         color: "green",
       });
     } catch {
       setWarehouseReceiverList(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Accounting Processor/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -182,8 +180,8 @@ const WarehouseReceiverList = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setWarehouseReceiverList(savedRecord);

@@ -126,8 +126,7 @@ const Layout = ({ children }: LayoutProps) => {
         setUnreadNotification(unreadNotificationCount || 0);
       } catch {
         notifications.show({
-          title: "Error!",
-          message: "Unable to fetch team",
+          message: "Something went wrong. Please try again later.",
           color: "red",
         });
         router.push("/500");

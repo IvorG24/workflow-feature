@@ -62,7 +62,7 @@ const CreateWarehouseReceiver = ({
     });
     if (isAlreadyExisting) {
       notifications.show({
-        message: "Warehouse receiver already exists",
+        message: "Warehouse receiver already exists.",
         color: "orange",
       });
       return;
@@ -86,15 +86,13 @@ const CreateWarehouseReceiver = ({
       });
       setWarehouseReceiverCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Warehouse Receiver created successfully",
+        message: "Warehouse Receiver created.",
         color: "green",
       });
       setIsCreatingWarehouseReceiver(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating warehouseReceiver",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

@@ -58,8 +58,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       setIsCommentEdited(true);
     } catch (e) {
       notifications.show({
-        title: "Update comment failed.",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -83,8 +82,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       });
     } catch (e) {
       notifications.show({
-        title: "Failed to delete comment.",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
