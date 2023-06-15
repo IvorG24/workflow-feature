@@ -1,4 +1,4 @@
-import { RequestType, TeamMemberWithUserType } from "@/utils/types";
+import { TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
   Group,
@@ -17,7 +17,8 @@ import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues } from "./RequestListPage";
 
 type RequestListFilterProps = {
-  requestList: RequestType[];
+  // requestList: RequestType[];
+  formList: { label: string; value: string }[];
   teamMemberList: TeamMemberWithUserType[];
   handleFilterForms: () => void;
 };
@@ -29,7 +30,8 @@ type FilterSelectedValuesType = {
 };
 
 const RequestListFilter = ({
-  requestList,
+  // requestList,
+  formList,
   teamMemberList,
   handleFilterForms,
 }: RequestListFilterProps) => {
@@ -56,18 +58,18 @@ const RequestListFilter = ({
     label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
   }));
 
-  const initialFormList: { value: string; label: string }[] = [];
-  const formList = requestList.reduce((uniqueForms, request) => {
-    const formName = request.request_form.form_name;
-    const uniqueFormNames = uniqueForms.map((form) => form.label);
-    if (!uniqueFormNames.includes(formName)) {
-      uniqueForms.push({
-        value: request.request_form.form_id,
-        label: formName,
-      });
-    }
-    return uniqueForms;
-  }, initialFormList);
+  // const initialFormList: { value: string; label: string }[] = [];
+  // const formList = requestList.reduce((uniqueForms, request) => {
+  //   const formName = request.request_form.form_name;
+  //   const uniqueFormNames = uniqueForms.map((form) => form.label);
+  //   if (!uniqueFormNames.includes(formName)) {
+  //     uniqueForms.push({
+  //       value: request.request_form.form_id,
+  //       label: formName,
+  //     });
+  //   }
+  //   return uniqueForms;
+  // }, initialFormList);
 
   const statusList = [
     { value: "APPROVED", label: "Approved" },
