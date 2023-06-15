@@ -25,6 +25,7 @@ const ResponseTable = ({ response }: ResponseTableProps) => {
   const { responseList } = response;
   const sortedResponseList = responseList.sort((a, b) => b.count - a.count);
   const totalCount = responseList.reduce((sum, value) => sum + value.count, 0);
+
   return (
     <Paper w={{ base: "100%", sm: 320 }} mt="xl" h="fit-content" withBorder>
       <Box p="sm" className={classes.withBorderBottom}>

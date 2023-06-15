@@ -104,7 +104,7 @@ export const generateSectionWithDuplicateList = (
 export const parseResponse = (field_type: string, responseValue: string) => {
   switch (field_type) {
     case "DATE":
-      return moment(responseValue).format("MMM D, YYYY");
+      return moment(JSON.parse(responseValue)).format("MMM D, YYYY");
 
     default:
       return JSON.parse(responseValue);
