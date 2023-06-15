@@ -17,7 +17,7 @@ const ItemDescriptionField = ({ description }: Props) => {
   const [itemDescriptionFieldList, setItemDescriptionFieldList] = useState<
     ItemDescriptionFieldTableRow[]
   >([]);
-  const [itemDescriptionFieldCount, setsetItemDecsriptionFieldCount] =
+  const [itemDescriptionFieldCount, setsetItemDescriptionFieldCount] =
     useState(0);
 
   return (
@@ -28,7 +28,7 @@ const ItemDescriptionField = ({ description }: Props) => {
           records={itemDescriptionFieldList}
           setRecords={setItemDescriptionFieldList}
           count={itemDescriptionFieldCount}
-          setCount={setsetItemDecsriptionFieldCount}
+          setCount={setsetItemDescriptionFieldCount}
           setIsCreating={setIsCreating}
         />
       ) : null}
@@ -36,7 +36,7 @@ const ItemDescriptionField = ({ description }: Props) => {
         <CreateItemDescriptionField
           setIsCreating={setIsCreating}
           setItemDescriptionFieldList={setItemDescriptionFieldList}
-          setsetItemDecsriptionFieldCount={setsetItemDecsriptionFieldCount}
+          setsetItemDescriptionFieldCount={setsetItemDescriptionFieldCount}
           label={description.item_description_label}
           descriptionId={description.item_description_id}
         />
