@@ -62,7 +62,7 @@ const CreatePurchasingProcessor = ({
     });
     if (isAlreadyExisting) {
       notifications.show({
-        message: "Purchasing Processor already exists",
+        message: "Purchasing Processor already exists.",
         color: "orange",
       });
       return;
@@ -86,15 +86,13 @@ const CreatePurchasingProcessor = ({
       });
       setPurchasingProcessorCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Purchasing Processor created successfully",
+        message: "Purchasing Processor created.",
         color: "green",
       });
       setIsCreatingPurchasingProcessor(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating purchasingProcessor",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

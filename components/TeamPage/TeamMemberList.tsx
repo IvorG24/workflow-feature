@@ -1,4 +1,4 @@
-import { useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_TEAM_MEMBER_LIST_LIMIT } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { MemberRoleType, TeamMemberType } from "@/utils/types";
@@ -47,9 +47,9 @@ const TeamMemberList = ({
     teamMemberList.length / DEFAULT_TEAM_MEMBER_LIST_LIMIT
   );
 
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const authUser = teamMemberList.find(
-    (member) => member.team_member_id === teamMemberId
+    (member) => member.team_member_id === teamMember?.team_member_id
   ) as TeamMemberType;
 
   const { register, handleSubmit } = useFormContext<SearchTeamMemberForm>();

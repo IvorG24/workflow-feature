@@ -55,7 +55,7 @@ const SignUpPage = () => {
       if (isEmailExists) {
         notifications.show({
           message: "Email already registered.",
-          color: "red",
+          color: "orange",
         });
         return;
       }
@@ -66,7 +66,6 @@ const SignUpPage = () => {
       });
       if (!signUp.user && !signUp.session) throw Error;
       notifications.show({
-        title: "Sign up successful.",
         message:
           "Confirmation email sent. Please check your email inbox to proceed.",
         color: "green",
@@ -76,8 +75,7 @@ const SignUpPage = () => {
       reset();
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

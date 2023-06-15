@@ -61,7 +61,7 @@ const CreateAuditProcessor = ({
     });
     if (isAlreadyExisting) {
       notifications.show({
-        message: "Audit Processor already exists",
+        message: "Audit Processor already exists.",
         color: "orange",
       });
       return;
@@ -82,15 +82,13 @@ const CreateAuditProcessor = ({
       });
       setAuditProcessorCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Audit Processor created successfully",
+        message: "Audit Processor created.",
         color: "green",
       });
       setIsCreatingAuditProcessor(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating auditProcessor",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

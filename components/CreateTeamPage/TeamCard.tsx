@@ -1,4 +1,4 @@
-import { getFormList, getUserTeamMemberId } from "@/backend/api/get";
+import { getFormList, getUserTeamMemberData } from "@/backend/api/get";
 import { updateUserActiveTeam } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -24,7 +24,7 @@ const TeamCard = ({ team }: TeamCardProps) => {
 
   const { setActiveTeam } = useTeamActions();
   const { setIsLoading } = useLoadingActions();
-  const { setUserTeamMemberId } = useUserActions();
+  const { setUserTeamMember } = useUserActions();
   const { setFormList } = useFormActions();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
@@ -41,13 +41,13 @@ const TeamCard = ({ team }: TeamCardProps) => {
       });
 
       // fetch user team member id
-      const teamMemberId = await getUserTeamMemberId(supabaseClient, {
+      const teamMember = await getUserTeamMemberData(supabaseClient, {
         teamId: team.team_id,
         userId: user.user_id,
       });
       // set user team member id
-      if (teamMemberId) {
-        setUserTeamMemberId(teamMemberId);
+      if (teamMember) {
+        setUserTeamMember(teamMember);
 
         // set notification
         setNotificationList([]);

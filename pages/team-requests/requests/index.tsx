@@ -1,6 +1,7 @@
 // Imports
 import {
   getAllTeamMembers,
+  getFormList,
   getRequestList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
@@ -21,7 +22,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         userId: user.id,
       });
 
-      const [data, teamMemberList] = await Promise.all([
+      const [data, teamMemberList, formList] = await Promise.all([
         getRequestList(supabaseClient, {
           teamId: teamId,
           page: 1,
@@ -30,6 +31,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         getAllTeamMembers(supabaseClient, {
           teamId,
         }),
+        getFormList(supabaseClient, { teamId, app: "REQUEST" }),
       ]);
 
       return {
@@ -37,6 +39,9 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           requestListData: data.data,
           requestListCount: data.count,
           teamMemberList,
+          formList: formList.map((form) => {
+            return { label: form.form_name, value: form.form_id };
+          }),
         },
       };
     } catch (error) {
@@ -55,9 +60,15 @@ type Props = {
   requestListData: RequestType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  formList: { label: string; value: string }[];
 };
 
-const Page = ({ requestListData, requestListCount, teamMemberList }: Props) => {
+const Page = ({
+  requestListData,
+  requestListCount,
+  teamMemberList,
+  formList,
+}: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const [requestList, setRequestList] =
@@ -98,6 +109,7 @@ const Page = ({ requestListData, requestListCount, teamMemberList }: Props) => {
         requestList={requestList}
         requestListCount={requestListCount}
         teamMemberList={teamMemberList}
+        formList={formList}
       />
     </>
   );

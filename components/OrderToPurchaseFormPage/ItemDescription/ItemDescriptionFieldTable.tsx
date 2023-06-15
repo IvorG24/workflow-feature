@@ -20,7 +20,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -109,8 +109,8 @@ const ItemDescriptionFieldTable = ({
       setRecords(data);
       setCount(Number(count));
     } catch {
-      showNotification({
-        message: "Error on fetching item description field list",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -135,17 +135,15 @@ const ItemDescriptionFieldTable = ({
         table: "item_description_field",
       });
 
-      showNotification({
-        title: "Success!",
-        message: "Field/s deleted",
+      notifications.show({
+        message: "Field/s deleted.",
         color: "green",
       });
     } catch {
       setRecords(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Field/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -170,8 +168,8 @@ const ItemDescriptionFieldTable = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setRecords(savedRecords);
@@ -186,7 +184,7 @@ const ItemDescriptionFieldTable = ({
             List of {description.item_description_label}
           </Title>
           <TextInput
-              miw={250}
+            miw={250}
             placeholder="Value"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>

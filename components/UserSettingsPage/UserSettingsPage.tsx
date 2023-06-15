@@ -64,8 +64,7 @@ const UserSettingsPage = ({ user }: Props) => {
         setIsUpdatingSignature(false);
       } catch (e) {
         notifications.show({
-          title: "Error!",
-          message: "Unable to fetch signature",
+          message: "Something went wrong. Please try again later.",
           color: "red",
         });
         router.push("/500");
@@ -117,14 +116,12 @@ const UserSettingsPage = ({ user }: Props) => {
       );
 
       notifications.show({
-        title: "Success!",
         message: "Personal info updated.",
         color: "green",
       });
     } catch (e) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -140,14 +137,12 @@ const UserSettingsPage = ({ user }: Props) => {
       // todo: check old password then change new password
 
       notifications.show({
-        title: "Success!",
         message: "Password changed.",
         color: "green",
       });
     } catch (e) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -181,14 +176,12 @@ const UserSettingsPage = ({ user }: Props) => {
 
       setSignatureUrl(url);
       notifications.show({
-        title: "Success!",
         message: "Signature updated.",
         color: "green",
       });
     } catch {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

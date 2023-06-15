@@ -1,5 +1,6 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
+import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   AccountingProcessorTableInsert,
@@ -349,18 +350,28 @@ export const createItem = async (
   if (sectionError) throw sectionError;
 
   itemDescription.forEach((description: string) => {
+    const fieldId = uuidv4();
     itemDescriptionInput.push({
       item_description_label: description,
       item_description_item_id: data.item_id,
       item_description_is_available: true,
+      item_description_field_id: fieldId,
     });
     fieldInput.push({
+      field_id: fieldId,
       field_name: description,
       field_type: "DROPDOWN",
-      field_order: 3,
+      field_order: 7,
       field_section_id: section.section_id,
+      field_is_required: true,
     });
   });
+
+  const { error: fieldError } = await supabaseClient
+    .from("field_table")
+    .insert(fieldInput);
+  if (fieldError) throw fieldError;
+
   const { data: itemDescriptionData, error: itemDescriptionError } =
     await supabaseClient
       .from("item_description_table")
@@ -368,10 +379,6 @@ export const createItem = async (
       .select();
   if (itemDescriptionError) throw itemDescriptionError;
 
-  const { error: fieldError } = await supabaseClient
-    .from("field_table")
-    .insert(fieldInput);
-  if (fieldError) throw fieldError;
   return { ...data, item_description: itemDescriptionData };
 };
 
@@ -485,7 +492,11 @@ export const createRequest = async (
   for (const section of requestFormValues.sections) {
     for (const field of section.section_field) {
       let responseValue = field.field_response;
-      if (typeof responseValue === "boolean" || responseValue) {
+      if (
+        typeof responseValue === "boolean" ||
+        responseValue ||
+        field.field_type === "SWITCH"
+      ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
           if (fileResponse["type"].split("/")[0] === "image") {
@@ -501,6 +512,8 @@ export const createRequest = async (
               bucket: "REQUEST_ATTACHMENTS",
             });
           }
+        } else if (field.field_type === "SWITCH" && !field.field_response) {
+          responseValue = false;
         }
         const response = {
           request_response: JSON.stringify(responseValue),
@@ -547,51 +560,33 @@ export const createFormslyPremadeForms = async (
 ) => {
   const { teamMemberId } = params;
 
-  const { data: formData, error: formError } = await supabaseClient
+  const { forms, sections, fieldWithId, fieldsWithoutId, options } =
+    formslyPremadeFormsData(teamMemberId);
+
+  const { error: formError } = await supabaseClient
     .from("form_table")
-    .insert({
-      form_name: "Order to Purchase",
-      form_description: "Formsly premade Order to Purchase form",
-      form_app: "REQUEST",
-      form_team_member_id: teamMemberId,
-      form_is_hidden: true,
-      form_is_formsly_form: true,
-    })
-    .select()
-    .single();
+    .insert(forms);
   if (formError) throw formError;
 
-  const { data: sectionData, error: sectionError } = await supabaseClient
+  const { error: sectionError } = await supabaseClient
     .from("section_table")
-    .insert({
-      section_name: "Item",
-      section_order: 1,
-      section_is_duplicatable: true,
-      section_form_id: formData.form_id,
-    })
-    .select()
-    .single();
+    .insert(sections);
   if (sectionError) throw sectionError;
 
-  const { error: fieldError } = await supabaseClient
+  const { error: fieldWithIdError } = await supabaseClient
     .from("field_table")
-    .insert([
-      {
-        field_name: "General Name",
-        field_type: "DROPDOWN",
-        field_order: 1,
-        field_section_id: sectionData.section_id,
-        field_is_required: true,
-      },
-      {
-        field_name: "Quantity",
-        field_type: "NUMBER",
-        field_order: 2,
-        field_section_id: sectionData.section_id,
-        field_is_required: true,
-      },
-    ]);
-  if (fieldError) throw fieldError;
+    .insert(fieldWithId);
+  if (fieldWithIdError) throw fieldWithIdError;
+
+  const { error: fieldWithoutIdError } = await supabaseClient
+    .from("field_table")
+    .insert(fieldsWithoutId);
+  if (fieldWithoutIdError) throw fieldWithoutIdError;
+
+  const { error: optionError } = await supabaseClient
+    .from("option_table")
+    .insert(options);
+  if (optionError) throw optionError;
 };
 
 // Create Project

@@ -26,7 +26,7 @@ type Props = {
   setItemDescriptionFieldList: Dispatch<
     SetStateAction<ItemDescriptionFieldTableRow[]>
   >;
-  setsetItemDecsriptionFieldCount: Dispatch<SetStateAction<number>>;
+  setsetItemDescriptionFieldCount: Dispatch<SetStateAction<number>>;
   label: string;
   descriptionId: string;
 };
@@ -34,7 +34,7 @@ type Props = {
 const CreateItemDescriptionField = ({
   setIsCreating,
   setItemDescriptionFieldList,
-  setsetItemDecsriptionFieldCount,
+  setsetItemDescriptionFieldCount,
   label,
   descriptionId,
 }: Props) => {
@@ -59,17 +59,15 @@ const CreateItemDescriptionField = ({
         prev.unshift(newItem);
         return prev;
       });
-      setsetItemDecsriptionFieldCount((prev) => prev + 1);
+      setsetItemDescriptionFieldCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Field created successfully",
+        message: "Field created.",
         color: "green",
       });
       setIsCreating(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating field",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

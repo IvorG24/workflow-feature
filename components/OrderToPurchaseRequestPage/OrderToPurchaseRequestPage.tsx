@@ -6,7 +6,7 @@ import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSectio
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSingerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
 import {
   FormStatusType,
@@ -39,7 +39,7 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
   const router = useRouter();
 
   const { setIsLoading } = useLoadingActions();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const user = useUserProfile();
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
@@ -62,7 +62,8 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
 
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
-    (signer) => signer.signer_team_member.team_member_id === teamMemberId
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -77,10 +78,11 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
       if (!signer) {
         notifications.show({
           message: "Invalid signer.",
-          color: "red",
+          color: "orange",
         });
         return;
       }
+      if (!teamMember) return;
 
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
@@ -90,20 +92,18 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
         requestOwnerId: request.request_team_member.team_member_user.user_id,
         signerFullName: signerFullName,
         formName: request.request_form.form_name,
-        memberId: teamMemberId,
+        memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
       });
 
       setRequestStatus(status);
       notifications.show({
-        title: "Update request successful.",
-        message: `You have ${lowerCase(status)} this request`,
+        message: `Requet ${lowerCase(status)}.`,
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Updating request failed",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -112,23 +112,22 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
   };
 
   const handleCancelRequest = async () => {
+    if (!teamMember) return;
     try {
       setIsLoading(true);
       await cancelRequest(supabaseClient, {
         requestId: request.request_id,
-        memberId: teamMemberId,
+        memberId: teamMember.team_member_id,
       });
 
       setRequestStatus("CANCELED");
       notifications.show({
-        title: "Update request successful.",
-        message: `You have canceled this request`,
+        message: `Request cancelled.`,
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Updating request failed",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -145,14 +144,12 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
 
       setRequestStatus("DELETED");
       notifications.show({
-        title: "Delete request successful.",
-        message: `You have deleted this request`,
+        message: "Request deleted.",
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Delete request failed.",
-        message: `Please try again later.`,
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

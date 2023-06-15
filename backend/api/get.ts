@@ -3,7 +3,9 @@ import {
   AppType,
   AttachmentBucketType,
   FormStatusType,
-  ItemWithDecsriptionAndField,
+  FormType,
+  ItemWithDescriptionAndField,
+  RequestWithResponseType,
   TeamMemberType,
   TeamTableRow,
 } from "@/utils/types";
@@ -200,7 +202,7 @@ export const getUserActiveTeamId = async (
       .maybeSingle();
     if (firstTeamError) throw firstTeamError;
 
-    if (!firstTeam) throw new Error("No team not found.");
+    if (!firstTeam) throw new Error("No team found.");
     return firstTeam.team_member_team_id;
   }
 
@@ -249,6 +251,7 @@ export const getRequest = async (
   }
 ) => {
   const { requestId } = params;
+
   const { data, error } = await supabaseClient
     .from("request_table")
     .select(
@@ -268,7 +271,41 @@ export const getRequest = async (
     .maybeSingle();
   if (error) throw error;
 
-  return data;
+  const formattedRequest = data as unknown as RequestWithResponseType;
+  const sortedSection = formattedRequest.request_form.form_section
+    .sort((a, b) => {
+      return a.section_order - b.section_order;
+    })
+    .map((section) => {
+      const sortedFields = section.section_field
+        .sort((a, b) => {
+          return a.field_order - b.field_order;
+        })
+        .map((field) => {
+          let sortedOption = field.field_option;
+          if (field.field_option) {
+            sortedOption = field.field_option.sort((a, b) => {
+              return a.option_order - b.option_order;
+            });
+          }
+          return {
+            ...field,
+            field_option: sortedOption,
+          };
+        });
+      return {
+        ...section,
+        section_field: sortedFields,
+      };
+    });
+
+  return {
+    ...formattedRequest,
+    request_form: {
+      ...formattedRequest.request_form,
+      form_section: sortedSection,
+    },
+  };
 };
 
 // Get specific team
@@ -292,7 +329,7 @@ export const getTeam = async (
 };
 
 // Get user's team member id
-export const getUserTeamMemberId = async (
+export const getUserTeamMemberData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
@@ -302,14 +339,14 @@ export const getUserTeamMemberId = async (
   const { userId, teamId } = params;
   const { data, error } = await supabaseClient
     .from("team_member_table")
-    .select("team_member_id")
+    .select("*")
     .eq("team_member_user_id", userId)
     .eq("team_member_team_id", teamId)
     .maybeSingle();
 
   if (error) throw error;
 
-  return data?.team_member_id;
+  return data;
 };
 
 // Get form list with filter
@@ -436,10 +473,40 @@ export const getForm = async (
     .eq("form_is_disabled", false)
     .eq("form_signer.signer_is_disabled", false)
     .single();
-
   if (error) throw error;
 
-  return data;
+  const formattedForm = data as unknown as FormType;
+  const sortedSection = formattedForm.form_section
+    .sort((a, b) => {
+      return a.section_order - b.section_order;
+    })
+    .map((section) => {
+      const sortedFields = section.section_field
+        .sort((a, b) => {
+          return a.field_order - b.field_order;
+        })
+        .map((field) => {
+          let sortedOption = field.field_option;
+          if (field.field_option) {
+            sortedOption = field.field_option.sort((a, b) => {
+              return a.option_order - b.option_order;
+            });
+          }
+          return {
+            ...field,
+            field_option: sortedOption,
+          };
+        });
+      return {
+        ...section,
+        section_field: sortedFields,
+      };
+    });
+
+  return {
+    ...formattedForm,
+    form_section: sortedSection,
+  };
 };
 
 // Get notification
@@ -620,20 +687,26 @@ export const getItem = async (
   const { data, error } = await supabaseClient
     .from("item_table")
     .select(
-      "*, item_description: item_description_table(*, item_description_field: item_description_field_table(*))"
+      "*, item_description: item_description_table(*, item_description_field: item_description_field_table(*), item_field: item_description_field_id(*))"
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)
     .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
     .eq("item_description.item_description_is_disabled", false)
+    .eq("item_description.item_description_is_available", true)
     .eq(
       "item_description.item_description_field.item_description_field_is_disabled",
       false
     )
+    .eq(
+      "item_description.item_description_field.item_description_field_is_available",
+      true
+    )
     .single();
   if (error) throw error;
 
-  return data as ItemWithDecsriptionAndField;
+  return data as ItemWithDescriptionAndField;
 };
 
 // check if Order to Purchase form can be activated
@@ -1064,10 +1137,11 @@ export const getFormslyFormId = async (
   }
 ) => {
   const { formName, teamId } = params;
+
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_team_member: form_team_member_id(team_member_team_id)"
+      "form_id, form_team_member: form_team_member_id!inner(team_member_team_id)"
     )
     .eq("form_name", formName)
     .eq("form_team_member.team_member_team_id", teamId)

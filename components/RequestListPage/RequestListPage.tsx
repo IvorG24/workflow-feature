@@ -24,12 +24,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import RequestCard from "./RequestCard/RequestCard";
 import RequestListFilter from "./RequestListFilter";
 
-type Props = {
-  requestList: RequestType[];
-  requestListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
-};
-
 export type FilterFormValues = {
   search: string;
   requestorList: string[];
@@ -38,10 +32,18 @@ export type FilterFormValues = {
   isAscendingSort: boolean;
 };
 
+type Props = {
+  requestList: RequestType[];
+  requestListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
+  formList: { label: string; value: string }[];
+};
+
 const RequestListPage = ({
   requestList,
   requestListCount: initialRequestListCount,
   teamMemberList,
+  formList,
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
@@ -89,8 +91,7 @@ const RequestListPage = ({
       setRequestListCount(count || 0);
     } catch (e) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -112,9 +113,9 @@ const RequestListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <RequestListFilter
-              requestList={requestList}
               teamMemberList={teamMemberList}
               handleFilterForms={handleFilterForms}
+              formList={formList}
             />
           </form>
         </FormProvider>

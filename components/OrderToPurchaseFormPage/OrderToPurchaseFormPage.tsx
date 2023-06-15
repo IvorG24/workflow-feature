@@ -142,7 +142,7 @@ const OrderToPurchaseFormPage = ({
     );
     if (isEmpty(primarySigner)) {
       notifications.show({
-        message: "There must be atleast one primary signer",
+        message: "There must be atleast one primary signer.",
         color: "orange",
       });
       return;
@@ -158,8 +158,7 @@ const OrderToPurchaseFormPage = ({
       });
       setIntialSigners(values.signers);
       notifications.show({
-        title: "Success",
-        message: "Signers updated",
+        message: "Signers updated.",
         color: "green",
       });
     } catch (e) {

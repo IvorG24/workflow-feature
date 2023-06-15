@@ -62,7 +62,7 @@ const CreateTreasuryProcessor = ({
     });
     if (isAlreadyExisting) {
       notifications.show({
-        message: "Treasury Processor already exists",
+        message: "Treasury Processor already exists.",
         color: "orange",
       });
       return;
@@ -86,15 +86,13 @@ const CreateTreasuryProcessor = ({
       });
       setTreasuryProcessorCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Treasury Processor created successfully",
+        message: "Treasury Processor created",
         color: "green",
       });
       setIsCreatingTreasuryProcessor(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating treasuryProcessor",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

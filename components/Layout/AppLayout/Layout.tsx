@@ -3,7 +3,7 @@ import {
   getAllTeamOfUser,
   getFormList,
   getUser,
-  getUserTeamMemberId,
+  getUserTeamMemberData,
 } from "@/backend/api/get";
 import { updateUserActiveApp } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
@@ -36,12 +36,8 @@ const Layout = ({ children }: LayoutProps) => {
   const activeApp = useActiveApp();
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
-  const {
-    setUserAvatar,
-    setUserInitials,
-    setUserTeamMemberId,
-    setUserProfile,
-  } = useUserActions();
+  const { setUserAvatar, setUserInitials, setUserTeamMember, setUserProfile } =
+    useUserActions();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
 
@@ -106,13 +102,13 @@ const Layout = ({ children }: LayoutProps) => {
         setFormList(formList);
 
         // fetch user team member id
-        const teamMemberId = await getUserTeamMemberId(supabaseClient, {
+        const teamMember = await getUserTeamMemberData(supabaseClient, {
           teamId: activeTeamId,
           userId: user.user_id,
         });
         // set user team member id
-        if (teamMemberId) {
-          setUserTeamMemberId(teamMemberId);
+        if (teamMember) {
+          setUserTeamMember(teamMember);
         }
 
         // fetch notification list
@@ -130,8 +126,7 @@ const Layout = ({ children }: LayoutProps) => {
         setUnreadNotification(unreadNotificationCount || 0);
       } catch {
         notifications.show({
-          title: "Error!",
-          message: "Unable to fetch team",
+          message: "Something went wrong. Please try again later.",
           color: "red",
         });
         router.push("/500");

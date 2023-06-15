@@ -104,8 +104,7 @@ const RequestFormListPage = ({
       setFormListCount(count || 0);
     } catch {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -140,14 +139,12 @@ const RequestFormListPage = ({
       storeSetFormList(newForm);
 
       notifications.show({
-        title: "Success!",
-        message: "Updated form visibility.",
+        message: "Form visibility updated.",
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -164,14 +161,12 @@ const RequestFormListPage = ({
       storeSetFormList(newFormList);
 
       notifications.show({
-        title: "Success!",
-        message: "Deleted form.",
+        message: "Form deleted.",
         color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

@@ -79,8 +79,7 @@ const InviteMember = ({
                 const isMemberAlready = memberEmailList.includes(query);
                 if (isMemberAlready) {
                   notifications.show({
-                    title: "Warning!",
-                    message: "A member with this email already exists",
+                    message: "A member with this email already exists.",
                     color: "orange",
                   });
                   valid = false;

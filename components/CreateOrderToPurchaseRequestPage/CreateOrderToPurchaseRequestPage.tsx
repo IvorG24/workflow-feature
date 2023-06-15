@@ -5,7 +5,7 @@ import RequestFormSection from "@/components/CreateRequestPage/RequestFormSectio
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
@@ -35,20 +35,13 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
-
-  conditionalFields: Field[];
 };
 
-const CreateOrderToPurchasesRequestPage = ({
-  form,
-  itemOptions,
-
-  conditionalFields,
-}: Props) => {
+const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createBrowserSupabaseClient<Database>();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const team = useActiveTeam();
 
   const requestorProfile = useUserProfile();
@@ -82,25 +75,25 @@ const CreateOrderToPurchasesRequestPage = ({
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
+      if (!teamMember) return;
+
       setIsLoading(true);
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId,
-        teamMemberId,
+        teamMemberId: teamMember.team_member_id,
         signers: form.form_signer,
       });
 
       notifications.show({
-        title: "Success",
-        message: "Request created",
+        message: "Request created.",
         color: "green",
       });
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({
-        title: "Something went wrong",
-        message: "Please try again later",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -174,6 +167,7 @@ const CreateOrderToPurchasesRequestPage = ({
         teamId: team.team_id,
         itemName: value,
       });
+
       const generalField = [
         {
           ...newSection.section_field[0],
@@ -185,34 +179,24 @@ const CreateOrderToPurchasesRequestPage = ({
       ];
       const duplicatableSectionId = uuidv4();
 
-      const newFields = item.item_description.map((description, fieldIndex) => {
-        const field = conditionalFields.find(
-          (field) => field.field_name === description.item_description_label
-        );
+      const newFields = item.item_description.map((description) => {
         const options = description.item_description_field.map(
           (options, optionIndex) => {
             return {
               option_description: null,
-              option_field_id: `${field?.field_id}`,
+              option_field_id: description.item_field.field_id,
               option_id: options.item_description_field_id,
               option_order: optionIndex + 1,
               option_value: options.item_description_field_value,
             };
           }
         );
+
         return {
-          field_description: null,
-          field_id: `${field?.field_id}`,
-          field_is_positive_metric: true,
-          field_is_required: true,
-          field_name: description.item_description_label,
-          field_order: fieldIndex + 1,
-          field_section_id: newSection.section_id,
-          field_type: "DROPDOWN",
+          ...description.item_field,
           field_section_duplicatable_id: duplicatableSectionId,
           field_option: options,
           field_response: "",
-          field_is_read_only: false,
         };
       });
 

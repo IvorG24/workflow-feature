@@ -17,7 +17,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const request = await getRequest(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
-      const formattedRequest = request as unknown as RequestWithResponseType;
 
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
@@ -25,9 +24,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       const connectedFormID = await getFormslyFormId(supabaseClient, {
         formName:
-          FORM_CONNECTION[
-            formattedRequest.request_form.form_name as ConnectedFormsType
-          ],
+          FORM_CONNECTION[request.request_form.form_name as ConnectedFormsType],
         teamId,
       });
 

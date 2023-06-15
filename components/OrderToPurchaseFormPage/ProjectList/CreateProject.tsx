@@ -58,15 +58,13 @@ const CreateProject = ({
       });
       setProjectCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Project created successfully",
+        message: "Project created.",
         color: "green",
       });
       setIsCreatingProject(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating project",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

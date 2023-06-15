@@ -1,6 +1,6 @@
 import { createRequestForm } from "@/backend/api/post";
 import { useFormActions } from "@/stores/useFormStore";
-import { useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { defaultRequestFormBuilderSection } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { AppType, TeamMemberWithUserType } from "@/utils/types";
@@ -49,12 +49,12 @@ type Props = {
 const BuildFormPage = ({ teamMemberList, formId }: Props) => {
   const router = useRouter();
   const supabaseClient = createBrowserSupabaseClient<Database>();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const formType: AppType = "REQUEST";
   const { classes } = useStyles();
 
   const { addForm } = useFormActions();
-  const [activeField, setActiveField] = useState<number | null>(null);
+  const [activeField, setActiveField] = useState<string | null>(null);
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -148,11 +148,12 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
 
   const handleSaveForm = async (formData: FormBuilderData) => {
     if (checkForError(formData)) return;
+    if (!teamMember) return;
     try {
       setIsSubmitting(true);
       const createdForm = await createRequestForm(supabaseClient, {
         formBuilderData: formData,
-        teamMemberId: teamMemberId,
+        teamMemberId: teamMember.team_member_id,
       });
       addForm(createdForm);
       notifications.show({

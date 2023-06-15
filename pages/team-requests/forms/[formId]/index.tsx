@@ -47,9 +47,8 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         teamId,
       });
 
-      const formattedForm = form as unknown as FormType;
-      if (formattedForm.form_is_formsly_form) {
-        if (formattedForm.form_name === "Order to Purchase") {
+      if (form.form_is_formsly_form) {
+        if (form.form_name === "Order to Purchase") {
           const { data: items, count: itemListCount } = await getItemList(
             supabaseClient,
             {
@@ -91,7 +90,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               warehouseProcessorListCount,
             },
           };
-        } else if (formattedForm.form_name === "Purchase Order") {
+        } else if (form.form_name === "Purchase Order") {
           const { data: vendors, count: vendorListCount } = await getNameList(
             supabaseClient,
             {
@@ -121,7 +120,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               purchasingProcessorListCount,
             },
           };
-        } else if (formattedForm.form_name === "Invoice") {
+        } else if (form.form_name === "Invoice") {
           const {
             data: accountingProcessors,
             count: accountingProcessorListCount,
@@ -139,7 +138,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               accountingProcessorListCount,
             },
           };
-        } else if (formattedForm.form_name === "Receiving Inspecting Report") {
+        } else if (form.form_name === "Receiving Inspecting Report") {
           const {
             data: warehouseReceivers,
             count: warehouseReceiverListCount,
@@ -157,7 +156,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               warehouseReceiverListCount,
             },
           };
-        } else if (formattedForm.form_name === "Cheque Reference") {
+        } else if (form.form_name === "Cheque Reference") {
           const {
             data: treasuryProcessors,
             count: treasuryProcessorListCount,
@@ -175,7 +174,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               treasuryProcessorListCount,
             },
           };
-        } else if (formattedForm.form_name === "Audit") {
+        } else if (form.form_name === "Audit") {
           const { data: auditProcessors, count: auditProcessorListCount } =
             await getProcessorList(supabaseClient, {
               processor: "audit",

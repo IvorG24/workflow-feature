@@ -26,12 +26,12 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 
+import { v4 as uuidv4 } from "uuid";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import CreatePurchasingProcessor from "./PurchasingProcessorList/CreatePurchasingProcessor";
 import PurchasingProcessorList from "./PurchasingProcessorList/PurchasingProcessorList";
 import CreateVendor from "./VendorList/CreateVendor";
 import VendorList from "./VendorList/VendorList";
-import { v4 as uuidv4 } from "uuid";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
@@ -128,7 +128,7 @@ const PurchaseOrderFormPage = ({
     );
     if (isEmpty(primarySigner)) {
       notifications.show({
-        message: "There must be atleast one primary signer",
+        message: "There must be atleast one primary signer.",
         color: "orange",
       });
       return;
@@ -144,8 +144,7 @@ const PurchaseOrderFormPage = ({
       });
       setIntialSigners(values.signers);
       notifications.show({
-        title: "Success",
-        message: "Signers updated",
+        message: "Signers updated.",
         color: "green",
       });
     } catch (e) {
@@ -187,7 +186,6 @@ const PurchaseOrderFormPage = ({
           >
             Analytics
           </Button>
-        
         </Group>
       </Flex>
       <Space h="xl" />

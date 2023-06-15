@@ -18,7 +18,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { showNotification } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
@@ -114,7 +114,7 @@ const WarehouseProcessorList = ({
       setWarehouseProcessorList(data as WarehouseProcessorTableRow[]);
       setWarehouseProcessorCount(Number(count));
     } catch {
-      showNotification({
+      notifications.show({
         message: "Error on fetching warehouse processor list",
         color: "red",
       });
@@ -142,17 +142,15 @@ const WarehouseProcessorList = ({
         table: "warehouse_processor",
       });
 
-      showNotification({
-        title: "Success!",
-        message: "Warehouse Processor/s deleted",
+      notifications.show({
+        message: "Warehouse Processor/s deleted.",
         color: "green",
       });
     } catch {
       setWarehouseProcessorList(savedRecord);
       setCheckList(saveCheckList);
-      showNotification({
-        title: "Error!",
-        message: "Warehouse Processor/s failed to delete",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
@@ -184,8 +182,8 @@ const WarehouseProcessorList = ({
         status: value,
       });
     } catch {
-      showNotification({
-        message: "Error on changing status",
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setWarehouseProcessorList(savedRecord);

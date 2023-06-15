@@ -62,7 +62,7 @@ const CreateAccountingProcessor = ({
     });
     if (isAlreadyExisting) {
       notifications.show({
-        message: "Accounting Processor already exists",
+        message: "Accounting Processor already exists.",
         color: "orange",
       });
       return;
@@ -86,15 +86,13 @@ const CreateAccountingProcessor = ({
       });
       setAccountingProcessorCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Accounting Processor created successfully",
+        message: "Accounting Processor created.",
         color: "green",
       });
       setIsCreatingAccountingProcessor(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating accountingProcessor",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }

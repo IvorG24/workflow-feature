@@ -40,7 +40,7 @@ const CreateTeamPage = () => {
 
   return (
     <Container>
-      <Title>Create Team Page</Title>
+      <Title>Create Team </Title>
       <Stepper my="xl" iconSize={42} active={activeStep} breakpoint="sm">
         <Stepper.Step label="Step 1" description="Create team" />
         <Stepper.Step label="Step 2" description="Invite members" />

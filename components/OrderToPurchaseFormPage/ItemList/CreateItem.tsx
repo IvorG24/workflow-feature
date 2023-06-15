@@ -76,15 +76,13 @@ const CreateItem = ({
       });
       setItemCount((prev) => prev + 1);
       notifications.show({
-        title: "Success!",
-        message: "Item created successfully",
+        message: "Item created.",
         color: "green",
       });
       setIsCreatingItem(false);
     } catch {
       notifications.show({
-        title: "Error!",
-        message: "There was an error on creating item",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     }
