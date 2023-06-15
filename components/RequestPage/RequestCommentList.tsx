@@ -1,5 +1,5 @@
 import { createComment, createNotification } from "@/backend/api/post";
-import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { RequestWithResponseType } from "@/utils/types";
 import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -22,7 +22,7 @@ type Props = {
 
 const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const userProfile = useUserProfile();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const supabaseClient = useSupabaseClient();
 
   const user = useUserProfile();
@@ -33,13 +33,14 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const addCommentFormMethods = useForm<CommentFormProps>();
   const handleAddComment = async (data: CommentFormProps) => {
     if (!userProfile) return;
+    if (!teamMember) return;
     const commenterFullName = `${userProfile.user_first_name} ${userProfile.user_last_name}`;
 
     try {
       setIsLoading(true);
       const { data: newComment, error } = await createComment(supabaseClient, {
         comment_request_id: requestData.requestId,
-        comment_team_member_id: teamMemberId,
+        comment_team_member_id: teamMember.team_member_id,
         comment_type: "REQUEST_COMMENT",
         comment_content: data.comment,
       });

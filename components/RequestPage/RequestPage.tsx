@@ -1,7 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useUserProfile, useUserTeamMemberId } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
 import { FORM_CONNECTION } from "@/utils/constant";
 import {
@@ -46,7 +46,7 @@ const RequestPage = ({
   const supabaseClient = useSupabaseClient();
 
   const user = useUserProfile();
-  const teamMemberId = useUserTeamMemberId();
+  const teamMember = useUserTeamMember();
   const { setIsLoading } = useLoadingActions();
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
@@ -71,7 +71,8 @@ const RequestPage = ({
 
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
-    (signer) => signer.signer_team_member.team_member_id === teamMemberId
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -80,6 +81,7 @@ const RequestPage = ({
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
+      if (!teamMember) return;
       setIsLoading(true);
       const signer = isUserSigner;
       const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
@@ -99,7 +101,7 @@ const RequestPage = ({
         requestOwnerId: request.request_team_member.team_member_user.user_id,
         signerFullName: signerFullName,
         formName: request.request_form.form_name,
-        memberId: teamMemberId,
+        memberId: teamMember?.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
       });
 
@@ -134,10 +136,11 @@ const RequestPage = ({
 
   const handleCancelRequest = async () => {
     try {
+      if (!teamMember) return;
       setIsLoading(true);
       await cancelRequest(supabaseClient, {
         requestId: request.request_id,
-        memberId: teamMemberId,
+        memberId: teamMember.team_member_id,
       });
 
       setRequestStatus("CANCELED");
