@@ -12,16 +12,18 @@ import {
   TEMP_USER_ID,
 } from "@/utils/dummyData";
 import { RequestType, TeamMemberWithUserType } from "@/utils/types";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 import { OTPDataType } from "./forms/[formId]/analytics";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
-    const supabaseClient = createServerSupabaseClient(ctx);
+    const supabaseClient = createPagesServerClient(ctx);
     const teamId = await getUserActiveTeamId(supabaseClient, {
       userId: TEMP_USER_ID,
     });
+
+    if (!teamId) throw Error;
 
     const { data, count } = await getRequestList(supabaseClient, {
       teamId: teamId,
