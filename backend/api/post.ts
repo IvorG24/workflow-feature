@@ -11,6 +11,7 @@ import {
   FieldTableInsert,
   FormType,
   InvitationTableInsert,
+  InvitationTableRow,
   ItemDescriptionFieldTableInsert,
   ItemTDescriptionableInsert,
   ItemTableInsert,
@@ -105,6 +106,33 @@ export const createUser = async (
     .single();
   if (error) throw error;
 
+  const { data: invitationList, error: invitationError } = await supabaseClient
+    .from("invitation_table")
+    .select(
+      "*, invitation_from_team_member: invitation_from_team_member_id(team_member_team: team_member_team_id(team_name))"
+    )
+    .eq("invitation_to_email", data.user_email);
+  if (invitationError) throw invitationError;
+
+  const formattedInvitationList =
+    invitationList as unknown as (InvitationTableRow & {
+      invitation_from_team_member: { team_member_team: { team_name: string } };
+    })[];
+
+  const notificationInput = formattedInvitationList.map((invitation) => {
+    return {
+      notification_app: "GENERAL",
+      notification_content: `You have been invited to join ${invitation.invitation_from_team_member.team_member_team.team_name}`,
+      notification_redirect_url: `/team/invitation/${invitation.invitation_id}`,
+      notification_type: "INVITE",
+      notification_user_id: data.user_id,
+    };
+  });
+  console.log(notificationInput);
+  const { error: notificationError } = await supabaseClient
+    .from("notification_table")
+    .insert(notificationInput);
+  if (notificationError) throw notificationError;
   return data;
 };
 

@@ -15,6 +15,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
+      if (!teamId) throw new Error("No team found");
 
       const team = await getTeam(supabaseClient, {
         teamId: teamId,

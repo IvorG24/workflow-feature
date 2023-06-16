@@ -2,7 +2,6 @@ import { getNotificationList, getUserActiveTeamId } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import NotificationPage from "@/components/NotificationPage/NotificationPage";
 import { DEFAULT_NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
-import { TEMP_USER_ID } from "@/utils/dummyData";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { NotificationTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -22,7 +21,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           app: "REQUEST",
           limit: DEFAULT_NOTIFICATION_LIST_LIMIT,
           page: Number(page),
-          userId: TEMP_USER_ID,
+          userId: user.id,
           teamId,
           unreadOnly: tab === "unread",
         });

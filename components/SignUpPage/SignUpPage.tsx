@@ -139,8 +139,8 @@ const SignUpPage = () => {
             labelPosition="center"
           />
           <SocialMediaButtonList
-            flexProps={{ mt: "md", direction: "column", gap: "sm" }}
-            buttonProps={{ variant: "outline" }}
+            flexprops={{ mt: "md", direction: "column", gap: "sm" }}
+            buttonprops={{ variant: "outline" }}
           />
         </Paper>
       </Center>

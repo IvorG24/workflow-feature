@@ -115,6 +115,7 @@ const CreateTeamForm = ({
         changeStep((prev) => prev + 1);
       }
     } catch (error) {
+      console.error(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

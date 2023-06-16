@@ -21,6 +21,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
+      if (!teamId) throw new Error("No team found");
 
       const connectedFormID = await getFormslyFormId(supabaseClient, {
         formName:

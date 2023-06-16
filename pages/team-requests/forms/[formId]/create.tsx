@@ -29,6 +29,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         const teamId = await getUserActiveTeamId(supabaseClient, {
           userId: user.id,
         });
+        if (!teamId) throw new Error("No team found");
 
         // Order to Purchase Form
         if (form.form_name === "Order to Purchase") {

@@ -12,6 +12,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
+      if (!teamId) throw new Error("No team found");
 
       const teamMemberList = await getTeamAdminList(supabaseClient, {
         teamId,

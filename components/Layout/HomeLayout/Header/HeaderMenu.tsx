@@ -1,3 +1,4 @@
+import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
 import {
   Button,
   Group,
@@ -6,6 +7,7 @@ import {
   createStyles,
   rem,
 } from "@mantine/core";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 
 const useStyles = createStyles((theme) => ({
@@ -58,6 +60,8 @@ const tabs = [
 const HeaderMenu = () => {
   const router = useRouter();
   const { classes } = useStyles();
+  const user = useUser();
+  
   return (
     <>
       <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
@@ -75,10 +79,19 @@ const HeaderMenu = () => {
       </MediaQuery>
       <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
         <Group>
-          <Button variant="outline" onClick={() => router.push("/sign-in")}>
-            Log in
-          </Button>
-          <Button onClick={() => router.push("/sign-up")}>Sign up</Button>
+          {user ? (
+            <Button onClick={() => router.push(DEFAULT_LANDING_PAGE)}>
+              Go to Formsly
+            </Button>
+          ) : null}
+          {!user ? (
+            <>
+              <Button variant="outline" onClick={() => router.push("/sign-in")}>
+                Log in
+              </Button>
+              <Button onClick={() => router.push("/sign-up")}>Sign up</Button>
+            </>
+          ) : null}
         </Group>
       </MediaQuery>
     </>

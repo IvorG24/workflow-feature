@@ -3,12 +3,12 @@ import Meta from "@/components/Meta/Meta";
 import NotificationPage from "@/components/NotificationPage/NotificationPage";
 import { TEMP_USER_ID } from "@/utils/dummyData";
 import { NotificationTableRow } from "@/utils/types";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
-    const supabaseClient = createServerSupabaseClient(ctx);
+    const supabaseClient = createPagesServerClient(ctx);
     const tab = ctx.query.tab || "all";
     const page = ctx.query.page || 1;
 
