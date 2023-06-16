@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { getCookie, setCookie } from "cookies-next";
 import NextApp, { AppContext } from "next/app";
@@ -25,7 +25,7 @@ export default function App(
   const activeApp = useActiveApp();
   const isLoading = useIsLoading();
 
-  const [supabaseClient] = useState(() => createBrowserSupabaseClient());
+  const [supabaseClient] = useState(() => createPagesBrowserClient());
   const [colorScheme, setColorScheme] = useState<ColorScheme>(
     props.colorScheme
   );

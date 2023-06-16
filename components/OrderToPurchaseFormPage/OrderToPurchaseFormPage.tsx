@@ -21,7 +21,7 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -59,7 +59,7 @@ const OrderToPurchaseFormPage = ({
   form,
 }: Props) => {
   const router = useRouter();
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const { formId } = router.query;
   const team = useActiveTeam();
   const initialSignerIds: string[] = [];

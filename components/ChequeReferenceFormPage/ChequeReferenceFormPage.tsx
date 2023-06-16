@@ -18,13 +18,13 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import { v4 as uuidv4 } from "uuid";
+import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import CreateTreasuryProcessor from "./TreasuryProcessorList/CreateTreasuryProcessor";
 import TreasuryProcessorList from "./TreasuryProcessorList/TreasuryProcessorList";
@@ -44,7 +44,7 @@ const ChequeReferenceFormPage = ({
   treasuryProcessorListCount,
 }: Props) => {
   const router = useRouter();
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const { formId } = router.query;
   const team = useActiveTeam();
   const initialSignerIds: string[] = [];

@@ -15,7 +15,7 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCalendar } from "@tabler/icons-react";
 import { capitalize } from "lodash";
 import moment from "moment";
@@ -28,7 +28,7 @@ type Props = {
 };
 
 const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const creator = form.form_team_member.team_member_user;
   const router = useRouter();
   const formId = router.query.formId as string;
