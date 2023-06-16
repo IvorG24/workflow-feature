@@ -19,7 +19,7 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize } from "lodash";
 import { useEffect, useState } from "react";
 
@@ -28,7 +28,7 @@ export type Props = {
 };
 
 const TeamInvitationPage = ({ invitation }: Props) => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const user = useUserProfile();
   const { setIsLoading } = useLoadingActions();

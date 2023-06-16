@@ -27,7 +27,7 @@ import {
   Menu,
   useMantineColorScheme,
 } from "@mantine/core";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
   IconLogout,
@@ -43,7 +43,7 @@ import Notification from "./Notification";
 const HeaderMenu = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const router = useRouter();
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();

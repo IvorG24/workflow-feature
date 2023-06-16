@@ -16,7 +16,8 @@ import { TEMP_USER_ID } from "@/utils/dummyData";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -29,9 +30,11 @@ type LayoutProps = {
 };
 
 const Layout = ({ children }: LayoutProps) => {
+  const user = useUser();
+  console.log(user);
   const theme = useMantineTheme();
   const router = useRouter();
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const activeApp = useActiveApp();
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();

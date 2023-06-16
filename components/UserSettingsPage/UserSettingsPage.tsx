@@ -6,7 +6,7 @@ import { Database } from "@/utils/database";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -37,7 +37,7 @@ type Props = {
 };
 
 const UserSettingsPage = ({ user }: Props) => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
 
   const { setUserAvatar, setUserInitials } = useUserActions();

@@ -8,7 +8,7 @@ import { useUserActions, useUserProfile } from "@/stores/useUserStore";
 import { TeamTableRow } from "@/utils/types";
 import { Button, Paper, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 
 type TeamCardProps = {
@@ -17,7 +17,7 @@ type TeamCardProps = {
 
 const TeamCard = ({ team }: TeamCardProps) => {
   const router = useRouter();
-  const supabaseClient = createBrowserSupabaseClient();
+  const supabaseClient = createPagesBrowserClient();
 
   const activeApp = useActiveApp();
   const user = useUserProfile();

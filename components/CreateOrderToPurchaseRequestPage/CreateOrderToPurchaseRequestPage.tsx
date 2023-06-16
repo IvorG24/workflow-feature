@@ -15,7 +15,7 @@ import {
 } from "@/utils/types";
 import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -40,7 +40,7 @@ type Props = {
 const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
 
