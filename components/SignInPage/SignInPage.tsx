@@ -1,5 +1,4 @@
 import { checkIfEmailExists, signInUser } from "@/backend/api/post";
-import { useActiveApp } from "@/stores/useTeamStore";
 import {
   Anchor,
   Box,
@@ -17,7 +16,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -33,7 +31,6 @@ type SignInFormValues = {
 const SignInPage = () => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  const activeApp = useActiveApp();
   const [isLoading, setIsLoading] = useState(false);
   const [openResetPasswordModal, setOpenResetPasswordModal] = useState(false);
   const {
@@ -64,7 +61,7 @@ const SignInPage = () => {
         email: data.email,
       });
       if (isUserOnboarded) {
-        router.push(`/team-${lowerCase(activeApp)}s/dashboard`);
+        router.push(`/team-requests/dashboard`);
         return;
       }
       router.push("/onboarding");
