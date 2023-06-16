@@ -1,6 +1,7 @@
 import { checkIfEmailExists } from "@/backend/api/post";
 import Meta from "@/components/Meta/Meta";
 import OnboardingPage from "@/components/OnboardingPage/OnboardingPage";
+import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
 import { withAuth } from "@/utils/server-side-protections";
 import { User } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
@@ -15,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = withAuth(
       ) {
         return {
           redirect: {
-            destination: "/",
+            destination: DEFAULT_LANDING_PAGE,
             permanent: false,
           },
         };

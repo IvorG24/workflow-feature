@@ -13,7 +13,7 @@ import {
   useMantineColorScheme,
   useMantineTheme,
 } from "@mantine/core";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconMoonStars, IconSun } from "@tabler/icons-react";
 import { lowerCase } from "lodash";
 import Image from "next/image";
@@ -29,7 +29,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const theme = useMantineTheme();
   const router = useRouter();
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const handleLogout = async () => {
     await supabaseClient.auth.signOut();

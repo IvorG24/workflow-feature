@@ -202,7 +202,7 @@ export const getUserActiveTeamId = async (
       .maybeSingle();
     if (firstTeamError) throw firstTeamError;
 
-    if (!firstTeam) throw new Error("No team found.");
+    if (!firstTeam) return null;
     return firstTeam.team_member_team_id;
   }
 
@@ -523,26 +523,50 @@ export const getAllNotification = async (
   const { userId, app, page, limit, teamId } = params;
   const start = (page - 1) * limit;
 
+  let notificationListQuery = supabaseClient
+    .from("notification_table")
+    .select("*")
+    .eq("notification_user_id", userId)
+    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
+    .order("notification_date_created", { ascending: false })
+    .limit(limit)
+    .range(start, start + limit - 1);
+
+  if (teamId) {
+    notificationListQuery = notificationListQuery.or(
+      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
+    );
+  } else {
+    notificationListQuery = notificationListQuery.is(
+      "notification_team_id",
+      null
+    );
+  }
+
   const { data: notificationList, error: notificationListError } =
-    await supabaseClient
-      .from("notification_table")
-      .select("*")
-      .eq("notification_user_id", userId)
-      .or(`notification_team_id.eq.${teamId}, notification_team_id.is.${null}`)
-      .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-      .order("notification_date_created", { ascending: false })
-      .limit(limit)
-      .range(start, start + limit - 1);
+    await notificationListQuery;
   if (notificationListError) throw notificationListError;
 
+  let unreadNotificationCountQuery = supabaseClient
+    .from("notification_table")
+    .select("*", { count: "exact", head: true })
+    .eq("notification_user_id", userId)
+    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
+    .eq("notification_is_read", false);
+
+  if (teamId) {
+    unreadNotificationCountQuery = unreadNotificationCountQuery.or(
+      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
+    );
+  } else {
+    unreadNotificationCountQuery = unreadNotificationCountQuery.is(
+      "notification_team_id",
+      null
+    );
+  }
+
   const { count: unreadNotificationCount, error: unreadNotificationError } =
-    await supabaseClient
-      .from("notification_table")
-      .select("*", { count: "exact", head: true })
-      .eq("notification_user_id", userId)
-      .or(`notification_team_id.eq.${teamId}, notification_team_id.is.${null}`)
-      .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-      .eq("notification_is_read", false);
+    await unreadNotificationCountQuery;
   if (unreadNotificationError) throw unreadNotificationError;
 
   return { data: notificationList, count: unreadNotificationCount };
@@ -844,8 +868,8 @@ export const getNotificationList = async (
     app: AppType;
     page: number;
     limit: number;
-    teamId: string;
     unreadOnly: boolean;
+    teamId: string | null;
   }
 ) => {
   const { userId, app, page, limit, teamId, unreadOnly } = params;
@@ -857,8 +881,15 @@ export const getNotificationList = async (
       count: "exact",
     })
     .eq("notification_user_id", userId)
-    .or(`notification_team_id.eq.${teamId}, notification_team_id.is.${null}`)
     .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`);
+
+  if (teamId) {
+    query = query.or(
+      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
+    );
+  } else {
+    query = query.is("notification_team_id", null);
+  }
 
   if (unreadOnly) {
     query = query.eq("notification_is_read", false);

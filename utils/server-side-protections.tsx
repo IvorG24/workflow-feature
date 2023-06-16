@@ -1,6 +1,6 @@
 import { checkIfOwnerOrAdmin, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseClient, User } from "@supabase/supabase-js";
 import {
   GetServerSideProps,
@@ -20,7 +20,7 @@ export const withAuth = <P extends { [key: string]: any }>(
   return async (
     context: GetServerSidePropsContext
   ): Promise<GetServerSidePropsResult<P>> => {
-    const supabaseClient = createServerSupabaseClient(context);
+    const supabaseClient = createPagesServerClient(context);
 
     try {
       // * 1. Check if user is authenticated
@@ -63,7 +63,7 @@ export const withAuthAndOnboarding = <P extends { [key: string]: any }>(
   return async (
     context: GetServerSidePropsContext
   ): Promise<GetServerSidePropsResult<P>> => {
-    const supabaseClient = createServerSupabaseClient(context);
+    const supabaseClient = createPagesServerClient(context);
 
     try {
       // * 1. Check if user is authenticated
@@ -120,7 +120,7 @@ export const withOwnerOrAdmin = <P extends { [key: string]: any }>(
   return async (
     context: GetServerSidePropsContext
   ): Promise<GetServerSidePropsResult<P>> => {
-    const supabaseClient = createServerSupabaseClient(context);
+    const supabaseClient = createPagesServerClient(context);
 
     try {
       // * 1. Check if user is authenticated
@@ -158,6 +158,7 @@ export const withOwnerOrAdmin = <P extends { [key: string]: any }>(
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
+      if (!teamId) throw new Error("No team found");
       const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
         userId: user.id,
         teamId: teamId,

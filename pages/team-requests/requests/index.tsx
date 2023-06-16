@@ -22,6 +22,15 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         userId: user.id,
       });
 
+      if (!teamId) {
+        return {
+          redirect: {
+            destination: "/team/create",
+            permanent: false,
+          },
+        };
+      }
+
       const [data, teamMemberList, formList] = await Promise.all([
         getRequestList(supabaseClient, {
           teamId: teamId,

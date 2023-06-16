@@ -1,5 +1,6 @@
-import { useActiveApp } from "@/stores/useTeamStore";
+import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
 import { Navbar as MantineNavbar, Skeleton, Stack } from "@mantine/core";
+import { isEmpty } from "lodash";
 import FormList from "./FormList";
 import NavLink from "./NavLink";
 import SelectTeam from "./SelectTeam";
@@ -10,6 +11,7 @@ type NavbarProps = {
 
 const Navbar = ({ openNavbar }: NavbarProps) => {
   const activeApp = useActiveApp();
+  const activeTeam = useActiveTeam();
 
   return (
     <MantineNavbar
@@ -19,7 +21,7 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
       width={{ sm: 200, lg: 300 }}
     >
       <Stack>
-        <SelectTeam />
+        {!isEmpty(activeTeam) ? <SelectTeam /> : null}
         {!activeApp ? (
           <>
             <Stack spacing={5}>
@@ -43,7 +45,7 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
         {activeApp ? (
           <>
             <NavLink />
-            <FormList />
+            {!isEmpty(activeTeam) ? <FormList /> : null}
           </>
         ) : null}
       </Stack>
