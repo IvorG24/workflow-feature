@@ -31,12 +31,13 @@ const Notification = () => {
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
   return (
-    <Stack spacing={8} p={8}>
+    <Stack spacing={8} p={8} >
       <Group position="apart">
         <Text weight={600}>Notifications</Text>
       </Group>
-      <ScrollArea mah={300} type="scroll">
-        <Stack p={8}>
+
+      <ScrollArea type="scroll">
+        <Stack p={8} mah={300}>
           {notificationList.map((notification) => (
             <Stack
               spacing={0}
@@ -77,18 +78,18 @@ const Notification = () => {
             </Center>
           ) : null}
         </Stack>
-        <Center>
-          <Button
-            variant="subtle"
-            compact
-            onClick={() =>
-              router.push(`/team-${lowerCase(activeApp)}s/notification`)
-            }
-          >
-            View all
-          </Button>
-        </Center>
       </ScrollArea>
+      <Center>
+        <Button
+          variant="subtle"
+          compact
+          onClick={() =>
+            router.push(`/team-${lowerCase(activeApp)}s/notification`)
+          }
+        >
+          View all
+        </Button>
+      </Center>
     </Stack>
   );
 };
