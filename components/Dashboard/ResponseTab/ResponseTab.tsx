@@ -2,12 +2,15 @@ import {
   getRequestListByForm,
   getResponseDataByKeyword,
 } from "@/backend/api/get";
+import { useFormList } from "@/stores/useFormStore";
 import {
+  generateFormslyFormResponseData,
   responseFieldReducer,
   searchResponseReducer,
 } from "@/utils/arrayFunctions";
 import {
   FieldWithResponseType,
+  FormslyFormResponseDataType,
   ResponseDataType,
   SearchKeywordResponseType,
 } from "@/utils/types";
@@ -19,6 +22,7 @@ import {
   Group,
   LoadingOverlay,
   Paper,
+  Stack,
   Text,
   TextInput,
   Title,
@@ -33,29 +37,39 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import RequisitionTable from "./RequisitionTable";
 import ResponseTable from "./ResponseTable";
 
 type ResponseDataProps = {
   selectedForm: string | null;
+  isFormslyForm: boolean | undefined;
 };
 
 type FormValues = {
   search: string;
 };
 
-const filteredTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
+const filteredResponseTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
 
-const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
+const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
+  const formList = useFormList();
   const supabaseClient = useSupabaseClient();
   const prevSelectedFormProp = useRef(selectedForm);
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [responseData, setResponseData] = useState<ResponseDataType | null>(
     null
   );
+  const [formslyFormResponseData, setFormslyFormResponseData] = useState<
+    FormslyFormResponseDataType[] | null
+  >(null);
   const [searchKeywordResponse, setSearchKeywordResponse] =
     useState<ResponseDataType | null>(null);
 
   const { handleSubmit, register, reset } = useForm<FormValues>();
+
+  const selectedFormName = formList.find(
+    (form) => form.form_id === selectedForm
+  )?.form_name;
 
   const handleSearchByKeyword = async (data: FormValues) => {
     try {
@@ -94,19 +108,35 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
       const requestList = await getRequestListByForm(supabaseClient, {
         formId: selectedForm,
       });
+
       const sectionList = requestList.flatMap(
         (request) => request.request_form.form_section
       );
+
       const fieldWithResponse: FieldWithResponseType = [];
       sectionList.forEach((section) =>
         section.section_field.forEach((field) => fieldWithResponse.push(field))
       );
+
       const reducedFieldWithResponse = responseFieldReducer(fieldWithResponse);
-      const nonDynamicResponseList = reducedFieldWithResponse.filter(
-        (field: ResponseDataType[0]) => !filteredTypes.includes(field.type)
-      );
-      setResponseData(nonDynamicResponseList);
+      console.log(reducedFieldWithResponse);
+      if (isFormslyForm) {
+        const groupedFieldResponse = generateFormslyFormResponseData(
+          fieldWithResponse,
+          reducedFieldWithResponse
+        );
+
+        setFormslyFormResponseData(groupedFieldResponse);
+      } else {
+        const nonDynamicResponseList = reducedFieldWithResponse.filter(
+          (field: ResponseDataType[0]) =>
+            !filteredResponseTypes.includes(field.type) &&
+            field.responseList.length > 0
+        );
+        setResponseData(nonDynamicResponseList);
+      }
     } catch (error) {
+      console.log(error);
       notifications.show({
         title: "Can't fetch data at the moment.",
         message: "Please try again later.",
@@ -172,22 +202,35 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
         </Paper>
       )}
 
-      {responseData && responseData.length > 0 ? (
-        <Paper
-          mt="sm"
-          p="md"
-          w={{ base: "100%", sm: "fit-content" }}
-          withBorder
-        >
+      {formslyFormResponseData || responseData ? (
+        <Paper mt="sm" p="md" w="100%" withBorder>
           <Group>
             <IconBrandSupabase />
             <Title order={3}>Field Response Data</Title>
           </Group>
-          <Flex w="100%" wrap="wrap" gap="md">
-            {responseData.map((response, idx) => (
-              <ResponseTable key={response.label + idx} response={response} />
-            ))}
-          </Flex>
+          {isFormslyForm && selectedFormName === "Order to Purchase" ? (
+            <Stack>
+              {formslyFormResponseData &&
+                formslyFormResponseData.length > 0 &&
+                formslyFormResponseData.map((response, idx) => (
+                  <RequisitionTable
+                    key={response.label + idx}
+                    response={response}
+                  />
+                ))}
+            </Stack>
+          ) : (
+            <Flex w="100%" wrap="wrap" gap="md">
+              {responseData &&
+                responseData.length > 0 &&
+                responseData.map((response, idx) => (
+                  <ResponseTable
+                    key={response.label + idx}
+                    response={response}
+                  />
+                ))}
+            </Flex>
+          )}
         </Paper>
       ) : (
         <Title mt="xl" order={3} align="center">
@@ -198,4 +241,4 @@ const ResponseDataChart = ({ selectedForm }: ResponseDataProps) => {
   );
 };
 
-export default ResponseDataChart;
+export default ResponseTab;

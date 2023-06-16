@@ -548,7 +548,11 @@ export type ResponseDataType = {
   type: FieldType;
   label: string;
   optionList: string[];
-  responseList: { label: string; value: number }[];
+  responseList: {
+    label: string;
+    value: number;
+    groupId?: string | null;
+  }[];
 }[];
 
 export type RequestorListType =
@@ -565,4 +569,9 @@ export type RequestorListType =
 export type LineChartDataType = {
   label: string;
   value: number;
+};
+
+export type FormslyFormResponseDataType = {
+  label: string;
+  responseData: ResponseDataType;
 };

@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 import Overview from "./OverviewTab/Overview";
 import OrderToPurchaseAnalytics from "./RequisitionTab/OrderToPurchaseAnalytics";
-import ResponseData from "./ResponseTab/ResponseDataChart";
+import ResponseTab from "./ResponseTab/ResponseTab";
 
 type DashboardProps = {
   requestList: RequestType[];
@@ -59,7 +59,6 @@ const Dashboard = ({
       setVisibleRequestList(data as RequestType[]);
       setRequestCount(count as number);
     } catch (error) {
-      console.log(error);
       notifications.show({
         title: "Something went wrong.",
         message: "Please try again later",
@@ -117,7 +116,10 @@ const Dashboard = ({
         </Tabs.Panel>
 
         <Tabs.Panel value="responses" pt="xs">
-          <ResponseData selectedForm={selectedForm} />
+          <ResponseTab
+            selectedForm={selectedForm}
+            isFormslyForm={isFormslyForm}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="requisition" pt="xs">

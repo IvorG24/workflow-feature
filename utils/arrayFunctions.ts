@@ -135,12 +135,14 @@ export const responseFieldReducer = (responseData: FieldWithResponseType) => {
             acc[acc.length] = {
               label: value,
               value: 1,
+              groupId: response.request_response_duplicatable_section_id,
             };
           });
         } else {
           acc[acc.length] = {
             label: parseResponseValue,
             value: 1,
+            groupId: response.request_response_duplicatable_section_id,
           };
         }
       }
@@ -198,4 +200,97 @@ export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
     }
     return acc;
   }, [] as ResponseDataType);
+};
+
+export const generateFormslyFormResponseData = (
+  fieldWithResponse: FieldWithResponseType,
+  reducedFieldWithResponse: ResponseDataType
+) => {
+  //get all responses from Main section
+  const mainResponseNameList = [
+    "Project Name",
+    "Warehouse Processor",
+    "Type",
+    "Date Needed",
+    "General Name",
+  ];
+
+  // get all label responses
+  const itemFieldLabelList = fieldWithResponse
+    .filter((field) => field.field_name === "General Name")
+    .flatMap((field) => field.field_response);
+
+  // get unique labels
+  const uniqueLabels: string[] = [];
+  const uniqueLabelWithDuplicateId: {
+    label: string;
+    duplicateId: string[];
+  }[] = [];
+
+  itemFieldLabelList.forEach((itemField) => {
+    const responseLabel = JSON.parse(itemField.request_response);
+
+    if (!uniqueLabels.includes(responseLabel)) {
+      const duplicateId = itemField.request_response_duplicatable_section_id
+        ? [itemField.request_response_duplicatable_section_id]
+        : [];
+      const newUniqueLabelWithDuplicateId = {
+        label: responseLabel,
+        duplicateId: duplicateId,
+      };
+      uniqueLabelWithDuplicateId.push(newUniqueLabelWithDuplicateId);
+      uniqueLabels.push(responseLabel);
+    } else {
+      const labelMatchIndex = uniqueLabelWithDuplicateId.findIndex(
+        (uniqueLabel) => uniqueLabel.label === responseLabel
+      );
+      if (labelMatchIndex) {
+        const labelMatchDuplicateId =
+          uniqueLabelWithDuplicateId[labelMatchIndex].duplicateId;
+        const duplicateId = itemField.request_response_duplicatable_section_id;
+
+        if (duplicateId && !labelMatchDuplicateId.includes(duplicateId)) {
+          uniqueLabelWithDuplicateId[labelMatchIndex].duplicateId.push(
+            duplicateId
+          );
+        }
+      }
+    }
+  });
+
+  // group responses by section
+  const groupedFieldResponse = uniqueLabelWithDuplicateId.map((uniqueLabel) => {
+    const label = uniqueLabel.label;
+    const duplicateIdList = uniqueLabel.duplicateId;
+    const responseMatch = reducedFieldWithResponse.map((field) => {
+      const filteredResponse = field.responseList.filter((item) =>
+        duplicateIdList.includes(`${item.groupId}`)
+      );
+
+      return {
+        ...field,
+        responseList: filteredResponse,
+      };
+    });
+
+    return {
+      label,
+      responseData: responseMatch.filter(
+        (responseItem) =>
+          responseItem.responseList.length > 0 &&
+          !mainResponseNameList.includes(responseItem.label)
+      ),
+    };
+  });
+
+  const mainResponse = [
+    {
+      label: "Main",
+      responseData: reducedFieldWithResponse.filter((field) =>
+        mainResponseNameList.includes(field.label)
+      ),
+    },
+  ];
+
+  return [...mainResponse, ...groupedFieldResponse];
 };

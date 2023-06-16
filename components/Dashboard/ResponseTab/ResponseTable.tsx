@@ -26,8 +26,8 @@ const ResponseTable = ({ response }: ResponseTableProps) => {
   const sortedResponseList = responseList.sort((a, b) => b.value - a.value);
 
   return (
-    <Paper maw={500} w={{ base: "100%" }} mt="xl" mah={600} withBorder>
-      <ScrollArea maw={500} type="auto" h="fit-content">
+    <Paper maw={400} w={{ base: "100%" }} mt="xl" mah={600} withBorder>
+      <ScrollArea maw={500} type="auto" h={300}>
         <Box p="sm" className={classes.withBorderBottom}>
           <Title order={4}>{response.label}</Title>
           <Text size="xs">{`${startCase(
