@@ -13,7 +13,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -48,7 +48,7 @@ type Props = {
 
 const BuildFormPage = ({ teamMemberList, formId }: Props) => {
   const router = useRouter();
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const formType: AppType = "REQUEST";
   const { classes } = useStyles();

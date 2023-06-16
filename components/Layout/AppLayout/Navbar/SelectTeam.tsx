@@ -19,7 +19,7 @@ import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { isEmpty, lowerCase, startCase } from "lodash";
 import { useRouter } from "next/router";
 import { forwardRef } from "react";
@@ -52,7 +52,7 @@ const SelectItem = forwardRef<HTMLDivElement, TeamSelectItem>(
 );
 
 const SelectTeam = () => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
 
   const teamList = useTeamList();
