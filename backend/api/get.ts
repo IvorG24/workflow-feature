@@ -1177,3 +1177,24 @@ export const checkRequest = async (
   if (error) throw error;
   return count === requestId.length;
 };
+
+// Check user if owner or admin
+export const checkIfOwnerOrAdmin = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    teamId: string;
+  }
+) => {
+  const { userId, teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select("team_member_role")
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId)
+    .maybeSingle();
+  if (error) throw error;
+  const role = data?.team_member_role;
+  if (role === null) return false;
+  return role === "ADMIN" || role === "OWNER";
+};

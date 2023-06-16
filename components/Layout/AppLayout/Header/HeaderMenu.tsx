@@ -14,7 +14,7 @@ import {
   useUserIntials,
   useUserProfile,
 } from "@/stores/useUserStore";
-import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
+import { NOTIFICATION_LIST_LIMIT, SIGN_IN_PAGE_PATH } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 import { AppType } from "@/utils/types";
@@ -92,6 +92,11 @@ const HeaderMenu = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabaseClient.auth.signOut();
+    await router.push(SIGN_IN_PAGE_PATH);
+  };
+
   return (
     <Group spacing={16}>
       <Menu
@@ -162,6 +167,7 @@ const HeaderMenu = () => {
           <Menu.Item
             icon={<IconLogout size={14} />}
             data-cy="header-authentication-button-logout"
+            onClick={handleLogout}
           >
             Logout
           </Menu.Item>

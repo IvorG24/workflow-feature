@@ -9,52 +9,52 @@ import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
-import { TEMP_USER_ID } from "@/utils/dummyData";
+import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { RequestType, TeamMemberWithUserType } from "@/utils/types";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { GetServerSideProps } from "next";
 import { useEffect, useState } from "react";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  try {
-    const supabaseClient = createServerSupabaseClient(ctx);
-    const teamId = await getUserActiveTeamId(supabaseClient, {
-      userId: TEMP_USER_ID,
-    });
+export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+  async ({ supabaseClient, user }) => {
+    try {
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
 
-    const [data, teamMemberList, formList] = await Promise.all([
-      getRequestList(supabaseClient, {
-        teamId: teamId,
-        page: 1,
-        limit: DEFAULT_REQUEST_LIST_LIMIT,
-      }),
-      getAllTeamMembers(supabaseClient, {
-        teamId,
-      }),
-      getFormList(supabaseClient, { teamId, app: "REQUEST" }),
-    ]);
-
-    return {
-      props: {
-        requestListData: data.data,
-        requestListCount: data.count,
-        teamMemberList,
-        formList: formList.map((form) => {
-          return { label: form.form_name, value: form.form_id };
+      const [data, teamMemberList, formList] = await Promise.all([
+        getRequestList(supabaseClient, {
+          teamId: teamId,
+          page: 1,
+          limit: DEFAULT_REQUEST_LIST_LIMIT,
         }),
-      },
-    };
-  } catch (error) {
-    console.error(error);
-    return {
-      redirect: {
-        destination: "/500",
-        permanent: false,
-      },
-    };
+        getAllTeamMembers(supabaseClient, {
+          teamId,
+        }),
+        getFormList(supabaseClient, { teamId, app: "REQUEST" }),
+      ]);
+
+      return {
+        props: {
+          requestListData: data.data,
+          requestListCount: data.count,
+          teamMemberList,
+          formList: formList.map((form) => {
+            return { label: form.form_name, value: form.form_id };
+          }),
+        },
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
   }
-};
+);
 
 type Props = {
   requestListData: RequestType[];
