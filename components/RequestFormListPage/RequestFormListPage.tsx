@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconSearch,
   IconSortAscending,
@@ -56,7 +56,7 @@ const RequestFormListPage = ({
   teamMemberList,
   teamId,
 }: Props) => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const [formList, setFormList] =
     useState<FormWithOwnerType[]>(initialFormList);

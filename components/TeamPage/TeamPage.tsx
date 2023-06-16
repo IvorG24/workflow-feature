@@ -12,7 +12,7 @@ import { Database } from "@/utils/database";
 import { MemberRoleType, TeamMemberType, TeamTableRow } from "@/utils/types";
 import { Container, Space, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import InviteMember from "./InviteMember";
@@ -34,7 +34,7 @@ type Props = {
 };
 
 const TeamPage = ({ team: initialTeam, teamMembers }: Props) => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();

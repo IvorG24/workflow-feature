@@ -15,13 +15,13 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { lowerCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 
 const Notification = () => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
 
   const notificationList = useNotificationList();

@@ -16,7 +16,7 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize, toLower } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -37,7 +37,7 @@ const NotificationPage = ({
 }: Props) => {
   const router = useRouter();
   const initialPage = router.query.page || 1;
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const { userProfile } = useUserStore();
   const userId = userProfile?.user_id || "";
   const teamId = userProfile?.user_active_team_id || "";

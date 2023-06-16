@@ -15,7 +15,7 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
@@ -39,7 +39,7 @@ const CreateWarehouseProcessor = ({
   setWarehouseProcessorList,
   setWarehouseProcessorCount,
 }: Props) => {
-  const supabaseClient = createBrowserSupabaseClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
 
   const { register, formState, handleSubmit } =
