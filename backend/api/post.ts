@@ -128,7 +128,6 @@ export const createUser = async (
       notification_user_id: data.user_id,
     };
   });
-  console.log(notificationInput);
   const { error: notificationError } = await supabaseClient
     .from("notification_table")
     .insert(notificationInput);
