@@ -1,4 +1,4 @@
-import { useActiveApp } from "@/stores/useTeamStore";
+import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
 import { Box } from "@mantine/core";
 import {
   IconCirclePlus,
@@ -6,7 +6,7 @@ import {
   IconMessage2,
   IconUsersGroup,
 } from "@tabler/icons-react";
-import { capitalize, lowerCase } from "lodash";
+import { capitalize, isEmpty, lowerCase } from "lodash";
 import NavLinkSection from "./NavLinkSection";
 
 const ReviewAppNavLink = () => {
@@ -14,6 +14,7 @@ const ReviewAppNavLink = () => {
   const defaultNavLinkProps = { px: 0 };
 
   const activeApp = useActiveApp();
+  const activeTeam = useActiveTeam();
 
   const overviewSection = [
     {
@@ -36,7 +37,7 @@ const ReviewAppNavLink = () => {
     },
   ];
 
-  const teamSection = [
+  const teamSectionWithManageTeam = [
     {
       label: "Manage Team",
       icon: (
@@ -57,16 +58,31 @@ const ReviewAppNavLink = () => {
     },
   ];
 
+  const teamSection = [
+    {
+      label: "Create Team",
+      icon: (
+        <Box ml="sm" py={5} mt={3}>
+          <IconCirclePlus {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/team/create`,
+    },
+  ];
+
   return (
     <>
-      <NavLinkSection
-        label={"Overview"}
-        links={overviewSection}
-        {...defaultNavLinkProps}
-      />
+      {!isEmpty(activeTeam) ? (
+        <NavLinkSection
+          label={"Overview"}
+          links={overviewSection}
+          {...defaultNavLinkProps}
+        />
+      ) : null}
+
       <NavLinkSection
         label={"Team"}
-        links={teamSection}
+        links={!isEmpty(activeTeam) ? teamSectionWithManageTeam : teamSection}
         {...defaultNavLinkProps}
       />
     </>

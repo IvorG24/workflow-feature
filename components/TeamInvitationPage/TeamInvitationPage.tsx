@@ -21,6 +21,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize } from "lodash";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 export type Props = {
@@ -31,6 +32,7 @@ const TeamInvitationPage = ({ invitation }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const user = useUserProfile();
+  const router = useRouter();
   const { setIsLoading } = useLoadingActions();
   const { setTeamList } = useTeamActions();
 
@@ -61,6 +63,7 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         message: "Invitation accepted.",
         color: "green",
       });
+      setTimeout(router.reload, 1000);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",

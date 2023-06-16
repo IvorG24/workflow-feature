@@ -6,40 +6,41 @@ import {
   TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA,
   TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA,
 } from "@/utils/dummyData";
+import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormWithResponseType } from "@/utils/types";
 import { Title } from "@mantine/core";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  try {
-    const teamData = TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA;
-    const userData = TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA;
-    const purchaseData = TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA;
-    const supabaseClient = createServerSupabaseClient(ctx);
+export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+  async ({ supabaseClient, context }) => {
+    try {
+      const teamData = TEMP_ORDER_TO_PURCHASE_FORM_TEAM_DATA;
+      const userData = TEMP_ORDER_TO_PURCHASE_FORM_USER_DATA;
+      const purchaseData = TEMP_ORDER_TO_PURCHASE_PURCHASE_DATA;
 
-    const form = await getForm(supabaseClient, {
-      formId: `${ctx.query.formId}`,
-    });
+      const form = await getForm(supabaseClient, {
+        formId: `${context.query.formId}`,
+      });
 
-    return {
-      props: {
-        order_to_purchase_form_team_data: teamData,
-        order_to_purchase_form_user_data: userData,
-        order_to_purchase_form_purchase_data: purchaseData,
-        form,
-      },
-    };
-  } catch (error) {
-    console.error(error);
-    return {
-      redirect: {
-        destination: "/500",
-        permanent: false,
-      },
-    };
+      return {
+        props: {
+          order_to_purchase_form_team_data: teamData,
+          order_to_purchase_form_user_data: userData,
+          order_to_purchase_form_purchase_data: purchaseData,
+          form,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
   }
-};
+);
 
 export type OTPDataType = {
   request_response_id: string;

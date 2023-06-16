@@ -1,32 +1,58 @@
+import { Database } from "@/utils/database";
 import { Button, ButtonProps, Flex, FlexProps } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { Provider } from "@supabase/supabase-js";
 import { FacebookIcon } from "./FacebookIcon";
 import { GoogleIcon } from "./GoogleIcon";
 import { TwitterIcon } from "./TwitterIcon";
 
 type ButtonListProps = {
-  flexProps?: FlexProps;
-  buttonProps?: ButtonProps;
-};
-
-export const GoogleButton = (props: ButtonProps) => {
-  return <Button leftIcon={<GoogleIcon />} {...props} />;
-};
-
-export const FacebookButton = (props: ButtonProps) => {
-  return <Button leftIcon={<FacebookIcon color="#1877F2" />} {...props} />;
-};
-
-export const TwitterButton = (props: ButtonProps) => {
-  return <Button leftIcon={<TwitterIcon color="#00acee" />} {...props} />;
+  flexprops?: FlexProps;
+  buttonprops?: ButtonProps;
 };
 
 const SocialMediaButtonList = (props: ButtonListProps) => {
-  const { flexProps, buttonProps } = props;
+  const { flexprops, buttonprops } = props;
+  const supabaseClient = createPagesBrowserClient<Database>();
+
+  const handleSignin = async (provider: Provider) => {
+    try {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: provider,
+      });
+
+      if (error) throw error;
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
   return (
-    <Flex {...flexProps}>
-      <FacebookButton {...buttonProps}>Facebook</FacebookButton>
-      <GoogleButton {...buttonProps}>Google</GoogleButton>
-      <TwitterButton {...buttonProps}>Twitter</TwitterButton>
+    <Flex {...flexprops}>
+      <Button
+        leftIcon={<FacebookIcon color="#1877F2" />}
+        {...buttonprops}
+        onClick={() => handleSignin("facebook")}
+      >
+        Facebook
+      </Button>
+      <Button
+        leftIcon={<GoogleIcon />}
+        {...buttonprops}
+        onClick={() => handleSignin("google")}
+      >
+        Google
+      </Button>
+      <Button
+        leftIcon={<TwitterIcon color="#00acee" />}
+        {...buttonprops}
+        onClick={() => handleSignin("twitter")}
+      >
+        Twitter
+      </Button>
     </Flex>
   );
 };

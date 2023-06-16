@@ -1,4 +1,5 @@
 import { checkIfEmailExists, signInUser } from "@/backend/api/post";
+import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
 import {
   Anchor,
   Box,
@@ -61,7 +62,7 @@ const SignInPage = () => {
         email: data.email,
       });
       if (isUserOnboarded) {
-        router.push(`/team-requests/dashboard`);
+        router.push(DEFAULT_LANDING_PAGE);
         return;
       }
       router.push("/onboarding");
@@ -136,8 +137,8 @@ const SignInPage = () => {
             labelPosition="center"
           />
           <SocialMediaButtonList
-            flexProps={{ mt: "md", direction: "column", gap: "sm" }}
-            buttonProps={{ variant: "outline" }}
+            flexprops={{ mt: "md", direction: "column", gap: "sm" }}
+            buttonprops={{ variant: "outline" }}
           />
         </Paper>
       </Center>

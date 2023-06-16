@@ -12,7 +12,6 @@ import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { TEMP_USER_ID } from "@/utils/dummyData";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -30,8 +29,9 @@ type LayoutProps = {
 };
 
 const Layout = ({ children }: LayoutProps) => {
-  const user = useUser();
-  console.log(user);
+  const currentUser = useUser();
+  const userId = currentUser?.id;
+
   const theme = useMantineTheme();
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -48,41 +48,21 @@ const Layout = ({ children }: LayoutProps) => {
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      if (!userId) return;
       try {
         // fetch all the team where the user is a part of
         const data = await getAllTeamOfUser(supabaseClient, {
-          userId: TEMP_USER_ID,
+          userId: userId,
         });
         const teamList = data as TeamTableRow[];
-        setTeamList(teamList);
 
         // fetch the current active team of the user
-        const user = await getUser(supabaseClient, { userId: TEMP_USER_ID });
-
-        // set user avatar and initials
-        setUserAvatar(user.user_avatar);
-        setUserInitials(
-          `${capitalize(user.user_first_name[0])}${capitalize(
-            user.user_last_name[0]
-          )}`
-        );
+        const user = await getUser(supabaseClient, {
+          userId: userId,
+        });
 
         //set user profile
         setUserProfile(user);
-
-        const userActiveTeam = teamList.find(
-          (team) => team.team_id === user.user_active_team_id
-        );
-
-        let activeTeamId = "";
-        // set the user's active team
-        if (userActiveTeam) {
-          activeTeamId = userActiveTeam.team_id;
-          setActiveTeam(userActiveTeam);
-        } else {
-          activeTeamId = teamList[0].team_id;
-          setActiveTeam(teamList[0]);
-        }
 
         // set the user's active app
         let activeApp = "";
@@ -93,26 +73,53 @@ const Layout = ({ children }: LayoutProps) => {
         } else {
           activeApp = user.user_active_app;
         }
+
         setActiveApp(activeApp);
 
-        // fetch form list of active team
-        const formList = await getFormList(supabaseClient, {
-          teamId: activeTeamId,
-          app: user.user_active_app,
-        });
+        let activeTeamId = "";
+        if (teamList.length !== 0) {
+          setTeamList(teamList);
 
-        // set form list
-        setFormList(formList);
+          const userActiveTeam = teamList.find(
+            (team) => team.team_id === user.user_active_team_id
+          );
 
-        // fetch user team member id
-        const teamMember = await getUserTeamMemberData(supabaseClient, {
-          teamId: activeTeamId,
-          userId: user.user_id,
-        });
-        // set user team member id
-        if (teamMember) {
-          setUserTeamMember(teamMember);
+          // set the user's active team
+          if (userActiveTeam) {
+            activeTeamId = userActiveTeam.team_id;
+            setActiveTeam(userActiveTeam);
+          } else {
+            activeTeamId = teamList[0].team_id;
+            setActiveTeam(teamList[0]);
+          }
+
+          // fetch form list of active team
+          const formList = await getFormList(supabaseClient, {
+            teamId: activeTeamId,
+            app: user.user_active_app,
+          });
+
+          // set form list
+          setFormList(formList);
+
+          // fetch user team member id
+          const teamMember = await getUserTeamMemberData(supabaseClient, {
+            teamId: activeTeamId,
+            userId: user.user_id,
+          });
+          // set user team member id
+          if (teamMember) {
+            setUserTeamMember(teamMember);
+          }
         }
+
+        // set user avatar and initials
+        setUserAvatar(user.user_avatar);
+        setUserInitials(
+          `${capitalize(user.user_first_name[0])}${capitalize(
+            user.user_last_name[0]
+          )}`
+        );
 
         // fetch notification list
         const { data: notificationList, count: unreadNotificationCount } =
@@ -127,7 +134,8 @@ const Layout = ({ children }: LayoutProps) => {
         // set notification
         setNotificationList(notificationList);
         setUnreadNotification(unreadNotificationCount || 0);
-      } catch {
+      } catch (e) {
+        console.error(e);
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",
@@ -135,14 +143,15 @@ const Layout = ({ children }: LayoutProps) => {
         router.push("/500");
       }
     };
+
     fetchInitialData();
-  }, []);
+  }, [userId]);
 
   useBeforeunload(async () => {
-    if (activeApp) {
+    if (activeApp && userId) {
       await updateUserActiveApp(supabaseClient, {
         app: activeApp,
-        userId: TEMP_USER_ID,
+        userId: userId,
       });
     }
   });
