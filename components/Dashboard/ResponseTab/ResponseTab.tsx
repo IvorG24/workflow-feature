@@ -55,14 +55,15 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
   const supabaseClient = useSupabaseClient();
   const prevSelectedFormProp = useRef(selectedForm);
   const [isFetchingData, setIsFetchingData] = useState(false);
-  const [responseData, setResponseData] = useState<ResponseDataType | null>(
+  const [responseData, setResponseData] = useState<ResponseDataType[] | null>(
     null
   );
   const [formslyFormResponseData, setFormslyFormResponseData] = useState<
     FormslyFormResponseDataType[] | null
   >(null);
-  const [searchKeywordResponse, setSearchKeywordResponse] =
-    useState<ResponseDataType | null>(null);
+  const [searchKeywordResponse, setSearchKeywordResponse] = useState<
+    ResponseDataType[] | null
+  >(null);
 
   const { handleSubmit, register, reset } = useForm<FormValues>();
 
@@ -142,7 +143,7 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
         setFormslyFormResponseData(groupedFieldResponse);
       } else {
         const nonDynamicResponseList = reducedFieldWithResponse.filter(
-          (field: ResponseDataType[0]) =>
+          (field: ResponseDataType) =>
             !filteredResponseTypes.includes(field.type) &&
             field.responseList.length > 0
         );

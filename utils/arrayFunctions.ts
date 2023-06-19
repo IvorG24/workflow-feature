@@ -148,7 +148,7 @@ export const responseFieldReducer = (responseData: FieldWithResponseType) => {
       }
 
       return acc;
-    }, [] as ResponseDataType[0]["responseList"]);
+    }, [] as ResponseDataType["responseList"]);
 
     const options = field.field_option.map((option) => option.option_value);
 
@@ -166,7 +166,7 @@ export const responseFieldReducer = (responseData: FieldWithResponseType) => {
     }
 
     return acc;
-  }, [] as ResponseDataType);
+  }, [] as ResponseDataType[]);
 
   return reducedFieldWithResponse;
 };
@@ -190,7 +190,7 @@ export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
         existingItem.responseList.push(responseItem);
       }
     } else {
-      const newItem: ResponseDataType[0] = {
+      const newItem: ResponseDataType = {
         id: item.request_response_field_id,
         type: item.response_field.field_type as FieldType,
         label,
@@ -200,12 +200,12 @@ export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
       acc[acc.length] = newItem;
     }
     return acc;
-  }, [] as ResponseDataType);
+  }, [] as ResponseDataType[]);
 };
 
 export const generateFormslyFormResponseData = (
   fieldWithResponse: FieldWithResponseType,
-  reducedFieldWithResponse: ResponseDataType,
+  reducedFieldWithResponse: ResponseDataType[],
   sectionFilter: { id: string; name: string }[]
 ) => {
   // get all label responses
@@ -272,8 +272,7 @@ export const generateFormslyFormResponseData = (
     const itemResponseData = responseMatch.filter(
       (responseItem) =>
         responseItem.responseList.length > 0 &&
-        itemFilter?.id === responseItem.section_id &&
-        responseItem.label !== "General Name"
+        itemFilter?.id === responseItem.section_id
     );
 
     return {

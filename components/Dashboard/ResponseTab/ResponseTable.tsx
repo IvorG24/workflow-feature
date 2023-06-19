@@ -9,7 +9,7 @@ const useStyles = createStyles(() => ({
 }));
 
 type ResponseTableProps = {
-  response: ResponseDataType[0];
+  response: ResponseDataType;
 };
 
 const ResponseTable = ({ response }: ResponseTableProps) => {

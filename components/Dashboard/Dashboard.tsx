@@ -1,8 +1,11 @@
-import { getRequestList } from "@/backend/api/get";
-import { OTPDataType } from "@/pages/team-requests/forms/[formId]/analytics";
+import { getRequestList, getRequestListByForm } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { RequestType, TeamMemberWithUserType } from "@/utils/types";
+import {
+  RequestByFormType,
+  RequestType,
+  TeamMemberWithUserType,
+} from "@/utils/types";
 import { Container, LoadingOverlay, Select, Tabs, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -20,25 +23,19 @@ type DashboardProps = {
   requestList: RequestType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
-  teamRequisitionData: OTPDataType;
-  userRequisitionData?: OTPDataType;
-  purchaseRequisitionData?: OTPDataType;
 };
 
-const Dashboard = ({
-  requestList,
-  requestListCount,
-  teamRequisitionData,
-  userRequisitionData,
-  purchaseRequisitionData,
-}: DashboardProps) => {
+const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const [isFetchingData, setIsFetchingData] = useState(false);
+  const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [visibleRequestList, setVisibleRequestList] = useState(requestList);
   const [requestCount, setRequestCount] = useState(requestListCount);
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
-  const [isFetchingData, setIsFetchingData] = useState(false);
+  const [requestListByForm, setRequestListByForm] = useState<
+    RequestByFormType[] | null
+  >(null);
 
   // check if selected form is formsly form
   const isFormslyForm = formList.find(
@@ -56,6 +53,49 @@ const Dashboard = ({
         limit: 9999999,
         form: value ? [value] : undefined,
       });
+      if (value) {
+        const requestListByFormData = await getRequestListByForm(
+          supabaseClient,
+          {
+            formId: value,
+          }
+        );
+        const requestListWithMatchingResponses = requestListByFormData.map(
+          (request) => {
+            const matchingResponses = request.request_form.form_section.map(
+              (section) => {
+                const sectionFields = section.section_field.map((field) => {
+                  const filteredResponseByRequestId =
+                    field.field_response.filter(
+                      (response) =>
+                        response.request_response_request_id ===
+                        request.request_id
+                    );
+
+                  return {
+                    ...field,
+                    field_response: filteredResponseByRequestId,
+                  };
+                });
+
+                return {
+                  ...section,
+                  section_field: sectionFields,
+                };
+              }
+            );
+            return {
+              ...request,
+              request_form: {
+                ...request.request_form,
+                form_section: matchingResponses,
+              },
+            };
+          }
+        );
+        setRequestListByForm(requestListWithMatchingResponses);
+      }
+
       setVisibleRequestList(data as RequestType[]);
       setRequestCount(count as number);
     } catch (error) {
@@ -125,9 +165,8 @@ const Dashboard = ({
         <Tabs.Panel value="requisition" pt="xs">
           {isFormslyForm ? (
             <OrderToPurchaseAnalytics
-              teamOrderToPurchaseData={teamRequisitionData}
-              userOrderToPurchaseData={userRequisitionData}
-              purchaseOrderToPurchaseData={purchaseRequisitionData}
+              selectedForm={selectedForm}
+              requestListByForm={requestListByForm}
             />
           ) : (
             <Text>No data available.</Text>

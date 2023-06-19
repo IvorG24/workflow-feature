@@ -554,7 +554,7 @@ export type ResponseDataType = {
     value: number;
     groupId?: string | null;
   }[];
-}[];
+};
 
 export type RequestorListType =
   (RequestType["request_team_member"]["team_member_user"] & {
@@ -574,5 +574,13 @@ export type LineChartDataType = {
 
 export type FormslyFormResponseDataType = {
   label: string;
-  responseData: ResponseDataType;
+  responseData: ResponseDataType[];
+};
+
+export type PurchaseTrendChartDataType = {
+  request_response_id: string;
+  request_response: string;
+  request_response_request_id: string;
+  request_response_field_id: string;
+  request_response_date_purchased?: string | undefined;
 };
