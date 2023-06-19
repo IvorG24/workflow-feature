@@ -7,6 +7,10 @@ type ResponseTableProps = {
 };
 
 const RequisitionTable = ({ response }: ResponseTableProps) => {
+  const filterResponseData = response.responseData.filter(
+    (d) => d.label !== "General Name"
+  );
+
   return (
     <Paper mt="sm" p="md" w={{ base: "100%" }}>
       <Divider
@@ -15,7 +19,7 @@ const RequisitionTable = ({ response }: ResponseTableProps) => {
         labelPosition="center"
       />
       <Flex w="100%" wrap="wrap" gap="md">
-        {response.responseData.map((response, idx) => (
+        {filterResponseData.map((response, idx) => (
           <ResponseTable key={response.label + idx} response={response} />
         ))}
       </Flex>

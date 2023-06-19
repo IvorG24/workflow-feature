@@ -237,7 +237,7 @@ export const generateFormslyFormResponseData = (
       const labelMatchIndex = uniqueLabelWithDuplicateId.findIndex(
         (uniqueLabel) => uniqueLabel.label === responseLabel
       );
-      if (labelMatchIndex) {
+      if (labelMatchIndex >= 0) {
         const labelMatchDuplicateId =
           uniqueLabelWithDuplicateId[labelMatchIndex].duplicateId;
         const duplicateId = itemField.request_response_duplicatable_section_id;
@@ -252,7 +252,6 @@ export const generateFormslyFormResponseData = (
   });
 
   // group responses by section
-
   // use item filter
   const itemFilter = sectionFilter.find((filter) => filter.name === "Item");
   const groupedFieldResponse = uniqueLabelWithDuplicateId.map((uniqueLabel) => {

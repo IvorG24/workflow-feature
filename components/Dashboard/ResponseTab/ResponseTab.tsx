@@ -119,6 +119,7 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
       );
 
       const reducedFieldWithResponse = responseFieldReducer(fieldWithResponse);
+
       if (isFormslyForm && selectedFormName === "Order to Purchase") {
         const uniqueSections: { id: string; name: string }[] = [];
         sectionList.forEach((section) => {
@@ -139,7 +140,6 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
           reducedFieldWithResponse,
           uniqueSections
         );
-
         setFormslyFormResponseData(groupedFieldResponse);
       } else {
         const nonDynamicResponseList = reducedFieldWithResponse.filter(
