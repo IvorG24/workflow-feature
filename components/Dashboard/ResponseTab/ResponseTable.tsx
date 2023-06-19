@@ -1,13 +1,5 @@
 import { ResponseDataType } from "@/utils/types";
-import {
-  Box,
-  Paper,
-  ScrollArea,
-  Text,
-  Title,
-  createStyles,
-} from "@mantine/core";
-import { lowerCase, startCase } from "lodash";
+import { Box, Paper, ScrollArea, Title, createStyles } from "@mantine/core";
 import ResponseChart from "./ResponseChart";
 
 const useStyles = createStyles(() => ({
@@ -30,9 +22,6 @@ const ResponseTable = ({ response }: ResponseTableProps) => {
       <ScrollArea maw={500} type="auto" h={300}>
         <Box p="sm" className={classes.withBorderBottom}>
           <Title order={4}>{response.label}</Title>
-          <Text size="xs">{`${startCase(
-            lowerCase(response.type)
-          )} Field`}</Text>
         </Box>
 
         <ResponseChart type={response.type} data={sortedResponseList} />

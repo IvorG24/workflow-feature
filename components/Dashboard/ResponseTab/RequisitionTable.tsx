@@ -7,7 +7,6 @@ type ResponseTableProps = {
 };
 
 const RequisitionTable = ({ response }: ResponseTableProps) => {
-  console.log(response);
   return (
     <Paper mt="sm" p="md" w={{ base: "100%" }}>
       <Divider

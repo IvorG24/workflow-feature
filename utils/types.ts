@@ -548,6 +548,7 @@ export type ResponseDataType = {
   type: FieldType;
   label: string;
   optionList: string[];
+  section_id?: string;
   responseList: {
     label: string;
     value: number;

@@ -159,6 +159,7 @@ export const responseFieldReducer = (responseData: FieldWithResponseType) => {
         id: field.field_id,
         type: field.field_type as FieldType,
         label: field.field_name,
+        section_id: field.field_section_id,
         optionList: options,
         responseList: reducedResponses,
       };
@@ -204,17 +205,9 @@ export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
 
 export const generateFormslyFormResponseData = (
   fieldWithResponse: FieldWithResponseType,
-  reducedFieldWithResponse: ResponseDataType
+  reducedFieldWithResponse: ResponseDataType,
+  sectionFilter: { id: string; name: string }[]
 ) => {
-  //get all responses from Main section
-  const mainResponseNameList = [
-    "Project Name",
-    "Warehouse Processor",
-    "Type",
-    "Date Needed",
-    "General Name",
-  ];
-
   // get all label responses
   const itemFieldLabelList = fieldWithResponse
     .filter((field) => field.field_name === "General Name")
@@ -259,6 +252,9 @@ export const generateFormslyFormResponseData = (
   });
 
   // group responses by section
+
+  // use item filter
+  const itemFilter = sectionFilter.find((filter) => filter.name === "Item");
   const groupedFieldResponse = uniqueLabelWithDuplicateId.map((uniqueLabel) => {
     const label = uniqueLabel.label;
     const duplicateIdList = uniqueLabel.duplicateId;
@@ -273,24 +269,36 @@ export const generateFormslyFormResponseData = (
       };
     });
 
+    const itemResponseData = responseMatch.filter(
+      (responseItem) =>
+        responseItem.responseList.length > 0 &&
+        itemFilter?.id === responseItem.section_id &&
+        responseItem.label !== "General Name"
+    );
+
     return {
       label,
-      responseData: responseMatch.filter(
-        (responseItem) =>
-          responseItem.responseList.length > 0 &&
-          !mainResponseNameList.includes(responseItem.label)
-      ),
+      responseData: itemResponseData,
     };
   });
 
-  const mainResponse = [
-    {
-      label: "Main",
-      responseData: reducedFieldWithResponse.filter((field) =>
-        mainResponseNameList.includes(field.label)
-      ),
-    },
-  ];
+  const mainFilter = sectionFilter.find((filter) => filter.name === "Main");
+  const mainResponseData =
+    reducedFieldWithResponse.filter(
+      (field) => mainFilter?.id === field.section_id
+    ) || [];
+  const mainResponse = mainFilter
+    ? [
+        {
+          label: "Main",
+          responseData: mainResponseData,
+        },
+      ]
+    : [];
+
+  if (groupedFieldResponse.length === 0) {
+    return [];
+  }
 
   return [...mainResponse, ...groupedFieldResponse];
 };

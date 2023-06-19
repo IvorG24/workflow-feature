@@ -31,7 +31,6 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconAlertCircle,
-  IconBrandSupabase,
   IconMessageSearch,
   IconSearch,
 } from "@tabler/icons-react";
@@ -119,11 +118,25 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
       );
 
       const reducedFieldWithResponse = responseFieldReducer(fieldWithResponse);
-      console.log(reducedFieldWithResponse);
-      if (isFormslyForm) {
+      if (isFormslyForm && selectedFormName === "Order to Purchase") {
+        const uniqueSections: { id: string; name: string }[] = [];
+        sectionList.forEach((section) => {
+          const hasDuplicateIndex = uniqueSections.findIndex(
+            (uniqueSection) => uniqueSection.id === section.section_id
+          );
+          if (hasDuplicateIndex < 0) {
+            const newSection = {
+              id: section.section_id,
+              name: section.section_name,
+            };
+            uniqueSections.push(newSection);
+          }
+        });
+
         const groupedFieldResponse = generateFormslyFormResponseData(
           fieldWithResponse,
-          reducedFieldWithResponse
+          reducedFieldWithResponse,
+          uniqueSections
         );
 
         setFormslyFormResponseData(groupedFieldResponse);
@@ -202,37 +215,23 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
         </Paper>
       )}
 
-      {formslyFormResponseData || responseData ? (
-        <Paper mt="sm" p="md" w="100%" withBorder>
-          <Group>
-            <IconBrandSupabase />
-            <Title order={3}>Field Response Data</Title>
-          </Group>
-          {isFormslyForm && selectedFormName === "Order to Purchase" ? (
-            <Stack>
-              {formslyFormResponseData &&
-                formslyFormResponseData.length > 0 &&
-                formslyFormResponseData.map((response, idx) => (
-                  <RequisitionTable
-                    key={response.label + idx}
-                    response={response}
-                  />
-                ))}
-            </Stack>
-          ) : (
-            <Flex w="100%" wrap="wrap" gap="md">
-              {responseData &&
-                responseData.length > 0 &&
-                responseData.map((response, idx) => (
-                  <ResponseTable
-                    key={response.label + idx}
-                    response={response}
-                  />
-                ))}
-            </Flex>
-          )}
-        </Paper>
-      ) : (
+      {formslyFormResponseData && formslyFormResponseData.length > 0 && (
+        <Stack>
+          {formslyFormResponseData.map((response, idx) => (
+            <RequisitionTable key={response.label + idx} response={response} />
+          ))}
+        </Stack>
+      )}
+
+      {responseData && responseData.length > 0 && (
+        <Flex w="100%" wrap="wrap" gap="md">
+          {responseData.map((response, idx) => (
+            <ResponseTable key={response.label + idx} response={response} />
+          ))}
+        </Flex>
+      )}
+
+      {!formslyFormResponseData && !responseData && (
         <Title mt="xl" order={3} align="center">
           No data available.
         </Title>
