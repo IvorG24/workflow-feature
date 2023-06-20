@@ -219,7 +219,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Amount",
+          field_name: "Quantity",
           field_type: "NUMBER",
           field_order: 4,
           field_section_id: poMainSectionId,
@@ -227,9 +227,17 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
+          field_name: "Price",
+          field_type: "NUMBER",
+          field_order: 5,
+          field_section_id: poMainSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
           field_name: "Remarks",
           field_type: "TEXTAREA",
-          field_order: 5,
+          field_order: 6,
           field_section_id: poMainSectionId,
           field_is_required: false,
           field_is_read_only: false,
@@ -237,7 +245,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Payment Terms",
           field_type: "TEXT",
-          field_order: 6,
+          field_order: 7,
           field_section_id: poMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -245,7 +253,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Down Payment Percentage",
           field_type: "NUMBER",
-          field_order: 7,
+          field_order: 8,
           field_section_id: poMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -253,7 +261,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Down Payment Computation",
           field_type: "NUMBER",
-          field_order: 8,
+          field_order: 9,
           field_section_id: poMainSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -261,7 +269,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Expected Delivery Date",
           field_type: "DATE",
-          field_order: 9,
+          field_order: 10,
           field_section_id: poMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
