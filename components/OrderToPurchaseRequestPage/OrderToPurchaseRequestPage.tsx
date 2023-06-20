@@ -10,6 +10,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   FormStatusType,
+  FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -28,13 +29,19 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 
 type Props = {
   request: RequestWithResponseType;
   connectedFormID: string;
+  connectedRequestIDList: FormslyFormType;
 };
 
-const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
+const OrderToPurchaseRequestPage = ({
+  request,
+  connectedFormID,
+  connectedRequestIDList,
+}: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -198,6 +205,10 @@ const OrderToPurchaseRequestPage = ({ request, connectedFormID }: Props) => {
           requestor={requestor}
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus as FormStatusType}
+        />
+
+        <ConnectedRequestSection
+          connectedRequestIDList={connectedRequestIDList}
         />
 
         {sectionWithDuplicateList.map((section, idx) => (

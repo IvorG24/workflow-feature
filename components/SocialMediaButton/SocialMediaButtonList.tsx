@@ -3,6 +3,7 @@ import { Button, ButtonProps, Flex, FlexProps } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Provider } from "@supabase/supabase-js";
+import { AzureIcon } from "./AzureIcon";
 import { FacebookIcon } from "./FacebookIcon";
 import { GoogleIcon } from "./GoogleIcon";
 import { TwitterIcon } from "./TwitterIcon";
@@ -52,6 +53,13 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
         onClick={() => handleSignin("twitter")}
       >
         Twitter
+      </Button>
+      <Button
+        leftIcon={<AzureIcon />}
+        {...buttonprops}
+        onClick={() => handleSignin("azure")}
+      >
+        Azure
       </Button>
     </Flex>
   );

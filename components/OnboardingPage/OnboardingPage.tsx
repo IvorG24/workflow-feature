@@ -54,9 +54,8 @@ const OnboardingPage = ({ user }: Props) => {
   });
 
   const handleOnboardUser = async (data: OnboardUserParams) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-
       let imageUrl = "";
       if (avatarFile) {
         imageUrl = await uploadImage(supabaseClient, {
@@ -237,7 +236,7 @@ const OnboardingPage = ({ user }: Props) => {
             />
 
             <Button type="submit" mt="xl" fullWidth>
-              Save and continue to homepage
+              Save and Continue
             </Button>
           </form>
         </Paper>

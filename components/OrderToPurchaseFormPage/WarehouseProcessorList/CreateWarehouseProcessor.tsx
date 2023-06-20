@@ -104,7 +104,7 @@ const CreateWarehouseProcessor = ({
       <LoadingOverlay visible={formState.isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Add WarehouseProcessor
+          Add Warehouse Processor
         </Title>
         <Divider mb="xl" />
 

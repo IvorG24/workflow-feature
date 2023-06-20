@@ -1290,3 +1290,70 @@ export const checkIfOwnerOrAdmin = async (
   if (role === null) return false;
   return role === "ADMIN" || role === "OWNER";
 };
+
+// Get all formsly forward link form id
+export const getFormslyForwardLinkFormId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "request_response_request: request_response_request_id!inner(request_id, request_status, request_form: request_form_id(form_name))"
+    )
+    .eq("request_response", `"${requestId}"`)
+    .eq("request_response_request.request_status", "APPROVED");
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    request_response_request: {
+      request_id: string;
+      request_form: {
+        form_name: string;
+      };
+    };
+  }[];
+
+  const requestList = {
+    "Order to Purchase": [] as string[],
+    "Purchase Order": [] as string[],
+    Invoice: [] as string[],
+    "Account Payable Voucher": [] as string[],
+    "Receiving Inspecting Report": [] as string[],
+  };
+
+  formattedData.forEach((request) => {
+    switch (request.request_response_request.request_form.form_name) {
+      case "Order to Purchase":
+        requestList["Order to Purchase"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Purchase Order":
+        requestList["Purchase Order"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Invoice":
+        requestList["Invoice"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Account Payable Voucher":
+        requestList["Account Payable Voucher"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Receiving Inspecting Report":
+        requestList["Receiving Inspecting Report"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+    }
+  });
+
+  return requestList;
+};

@@ -7,6 +7,7 @@ import { FORM_CONNECTION } from "@/utils/constant";
 import {
   ConnectedFormsType,
   FormStatusType,
+  FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -25,6 +26,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
@@ -35,12 +37,14 @@ type Props = {
   request: RequestWithResponseType;
   isFormslyForm?: boolean;
   connectedFormID?: string;
+  connectedRequestIDList?: FormslyFormType;
 };
 
 const RequestPage = ({
   request,
   isFormslyForm = false,
   connectedFormID,
+  connectedRequestIDList,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
@@ -260,6 +264,12 @@ const RequestPage = ({
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus as FormStatusType}
         />
+
+        {connectedRequestIDList ? (
+          <ConnectedRequestSection
+            connectedRequestIDList={connectedRequestIDList}
+          />
+        ) : null}
 
         {sectionWithDuplicateList.map((section, idx) => (
           <RequestSection

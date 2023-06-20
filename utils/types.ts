@@ -587,3 +587,17 @@ export type RequestResponseDataType = {
   sectionLabel: string;
   responseData: FieldWithResponseType;
 };
+export type FormslyFormType = {
+  "Order to Purchase": string[];
+  "Purchase Order": string[];
+  Invoice: string[];
+  "Account Payable Voucher": string[];
+  "Receiving Inspecting Report": string[];
+};
+
+export type FormslyFormKeyType =
+  | "Order to Purchase"
+  | "Purchase Order"
+  | "Invoice"
+  | "Account Payable Voucher"
+  | "Receiving Inspecting Report";
