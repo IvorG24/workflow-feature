@@ -1,16 +1,7 @@
+import { getResponseDataByKeyword } from "@/backend/api/get";
+import { searchResponseReducer } from "@/utils/arrayFunctions/dashboard";
 import {
-  getRequestListByForm,
-  getResponseDataByKeyword,
-} from "@/backend/api/get";
-import { useFormList } from "@/stores/useFormStore";
-import {
-  generateFormslyFormResponseData,
-  responseFieldReducer,
-  searchResponseReducer,
-} from "@/utils/arrayFunctions";
-import {
-  FieldWithResponseType,
-  FormslyFormResponseDataType,
+  RequestResponseDataType,
   ResponseDataType,
   SearchKeywordResponseType,
 } from "@/utils/types";
@@ -34,42 +25,32 @@ import {
   IconMessageSearch,
   IconSearch,
 } from "@tabler/icons-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import RequisitionTable from "./RequisitionTable";
+import ResponseSection from "./ResponseSection/ResponseSection";
 import ResponseTable from "./ResponseTable";
 
 type ResponseDataProps = {
   selectedForm: string | null;
-  isFormslyForm: boolean | undefined;
+  fieldResponseData: RequestResponseDataType[];
 };
 
 type FormValues = {
   search: string;
 };
 
-const filteredResponseTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
-
-const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
-  const formList = useFormList();
+const ResponseTab = ({
+  selectedForm,
+  fieldResponseData,
+}: ResponseDataProps) => {
   const supabaseClient = useSupabaseClient();
-  const prevSelectedFormProp = useRef(selectedForm);
   const [isFetchingData, setIsFetchingData] = useState(false);
-  const [responseData, setResponseData] = useState<ResponseDataType[] | null>(
-    null
-  );
-  const [formslyFormResponseData, setFormslyFormResponseData] = useState<
-    FormslyFormResponseDataType[] | null
-  >(null);
+
   const [searchKeywordResponse, setSearchKeywordResponse] = useState<
     ResponseDataType[] | null
   >(null);
 
-  const { handleSubmit, register, reset } = useForm<FormValues>();
-
-  const selectedFormName = formList.find(
-    (form) => form.form_id === selectedForm
-  )?.form_name;
+  const { handleSubmit, register } = useForm<FormValues>();
 
   const handleSearchByKeyword = async (data: FormValues) => {
     try {
@@ -100,76 +81,6 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
       setIsFetchingData(false);
     }
   };
-
-  const handleFetchResponseData = async () => {
-    try {
-      setIsFetchingData(true);
-      if (!selectedForm) return;
-      const requestList = await getRequestListByForm(supabaseClient, {
-        formId: selectedForm,
-      });
-
-      const sectionList = requestList.flatMap(
-        (request) => request.request_form.form_section
-      );
-
-      const fieldWithResponse: FieldWithResponseType = [];
-      sectionList.forEach((section) =>
-        section.section_field.forEach((field) => fieldWithResponse.push(field))
-      );
-
-      const reducedFieldWithResponse = responseFieldReducer(fieldWithResponse);
-
-      if (isFormslyForm && selectedFormName === "Order to Purchase") {
-        const uniqueSections: { id: string; name: string }[] = [];
-        sectionList.forEach((section) => {
-          const hasDuplicateIndex = uniqueSections.findIndex(
-            (uniqueSection) => uniqueSection.id === section.section_id
-          );
-          if (hasDuplicateIndex < 0) {
-            const newSection = {
-              id: section.section_id,
-              name: section.section_name,
-            };
-            uniqueSections.push(newSection);
-          }
-        });
-
-        const groupedFieldResponse = generateFormslyFormResponseData(
-          fieldWithResponse,
-          reducedFieldWithResponse,
-          uniqueSections
-        );
-        setFormslyFormResponseData(groupedFieldResponse);
-      } else {
-        const nonDynamicResponseList = reducedFieldWithResponse.filter(
-          (field: ResponseDataType) =>
-            !filteredResponseTypes.includes(field.type) &&
-            field.responseList.length > 0
-        );
-        setResponseData(nonDynamicResponseList);
-      }
-    } catch (error) {
-      console.log(error);
-      notifications.show({
-        title: "Can't fetch data at the moment.",
-        message: "Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingData(false);
-    }
-  };
-
-  useEffect(() => {
-    if (prevSelectedFormProp.current !== selectedForm) {
-      //re-fetch data
-      handleFetchResponseData();
-      reset();
-    } else if (!selectedForm) {
-      setResponseData(null);
-    }
-  }, [selectedForm]);
 
   return (
     <Container mt="sm" p={0} fluid>
@@ -216,23 +127,18 @@ const ResponseTab = ({ selectedForm, isFormslyForm }: ResponseDataProps) => {
         </Paper>
       )}
 
-      {formslyFormResponseData && formslyFormResponseData.length > 0 && (
+      {fieldResponseData && fieldResponseData.length > 0 && (
         <Stack>
-          {formslyFormResponseData.map((response, idx) => (
-            <RequisitionTable key={response.label + idx} response={response} />
+          {fieldResponseData.map((response, idx) => (
+            <ResponseSection
+              key={response.sectionLabel + idx}
+              responseSection={response}
+            />
           ))}
         </Stack>
       )}
 
-      {responseData && responseData.length > 0 && (
-        <Flex w="100%" wrap="wrap" gap="md">
-          {responseData.map((response, idx) => (
-            <ResponseTable key={response.label + idx} response={response} />
-          ))}
-        </Flex>
-      )}
-
-      {!formslyFormResponseData && !responseData && (
+      {!fieldResponseData && !searchKeywordResponse && (
         <Title mt="xl" order={3} align="center">
           No data available.
         </Title>

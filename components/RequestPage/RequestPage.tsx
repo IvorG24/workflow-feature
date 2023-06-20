@@ -2,7 +2,7 @@ import { deleteRequest } from "@/backend/api/delete";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORM_CONNECTION } from "@/utils/constant";
 import {
   ConnectedFormsType,

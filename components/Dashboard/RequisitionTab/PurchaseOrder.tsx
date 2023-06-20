@@ -1,36 +1,42 @@
 import BarChart from "@/components/Chart/BarChart";
-import { FormslyFormResponseDataType, ResponseDataType } from "@/utils/types";
+import { useUserTeamMember } from "@/stores/useUserStore";
+import { RequestResponseDataType } from "@/utils/types";
 import { Paper, Stack, Text } from "@mantine/core";
 import { Dispatch, SetStateAction } from "react";
-import RequisitionTable from "../ResponseTab/RequisitionTable";
+import { getUniqueResponseData } from "../ResponseTab/ResponseSection/ResponseDataTable";
+import ResponseSection from "../ResponseTab/ResponseSection/ResponseSection";
 
 type UserPurchaseDataProps = {
+  selectedPurchaseData: string;
   selectedBarChartItem: string;
   setSelectedBarChartItem: Dispatch<SetStateAction<string>>;
-  purchaseOrderData: FormslyFormResponseDataType[];
+  purchaseOrderData: RequestResponseDataType[];
 };
 
 const PurchaseOrder = ({
+  selectedPurchaseData,
   setSelectedBarChartItem,
   selectedBarChartItem,
   purchaseOrderData,
 }: UserPurchaseDataProps) => {
-  const mainItemData: ResponseDataType["responseList"] = [];
-
-  purchaseOrderData.forEach((fieldResponse) =>
-    fieldResponse.responseData.forEach((responseItem) => {
-      if (responseItem.label === "General Name") {
-        mainItemData.push(responseItem.responseList[0]);
-      }
-    })
+  const authUserMember = useUserTeamMember();
+  const itemSections = purchaseOrderData.filter(
+    (d) => d.sectionLabel !== "Main"
+  );
+  const mainItemList = itemSections.flatMap(
+    (section) => section.responseData[0].field_response
   );
 
-  const response = purchaseOrderData.map((fieldResponse) => ({
-    ...fieldResponse,
-    responseData: fieldResponse.responseData.filter(
-      (responseItem) => responseItem.label !== "General Name"
-    ),
-  }));
+  const selectedItemList =
+    selectedPurchaseData === "user"
+      ? mainItemList.filter(
+          (item) =>
+            item.request_response_team_member_id ===
+            authUserMember?.team_member_id
+        )
+      : mainItemList;
+
+  const mainItemData = getUniqueResponseData(selectedItemList);
 
   return (
     <Stack>
@@ -41,15 +47,15 @@ const PurchaseOrder = ({
           setSelectedBarChartItem={setSelectedBarChartItem}
         />
       </Paper>
-      {selectedBarChartItem !== "" &&
-        purchaseOrderData &&
-        purchaseOrderData.length > 0 && (
-          <RequisitionTable
-            response={
-              response.filter((r) => r.label === selectedBarChartItem)[0]
-            }
-          />
-        )}
+      {selectedBarChartItem !== "" && (
+        <ResponseSection
+          responseSection={
+            itemSections.filter(
+              (item) => item.sectionLabel === selectedBarChartItem
+            )[0]
+          }
+        />
+      )}
     </Stack>
   );
 };

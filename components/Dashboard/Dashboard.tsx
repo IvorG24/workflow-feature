@@ -1,8 +1,11 @@
 import { getRequestList, getRequestListByForm } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { generateFormslyResponseData } from "@/utils/arrayFunctions/dashboard";
 import {
+  FieldWithResponseType,
   RequestByFormType,
+  RequestResponseDataType,
   RequestType,
   TeamMemberWithUserType,
 } from "@/utils/types";
@@ -14,7 +17,7 @@ import {
   IconMessageCircle,
   IconReportAnalytics,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
 import OrderToPurchaseAnalytics from "./RequisitionTab/OrderToPurchaseAnalytics";
 import ResponseTab from "./ResponseTab/ResponseTab";
@@ -24,6 +27,8 @@ type DashboardProps = {
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
 };
+
+const filteredResponseTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
 
 const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const formList = useFormList();
@@ -35,17 +40,23 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const [requestCount, setRequestCount] = useState(requestListCount);
   const [requestListByForm, setRequestListByForm] = useState<
     RequestByFormType[] | null
+  >();
+  const [fieldResponseData, setFieldResponseData] = useState<
+    RequestResponseDataType[] | null
   >(null);
 
   // check if selected form is formsly form
   const isFormslyForm = formList.find(
     (form) => form.form_id === selectedForm
   )?.form_is_formsly_form;
+  const selectedFormName = formList.find(
+    (form) => form.form_id === selectedForm
+  )?.form_name;
 
   // filter data by selected request form
   const handleFilterRequestList = async (value: string) => {
-    setSelectedForm(value);
     try {
+      setSelectedForm(value);
       setIsFetchingData(true);
       const { data, count } = await getRequestList(supabaseClient, {
         teamId: activeTeam.team_id,
@@ -74,9 +85,18 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
                         request.request_id
                     );
 
+                  const filteredResponseWithDateCreated =
+                    filteredResponseByRequestId.map((response) => ({
+                      ...response,
+                      request_response_date_purchased:
+                        request.request_date_created,
+                      request_response_team_member_id:
+                        request.request_team_member_id,
+                    }));
+
                   return {
                     ...field,
-                    field_response: filteredResponseByRequestId,
+                    field_response: filteredResponseWithDateCreated,
                   };
                 });
 
@@ -110,6 +130,73 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
       setIsFetchingData(false);
     }
   };
+
+  const handleResponseTabData = () => {
+    try {
+      if (!requestListByForm) return;
+
+      const sectionList = requestListByForm.flatMap(
+        (request) => request.request_form.form_section
+      );
+
+      const fieldWithResponse: FieldWithResponseType = [];
+      sectionList.forEach((section) =>
+        section.section_field.forEach((field) => {
+          if (field.field_response.length > 0) {
+            fieldWithResponse.push(field);
+          }
+        })
+      );
+
+      const uniqueFieldList = fieldWithResponse.reduce((acc, field) => {
+        const duplicateFieldIndex = acc.findIndex(
+          (f) => f.field_id === field.field_id
+        );
+
+        if (duplicateFieldIndex >= 0) {
+          const updatedResponseList = [
+            ...acc[duplicateFieldIndex].field_response,
+            ...field.field_response,
+          ];
+          acc[duplicateFieldIndex].field_response = updatedResponseList;
+        } else {
+          acc.push(field);
+        }
+
+        return acc;
+      }, [] as FieldWithResponseType);
+
+      if (isFormslyForm && selectedFormName === "Order to Purchase") {
+        const responseData = generateFormslyResponseData(
+          uniqueFieldList,
+          sectionList
+        );
+        setFieldResponseData(responseData);
+      } else {
+        const nonDynamicFieldList = uniqueFieldList.filter(
+          (field) => !filteredResponseTypes.includes(field.field_type)
+        );
+        const groupedRequestFormData = nonDynamicFieldList.map((field) => ({
+          sectionLabel: field.field_name,
+          responseData: [field],
+        }));
+        setFieldResponseData(groupedRequestFormData);
+      }
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        title: "Can't fetch data at the moment.",
+        message: "Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (requestListByForm) {
+      handleResponseTabData();
+    }
+  }, [requestListByForm]);
 
   return (
     <Container p={0} fluid>
@@ -158,18 +245,19 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
         </Tabs.Panel>
 
         <Tabs.Panel value="responses" pt="xs">
-          <ResponseTab
-            selectedForm={selectedForm}
-            isFormslyForm={isFormslyForm}
-          />
+          {fieldResponseData ? (
+            <ResponseTab
+              selectedForm={selectedForm}
+              fieldResponseData={fieldResponseData}
+            />
+          ) : (
+            <Text>No data available.</Text>
+          )}
         </Tabs.Panel>
 
         <Tabs.Panel value="requisition" pt="xs">
-          {isFormslyForm ? (
-            <OrderToPurchaseAnalytics
-              selectedForm={selectedForm}
-              requestListByForm={requestListByForm}
-            />
+          {isFormslyForm && fieldResponseData ? (
+            <OrderToPurchaseAnalytics fieldResponseData={fieldResponseData} />
           ) : (
             <Text>No data available.</Text>
           )}

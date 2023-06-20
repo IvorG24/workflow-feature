@@ -492,7 +492,9 @@ export type RequestByFormType = RequestTableRow & {
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_option: OptionTableRow[];
-        field_response: RequestResponseTableRow[];
+        field_response: (RequestResponseTableRow & {
+          request_response_team_member_id?: string | null;
+        })[];
       })[];
     })[];
   };
@@ -572,15 +574,16 @@ export type LineChartDataType = {
   value: number;
 };
 
-export type FormslyFormResponseDataType = {
-  label: string;
-  responseData: ResponseDataType[];
-};
-
 export type PurchaseTrendChartDataType = {
   request_response_id: string;
   request_response: string;
   request_response_request_id: string;
   request_response_field_id: string;
   request_response_date_purchased?: string | undefined;
+  request_response_team_member_id?: string | null;
+};
+
+export type RequestResponseDataType = {
+  sectionLabel: string;
+  responseData: FieldWithResponseType;
 };
