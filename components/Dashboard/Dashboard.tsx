@@ -1,4 +1,4 @@
-import { getRequestList, getRequestListByForm } from "@/backend/api/get";
+import { getRequestListByForm } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { generateFormslyResponseData } from "@/utils/arrayFunctions/dashboard";
@@ -6,13 +6,21 @@ import {
   FieldWithResponseType,
   RequestByFormType,
   RequestResponseDataType,
-  RequestType,
   TeamMemberWithUserType,
 } from "@/utils/types";
-import { Container, LoadingOverlay, Select, Tabs, Text } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Container,
+  Group,
+  LoadingOverlay,
+  Select,
+  Tabs,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
+  IconAlertCircle,
   IconChartHistogram,
   IconMessageCircle,
   IconReportAnalytics,
@@ -23,12 +31,18 @@ import OrderToPurchaseAnalytics from "./RequisitionTab/OrderToPurchaseAnalytics"
 import ResponseTab from "./ResponseTab/ResponseTab";
 
 type DashboardProps = {
-  requestList: RequestType[];
+  requestList: RequestByFormType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
 };
 
 const filteredResponseTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
+const statusFilter = [
+  { value: "APPROVED", label: "Approved" },
+  { value: "PENDING", label: "Pending" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "CANCELED", label: "Canceled" },
+];
 
 const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const formList = useFormList();
@@ -36,6 +50,7 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const supabaseClient = useSupabaseClient();
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [visibleRequestList, setVisibleRequestList] = useState(requestList);
   const [requestCount, setRequestCount] = useState(requestListCount);
   const [requestListByForm, setRequestListByForm] = useState<
@@ -53,72 +68,56 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
     (form) => form.form_id === selectedForm
   )?.form_name;
 
-  // filter data by selected request form
-  const handleFilterRequestList = async (value: string) => {
+  const handleFilterRequestList = async () => {
     try {
-      setSelectedForm(value);
       setIsFetchingData(true);
-      const { data, count } = await getRequestList(supabaseClient, {
+      const { data, count } = await getRequestListByForm(supabaseClient, {
         teamId: activeTeam.team_id,
-        page: 1,
-        limit: 9999999,
-        form: value ? [value] : undefined,
+        formId: selectedForm ? selectedForm : undefined,
+        requestStatus: selectedStatus ? selectedStatus : undefined,
       });
-      if (value) {
-        const requestListByFormData = await getRequestListByForm(
-          supabaseClient,
-          {
-            formId: value,
-          }
-        );
-        // map field responses according to request id
-        // current backend api is getting responses by field id only
-        const requestListWithMatchingResponses = requestListByFormData.map(
-          (request) => {
-            const matchingResponses = request.request_form.form_section.map(
-              (section) => {
-                const sectionFields = section.section_field.map((field) => {
-                  const filteredResponseByRequestId =
-                    field.field_response.filter(
-                      (response) =>
-                        response.request_response_request_id ===
-                        request.request_id
-                    );
 
-                  const filteredResponseWithDateCreated =
-                    filteredResponseByRequestId.map((response) => ({
-                      ...response,
-                      request_response_date_purchased:
-                        request.request_date_created,
-                      request_response_team_member_id:
-                        request.request_team_member_id,
-                    }));
+      if (!data) throw Error;
 
-                  return {
-                    ...field,
-                    field_response: filteredResponseWithDateCreated,
-                  };
-                });
+      const requestListWithMatchingResponses = data.map((request) => {
+        const matchingResponses = request.request_form.form_section.map(
+          (section) => {
+            const sectionFields = section.section_field.map((field) => {
+              const filteredResponseByRequestId = field.field_response.filter(
+                (response) =>
+                  response.request_response_request_id === request.request_id
+              );
 
-                return {
-                  ...section,
-                  section_field: sectionFields,
-                };
-              }
-            );
+              const filteredResponseWithDateCreated =
+                filteredResponseByRequestId.map((response) => ({
+                  ...response,
+                  request_response_date_purchased: request.request_date_created,
+                  request_response_team_member_id:
+                    request.request_team_member_id,
+                }));
+
+              return {
+                ...field,
+                field_response: filteredResponseWithDateCreated,
+              };
+            });
+
             return {
-              ...request,
-              request_form: {
-                ...request.request_form,
-                form_section: matchingResponses,
-              },
+              ...section,
+              section_field: sectionFields,
             };
           }
         );
-        setRequestListByForm(requestListWithMatchingResponses);
-      }
-
-      setVisibleRequestList(data as RequestType[]);
+        return {
+          ...request,
+          request_form: {
+            ...request.request_form,
+            form_section: matchingResponses,
+          },
+        };
+      });
+      setRequestListByForm(requestListWithMatchingResponses);
+      setVisibleRequestList(data as RequestByFormType[]);
       setRequestCount(count as number);
     } catch (error) {
       notifications.show({
@@ -131,7 +130,7 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
     }
   };
 
-  const handleResponseTabData = () => {
+  const handleResponseTabData = (requestListByForm: RequestByFormType[]) => {
     try {
       if (!requestListByForm) return;
 
@@ -166,7 +165,11 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
         return acc;
       }, [] as FieldWithResponseType);
 
-      if (isFormslyForm && selectedFormName === "Order to Purchase") {
+      if (
+        isFormslyForm &&
+        selectedFormName === "Order to Purchase" &&
+        sectionList.length > 0
+      ) {
         const responseData = generateFormslyResponseData(
           uniqueFieldList,
           sectionList
@@ -193,27 +196,38 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   };
 
   useEffect(() => {
-    if (requestListByForm) {
-      handleResponseTabData();
+    if (selectedForm && requestListByForm) {
+      handleResponseTabData(requestListByForm);
+    } else {
+      setRequestListByForm(null);
     }
-  }, [requestListByForm]);
+  }, [requestListByForm, selectedForm]);
 
   return (
     <Container p={0} fluid>
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
-      <Select
-        maw={300}
-        mb="sm"
-        label="Select Form"
-        placeholder="All forms"
-        data={formList.map((form) => ({
-          value: form.form_id,
-          label: form.form_name,
-        }))}
-        value={selectedForm}
-        onChange={handleFilterRequestList}
-        clearable
-      />
+      <Group my="md">
+        <Select
+          maw={300}
+          placeholder="All forms"
+          data={formList.map((form) => ({
+            value: form.form_id,
+            label: form.form_name,
+          }))}
+          value={selectedForm}
+          onChange={setSelectedForm}
+          clearable
+        />
+        <Select
+          maw={300}
+          placeholder="Status"
+          data={statusFilter}
+          value={selectedStatus}
+          onChange={setSelectedStatus}
+          clearable
+        />
+        <Button onClick={() => handleFilterRequestList()}>Fetch Data</Button>
+      </Group>
 
       <Tabs defaultValue="overview">
         <Tabs.List>
@@ -251,7 +265,9 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
               fieldResponseData={fieldResponseData}
             />
           ) : (
-            <Text>No data available.</Text>
+            <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
+              Select a form and click Fetch Data to generate data.
+            </Alert>
           )}
         </Tabs.Panel>
 
@@ -259,7 +275,9 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
           {isFormslyForm && fieldResponseData ? (
             <OrderToPurchaseAnalytics fieldResponseData={fieldResponseData} />
           ) : (
-            <Text>No data available.</Text>
+            <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
+              Select a form and click Fetch Data to generate data.
+            </Alert>
           )}
         </Tabs.Panel>
       </Tabs>

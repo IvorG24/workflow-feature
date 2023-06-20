@@ -1,12 +1,12 @@
 import {
   getAllTeamMembers,
-  getRequestList,
+  getRequestListByForm,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Dashboard from "@/components/Dashboard/Dashboard";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { RequestType, TeamMemberWithUserType } from "@/utils/types";
+import { RequestByFormType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -18,10 +18,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       if (!teamId) throw Error;
 
-      const { data, count } = await getRequestList(supabaseClient, {
+      const { data, count } = await getRequestListByForm(supabaseClient, {
         teamId: teamId,
-        page: 1,
-        limit: 9999999,
       });
 
       const teamMemberList = await getAllTeamMembers(supabaseClient, {
@@ -48,7 +46,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 );
 
 type Props = {
-  requestList: RequestType[];
+  requestList: RequestByFormType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
 };

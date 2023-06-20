@@ -1,4 +1,4 @@
-import { RequestType } from "@/utils/types";
+import { RequestByFormType } from "@/utils/types";
 import { Group, Paper, Title } from "@mantine/core";
 import { IconFileAnalytics } from "@tabler/icons-react";
 import moment from "moment";
@@ -8,7 +8,7 @@ import StackedBarChart, {
 } from "../../Chart/StackedBarChart";
 
 type RequestStatisticsProps = {
-  requestList: RequestType[];
+  requestList: RequestByFormType[];
 };
 
 const generateInitialChartData = () => {

@@ -6,7 +6,6 @@ import {
   SearchKeywordResponseType,
 } from "@/utils/types";
 import {
-  Alert,
   Button,
   Container,
   Flex,
@@ -20,11 +19,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import {
-  IconAlertCircle,
-  IconMessageSearch,
-  IconSearch,
-} from "@tabler/icons-react";
+import { IconMessageSearch, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import ResponseSection from "./ResponseSection/ResponseSection";
@@ -32,7 +27,7 @@ import ResponseTable from "./ResponseTable";
 
 type ResponseDataProps = {
   selectedForm: string | null;
-  fieldResponseData: RequestResponseDataType[];
+  fieldResponseData: RequestResponseDataType[] | null;
 };
 
 type FormValues = {
@@ -56,13 +51,7 @@ const ResponseTab = ({
     try {
       setIsFetchingData(true);
       if (!data.search) return;
-      if (selectedForm === null) {
-        return notifications.show({
-          title: "Please select a form",
-          message: "Choose a form from the form filter.",
-          color: "orange",
-        });
-      }
+
       const searchData = await getResponseDataByKeyword(supabaseClient, {
         formId: selectedForm as string,
         keyword: data.search,
@@ -84,64 +73,57 @@ const ResponseTab = ({
 
   return (
     <Container mt="sm" p={0} fluid>
-      <form onSubmit={handleSubmit(handleSearchByKeyword)}>
-        <Group spacing={8}>
-          <TextInput
-            w="100%"
-            maw={300}
-            placeholder="Search response data by keyword"
-            icon={<IconSearch size="16px" />}
-            {...register("search")}
-          />
-          <Button type="submit">Search</Button>
-        </Group>
-      </form>
-
-      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
-      {!selectedForm && (
-        <Alert mt="sm" color="yellow" icon={<IconAlertCircle size="1rem" />}>
-          Please select a form to generate data.
-        </Alert>
-      )}
-
-      {searchKeywordResponse && (
-        <Paper
-          mt="sm"
-          p="md"
-          w={{ base: "100%", sm: "fit-content" }}
-          withBorder
-        >
-          <Group>
-            <IconMessageSearch />
-            <Title order={3}>Keyword Search Data</Title>
-          </Group>
-
-          <Flex wrap="wrap" gap="md">
-            {searchKeywordResponse.map((response, idx) => (
-              <ResponseTable key={response.label + idx} response={response} />
-            ))}
-          </Flex>
-          {searchKeywordResponse.length <= 0 && (
-            <Text mt="xl">No matching results found.</Text>
-          )}
-        </Paper>
-      )}
-
       {fieldResponseData && fieldResponseData.length > 0 && (
-        <Stack>
-          {fieldResponseData.map((response, idx) => (
-            <ResponseSection
-              key={response.sectionLabel + idx}
-              responseSection={response}
-            />
-          ))}
-        </Stack>
-      )}
+        <>
+          <form onSubmit={handleSubmit(handleSearchByKeyword)}>
+            <Group spacing={8}>
+              <TextInput
+                w="100%"
+                maw={300}
+                placeholder="Search response data by keyword"
+                icon={<IconSearch size="16px" />}
+                {...register("search")}
+              />
+              <Button type="submit">Search</Button>
+            </Group>
+          </form>
 
-      {!fieldResponseData && !searchKeywordResponse && (
-        <Title mt="xl" order={3} align="center">
-          No data available.
-        </Title>
+          <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
+
+          {searchKeywordResponse && (
+            <Paper
+              mt="sm"
+              p="md"
+              w={{ base: "100%", sm: "fit-content" }}
+              withBorder
+            >
+              <Group>
+                <IconMessageSearch />
+                <Title order={3}>Keyword Search Data</Title>
+              </Group>
+
+              <Flex wrap="wrap" gap="md">
+                {searchKeywordResponse.map((response, idx) => (
+                  <ResponseTable
+                    key={response.label + idx}
+                    response={response}
+                  />
+                ))}
+              </Flex>
+              {searchKeywordResponse.length <= 0 && (
+                <Text mt="xl">No matching results found.</Text>
+              )}
+            </Paper>
+          )}
+          <Stack>
+            {fieldResponseData.map((response, idx) => (
+              <ResponseSection
+                key={response.sectionLabel + idx}
+                responseSection={response}
+              />
+            ))}
+          </Stack>
+        </>
       )}
     </Container>
   );

@@ -30,35 +30,38 @@ const OrderToPurchaseAnalytics = ({ fieldResponseData }: Props) => {
   const [selectedPurchaseData, setSelectedPurchaseData] = useState("user");
   const [selectedBarChartItem, setSelectedBarChartItem] = useState("");
   const itemPurchaseTrendData = getItemPurchaseTrendData(fieldResponseData);
-
   return (
     <Container h="100%" fluid>
-      <SegmentedControl
-        mb="md"
-        value={selectedPurchaseData}
-        onChange={setSelectedPurchaseData}
-        data={[
-          { value: "user", label: "Your Purchase Order" },
-          { value: "team", label: "Team Purchase Order" },
-          { value: "purchase", label: "Purchase Trend" },
-        ]}
-      />
-
-      {selectedPurchaseData !== "purchase" &&
-        fieldResponseData &&
-        fieldResponseData.length > 0 && (
-          <PurchaseOrder
-            selectedPurchaseData={selectedPurchaseData}
-            selectedBarChartItem={selectedBarChartItem}
-            setSelectedBarChartItem={setSelectedBarChartItem}
-            purchaseOrderData={fieldResponseData}
+      {fieldResponseData.length > 0 ? (
+        <>
+          <SegmentedControl
+            mb="md"
+            value={selectedPurchaseData}
+            onChange={setSelectedPurchaseData}
+            data={[
+              { value: "user", label: "Your Purchase Order" },
+              { value: "team", label: "Team Purchase Order" },
+              { value: "purchase", label: "Purchase Trend" },
+            ]}
           />
-        )}
 
-      {!fieldResponseData && <Text>No data available.</Text>}
+          {selectedPurchaseData !== "purchase" &&
+            fieldResponseData &&
+            fieldResponseData.length > 0 && (
+              <PurchaseOrder
+                selectedPurchaseData={selectedPurchaseData}
+                selectedBarChartItem={selectedBarChartItem}
+                setSelectedBarChartItem={setSelectedBarChartItem}
+                purchaseOrderData={fieldResponseData}
+              />
+            )}
 
-      {selectedPurchaseData === "purchase" && itemPurchaseTrendData && (
-        <PurchaseTrend itemPurchaseTrendData={itemPurchaseTrendData} />
+          {selectedPurchaseData === "purchase" && itemPurchaseTrendData && (
+            <PurchaseTrend itemPurchaseTrendData={itemPurchaseTrendData} />
+          )}
+        </>
+      ) : (
+        <Text>No data available.</Text>
       )}
     </Container>
   );

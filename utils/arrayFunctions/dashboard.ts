@@ -106,6 +106,7 @@ export const generateFormslyResponseData = (
   const mainSection = sectionList.filter(
     (section) => section.section_name === "Main"
   )[0];
+
   const mainFieldWithResponse = uniqueFieldList.filter(
     (field) => field.field_section_id === mainSection.section_id
   );

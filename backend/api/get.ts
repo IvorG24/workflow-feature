@@ -1164,19 +1164,37 @@ export const checkReceiver = async (
 export const getRequestListByForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    formId: string;
+    teamId: string;
+    formId?: string;
+    requestStatus?: string;
   }
 ) => {
-  const { formId } = params;
-  const { data, error } = await supabaseClient
+  const { formId, teamId, requestStatus } = params;
+  let query = supabaseClient
     .from("request_table")
     .select(
-      "*, request_team_member: request_team_member_id(team_member_team_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_form: request_form_id(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*))))"
+      "*, request_team_member: request_team_member_id(team_member_team_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_form: request_form_id(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*))))",
+      { count: "exact" }
     )
-    .eq("request_form_id", formId);
+    .eq("request_team_member.team_member_team_id", teamId)
+    .eq("request_is_disabled", false)
+    .eq("request_form.form_is_disabled", false);
+
+  if (formId) {
+    const formCondition = `request_form_id.eq.${formId}`;
+    query = query.or(formCondition);
+  }
+
+  if (requestStatus) {
+    const statusCondition = `request_status.eq.${requestStatus}`;
+    query = query.or(statusCondition);
+  }
+  const { data, error, count } = await query;
   if (error) throw error;
 
-  return data as RequestByFormType[];
+  const requestList = data as RequestByFormType[];
+
+  return { data: requestList, count };
 };
 
 // Get specific formsly form id by name and team id
@@ -1247,11 +1265,10 @@ export const getResponseDataByKeyword = async (
     .in("response_field.field_type", ["TEXT", "TEXTAREA"])
     .ilike("request_response", `%${keyword}%`);
 
-  console.log(error);
   if (error) throw error;
 
   return data;
-}
+};
 
 // Check user if owner or admin
 export const checkIfOwnerOrAdmin = async (
