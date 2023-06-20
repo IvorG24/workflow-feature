@@ -1,5 +1,6 @@
 import {
   getFormslyFormId,
+  getFormslyForwardLinkFormId,
   getRequest,
   getUserActiveTeamId,
 } from "@/backend/api/get";
@@ -8,7 +9,7 @@ import OrderToPurchaseRequestPage from "@/components/OrderToPurchaseRequestPage/
 import RequestPage from "@/components/RequestPage/RequestPage";
 import { FORM_CONNECTION } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { ConnectedFormsType, RequestWithResponseType } from "@/utils/types";
+import { ConnectedFormsType, FormslyFormType, RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -29,6 +30,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         teamId,
       });
 
+      const connectedRequestIDList = await getFormslyForwardLinkFormId(
+        supabaseClient,
+        {
+          requestId: request.request_id,
+        }
+      );
+
       if (!request) {
         return {
           redirect: {
@@ -39,7 +47,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       }
 
       return {
-        props: { request, connectedFormID },
+        props: { request, connectedFormID, connectedRequestIDList },
       };
     } catch (error) {
       console.error(error);
@@ -56,15 +64,17 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   request: RequestWithResponseType;
   connectedFormID: string;
+  connectedRequestIDList: FormslyFormType;
 };
 
-const Page = ({ request, connectedFormID }: Props) => {
+const Page = ({ request, connectedFormID, connectedRequestIDList }: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Order to Purchase") {
       return (
         <OrderToPurchaseRequestPage
           request={request}
           connectedFormID={connectedFormID}
+          connectedRequestIDList={connectedRequestIDList}
         />
       );
     } else {
@@ -73,6 +83,7 @@ const Page = ({ request, connectedFormID }: Props) => {
           request={request}
           isFormslyForm
           connectedFormID={connectedFormID}
+          connectedRequestIDList={connectedRequestIDList}
         />
       );
     }
