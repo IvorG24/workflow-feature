@@ -1,5 +1,9 @@
 import { getFileUrl } from "@/backend/api/get";
-import { createAttachment, uploadImage } from "@/backend/api/post";
+import {
+  createAttachment,
+  resetPassword,
+  uploadImage,
+} from "@/backend/api/post";
 import { udpateUser } from "@/backend/api/update";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
@@ -132,15 +136,13 @@ const UserSettingsPage = ({ user }: Props) => {
   const handleChangePassword = async (data: ChangePasswordForm) => {
     try {
       setIsUpdatingPassword(true);
-
-      console.log(data);
-      // todo: check old password then change new password
-
+      await resetPassword(supabaseClient, data.password);
       notifications.show({
-        message: "Password changed.",
+        message: "Password updated.",
         color: "green",
       });
-    } catch (e) {
+      changePasswordFormMethods.reset();
+    } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
