@@ -193,7 +193,7 @@ const UserSettingsPage = ({ user }: Props) => {
   };
 
   return (
-    <Container fluid>
+    <Container>
       <Title order={2}>User Settings</Title>
 
       <FormProvider {...personalInfoFormMethods}>
