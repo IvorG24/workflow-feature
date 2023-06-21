@@ -13,6 +13,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { usePrevious } from "@mantine/hooks";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -46,6 +47,9 @@ const PersonalInfo = ({
     formState: { errors, isDirty, defaultValues },
   } = useFormContext<PersonalInfoForm>();
 
+  const prevAvatarFile = usePrevious(avatarFile);
+  const isAvatarChanged = avatarFile !== prevAvatarFile;
+
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
       <LoadingOverlay
@@ -62,6 +66,7 @@ const PersonalInfo = ({
 
             <Flex mt="md" justify="space-between" gap="xl" wrap="wrap">
               <UploadAvatar
+                // {...register("user_avatar")}
                 src={getValues("user_avatar")}
                 value={avatarFile}
                 onChange={onAvatarFileChange}
@@ -217,7 +222,7 @@ const PersonalInfo = ({
               type="submit"
               size="xs"
               sx={{ alignSelf: "flex-end" }}
-              disabled={!isDirty}
+              disabled={!isAvatarChanged && !isDirty}
             >
               Save Changes
             </Button>
