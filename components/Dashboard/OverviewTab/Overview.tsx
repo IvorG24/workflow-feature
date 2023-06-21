@@ -1,8 +1,8 @@
 import { RequestByFormType, RequestorListType } from "@/utils/types";
 import { Box, Flex } from "@mantine/core";
 import { lowerCase } from "lodash";
-import RequestCountByStatus from "./RequestCountByStatus";
 import RequestStatistics from "./RequestStatistics";
+import RequestStatusTracker from "./RequestStatusTracker";
 import RequestorTable from "./RequestorTable";
 
 type OverviewProps = {
@@ -78,7 +78,7 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
   }, [] as RequestorListType);
 
   // get request status meter data
-  const requestStatusMeterData = status.map((status) => {
+  const requestStatusData = status.map((status) => {
     const requestMatch =
       requestList.filter(
         (request) => lowerCase(request.request_status) === lowerCase(status)
@@ -95,11 +95,8 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
 
   return (
     <Box>
-      <Flex gap="sm" wrap="wrap">
-        {requestStatusMeterData.map((meter, idx) => (
-          <RequestCountByStatus key={meter.label + idx} {...meter} />
-        ))}
-      </Flex>
+      <RequestStatusTracker data={requestStatusData} />
+
       <Flex gap="xl" wrap="wrap">
         <RequestStatistics requestList={requestList} />
         {reducedRequestorList.length > 0 && (
