@@ -3,10 +3,8 @@ import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
-  AccountingProcessorTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
-  AuditProcessorTableInsert,
   CommentTableInsert,
   FieldTableInsert,
   FormType,
@@ -18,17 +16,13 @@ import {
   NotificationTableInsert,
   OptionTableInsert,
   ProjectTableInsert,
-  PurchasingProcessorTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   SectionTableInsert,
+  SupplierTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
-  TreasuryProcessorTableInsert,
   UserTableInsert,
-  VendorTableInsert,
-  WarehouseProcessorTableInsert,
-  WarehouseReceiverTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -633,119 +627,17 @@ export const createProject = async (
   return data;
 };
 
-// Create Warehouse Processor
-export const createWarehouseProcessor = async (
+// Create Supplier
+export const createSupplier = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    warehouseProcessorData: WarehouseProcessorTableInsert;
+    supplierData: SupplierTableInsert;
   }
 ) => {
-  const { warehouseProcessorData } = params;
+  const { supplierData } = params;
   const { data, error } = await supabaseClient
-    .from("warehouse_processor_table")
-    .insert(warehouseProcessorData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
-// Create Vendor
-export const createVendor = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    vendorData: VendorTableInsert;
-  }
-) => {
-  const { vendorData } = params;
-  const { data, error } = await supabaseClient
-    .from("vendor_table")
-    .insert(vendorData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
-// Create Purchasing Processor
-export const createPurchasingProcessor = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    purchasingProcessorData: PurchasingProcessorTableInsert;
-  }
-) => {
-  const { purchasingProcessorData } = params;
-  const { data, error } = await supabaseClient
-    .from("purchasing_processor_table")
-    .insert(purchasingProcessorData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
-// Create Accounting Processor
-export const createAccountingProcessor = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    accountingProcessorData: AccountingProcessorTableInsert;
-  }
-) => {
-  const { accountingProcessorData } = params;
-  const { data, error } = await supabaseClient
-    .from("accounting_processor_table")
-    .insert(accountingProcessorData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
-// Create Warehouse Receiver
-export const createWarehouseReceiver = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    warehouseReceiverData: WarehouseReceiverTableInsert;
-  }
-) => {
-  const { warehouseReceiverData } = params;
-  const { data, error } = await supabaseClient
-    .from("warehouse_receiver_table")
-    .insert(warehouseReceiverData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
-// Create Treasury Processor
-export const createTreasuryProcessor = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    treasuryProcessorData: TreasuryProcessorTableInsert;
-  }
-) => {
-  const { treasuryProcessorData } = params;
-  const { data, error } = await supabaseClient
-    .from("treasury_processor_table")
-    .insert(treasuryProcessorData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
-// Create Audit Processor
-export const createAuditProcessor = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    auditProcessorData: AuditProcessorTableInsert;
-  }
-) => {
-  const { auditProcessorData } = params;
-  const { data, error } = await supabaseClient
-    .from("audit_processor_table")
-    .insert(auditProcessorData)
+    .from("supplier_table")
+    .insert(supplierData)
     .select()
     .single();
   if (error) throw error;

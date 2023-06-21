@@ -340,3 +340,87 @@ export const readAllNotification = async (
     .or(`notification_app.eq.${appType}, notification_app.is.null`);
   if (error) throw error;
 };
+
+// Udpate team and team member group list
+export const updateTeamAndTeamMemberGroupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    teamGroupList: string[];
+    upsertGroupName: string;
+    addedGroupMembers: string[];
+    deletedGroupMembers: string[];
+  }
+) => {
+  const {
+    teamId,
+    teamGroupList,
+    upsertGroupName,
+    addedGroupMembers,
+    deletedGroupMembers,
+  } = params;
+  const { error: teamError } = await supabaseClient
+    .from("team_table")
+    .update({ team_group_list: teamGroupList })
+    .eq("team_id", teamId);
+  if (teamError) throw teamError;
+
+  if (addedGroupMembers.length !== 0) {
+    let addTeamMemberCondition = "";
+    addedGroupMembers.forEach((memberId) => {
+      addTeamMemberCondition += `team_member_id.eq.${memberId}, `;
+    });
+
+    const { data: teamMemberList, error: teamMemberListError } =
+      await supabaseClient
+        .from("team_member_table")
+        .select("*")
+        .or(addTeamMemberCondition.slice(0, -2));
+    if (teamMemberListError) throw teamMemberListError;
+
+    const upsertTeamMemberData = teamMemberList.map((member) => {
+      return {
+        ...member,
+        team_member_group_list: [
+          ...member.team_member_group_list,
+          upsertGroupName,
+        ],
+      };
+    });
+
+    const { error: teamMemberUpsertError } = await supabaseClient
+      .from("team_member_table")
+      .upsert(upsertTeamMemberData);
+
+    if (teamMemberUpsertError) throw teamMemberUpsertError;
+  }
+
+  if (deletedGroupMembers.length !== 0) {
+    let deleteTeamMemberCondition = "";
+    deletedGroupMembers.forEach((memberId) => {
+      deleteTeamMemberCondition += `team_member_id.eq.${memberId}, `;
+    });
+
+    const { data: teamMemberList, error: teamMemberListError } =
+      await supabaseClient
+        .from("team_member_table")
+        .select("*")
+        .or(deleteTeamMemberCondition.slice(0, -2));
+    if (teamMemberListError) throw teamMemberListError;
+
+    const upsertTeamMemberData = teamMemberList.map((member) => {
+      return {
+        ...member,
+        team_member_group_list: member.team_member_group_list.filter(
+          (group) => group !== upsertGroupName
+        ),
+      };
+    });
+
+    const { error: teamMemberUpsertError } = await supabaseClient
+      .from("team_member_table")
+      .upsert(upsertTeamMemberData);
+
+    if (teamMemberUpsertError) throw teamMemberUpsertError;
+  }
+};
