@@ -1,6 +1,7 @@
 import {
   FieldType,
   FieldWithResponseType,
+  LineChartDataType,
   RequestByFormType,
   ResponseDataType,
   SearchKeywordResponseType,
@@ -117,4 +118,29 @@ export const generateFormslyResponseData = (
   };
 
   return [groupedMainSection, ...groupedResponseData];
+};
+
+export const getUniqueResponseData = (
+  data: FieldWithResponseType[0]["field_response"]
+) => {
+  const uniqueResponseData = data.reduce((acc, response) => {
+    const parseResponseValue = JSON.parse(response.request_response);
+    const duplicateResponseIndex = acc.findIndex(
+      (res) => res.label === parseResponseValue
+    );
+
+    if (duplicateResponseIndex >= 0) {
+      acc[duplicateResponseIndex].value++;
+    } else {
+      const newResponse = { label: parseResponseValue, value: 1 };
+      acc.push(newResponse);
+    }
+
+    return acc;
+  }, [] as LineChartDataType[]);
+
+  const sortedUniqueResponseData = uniqueResponseData.sort(
+    (a, b) => b.value - a.value
+  );
+  return sortedUniqueResponseData;
 };

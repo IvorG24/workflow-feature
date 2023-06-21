@@ -12,7 +12,7 @@ type ResponseTableProps = {
   response: ResponseDataType;
 };
 
-const ResponseTable = ({ response }: ResponseTableProps) => {
+const SearchResponseTable = ({ response }: ResponseTableProps) => {
   const { classes } = useStyles();
   const { responseList } = response;
   const sortedResponseList = responseList.sort((a, b) => b.value - a.value);
@@ -30,4 +30,4 @@ const ResponseTable = ({ response }: ResponseTableProps) => {
   );
 };
 
-export default ResponseTable;
+export default SearchResponseTable;

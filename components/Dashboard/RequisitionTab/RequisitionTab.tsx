@@ -26,12 +26,12 @@ const getItemPurchaseTrendData = (data: RequestResponseDataType[]) => {
   return itemPurchaseTrendData;
 };
 
-const OrderToPurchaseAnalytics = ({ fieldResponseData }: Props) => {
+const RequisitionTab = ({ fieldResponseData }: Props) => {
   const [selectedPurchaseData, setSelectedPurchaseData] = useState("user");
   const [selectedBarChartItem, setSelectedBarChartItem] = useState("");
   const itemPurchaseTrendData = getItemPurchaseTrendData(fieldResponseData);
   return (
-    <Container h="100%" fluid>
+    <Container p={0} h="100%" fluid>
       {fieldResponseData.length > 0 ? (
         <>
           <SegmentedControl
@@ -67,4 +67,4 @@ const OrderToPurchaseAnalytics = ({ fieldResponseData }: Props) => {
   );
 };
 
-export default OrderToPurchaseAnalytics;
+export default RequisitionTab;

@@ -1,10 +1,10 @@
 import BarChart from "@/components/Chart/BarChart";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { getUniqueResponseData } from "@/utils/arrayFunctions/dashboard";
 import { RequestResponseDataType } from "@/utils/types";
 import { Paper, Stack, Text } from "@mantine/core";
 import { Dispatch, SetStateAction } from "react";
-import { getUniqueResponseData } from "../ResponseTab/ResponseSection/ResponseDataTable";
-import ResponseSection from "../ResponseTab/ResponseSection/ResponseSection";
+import ResponseSection from "../ResponseTab/ResponseSection/FormslyFormResponseSection";
 
 type UserPurchaseDataProps = {
   selectedPurchaseData: string;

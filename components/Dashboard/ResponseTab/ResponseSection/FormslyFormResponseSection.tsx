@@ -1,19 +1,21 @@
 import { RequestResponseDataType } from "@/utils/types";
-import { Divider, Flex, Paper, Title } from "@mantine/core";
-import ResponseDataTable from "./ResponseDataTable";
+import { Box, Divider, Flex, Title } from "@mantine/core";
+import FieldResponseTable from "./FieldResponseTable";
 
 type ResponseSectionProps = {
   responseSection: RequestResponseDataType;
 };
 
-const ResponseSection = ({ responseSection }: ResponseSectionProps) => {
+const FormslyFormResponseSection = ({
+  responseSection,
+}: ResponseSectionProps) => {
   const label = responseSection.sectionLabel;
   const responseData = responseSection.responseData.filter(
     (response) => response.field_name !== "General Name"
   );
 
   return (
-    <Paper mt="sm" p="md" w={{ base: "100%" }}>
+    <Box p="md" w={{ base: "100%" }}>
       <Divider
         my="xs"
         label={<Title order={5}>{label}</Title>}
@@ -21,11 +23,11 @@ const ResponseSection = ({ responseSection }: ResponseSectionProps) => {
       />
       <Flex w="100%" wrap="wrap" gap="md">
         {responseData.map((response) => (
-          <ResponseDataTable key={response.field_id} response={response} />
+          <FieldResponseTable key={response.field_id} response={response} />
         ))}
       </Flex>
-    </Paper>
+    </Box>
   );
 };
 
-export default ResponseSection;
+export default FormslyFormResponseSection;

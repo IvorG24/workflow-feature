@@ -6,28 +6,36 @@ import {
   SearchKeywordResponseType,
 } from "@/utils/types";
 import {
+  Alert,
+  Box,
   Button,
   Container,
   Flex,
   Group,
   LoadingOverlay,
   Paper,
-  Stack,
   Text,
   TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconMessageSearch, IconSearch } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconBolt,
+  IconMessageSearch,
+  IconSearch,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import ResponseSection from "./ResponseSection/ResponseSection";
-import ResponseTable from "./ResponseTable";
+import FormslyFormResponseSection from "./ResponseSection/FormslyFormResponseSection";
+import RequestResponseSection from "./ResponseSection/RequestResponseSection";
+import SearchResponseTable from "./ResponseSection/SearchResponseTable";
 
 type ResponseDataProps = {
   selectedForm: string | null;
   fieldResponseData: RequestResponseDataType[] | null;
+  isOTPForm: boolean;
 };
 
 type FormValues = {
@@ -37,6 +45,7 @@ type FormValues = {
 const ResponseTab = ({
   selectedForm,
   fieldResponseData,
+  isOTPForm,
 }: ResponseDataProps) => {
   const supabaseClient = useSupabaseClient();
   const [isFetchingData, setIsFetchingData] = useState(false);
@@ -72,9 +81,9 @@ const ResponseTab = ({
   };
 
   return (
-    <Container mt="sm" p={0} fluid>
-      {fieldResponseData && fieldResponseData.length > 0 && (
-        <>
+    <Container p={0} fluid>
+      {fieldResponseData && fieldResponseData.length > 0 ? (
+        <Box>
           <form onSubmit={handleSubmit(handleSearchByKeyword)}>
             <Group spacing={8}>
               <TextInput
@@ -104,7 +113,7 @@ const ResponseTab = ({
 
               <Flex wrap="wrap" gap="md">
                 {searchKeywordResponse.map((response, idx) => (
-                  <ResponseTable
+                  <SearchResponseTable
                     key={response.label + idx}
                     response={response}
                   />
@@ -115,15 +124,33 @@ const ResponseTab = ({
               )}
             </Paper>
           )}
-          <Stack>
-            {fieldResponseData.map((response, idx) => (
-              <ResponseSection
-                key={response.sectionLabel + idx}
-                responseSection={response}
-              />
-            ))}
-          </Stack>
-        </>
+          {isOTPForm ? (
+            <Paper mt="xl" p="xl">
+              <Group spacing="xs">
+                <IconBolt />
+                <Title order={3}>Field Response Data</Title>
+              </Group>
+              {fieldResponseData.map((response, idx) => (
+                <FormslyFormResponseSection
+                  key={response.sectionLabel + idx}
+                  responseSection={response}
+                />
+              ))}
+            </Paper>
+          ) : (
+            <RequestResponseSection requestResponse={fieldResponseData} />
+          )}
+        </Box>
+      ) : (
+        <Box>
+          {!selectedForm ? (
+            <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
+              Please select a form to generate data.
+            </Alert>
+          ) : (
+            <Text>No data available.</Text>
+          )}
+        </Box>
       )}
     </Container>
   );

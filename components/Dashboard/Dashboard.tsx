@@ -9,25 +9,24 @@ import {
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
-  Alert,
   Button,
   Container,
   Group,
   LoadingOverlay,
   Select,
   Tabs,
+  Text,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
-  IconAlertCircle,
   IconChartHistogram,
   IconMessageCircle,
   IconReportAnalytics,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Overview from "./OverviewTab/Overview";
-import OrderToPurchaseAnalytics from "./RequisitionTab/OrderToPurchaseAnalytics";
+import RequisitionTab from "./RequisitionTab/RequisitionTab";
 import ResponseTab from "./ResponseTab/ResponseTab";
 
 type DashboardProps = {
@@ -51,22 +50,19 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [isOTPForm, setIsOTPForm] = useState(false);
   const [visibleRequestList, setVisibleRequestList] = useState(requestList);
   const [requestCount, setRequestCount] = useState(requestListCount);
-  const [requestListByForm, setRequestListByForm] = useState<
-    RequestByFormType[] | null
-  >();
   const [fieldResponseData, setFieldResponseData] = useState<
     RequestResponseDataType[] | null
   >(null);
 
   // check if selected form is formsly form
-  const isFormslyForm = formList.find(
-    (form) => form.form_id === selectedForm
-  )?.form_is_formsly_form;
-  const selectedFormName = formList.find(
-    (form) => form.form_id === selectedForm
-  )?.form_name;
+  const isFormslyForm =
+    formList.find((form) => form.form_id === selectedForm)
+      ?.form_is_formsly_form || false;
+  const selectedFormName =
+    formList.find((form) => form.form_id === selectedForm)?.form_name || false;
 
   const handleFilterRequestList = async () => {
     try {
@@ -116,8 +112,12 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
           },
         };
       });
-      setRequestListByForm(requestListWithMatchingResponses);
+      if (selectedForm) {
+        handleResponseTabData(requestListWithMatchingResponses);
+      }
+
       setVisibleRequestList(data as RequestByFormType[]);
+      setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
       setRequestCount(count as number);
     } catch (error) {
       notifications.show({
@@ -195,14 +195,6 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
     }
   };
 
-  useEffect(() => {
-    if (selectedForm && requestListByForm) {
-      handleResponseTabData(requestListByForm);
-    } else {
-      setRequestListByForm(null);
-    }
-  }, [requestListByForm, selectedForm]);
-
   return (
     <Container p={0} fluid>
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
@@ -259,25 +251,18 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
         </Tabs.Panel>
 
         <Tabs.Panel value="responses" pt="xs">
-          {fieldResponseData ? (
-            <ResponseTab
-              selectedForm={selectedForm}
-              fieldResponseData={fieldResponseData}
-            />
-          ) : (
-            <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
-              Select a form and click Fetch Data to generate data.
-            </Alert>
-          )}
+          <ResponseTab
+            isOTPForm={isOTPForm}
+            selectedForm={selectedForm}
+            fieldResponseData={fieldResponseData}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="requisition" pt="xs">
           {isFormslyForm && fieldResponseData ? (
-            <OrderToPurchaseAnalytics fieldResponseData={fieldResponseData} />
+            <RequisitionTab fieldResponseData={fieldResponseData} />
           ) : (
-            <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
-              Select a form and click Fetch Data to generate data.
-            </Alert>
+            <Text>No data available.</Text>
           )}
         </Tabs.Panel>
       </Tabs>
