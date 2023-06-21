@@ -95,17 +95,16 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
 
   return (
     <Box>
-      <RequestStatusTracker data={requestStatusData} />
-
-      <Flex gap="xl" wrap="wrap">
+      <Flex gap="xl" wrap="wrap" mah={700}>
         <RequestStatistics requestList={requestList} />
-        {reducedRequestorList.length > 0 && (
-          <RequestorTable
-            requestorList={reducedRequestorList}
-            totalRequest={requestCount}
-          />
-        )}
+        <RequestStatusTracker data={requestStatusData} />
       </Flex>
+      {reducedRequestorList.length > 0 && (
+        <RequestorTable
+          requestorList={reducedRequestorList}
+          totalRequest={requestCount}
+        />
+      )}
     </Box>
   );
 };

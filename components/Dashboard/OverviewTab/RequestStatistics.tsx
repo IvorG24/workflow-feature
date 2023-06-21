@@ -1,5 +1,5 @@
 import { RequestByFormType } from "@/utils/types";
-import { Group, Paper, Title } from "@mantine/core";
+import { Box, Group, Paper, Title } from "@mantine/core";
 import { IconFileAnalytics } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -89,16 +89,7 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
       );
 
       if (dataMatch) {
-        const { approved, rejected, pending, canceled } = dataMatch;
-        const totalCount = approved + rejected + pending + canceled;
-
-        return {
-          ...dataMatch,
-          approved: (dataMatch.approved / totalCount) * 100,
-          rejected: (dataMatch.rejected / totalCount) * 100,
-          pending: (dataMatch.pending / totalCount) * 100,
-          canceled: (dataMatch.canceled / totalCount) * 100,
-        };
+        return dataMatch;
       } else {
         return chartData;
       }
@@ -108,17 +99,18 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
 
   return (
     <Paper
-      w={{ base: "100%", sm: 500, md: 700 }}
+      w={{ base: "100%" }}
       p={{ base: "sm", sm: "lg" }}
-      mt="xl"
-      h="fit-content"
       withBorder
+      sx={{ flex: 1 }}
     >
       <Group mb="sm">
         <IconFileAnalytics />
-        <Title order={3}>Request Statistics</Title>
+        <Title order={3}>Monthly Request Statistics</Title>
       </Group>
-      <StackedBarChart data={chartData} />
+      <Box p="xl">
+        <StackedBarChart data={chartData} />
+      </Box>
     </Paper>
   );
 };

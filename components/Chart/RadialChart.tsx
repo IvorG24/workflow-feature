@@ -23,7 +23,7 @@ const RadialChart: React.FC<RadialChartProps> = ({
   const dataSet = data.map((d) => ({
     label: d.label,
     data: [d.value, totalCount - d.value],
-    backgroundColor: [getStatusToColorForCharts(d.label), "#C1C2C5"],
+    backgroundColor: [getStatusToColorForCharts(d.label), "#DEE2E6"],
     borderWidth: 4,
     borderRadius: 24,
   }));

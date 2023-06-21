@@ -18,35 +18,37 @@ type RequestStatusTrackerProps = {
 };
 
 const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
+  const totalCount = data[0].totalCount;
+
   return (
     <Paper p="xl" w={400}>
-      <Stack spacing="xl">
-        <Title order={3}>Request Status</Title>
+      <Flex h="100%" direction="column" justify="space-between">
+        <Title order={3}>Total Request: {totalCount}</Title>
         <Center w="100%">
-          <Box maw={250}>
+          <Box maw={300}>
             <RadialChart data={data} />
           </Box>
         </Center>
         <Stack>
-          {data.map((meter, idx) => (
-            <Box key={meter.label + idx}>
+          {data.map((d, idx) => (
+            <Box key={d.label + idx}>
               <Group w="100%" position="apart">
                 <Flex gap="sm" w="fit-content">
-                  <Box c={getStatusToColorForCharts(meter.label)}>
+                  <Box c={getStatusToColorForCharts(d.label)}>
                     <IconSquareRoundedFilled />
                   </Box>
-                  <Text weight={600}>{`${meter.label} Requests`}</Text>
+                  <Text weight={600}>{`${d.label} Requests`}</Text>
                 </Flex>
-                <Text weight={600}>{`${meter.value}/${meter.totalCount}`}</Text>
+                <Text weight={600}>{`${d.value}/${d.totalCount}`}</Text>
                 <Text weight={600} c="dimmed">{`${
-                  (meter.value / meter.totalCount) * 100
+                  (d.value / d.totalCount) * 100
                 }%`}</Text>
               </Group>
               {idx < data.length - 1 && <Divider />}
             </Box>
           ))}
         </Stack>
-      </Stack>
+      </Flex>
     </Paper>
   );
 };
