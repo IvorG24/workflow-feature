@@ -26,6 +26,10 @@ const RequestorTable = ({
   totalRequest,
 }: RequestorTableProps) => {
   const { classes } = useStyles();
+  const sortRequestorListByTotalRequests = requestorList.sort(
+    (a, b) => b.request.total - a.request.total
+  );
+
   return (
     <ScrollArea w="100%" maw={500} h={412} mt="xl">
       <Paper w={{ base: "100%" }} mih={412} withBorder>
@@ -35,7 +39,7 @@ const RequestorTable = ({
         </Group>
 
         <Stack p="sm" my="sm">
-          {requestorList.map((requestor) => (
+          {sortRequestorListByTotalRequests.map((requestor) => (
             <RequestorItem
               key={requestor.user_id}
               requestor={requestor}
