@@ -21,7 +21,7 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
   const totalCount = data[0].totalCount;
 
   return (
-    <Paper p="xl" w={400}>
+    <Paper p="xl" w={400} withBorder>
       <Flex h="100%" direction="column" justify="space-between">
         <Title order={3}>Total Request: {totalCount}</Title>
         <Center w="100%">
