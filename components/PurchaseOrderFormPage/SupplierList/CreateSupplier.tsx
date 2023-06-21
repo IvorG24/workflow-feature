@@ -1,8 +1,8 @@
 import { checkName } from "@/backend/api/get";
-import { createVendor } from "@/backend/api/post";
+import { createSupplier } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { VendorTableRow } from "@/utils/types";
+import { SupplierTableRow } from "@/utils/types";
 import {
   Button,
   Checkbox,
@@ -20,15 +20,15 @@ import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
 type Props = {
-  setIsCreatingVendor: Dispatch<SetStateAction<boolean>>;
-  setVendorList: Dispatch<SetStateAction<VendorTableRow[]>>;
-  setVendorCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingSupplier: Dispatch<SetStateAction<boolean>>;
+  setSupplierList: Dispatch<SetStateAction<SupplierTableRow[]>>;
+  setSupplierCount: Dispatch<SetStateAction<number>>;
 };
 
-const CreateVendor = ({
-  setIsCreatingVendor,
-  setVendorList,
-  setVendorCount,
+const CreateSupplier = ({
+  setIsCreatingSupplier,
+  setSupplierList,
+  setSupplierCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -45,23 +45,23 @@ const CreateVendor = ({
 
   const onSubmit = async (data: { name: string; isAvailable: boolean }) => {
     try {
-      const newVendor = await createVendor(supabaseClient, {
-        vendorData: {
-          vendor_name: data.name,
-          vendor_is_available: data.isAvailable,
-          vendor_team_id: activeTeam.team_id,
+      const newSupplier = await createSupplier(supabaseClient, {
+        supplierData: {
+          supplier_name: data.name,
+          supplier_is_available: data.isAvailable,
+          supplier_team_id: activeTeam.team_id,
         },
       });
-      setVendorList((prev) => {
-        prev.unshift(newVendor);
+      setSupplierList((prev) => {
+        prev.unshift(newSupplier);
         return prev;
       });
-      setVendorCount((prev) => prev + 1);
+      setSupplierCount((prev) => prev + 1);
       notifications.show({
-        message: "Vendor created.",
+        message: "Supplier created.",
         color: "green",
       });
-      setIsCreatingVendor(false);
+      setIsCreatingSupplier(false);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -76,7 +76,7 @@ const CreateVendor = ({
       <LoadingOverlay visible={formState.isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Add Vendor
+          Add Supplier
         </Title>
         <Divider mb="xl" />
 
@@ -96,11 +96,11 @@ const CreateVendor = ({
                 validate: {
                   duplicate: async (value) => {
                     const isExisting = await checkName(supabaseClient, {
-                      table: "vendor",
+                      table: "supplier",
                       name: value,
                       teamId: activeTeam.team_id,
                     });
-                    return isExisting ? "Vendor already exists" : true;
+                    return isExisting ? "Supplier already exists" : true;
                   },
                 },
               })}
@@ -125,7 +125,7 @@ const CreateVendor = ({
             miw={100}
             mt={30}
             mr={14}
-            onClick={() => setIsCreatingVendor(false)}
+            onClick={() => setIsCreatingSupplier(false)}
           >
             Cancel
           </Button>
@@ -135,4 +135,4 @@ const CreateVendor = ({
   );
 };
 
-export default CreateVendor;
+export default CreateSupplier;

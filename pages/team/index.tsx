@@ -7,6 +7,7 @@ import Meta from "@/components/Meta/Meta";
 import TeamPage from "@/components/TeamPage/TeamPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { TeamMemberType, TeamTableRow } from "@/utils/types";
+import { isArray } from "lodash";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -33,8 +34,26 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         teamId: team.team_id,
       });
 
+      const teamGroups: Record<string, TeamMemberType[]> = {};
+
+      team.team_group_list
+        ? team.team_group_list.forEach((group) => {
+            teamGroups[group] = [];
+          })
+        : [];
+
+      teamMembers.forEach((member) => {
+        if (member.team_member_group_list) {
+          member.team_member_group_list.forEach((group) => {
+            if (isArray(teamGroups[group])) {
+              teamGroups[group].push(member);
+            }
+          });
+        }
+      });
+
       return {
-        props: { team, teamMembers },
+        props: { team, teamMembers, teamGroups },
       };
     } catch (error) {
       console.error(error);
@@ -51,13 +70,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
+  teamGroups: Record<string, TeamMemberType[]>;
 };
 
-const Page = ({ team, teamMembers }: Props) => {
+const Page = ({ team, teamMembers, teamGroups }: Props) => {
   return (
     <>
       <Meta description="Team Page" url="/team" />
-      <TeamPage team={team} teamMembers={teamMembers} />
+      <TeamPage team={team} teamMembers={teamMembers} teamGroups={teamGroups} />
     </>
   );
 };
