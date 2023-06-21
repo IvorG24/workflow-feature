@@ -4,18 +4,18 @@ INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name,
 ('d0247fec-7959-45be-9303-92fe020bb2c2', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '9571523487', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
-INSERT INTO team_table (team_id, team_name, team_user_id) VALUES
-('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '9355b5db-cb06-4a31-ab00-d2420ff53a80'),
-('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', '9355b5db-cb06-4a31-ab00-d2420ff53a80'),
-('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', '9355b5db-cb06-4a31-ab00-d2420ff53a80');
+INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list) VALUES
+('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
+('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);
 
-INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id) VALUES
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80'),
-('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '30edd2d7-875a-4be3-9d5e-e295f8d7f95a'),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'd0247fec-7959-45be-9303-92fe020bb2c2'),
-('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '10dc885f-f37e-4349-9d25-7b0eb4dc0dc9'),
-('ccff17b4-66bf-4c0f-bc02-35750403cecf', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '9355b5db-cb06-4a31-ab00-d2420ff53a80'),
-('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '9355b5db-cb06-4a31-ab00-d2420ff53a80');
+INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list) VALUES
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '30edd2d7-875a-4be3-9d5e-e295f8d7f95a', ARRAY[]::VARCHAR[]),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'd0247fec-7959-45be-9303-92fe020bb2c2', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', ARRAY[]::VARCHAR[]),
+('ccff17b4-66bf-4c0f-bc02-35750403cecf', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
+('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden) VALUES
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
@@ -92,7 +92,6 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 
 -- Order to Purchase Form
 ('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 1, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('c88f075a-e97a-4d8c-aab0-1540c32e5b9b', 'Warehouse Processor', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
@@ -108,8 +107,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 
 -- Purchase Order Form
 ('1582b98c-c8a0-4a2c-a802-771a7f3bc248', 'Order to Purchase ID', 'LINK', 1, 'f052f7da-a130-41db-a6ef-6150fbb9cd06', true, true),
-('c1668339-396e-439e-af1d-9f78024f985c', 'Purchasing Processor', 'DROPDOWN', 2, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
-('2a43aedd-017c-4675-ad4c-00debbac7050', 'Vendor', 'DROPDOWN', 3, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
+('2a43aedd-017c-4675-ad4c-00debbac7050', 'Supplier', 'DROPDOWN', 3, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
 ('4428c857-5a20-4d53-b5d0-543a20f0413a', 'Quantity', 'NUMBER', 4, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
 ('a263d179-0c91-4139-a5a3-aad7c7838c9f', 'Price', 'NUMBER', 5, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
 ('edec8e71-7fe0-4e6f-a390-4ab7462f85d6', 'Remarks', 'TEXTAREA', 6, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', false, false),
@@ -121,7 +119,6 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 -- Invoice Form
 ('df0cb109-e34d-498f-ac51-af2139628ac0', 'Order to Purchase ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
 ('671c4cb1-75cc-4be4-b87d-ec6e3f8ec90a', 'Purchase Order ID', 'LINK', 2, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
-('dc494a3b-824c-4e5d-8fe1-6a7fab240880', 'Accounting Processor', 'DROPDOWN', 3, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Invoice Received Date', 'DATE', 4, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('4c201ab9-92d9-47dd-a661-a7bb2c4e3923', 'Invoice Attachment', 'FILE', 5, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Invoice Pay by Date', 'DATE', 6, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
@@ -138,11 +135,9 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('ae1a746d-47c7-4184-a9a2-1c23d0440353', 'Purchase Order ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Invoice ID', 'LINK', 3, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('8bd25524-eea4-4771-bb12-4af7205ea4b9', 'Account Payable Voucher ID', 'LINK', 4, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
-('e9f687cb-fcbe-4a87-aa88-2d43df8659bd', 'Warehouse Receiver', 'DROPDOWN', 5, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
 ('b74ff20b-33d5-444f-b39d-07745ba0d332', 'Receiving Status', 'DROPDOWN', 6, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false), 
 
 -- Cheque Reference Form
-('f77ed73c-ddec-4a41-87fe-c6000d315d8e', 'Treasury Processsor', 'DROPDOWN', 1, '2217dcb5-0604-4455-b15a-6beb4ee4fa9f', true, false),
 ('8d245864-66be-46b7-8944-cef61c86a1ce', 'Treasury Status', 'DROPDOWN', 2, '2217dcb5-0604-4455-b15a-6beb4ee4fa9f', true, false),
 ('80054b56-d390-45ed-a3c5-2ae63489721b', 'Cheque Cancelled', 'SWITCH', 3, '5ec2a535-7855-48dd-ab14-318a5344409d', false, false),
 ('6def6dcb-c1a9-4597-93ac-0287b4005618', 'Cheque Printed Date', 'DATE', 4, '5ec2a535-7855-48dd-ab14-318a5344409d', true, false),
@@ -153,7 +148,6 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('4aa09972-2e53-4933-8dcb-f0ac92ec6063', 'Cheque Second Date Signed', 'DATE', 9, '5ec2a535-7855-48dd-ab14-318a5344409d', true, false),
 
 -- Audit Form
-('ebd59060-4564-4fe4-838c-774a5de6d1ba', 'Audit Processsor', 'DROPDOWN', 1, '8efd8c64-d1e7-45d4-a761-631db06d9a08', true, false),
 ('01ce24b8-780b-46af-8b15-864da9c20528', 'SSOT PO Prioritization Row Check', 'DROPDOWN', 2, '8efd8c64-d1e7-45d4-a761-631db06d9a08', true, false),
 ('5fde63d6-b583-49f2-881c-669d405f734c', 'Audit Remarks', 'TEXTAREA', 3, '8efd8c64-d1e7-45d4-a761-631db06d9a08', false, false),
 ('fd7cc81e-b93a-4bdf-bddf-0975f05aeda6', 'Date Audit Work Complete', 'DATE', 4, '8efd8c64-d1e7-45d4-a761-631db06d9a08', true, false);
@@ -335,50 +329,8 @@ INSERT INTO project_table (project_id, project_name, project_team_id) VALUES
 ('45d921f4-19cb-4d42-b441-ee80a04e8e68', 'Lake Mainit', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('da7466c2-b5f3-48b6-b092-866804143d93', 'Meralco HDD', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
-INSERT INTO warehouse_processor_table (warehouse_processor_id, warehouse_processor_first_name, warehouse_processor_last_name, warehouse_processor_employee_number, warehouse_processor_team_id) VALUES 
-('239d5de1-ba78-46ae-a0f5-7471c4cba265', 'Christian', 'Dillon', '5760', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('721bf5bb-d621-412b-b945-5af719ae70a6', 'Jayson', 'Robertson', '3145', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('5ef4ee74-32e2-40cd-b6e5-c183fd18ce8d', 'Daren', 'Moran', '5471', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('2410e2f7-55a2-4ad2-83ce-8dd722801087', 'Nicholas', 'Hanson', '7021', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('235a8fa3-83dd-4899-bc03-b1a65c385f92', 'Jennie', 'Christian', '8977', 'a5a28977-6956-45c1-a624-b9e90911502e');
-
-INSERT INTO vendor_table (vendor_id, vendor_name, vendor_team_id) VALUES
+INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('0f61f7e2-8354-4022-a5bd-adeae3e4027e', 'Techrom Computer Shop', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('c4cc353e-7b92-421b-b161-47e3f19c1c26', 'Symmetric Intercontinental IT Solutions Inc', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('3753ab78-290b-4b53-a4b0-752a8e42daf5', 'Fire Solution Inc', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('15c734e9-174f-4a19-b9ab-a3cc2f661b56', 'Begul Builders Corporation', 'a5a28977-6956-45c1-a624-b9e90911502e');
-
-INSERT INTO purchasing_processor_table (purchasing_processor_id, purchasing_processor_first_name, purchasing_processor_last_name, purchasing_processor_employee_number, purchasing_processor_team_id) VALUES 
-('6d24a39c-2bf1-48f1-8739-d60bbda9dc34', 'Chris', 'Swanson', '5760', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('b8a32349-8333-4a3b-818e-19f18576adf7', 'Hunter', 'Gates', '3145', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('04c12e38-d79d-4a82-8e23-ef60356b90d9', 'Lorie', 'Blackburn', '5471', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('f9cd72ab-d3a5-4c13-9ca6-d6db021df329', 'Rosanne', 'Vincent', '7021', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('2dde9900-5f34-4821-a3fd-6a9740aff772', 'Lowell', 'Bautista', '8977', 'a5a28977-6956-45c1-a624-b9e90911502e');
-
-INSERT INTO accounting_processor_table (accounting_processor_id, accounting_processor_first_name, accounting_processor_last_name, accounting_processor_employee_number, accounting_processor_team_id) VALUES 
-('ef8bb978-96a6-40c2-bcdc-226fb30c691f', 'Ralph', 'Freeman', '3698', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('7f5d7d26-414a-45cf-ac8a-5a66584ae52e', 'Erik', 'Guerra', '6259', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('7cbd3185-4440-4313-a19b-9013d7a77964', 'Leonardo', 'Lambert', '1233', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('1e26f8eb-d604-42ff-94bb-0b71f44abc6c', 'Mckinley', 'Hatfield', '5431', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('45f41256-4e34-41fd-a8fe-48a6fda93d5f', 'Rudy', 'Tate', '6754', 'a5a28977-6956-45c1-a624-b9e90911502e');
-
-INSERT INTO warehouse_receiver_table (warehouse_receiver_id, warehouse_receiver_first_name, warehouse_receiver_last_name, warehouse_receiver_employee_number, warehouse_receiver_team_id) VALUES 
-('a3a46ce3-478c-4d8e-9b54-8410bb1f9d30', 'Darwin', 'Henderson', '5423', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('f41276a8-5329-4674-b7b6-7447521b7cfa', 'Jacinto', 'Little', '5678', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('6025ff26-3646-4c41-9341-f6fd3bce04b2', 'Kellie', 'Chan', '0988', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('2278e890-3a02-404b-b690-645242080e13', 'Paulette', 'Ward', '1232', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('82559661-66d8-4822-b9de-d7907d8e1a93', 'Judy', 'Robertson', '6787', 'a5a28977-6956-45c1-a624-b9e90911502e');
-
-INSERT INTO treasury_processor_table (treasury_processor_id, treasury_processor_first_name, treasury_processor_last_name, treasury_processor_employee_number, treasury_processor_team_id) VALUES 
-('667b7e64-8294-443d-9192-0f63b65d4117', 'Mavis', 'Hubbard', '9852', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('8a7844cf-7601-4998-a4f5-059c86b271a9', 'Hans', 'English', '6723', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('408560c0-810a-4d81-ab93-d81cd53609af', 'Phoebe', 'Barber', '6978', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('b5d0b3b4-81e1-4b7a-bbda-39a89954cc74', 'Patrice', 'Hendrix', '4521', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('acea3330-d46b-443a-a62a-6519b53656e0', 'Irving', 'Nielsen', '8258', 'a5a28977-6956-45c1-a624-b9e90911502e');
-
-INSERT INTO audit_processor_table (audit_processor_id, audit_processor_first_name, audit_processor_last_name, audit_processor_employee_number, audit_processor_team_id) VALUES 
-('41593035-a2f4-47b2-9e65-80bef1e18a2b', 'Bessie', 'Johnston', '4357', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('14e7ae88-1f42-45b1-a1e3-7355ec30ebf0', 'Erwin', 'Huerta', '9873', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('cf8ba8a9-121e-42ab-bc25-598a31fbdfc5', 'Jules', 'Atkins', '2587', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('dc3c0e42-0765-4fd8-83b1-9173cd3c46aa', 'Henry', 'Fry', '4568', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('760e045e-4148-4f60-854d-2f5ac9c135cc', 'Florentino', 'Kaiser', '8133', 'a5a28977-6956-45c1-a624-b9e90911502e');

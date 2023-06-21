@@ -1,9 +1,9 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getProcessorList } from "@/backend/api/get";
+import { getNameList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { WarehouseProcessorTableRow } from "@/utils/types";
+import { SupplierTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -46,21 +46,19 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  warehouseProcessorList: WarehouseProcessorTableRow[];
-  setWarehouseProcessorList: Dispatch<
-    SetStateAction<WarehouseProcessorTableRow[]>
-  >;
-  warehouseProcessorCount: number;
-  setWarehouseProcessorCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingWarehouseProcessor: Dispatch<SetStateAction<boolean>>;
+  supplierList: SupplierTableRow[];
+  setSupplierList: Dispatch<SetStateAction<SupplierTableRow[]>>;
+  supplierCount: number;
+  setSupplierCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingSupplier: Dispatch<SetStateAction<boolean>>;
 };
 
-const WarehouseProcessorList = ({
-  warehouseProcessorList,
-  setWarehouseProcessorList,
-  warehouseProcessorCount,
-  setWarehouseProcessorCount,
-  setIsCreatingWarehouseProcessor,
+const SupplierList = ({
+  supplierList,
+  setSupplierList,
+  supplierCount,
+  setSupplierCount,
+  setIsCreatingSupplier,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -75,20 +73,20 @@ const WarehouseProcessorList = ({
 
   const headerCheckboxKey = uniqueId();
 
-  const handleCheckRow = (warehouseProcessorId: string) => {
-    if (checkList.includes(warehouseProcessorId)) {
-      setCheckList(checkList.filter((id) => id !== warehouseProcessorId));
+  const handleCheckRow = (supplierId: string) => {
+    if (checkList.includes(supplierId)) {
+      setCheckList(checkList.filter((id) => id !== supplierId));
     } else {
-      setCheckList([...checkList, warehouseProcessorId]);
+      setCheckList([...checkList, supplierId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const warehouseProcessorIdList = warehouseProcessorList.map(
-        (warehouseProcessor) => warehouseProcessor.warehouse_processor_id
+      const supplierIdList = supplierList.map(
+        (supplier) => supplier.supplier_id
       );
-      setCheckList(warehouseProcessorIdList);
+      setCheckList(supplierIdList);
     } else {
       setCheckList([]);
     }
@@ -104,18 +102,18 @@ const WarehouseProcessorList = ({
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
-      const { data, count } = await getProcessorList(supabaseClient, {
-        processor: "warehouse",
+      const { data, count } = await getNameList(supabaseClient, {
+        table: "supplier",
         teamId: activeTeam.team_id,
         search,
         limit: ROW_PER_PAGE,
         page: page,
       });
-      setWarehouseProcessorList(data as WarehouseProcessorTableRow[]);
-      setWarehouseProcessorCount(Number(count));
+      setSupplierList(data as SupplierTableRow[]);
+      setSupplierCount(Number(count));
     } catch {
       notifications.show({
-        message: "Error on fetching warehouse processor list",
+        message: "Error on fetching supplier list",
         color: "red",
       });
     }
@@ -124,30 +122,28 @@ const WarehouseProcessorList = ({
 
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = warehouseProcessorList;
+    const savedRecord = supplierList;
 
     try {
-      const updatedWarehouseProcessorList = warehouseProcessorList.filter(
-        (warehouseProcessor) => {
-          if (!checkList.includes(warehouseProcessor.warehouse_processor_id)) {
-            return warehouseProcessor;
-          }
+      const updatedSupplierList = supplierList.filter((supplier) => {
+        if (!checkList.includes(supplier.supplier_id)) {
+          return supplier;
         }
-      );
-      setWarehouseProcessorList(updatedWarehouseProcessorList);
+      });
+      setSupplierList(updatedSupplierList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "warehouse_processor",
+        table: "supplier",
       });
 
       notifications.show({
-        message: "Warehouse Processor/s deleted.",
+        message: "Supplier/s deleted.",
         color: "green",
       });
     } catch {
-      setWarehouseProcessorList(savedRecord);
+      setSupplierList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -156,29 +152,21 @@ const WarehouseProcessorList = ({
     }
   };
 
-  const handleUpdateStatus = async (
-    warehouseProcessorId: string,
-    value: boolean
-  ) => {
-    const savedRecord = warehouseProcessorList;
+  const handleUpdateStatus = async (supplierId: string, value: boolean) => {
+    const savedRecord = supplierList;
     try {
-      setWarehouseProcessorList((prev) =>
-        prev.map((warehouseProcessor) => {
-          if (
-            warehouseProcessor.warehouse_processor_id !== warehouseProcessorId
-          )
-            return warehouseProcessor;
-
+      setSupplierList((prev) =>
+        prev.map((supplier) => {
+          if (supplier.supplier_id !== supplierId) return supplier;
           return {
-            ...warehouseProcessor,
-            warehouse_processor_is_available: value,
+            ...supplier,
+            supplier_is_available: value,
           };
         })
       );
-
       await toggleStatus(supabaseClient, {
-        table: "warehouse_processor",
-        id: warehouseProcessorId,
+        table: "supplier",
+        id: supplierId,
         status: value,
       });
     } catch {
@@ -186,7 +174,7 @@ const WarehouseProcessorList = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      setWarehouseProcessorList(savedRecord);
+      setSupplierList(savedRecord);
     }
   };
 
@@ -195,11 +183,11 @@ const WarehouseProcessorList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Warehouse Processors
+            List of Suppliers
           </Title>
           <TextInput
             miw={250}
-            placeholder="Employee"
+            placeholder="Supplier Name"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -236,8 +224,8 @@ const WarehouseProcessorList = ({
                     <Text size={14}>
                       Are you sure you want to delete{" "}
                       {checkList.length === 1
-                        ? "this warehouse processor?"
-                        : "these warehouse processors?"}
+                        ? "this supplier?"
+                        : "these suppliers?"}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -252,21 +240,21 @@ const WarehouseProcessorList = ({
           <Button
             rightIcon={<IconPlus size={16} />}
             className={classes.flexGrow}
-            onClick={() => setIsCreatingWarehouseProcessor(true)}
+            onClick={() => setIsCreatingSupplier(true)}
           >
             Add
           </Button>
         </Group>
       </Flex>
       <DataTable
-        idAccessor="warehouse_processor_id"
+        idAccessor="supplier_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={warehouseProcessorList}
+        records={supplierList}
         columns={[
           {
             accessor: "checkbox",
@@ -276,70 +264,48 @@ const WarehouseProcessorList = ({
                 className={classes.checkbox}
                 checked={
                   checkList.length > 0 &&
-                  checkList.length === warehouseProcessorList.length
+                  checkList.length === supplierList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
               />
             ),
-            render: ({ warehouse_processor_id }) => (
+            render: ({ supplier_id }) => (
               <Checkbox
                 className={classes.checkbox}
                 size="xs"
-                checked={checkList.includes(warehouse_processor_id)}
+                checked={checkList.includes(supplier_id)}
                 onChange={() => {
-                  handleCheckRow(warehouse_processor_id);
+                  handleCheckRow(supplier_id);
                 }}
               />
             ),
             width: 40,
           },
           {
-            accessor: "warehouse_processor_employee_number",
-            title: "Employee Number",
-            render: ({ warehouse_processor_employee_number }) => (
-              <Text>{warehouse_processor_employee_number}</Text>
-            ),
-          },
-          {
-            accessor: "warehouse_processor_first_name",
-            title: "First Name",
-            render: ({ warehouse_processor_first_name }) => (
-              <Text>{warehouse_processor_first_name}</Text>
-            ),
-          },
-          {
-            accessor: "warehouse_processor_last_name",
-            title: "Last Name",
-            render: ({ warehouse_processor_last_name }) => (
-              <Text>{warehouse_processor_last_name}</Text>
-            ),
+            accessor: "supplier_name",
+            title: "Supplier Name",
+            render: ({ supplier_name }) => <Text>{supplier_name}</Text>,
           },
           {
             accessor: "status",
             title: "Status",
             textAlignment: "center",
-            render: ({
-              warehouse_processor_is_available,
-              warehouse_processor_id,
-            }) => (
+            render: ({ supplier_is_available, supplier_id }) => (
               <Center>
                 <Checkbox
-                  checked={warehouse_processor_is_available}
+                  checked={supplier_is_available}
                   className={classes.checkbox}
                   size="xs"
                   onChange={(e) =>
-                    handleUpdateStatus(
-                      warehouse_processor_id,
-                      e.currentTarget.checked
-                    )
+                    handleUpdateStatus(supplier_id, e.currentTarget.checked)
                   }
                 />
               </Center>
             ),
           },
         ]}
-        totalRecords={warehouseProcessorCount}
+        totalRecords={supplierCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -351,4 +317,4 @@ const WarehouseProcessorList = ({
   );
 };
 
-export default WarehouseProcessorList;
+export default SupplierList;

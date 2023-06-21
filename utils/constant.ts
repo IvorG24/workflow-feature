@@ -5,6 +5,7 @@ import { SectionWithField } from "./types";
 export const DEFAULT_REQUEST_LIST_LIMIT = 12;
 export const DEFAULT_FORM_LIST_LIMIT = 10;
 export const DEFAULT_TEAM_MEMBER_LIST_LIMIT = 10;
+export const DEFAULT_TEAM_GROUP_LIST_LIMIT = 10;
 export const NOTIFICATION_LIST_LIMIT = 10;
 export const DEFAULT_NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
@@ -121,15 +122,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Warehouse Processor",
-          field_type: "DROPDOWN",
-          field_order: 2,
-          field_section_id: otpMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-
-        {
           field_name: "Date Needed",
           field_type: "DATE",
           field_order: 4,
@@ -203,15 +195,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: true,
         },
         {
-          field_name: "Purchasing Processor",
-          field_type: "DROPDOWN",
-          field_order: 2,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Vendor",
+          field_name: "Supplier",
           field_type: "DROPDOWN",
           field_order: 3,
           field_section_id: poMainSectionId,
@@ -318,14 +302,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_section_id: invoiceIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
-        },
-        {
-          field_name: "Accounting Processor",
-          field_type: "DROPDOWN",
-          field_order: 3,
-          field_section_id: invoiceMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
         },
         {
           field_name: "Invoice Received Date",
@@ -474,14 +450,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_required: true,
           field_is_read_only: true,
         },
-        {
-          field_name: "Warehouse Receiver",
-          field_type: "DROPDOWN",
-          field_order: 5,
-          field_section_id: rirMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
       ],
       option: [
         {
@@ -528,15 +496,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
       field: [
-        {
-          field_name: "Treasury Processsor",
-          field_type: "DROPDOWN",
-          field_order: 1,
-          field_section_id: chequeReferenceTreasurySectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-
         {
           field_name: "Cheque Cancelled",
           field_type: "SWITCH",
@@ -632,15 +591,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
       field: [
-        {
-          field_name: "Audit Processsor",
-          field_type: "DROPDOWN",
-          field_order: 1,
-          field_section_id: auditMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-
         {
           field_name: "Audit Remarks",
           field_type: "TEXTAREA",
@@ -759,3 +709,12 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
   };
 };
+
+export const FORMSLY_GROUP = [
+  "Warehouse Processor",
+  "Purchasing Processor",
+  "Accounting Processor",
+  "Warehouse Receiver",
+  "Treasury Processor",
+  "Audit Processor",
+];

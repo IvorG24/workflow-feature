@@ -7,7 +7,6 @@ import {
   ItemWithDescriptionType,
   ProjectTableRow,
   TeamMemberWithUserType,
-  WarehouseProcessorTableRow,
 } from "@/utils/types";
 import {
   Button,
@@ -34,16 +33,12 @@ import CreateItem from "./ItemList/CreateItem";
 import ItemList from "./ItemList/ItemList";
 import CreateProject from "./ProjectList/CreateProject";
 import ProjectList from "./ProjectList/ProjectList";
-import CreateWarehouseProcessor from "./WarehouseProcessorList/CreateWarehouseProcessor";
-import WarehouseProcessorList from "./WarehouseProcessorList/WarehouseProcessorList";
 
 type Props = {
   items: ItemWithDescriptionType[];
   itemListCount: number;
   projects: ProjectTableRow[];
   projectListCount: number;
-  warehouseProcessors: WarehouseProcessorTableRow[];
-  warehouseProcessorListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
 };
@@ -53,8 +48,6 @@ const OrderToPurchaseFormPage = ({
   itemListCount,
   projects,
   projectListCount,
-  warehouseProcessors,
-  warehouseProcessorListCount,
   teamMemberList,
   form,
 }: Props) => {
@@ -73,14 +66,6 @@ const OrderToPurchaseFormPage = ({
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [projectList, setProjectList] = useState(projects);
   const [projectCount, setProjectCount] = useState(projectListCount);
-
-  const [isCreatingWarehouseProcessor, setIsCreatingWarehouseProcessor] =
-    useState(false);
-  const [warehouseProcessorList, setWarehouseProcessorList] =
-    useState(warehouseProcessors);
-  const [warehouseProcessorCount, setWarehouseProcessorCount] = useState(
-    warehouseProcessorListCount
-  );
 
   const [isSavingSigners, setIsSavingSigner] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -262,25 +247,6 @@ const OrderToPurchaseFormPage = ({
             setIsCreatingProject={setIsCreatingProject}
             setProjectList={setProjectList}
             setProjectCount={setProjectCount}
-          />
-        ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!isCreatingWarehouseProcessor ? (
-          <WarehouseProcessorList
-            warehouseProcessorList={warehouseProcessorList}
-            setWarehouseProcessorList={setWarehouseProcessorList}
-            warehouseProcessorCount={warehouseProcessorCount}
-            setWarehouseProcessorCount={setWarehouseProcessorCount}
-            setIsCreatingWarehouseProcessor={setIsCreatingWarehouseProcessor}
-          />
-        ) : null}
-        {isCreatingWarehouseProcessor ? (
-          <CreateWarehouseProcessor
-            setIsCreatingWarehouseProcessor={setIsCreatingWarehouseProcessor}
-            setWarehouseProcessorList={setWarehouseProcessorList}
-            setWarehouseProcessorCount={setWarehouseProcessorCount}
           />
         ) : null}
       </Paper>

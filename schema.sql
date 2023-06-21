@@ -61,6 +61,7 @@ CREATE TABLE team_table (
   team_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
   team_logo VARCHAR(4000),
+  team_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
   
   team_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
@@ -69,6 +70,7 @@ CREATE TABLE team_member_table(
   team_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
   team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
+  team_member_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
 
   team_member_user_id UUID REFERENCES user_table(user_id) NOT NULL,
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
@@ -239,108 +241,21 @@ CREATE TABLE project_table(
   project_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE warehouse_processor_table(
-  warehouse_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  warehouse_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  warehouse_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  warehouse_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  warehouse_processor_first_name VARCHAR(4000) NOT NULL,
-  warehouse_processor_last_name VARCHAR(4000) NOT NULL,
-  warehouse_processor_employee_number VARCHAR(4000) NOT NULL,
-
-  warehouse_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
 -- End: Order to Purchase Form
 
 -- Start: Purchase Order Form
 
-CREATE TABLE purchasing_processor_table(
-  purchasing_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  purchasing_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  purchasing_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  purchasing_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  purchasing_processor_first_name VARCHAR(4000) NOT NULL,
-  purchasing_processor_last_name VARCHAR(4000) NOT NULL,
-  purchasing_processor_employee_number VARCHAR(4000) NOT NULL,
+CREATE TABLE supplier_table(
+  supplier_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  supplier_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  supplier_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  supplier_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  supplier_name VARCHAR(4000) NOT NULL,
 
-  purchasing_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
-CREATE TABLE vendor_table(
-  vendor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  vendor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  vendor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  vendor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  vendor_name VARCHAR(4000) NOT NULL,
-
-  vendor_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Purchase Order Form
-
--- Start: Invoice Form
-
-CREATE TABLE accounting_processor_table(
-  accounting_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  accounting_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  accounting_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  accounting_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  accounting_processor_first_name VARCHAR(4000) NOT NULL,
-  accounting_processor_last_name VARCHAR(4000) NOT NULL,
-  accounting_processor_employee_number VARCHAR(4000) NOT NULL,
-
-  accounting_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Invoice Form
-
--- Start: Receiving Inspecting Report Form
-
-CREATE TABLE warehouse_receiver_table(
-  warehouse_receiver_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  warehouse_receiver_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  warehouse_receiver_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  warehouse_receiver_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  warehouse_receiver_first_name VARCHAR(4000) NOT NULL,
-  warehouse_receiver_last_name VARCHAR(4000) NOT NULL,
-  warehouse_receiver_employee_number VARCHAR(4000) NOT NULL,
-
-  warehouse_receiver_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Receiving Inspecting Report Form
-
--- Start: Cheque Reference Form
-
-CREATE TABLE treasury_processor_table(
-  treasury_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  treasury_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  treasury_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  treasury_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  treasury_processor_first_name VARCHAR(4000) NOT NULL,
-  treasury_processor_last_name VARCHAR(4000) NOT NULL,
-  treasury_processor_employee_number VARCHAR(4000) NOT NULL,
-
-  treasury_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Cheque Reference Form
-
--- Start: Audit Form
-
-CREATE TABLE audit_processor_table(
-  audit_processor_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  audit_processor_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  audit_processor_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  audit_processor_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  audit_processor_first_name VARCHAR(4000) NOT NULL,
-  audit_processor_last_name VARCHAR(4000) NOT NULL,
-  audit_processor_employee_number VARCHAR(4000) NOT NULL,
-
-  audit_processor_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Audit Form
 
 ---------- End: TABLES
 

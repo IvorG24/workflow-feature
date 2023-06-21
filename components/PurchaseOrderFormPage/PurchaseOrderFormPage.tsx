@@ -4,9 +4,8 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
-  PurchasingProcessorTableRow,
+  SupplierTableRow,
   TeamMemberWithUserType,
-  VendorTableRow,
 } from "@/utils/types";
 import {
   Button,
@@ -28,27 +27,21 @@ import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 
 import { v4 as uuidv4 } from "uuid";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
-import CreatePurchasingProcessor from "./PurchasingProcessorList/CreatePurchasingProcessor";
-import PurchasingProcessorList from "./PurchasingProcessorList/PurchasingProcessorList";
-import CreateVendor from "./VendorList/CreateVendor";
-import VendorList from "./VendorList/VendorList";
+import CreateSupplier from "./SupplierList/CreateSupplier";
+import SupplierList from "./SupplierList/SupplierList";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
-  vendors: VendorTableRow[];
-  vendorListCount: number;
-  purchasingProcessors: PurchasingProcessorTableRow[];
-  purchasingProcessorListCount: number;
+  suppliers: SupplierTableRow[];
+  supplierListCount: number;
 };
 
 const PurchaseOrderFormPage = ({
   teamMemberList,
   form,
-  vendors,
-  vendorListCount,
-  purchasingProcessors,
-  purchasingProcessorListCount,
+  suppliers,
+  supplierListCount,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -56,17 +49,9 @@ const PurchaseOrderFormPage = ({
   const team = useActiveTeam();
   const initialSignerIds: string[] = [];
 
-  const [isCreatingVendor, setIsCreatingVendor] = useState(false);
-  const [vendorList, setVendorList] = useState(vendors);
-  const [vendorCount, setVendorCount] = useState(vendorListCount);
-
-  const [isCreatingPurchasingProcessor, setIsCreatingPurchasingProcessor] =
-    useState(false);
-  const [purchasingProcessorList, setPurchasingProcessorList] =
-    useState(purchasingProcessors);
-  const [purchasingProcessorCount, setPurchasingProcessorCount] = useState(
-    purchasingProcessorListCount
-  );
+  const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
+  const [supplierList, setSupplierList] = useState(suppliers);
+  const [supplierCount, setSupplierCount] = useState(supplierListCount);
 
   const [isSavingSigners, setIsSavingSigner] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -196,39 +181,20 @@ const PurchaseOrderFormPage = ({
       <Space h="xl" />
 
       <Paper p="xl" shadow="xs">
-        {!isCreatingVendor ? (
-          <VendorList
-            vendorList={vendorList}
-            setVendorList={setVendorList}
-            vendorCount={vendorCount}
-            setVendorCount={setVendorCount}
-            setIsCreatingVendor={setIsCreatingVendor}
+        {!isCreatingSupplier ? (
+          <SupplierList
+            supplierList={supplierList}
+            setSupplierList={setSupplierList}
+            supplierCount={supplierCount}
+            setSupplierCount={setSupplierCount}
+            setIsCreatingSupplier={setIsCreatingSupplier}
           />
         ) : null}
-        {isCreatingVendor ? (
-          <CreateVendor
-            setIsCreatingVendor={setIsCreatingVendor}
-            setVendorList={setVendorList}
-            setVendorCount={setVendorCount}
-          />
-        ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!isCreatingPurchasingProcessor ? (
-          <PurchasingProcessorList
-            purchasingProcessorList={purchasingProcessorList}
-            setPurchasingProcessorList={setPurchasingProcessorList}
-            purchasingProcessorCount={purchasingProcessorCount}
-            setPurchasingProcessorCount={setPurchasingProcessorCount}
-            setIsCreatingPurchasingProcessor={setIsCreatingPurchasingProcessor}
-          />
-        ) : null}
-        {isCreatingPurchasingProcessor ? (
-          <CreatePurchasingProcessor
-            setIsCreatingPurchasingProcessor={setIsCreatingPurchasingProcessor}
-            setPurchasingProcessorList={setPurchasingProcessorList}
-            setPurchasingProcessorCount={setPurchasingProcessorCount}
+        {isCreatingSupplier ? (
+          <CreateSupplier
+            setIsCreatingSupplier={setIsCreatingSupplier}
+            setSupplierList={setSupplierList}
+            setSupplierCount={setSupplierCount}
           />
         ) : null}
       </Paper>

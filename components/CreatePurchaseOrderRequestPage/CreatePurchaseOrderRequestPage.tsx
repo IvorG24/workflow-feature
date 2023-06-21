@@ -61,15 +61,15 @@ const CreatePurchaseOrderRequestPage = ({ form }: Props) => {
   });
 
   const priceWatch =
-    watch(`sections.${1}.section_field.${3}.field_response`) || 0;
+    watch(`sections.${1}.section_field.${2}.field_response`) || 0;
   const downPaymentWatch =
-    watch(`sections.${1}.section_field.${6}.field_response`) || 0;
+    watch(`sections.${1}.section_field.${5}.field_response`) || 0;
 
   useEffect(() => {
     const computationValue =
       (priceWatch as number) * ((downPaymentWatch as number) / 100);
     setValue(
-      `sections.${1}.section_field.${7}.field_response`,
+      `sections.${1}.section_field.${6}.field_response`,
       computationValue
     );
   }, [priceWatch, downPaymentWatch, setValue]);
