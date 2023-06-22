@@ -196,9 +196,9 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   };
 
   return (
-    <Container p={0} fluid>
+    <Container p={0} maw={1108} h="100%">
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
-      <Group my="md">
+      <Group mb="md">
         <Select
           maw={300}
           placeholder="All forms"

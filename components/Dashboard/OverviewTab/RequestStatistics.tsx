@@ -98,17 +98,12 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
   }, [requestList]);
 
   return (
-    <Paper
-      w={{ base: "100%" }}
-      p={{ base: "sm", sm: "lg" }}
-      withBorder
-      sx={{ flex: 1 }}
-    >
+    <Paper w="100%" h="100%" p="sm" withBorder sx={{ flex: 1 }}>
       <Group mb="sm">
         <IconFileAnalytics />
         <Title order={3}>Monthly Request Statistics</Title>
       </Group>
-      <Box p="xl">
+      <Box p="xl" h="100%">
         <StackedBarChart data={chartData} />
       </Box>
     </Paper>

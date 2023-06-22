@@ -1,9 +1,14 @@
-import { RequestByFormType, RequestorListType } from "@/utils/types";
-import { Box, Flex } from "@mantine/core";
+import {
+  RequestByFormType,
+  RequestSignerListType,
+  RequestorListType,
+} from "@/utils/types";
+import { Box, Flex, Stack } from "@mantine/core";
 import { lowerCase } from "lodash";
 import RequestStatistics from "./RequestStatistics";
 import RequestStatusTracker from "./RequestStatusTracker";
-import RequestorTable from "./RequestorTable";
+import RequestorTable from "./RequestorTable/RequestorTable";
+import SignerTable from "./SignerTable";
 
 type OverviewProps = {
   requestList: RequestByFormType[];
@@ -13,7 +18,7 @@ type OverviewProps = {
 const status = ["Pending", "Approved", "Rejected", "Canceled"];
 
 const incrementRequestorStatusCount = (
-  requestor: RequestorListType[0],
+  requestor: RequestorListType,
   status: string
 ) => {
   switch (status) {
@@ -57,7 +62,7 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
 
       acc[duplicateIndex] = updateRequestor;
     } else {
-      const newRequestor: RequestorListType[0] = {
+      const newRequestor: RequestorListType = {
         ...user,
         request: {
           total: 1,
@@ -75,7 +80,26 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
     }
 
     return acc;
-  }, [] as RequestorListType);
+  }, [] as RequestorListType[]);
+
+  // get signers
+  const signerList = requestList.flatMap((request) => request.request_signer);
+  const reducedSignerList = signerList.reduce((acc, signer) => {
+    const duplicateSignerIndex = acc.findIndex(
+      (d) =>
+        d.signer_team_member.team_member_id ===
+        signer.request_signer_signer.signer_team_member.team_member_id
+    );
+
+    if (duplicateSignerIndex >= 0) {
+      acc[duplicateSignerIndex].count++;
+    } else {
+      const newSigner = { ...signer.request_signer_signer, count: 1 };
+      acc.push(newSigner);
+    }
+
+    return acc;
+  }, [] as RequestSignerListType[]);
 
   // get request status meter data
   const requestStatusData = status.map((status) => {
@@ -94,18 +118,27 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
   });
 
   return (
-    <Box>
-      <Flex gap="xl" wrap="wrap" mah={700}>
-        <RequestStatistics requestList={requestList} />
-        <RequestStatusTracker data={requestStatusData} />
+    <Stack w="100%" align="center">
+      <Flex align="flex-start" gap="xl" wrap="wrap">
+        <Box w={{ base: "100%", sm: 360 }} h={500}>
+          <RequestStatusTracker data={requestStatusData} />
+        </Box>
+        <Box w={{ base: "100%", lg: 720 }} h={500}>
+          <RequestStatistics requestList={requestList} />
+        </Box>
       </Flex>
-      {reducedRequestorList.length > 0 && (
-        <RequestorTable
-          requestorList={reducedRequestorList}
-          totalRequest={requestCount}
-        />
-      )}
-    </Box>
+      <Flex align="flex-start" w="100%" gap="xl" wrap="wrap">
+        <Box w={{ base: "100%", sm: 360 }} h={500}>
+          <RequestorTable
+            requestorList={reducedRequestorList}
+            totalRequest={requestCount}
+          />
+        </Box>
+        <Box w={{ base: "100%", sm: 360 }} h={500}>
+          <SignerTable signerList={reducedSignerList} />
+        </Box>
+      </Flex>
+    </Stack>
   );
 };
 

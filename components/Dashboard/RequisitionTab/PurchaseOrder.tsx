@@ -2,7 +2,8 @@ import BarChart from "@/components/Chart/BarChart";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { getUniqueResponseData } from "@/utils/arrayFunctions/dashboard";
 import { RequestResponseDataType } from "@/utils/types";
-import { Paper, Stack, Text } from "@mantine/core";
+import { Box, Center, Paper, Stack, Text } from "@mantine/core";
+import { startCase } from "lodash";
 import { Dispatch, SetStateAction } from "react";
 import ResponseSection from "../ResponseTab/ResponseSection/FormslyFormResponseSection";
 
@@ -41,11 +42,23 @@ const PurchaseOrder = ({
   return (
     <Stack>
       <Paper p="md" w="100%" maw={700} h="fit-content">
-        <Text weight={600}>User Order Per Item</Text>
-        <BarChart
-          data={mainItemData}
-          setSelectedBarChartItem={setSelectedBarChartItem}
-        />
+        <Text weight={600}>
+          {startCase(selectedPurchaseData)} Order Per Item
+        </Text>
+        <Box mih={334}>
+          {mainItemData.length > 0 ? (
+            <BarChart
+              data={mainItemData}
+              setSelectedBarChartItem={setSelectedBarChartItem}
+            />
+          ) : (
+            <Center h={334}>
+              <Text size={24} color="dimmed" weight={600}>
+                No data available.
+              </Text>
+            </Center>
+          )}
+        </Box>
       </Paper>
       {selectedBarChartItem !== "" && (
         <ResponseSection

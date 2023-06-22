@@ -482,6 +482,7 @@ export type RequestByFormType = RequestTableRow & {
         team_member_user: {
           user_first_name: string;
           user_last_name: string;
+          user_avatar: string | null;
         };
       };
     };
@@ -518,7 +519,7 @@ export type ResponseDataType = {
 };
 
 export type RequestorListType =
-  (RequestType["request_team_member"]["team_member_user"] & {
+  RequestType["request_team_member"]["team_member_user"] & {
     request: {
       total: number;
       pending: number;
@@ -526,7 +527,7 @@ export type RequestorListType =
       rejected: number;
       canceled: number;
     };
-  })[];
+  };
 
 export type LineChartDataType = {
   label: string;
@@ -560,3 +561,8 @@ export type FormslyFormKeyType =
   | "Invoice"
   | "Account Payable Voucher"
   | "Receiving Inspecting Report";
+
+export type RequestSignerListType =
+  RequestByFormType["request_signer"][0]["request_signer_signer"] & {
+    count: number;
+  };

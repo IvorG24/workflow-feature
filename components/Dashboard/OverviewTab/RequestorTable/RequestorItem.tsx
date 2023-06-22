@@ -1,10 +1,18 @@
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestorListType } from "@/utils/types";
-import { Avatar, Badge, Group, Progress, Stack, Text } from "@mantine/core";
+import {
+  Avatar,
+  Badge,
+  Group,
+  Progress,
+  Stack,
+  Text,
+  Tooltip,
+} from "@mantine/core";
 import { startCase } from "lodash";
 
 type RequestorItemProps = {
-  requestor: RequestorListType[0];
+  requestor: RequestorListType;
   totalRequest: number;
 };
 
@@ -13,9 +21,12 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
   const progressSections = statusCount.map(([key, value]) => ({
     value: (value / totalRequest) * 100,
     color: `${getStatusToColor(key) || "dark"}`,
-    tooltip: `${startCase(key)} - ${value}`,
+    tooltip: `${startCase(key)}: ${value}`,
     label: `${startCase(key)}: ${value}`,
   }));
+  const progressSectionsWithoutTotal = progressSections.filter(
+    (section) => !section.tooltip.includes("Total")
+  );
 
   return (
     <Stack key={requestor.user_id}>
@@ -34,17 +45,17 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
             weight={500}
           >{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
         </Group>
-        <Badge size="sm" variant="filled" color="dark">
-          Total: {requestor.request.total}
-        </Badge>
+        <Tooltip
+          label={progressSectionsWithoutTotal.map((section, idx) => (
+            <Text key={section.label + idx}>{section.label}</Text>
+          ))}
+        >
+          <Badge size="sm" variant="filled" color="dark">
+            Total: {requestor.request.total}
+          </Badge>
+        </Tooltip>
       </Group>
-      <Progress
-        size="xl"
-        radius="lg"
-        sections={progressSections.filter(
-          (section) => !section.tooltip.includes("Total")
-        )}
-      />
+      <Progress size="xl" radius="lg" sections={progressSectionsWithoutTotal} />
     </Stack>
   );
 };

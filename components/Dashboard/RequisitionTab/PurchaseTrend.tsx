@@ -1,6 +1,14 @@
 import LineChart from "@/components/Chart/LineChart";
 import { PurchaseTrendChartDataType } from "@/utils/types";
-import { Group, Paper, Select, SelectItem, Text } from "@mantine/core";
+import {
+  Box,
+  Center,
+  Group,
+  Paper,
+  Select,
+  SelectItem,
+  Text,
+} from "@mantine/core";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
@@ -113,11 +121,17 @@ const PurchaseTrend = ({ itemPurchaseTrendData }: PurchaseTrendProps) => {
           data={itemList as SelectItem[]}
         />
       </Group>
-      {chartData && chartData.length > 0 ? (
-        <LineChart data={chartData} legendLabel={selectedItem} />
-      ) : (
-        <Text>No data available.</Text>
-      )}
+      <Box mih={334}>
+        {chartData && chartData.length > 0 ? (
+          <LineChart data={chartData} legendLabel={selectedItem} />
+        ) : (
+          <Center h={334}>
+            <Text size={24} color="dimmed" weight={600}>
+              No data available.
+            </Text>
+          </Center>
+        )}
+      </Box>
     </Paper>
   );
 };

@@ -5,47 +5,64 @@ import {
   Center,
   Divider,
   Flex,
-  Group,
+  Grid,
   Paper,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
 import { IconSquareRoundedFilled } from "@tabler/icons-react";
+import { isInteger } from "lodash";
 
 type RequestStatusTrackerProps = {
   data: RadialChartData[];
 };
 
+const getPercentage = (value: number, total: number) => {
+  const percentage = (value / total) * 100;
+  return isInteger(percentage) ? `${percentage.toFixed(0)}%` : `0%`;
+};
+
 const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
   const totalCount = data[0].totalCount;
-
   return (
-    <Paper p="xl" w={400} withBorder>
+    <Paper p="lg" w="100%" h="100%" withBorder>
       <Flex h="100%" direction="column" justify="space-between">
         <Title order={3}>Total Request: {totalCount}</Title>
         <Center w="100%">
-          <Box maw={300}>
-            <RadialChart data={data} />
+          <Box maw={200} mih={200}>
+            {totalCount > 0 ? (
+              <RadialChart data={data} />
+            ) : (
+              <Center h={300}>
+                <Text size={24} color="dimmed" weight={600}>
+                  No data available.
+                </Text>
+              </Center>
+            )}
           </Box>
         </Center>
         <Stack>
           {data.map((d, idx) => (
             <Box key={d.label + idx}>
-              <Group w="100%" position="apart">
-                <Flex gap="sm" w="fit-content">
-                  <Box c={getStatusToColorForCharts(d.label)}>
-                    <IconSquareRoundedFilled />
-                  </Box>
-                  <Text weight={600}>{`${d.label} Requests`}</Text>
-                </Flex>
-                <Text weight={600}>{`${d.value}/${d.totalCount}`}</Text>
-                {/* percentage */}
-                <Text weight={600} c="dimmed">{`${(
-                  (d.value / d.totalCount) *
-                  100
-                ).toFixed(0)}%`}</Text>
-              </Group>
+              <Grid justify="flex-end">
+                <Grid.Col span={8}>
+                  <Flex gap="sm" w="fit-content">
+                    <Box c={getStatusToColorForCharts(d.label)}>
+                      <IconSquareRoundedFilled />
+                    </Box>
+                    <Text weight={600}>{`${d.label} Requests`}</Text>
+                  </Flex>
+                </Grid.Col>
+                <Grid.Col span={2}>
+                  <Text weight={600}>{`${d.value}/${d.totalCount}`}</Text>
+                </Grid.Col>
+                <Grid.Col span={2}>
+                  <Text align="right" weight={600} c="dimmed">
+                    {getPercentage(d.value, d.totalCount)}
+                  </Text>
+                </Grid.Col>
+              </Grid>
               {idx < data.length - 1 && <Divider />}
             </Box>
           ))}
