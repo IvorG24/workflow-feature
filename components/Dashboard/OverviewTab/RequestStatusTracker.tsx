@@ -40,9 +40,11 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
                   <Text weight={600}>{`${d.label} Requests`}</Text>
                 </Flex>
                 <Text weight={600}>{`${d.value}/${d.totalCount}`}</Text>
-                <Text weight={600} c="dimmed">{`${
-                  (d.value / d.totalCount) * 100
-                }%`}</Text>
+                {/* percentage */}
+                <Text weight={600} c="dimmed">{`${(
+                  (d.value / d.totalCount) *
+                  100
+                ).toFixed(0)}%`}</Text>
               </Group>
               {idx < data.length - 1 && <Divider />}
             </Box>
