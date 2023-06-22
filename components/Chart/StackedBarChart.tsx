@@ -108,14 +108,15 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
     },
     plugins: {
       legend: {
-        position: "right" as const,
-        align: "start" as const,
-        labels: {
-          boxWidth: 20,
-          boxHeight: 15,
-          usePointStyle: true,
-          pointStyle: "rectRounded",
-        },
+        display: false,
+        // position: "right" as const,
+        // align: "start" as const,
+        // labels: {
+        //   boxWidth: 20,
+        //   boxHeight: 15,
+        //   usePointStyle: true,
+        //   pointStyle: "rectRounded",
+        // },
       },
     },
   };

@@ -10,7 +10,7 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
-import { IconTrophy } from "@tabler/icons-react";
+import { IconTrophyFilled } from "@tabler/icons-react";
 import RequestorItem from "./RequestorItem";
 
 const useStyles = createStyles(() => ({
@@ -37,7 +37,9 @@ const RequestorTable = ({
     <ScrollArea w="100%" h="100%">
       <Paper w={{ base: "100%" }} withBorder>
         <Group p="md" className={classes.withBorderBottom}>
-          <IconTrophy />
+          <Box c="blue">
+            <IconTrophyFilled />
+          </Box>
           <Title order={4}>Top Requestor</Title>
         </Group>
 

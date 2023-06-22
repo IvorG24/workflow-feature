@@ -1,11 +1,14 @@
+import { getStackedBarChartData } from "@/utils/arrayFunctions/dashboard";
+import { getStatusToColorForCharts } from "@/utils/styling";
 import { RequestByFormType } from "@/utils/types";
-import { Box, Group, Paper, Title } from "@mantine/core";
-import { IconFileAnalytics } from "@tabler/icons-react";
-import moment from "moment";
-import { useEffect, useState } from "react";
-import StackedBarChart, {
-  StackedBarChartDataType,
-} from "../../Chart/StackedBarChart";
+import { Box, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
+import {
+  IconFileAnalytics,
+  IconSquareRoundedFilled,
+} from "@tabler/icons-react";
+import { startCase } from "lodash";
+import { useState } from "react";
+import StackedBarChart from "../../Chart/StackedBarChart";
 
 type RequestStatisticsProps = {
   requestList: RequestByFormType[];
@@ -38,74 +41,69 @@ const generateInitialChartData = () => {
   return initialChartData;
 };
 
+const statusList = ["approved", "rejected", "pending", "canceled"];
+
 const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
   const initialChartData = generateInitialChartData();
-  const [chartData, setChartData] = useState<StackedBarChartDataType[]>([]);
+  const [chartData, setChartData] = useState(
+    getStackedBarChartData(requestList, initialChartData)
+  );
+  const [selectedFilter, setSelectedFilter] = useState([""]);
+  const filterChart = (status: string) => {
+    const filteredChartData = chartData.map((d) => {
+      // update status
+      switch (status) {
+        case "approved":
+          d.approved = 0;
+          break;
+        case "rejected":
+          d.rejected = 0;
+          break;
+        case "pending":
+          d.pending = 0;
+          break;
+        case "canceled":
+          d.canceled = 0;
+          break;
 
-  useEffect(() => {
-    const reducedRequestList = requestList.reduce((acc, request) => {
-      const requestMonthCreated = moment(request.request_date_created).format(
-        "MMM"
-      );
-      const status = request.request_status.toLowerCase();
-      const duplicateIndex = acc.findIndex(
-        (duplicate) => duplicate.month === requestMonthCreated
-      );
-
-      if (duplicateIndex >= 0) {
-        switch (status) {
-          case "approved":
-            acc[duplicateIndex].approved++;
-            break;
-          case "rejected":
-            acc[duplicateIndex].rejected++;
-            break;
-          case "pending":
-            acc[duplicateIndex].pending++;
-            break;
-          case "canceled":
-            acc[duplicateIndex].canceled++;
-            break;
-
-          default:
-            break;
-        }
-      } else {
-        acc[acc.length] = {
-          month: requestMonthCreated,
-          approved: status === "approved" ? 1 : 0,
-          rejected: status === "rejected" ? 1 : 0,
-          pending: status === "pending" ? 1 : 0,
-          canceled: status === "canceled" ? 1 : 0,
-        };
+        default:
+          break;
       }
 
-      return acc;
-    }, [] as StackedBarChartDataType[]);
-
-    const updatedChartData = initialChartData.map((chartData) => {
-      const dataMatch = reducedRequestList.find(
-        (requestData) => requestData.month === chartData.month
-      );
-
-      if (dataMatch) {
-        return dataMatch;
-      } else {
-        return chartData;
-      }
+      return d;
     });
-    setChartData(updatedChartData);
-  }, [requestList]);
+
+    setChartData(filteredChartData);
+  };
 
   return (
-    <Paper w="100%" h="100%" p="sm" withBorder sx={{ flex: 1 }}>
-      <Group mb="sm">
-        <IconFileAnalytics />
-        <Title order={3}>Monthly Request Statistics</Title>
-      </Group>
-      <Box p="xl" h="100%">
-        <StackedBarChart data={chartData} />
-      </Box>
+    <Paper w="100%" h="100%" p="md" withBorder sx={{ flex: 1 }}>
+      <Stack>
+        <Group position="apart">
+          <Group mb="sm">
+            <IconFileAnalytics />
+            <Title order={3}>Monthly Statistics</Title>
+          </Group>
+          <Group fz={14}>
+            {statusList.map((status, idx) => (
+              <Flex
+                key={status + idx}
+                gap={4}
+                w="fit-content"
+                onClick={() => filterChart(status)}
+              >
+                <Box c={getStatusToColorForCharts(status)}>
+                  <IconSquareRoundedFilled />
+                </Box>
+                <Text weight={600}>{startCase(status)}</Text>
+              </Flex>
+            ))}
+          </Group>
+        </Group>
+        <Box p="xs" w="100%">
+          <StackedBarChart data={chartData} />
+        </Box>
+      </Stack>
     </Paper>
   );
 };

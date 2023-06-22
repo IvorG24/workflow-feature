@@ -1,3 +1,5 @@
+import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
+import moment from "moment";
 import {
   FieldType,
   FieldWithResponseType,
@@ -143,4 +145,63 @@ export const getUniqueResponseData = (
     (a, b) => b.value - a.value
   );
   return sortedUniqueResponseData;
+};
+
+export const getStackedBarChartData = (
+  requestList: RequestByFormType[],
+  initialChartData: StackedBarChartDataType[]
+) => {
+  const reducedRequestList = requestList.reduce((acc, request) => {
+    const requestMonthCreated = moment(request.request_date_created).format(
+      "MMM"
+    );
+    const status = request.request_status.toLowerCase();
+    const duplicateIndex = acc.findIndex(
+      (duplicate) => duplicate.month === requestMonthCreated
+    );
+
+    if (duplicateIndex >= 0) {
+      switch (status) {
+        case "approved":
+          acc[duplicateIndex].approved++;
+          break;
+        case "rejected":
+          acc[duplicateIndex].rejected++;
+          break;
+        case "pending":
+          acc[duplicateIndex].pending++;
+          break;
+        case "canceled":
+          acc[duplicateIndex].canceled++;
+          break;
+
+        default:
+          break;
+      }
+    } else {
+      acc[acc.length] = {
+        month: requestMonthCreated,
+        approved: status === "approved" ? 1 : 0,
+        rejected: status === "rejected" ? 1 : 0,
+        pending: status === "pending" ? 1 : 0,
+        canceled: status === "canceled" ? 1 : 0,
+      };
+    }
+
+    return acc;
+  }, [] as StackedBarChartDataType[]);
+
+  const updatedChartData = initialChartData.map((chartData) => {
+    const dataMatch = reducedRequestList.find(
+      (requestData) => requestData.month === chartData.month
+    );
+
+    if (dataMatch) {
+      return dataMatch;
+    } else {
+      return chartData;
+    }
+  });
+
+  return updatedChartData;
 };

@@ -9,21 +9,20 @@ import {
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
+  Box,
   Button,
   Container,
+  Flex,
   Group,
   LoadingOverlay,
+  SegmentedControl,
   Select,
-  Tabs,
+  Stack,
   Text,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import {
-  IconChartHistogram,
-  IconMessageCircle,
-  IconReportAnalytics,
-} from "@tabler/icons-react";
+import { startCase } from "lodash";
 import { useState } from "react";
 import Overview from "./OverviewTab/Overview";
 import RequisitionTab from "./RequisitionTab/RequisitionTab";
@@ -42,12 +41,14 @@ const statusFilter = [
   { value: "REJECTED", label: "Rejected" },
   { value: "CANCELED", label: "Canceled" },
 ];
+const TABS = ["overview", "responses", "requisition"];
 
 const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const [isFetchingData, setIsFetchingData] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isOTPForm, setIsOTPForm] = useState(false);
@@ -195,77 +196,82 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
     }
   };
 
-  return (
-    <Container p={0} maw={1108} h="100%">
-      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
-      <Group mb="md">
-        <Select
-          maw={300}
-          placeholder="All forms"
-          data={formList.map((form) => ({
-            value: form.form_id,
-            label: form.form_name,
-          }))}
-          value={selectedForm}
-          onChange={setSelectedForm}
-          clearable
-        />
-        <Select
-          maw={300}
-          placeholder="Status"
-          data={statusFilter}
-          value={selectedStatus}
-          onChange={setSelectedStatus}
-          clearable
-        />
-        <Button onClick={() => handleFilterRequestList()}>Fetch Data</Button>
-      </Group>
-
-      <Tabs defaultValue="overview">
-        <Tabs.List>
-          <Tabs.Tab
-            value="overview"
-            icon={<IconReportAnalytics size="0.8rem" />}
-          >
-            Overview
-          </Tabs.Tab>
-          <Tabs.Tab
-            value="responses"
-            icon={<IconMessageCircle size="0.8rem" />}
-          >
-            Responses
-          </Tabs.Tab>
-          <Tabs.Tab
-            value="requisition"
-            icon={<IconChartHistogram size="0.8rem" />}
-          >
-            Requisition
-          </Tabs.Tab>
-        </Tabs.List>
-
-        <Tabs.Panel value="overview" pt="xs">
+  const renderTabs = (tab: string) => {
+    switch (tab) {
+      case "overview":
+        return (
           <Overview
             requestList={visibleRequestList}
             requestCount={requestCount}
           />
-        </Tabs.Panel>
+        );
 
-        <Tabs.Panel value="responses" pt="xs">
+      case "responses":
+        return (
           <ResponseTab
             isOTPForm={isOTPForm}
             selectedForm={selectedForm}
             fieldResponseData={fieldResponseData}
           />
-        </Tabs.Panel>
+        );
 
-        <Tabs.Panel value="requisition" pt="xs">
-          {isFormslyForm && fieldResponseData ? (
-            <RequisitionTab fieldResponseData={fieldResponseData} />
-          ) : (
-            <Text>No data available.</Text>
-          )}
-        </Tabs.Panel>
-      </Tabs>
+      case "requisition":
+        return isFormslyForm && fieldResponseData ? (
+          <RequisitionTab fieldResponseData={fieldResponseData} />
+        ) : (
+          <Text>No data available.</Text>
+        );
+
+      default:
+        return (
+          <Overview
+            requestList={visibleRequestList}
+            requestCount={requestCount}
+          />
+        );
+    }
+  };
+
+  return (
+    <Container p={0} maw={1024} h="100%">
+      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
+
+      <Stack>
+        <Flex justify="space-between" wrap="wrap">
+          <SegmentedControl
+            value={selectedTab}
+            onChange={setSelectedTab}
+            data={TABS.map((tab) => ({ value: tab, label: startCase(tab) }))}
+          />
+
+          <Group>
+            <Select
+              maw={200}
+              placeholder="All forms"
+              data={formList.map((form) => ({
+                value: form.form_id,
+                label: form.form_name,
+              }))}
+              value={selectedForm}
+              onChange={setSelectedForm}
+              clearable
+            />
+            <Select
+              w={100}
+              placeholder="Status"
+              data={statusFilter}
+              value={selectedStatus}
+              onChange={setSelectedStatus}
+              clearable
+            />
+            <Button onClick={() => handleFilterRequestList()}>
+              Fetch Data
+            </Button>
+          </Group>
+        </Flex>
+
+        <Box>{renderTabs(selectedTab)}</Box>
+      </Stack>
     </Container>
   );
 };

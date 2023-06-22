@@ -12,7 +12,6 @@ import {
   Title,
 } from "@mantine/core";
 import { IconSquareRoundedFilled } from "@tabler/icons-react";
-import { isInteger } from "lodash";
 
 type RequestStatusTrackerProps = {
   data: RadialChartData[];
@@ -20,7 +19,7 @@ type RequestStatusTrackerProps = {
 
 const getPercentage = (value: number, total: number) => {
   const percentage = (value / total) * 100;
-  return isInteger(percentage) ? `${percentage.toFixed(0)}%` : `0%`;
+  return !isNaN(percentage) ? `${percentage.toFixed(0)}%` : `0%`;
 };
 
 const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
@@ -30,7 +29,7 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
       <Flex h="100%" direction="column" justify="space-between">
         <Title order={3}>Total Request: {totalCount}</Title>
         <Center w="100%">
-          <Box maw={200} mih={200}>
+          <Box maw={175} mih={175}>
             {totalCount > 0 ? (
               <RadialChart data={data} />
             ) : (
@@ -44,7 +43,7 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
         </Center>
         <Stack>
           {data.map((d, idx) => (
-            <Box key={d.label + idx}>
+            <Box key={d.label + idx} fz={14}>
               <Grid justify="flex-end">
                 <Grid.Col span={8}>
                   <Flex gap="sm" w="fit-content">
