@@ -68,14 +68,10 @@ const CreateReceivingInspectingReportPage = ({ form }: Props) => {
     );
     setValue(
       `sections.${0}.section_field.${1}.field_response`,
-      router.query.poId
-    );
-    setValue(
-      `sections.${0}.section_field.${2}.field_response`,
       router.query.invoiceId
     );
     setValue(
-      `sections.${0}.section_field.${3}.field_response`,
+      `sections.${0}.section_field.${2}.field_response`,
       router.query.apvId
     );
   }, [form, replaceSection]);

@@ -32,6 +32,13 @@ type RequestFormFieldsProps = {
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
+  invoiceFormMethods?: {
+    onItemChange: (
+      index: number,
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+  };
   formslyFormName?: string;
 };
 
@@ -40,12 +47,14 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   orderToPurchaseFormMethods,
+  invoiceFormMethods,
   formslyFormName = "",
 }: RequestFormFieldsProps) => {
   const {
     register,
     control,
     formState: { errors },
+    getValues,
   } = useFormContext<RequestFormValues>();
 
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -185,12 +194,21 @@ const RequestFormFields = ({
               <Select
                 value={value as string}
                 onChange={(value) => {
+                  const prevValue = getValues(
+                    `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`
+                  );
                   onChange(value);
 
                   if (field.field_name === "General Name")
                     orderToPurchaseFormMethods?.onGeneralNameChange(
                       sectionIndex,
                       value
+                    );
+                  if (field.field_name === "Item")
+                    invoiceFormMethods?.onItemChange(
+                      sectionIndex,
+                      value,
+                      prevValue === null ? null : `${prevValue}`
                     );
                 }}
                 data={dropdownOption}

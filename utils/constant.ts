@@ -11,15 +11,13 @@ export const DEFAULT_NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
 
 export const UNHIDEABLE_FORMLY_FORMS = [
-  "Purchase Order",
   "Invoice",
   "Account Payable Voucher",
   "Receiving Inspecting Report",
 ];
 
 export const FORM_CONNECTION = {
-  "Order to Purchase": "Purchase Order",
-  "Purchase Order": "Invoice",
+  "Order to Purchase": "Invoice",
   Invoice: "Account Payable Voucher",
   "Account Payable Voucher": "Receiving Inspecting Report",
 };
@@ -58,7 +56,6 @@ export const defaultRequestFormBuilderSigners = (
 export const formslyPremadeFormsData = (teamMemberId: string) => {
   // form ids
   const orderToPurchaseFormId = uuidv4();
-  const purchaseOrderFormId = uuidv4();
   const invoiceFormId = uuidv4();
   const accountPayableVoucherFormId = uuidv4();
   const receivingInspectingReportFormId = uuidv4();
@@ -68,10 +65,9 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   // section ids
   const otpMainSectionId = uuidv4();
   const otpItemSectionId = uuidv4();
-  const poIdSectionId = uuidv4();
-  const poMainSectionId = uuidv4();
   const invoiceIdSectionId = uuidv4();
   const invoiceMainSectionId = uuidv4();
+  const invoiceItemSectionId = uuidv4();
   const apvIdSectionId = uuidv4();
   const rirIdSectionId = uuidv4();
   const rirMainSectionId = uuidv4();
@@ -81,6 +77,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 
   // field ids
   const otpTypeFieldId = uuidv4();
+  const invoiceRequestSendMethodId = uuidv4();
   const rirReceivingStatusFieldId = uuidv4();
   const chequeReferenceTreasuryStatusFieldId = uuidv4();
   const auditRowCheckFieldId = uuidv4();
@@ -124,7 +121,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Date Needed",
           field_type: "DATE",
-          field_order: 4,
+          field_order: 3,
           field_section_id: otpMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -132,7 +129,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "General Name",
           field_type: "DROPDOWN",
-          field_order: 5,
+          field_order: 4,
           field_section_id: otpItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -140,7 +137,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 6,
+          field_order: 5,
           field_section_id: otpItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -156,107 +153,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           option_value: "Order to Purchase",
           option_order: 2,
           option_field_id: otpTypeFieldId,
-        },
-      ],
-    },
-    purchaseOrder: {
-      form: {
-        form_id: purchaseOrderFormId,
-        form_name: "Purchase Order",
-        form_description: "formsly premade Purchase Order form",
-        form_app: "REQUEST",
-        form_is_formsly_form: true,
-        form_is_hidden: true,
-        form_team_member_id: teamMemberId,
-      },
-      section: [
-        {
-          section_id: poIdSectionId,
-          section_name: "ID",
-          section_order: 1,
-          section_is_duplicatable: false,
-          section_form_id: purchaseOrderFormId,
-        },
-        {
-          section_id: poMainSectionId,
-          section_name: "Main",
-          section_order: 2,
-          section_is_duplicatable: false,
-          section_form_id: purchaseOrderFormId,
-        },
-      ],
-      field: [
-        {
-          field_name: "Order to Purchase ID",
-          field_type: "LINK",
-          field_order: 1,
-          field_section_id: poIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
-          field_name: "Supplier",
-          field_type: "DROPDOWN",
-          field_order: 3,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Quantity",
-          field_type: "NUMBER",
-          field_order: 4,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Price",
-          field_type: "NUMBER",
-          field_order: 5,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Remarks",
-          field_type: "TEXTAREA",
-          field_order: 6,
-          field_section_id: poMainSectionId,
-          field_is_required: false,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Payment Terms",
-          field_type: "TEXT",
-          field_order: 7,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Down Payment Percentage",
-          field_type: "NUMBER",
-          field_order: 8,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Down Payment Computation",
-          field_type: "NUMBER",
-          field_order: 9,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
-          field_name: "Expected Delivery Date",
-          field_type: "DATE",
-          field_order: 10,
-          field_section_id: poMainSectionId,
-          field_is_required: true,
-          field_is_read_only: false,
         },
       ],
     },
@@ -285,6 +181,13 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           section_is_duplicatable: false,
           section_form_id: invoiceFormId,
         },
+        {
+          section_id: invoiceItemSectionId,
+          section_name: "Item",
+          section_order: 3,
+          section_is_duplicatable: true,
+          section_form_id: invoiceFormId,
+        },
       ],
       field: [
         {
@@ -296,52 +199,69 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: true,
         },
         {
-          field_name: "Purchase Order ID",
-          field_type: "LINK",
+          field_name: "Supplier",
+          field_type: "DROPDOWN",
           field_order: 2,
-          field_section_id: invoiceIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
-          field_name: "Invoice Received Date",
-          field_type: "DATE",
-          field_order: 4,
           field_section_id: invoiceMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
         {
-          field_name: "Invoice Attachment",
+          field_name: "Supplier Invoice",
+          field_type: "FILE",
+          field_order: 3,
+          field_section_id: invoiceMainSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Proof of Sending",
           field_type: "FILE",
           field_order: 5,
           field_section_id: invoiceMainSectionId,
-          field_is_required: true,
+          field_is_required: false,
           field_is_read_only: false,
         },
         {
-          field_name: "Invoice Pay by Date",
-          field_type: "DATE",
+          field_name: "Item",
+          field_type: "DROPDOWN",
           field_order: 6,
-          field_section_id: invoiceMainSectionId,
+          field_section_id: invoiceItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
         {
-          field_name: "Invoice Payable Amount",
+          field_name: "Price",
           field_type: "NUMBER",
           field_order: 7,
-          field_section_id: invoiceMainSectionId,
+          field_section_id: invoiceItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
         {
-          field_name: "CV Attachment",
-          field_type: "FILE",
+          field_name: "QUANTITY",
+          field_type: "NUMBER",
           field_order: 8,
-          field_section_id: invoiceMainSectionId,
+          field_section_id: invoiceItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
+        },
+      ],
+      option: [
+        {
+          option_value: "Email",
+          option_order: 1,
+          option_field_id: invoiceRequestSendMethodId,
+        },
+        {
+          option_value: "Text",
+          option_order: 2,
+          option_field_id: invoiceRequestSendMethodId,
+        },
+        {
+          option_value: "Other",
+          option_order: 3,
+          option_field_id: invoiceRequestSendMethodId,
         },
       ],
     },
@@ -369,14 +289,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Order to Purchase ID",
           field_type: "LINK",
           field_order: 1,
-          field_section_id: apvIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
-          field_name: "Purchase Order ID",
-          field_type: "LINK",
-          field_order: 2,
           field_section_id: apvIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -422,14 +334,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Order to Purchase ID",
           field_type: "LINK",
           field_order: 1,
-          field_section_id: rirIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
-          field_name: "Purchase Order ID",
-          field_type: "LINK",
-          field_order: 2,
           field_section_id: rirIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -634,6 +538,15 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field_is_read_only: false,
     },
     {
+      field_id: invoiceRequestSendMethodId,
+      field_name: "Request Send Method",
+      field_type: "DROPDOWN",
+      field_order: 4,
+      field_section_id: invoiceMainSectionId,
+      field_is_required: false,
+      field_is_read_only: false,
+    },
+    {
       field_id: rirReceivingStatusFieldId,
       field_name: "Receiving Status",
       field_type: "DROPDOWN",
@@ -664,7 +577,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 
   const {
     orderToPurchase,
-    purchaseOrder,
     invoice,
     accountPayableVoucher,
     receivingInspectingReport,
@@ -675,7 +587,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   return {
     forms: [
       orderToPurchase.form,
-      purchaseOrder.form,
       invoice.form,
       accountPayableVoucher.form,
       receivingInspectingReport.form,
@@ -684,7 +595,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
     sections: [
       ...orderToPurchase.section,
-      ...purchaseOrder.section,
       ...invoice.section,
       ...accountPayableVoucher.section,
       ...receivingInspectingReport.section,
@@ -693,7 +603,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
     fieldsWithoutId: [
       ...orderToPurchase.field,
-      ...purchaseOrder.field,
       ...invoice.field,
       ...accountPayableVoucher.field,
       ...receivingInspectingReport.field,

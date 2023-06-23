@@ -194,7 +194,7 @@ const OrderToPurchaseRequestPage = ({
                 )
               }
             >
-              Create Purchase Order
+              Create Invoice
             </Button>
           </Group>
         ) : null}
