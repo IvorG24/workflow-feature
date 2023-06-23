@@ -1,7 +1,12 @@
 import { updateFormSigner } from "@/backend/api/update";
-import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
+import { useUserTeamMember } from "@/stores/useUserStore";
+import { GROUP_CONNECTION, UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { FormType, TeamMemberWithUserType } from "@/utils/types";
+import {
+  FormType,
+  TeamGroupForFormType,
+  TeamMemberWithUserType,
+} from "@/utils/types";
 import {
   Button,
   Center,
@@ -32,6 +37,7 @@ const RequestFormPage = ({ form, teamMemberList }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const { formId } = router.query;
+  const teamMember = useUserTeamMember();
 
   const initialSignerIds: string[] = [];
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
@@ -50,6 +56,14 @@ const RequestFormPage = ({ form, teamMemberList }: Props) => {
       return requestSigner;
     })
   );
+
+  const isGroupMember =
+    form.form_is_formsly_form &&
+    GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+      ? teamMember?.team_member_group_list.includes(
+          GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+        )
+      : true;
 
   const methods = useForm<{
     signers: RequestSigner[];
@@ -123,7 +137,8 @@ const RequestFormPage = ({ form, teamMemberList }: Props) => {
 
           {!form.form_is_formsly_form ||
           (form.form_is_formsly_form &&
-            !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)) ? (
+            !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name) &&
+            isGroupMember) ? (
             <Button
               onClick={() =>
                 router.push(`/team-requests/forms/${formId}/create`)

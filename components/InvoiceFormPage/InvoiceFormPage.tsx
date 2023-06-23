@@ -15,6 +15,8 @@ import {
   Group,
   Paper,
   Space,
+  Stack,
+  Switch,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -27,6 +29,7 @@ import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 
 import { v4 as uuidv4 } from "uuid";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
+import FormSection from "../RequestFormPage/FormSection";
 import CreateSupplier from "./SupplierList/CreateSupplier";
 import SupplierList from "./SupplierList/SupplierList";
 
@@ -69,6 +72,7 @@ const InvoiceFormPage = ({
     })
   );
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
+  const [switchValue, setSwitchValue] = useState(false);
 
   const methods = useForm<{
     signers: RequestSigner[];
@@ -180,24 +184,51 @@ const InvoiceFormPage = ({
       />
       <Space h="xl" />
 
-      <Paper p="xl" shadow="xs">
-        {!isCreatingSupplier ? (
-          <SupplierList
-            supplierList={supplierList}
-            setSupplierList={setSupplierList}
-            supplierCount={supplierCount}
-            setSupplierCount={setSupplierCount}
-            setIsCreatingSupplier={setIsCreatingSupplier}
-          />
-        ) : null}
-        {isCreatingSupplier ? (
-          <CreateSupplier
-            setIsCreatingSupplier={setIsCreatingSupplier}
-            setSupplierList={setSupplierList}
-            setSupplierCount={setSupplierCount}
-          />
-        ) : null}
-      </Paper>
+      <Center>
+        <Switch
+          onLabel="Form Preview"
+          offLabel="Form Details"
+          size="xl"
+          checked={switchValue}
+          onChange={(e) => setSwitchValue(e.target.checked)}
+          sx={{
+            label: {
+              cursor: "pointer",
+            },
+          }}
+        />
+      </Center>
+
+      <Space h="xl" />
+
+      {!switchValue ? (
+        <Paper p="xl" shadow="xs">
+          {!isCreatingSupplier ? (
+            <SupplierList
+              supplierList={supplierList}
+              setSupplierList={setSupplierList}
+              supplierCount={supplierCount}
+              setSupplierCount={setSupplierCount}
+              setIsCreatingSupplier={setIsCreatingSupplier}
+            />
+          ) : null}
+          {isCreatingSupplier ? (
+            <CreateSupplier
+              setIsCreatingSupplier={setIsCreatingSupplier}
+              setSupplierList={setSupplierList}
+              setSupplierCount={setSupplierCount}
+            />
+          ) : null}
+        </Paper>
+      ) : null}
+
+      {switchValue ? (
+        <Stack spacing="xl">
+          {form.form_section.map((section) => (
+            <FormSection section={section} key={section.section_id} />
+          ))}
+        </Stack>
+      ) : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Signer Details</Title>

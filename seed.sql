@@ -5,14 +5,14 @@ INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name,
 ('10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list) VALUES
-('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
 ('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
 ('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list) VALUES
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '30edd2d7-875a-4be3-9d5e-e295f8d7f95a', ARRAY[]::VARCHAR[]),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'd0247fec-7959-45be-9303-92fe020bb2c2', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'd0247fec-7959-45be-9303-92fe020bb2c2', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
 ('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', ARRAY[]::VARCHAR[]),
 ('ccff17b4-66bf-4c0f-bc02-35750403cecf', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
 ('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);

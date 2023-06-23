@@ -459,3 +459,10 @@ export type FormslyFormKeyType =
   | "Invoice"
   | "Account Payable Voucher"
   | "Receiving Inspecting Report";
+
+export type TeamGroupForFormType =
+  | "Order to Purchase"
+  | "Invoice"
+  | "Receiving Inspecting Report"
+  | "Cheque Reference"
+  | "Audit";
