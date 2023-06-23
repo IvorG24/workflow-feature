@@ -3,12 +3,12 @@ import {
   getAllItems,
   getAllNames,
   getForm,
+  getItemResponse,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import CreateAccountPayableVoucherRequestPage from "@/components/CreateAccountPayableVoucherRequestPage/CreateAccountPayableVoucherRequestPage";
 import CreateInvoiceRequestPage from "@/components/CreateInvoiceRequestPage/CreateInvoiceRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
-import CreatePurchaseOrderRequestPage from "@/components/CreatePurchaseOrderRequestPage/CreatePurchaseOrderRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
@@ -88,8 +88,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Purchase Order
-        else if (form.form_name === "Purchase Order") {
+        // Invoice
+        else if (form.form_name === "Invoice") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.otpId}`],
           });
@@ -118,6 +118,20 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           });
 
+          const items = await getItemResponse(supabaseClient, {
+            requestId: `${context.query.otpId}`,
+          });
+
+          const itemOptions = Object.keys(items).map((item, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[2].section_field[0].field_id,
+              option_id: item,
+              option_order: index,
+              option_value: `${items[item].name} (${items[item].quantity}) (${items[item].description})`,
+            };
+          });
+
           return {
             props: {
               form: {
@@ -139,40 +153,19 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       ),
                     ],
                   },
+                  {
+                    ...form.form_section[2],
+                  },
                 ],
               },
-            },
-          };
-        }
-        // Invoice
-        else if (form.form_name === "Invoice") {
-          const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.otpId}`, `${context.query.poId}`],
-          });
-
-          if (!isRequestIdValid) {
-            return {
-              redirect: {
-                destination: "/404",
-                permanent: false,
-              },
-            };
-          }
-
-          return {
-            props: {
-              form,
+              itemOptions,
             },
           };
         }
         // Account Payable Voucher
         else if (form.form_name === "Account Payable Voucher ") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [
-              `${context.query.otpId}`,
-              `${context.query.poId}`,
-              `${context.query.invoiceId}`,
-            ],
+            requestId: [`${context.query.otpId}`, `${context.query.invoiceId}`],
           });
 
           if (!isRequestIdValid) {
@@ -195,7 +188,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
               `${context.query.otpId}`,
-              `${context.query.poId}`,
               `${context.query.invoiceId}`,
               `${context.query.apvId}`,
             ],
@@ -261,10 +253,10 @@ const Page = ({ form, itemOptions }: Props) => {
             }}
           />
         );
-      case "Purchase Order":
-        return <CreatePurchaseOrderRequestPage form={form} />;
       case "Invoice":
-        return <CreateInvoiceRequestPage form={form} />;
+        return (
+          <CreateInvoiceRequestPage form={form} itemOptions={itemOptions} />
+        );
       case "Account Payable Voucher":
         return <CreateAccountPayableVoucherRequestPage form={form} />;
       case "Receiving Inspecting Report":

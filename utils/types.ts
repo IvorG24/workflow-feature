@@ -444,13 +444,11 @@ export type InvitationWithTeam = InvitationTableRow & {
 
 export type ConnectedFormsType =
   | "Order to Purchase"
-  | "Purchase Order"
   | "Invoice"
   | "Account Payable Voucher";
 
 export type FormslyFormType = {
   "Order to Purchase": string[];
-  "Purchase Order": string[];
   Invoice: string[];
   "Account Payable Voucher": string[];
   "Receiving Inspecting Report": string[];
@@ -458,7 +456,6 @@ export type FormslyFormType = {
 
 export type FormslyFormKeyType =
   | "Order to Purchase"
-  | "Purchase Order"
   | "Invoice"
   | "Account Payable Voucher"
   | "Receiving Inspecting Report";

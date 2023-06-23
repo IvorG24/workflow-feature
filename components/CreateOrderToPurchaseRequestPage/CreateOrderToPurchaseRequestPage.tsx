@@ -79,8 +79,48 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
 
       setIsLoading(true);
 
+      const toBeCheckedSections = data.sections.slice(1, data.sections.length);
+      const newSections: RequestFormValues["sections"] = [];
+      toBeCheckedSections.forEach((section) => {
+        // if new section if empty
+        if (newSections.length == 0) {
+          newSections.push(section);
+        } else {
+          let uniqueItem = true;
+          newSections.forEach((newSection) => {
+            // if section general name is equal
+            if (
+              newSection.section_field[0].field_response ===
+              section.section_field[0].field_response
+            ) {
+              let uniqueField = false;
+              // loop on every field except name and quantity
+              for (let i = 2; i < newSection.section_field.length; i++) {
+                if (
+                  newSection.section_field[i].field_response !==
+                  section.section_field[i].field_response
+                ) {
+                  uniqueField = true;
+                  break;
+                }
+              }
+              if (!uniqueField) {
+                newSection.section_field[1].field_response =
+                  Number(newSection.section_field[1].field_response) +
+                  Number(section.section_field[1].field_response);
+                uniqueItem = false;
+              }
+            }
+          });
+          if (uniqueItem) {
+            newSections.push(section);
+          }
+        }
+      });
+      const newData = { sections: [data.sections[0], ...newSections] };
+
       const request = await createRequest(supabaseClient, {
-        requestFormValues: data,
+        requestFormValues: newData,
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: form.form_signer,
