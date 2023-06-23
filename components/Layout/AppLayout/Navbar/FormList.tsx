@@ -1,7 +1,8 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { FormTableRow } from "@/utils/types";
+import { GROUP_CONNECTION } from "@/utils/constant";
+import { FormTableRow, TeamGroupForFormType } from "@/utils/types";
 import {
   Anchor,
   Autocomplete,
@@ -77,8 +78,16 @@ const FormList = () => {
       />
       <ScrollArea h={{ base: 400, sm: 500 }} mt="xs" scrollbarSize={5}>
         <Stack mt="sm" spacing={0}>
-          {formList.map((form) =>
-            !form.form_is_hidden ? (
+          {formList.map((form) => {
+            const isGroupMember =
+              form.form_is_formsly_form &&
+              GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+                ? teamMember?.team_member_group_list.includes(
+                    GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+                  )
+                : true;
+
+            return !form.form_is_hidden && isGroupMember ? (
               <NavLink
                 key={form.form_id}
                 label={form.form_name}
@@ -91,8 +100,8 @@ const FormList = () => {
                   )
                 }
               />
-            ) : null
-          )}
+            ) : null;
+          })}
         </Stack>
       </ScrollArea>
     </Box>

@@ -4,13 +4,14 @@ import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
-import { FORM_CONNECTION } from "@/utils/constant";
+import { FORM_CONNECTION, GROUP_CONNECTION } from "@/utils/constant";
 import {
   ConnectedFormsType,
   FormStatusType,
   FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
+  TeamGroupForFormType,
 } from "@/utils/types";
 import {
   Box,
@@ -54,6 +55,23 @@ const RequestPage = ({
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
+
+  const isGroupMember =
+    request.request_form.form_is_formsly_form &&
+    GROUP_CONNECTION[
+      FORM_CONNECTION[
+        request.request_form.form_name as ConnectedFormsType
+      ] as TeamGroupForFormType
+    ]
+      ? teamMember?.team_member_group_list.includes(
+          GROUP_CONNECTION[
+            FORM_CONNECTION[
+              request.request_form.form_name as ConnectedFormsType
+            ] as TeamGroupForFormType
+          ]
+        )
+      : true;
+
   const { setIsLoading } = useLoadingActions();
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
@@ -298,7 +316,7 @@ const RequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {connectedFormID && requestStatus === "APPROVED" ? (
+        {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
           <Group>
             <Button onClick={handleRedirectToConnectedRequest}>
               Create{" "}

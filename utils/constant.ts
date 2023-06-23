@@ -22,6 +22,14 @@ export const FORM_CONNECTION = {
   "Account Payable Voucher": "Receiving Inspecting Report",
 };
 
+export const GROUP_CONNECTION = {
+  "Order to Purchase": "Warehouse Processor",
+  Invoice: "Accounting Processor",
+  "Receiving Inspecting Report": "Warehouse Receiver",
+  "Cheque Reference": "Treasury Processor",
+  Audit: "Audit Processor",
+};
+
 export const SIGN_IN_PAGE_PATH = "/sign-in";
 export const DEFAULT_LANDING_PAGE = "/team-requests/requests";
 
@@ -621,7 +629,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 
 export const FORMSLY_GROUP = [
   "Warehouse Processor",
-  "Purchasing Processor",
   "Accounting Processor",
   "Warehouse Receiver",
   "Treasury Processor",

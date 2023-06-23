@@ -1,14 +1,18 @@
 import { checkOrderToPurchaseFormStatus } from "@/backend/api/get";
 import { updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
+import { GROUP_CONNECTION } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   FormType,
   ItemWithDescriptionType,
   ProjectTableRow,
+  TeamGroupForFormType,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
+  Box,
   Button,
   Center,
   Container,
@@ -16,6 +20,8 @@ import {
   Group,
   Paper,
   Space,
+  Stack,
+  Switch,
   Text,
   Title,
 } from "@mantine/core";
@@ -28,6 +34,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
+import FormSection from "../RequestFormPage/FormSection";
 import ItemDescription from "./ItemDescription/ItemDescription";
 import CreateItem from "./ItemList/CreateItem";
 import ItemList from "./ItemList/ItemList";
@@ -55,6 +62,7 @@ const OrderToPurchaseFormPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const { formId } = router.query;
   const team = useActiveTeam();
+  const teamMember = useUserTeamMember();
   const initialSignerIds: string[] = [];
 
   const [isCreatingItem, setIsCreatingItem] = useState(false);
@@ -83,6 +91,7 @@ const OrderToPurchaseFormPage = ({
     })
   );
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
+  const [switchValue, setSwitchValue] = useState(false);
 
   const methods = useForm<{
     signers: RequestSigner[];
@@ -119,6 +128,14 @@ const OrderToPurchaseFormPage = ({
     ...form,
     ...newTeamMember,
   };
+
+  const isGroupMember =
+    form.form_is_formsly_form &&
+    GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+      ? teamMember?.team_member_group_list.includes(
+          GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+        )
+      : true;
 
   const handleSaveSigners = async () => {
     const values = methods.getValues();
@@ -185,11 +202,15 @@ const OrderToPurchaseFormPage = ({
           >
             Analytics
           </Button>
-          <Button
-            onClick={() => router.push(`/team-requests/forms/${formId}/create`)}
-          >
-            Create Request
-          </Button>
+          {isGroupMember ? (
+            <Button
+              onClick={() =>
+                router.push(`/team-requests/forms/${formId}/create`)
+              }
+            >
+              Create Request
+            </Button>
+          ) : null}
         </Group>
       </Flex>
       <Space h="xl" />
@@ -198,58 +219,90 @@ const OrderToPurchaseFormPage = ({
         formVisibilityRestriction={handleFormVisibilityRestriction}
       />
       <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!isCreatingItem ? (
-          <ItemList
-            itemList={itemList}
-            setItemList={setItemList}
-            itemCount={itemCount}
-            setItemCount={setItemCount}
-            setIsCreatingItem={setIsCreatingItem}
-            setSelectedItem={setSelectedItem}
-          />
-        ) : null}
-        {isCreatingItem ? (
-          <CreateItem
-            setIsCreatingItem={setIsCreatingItem}
-            setItemList={setItemList}
-            setItemCount={setItemCount}
-          />
-        ) : null}
-      </Paper>
+      <Center>
+        <Switch
+          onLabel="Form Preview"
+          offLabel="Form Details"
+          size="xl"
+          checked={switchValue}
+          onChange={(e) => setSwitchValue(e.target.checked)}
+          sx={{
+            label: {
+              cursor: "pointer",
+            },
+          }}
+        />
+      </Center>
       <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!selectedItem ? (
-          <Center>
-            <Text color="dimmed">No item selected</Text>
-          </Center>
-        ) : null}
-        {selectedItem ? (
-          <ItemDescription
-            selectedItem={selectedItem}
-            setSelectedItem={setSelectedItem}
+
+      {!switchValue ? (
+        <Box>
+          <Paper p="xl" shadow="xs">
+            {!isCreatingItem ? (
+              <ItemList
+                itemList={itemList}
+                setItemList={setItemList}
+                itemCount={itemCount}
+                setItemCount={setItemCount}
+                setIsCreatingItem={setIsCreatingItem}
+                setSelectedItem={setSelectedItem}
+              />
+            ) : null}
+            {isCreatingItem ? (
+              <CreateItem
+                setIsCreatingItem={setIsCreatingItem}
+                setItemList={setItemList}
+                setItemCount={setItemCount}
+              />
+            ) : null}
+          </Paper>
+          <Space h="xl" />
+          <Paper p="xl" shadow="xs">
+            {!selectedItem ? (
+              <Center>
+                <Text color="dimmed">No item selected</Text>
+              </Center>
+            ) : null}
+            {selectedItem ? (
+              <ItemDescription
+                selectedItem={selectedItem}
+                setSelectedItem={setSelectedItem}
+              />
+            ) : null}
+          </Paper>
+          <Space h="xl" />
+          <Paper p="xl" shadow="xs">
+            {!isCreatingProject ? (
+              <ProjectList
+                projectList={projectList}
+                setProjectList={setProjectList}
+                projectCount={projectCount}
+                setProjectCount={setProjectCount}
+                setIsCreatingProject={setIsCreatingProject}
+              />
+            ) : null}
+            {isCreatingProject ? (
+              <CreateProject
+                setIsCreatingProject={setIsCreatingProject}
+                setProjectList={setProjectList}
+                setProjectCount={setProjectCount}
+              />
+            ) : null}
+          </Paper>
+        </Box>
+      ) : null}
+
+      {switchValue ? (
+        <Stack spacing="xl">
+          <FormSection section={form.form_section[0]} />
+          <FormSection
+            section={{
+              ...form.form_section[1],
+              section_field: form.form_section[1].section_field.slice(0, 2),
+            }}
           />
-        ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!isCreatingProject ? (
-          <ProjectList
-            projectList={projectList}
-            setProjectList={setProjectList}
-            projectCount={projectCount}
-            setProjectCount={setProjectCount}
-            setIsCreatingProject={setIsCreatingProject}
-          />
-        ) : null}
-        {isCreatingProject ? (
-          <CreateProject
-            setIsCreatingProject={setIsCreatingProject}
-            setProjectList={setProjectList}
-            setProjectCount={setProjectCount}
-          />
-        ) : null}
-      </Paper>
+        </Stack>
+      ) : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Signer Details</Title>
