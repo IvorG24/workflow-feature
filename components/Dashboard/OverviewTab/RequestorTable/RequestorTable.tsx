@@ -43,7 +43,7 @@ const RequestorTable = ({
           <Title order={4}>Top Requestor</Title>
         </Group>
 
-        <Stack p="lg" mb="sm">
+        <Stack p="lg" mb="sm" spacing={32}>
           {sortRequestorListByTotalRequests.length > 0 ? (
             sortRequestorListByTotalRequests.map((requestor) => (
               <Box key={requestor.user_id}>

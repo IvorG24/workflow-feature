@@ -22,14 +22,14 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
     value: (value / totalRequest) * 100,
     color: `${getStatusToColor(key) || "dark"}`,
     tooltip: `${startCase(key)}: ${value}`,
-    label: `${startCase(key)}: ${value}`,
+    // label: `${startCase(key)}: ${value}`,
   }));
   const progressSectionsWithoutTotal = progressSections.filter(
     (section) => !section.tooltip.includes("Total")
   );
 
   return (
-    <Stack key={requestor.user_id}>
+    <Stack spacing="xs" key={requestor.user_id}>
       <Group position="apart">
         <Group spacing="xs">
           <Avatar
@@ -47,7 +47,7 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
         </Group>
         <Tooltip
           label={progressSectionsWithoutTotal.map((section, idx) => (
-            <Text key={section.label + idx}>{section.label}</Text>
+            <Text key={section.tooltip + idx}>{section.tooltip}</Text>
           ))}
         >
           <Badge size="sm" variant="filled" color="dark">
@@ -55,7 +55,7 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
           </Badge>
         </Tooltip>
       </Group>
-      <Progress size="xl" radius="lg" sections={progressSectionsWithoutTotal} />
+      <Progress size="md" radius="lg" sections={progressSectionsWithoutTotal} />
     </Stack>
   );
 };

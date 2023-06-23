@@ -41,12 +41,12 @@ const SignerTable = ({ signerList }: SignerTableProps) => {
           <Title order={4}>Top Signer</Title>
         </Group>
 
-        <Stack p="lg" mb="sm">
+        <Stack p="lg" mb="sm" spacing={32}>
           {signerList.length > 0 ? (
             sortSignerListByTotalRequests.map((signer) => {
               const user = signer.signer_team_member.team_member_user;
               return (
-                <Stack key={signer.signer_id}>
+                <Stack key={signer.signer_id} spacing="xs">
                   <Group position="apart">
                     <Group spacing="xs">
                       <Avatar
@@ -70,7 +70,7 @@ const SignerTable = ({ signerList }: SignerTableProps) => {
                     </Badge>
                   </Group>
                   <Progress
-                    size="xl"
+                    size="md"
                     radius="lg"
                     color="green"
                     value={(signer.count / signerList.length) * 100}
