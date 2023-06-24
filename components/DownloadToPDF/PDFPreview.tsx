@@ -3,8 +3,7 @@ import { RequestWithResponseType } from "@/utils/types";
 import { Box, Divider, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import { lowerCase, startCase } from "lodash";
 import moment from "moment";
-import { useRef } from "react";
-import DownloadToPDFButton from "./DownloadToPDF";
+import DownloadToPdfButton from "./DownloadToPdfButton";
 
 type Props = {
   request: RequestWithResponseType;
@@ -22,8 +21,7 @@ const getReadableDate = (date: string) => {
   return readableDate;
 };
 
-const PDFPreview = ({ request, sectionWithDuplicateList }: Props) => {
-  const pageContentRef = useRef<HTMLDivElement>(null);
+const PdfPreview = ({ request, sectionWithDuplicateList }: Props) => {
   const requestor = request.request_team_member.team_member_user;
   const requestDateCreated = getReadableDate(request.request_date_created);
 
@@ -36,12 +34,12 @@ const PDFPreview = ({ request, sectionWithDuplicateList }: Props) => {
   const pageContentId = `pdf-${request.request_id}`;
 
   return (
-    <Paper>
+    <Paper p="md">
       <Stack
-        p="md"
+        p="xl"
         spacing="xl"
-        ref={pageContentRef}
         id={`pdf-${request.request_id}`}
+        sx={{ border: "1px solid #CED4DA", borderRadius: 8 }}
       >
         {/* Receipt Details */}
         <Group position="apart">
@@ -110,7 +108,7 @@ const PDFPreview = ({ request, sectionWithDuplicateList }: Props) => {
           </Box>
         ))}
       </Stack>
-      <DownloadToPDFButton
+      <DownloadToPdfButton
         pageContentId={pageContentId}
         pdfFileName={pdfFileName}
       />
@@ -118,6 +116,4 @@ const PDFPreview = ({ request, sectionWithDuplicateList }: Props) => {
   );
 };
 
-PDFPreview.displayName = "PDFPreview";
-
-export default PDFPreview;
+export default PdfPreview;

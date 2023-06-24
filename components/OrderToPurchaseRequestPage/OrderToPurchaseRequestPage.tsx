@@ -9,8 +9,8 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
 import {
-  FormStatusType,
   FormslyFormType,
+  FormStatusType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -19,7 +19,6 @@ import {
   Container,
   Flex,
   Group,
-  Modal,
   Stack,
   Text,
   Title,
@@ -30,7 +29,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import PDFPreview from "../DownloadToPDF/PDFPreview";
+import ExportToPDfModal from "../DownloadToPDF/ExportToPdfModal";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 
 type Props = {
@@ -50,8 +49,6 @@ const OrderToPurchaseRequestPage = ({
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
-
-  const [openPDFPreview, setOpenPDFPreview] = useState(false);
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
 
@@ -192,9 +189,10 @@ const OrderToPurchaseRequestPage = ({
         {requestStatus === "APPROVED" &&
         teamMember?.team_member_group_list.includes("Accounting Processor") ? (
           <Group>
-            <Button onClick={() => setOpenPDFPreview(true)}>
-              Export to PDF
-            </Button>
+            <ExportToPDfModal
+              request={request}
+              sectionWithDuplicateList={sectionWithDuplicateList}
+            />
             <Button
               onClick={() =>
                 router.push(
@@ -252,18 +250,6 @@ const OrderToPurchaseRequestPage = ({
         }}
         requestCommentList={request.request_comment}
       />
-
-      <Modal
-        opened={openPDFPreview}
-        onClose={() => setOpenPDFPreview(false)}
-        title="Download Preview"
-        size="55rem"
-      >
-        <PDFPreview
-          request={request}
-          sectionWithDuplicateList={sectionWithDuplicateList}
-        />
-      </Modal>
     </Container>
   );
 };

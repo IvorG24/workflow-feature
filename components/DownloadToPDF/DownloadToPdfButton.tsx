@@ -30,7 +30,7 @@ function addFooters(
   }
 }
 
-const DownloadToPDFButton: React.FC<DownloadButtonProps> = ({
+const DownloadToPdfButton: React.FC<DownloadButtonProps> = ({
   pageContentId,
   pdfFileName,
 }) => {
@@ -85,10 +85,10 @@ const DownloadToPDFButton: React.FC<DownloadButtonProps> = ({
   };
 
   return (
-    <Button mt="md" onClick={handleDownload} fullWidth>
+    <Button mt="md" size="md" onClick={handleDownload} fullWidth>
       Download as PDF
     </Button>
   );
 };
 
-export default DownloadToPDFButton;
+export default DownloadToPdfButton;
