@@ -7,8 +7,8 @@ import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
 import { FORM_CONNECTION, GROUP_CONNECTION } from "@/utils/constant";
 import {
   ConnectedFormsType,
-  FormslyFormType,
   FormStatusType,
+  FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
   TeamGroupForFormType,
@@ -30,7 +30,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
-import ExportToPDfModal from "../DownloadToPDF/ExportToPdfModal";
+import ExportToPDFModal from "../ExportToPDF/ExportToPDFModal";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -320,7 +320,7 @@ const RequestPage = ({
         </Title>
         {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
           <Group>
-            <ExportToPDfModal
+            <ExportToPDFModal
               request={request}
               sectionWithDuplicateList={sectionWithDuplicateList}
             />

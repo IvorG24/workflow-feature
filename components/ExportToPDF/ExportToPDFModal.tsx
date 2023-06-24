@@ -2,13 +2,13 @@ import { DuplicateSectionType } from "@/utils/arrayFunctions";
 import { RequestWithResponseType } from "@/utils/types";
 import { Box, Button, Modal, Text } from "@mantine/core";
 import { useState } from "react";
-import PdfPreview from "./PdfPreview";
+import PdfPreview from "./PDFPreview";
 
 type Props = {
   request: RequestWithResponseType;
   sectionWithDuplicateList: DuplicateSectionType[];
 };
-const ExportToPDfModal = ({ request, sectionWithDuplicateList }: Props) => {
+const ExportToPDFModal = ({ request, sectionWithDuplicateList }: Props) => {
   const [openPDFPreview, setOpenPDFPreview] = useState(false);
 
   return (
@@ -34,4 +34,4 @@ const ExportToPDfModal = ({ request, sectionWithDuplicateList }: Props) => {
   );
 };
 
-export default ExportToPDfModal;
+export default ExportToPDFModal;

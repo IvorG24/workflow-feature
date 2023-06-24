@@ -3,7 +3,7 @@ import { RequestWithResponseType } from "@/utils/types";
 import { Box, Divider, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import { lowerCase, startCase } from "lodash";
 import moment from "moment";
-import DownloadToPdfButton from "./DownloadToPdfButton";
+import DownloadToPdfButton from "./DownloadToPDFButton";
 
 type Props = {
   request: RequestWithResponseType;
@@ -21,7 +21,7 @@ const getReadableDate = (date: string) => {
   return readableDate;
 };
 
-const PdfPreview = ({ request, sectionWithDuplicateList }: Props) => {
+const PDFPreview = ({ request, sectionWithDuplicateList }: Props) => {
   const requestor = request.request_team_member.team_member_user;
   const requestDateCreated = getReadableDate(request.request_date_created);
 
@@ -116,4 +116,4 @@ const PdfPreview = ({ request, sectionWithDuplicateList }: Props) => {
   );
 };
 
-export default PdfPreview;
+export default PDFPreview;

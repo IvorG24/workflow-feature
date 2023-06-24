@@ -9,8 +9,8 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
 import {
-  FormslyFormType,
   FormStatusType,
+  FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -29,7 +29,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import ExportToPDfModal from "../DownloadToPDF/ExportToPdfModal";
+import ExportToPDFModal from "../ExportToPDF/ExportToPDFModal";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 
 type Props = {
@@ -189,7 +189,7 @@ const OrderToPurchaseRequestPage = ({
         {requestStatus === "APPROVED" &&
         teamMember?.team_member_group_list.includes("Accounting Processor") ? (
           <Group>
-            <ExportToPDfModal
+            <ExportToPDFModal
               request={request}
               sectionWithDuplicateList={sectionWithDuplicateList}
             />
