@@ -189,7 +189,8 @@ const OrderToPurchaseRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {requestStatus === "APPROVED" ? (
+        {requestStatus === "APPROVED" &&
+        teamMember?.team_member_group_list.includes("Accounting Processor") ? (
           <Group>
             <Button onClick={() => setOpenPDFPreview(true)}>
               Export to PDF
@@ -201,7 +202,7 @@ const OrderToPurchaseRequestPage = ({
                 )
               }
             >
-              Create Purchase Order
+              Create Invoice
             </Button>
           </Group>
         ) : null}

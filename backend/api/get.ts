@@ -5,6 +5,7 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  RequestResponseTableRow,
   RequestWithResponseType,
   TeamMemberType,
   TeamTableRow,
@@ -1257,7 +1258,6 @@ export const getFormslyForwardLinkFormId = async (
 
   const requestList = {
     "Order to Purchase": [] as string[],
-    "Purchase Order": [] as string[],
     Invoice: [] as string[],
     "Account Payable Voucher": [] as string[],
     "Receiving Inspecting Report": [] as string[],
@@ -1267,11 +1267,6 @@ export const getFormslyForwardLinkFormId = async (
     switch (request.request_response_request.request_form.form_name) {
       case "Order to Purchase":
         requestList["Order to Purchase"].push(
-          `"${request.request_response_request.request_id}"`
-        );
-        break;
-      case "Purchase Order":
-        requestList["Purchase Order"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1294,4 +1289,163 @@ export const getFormslyForwardLinkFormId = async (
   });
 
   return requestList;
+};
+
+// Get item repone of an otp request
+export const getItemResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { requestId } = params;
+
+  const { data: requestResponseData, error: requestResponseError } =
+    await supabaseClient
+      .from("request_response_table")
+      .select(
+        "*, request_response_field: request_response_field_id(field_name, field_order)"
+      )
+      .eq("request_response_request_id", requestId);
+  if (requestResponseError) throw requestResponseError;
+  const formattedRequestReponseData =
+    requestResponseData as unknown as (RequestResponseTableRow & {
+      request_response_field: { field_name: string; field_order: number };
+    })[];
+
+  const options: Record<
+    string,
+    {
+      name: string;
+      description: string;
+      quantity: number;
+    }
+  > = {};
+
+  formattedRequestReponseData.forEach((response) => {
+    if (response.request_response_field) {
+      const fieldName = response.request_response_field.field_name;
+      const duplicatableSectionId =
+        response.request_response_duplicatable_section_id;
+
+      if (
+        duplicatableSectionId &&
+        response.request_response_field.field_order > 3
+      ) {
+        if (!options[duplicatableSectionId]) {
+          options[duplicatableSectionId] = {
+            name: "",
+            description: "",
+            quantity: 0,
+          };
+        }
+
+        if (fieldName === "General Name") {
+          options[duplicatableSectionId].name = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Quantity") {
+          options[duplicatableSectionId].quantity = Number(
+            response.request_response
+          );
+        } else {
+          options[duplicatableSectionId].description += `${
+            options[duplicatableSectionId].description ? ", " : ""
+          }${fieldName}: ${JSON.parse(response.request_response)}`;
+        }
+      }
+    }
+  });
+  return options;
+};
+
+// Check if the approving invoice item quantity are less than the otp quantity
+export const checkInvoiceItemQuantity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    otpID: string;
+    itemFieldId: string;
+    quantityFieldId: string;
+    itemFieldList: RequestResponseTableRow[];
+    quantityFieldList: RequestResponseTableRow[];
+  }
+) => {
+  const {
+    otpID,
+    itemFieldId,
+    quantityFieldId,
+    itemFieldList,
+    quantityFieldList,
+  } = params;
+
+  // fetch request id
+  const { data: requestIds, error: requestIdListError } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "*, request_response_request: request_response_request_id!inner(request_status, request_form: request_form_id!inner(form_is_formsly_form, form_name))"
+    )
+    .eq("request_response", otpID)
+    .eq("request_response_request.request_status", "APPROVED")
+    .eq("request_response_request.request_form.form_is_formsly_form", true)
+    .eq("request_response_request.request_form.form_name", "Invoice");
+
+  if (requestIdListError) throw requestIdListError;
+  const requestIdList = requestIds.map(
+    (response) => response.request_response_request_id
+  );
+
+  // fetch request responses
+  const { data: requestResponse, error: requestResponseError } =
+    await supabaseClient
+      .from("request_response_table")
+      .select("*")
+      .in("request_response_request_id", requestIdList)
+      .or(
+        `request_response_field_id.eq.${itemFieldId}, request_response_field_id.eq.${quantityFieldId}`
+      );
+  if (requestResponseError) throw requestResponseError;
+
+  // separate item to quantity response
+  const requestResponseItem: RequestResponseTableRow[] = [];
+  const requestResponseQuantity: RequestResponseTableRow[] = [];
+  requestResponse.forEach((response) => {
+    if (response.request_response_field_id === itemFieldId) {
+      requestResponseItem.push(response);
+    } else if (response.request_response_field_id === quantityFieldId) {
+      requestResponseQuantity.push(response);
+    }
+  });
+  requestResponseItem.push(...itemFieldList);
+  requestResponseQuantity.push(...quantityFieldList);
+
+  const itemList: string[] = [];
+  const quantityList: number[] = [];
+
+  for (let i = 0; i < requestResponseItem.length; i++) {
+    if (itemList.includes(requestResponseItem[i].request_response)) {
+      const quantityIndex = itemList.indexOf(
+        requestResponseItem[i].request_response
+      );
+      quantityList[quantityIndex] += Number(
+        requestResponseQuantity[i].request_response
+      );
+    } else {
+      itemList.push(requestResponseItem[i].request_response);
+      quantityList.push(Number(requestResponseQuantity[i].request_response));
+    }
+  }
+
+  const returnData: string[] = [];
+  const regExp = /\(([^)]+)\)/;
+  for (let i = 0; i < itemList.length; i++) {
+    const matches = regExp.exec(itemList[i]);
+    const expectedQuantity = matches ? Number(matches[1]) : 0;
+
+    if (quantityList[i] > expectedQuantity) {
+      returnData.push(
+        `${JSON.parse(itemList[i])} exceeds quantity limit by ${
+          quantityList[i] - expectedQuantity
+        }`
+      );
+    }
+  }
+  return returnData;
 };
