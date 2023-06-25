@@ -93,16 +93,19 @@ const PdfDocument = ({
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <View style={styles.column}>
-          {requestDetails.map((detail) => (
-            <View style={styles.columnItem}>
+          {requestDetails.map((detail, index) => (
+            <View key={index} style={styles.columnItem}>
               <Text>{detail.label}</Text>
               <Text style={{ fontWeight: 600 }}>{detail.value}</Text>
             </View>
           ))}
         </View>
         <View style={styles.column}>
-          {requestorDetails.map((detail) => (
-            <View style={{ ...styles.columnItem, alignItems: "flex-end" }}>
+          {requestorDetails.map((detail, index) => (
+            <View
+              key={index}
+              style={{ ...styles.columnItem, alignItems: "flex-end" }}
+            >
               <Text>{detail.label}</Text>
               <Text style={{ fontWeight: 600 }}>{detail.value}</Text>
             </View>
