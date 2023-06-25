@@ -29,7 +29,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import ExportToPDFModal from "../ExportToPDF/ExportToPDFModal";
+import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 
 type Props = {
@@ -189,7 +189,7 @@ const OrderToPurchaseRequestPage = ({
         {requestStatus === "APPROVED" &&
         teamMember?.team_member_group_list.includes("Accounting Processor") ? (
           <Group>
-            <ExportToPDFModal
+            <ExportToPdf
               request={request}
               sectionWithDuplicateList={sectionWithDuplicateList}
             />

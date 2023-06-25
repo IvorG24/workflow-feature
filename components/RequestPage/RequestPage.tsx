@@ -30,7 +30,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
-import ExportToPDFModal from "../ExportToPDF/ExportToPDFModal";
+import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -320,7 +320,7 @@ const RequestPage = ({
         </Title>
         {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
           <Group>
-            <ExportToPDFModal
+            <ExportToPdf
               request={request}
               sectionWithDuplicateList={sectionWithDuplicateList}
             />
