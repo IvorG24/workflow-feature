@@ -33,8 +33,8 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
             {totalCount > 0 ? (
               <RadialChart data={data} />
             ) : (
-              <Center h={300}>
-                <Text size={24} color="dimmed" weight={600}>
+              <Center mih={175}>
+                <Text size={20} color="dimmed" weight={600}>
                   No data available.
                 </Text>
               </Center>

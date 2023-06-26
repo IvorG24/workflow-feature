@@ -19,7 +19,7 @@ const ResponseChart = ({ type, data }: ResponseChartProps) => {
       case "DATE":
         const dateChartData = chartData.map((d) => ({
           ...d,
-          label: moment(d.label).format("MMM DD, YYYY"),
+          label: moment(new Date(d.label)).format("MMM DD, YYYY"),
         }));
         return <LineChart data={getDataWithStartingPoint(dateChartData)} />;
 

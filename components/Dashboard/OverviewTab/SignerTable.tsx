@@ -74,14 +74,13 @@ const SignerTable = ({ signerList }: SignerTableProps) => {
                     radius="lg"
                     color="green"
                     value={(signer.count / signerList.length) * 100}
-                    label={`Total: ${signer.count}`}
                   />
                 </Stack>
               );
             })
           ) : (
-            <Center h={300}>
-              <Text size={24} color="dimmed" weight={600}>
+            <Center h={175}>
+              <Text size={20} color="dimmed" weight={600}>
                 No data available.
               </Text>
             </Center>

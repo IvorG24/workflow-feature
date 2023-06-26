@@ -54,8 +54,8 @@ const RequestorTable = ({
               </Box>
             ))
           ) : (
-            <Center h={300}>
-              <Text size={24} color="dimmed" weight={600}>
+            <Center h={175}>
+              <Text size={20} color="dimmed" weight={600}>
                 No data available.
               </Text>
             </Center>

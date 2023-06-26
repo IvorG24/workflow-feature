@@ -113,6 +113,10 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
           },
         };
       });
+
+      if (!selectedForm) {
+        setFieldResponseData(null);
+      }
       if (selectedForm) {
         handleResponseTabData(requestListWithMatchingResponses);
       }
@@ -180,10 +184,36 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
         const nonDynamicFieldList = uniqueFieldList.filter(
           (field) => !filteredResponseTypes.includes(field.field_type)
         );
-        const groupedRequestFormData = nonDynamicFieldList.map((field) => ({
-          sectionLabel: field.field_name,
-          responseData: [field],
-        }));
+        const groupedRequestFormData = nonDynamicFieldList.map((field) => {
+          const isMultiSelect = field.field_type === "MULTISELECT";
+          // get multiselect response
+          const multiSelectResponseData: FieldWithResponseType[0]["field_response"] =
+            [];
+
+          if (isMultiSelect) {
+            field.field_response.forEach((response) => {
+              const parseResponse = JSON.parse(response.request_response);
+              parseResponse.forEach((responseItem: string) => {
+                const newResponse = {
+                  ...response,
+                  request_response: JSON.stringify(responseItem),
+                };
+
+                multiSelectResponseData.push(newResponse);
+              });
+            });
+          }
+
+          const multiSelectData = {
+            ...field,
+            field_response: multiSelectResponseData,
+          };
+
+          return {
+            sectionLabel: field.field_name,
+            responseData: [isMultiSelect ? multiSelectData : field],
+          };
+        });
         setFieldResponseData(groupedRequestFormData);
       }
     } catch (error) {

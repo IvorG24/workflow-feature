@@ -85,17 +85,23 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
   // get signers
   const signerList = requestList.flatMap((request) => request.request_signer);
   const reducedSignerList = signerList.reduce((acc, signer) => {
+    const isRequestApproved = signer.request_signer_status === "APPROVED";
     const duplicateSignerIndex = acc.findIndex(
       (d) =>
         d.signer_team_member.team_member_id ===
         signer.request_signer_signer.signer_team_member.team_member_id
     );
 
-    if (duplicateSignerIndex >= 0) {
-      acc[duplicateSignerIndex].count++;
-    } else {
-      const newSigner = { ...signer.request_signer_signer, count: 1 };
-      acc.push(newSigner);
+    if (isRequestApproved) {
+      if (duplicateSignerIndex >= 0) {
+        acc[duplicateSignerIndex].count++;
+      } else {
+        const newSigner = {
+          ...signer.request_signer_signer,
+          count: 1,
+        };
+        acc.push(newSigner);
+      }
     }
 
     return acc;

@@ -7,7 +7,7 @@ import {
   IconSquareRoundedFilled,
 } from "@tabler/icons-react";
 import { startCase } from "lodash";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StackedBarChart from "../../Chart/StackedBarChart";
 
 type RequestStatisticsProps = {
@@ -49,7 +49,7 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
     generateInitialChartData()
   );
 
-  const [chartData, setChartData] = useState(initialChartData);
+  const [chartData, setChartData] = useState(generateInitialChartData());
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
 
   const filterChart = (newFilter: string) => {
@@ -61,7 +61,6 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
     } else {
       updatedFilter.push(newFilter);
     }
-    console.log(updatedFilter);
     setSelectedFilter(updatedFilter);
 
     const newChartData = initialChartData.map((d) => {
@@ -90,6 +89,10 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
     });
     setChartData(newChartData);
   };
+
+  useEffect(() => {
+    setChartData(initialChartData);
+  }, [requestList]);
 
   return (
     <Paper w="100%" h="100%" p="md" withBorder sx={{ flex: 1 }}>
