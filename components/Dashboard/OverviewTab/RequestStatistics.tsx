@@ -44,36 +44,51 @@ const generateInitialChartData = () => {
 const statusList = ["approved", "rejected", "pending", "canceled"];
 
 const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
-  const initialChartData = generateInitialChartData();
-  const [chartData, setChartData] = useState(
-    getStackedBarChartData(requestList, initialChartData)
+  const initialChartData = getStackedBarChartData(
+    requestList,
+    generateInitialChartData()
   );
-  const [selectedFilter, setSelectedFilter] = useState([""]);
-  const filterChart = (status: string) => {
-    const filteredChartData = chartData.map((d) => {
-      // update status
-      switch (status) {
-        case "approved":
-          d.approved = 0;
-          break;
-        case "rejected":
-          d.rejected = 0;
-          break;
-        case "pending":
-          d.pending = 0;
-          break;
-        case "canceled":
-          d.canceled = 0;
-          break;
 
-        default:
-          break;
-      }
+  const [chartData, setChartData] = useState(initialChartData);
+  const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
+
+  const filterChart = (newFilter: string) => {
+    let updatedFilter = selectedFilter;
+    if (selectedFilter.includes(newFilter)) {
+      updatedFilter = selectedFilter.filter(
+        (oldFilter) => oldFilter !== newFilter
+      );
+    } else {
+      updatedFilter.push(newFilter);
+    }
+    console.log(updatedFilter);
+    setSelectedFilter(updatedFilter);
+
+    const newChartData = initialChartData.map((d) => {
+      updatedFilter.forEach((filter) => {
+        // update status
+        switch (filter) {
+          case "approved":
+            d.approved = 0;
+            break;
+          case "rejected":
+            d.rejected = 0;
+            break;
+          case "pending":
+            d.pending = 0;
+            break;
+          case "canceled":
+            d.canceled = 0;
+            break;
+
+          default:
+            break;
+        }
+      });
 
       return d;
     });
-
-    setChartData(filteredChartData);
+    setChartData(newChartData);
   };
 
   return (
@@ -91,11 +106,17 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
                 gap={4}
                 w="fit-content"
                 onClick={() => filterChart(status)}
+                sx={{ cursor: "pointer" }}
               >
                 <Box c={getStatusToColorForCharts(status)}>
                   <IconSquareRoundedFilled />
                 </Box>
-                <Text weight={600}>{startCase(status)}</Text>
+                <Text
+                  weight={600}
+                  strikethrough={selectedFilter.includes(status)}
+                >
+                  {startCase(status)}
+                </Text>
               </Flex>
             ))}
           </Group>
