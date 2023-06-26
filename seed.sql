@@ -5,14 +5,14 @@ INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name,
 ('10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list) VALUES
-('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
 ('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
 ('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list) VALUES
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '30edd2d7-875a-4be3-9d5e-e295f8d7f95a', ARRAY[]::VARCHAR[]),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'd0247fec-7959-45be-9303-92fe020bb2c2', ARRAY['Warehouse Processor','Purchasing Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'd0247fec-7959-45be-9303-92fe020bb2c2', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
 ('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', ARRAY[]::VARCHAR[]),
 ('ccff17b4-66bf-4c0f-bc02-35750403cecf', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
 ('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);
@@ -21,7 +21,6 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
-('bba77187-c35d-4a6d-bf03-431e2ff2212e', 'Purchase Order', 'formsly premade Purchase Order form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Invoice', 'formsly premade Invoice form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('6f7b3e6c-002e-4a74-8a67-ea21a11dc178', 'Account Payable Voucher', 'formsly premade Account Payable Voucher form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'formsly premade Receiving Inspecting Report form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
@@ -40,13 +39,10 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 
--- Purchase Order
-('f052f7da-a130-41db-a6ef-6150fbb9cd06', 'ID', 1, false, 'bba77187-c35d-4a6d-bf03-431e2ff2212e'),
-('e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', 'Main', 2, false, 'bba77187-c35d-4a6d-bf03-431e2ff2212e'),
-
 -- Invoice
 ('7d6649c2-316b-4895-86eb-120def2e2f33', 'ID', 1, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 ('991d9830-ae1b-4c14-bdba-6167b64f50f7', 'Main', 2, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
+('ee8a3bc7-4253-44f7-bd7c-53b0e8871601', 'Item', 3, true, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 
 -- Account Payable Voucher
 ('5a936443-46ef-471f-8c87-6bc82b1568c3', 'ID', 1, false, '6f7b3e6c-002e-4a74-8a67-ea21a11dc178'),
@@ -92,47 +88,35 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 
 -- Order to Purchase Form
 ('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 1, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
-('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('59a6093c-5733-44c0-8a99-e12011207ff8', 'Length', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d527a714-a49a-4162-a851-f73553f6bea1', 'Width', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('743ac520-e8a8-4801-a89b-abe4d666ff68', 'Height', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84b92308-11bf-47b4-b006-00894ea3640d', 'Type', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('2d0a3a6c-107d-4f86-bf3d-87a98607f832', 'Brand', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('ed1f9bbd-deab-4576-b83d-965b16b98522', 'Material', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84e06984-45eb-4947-913e-7882e20f3bfd', 'Size', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-
--- Purchase Order Form
-('1582b98c-c8a0-4a2c-a802-771a7f3bc248', 'Order to Purchase ID', 'LINK', 1, 'f052f7da-a130-41db-a6ef-6150fbb9cd06', true, true),
-('2a43aedd-017c-4675-ad4c-00debbac7050', 'Supplier', 'DROPDOWN', 3, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
-('4428c857-5a20-4d53-b5d0-543a20f0413a', 'Quantity', 'NUMBER', 4, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
-('a263d179-0c91-4139-a5a3-aad7c7838c9f', 'Price', 'NUMBER', 5, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
-('edec8e71-7fe0-4e6f-a390-4ab7462f85d6', 'Remarks', 'TEXTAREA', 6, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', false, false),
-('ce33edb3-a69b-4cde-b735-c6e2f7228e10', 'Payment Terms', 'TEXT', 7, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
-('ef9e3fbb-3f37-4513-b455-c6b8098cf428', 'Down Payment Percentage', 'NUMBER', 8, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
-('4ede3ad7-6763-4f42-9681-ef7f9d6c2872', 'Down Payment Computation', 'NUMBER', 9, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, true),
-('5dd83e41-c884-4466-b856-0a1ed5182774', 'Expected Delivery Date', 'DATE', 10, 'e283f2ca-bfba-4ec0-bc57-38e3d3ccb94d', true, false),
+('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 4, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('59a6093c-5733-44c0-8a99-e12011207ff8', 'Length', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d527a714-a49a-4162-a851-f73553f6bea1', 'Width', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('743ac520-e8a8-4801-a89b-abe4d666ff68', 'Height', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('84b92308-11bf-47b4-b006-00894ea3640d', 'Type', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('2d0a3a6c-107d-4f86-bf3d-87a98607f832', 'Brand', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('ed1f9bbd-deab-4576-b83d-965b16b98522', 'Material', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('84e06984-45eb-4947-913e-7882e20f3bfd', 'Size', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
 
 -- Invoice Form
 ('df0cb109-e34d-498f-ac51-af2139628ac0', 'Order to Purchase ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
-('671c4cb1-75cc-4be4-b87d-ec6e3f8ec90a', 'Purchase Order ID', 'LINK', 2, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
-('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Invoice Received Date', 'DATE', 4, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
-('4c201ab9-92d9-47dd-a661-a7bb2c4e3923', 'Invoice Attachment', 'FILE', 5, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
-('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Invoice Pay by Date', 'DATE', 6, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
-('e18d1ebd-860a-4e46-8c88-15c1e4b9222f', 'Invoice Payable Amount', 'NUMBER', 7, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
-('3368de3f-ff94-4549-bd99-69bb5457ff13', 'CV Attachment', 'FILE', 8, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('2a43aedd-017c-4675-ad4c-00debbac7050', 'Supplier', 'DROPDOWN', 2, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Supplier Invoice', 'FILE', 3, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Request Send Method', 'DROPDOWN', 4, '991d9830-ae1b-4c14-bdba-6167b64f50f7', false, false),
+('4c201ab9-92d9-47dd-a661-a7bb2c4e3923', 'Proof of Sending', 'FILE', 5, '991d9830-ae1b-4c14-bdba-6167b64f50f7', false, false),
+('ba52fb74-5663-41f9-a72b-5dbe0244f317', 'Item', 'DROPDOWN', 6, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
+('273a1161-2a86-4b96-a024-94cf4f6f4cdf', 'Price', 'NUMBER', 7, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
+('5dfbc04b-6f2d-4b55-818c-8f7031cdcdc2', 'Quantity', 'NUMBER', 8, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 
 -- Account Payable Voucher Form
 ('72e63b67-7c13-4961-a277-2c8bcd222f6f', 'Order to Purchase ID', 'LINK', 1, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
-('cec2b402-15d3-48ab-aee3-f28e5ae6b695', 'Purchase Order ID', 'LINK', 2, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
 ('c4ddbd67-73a7-4a86-b374-249dabae692e', 'Invoice ID', 'LINK', 3, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
 
 -- Receiving Inspecting Report Form
 ('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Order to Purchase ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
-('ae1a746d-47c7-4184-a9a2-1c23d0440353', 'Purchase Order ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Invoice ID', 'LINK', 3, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('8bd25524-eea4-4771-bb12-4af7205ea4b9', 'Account Payable Voucher ID', 'LINK', 4, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('b74ff20b-33d5-444f-b39d-07745ba0d332', 'Receiving Status', 'DROPDOWN', 6, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false), 
@@ -175,6 +159,11 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('f97eb24f-53b2-452b-966e-9a2f1dfd812d', 'Cash', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 
+-- Invoice Form
+('345214ae-9523-4f81-b3c1-d118f7735999', 'Email', 1, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
+('3b8437da-7135-4fc5-ae4f-d9e294f096ab', 'Text', 2, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
+('5ca3971c-ab0b-46e0-ad0b-cc48719360d4', 'Other', 3, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
+
 -- Receiving Inspecting Report Form
 ('448d9bb2-f09c-4a9f-9b03-632bc849c3aa', 'Not Received', 1, 'b74ff20b-33d5-444f-b39d-07745ba0d332'),
 ('5376f40c-2dae-400a-9cb5-ed3d0fa003b7', 'Partially Received', 2, 'b74ff20b-33d5-444f-b39d-07745ba0d332'),
@@ -194,7 +183,6 @@ INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, si
 ('b7115738-8089-4e68-ac94-76ce6d0452f5', TRUE, 'Approved', 1, '337658f1-0777-45f2-853f-b6f20551712e', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('7d0781fe-eb57-4225-858d-abb6b93357c7', FALSE, 'Noted', 2, '337658f1-0777-45f2-853f-b6f20551712e', '1e9bb9c7-e4e6-42e4-9377-a33f9b645343'),
 ('37067546-44b2-4bfa-a952-b0332e98298c', TRUE, 'Approved', 1, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
-('50caa3f7-80e5-4cb4-9e52-0f3e8b921c90', TRUE, 'Approved', 1, 'bba77187-c35d-4a6d-bf03-431e2ff2212e', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('8321f613-6362-4d17-b9f2-f439ddd9a8a8', TRUE, 'Approved', 1, 'a732196f-9779-45e2-85fa-7320397e5b0a', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('9fd0abd8-efa8-4598-98d1-b39b0a87faab', TRUE, 'Approved', 1, '6f7b3e6c-002e-4a74-8a67-ea21a11dc178', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('37f8b92c-9e9e-4e97-a6f4-f2f55a7f1a87', TRUE, 'Approved', 1, '5782d70a-5f6b-486c-a77f-401066afd005', 'd9c6c738-8a60-43de-965f-f1f666da1639'),

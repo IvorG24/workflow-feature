@@ -491,7 +491,6 @@ export type RequestByFormType = RequestTableRow & {
 
 export type ConnectedFormsType =
   | "Order to Purchase"
-  | "Purchase Order"
   | "Invoice"
   | "Account Payable Voucher";
 
@@ -549,7 +548,6 @@ export type RequestResponseDataType = {
 };
 export type FormslyFormType = {
   "Order to Purchase": string[];
-  "Purchase Order": string[];
   Invoice: string[];
   "Account Payable Voucher": string[];
   "Receiving Inspecting Report": string[];
@@ -557,7 +555,6 @@ export type FormslyFormType = {
 
 export type FormslyFormKeyType =
   | "Order to Purchase"
-  | "Purchase Order"
   | "Invoice"
   | "Account Payable Voucher"
   | "Receiving Inspecting Report";
@@ -566,3 +563,9 @@ export type RequestSignerListType =
   RequestByFormType["request_signer"][0]["request_signer_signer"] & {
     count: number;
   };
+export type TeamGroupForFormType =
+  | "Order to Purchase"
+  | "Invoice"
+  | "Receiving Inspecting Report"
+  | "Cheque Reference"
+  | "Audit";

@@ -243,7 +243,7 @@ CREATE TABLE project_table(
 
 -- End: Order to Purchase Form
 
--- Start: Purchase Order Form
+-- Start: Invoice Form
 
 CREATE TABLE supplier_table(
   supplier_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -255,7 +255,7 @@ CREATE TABLE supplier_table(
   supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
--- End: Purchase Order Form
+-- End: Invoice Form
 
 ---------- End: TABLES
 

@@ -14,15 +14,33 @@ import {
   ScrollArea,
   Stack,
   Text,
+  createStyles,
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { lowerCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 
+const useStyles = createStyles((theme) => ({
+  notification: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 15,
+    paddingRight: 15,
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[5]
+          : theme.colors.gray[0],
+    },
+  },
+}));
+
 const Notification = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const { classes } = useStyles();
 
   const notificationList = useNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
@@ -30,19 +48,19 @@ const Notification = () => {
 
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
+
   return (
-    <Stack spacing={8} p={8} >
+    <Stack spacing={8} p={8}>
       <Group position="apart">
         <Text weight={600}>Notifications</Text>
       </Group>
 
-      <ScrollArea type="scroll">
-        <Stack p={8} mah={300}>
+      <ScrollArea type="auto" offsetScrollbars scrollbarSize={5}>
+        <Stack mah={300} pr={5} spacing={5}>
           {notificationList.map((notification) => (
             <Stack
-              spacing={0}
               key={notification.notification_id}
-              sx={{ cursor: "pointer" }}
+              className={classes.notification}
               onClick={async () => {
                 if (!notification.notification_is_read) {
                   const newNotifications = notificationList.map((notif) => {

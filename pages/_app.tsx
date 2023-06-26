@@ -64,7 +64,11 @@ export default function App(
             initialSession={pageProps.initialSession}
           >
             <Layout>
-              <LoadingOverlay visible={isLoading} overlayBlur={2} />
+              <LoadingOverlay
+                visible={isLoading}
+                overlayBlur={2}
+                sx={{ position: "fixed" }}
+              />
               <Component {...pageProps} />
             </Layout>
           </SessionContextProvider>
