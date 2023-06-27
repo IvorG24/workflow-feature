@@ -321,12 +321,12 @@ const RequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
-          <Group>
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-            />
+        <Group>
+          <ExportToPdf
+            request={request}
+            sectionWithDuplicateList={sectionWithDuplicateList}
+          />
+          {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
             <Button onClick={handleRedirectToConnectedRequest}>
               Create{" "}
               {
@@ -335,8 +335,8 @@ const RequestPage = ({
                 ]
               }
             </Button>
-          </Group>
-        ) : null}
+          ) : null}
+        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <Stack spacing="xl" ref={pageContentRef}>

@@ -11,6 +11,7 @@ import {
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { v4 as uuidv4 } from "uuid";
 
 // Get file url
 export async function getFileUrl(
@@ -1291,7 +1292,7 @@ export const getFormslyForwardLinkFormId = async (
   return requestList;
 };
 
-// Get item repone of an otp request
+// Get item response of an otp request
 export const getItemResponse = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
@@ -1305,8 +1306,9 @@ export const getItemResponse = async (
         "*, request_response_field: request_response_field_id(field_name, field_order)"
       )
       .eq("request_response_request_id", requestId);
+
   if (requestResponseError) throw requestResponseError;
-  const formattedRequestReponseData =
+  const formattedRequestResponseData =
     requestResponseData as unknown as (RequestResponseTableRow & {
       request_response_field: { field_name: string; field_order: number };
     })[];
@@ -1317,29 +1319,33 @@ export const getItemResponse = async (
       name: string;
       description: string;
       quantity: number;
+      unit: string;
     }
   > = {};
-
-  formattedRequestReponseData.forEach((response) => {
+  const idForNullDuplicationId = uuidv4();
+  formattedRequestResponseData.forEach((response) => {
     if (response.request_response_field) {
       const fieldName = response.request_response_field.field_name;
       const duplicatableSectionId =
-        response.request_response_duplicatable_section_id;
+        response.request_response_duplicatable_section_id ??
+        idForNullDuplicationId;
 
-      if (
-        duplicatableSectionId &&
-        response.request_response_field.field_order > 3
-      ) {
+      if (response.request_response_field.field_order > 3) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
             name: "",
             description: "",
             quantity: 0,
+            unit: "",
           };
         }
 
         if (fieldName === "General Name") {
           options[duplicatableSectionId].name = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Unit") {
+          options[duplicatableSectionId].unit = JSON.parse(
             response.request_response
           );
         } else if (fieldName === "Quantity") {

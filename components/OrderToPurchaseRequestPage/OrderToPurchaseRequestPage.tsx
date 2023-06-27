@@ -186,13 +186,15 @@ const OrderToPurchaseRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {requestStatus === "APPROVED" &&
-        teamMember?.team_member_group_list.includes("Accounting Processor") ? (
-          <Group>
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-            />
+        <Group>
+          <ExportToPdf
+            request={request}
+            sectionWithDuplicateList={sectionWithDuplicateList}
+          />
+          {requestStatus === "APPROVED" &&
+          teamMember?.team_member_group_list.includes(
+            "Accounting Processor"
+          ) ? (
             <Button
               onClick={() =>
                 router.push(
@@ -202,8 +204,8 @@ const OrderToPurchaseRequestPage = ({
             >
               Create Quotation
             </Button>
-          </Group>
-        ) : null}
+          ) : null}
+        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection

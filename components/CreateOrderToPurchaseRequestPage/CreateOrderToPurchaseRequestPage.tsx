@@ -211,13 +211,16 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
       const generalField = [
         {
           ...newSection.section_field[0],
-          field_description: item.item_unit,
         },
         {
           ...newSection.section_field[1],
+          field_response: item.item_unit,
+        },
+        {
+          ...newSection.section_field[2],
         },
       ];
-      const duplicatableSectionId = uuidv4();
+      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
       const newFields = item.item_description.map((description) => {
         const options = description.item_description_field.map(
@@ -249,6 +252,10 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
           },
           {
             ...generalField[1],
+            field_section_duplicatable_id: duplicatableSectionId,
+          },
+          {
+            ...generalField[2],
             field_section_duplicatable_id: duplicatableSectionId,
           },
           ...newFields,

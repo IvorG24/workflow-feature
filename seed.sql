@@ -20,7 +20,7 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden) VALUES
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
-('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
+('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('6f7b3e6c-002e-4a74-8a67-ea21a11dc178', 'Account Payable Voucher', 'formsly premade Account Payable Voucher form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'formsly premade Receiving Inspecting Report form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
@@ -92,14 +92,15 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
 ('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 4, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('59a6093c-5733-44c0-8a99-e12011207ff8', 'Length', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d527a714-a49a-4162-a851-f73553f6bea1', 'Width', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('743ac520-e8a8-4801-a89b-abe4d666ff68', 'Height', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84b92308-11bf-47b4-b006-00894ea3640d', 'Type', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('2d0a3a6c-107d-4f86-bf3d-87a98607f832', 'Brand', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('ed1f9bbd-deab-4576-b83d-965b16b98522', 'Material', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84e06984-45eb-4947-913e-7882e20f3bfd', 'Size', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit', 'TEXT', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('59a6093c-5733-44c0-8a99-e12011207ff8', 'Length', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d527a714-a49a-4162-a851-f73553f6bea1', 'Width', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('743ac520-e8a8-4801-a89b-abe4d666ff68', 'Height', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('84b92308-11bf-47b4-b006-00894ea3640d', 'Type', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('2d0a3a6c-107d-4f86-bf3d-87a98607f832', 'Brand', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('ed1f9bbd-deab-4576-b83d-965b16b98522', 'Material', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('84e06984-45eb-4947-913e-7882e20f3bfd', 'Size', 'DROPDOWN', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
 
 -- Quotation Form
 ('df0cb109-e34d-498f-ac51-af2139628ac0', 'Order to Purchase ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
@@ -282,7 +283,7 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 
 INSERT INTO item_table (item_id, item_general_name, item_unit, item_team_id) VALUES 
 ('5bc0f573-9c7f-4053-a387-21e744399b0c', 'Wood', 'piece', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('64de1a67-18dd-4010-ac2a-326aa7178908', 'Gasoline', 'liter', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('64de1a67-18dd-4010-ac2a-326aa7178908', 'Gasoline', 'litre', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('bf56098b-3869-4c28-a1e8-896c82b9386e', 'Nail', 'bag', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
@@ -295,21 +296,21 @@ INSERT INTO item_description_table(item_description_id, item_description_label, 
 ('0554d368-42e8-4b3b-a5d0-8fc68a7129ec', 'Size', 'bf56098b-3869-4c28-a1e8-896c82b9386e', '84e06984-45eb-4947-913e-7882e20f3bfd');
 
 INSERT INTO item_description_field_table (item_description_field_id, item_description_field_value, item_description_field_item_description_id) VALUES 
-('f55f7011-16b4-4d68-913d-26b982851b78', '1', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('d943db75-d8cf-413e-b9c3-c5b499a73640', '2', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('4b6ce9ff-361c-4c81-977d-6aba7fa6382e', '3', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('44da0631-b20b-4887-85e7-2d979f840f04', '4', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('8331b319-569f-4613-b62a-338cc2d8359d', '1', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
-('a80b02c8-3068-40be-8a82-444a82e7f63f', '2', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
-('a1f5ae8e-71e9-43ed-8a4e-575614a0d5bc', '3', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
-('779a3de2-7cc0-4214-8b81-8ad82185cb94', '1', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
-('83d756f9-7238-4e0c-81e1-b284ffb4b7f2', '2', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
+('f55f7011-16b4-4d68-913d-26b982851b78', '1 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+('d943db75-d8cf-413e-b9c3-c5b499a73640', '2 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+('4b6ce9ff-361c-4c81-977d-6aba7fa6382e', '3 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+('44da0631-b20b-4887-85e7-2d979f840f04', '4 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+('8331b319-569f-4613-b62a-338cc2d8359d', '1 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
+('a80b02c8-3068-40be-8a82-444a82e7f63f', '2 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
+('a1f5ae8e-71e9-43ed-8a4e-575614a0d5bc', '3 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
+('779a3de2-7cc0-4214-8b81-8ad82185cb94', '1 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
+('83d756f9-7238-4e0c-81e1-b284ffb4b7f2', '2 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
 ('13a12596-3161-4893-a3fe-07ea73fbeffd', 'Unleaded',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
 ('f1a11c5a-915b-4eff-a4d2-f36683998b2f', 'Shell',  'f63b2370-0174-4a89-a047-a2680717d91a'),
 ('b113659c-8ae7-4650-8b19-1d88e2d76c37', 'Diesel',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
 ('ed3fe8d0-a9c5-4e67-a9da-2d8617a8a550', 'Petron',  'f63b2370-0174-4a89-a047-a2680717d91a'),
 ('0055da68-32c8-40f9-ad6e-d7be663dad70', 'Metal', '0e5e970a-63aa-4b88-902a-e410a3611015'),
-('1fc0f954-bd1a-46e8-905b-6a9c367a6cc0', '5', '0554d368-42e8-4b3b-a5d0-8fc68a7129ec');
+('1fc0f954-bd1a-46e8-905b-6a9c367a6cc0', '5 inch', '0554d368-42e8-4b3b-a5d0-8fc68a7129ec');
 
 INSERT INTO project_table (project_id, project_name, project_team_id) VALUES
 ('5918cc87-8f77-4b90-8db1-30705318d0ba', 'Philip Morris', 'a5a28977-6956-45c1-a624-b9e90911502e'),

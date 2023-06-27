@@ -208,6 +208,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   const renderOtp = () => {
     return data.map((request) => {
       const itemName: string[] = [];
+      const itemUnit: string[] = [];
       const itemQuantity: string[] = [];
       const itemDescription: string[] = [];
       const items = request.otp_request_response.slice(
@@ -223,6 +224,8 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               itemDescription.length - 2
             ].slice(0, -2);
           }
+        } else if (item.request_response_field_name === "Unit") {
+          itemUnit.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           itemQuantity.push(JSON.parse(item.request_response));
         } else {
@@ -264,6 +267,15 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           <td>
             <List sx={{ listStyle: "none" }}>
               {itemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }}>
+              {itemUnit.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
                 </List.Item>
@@ -324,6 +336,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                 <th style={{ minWidth: 100 }}>Date Needed</th>
                 <th>Item Name</th>
                 <th>Quantity</th>
+                <th>Unit</th>
                 <th style={{ minWidth: 400 }}>Description</th>
                 <th>Quotation</th>
               </tr>

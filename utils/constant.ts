@@ -143,9 +143,17 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
+          field_name: "Unit",
+          field_type: "TEXT",
+          field_order: 5,
+          field_section_id: otpItemSectionId,
+          field_is_required: true,
+          field_is_read_only: true,
+        },
+        {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 5,
+          field_order: 6,
           field_section_id: otpItemSectionId,
           field_is_required: true,
           field_is_read_only: false,

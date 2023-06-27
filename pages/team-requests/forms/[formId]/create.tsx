@@ -128,7 +128,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               option_field_id: form.form_section[2].section_field[0].field_id,
               option_id: item,
               option_order: index,
-              option_value: `${items[item].name} (${items[item].quantity}) (${items[item].description})`,
+              option_value: `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`,
             };
           });
 
@@ -249,7 +249,7 @@ const Page = ({ form, itemOptions }: Props) => {
                 {
                   ...form.form_section[1],
                   section_field: [
-                    ...form.form_section[1].section_field.slice(0, 2),
+                    ...form.form_section[1].section_field.slice(0, 3),
                   ],
                 },
               ],
