@@ -19,6 +19,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
+import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -26,11 +27,10 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
+import { startCase } from "lodash";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import DeleteFormModal from "./DeleteFormModal";
 import FormCard from "./FormCard";
-import ToggleHideFormModal from "./ToggleHideFormModal";
 
 type Props = {
   formList: FormWithOwnerType[];
@@ -63,11 +63,6 @@ const RequestFormListPage = ({
   const [formListCount, setFormListCount] = useState(initialFormListCount);
   const [isFetchingFormList, setIsFetchingFormList] = useState(false);
   const [activePage, setActivePage] = useState(1);
-  const [isDeletingForm, setIsDeletingForm] = useState(false);
-  const [isHidingForm, setIsHidingForm] = useState(false);
-  const [selectedForm, setSelectedForm] = useState<FormWithOwnerType | null>(
-    null
-  );
   const [formFilterValues, setFormFilterValues] = useState<FormFilterValues>({
     creatorFilter: [],
   });
@@ -304,13 +299,53 @@ const RequestFormListPage = ({
               <FormCard
                 form={form}
                 onDeleteForm={() => {
-                  setSelectedForm(form);
-                  setIsDeletingForm(true);
+                  openConfirmModal({
+                    title: <Text>Delete Form</Text>,
+                    children: (
+                      <Text size={14}>
+                        Are you sure you want to delete
+                        <Text weight={700} span>
+                          &nbsp;
+                          {startCase(form.form_name)}
+                        </Text>
+                        ?
+                      </Text>
+                    ),
+                    labels: { confirm: "Delete", cancel: "Cancel" },
+                    centered: true,
+                    confirmProps: { color: "red" },
+                    onConfirm: () => handleDeleteForm(form.form_id),
+                  });
                 }}
-                onHideForm={async () => {
-                  setSelectedForm(form);
-                  setIsHidingForm(true);
-                }}
+                onHideForm={() =>
+                  openConfirmModal({
+                    title: <Text>Form Visibility</Text>,
+                    children: (
+                      <Text size={14}>
+                        Are you sure you want to{" "}
+                        {form.form_is_hidden ? "unhide" : "hide"}
+                        <Text weight={700} span>
+                          &nbsp;
+                          {startCase(form.form_name)}
+                        </Text>
+                        ?
+                      </Text>
+                    ),
+                    labels: {
+                      confirm: form.form_is_hidden ? "Unhide" : "Hide",
+                      cancel: "Cancel",
+                    },
+                    centered: true,
+                    confirmProps: {
+                      color: form.form_is_hidden ? "blue" : "orange",
+                    },
+                    onConfirm: () =>
+                      handleUpdateFormVisibility(
+                        form.form_id,
+                        form.form_is_hidden
+                      ),
+                  })
+                }
                 key={form.form_id}
               />
             ))
@@ -333,7 +368,7 @@ const RequestFormListPage = ({
         position="right"
       />
 
-      {selectedForm !== null && (
+      {/* {selectedForm !== null && (
         <>
           <DeleteFormModal
             opened={isDeletingForm}
@@ -357,7 +392,7 @@ const RequestFormListPage = ({
             isHidden={selectedForm?.form_is_hidden}
           />
         </>
-      )}
+      )} */}
     </Container>
   );
 };

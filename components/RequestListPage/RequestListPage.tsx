@@ -8,6 +8,7 @@ import {
 } from "@/utils/types";
 import {
   Box,
+  Button,
   Container,
   Flex,
   Group,
@@ -19,6 +20,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestCard from "./RequestCard/RequestCard";
@@ -30,6 +32,7 @@ export type FilterFormValues = {
   formList: string[];
   status?: FormStatusType[];
   isAscendingSort: boolean;
+  isFormslyTeam: boolean;
 };
 
 type Props = {
@@ -37,6 +40,7 @@ type Props = {
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
+  isFormslyTeam: boolean;
 };
 
 const RequestListPage = ({
@@ -44,7 +48,9 @@ const RequestListPage = ({
   requestListCount: initialRequestListCount,
   teamMemberList,
   formList,
+  isFormslyTeam,
 }: Props) => {
+  const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const [visibleRequestList, setVisibleRequestList] =
@@ -105,11 +111,21 @@ const RequestListPage = ({
 
   return (
     <Container fluid>
-      <Box mb="sm">
-        <Title order={4}>Request List Page</Title>
-        <Text>Manage your team requests here.</Text>
-      </Box>
-      <Group spacing={4}>
+      <Flex align="center" gap="xl">
+        <Box>
+          <Title order={4}>Request List Page</Title>
+          <Text>Manage your team requests here.</Text>
+        </Box>
+        {isFormslyTeam ? (
+          <Button
+            variant="light"
+            onClick={() => router.push("/team-requests/spreadsheet-view")}
+          >
+            SSOT Spreadsheet View
+          </Button>
+        ) : null}
+      </Flex>
+      <Group spacing={4} mt="sm">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <RequestListFilter

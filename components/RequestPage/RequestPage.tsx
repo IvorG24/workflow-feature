@@ -29,7 +29,8 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -73,6 +74,7 @@ const RequestPage = ({
       : true;
 
   const { setIsLoading } = useLoadingActions();
+  const pageContentRef = useRef<HTMLDivElement>(null);
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(
@@ -318,6 +320,10 @@ const RequestPage = ({
         </Title>
         {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
           <Group>
+            <ExportToPdf
+              request={request}
+              sectionWithDuplicateList={sectionWithDuplicateList}
+            />
             <Button onClick={handleRedirectToConnectedRequest}>
               Create{" "}
               {
@@ -329,29 +335,29 @@ const RequestPage = ({
           </Group>
         ) : null}
       </Flex>
-
       <Stack spacing="xl" mt="xl">
-        <RequestDetailsSection
-          request={request}
-          requestor={requestor}
-          requestDateCreated={requestDateCreated}
-          requestStatus={requestStatus as FormStatusType}
-        />
-
-        {connectedRequestIDList ? (
-          <ConnectedRequestSection
-            connectedRequestIDList={connectedRequestIDList}
+        <Stack spacing="xl" ref={pageContentRef}>
+          <RequestDetailsSection
+            request={request}
+            requestor={requestor}
+            requestDateCreated={requestDateCreated}
+            requestStatus={requestStatus as FormStatusType}
           />
-        ) : null}
 
-        {sectionWithDuplicateList.map((section, idx) => (
-          <RequestSection
-            key={section.section_id + idx}
-            section={section}
-            isFormslyForm={isFormslyForm}
-          />
-        ))}
+          {connectedRequestIDList ? (
+            <ConnectedRequestSection
+              connectedRequestIDList={connectedRequestIDList}
+            />
+          ) : null}
 
+          {sectionWithDuplicateList.map((section, idx) => (
+            <RequestSection
+              key={section.section_id + idx}
+              section={section}
+              isFormslyForm={isFormslyForm}
+            />
+          ))}
+        </Stack>
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
         (isUserSigner && requestStatus === "PENDING") ? (
@@ -367,6 +373,7 @@ const RequestPage = ({
         ) : null}
         <RequestSingerSection signerList={signerList} />
       </Stack>
+
       <RequestCommentList
         requestData={{
           requestId: request.request_id,

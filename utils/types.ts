@@ -571,3 +571,39 @@ export type TeamGroupForFormType =
   | "Receiving Inspecting Report"
   | "Cheque Reference"
   | "Audit";
+
+type SSOTRequestOwnerType = {
+  user_first_name: string;
+  user_last_name: string;
+};
+
+type SSOTResponseType = {
+  request_response: string;
+  request_response_field_name: string;
+  request_response_field_type: string;
+};
+
+export type SSOTType = {
+  otp_request_id: string;
+  otp_request_date_created: string;
+  otp_request_owner: SSOTRequestOwnerType;
+  otp_request_response: SSOTResponseType[];
+  otp_invoice_request: {
+    invoice_request_id: string;
+    invoice_request_date_created: string;
+    invoice_request_owner: SSOTRequestOwnerType;
+    invoice_request_response: SSOTResponseType[];
+    invoice_apv_request: {
+      apv_request_id: string;
+      apv_request_date_created: string;
+      apv_request_owner: SSOTRequestOwnerType;
+      apv_request_response: SSOTResponseType[];
+      apv_rir_request: {
+        rir_request_id: string;
+        rir_request_date_created: string;
+        rir_request_owner: SSOTRequestOwnerType;
+        rir_request_response: SSOTResponseType[];
+      }[];
+    }[];
+  }[];
+};
