@@ -66,9 +66,9 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
         ...user,
         request: {
           total: 1,
+          pending: 0,
           approved: 0,
           rejected: 0,
-          pending: 0,
           canceled: 0,
         },
       };

@@ -41,7 +41,7 @@ const generateInitialChartData = () => {
   return initialChartData;
 };
 
-const statusList = ["approved", "rejected", "pending", "canceled"];
+const statusList = ["pending", "approved", "rejected", "canceled"];
 
 const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
   const initialChartData = getStackedBarChartData(
