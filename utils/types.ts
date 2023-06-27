@@ -442,22 +442,17 @@ export type InvitationWithTeam = InvitationTableRow & {
   };
 };
 
-export type ConnectedFormsType =
-  | "Order to Purchase"
-  | "Quotation"
-  | "Account Payable Voucher";
+export type ConnectedFormsType = "Order to Purchase" | "Quotation";
 
 export type FormslyFormType = {
   "Order to Purchase": string[];
   Quotation: string[];
-  "Account Payable Voucher": string[];
   "Receiving Inspecting Report": string[];
 };
 
 export type FormslyFormKeyType =
   | "Order to Purchase"
   | "Quotation"
-  | "Account Payable Voucher"
   | "Receiving Inspecting Report";
 
 export type TeamGroupForFormType =
@@ -488,17 +483,11 @@ export type SSOTType = {
     quotation_request_date_created: string;
     quotation_request_owner: SSOTRequestOwnerType;
     quotation_request_response: SSOTResponseType[];
-    quotation_apv_request: {
-      apv_request_id: string;
-      apv_request_date_created: string;
-      apv_request_owner: SSOTRequestOwnerType;
-      apv_request_response: SSOTResponseType[];
-      apv_rir_request: {
-        rir_request_id: string;
-        rir_request_date_created: string;
-        rir_request_owner: SSOTRequestOwnerType;
-        rir_request_response: SSOTResponseType[];
-      }[];
+    quotation_rir_request: {
+      rir_request_id: string;
+      rir_request_date_created: string;
+      rir_request_owner: SSOTRequestOwnerType;
+      rir_request_response: SSOTResponseType[];
     }[];
   }[];
 };

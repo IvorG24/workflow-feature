@@ -302,16 +302,6 @@ const RequestPage = ({
               .field_response[0].request_response
           )}&quotationId=${request.request_id}`
         );
-      case "Account Payable Voucher":
-        return router.push(
-          `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
-            request.request_form.form_section[0].section_field[0]
-              .field_response[0].request_response
-          )}&quotationId=${JSON.parse(
-            request.request_form.form_section[0].section_field[1]
-              .field_response[0].request_response
-          )}&apvId=${request.request_id}`
-        );
     }
   };
 

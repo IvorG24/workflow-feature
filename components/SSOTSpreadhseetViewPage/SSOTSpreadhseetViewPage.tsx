@@ -29,7 +29,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   const { classes } = useStyles();
 
   const renderRir = (
-    request: SSOTType["otp_quotation_request"][0]["quotation_apv_request"][0]["apv_rir_request"]
+    request: SSOTType["otp_quotation_request"][0]["quotation_rir_request"]
   ) => {
     return request.map((request) => {
       return (
@@ -46,47 +46,6 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           <td>
             {JSON.parse(request.rir_request_response[3].request_response)}
           </td>
-        </tr>
-      );
-    });
-  };
-
-  const renderApv = (
-    request: SSOTType["otp_quotation_request"][0]["quotation_apv_request"]
-  ) => {
-    return request.map((request) => {
-      return (
-        <tr
-          key={request.apv_request_id}
-          className={classes.cell}
-          style={{ borderTop: "solid 1px #DEE2E6" }}
-        >
-          <td>{request.apv_request_id}</td>
-          <td>
-            {new Date(request.apv_request_date_created).toLocaleDateString()}
-          </td>
-          <td>{`${request.apv_request_owner.user_first_name} ${request.apv_request_owner.user_last_name}`}</td>
-          {request.apv_request_response.slice(0, 2).map((response, index) => {
-            return <td key={index}>{JSON.parse(response.request_response)}</td>;
-          })}
-
-          {request.apv_rir_request.length !== 0 ? (
-            <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders>
-                <thead style={{ backgroundColor: "#69DB7C" }}>
-                  <tr>
-                    <th style={{ minWidth: 200 }}>RIR ID</th>
-                    <th style={{ minWidth: 100 }}>Date Created</th>
-                    <th style={{ minWidth: 200 }}>Warehouse Receiver</th>
-                    <th>Receiving Status</th>
-                  </tr>
-                </thead>
-                <tbody style={{ backgroundColor: "#EBFBEE" }}>
-                  {renderRir(request.apv_rir_request)}
-                </tbody>
-              </Table>
-            </td>
-          ) : null}
         </tr>
       );
     });
@@ -181,21 +140,19 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               ))}
             </List>
           </td>
-          {request.quotation_apv_request.length !== 0 ? (
+          {request.quotation_rir_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
               <Table withBorder withColumnBorders>
                 <thead style={{ backgroundColor: "#4DABF7" }}>
                   <tr>
-                    <th style={{ minWidth: 200 }}>APV ID</th>
+                    <th style={{ minWidth: 200 }}>RIR ID</th>
                     <th style={{ minWidth: 100 }}>Date Created</th>
-                    <th>Requestor</th>
-                    <th style={{ minWidth: 200 }}>OTP ID</th>
-                    <th style={{ minWidth: 200 }}>Quotation ID</th>
-                    <th>RIR</th>
+                    <th style={{ minWidth: 200 }}>Warehouse Receiver</th>
+                    <th>Receiving Status</th>
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#E7F5FF" }}>
-                  {renderApv(request.quotation_apv_request)}
+                  {renderRir(request.quotation_rir_request)}
                 </tbody>
               </Table>
             </td>
@@ -306,7 +263,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th style={{ minWidth: 400 }}>Item</th>
                     <th>Price</th>
                     <th>Quantity</th>
-                    <th>APV</th>
+                    <th>RIR</th>
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#F8F0FC" }}>

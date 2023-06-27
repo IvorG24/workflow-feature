@@ -6,7 +6,6 @@ import {
   getItemResponse,
   getUserActiveTeamId,
 } from "@/backend/api/get";
-import CreateAccountPayableVoucherRequestPage from "@/components/CreateAccountPayableVoucherRequestPage/CreateAccountPayableVoucherRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
@@ -162,37 +161,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Account Payable Voucher
-        else if (form.form_name === "Account Payable Voucher ") {
-          const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [
-              `${context.query.otpId}`,
-              `${context.query.quotationId}`,
-            ],
-          });
-
-          if (!isRequestIdValid) {
-            return {
-              redirect: {
-                destination: "/404",
-                permanent: false,
-              },
-            };
-          }
-
-          return {
-            props: {
-              form,
-            },
-          };
-        }
         // Receiving Inspecting Report
         else if (form.form_name === "Receiving Inspecting Report") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
               `${context.query.otpId}`,
               `${context.query.quotationId}`,
-              `${context.query.apvId}`,
             ],
           });
 
@@ -260,8 +234,6 @@ const Page = ({ form, itemOptions }: Props) => {
         return (
           <CreateQuotationRequestPage form={form} itemOptions={itemOptions} />
         );
-      case "Account Payable Voucher":
-        return <CreateAccountPayableVoucherRequestPage form={form} />;
       case "Receiving Inspecting Report":
         return <CreateReceivingInspectingReportPage form={form} />;
       case "Cheque Reference":

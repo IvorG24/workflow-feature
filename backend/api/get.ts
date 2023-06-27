@@ -1260,7 +1260,6 @@ export const getFormslyForwardLinkFormId = async (
   const requestList = {
     "Order to Purchase": [] as string[],
     Quotation: [] as string[],
-    "Account Payable Voucher": [] as string[],
     "Receiving Inspecting Report": [] as string[],
   };
 
@@ -1273,11 +1272,6 @@ export const getFormslyForwardLinkFormId = async (
         break;
       case "Quotation":
         requestList["Quotation"].push(
-          `"${request.request_response_request.request_id}"`
-        );
-        break;
-      case "Account Payable Voucher":
-        requestList["Account Payable Voucher"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;

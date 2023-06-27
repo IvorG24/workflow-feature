@@ -70,10 +70,6 @@ const CreateReceivingInspectingReportPage = ({ form }: Props) => {
       `sections.${0}.section_field.${1}.field_response`,
       router.query.quotationId
     );
-    setValue(
-      `sections.${0}.section_field.${2}.field_response`,
-      router.query.apvId
-    );
   }, [form, replaceSection]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
@@ -121,7 +117,7 @@ const CreateReceivingInspectingReportPage = ({ form }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Account Payable Voucher"
+                    formslyFormName="Receiving Inspecting Report"
                   />
                 </Box>
               );

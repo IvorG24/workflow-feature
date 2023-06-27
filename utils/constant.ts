@@ -12,14 +12,12 @@ export const ROW_PER_PAGE = 10;
 
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
-  "Account Payable Voucher",
   "Receiving Inspecting Report",
 ];
 
 export const FORM_CONNECTION = {
   "Order to Purchase": "Quotation",
-  Quotation: "Account Payable Voucher",
-  "Account Payable Voucher": "Receiving Inspecting Report",
+  Quotation: "Receiving Inspecting Report",
 };
 
 export const GROUP_CONNECTION = {
@@ -65,7 +63,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   // form ids
   const orderToPurchaseFormId = uuidv4();
   const quotationFormId = uuidv4();
-  const accountPayableVoucherFormId = uuidv4();
   const receivingInspectingReportFormId = uuidv4();
   const chequeReferenceFormId = uuidv4();
   const auditFormId = uuidv4();
@@ -76,7 +73,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const quotationIdSectionId = uuidv4();
   const quotationMainSectionId = uuidv4();
   const quotationItemSectionId = uuidv4();
-  const apvIdSectionId = uuidv4();
   const rirIdSectionId = uuidv4();
   const rirMainSectionId = uuidv4();
   const chequeReferenceTreasurySectionId = uuidv4();
@@ -281,44 +277,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
     },
-    accountPayableVoucher: {
-      form: {
-        form_id: accountPayableVoucherFormId,
-        form_name: "Account Payable Voucher",
-        form_description: "formsly premade Account Payable Voucher form",
-        form_app: "REQUEST",
-        form_is_formsly_form: true,
-        form_is_hidden: true,
-        form_team_member_id: teamMemberId,
-      },
-      section: [
-        {
-          section_id: apvIdSectionId,
-          section_name: "ID",
-          section_order: 1,
-          section_is_duplicatable: false,
-          section_form_id: accountPayableVoucherFormId,
-        },
-      ],
-      field: [
-        {
-          field_name: "Order to Purchase ID",
-          field_type: "LINK",
-          field_order: 1,
-          field_section_id: apvIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
-          field_name: "Quotation ID",
-          field_type: "LINK",
-          field_order: 3,
-          field_section_id: apvIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-      ],
-    },
     receivingInspectingReport: {
       form: {
         form_id: receivingInspectingReportFormId,
@@ -358,14 +316,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Quotation ID",
           field_type: "LINK",
           field_order: 3,
-          field_section_id: rirIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
-          field_name: "Account Payable Voucher ID",
-          field_type: "LINK",
-          field_order: 4,
           field_section_id: rirIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -594,7 +544,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const {
     orderToPurchase,
     quotation,
-    accountPayableVoucher,
     receivingInspectingReport,
     chequeReference,
     audit,
@@ -604,7 +553,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     forms: [
       orderToPurchase.form,
       quotation.form,
-      accountPayableVoucher.form,
       receivingInspectingReport.form,
       chequeReference.form,
       audit.form,
@@ -612,7 +560,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     sections: [
       ...orderToPurchase.section,
       ...quotation.section,
-      ...accountPayableVoucher.section,
       ...receivingInspectingReport.section,
       ...chequeReference.section,
       ...audit.section,
@@ -620,7 +567,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     fieldsWithoutId: [
       ...orderToPurchase.field,
       ...quotation.field,
-      ...accountPayableVoucher.field,
       ...receivingInspectingReport.field,
       ...chequeReference.field,
       ...audit.field,
