@@ -1,7 +1,9 @@
+"use client";
+
 import { DuplicateSectionType } from "@/utils/arrayFunctions/arrayFunctions";
 import { RequestWithResponseType } from "@/utils/types";
 import { Button } from "@mantine/core";
-import { usePDF } from "@react-pdf/renderer";
+import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { lowerCase, startCase } from "lodash";
 import moment from "moment";
 import PdfDocument from "./PdfDocument";
@@ -10,6 +12,19 @@ type Props = {
   request: RequestWithResponseType;
   sectionWithDuplicateList: DuplicateSectionType[];
 };
+
+Font.register({
+  family: "Open Sans",
+  fonts: [
+    {
+      src: "https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-regular.ttf",
+    },
+    {
+      src: "https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-600.ttf",
+      fontWeight: 600,
+    },
+  ],
+});
 
 const getReadableDate = (date: string) => {
   const readableDate = new Date(date).toLocaleDateString("en-US", {
@@ -97,14 +112,18 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
   });
 
   return (
-    <Button
-      variant="light"
-      component="a"
-      href={instance.url ? instance.url : "#"}
-      download={pdfFileName}
-    >
-      Export to PDF
-    </Button>
+    <>
+      {!instance.loading ? (
+        <Button
+          variant="light"
+          component="a"
+          href={instance.url ? instance.url : "#"}
+          download={pdfFileName}
+        >
+          Export to PDF
+        </Button>
+      ) : null}
+    </>
   );
 };
 
