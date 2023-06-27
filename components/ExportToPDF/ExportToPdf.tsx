@@ -1,4 +1,4 @@
-import { DuplicateSectionType } from "@/utils/arrayFunctions";
+import { DuplicateSectionType } from "@/utils/arrayFunctions/arrayFunctions";
 import { RequestWithResponseType } from "@/utils/types";
 import { Button } from "@mantine/core";
 import { usePDF } from "@react-pdf/renderer";
