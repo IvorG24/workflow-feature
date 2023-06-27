@@ -165,13 +165,18 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ],
       option: [
         {
-          option_value: "Cash",
+          option_value: "Cash Purchase - Advance Payment",
           option_order: 1,
           option_field_id: otpTypeFieldId,
         },
         {
-          option_value: "Order to Purchase",
+          option_value: "Cash Purchase - Local Purchase",
           option_order: 2,
+          option_field_id: otpTypeFieldId,
+        },
+        {
+          option_value: "Order to Purchase",
+          option_order: 3,
           option_field_id: otpTypeFieldId,
         },
       ],

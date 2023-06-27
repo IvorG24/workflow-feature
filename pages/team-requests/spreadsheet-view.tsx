@@ -57,3 +57,4 @@ const Page = ({ data }: Props) => {
 };
 
 export default Page;
+Page.Layout = "APP";

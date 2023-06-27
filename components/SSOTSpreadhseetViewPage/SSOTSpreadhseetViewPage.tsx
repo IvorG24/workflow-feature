@@ -19,6 +19,36 @@ const useStyles = createStyles(() => ({
   cell: {
     verticalAlign: "top",
   },
+  date: {
+    width: 120,
+    minWidth: 120,
+    maxWidth: 120,
+  },
+  processor: {
+    width: 180,
+    minWidth: 180,
+    maxWidth: 180,
+  },
+  short: {
+    width: 80,
+    minWidth: 80,
+    maxWidth: 80,
+  },
+  normal: {
+    width: 100,
+    minWidth: 100,
+    maxWidth: 100,
+  },
+  long: {
+    width: 200,
+    minWidth: 200,
+    maxWidth: 200,
+  },
+  description: {
+    width: 300,
+    minWidth: 300,
+    maxWidth: 300,
+  },
 }));
 
 type Props = {
@@ -114,7 +144,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               );
             })}
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -123,7 +153,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemPrice.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -132,7 +162,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -142,13 +172,13 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           {request.quotation_rir_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders>
+              <Table withBorder withColumnBorders h="100%">
                 <thead style={{ backgroundColor: "#4DABF7" }}>
                   <tr>
-                    <th style={{ minWidth: 200 }}>RIR ID</th>
-                    <th style={{ minWidth: 100 }}>Date Created</th>
-                    <th style={{ minWidth: 200 }}>Warehouse Receiver</th>
-                    <th>Receiving Status</th>
+                    <th className={classes.long}>RIR ID</th>
+                    <th className={classes.date}>Date Created</th>
+                    <th className={classes.processor}>Warehouse Receiver</th>
+                    <th className={classes.normal}>Receiving Status</th>
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#E7F5FF" }}>
@@ -213,7 +243,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             );
           })}
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -222,7 +252,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -231,7 +261,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemUnit.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -240,7 +270,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemDescription.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -250,19 +280,19 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           {request.otp_quotation_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders>
+              <Table withBorder withColumnBorders h="100%">
                 <thead style={{ backgroundColor: "#E599F7" }}>
                   <tr>
-                    <th style={{ minWidth: 200 }}>Quotation ID</th>
-                    <th style={{ minWidth: 100 }}>Date Created</th>
-                    <th style={{ minWidth: 200 }}>Accounting Processor</th>
-                    <th style={{ minWidth: 300 }}>Supplier</th>
-                    <th>Supplier Quotation</th>
-                    <th>Request Send Method</th>
-                    <th>Proof of Sending</th>
-                    <th style={{ minWidth: 400 }}>Item</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
+                    <th className={classes.long}>Quotation ID</th>
+                    <th className={classes.date}>Date Created</th>
+                    <th className={classes.processor}>Accounting Processor</th>
+                    <th className={classes.long}>Supplier</th>
+                    <th className={classes.normal}>Supplier Quotation</th>
+                    <th className={classes.short}> Send Method</th>
+                    <th className={classes.normal}>Proof of Sending</th>
+                    <th className={classes.description}>Item</th>
+                    <th className={classes.short}>Price</th>
+                    <th className={classes.short}>Quantity</th>
                     <th>RIR</th>
                   </tr>
                 </thead>
@@ -278,32 +308,39 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   };
 
   return (
-    <Box p="xl">
-      <Title>SSOT Spreadsheet View</Title>
-      <ScrollArea type="auto" offsetScrollbars scrollbarSize={5}>
-        <Paper mt="xl">
-          <Table withBorder withColumnBorders>
-            <thead style={{ backgroundColor: "#FFA8A8" }}>
-              <tr>
-                <th style={{ minWidth: 200 }}>OTP ID</th>
-                <th style={{ minWidth: 100 }}>Date Created</th>
-                <th style={{ minWidth: 150 }}>Warehouse Processor</th>
-                <th>Project Name</th>
-                <th>Type</th>
-                <th style={{ minWidth: 100 }}>Date Needed</th>
-                <th>Cost Code</th>
-                <th>Item Name</th>
-                <th>Quantity</th>
-                <th>Unit</th>
-                <th style={{ minWidth: 400 }}>Description</th>
-                <th>Quotation</th>
-              </tr>
-            </thead>
-            <tbody style={{ backgroundColor: "#FFF5F5" }}>{renderOtp()}</tbody>
-          </Table>
-        </Paper>
-      </ScrollArea>
-    </Box>
+    <Flex direction="column" p="xl">
+      <Title order={2} color="dimmed">
+        SSOT Spreadsheet View
+      </Title>
+
+      <Paper mt="xl" p="xl" shadow="sm">
+        <ScrollArea scrollbarSize={10}>
+          <Box mah={710}>
+            <Table withBorder withColumnBorders pos="relative" h="100%">
+              <thead style={{ backgroundColor: "#FFA8A8" }}>
+                <tr>
+                  <th className={classes.long}>OTP ID</th>
+                  <th className={classes.date}>Date Created</th>
+                  <th className={classes.processor}>Warehouse Processor</th>
+                  <th className={classes.long}>Project Name</th>
+                  <th className={classes.normal}>Type</th>
+                  <th className={classes.date}>Date Needed</th>
+                  <th className={classes.normal}>Cost Code</th>
+                  <th className={classes.normal}>Item Name</th>
+                  <th className={classes.short}>Quantity</th>
+                  <th className={classes.short}>Unit</th>
+                  <th className={classes.description}>Description</th>
+                  <th>Quotation</th>
+                </tr>
+              </thead>
+              <tbody style={{ backgroundColor: "#FFF5F5" }}>
+                {renderOtp()}
+              </tbody>
+            </Table>
+          </Box>
+        </ScrollArea>
+      </Paper>
+    </Flex>
   );
 };
 
