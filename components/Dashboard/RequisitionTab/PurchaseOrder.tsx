@@ -157,11 +157,9 @@ const PurchaseOrder = ({
           <Divider my="md" />
           <Text weight={600}>
             Total Order:{" "}
-            {
-              generalNameChartData.find(
-                (name) => name.label === selectedBarChartItem
-              )?.value
-            }
+            {generalNameChartData
+              .find((name) => name.label === selectedBarChartItem)
+              ?.value.toLocaleString()}
           </Text>
           <Group mt="sm">
             <Text>Breakdown:</Text>
@@ -171,12 +169,12 @@ const PurchaseOrder = ({
                 color={getStatusToColor(lowerCase(status))}
               >{`${startCase(lowerCase(status))}: ${getOrderCountByStatus(
                 status
-              )}`}</Badge>
+              ).toLocaleString()}`}</Badge>
             ))}
           </Group>
           <Divider my="md" />
           <Text weight={600}>
-            Total Item Quantity: {getTotalQuantityCount()}
+            Total Item Quantity: {getTotalQuantityCount().toLocaleString()}
           </Text>
           <Group mt="sm">
             <Text>Breakdown:</Text>
@@ -186,7 +184,7 @@ const PurchaseOrder = ({
                 color={getStatusToColor(lowerCase(status))}
               >{`${startCase(lowerCase(status))}: ${getQuantityCountByStatus(
                 status
-              )}`}</Badge>
+              ).toLocaleString()}`}</Badge>
             ))}
           </Group>
         </Paper>
