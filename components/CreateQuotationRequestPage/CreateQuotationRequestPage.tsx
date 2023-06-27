@@ -35,7 +35,7 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateInvoiceRequestPage = ({ form, itemOptions }: Props) => {
+const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -305,9 +305,9 @@ const CreateInvoiceRequestPage = ({ form, itemOptions }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Invoice"
+                    formslyFormName="Quotation"
                     onRemoveSection={handleRemoveSection}
-                    invoiceFormMethods={{ onItemChange: handleItemChange }}
+                    quotationFormMethods={{ onItemChange: handleItemChange }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -334,4 +334,4 @@ const CreateInvoiceRequestPage = ({ form, itemOptions }: Props) => {
   );
 };
 
-export default CreateInvoiceRequestPage;
+export default CreateQuotationRequestPage;

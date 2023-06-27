@@ -200,7 +200,7 @@ const OrderToPurchaseRequestPage = ({
                 )
               }
             >
-              Create Invoice
+              Create Quotation
             </Button>
           </Group>
         ) : null}

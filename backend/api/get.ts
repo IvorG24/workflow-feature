@@ -1258,7 +1258,7 @@ export const getFormslyForwardLinkFormId = async (
 
   const requestList = {
     "Order to Purchase": [] as string[],
-    Invoice: [] as string[],
+    Quotation: [] as string[],
     "Account Payable Voucher": [] as string[],
     "Receiving Inspecting Report": [] as string[],
   };
@@ -1270,8 +1270,8 @@ export const getFormslyForwardLinkFormId = async (
           `"${request.request_response_request.request_id}"`
         );
         break;
-      case "Invoice":
-        requestList["Invoice"].push(
+      case "Quotation":
+        requestList["Quotation"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1357,8 +1357,8 @@ export const getItemResponse = async (
   return options;
 };
 
-// Check if the approving invoice item quantity are less than the otp quantity
-export const checkInvoiceItemQuantity = async (
+// Check if the approving quotation item quantity are less than the otp quantity
+export const checkQuotationItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     otpID: string;
@@ -1385,7 +1385,7 @@ export const checkInvoiceItemQuantity = async (
     .eq("request_response", otpID)
     .eq("request_response_request.request_status", "APPROVED")
     .eq("request_response_request.request_form.form_is_formsly_form", true)
-    .eq("request_response_request.request_form.form_name", "Invoice");
+    .eq("request_response_request.request_form.form_name", "Quotation");
 
   if (requestIdListError) throw requestIdListError;
   const requestIdList = requestIds.map(

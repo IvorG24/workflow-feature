@@ -21,7 +21,7 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
-('a732196f-9779-45e2-85fa-7320397e5b0a', 'Invoice', 'formsly premade Invoice form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
+('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('6f7b3e6c-002e-4a74-8a67-ea21a11dc178', 'Account Payable Voucher', 'formsly premade Account Payable Voucher form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'formsly premade Receiving Inspecting Report form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
 ('913a09d8-88f9-4139-a039-a77394405b62', 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true),
@@ -39,7 +39,7 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 
--- Invoice
+-- Quotation
 ('7d6649c2-316b-4895-86eb-120def2e2f33', 'ID', 1, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 ('991d9830-ae1b-4c14-bdba-6167b64f50f7', 'Main', 2, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 ('ee8a3bc7-4253-44f7-bd7c-53b0e8871601', 'Item', 3, true, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
@@ -101,10 +101,10 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('ed1f9bbd-deab-4576-b83d-965b16b98522', 'Material', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
 ('84e06984-45eb-4947-913e-7882e20f3bfd', 'Size', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
 
--- Invoice Form
+-- Quotation Form
 ('df0cb109-e34d-498f-ac51-af2139628ac0', 'Order to Purchase ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
 ('2a43aedd-017c-4675-ad4c-00debbac7050', 'Supplier', 'DROPDOWN', 2, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
-('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Supplier Invoice', 'FILE', 3, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
+('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Supplier Quotation', 'FILE', 3, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Request Send Method', 'DROPDOWN', 4, '991d9830-ae1b-4c14-bdba-6167b64f50f7', false, false),
 ('4c201ab9-92d9-47dd-a661-a7bb2c4e3923', 'Proof of Sending', 'FILE', 5, '991d9830-ae1b-4c14-bdba-6167b64f50f7', false, false),
 ('ba52fb74-5663-41f9-a72b-5dbe0244f317', 'Item', 'DROPDOWN', 6, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
@@ -113,11 +113,11 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 
 -- Account Payable Voucher Form
 ('72e63b67-7c13-4961-a277-2c8bcd222f6f', 'Order to Purchase ID', 'LINK', 1, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
-('c4ddbd67-73a7-4a86-b374-249dabae692e', 'Invoice ID', 'LINK', 3, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
+('c4ddbd67-73a7-4a86-b374-249dabae692e', 'Quotation ID', 'LINK', 3, '5a936443-46ef-471f-8c87-6bc82b1568c3', true, true),
 
 -- Receiving Inspecting Report Form
 ('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Order to Purchase ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
-('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Invoice ID', 'LINK', 3, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
+('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Quotation ID', 'LINK', 3, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('8bd25524-eea4-4771-bb12-4af7205ea4b9', 'Account Payable Voucher ID', 'LINK', 4, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('b74ff20b-33d5-444f-b39d-07745ba0d332', 'Receiving Status', 'DROPDOWN', 6, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false), 
 
@@ -159,7 +159,7 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('f97eb24f-53b2-452b-966e-9a2f1dfd812d', 'Cash', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 
--- Invoice Form
+-- Quotation Form
 ('345214ae-9523-4f81-b3c1-d118f7735999', 'Email', 1, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
 ('3b8437da-7135-4fc5-ae4f-d9e294f096ab', 'Text', 2, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
 ('5ca3971c-ab0b-46e0-ad0b-cc48719360d4', 'Other', 3, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),

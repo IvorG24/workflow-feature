@@ -243,7 +243,7 @@ CREATE TABLE project_table(
 
 -- End: Order to Purchase Form
 
--- Start: Invoice Form
+-- Start: Quotation Form
 
 CREATE TABLE supplier_table(
   supplier_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -255,7 +255,7 @@ CREATE TABLE supplier_table(
   supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
--- End: Invoice Form
+-- End: Quotation Form
 
 ---------- End: TABLES
 
@@ -287,7 +287,7 @@ RETURNS JSON as $$
 
     // Fetch team formsly forms
     const otp_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Order to Purchase' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const invoice_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Invoice' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const apv_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Account Payable Voucher' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
@@ -309,22 +309,22 @@ RETURNS JSON as $$
       // OTP team member
       const otp_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${otp.request_team_member_id}'`)[0];
 
-      const invoice_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${invoice_form.form_id}'`);
-      let invoice_list = [];
+      const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
+      let quotation_list = [];
 
-      if(invoice_ids.length !== 0){
-        let invoice_condition = "";
-        invoice_ids.forEach(invoice => {
-          invoice_condition += `request_id='${invoice.request_id}' OR `;
+      if(quotation_ids.length !== 0){
+        let quotation_condition = "";
+        quotation_ids.forEach(quotation => {
+          quotation_condition += `request_id='${quotation.request_id}' OR `;
         });
 
-        const invoice_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${invoice_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
-        invoice_list = invoice_requests.map(invoice => {
-          // Invoice request response
-          const invoice_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${invoice.request_id}'`);
+        const quotation_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        quotation_list = quotation_requests.map(quotation => {
+          // Quotation request response
+          const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
           
-          // Invoice request respone with fields
-          const invoice_response_fields = invoice_response.map(response => {
+          // Quotation request respone with fields
+          const quotation_response_fields = quotation_response.map(response => {
             const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
             return {
               request_response: response.request_response,
@@ -333,11 +333,11 @@ RETURNS JSON as $$
             }
           });
 
-          // Invoice team member
-          const invoice_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${invoice.request_team_member_id}'`)[0];
+          // Quotation team member
+          const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
 
-          const apv_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${invoice.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${apv_form.form_id}'`);
+          const apv_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${apv_form.form_id}'`);
           let apv_list = [];
           
           if(apv_ids.length !== 0){
@@ -411,11 +411,11 @@ RETURNS JSON as $$
           }
 
           return {
-            invoice_request_id: invoice.request_id,
-            invoice_request_date_created: invoice.request_date_created,
-            invoice_request_response: invoice_response_fields,
-            invoice_request_owner: invoice_team_member,
-            invoice_apv_request: apv_list
+            quotation_request_id: quotation.request_id,
+            quotation_request_date_created: quotation.request_date_created,
+            quotation_request_response: quotation_response_fields,
+            quotation_request_owner: quotation_team_member,
+            quotation_apv_request: apv_list
           }
         });
       }
@@ -425,7 +425,7 @@ RETURNS JSON as $$
         otp_request_date_created: otp.request_date_created,
         otp_request_response: otp_response_fields,
         otp_request_owner: otp_team_member,
-        otp_invoice_request: invoice_list
+        otp_quotation_request: quotation_list
       }
     })
  });

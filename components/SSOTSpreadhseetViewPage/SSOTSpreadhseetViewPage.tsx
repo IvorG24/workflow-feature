@@ -29,7 +29,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   const { classes } = useStyles();
 
   const renderRir = (
-    request: SSOTType["otp_invoice_request"][0]["invoice_apv_request"][0]["apv_rir_request"]
+    request: SSOTType["otp_quotation_request"][0]["quotation_apv_request"][0]["apv_rir_request"]
   ) => {
     return request.map((request) => {
       return (
@@ -52,7 +52,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   };
 
   const renderApv = (
-    request: SSOTType["otp_invoice_request"][0]["invoice_apv_request"]
+    request: SSOTType["otp_quotation_request"][0]["quotation_apv_request"]
   ) => {
     return request.map((request) => {
       return (
@@ -92,14 +92,14 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
     });
   };
 
-  const renderInvoice = (request: SSOTType["otp_invoice_request"]) => {
+  const renderQuotation = (request: SSOTType["otp_quotation_request"]) => {
     return request.map((request) => {
       const itemName: string[] = [];
       const itemPrice: string[] = [];
       const itemQuantity: string[] = [];
-      const items = request.invoice_request_response.slice(
+      const items = request.quotation_request_response.slice(
         3,
-        request.invoice_request_response.length
+        request.quotation_request_response.length
       );
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -113,18 +113,18 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
 
       return (
         <tr
-          key={request.invoice_request_id}
+          key={request.quotation_request_id}
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.invoice_request_id}</td>
+          <td>{request.quotation_request_id}</td>
           <td>
             {new Date(
-              request.invoice_request_date_created
+              request.quotation_request_date_created
             ).toLocaleDateString()}
           </td>
-          <td>{`${request.invoice_request_owner.user_first_name} ${request.invoice_request_owner.user_last_name}`}</td>
-          {request.invoice_request_response
+          <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
+          {request.quotation_request_response
             .slice(1, 5)
             .map((response, index) => {
               return (
@@ -181,7 +181,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               ))}
             </List>
           </td>
-          {request.invoice_apv_request.length !== 0 ? (
+          {request.quotation_apv_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
               <Table withBorder withColumnBorders>
                 <thead style={{ backgroundColor: "#4DABF7" }}>
@@ -190,12 +190,12 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th style={{ minWidth: 100 }}>Date Created</th>
                     <th>Requestor</th>
                     <th style={{ minWidth: 200 }}>OTP ID</th>
-                    <th style={{ minWidth: 200 }}>Invoice ID</th>
+                    <th style={{ minWidth: 200 }}>Quotation ID</th>
                     <th>RIR</th>
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#E7F5FF" }}>
-                  {renderApv(request.invoice_apv_request)}
+                  {renderApv(request.quotation_apv_request)}
                 </tbody>
               </Table>
             </td>
@@ -279,16 +279,16 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               ))}
             </List>
           </td>
-          {request.otp_invoice_request.length !== 0 ? (
+          {request.otp_quotation_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
               <Table withBorder withColumnBorders>
                 <thead style={{ backgroundColor: "#E599F7" }}>
                   <tr>
-                    <th style={{ minWidth: 200 }}>Invoice ID</th>
+                    <th style={{ minWidth: 200 }}>Quotation ID</th>
                     <th style={{ minWidth: 100 }}>Date Created</th>
                     <th style={{ minWidth: 200 }}>Accounting Processor</th>
                     <th style={{ minWidth: 300 }}>Supplier</th>
-                    <th>Supplier Invoice</th>
+                    <th>Supplier Quotation</th>
                     <th>Request Send Method</th>
                     <th>Proof of Sending</th>
                     <th style={{ minWidth: 400 }}>Item</th>
@@ -298,7 +298,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#F8F0FC" }}>
-                  {renderInvoice(request.otp_invoice_request)}
+                  {renderQuotation(request.otp_quotation_request)}
                 </tbody>
               </Table>
             </td>
@@ -325,7 +325,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                 <th>Item Name</th>
                 <th>Quantity</th>
                 <th style={{ minWidth: 400 }}>Description</th>
-                <th>Invoice</th>
+                <th>Quotation</th>
               </tr>
             </thead>
             <tbody style={{ backgroundColor: "#FFF5F5" }}>{renderOtp()}</tbody>

@@ -32,7 +32,7 @@ type RequestFormFieldsProps = {
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
-  invoiceFormMethods?: {
+  quotationFormMethods?: {
     onItemChange: (
       index: number,
       value: string | null,
@@ -47,7 +47,7 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   orderToPurchaseFormMethods,
-  invoiceFormMethods,
+  quotationFormMethods,
   formslyFormName = "",
 }: RequestFormFieldsProps) => {
   const {
@@ -205,7 +205,7 @@ const RequestFormFields = ({
                       value
                     );
                   if (field.field_name === "Item")
-                    invoiceFormMethods?.onItemChange(
+                    quotationFormMethods?.onItemChange(
                       sectionIndex,
                       value,
                       prevValue === null ? null : `${prevValue}`
@@ -348,7 +348,9 @@ const RequestFormFields = ({
                 onChange={field.onChange}
                 error={fieldError}
                 accept={
-                  formslyFormName === "Invoice" ? "application/pdf" : undefined
+                  formslyFormName === "Quotation"
+                    ? "application/pdf"
+                    : undefined
                 }
               />
             )}

@@ -1,5 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { checkInvoiceItemQuantity } from "@/backend/api/get";
+import { checkQuotationItemQuantity } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -122,7 +122,7 @@ const RequestPage = ({
 
       if (
         request.request_form.form_is_formsly_form &&
-        request.request_form.form_name === "Invoice" &&
+        request.request_form.form_name === "Quotation" &&
         status === "APPROVED"
       ) {
         const otpID =
@@ -130,13 +130,16 @@ const RequestPage = ({
             .field_response[0].request_response;
         const itemSection = request.request_form.form_section[2];
 
-        const warningItemList = await checkInvoiceItemQuantity(supabaseClient, {
-          otpID,
-          itemFieldId: itemSection.section_field[0].field_id,
-          quantityFieldId: itemSection.section_field[2].field_id,
-          itemFieldList: itemSection.section_field[0].field_response,
-          quantityFieldList: itemSection.section_field[2].field_response,
-        });
+        const warningItemList = await checkQuotationItemQuantity(
+          supabaseClient,
+          {
+            otpID,
+            itemFieldId: itemSection.section_field[0].field_id,
+            quantityFieldId: itemSection.section_field[2].field_id,
+            itemFieldList: itemSection.section_field[0].field_response,
+            quantityFieldList: itemSection.section_field[2].field_response,
+          }
+        );
 
         if (warningItemList.length !== 0) {
           setIsLoading(false);
@@ -292,19 +295,19 @@ const RequestPage = ({
         return router.push(
           `/team-requests/forms/${connectedFormID}/create?otpId=${request.request_id}`
         );
-      case "Invoice":
+      case "Quotation":
         return router.push(
           `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response
-          )}&invoiceId=${request.request_id}`
+          )}&quotationId=${request.request_id}`
         );
       case "Account Payable Voucher":
         return router.push(
           `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response
-          )}&invoiceId=${JSON.parse(
+          )}&quotationId=${JSON.parse(
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response
           )}&apvId=${request.request_id}`

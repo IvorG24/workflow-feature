@@ -7,8 +7,8 @@ import {
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import CreateAccountPayableVoucherRequestPage from "@/components/CreateAccountPayableVoucherRequestPage/CreateAccountPayableVoucherRequestPage";
-import CreateInvoiceRequestPage from "@/components/CreateInvoiceRequestPage/CreateInvoiceRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
+import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
@@ -88,8 +88,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Invoice
-        else if (form.form_name === "Invoice") {
+        // Quotation
+        else if (form.form_name === "Quotation") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.otpId}`],
           });
@@ -165,7 +165,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         // Account Payable Voucher
         else if (form.form_name === "Account Payable Voucher ") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.otpId}`, `${context.query.invoiceId}`],
+            requestId: [
+              `${context.query.otpId}`,
+              `${context.query.quotationId}`,
+            ],
           });
 
           if (!isRequestIdValid) {
@@ -188,7 +191,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
               `${context.query.otpId}`,
-              `${context.query.invoiceId}`,
+              `${context.query.quotationId}`,
               `${context.query.apvId}`,
             ],
           });
@@ -253,9 +256,9 @@ const Page = ({ form, itemOptions }: Props) => {
             }}
           />
         );
-      case "Invoice":
+      case "Quotation":
         return (
-          <CreateInvoiceRequestPage form={form} itemOptions={itemOptions} />
+          <CreateQuotationRequestPage form={form} itemOptions={itemOptions} />
         );
       case "Account Payable Voucher":
         return <CreateAccountPayableVoucherRequestPage form={form} />;

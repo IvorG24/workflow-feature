@@ -5,9 +5,9 @@ import {
   getTeamAdminList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
-import InvoiceFormPage from "@/components/InvoiceFormPage/InvoiceFormPage";
 import Meta from "@/components/Meta/Meta";
 import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
+import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrAdmin } from "@/utils/server-side-protections";
@@ -67,7 +67,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               projectListCount,
             },
           };
-        } else if (form.form_name === "Invoice") {
+        } else if (form.form_name === "Quotation") {
           const { data: suppliers, count: supplierListCount } =
             await getNameList(supabaseClient, {
               table: "supplier",
@@ -134,9 +134,9 @@ const Page = ({
             form={form}
           />
         );
-      case "Invoice":
+      case "Quotation":
         return (
-          <InvoiceFormPage
+          <QuotationFormPage
             teamMemberList={teamMemberList}
             form={form}
             suppliers={suppliers}

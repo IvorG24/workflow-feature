@@ -444,25 +444,25 @@ export type InvitationWithTeam = InvitationTableRow & {
 
 export type ConnectedFormsType =
   | "Order to Purchase"
-  | "Invoice"
+  | "Quotation"
   | "Account Payable Voucher";
 
 export type FormslyFormType = {
   "Order to Purchase": string[];
-  Invoice: string[];
+  Quotation: string[];
   "Account Payable Voucher": string[];
   "Receiving Inspecting Report": string[];
 };
 
 export type FormslyFormKeyType =
   | "Order to Purchase"
-  | "Invoice"
+  | "Quotation"
   | "Account Payable Voucher"
   | "Receiving Inspecting Report";
 
 export type TeamGroupForFormType =
   | "Order to Purchase"
-  | "Invoice"
+  | "Quotation"
   | "Receiving Inspecting Report"
   | "Cheque Reference"
   | "Audit";
@@ -483,12 +483,12 @@ export type SSOTType = {
   otp_request_date_created: string;
   otp_request_owner: SSOTRequestOwnerType;
   otp_request_response: SSOTResponseType[];
-  otp_invoice_request: {
-    invoice_request_id: string;
-    invoice_request_date_created: string;
-    invoice_request_owner: SSOTRequestOwnerType;
-    invoice_request_response: SSOTResponseType[];
-    invoice_apv_request: {
+  otp_quotation_request: {
+    quotation_request_id: string;
+    quotation_request_date_created: string;
+    quotation_request_owner: SSOTRequestOwnerType;
+    quotation_request_response: SSOTResponseType[];
+    quotation_apv_request: {
       apv_request_id: string;
       apv_request_date_created: string;
       apv_request_owner: SSOTRequestOwnerType;
