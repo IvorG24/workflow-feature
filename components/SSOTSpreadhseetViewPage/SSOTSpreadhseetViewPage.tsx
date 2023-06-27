@@ -44,7 +44,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
           <td>
-            {JSON.parse(request.rir_request_response[3].request_response)}
+            {JSON.parse(request.rir_request_response[2].request_response)}
           </td>
         </tr>
       );
@@ -201,7 +201,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             {new Date(request.otp_request_date_created).toLocaleDateString()}
           </td>
           <td>{`${request.otp_request_owner.user_first_name} ${request.otp_request_owner.user_last_name}`}</td>
-          {request.otp_request_response.slice(0, 3).map((response, index) => {
+          {request.otp_request_response.slice(0, 4).map((response, index) => {
             return (
               <td key={index}>
                 {response.request_response_field_type === "DATE"
@@ -291,6 +291,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                 <th>Project Name</th>
                 <th>Type</th>
                 <th style={{ minWidth: 100 }}>Date Needed</th>
+                <th>Cost Code</th>
                 <th>Item Name</th>
                 <th>Quantity</th>
                 <th>Unit</th>

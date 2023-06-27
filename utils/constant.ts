@@ -131,9 +131,17 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
+          field_name: "Cost Code",
+          field_type: "TEXT",
+          field_order: 4,
+          field_section_id: otpMainSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
           field_name: "General Name",
           field_type: "DROPDOWN",
-          field_order: 4,
+          field_order: 5,
           field_section_id: otpItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -141,7 +149,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Unit",
           field_type: "TEXT",
-          field_order: 5,
+          field_order: 6,
           field_section_id: otpItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -149,7 +157,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 6,
+          field_order: 7,
           field_section_id: otpItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
