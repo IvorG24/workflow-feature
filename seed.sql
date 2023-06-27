@@ -1,21 +1,21 @@
 INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name, user_email, user_job_title, user_phone_number, user_active_team_id) VALUES
-('9355b5db-cb06-4a31-ab00-d2420ff53a80', 'johndoe', 'John', 'Doe', 'johndoe@gmail.com', 'Graphic Designer', '9586325781', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('30edd2d7-875a-4be3-9d5e-e295f8d7f95a', 'janedoe', 'Jane', 'Doe', 'janedoe@gmail.com', 'Sales Management', '9563268975', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('d0247fec-7959-45be-9303-92fe020bb2c2', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '9571523487', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
+('20ce163c-be18-49fa-a8e1-abf26c3a8a04', 'johndoe', 'John', 'Doe', 'johndoe@gmail.com', 'Graphic Designer', '9586325781', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('63e913eb-746e-4eb9-a1b2-4b3c88df0659', 'janedoe', 'Jane', 'Doe', 'janedoe@gmail.com', 'Sales Management', '9563268975', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('f5ee3322-46a1-48ea-a40f-9244ab198f18', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '9571523487', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('657b418b-fd23-4fac-ba35-7b485eb62b99', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list) VALUES
-('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
-('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
-('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);
+('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[]),
+('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[]);
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list) VALUES
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
-('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '30edd2d7-875a-4be3-9d5e-e295f8d7f95a', ARRAY[]::VARCHAR[]),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'd0247fec-7959-45be-9303-92fe020bb2c2', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
-('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '10dc885f-f37e-4349-9d25-7b0eb4dc0dc9', ARRAY[]::VARCHAR[]),
-('ccff17b4-66bf-4c0f-bc02-35750403cecf', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]),
-('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '9355b5db-cb06-4a31-ab00-d2420ff53a80', ARRAY[]::VARCHAR[]);
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '63e913eb-746e-4eb9-a1b2-4b3c88df0659', ARRAY[]::VARCHAR[]),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'f5ee3322-46a1-48ea-a40f-9244ab198f18', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '657b418b-fd23-4fac-ba35-7b485eb62b99', ARRAY[]::VARCHAR[]),
+('ccff17b4-66bf-4c0f-bc02-35750403cecf', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[]),
+('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[]);
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden) VALUES
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false),
@@ -274,11 +274,11 @@ INSERT INTO invitation_table (invitation_id, invitation_to_email, invitation_fro
 ('80176876-068c-4b7f-b143-e41f78fd16c9', 'dolorsit@gmail.com', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b');
 
 INSERT INTO notification_table (notification_id, notification_content, notification_is_read, notification_redirect_url, notification_type, notification_app, notification_team_id, notification_user_id) VALUES
-('9aeefd48-41b1-4eb3-aeec-8858cec974a5', 'Test notification invite', TRUE, '/', 'INVITE', 'GENERAL', NULL, '30edd2d7-875a-4be3-9d5e-e295f8d7f95a'),
-('08df0d02-13e0-49f2-9bae-9ca9d6b25161', 'Test notification request', TRUE, '/', 'REQUEST', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80'),
-('f5caeebf-8158-450a-88da-d7a098155a14', 'Test notification approve', TRUE, '/', 'APPROVE', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80'),
-('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80'),
-('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '9355b5db-cb06-4a31-ab00-d2420ff53a80');
+('9aeefd48-41b1-4eb3-aeec-8858cec974a5', 'Test notification invite', TRUE, '/', 'INVITE', 'GENERAL', NULL, '63e913eb-746e-4eb9-a1b2-4b3c88df0659'),
+('08df0d02-13e0-49f2-9bae-9ca9d6b25161', 'Test notification request', TRUE, '/', 'REQUEST', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04'),
+('f5caeebf-8158-450a-88da-d7a098155a14', 'Test notification approve', TRUE, '/', 'APPROVE', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04'),
+('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04'),
+('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04');
 
 INSERT INTO item_table (item_id, item_general_name, item_unit, item_team_id) VALUES 
 ('5bc0f573-9c7f-4053-a387-21e744399b0c', 'Wood', 'piece', 'a5a28977-6956-45c1-a624-b9e90911502e'),
