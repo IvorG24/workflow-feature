@@ -19,6 +19,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import wordExists from "word-exists";
 import InputAddRemove from "../InputAddRemove";
 
 type Props = {
@@ -132,6 +133,10 @@ const CreateItem = ({
                 maxLength: {
                   message: "Unit must be shorter than 500 characters",
                   value: 500,
+                },
+                validate: {
+                  isWordExists: (value) =>
+                    wordExists(value) ? true : "Not a valid word",
                 },
               })}
               withAsterisk
