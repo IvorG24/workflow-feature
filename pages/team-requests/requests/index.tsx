@@ -1,5 +1,6 @@
 // Imports
 import {
+  checkIfTeamHaveFormslyForms,
   getAllTeamMembers,
   getFormList,
   getRequestList,
@@ -31,17 +32,20 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
-      const [data, teamMemberList, formList] = await Promise.all([
-        getRequestList(supabaseClient, {
-          teamId: teamId,
-          page: 1,
-          limit: DEFAULT_REQUEST_LIST_LIMIT,
-        }),
-        getAllTeamMembers(supabaseClient, {
-          teamId,
-        }),
-        getFormList(supabaseClient, { teamId, app: "REQUEST" }),
-      ]);
+      const [data, teamMemberList, formList, isFormslyTeam] = await Promise.all(
+        [
+          getRequestList(supabaseClient, {
+            teamId: teamId,
+            page: 1,
+            limit: DEFAULT_REQUEST_LIST_LIMIT,
+          }),
+          getAllTeamMembers(supabaseClient, {
+            teamId,
+          }),
+          getFormList(supabaseClient, { teamId, app: "REQUEST" }),
+          checkIfTeamHaveFormslyForms(supabaseClient, { teamId }),
+        ]
+      );
 
       return {
         props: {
@@ -51,6 +55,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           formList: formList.map((form) => {
             return { label: form.form_name, value: form.form_id };
           }),
+          isFormslyTeam,
         },
       };
     } catch (error) {
@@ -70,6 +75,7 @@ type Props = {
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
+  isFormslyTeam: boolean;
 };
 
 const Page = ({
@@ -77,6 +83,7 @@ const Page = ({
   requestListCount,
   teamMemberList,
   formList,
+  isFormslyTeam,
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
@@ -119,6 +126,7 @@ const Page = ({
         requestListCount={requestListCount}
         teamMemberList={teamMemberList}
         formList={formList}
+        isFormslyTeam={isFormslyTeam}
       />
     </>
   );

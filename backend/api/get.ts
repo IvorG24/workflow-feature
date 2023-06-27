@@ -1449,3 +1449,28 @@ export const checkInvoiceItemQuantity = async (
   }
   return returnData;
 };
+
+// Get SSOT for spreadsheet view
+export const checkIfTeamHaveFormslyForms = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { count, error } = await supabaseClient
+    .from("form_table")
+    .select(
+      "*, form_team_member: form_team_member_id!inner(team_member_team_id)",
+      {
+        count: "exact",
+        head: true,
+      }
+    )
+    .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_is_formsly_form", true);
+
+  if (error) throw error;
+
+  return Boolean(count);
+};
