@@ -33,7 +33,7 @@ const SignerTable = ({ signerList }: SignerTableProps) => {
 
   return (
     <ScrollArea w="100%" h="100%">
-      <Paper w={{ base: "100%" }} withBorder>
+      <Paper w={{ base: "100%" }} mih={450} withBorder>
         <Group p="md" className={classes.withBorderBottom}>
           <Box c="green">
             <IconShieldCheckFilled />

@@ -16,7 +16,7 @@ type PurchaseTrendProps = {
   itemPurchaseTrendData: PurchaseTrendChartDataType[];
 };
 
-type DataItem = {
+export type DataItem = {
   label: string;
   value: number;
   item?: string;
@@ -52,10 +52,10 @@ const getReducedPurchaseDataArray = (data: PurchaseTrendChartDataType[]) => {
       "MMM"
     );
     const parseResponse = JSON.parse(item.request_response);
-
     const existingItem = acc.find(
       (el) => el.item === parseResponse && el.label === monthLabel
     );
+
     if (existingItem) {
       existingItem.value++;
     } else {
@@ -119,6 +119,7 @@ const PurchaseTrend = ({ itemPurchaseTrendData }: PurchaseTrendProps) => {
           value={selectedItem}
           onChange={(value: string) => setSelectedItem(value)}
           data={itemList as SelectItem[]}
+          searchable
         />
       </Group>
       <Box mih={334}>

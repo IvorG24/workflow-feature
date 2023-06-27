@@ -453,6 +453,7 @@ export type RequestByFormType = RequestTableRow & {
         field_option: OptionTableRow[];
         field_response: (RequestResponseTableRow & {
           request_response_team_member_id?: string | null;
+          request_response_request_status?: string;
         })[];
       })[];
     })[];
@@ -540,6 +541,7 @@ export type PurchaseTrendChartDataType = {
   request_response_field_id: string;
   request_response_date_purchased?: string | undefined;
   request_response_team_member_id?: string | null;
+  request_response_request_status?: string | null;
 };
 
 export type RequestResponseDataType = {

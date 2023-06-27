@@ -125,23 +125,29 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
 
   return (
     <Stack w="100%" align="center">
-      <Flex w="100%" align="flex-start" gap="xl" wrap="wrap">
+      <Flex
+        w="100%"
+        align="flex-start"
+        justify={{ xl: "space-between" }}
+        gap="md"
+        wrap="wrap"
+      >
         <Box w={{ base: "100%", sm: 320 }} h={450}>
           <RequestStatusTracker data={requestStatusData} />
         </Box>
-        <Box sx={{ flex: 1 }} maw={700} h={450}>
-          <RequestStatistics requestList={requestList} />
-        </Box>
-      </Flex>
-      <Flex w="100%" align="flex-start" gap="xl" wrap="wrap">
-        <Box w={{ base: "100%", sm: 320 }} h={500}>
+        <Box w={{ base: "100%", sm: 320 }} h={450}>
           <RequestorTable
             requestorList={reducedRequestorList}
             totalRequest={requestCount}
           />
         </Box>
-        <Box w={{ base: "100%", sm: 320 }} h={500}>
+        <Box w={{ base: "100%", sm: 320 }} h={450}>
           <SignerTable signerList={reducedSignerList} />
+        </Box>
+      </Flex>
+      <Flex w="100%" align="flex-start" gap="xl" wrap="wrap">
+        <Box sx={{ flex: 1 }} w="100%">
+          <RequestStatistics requestList={requestList} />
         </Box>
       </Flex>
     </Stack>

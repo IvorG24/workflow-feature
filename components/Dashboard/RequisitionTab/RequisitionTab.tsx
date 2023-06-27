@@ -5,7 +5,7 @@ import {
 import { Container, SegmentedControl, Text } from "@mantine/core";
 import { useState } from "react";
 import PurchaseOrder from "./PurchaseOrder";
-import PurchaseTrend from "./PurchaseTrend";
+import PurchaseTrend, { DataItem } from "./PurchaseTrend";
 
 type Props = {
   fieldResponseData: RequestResponseDataType[];
@@ -26,10 +26,63 @@ const getItemPurchaseTrendData = (data: RequestResponseDataType[]) => {
   return itemPurchaseTrendData;
 };
 
+const getItemStatusCount = (data: PurchaseTrendChartDataType[]) => {
+  const itemStatusCount = data.reduce((acc, item) => {
+    const parseResponse = JSON.parse(item.request_response);
+    const requestStatus: string = item.request_response_request_status
+      ? item.request_response_request_status
+      : "";
+    const itemMatch = acc.findIndex(
+      (accItem) =>
+        accItem.item === parseResponse && accItem.label === requestStatus
+    );
+
+    if (itemMatch >= 0 && requestStatus) {
+      acc[itemMatch].value++;
+    } else {
+      const newItem = {
+        label: requestStatus,
+        value: 1,
+        item: parseResponse,
+      };
+      acc.push(newItem);
+    }
+
+    return acc;
+  }, [] as DataItem[]);
+
+  return itemStatusCount;
+};
+
 const RequisitionTab = ({ fieldResponseData }: Props) => {
   const [selectedPurchaseData, setSelectedPurchaseData] = useState("user");
   const [selectedBarChartItem, setSelectedBarChartItem] = useState("");
-  const itemPurchaseTrendData = getItemPurchaseTrendData(fieldResponseData);
+
+  const approvedFieldResponseData = fieldResponseData.map((data) => {
+    const responseData = data.responseData.map((field) => {
+      const approvedResponseList = field.field_response.filter(
+        (res) => res.request_response_request_status === "APPROVED"
+      );
+
+      return {
+        ...field,
+        field_response: approvedResponseList,
+      };
+    });
+
+    return {
+      ...data,
+      responseData,
+    };
+  });
+
+  const itemPurchaseTrendData = getItemPurchaseTrendData(
+    approvedFieldResponseData
+  );
+
+  const initialItemStatusCount = getItemPurchaseTrendData(fieldResponseData);
+  const itemStatusCount = getItemStatusCount(initialItemStatusCount);
+
   return (
     <Container p={0} h="100%" fluid>
       {fieldResponseData.length > 0 ? (
@@ -53,6 +106,7 @@ const RequisitionTab = ({ fieldResponseData }: Props) => {
                 selectedBarChartItem={selectedBarChartItem}
                 setSelectedBarChartItem={setSelectedBarChartItem}
                 purchaseOrderData={fieldResponseData}
+                itemStatusCount={itemStatusCount}
               />
             )}
 

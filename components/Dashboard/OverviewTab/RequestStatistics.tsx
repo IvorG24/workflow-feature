@@ -95,7 +95,7 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
   }, [requestList]);
 
   return (
-    <Paper w="100%" h="100%" p="md" withBorder sx={{ flex: 1 }}>
+    <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
       <Stack>
         <Group position="apart">
           <Group mb="sm">

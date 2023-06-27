@@ -19,6 +19,7 @@ import {
   Select,
   Stack,
   Text,
+  Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -26,7 +27,6 @@ import { startCase } from "lodash";
 import { useState } from "react";
 import Overview from "./OverviewTab/Overview";
 import RequisitionTab from "./RequisitionTab/RequisitionTab";
-import ResponseTab from "./ResponseTab/ResponseTab";
 
 type DashboardProps = {
   requestList: RequestByFormType[];
@@ -41,7 +41,9 @@ const statusFilter = [
   { value: "REJECTED", label: "Rejected" },
   { value: "CANCELED", label: "Canceled" },
 ];
-const TABS = ["overview", "responses", "requisition"];
+
+// REMOVED "responses" TAB
+const TABS = ["overview", "requisition"];
 
 const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const formList = useFormList();
@@ -91,6 +93,7 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
                   request_response_date_purchased: request.request_date_created,
                   request_response_team_member_id:
                     request.request_team_member_id,
+                  request_response_request_status: request.request_status,
                 }));
 
               return {
@@ -236,17 +239,17 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
           />
         );
 
-      case "responses":
-        return (
-          <ResponseTab
-            isOTPForm={isOTPForm}
-            selectedForm={selectedForm}
-            fieldResponseData={fieldResponseData}
-          />
-        );
+      // case "responses":
+      //   return (
+      //     <ResponseTab
+      //       isOTPForm={isOTPForm}
+      //       selectedForm={selectedForm}
+      //       fieldResponseData={fieldResponseData}
+      //     />
+      //   );
 
       case "requisition":
-        return isFormslyForm && fieldResponseData ? (
+        return isOTPForm && fieldResponseData ? (
           <RequisitionTab fieldResponseData={fieldResponseData} />
         ) : (
           <Text>No data available.</Text>
@@ -267,7 +270,8 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
 
       <Stack>
-        <Flex justify="space-between" wrap="wrap">
+        <Title order={2}>Manage Team</Title>
+        <Flex justify="space-between" rowGap="sm" wrap="wrap">
           <SegmentedControl
             value={selectedTab}
             onChange={setSelectedTab}
@@ -287,7 +291,7 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
               clearable
             />
             <Select
-              w={100}
+              w={120}
               placeholder="Status"
               data={statusFilter}
               value={selectedStatus}
