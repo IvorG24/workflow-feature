@@ -261,6 +261,7 @@ const RequestFormFields = ({
                   {...inputProps}
                   icon={<IconCalendar size={16} />}
                   error={fieldError}
+                  minDate={formslyFormName ? new Date() : undefined}
                 />
               );
             }}
