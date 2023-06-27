@@ -270,7 +270,7 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
 
       <Stack>
-        <Title order={2}>Manage Team</Title>
+        <Title order={2}>Dashboard</Title>
         <Flex justify="space-between" rowGap="sm" wrap="wrap">
           <SegmentedControl
             value={selectedTab}
