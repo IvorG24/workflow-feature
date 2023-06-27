@@ -20,7 +20,7 @@ const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
     labels: data.map((item) => item.label),
     datasets: [
       {
-        label: "Item Purchase",
+        label: "Purchase Order",
         data: data.map((item) => item.value),
         backgroundColor: "#339AF0",
         borderColor: "#1864AB",

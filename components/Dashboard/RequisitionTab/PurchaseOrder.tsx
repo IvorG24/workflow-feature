@@ -1,17 +1,20 @@
 import BarChart from "@/components/Chart/BarChart";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { getUniqueResponseData } from "@/utils/arrayFunctions/dashboard";
+import { getStatusToColor } from "@/utils/styling";
 import { RequestResponseDataType } from "@/utils/types";
 import {
+  Badge,
   Box,
   Center,
+  Divider,
   Group,
   Paper,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
-import { startCase } from "lodash";
+import { lowerCase, startCase } from "lodash";
 import { Dispatch, SetStateAction, useState } from "react";
 import validator from "validator";
 import { DataItem } from "./PurchaseTrend";
@@ -24,6 +27,8 @@ type UserPurchaseDataProps = {
   itemStatusCount: DataItem[];
 };
 
+const STATUS_LIST = ["PENDING", "APPROVED", "REJECTED", "CANCELED"];
+
 const PurchaseOrder = ({
   selectedPurchaseData,
   setSelectedBarChartItem,
@@ -32,28 +37,29 @@ const PurchaseOrder = ({
   itemStatusCount,
 }: UserPurchaseDataProps) => {
   const authUserMember = useUserTeamMember();
+  const [searchItemKey, setSearchItemKey] = useState("");
 
   const itemSections = purchaseOrderData.filter(
     (d) => d.sectionLabel !== "Main"
   );
 
-  const mainItemList = itemSections.flatMap(
+  //get all General Name field responses
+  const itemGeneralNameList = itemSections.flatMap(
     (section) => section.responseData[0].field_response
   );
 
-  const initialSelectedItemList =
+  // filter General Name responses -> user or team responses
+  const selectedTabItemGeneralNameList =
     selectedPurchaseData === "user"
-      ? mainItemList.filter(
+      ? itemGeneralNameList.filter(
           (item) =>
             item.request_response_team_member_id ===
             authUserMember?.team_member_id
         )
-      : mainItemList;
+      : itemGeneralNameList;
 
-  const [searchItemKey, setSearchItemKey] = useState("");
-
-  const mainItemData = getUniqueResponseData(
-    initialSelectedItemList.filter((item) => {
+  const generalNameChartData = getUniqueResponseData(
+    selectedTabItemGeneralNameList.filter((item) => {
       const parseResponse = JSON.parse(item.request_response);
 
       return validator.contains(parseResponse, searchItemKey, {
@@ -62,11 +68,12 @@ const PurchaseOrder = ({
     })
   );
 
+  // get number of order by status
   const selectedItemStatusCount = itemStatusCount.filter(
     (item) => item.item === selectedBarChartItem
   );
 
-  const getStatusCount = (selectedStatus: string) => {
+  const getOrderCountByStatus = (selectedStatus: string) => {
     const selectedItem = selectedItemStatusCount.filter(
       (item) => item.label === selectedStatus
     )[0];
@@ -77,13 +84,52 @@ const PurchaseOrder = ({
     return 0;
   };
 
+  //get all Quantity field responses from selected item
+  const selectedItemSection = itemSections.filter(
+    (section) => section.sectionLabel === selectedBarChartItem
+  );
+  const itemQuantityList = selectedItemSection.flatMap(
+    (section) =>
+      section.responseData.filter((res) => res.field_name === "Quantity")[0]
+        .field_response
+  );
+
+  // filter Quantity responses -> user or team responses
+  const selectedItemQuantityList =
+    selectedPurchaseData === "user"
+      ? itemQuantityList.filter(
+          (item) =>
+            item.request_response_team_member_id ===
+            authUserMember?.team_member_id
+        )
+      : itemQuantityList;
+
+  const getTotalQuantityCount = () => {
+    const total = selectedItemQuantityList.reduce((total, item) => {
+      const itemQuantity = JSON.parse(item.request_response);
+      return total + itemQuantity;
+    }, 0);
+
+    return total;
+  };
+  const getQuantityCountByStatus = (selectedStatus: string) => {
+    const itemQuantity = selectedItemQuantityList.filter(
+      (item) => item.request_response_request_status === selectedStatus
+    );
+    const total = itemQuantity.reduce((total, item) => {
+      const itemQuantity = JSON.parse(item.request_response);
+
+      return total + itemQuantity;
+    }, 0);
+
+    return total;
+  };
+
   return (
     <Stack>
       <Paper p="md" w="100%" maw={700} h="fit-content">
         <Group mb="lg" position="apart">
-          <Text weight={600}>
-            {startCase(selectedPurchaseData)} Order Per Item
-          </Text>
+          <Text weight={600}>Total Order Per Item</Text>
           <TextInput
             placeholder="Search item"
             value={searchItemKey}
@@ -91,9 +137,9 @@ const PurchaseOrder = ({
           />
         </Group>
         <Box mih={334}>
-          {mainItemData.length > 0 ? (
+          {generalNameChartData.length > 0 ? (
             <BarChart
-              data={mainItemData}
+              data={generalNameChartData}
               setSelectedBarChartItem={setSelectedBarChartItem}
             />
           ) : (
@@ -107,12 +153,41 @@ const PurchaseOrder = ({
       </Paper>
       {selectedBarChartItem !== "" && (
         <Paper p="md" maw={700}>
-          <Group>
-            <Text weight={600}>{selectedItemStatusCount[0].item}</Text>
-            <Text>Pending: {getStatusCount("PENDING")}</Text>
-            <Text>Approved: {getStatusCount("APPROVED")}</Text>
-            <Text>Rejected: {getStatusCount("REJECTED")}</Text>
-            <Text>Canceled: {getStatusCount("CANCELED")}</Text>
+          <Text weight={600}>{selectedItemStatusCount[0].item}</Text>
+          <Divider my="md" />
+          <Text weight={600}>
+            Total Order:{" "}
+            {
+              generalNameChartData.find(
+                (name) => name.label === selectedBarChartItem
+              )?.value
+            }
+          </Text>
+          <Group mt="sm">
+            <Text>Breakdown:</Text>
+            {STATUS_LIST.map((status, idx) => (
+              <Badge
+                key={status + idx}
+                color={getStatusToColor(lowerCase(status))}
+              >{`${startCase(lowerCase(status))}: ${getOrderCountByStatus(
+                status
+              )}`}</Badge>
+            ))}
+          </Group>
+          <Divider my="md" />
+          <Text weight={600}>
+            Total Item Quantity: {getTotalQuantityCount()}
+          </Text>
+          <Group mt="sm">
+            <Text>Breakdown:</Text>
+            {STATUS_LIST.map((status, idx) => (
+              <Badge
+                key={status + idx}
+                color={getStatusToColor(lowerCase(status))}
+              >{`${startCase(lowerCase(status))}: ${getQuantityCountByStatus(
+                status
+              )}`}</Badge>
+            ))}
           </Group>
         </Paper>
       )}
