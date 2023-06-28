@@ -443,8 +443,6 @@ export type InvitationWithTeam = InvitationTableRow & {
   };
 };
 
-export type ConnectedFormsType = "Order to Purchase" | "Quotation";
-
 export type FormslyFormType = {
   "Order to Purchase": string[];
   Quotation: string[];
@@ -490,5 +488,11 @@ export type SSOTType = {
       rir_request_owner: SSOTRequestOwnerType;
       rir_request_response: SSOTResponseType[];
     }[];
+  }[];
+  otp_cheque_reference_request: {
+    cheque_reference_request_id: string;
+    cheque_reference_request_date_created: string;
+    cheque_reference_request_response: SSOTResponseType[];
+    cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
 };

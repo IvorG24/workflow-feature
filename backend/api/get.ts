@@ -1186,6 +1186,32 @@ export const getFormslyFormId = async (
   return data ? data.form_id : "";
 };
 
+// Get specific OTP form id by name and team id
+export const getFormIDForOTP = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("form_table")
+    .select(
+      "form_id, form_name, form_team_member: form_team_member_id!inner(team_member_team_id)"
+    )
+    .or("form_name.eq.Quotation, form_name.eq.Cheque Reference")
+    .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_is_formsly_form", true);
+  if (error) throw error;
+
+  return data.map((form) => {
+    return {
+      form_id: form.form_id,
+      form_name: form.form_name,
+    };
+  });
+};
+
 // Check if the request id exists and already approved
 export const checkRequest = async (
   supabaseClient: SupabaseClient<Database>,

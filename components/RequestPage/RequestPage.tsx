@@ -4,14 +4,12 @@ import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
-import { FORM_CONNECTION, GROUP_CONNECTION } from "@/utils/constant";
+import { GROUP_CONNECTION } from "@/utils/constant";
 import {
-  ConnectedFormsType,
   FormStatusType,
   FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
-  TeamGroupForFormType,
 } from "@/utils/types";
 import {
   Box,
@@ -42,7 +40,7 @@ import RequestSignerSection from "./RequestSignerSection";
 type Props = {
   request: RequestWithResponseType;
   isFormslyForm?: boolean;
-  connectedFormID?: string;
+  connectedFormID?: string[];
   connectedRequestIDList?: FormslyFormType;
 };
 
@@ -60,19 +58,8 @@ const RequestPage = ({
 
   const isGroupMember =
     request.request_form.form_is_formsly_form &&
-    GROUP_CONNECTION[
-      FORM_CONNECTION[
-        request.request_form.form_name as ConnectedFormsType
-      ] as TeamGroupForFormType
-    ]
-      ? teamMember?.team_member_group_list.includes(
-          GROUP_CONNECTION[
-            FORM_CONNECTION[
-              request.request_form.form_name as ConnectedFormsType
-            ] as TeamGroupForFormType
-          ]
-        )
-      : true;
+    request.request_form.form_name === "Quotation" &&
+    teamMember?.team_member_group_list.includes(GROUP_CONNECTION["Receiving Inspecting Report"]);
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
@@ -267,22 +254,6 @@ const RequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const handleRedirectToConnectedRequest = () => {
-    switch (request.request_form.form_name) {
-      case "Order to Purchase":
-        return router.push(
-          `/team-requests/forms/${connectedFormID}/create?otpId=${request.request_id}`
-        );
-      case "Quotation":
-        return router.push(
-          `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
-            request.request_form.form_section[0].section_field[0]
-              .field_response[0].request_response
-          )}&quotationId=${request.request_id}`
-        );
-    }
-  };
-
   return (
     <Container>
       <Flex justify="space-between">
@@ -295,13 +266,17 @@ const RequestPage = ({
             sectionWithDuplicateList={sectionWithDuplicateList}
           />
           {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
-            <Button onClick={handleRedirectToConnectedRequest}>
-              Create{" "}
-              {
-                FORM_CONNECTION[
-                  request.request_form.form_name as ConnectedFormsType
-                ]
-              }
+            <Button
+              onClick={() => {
+                router.push(
+                  `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
+                    request.request_form.form_section[0].section_field[0]
+                      .field_response[0].request_response
+                  )}&quotationId=${request.request_id}`
+                );
+              }}
+            >
+              Receiving Inspecting Report
             </Button>
           ) : null}
         </Group>

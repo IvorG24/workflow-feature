@@ -1,4 +1,5 @@
 import {
+  getFormIDForOTP,
   getFormslyFormId,
   getFormslyForwardLinkFormId,
   getRequest,
@@ -7,9 +8,8 @@ import {
 import Meta from "@/components/Meta/Meta";
 import OrderToPurchaseRequestPage from "@/components/OrderToPurchaseRequestPage/OrderToPurchaseRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
-import { FORM_CONNECTION } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { ConnectedFormsType, FormslyFormType, RequestWithResponseType } from "@/utils/types";
+import { FormslyFormType, RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -18,24 +18,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const request = await getRequest(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
-
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
-      if (!teamId) throw new Error("No team found");
-
-      const connectedFormID = await getFormslyFormId(supabaseClient, {
-        formName:
-          FORM_CONNECTION[request.request_form.form_name as ConnectedFormsType],
-        teamId,
-      });
-
-      const connectedRequestIDList = await getFormslyForwardLinkFormId(
-        supabaseClient,
-        {
-          requestId: request.request_id,
-        }
-      );
 
       if (!request) {
         return {
@@ -46,9 +28,36 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
-      return {
-        props: { request, connectedFormID, connectedRequestIDList },
-      };
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+      if (!teamId) throw new Error("No team found");
+
+      const connectedRequestIDList = await getFormslyForwardLinkFormId(
+        supabaseClient,
+        {
+          requestId: request.request_id,
+        }
+      );
+
+      if (request.request_form.form_name === "Order to Purchase") {
+        const connectedForm = await getFormIDForOTP(supabaseClient, {
+          teamId,
+        });
+
+        return {
+          props: { request, connectedForm, connectedRequestIDList },
+        };
+      } else {
+        const connectedFormID = await getFormslyFormId(supabaseClient, {
+          formName: "Receiving Inspecting Report",
+          teamId,
+        });
+
+        return {
+          props: { request, connectedFormID, connectedRequestIDList },
+        };
+      }
     } catch (error) {
       console.error(error);
       return {
@@ -63,17 +72,23 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   request: RequestWithResponseType;
-  connectedFormID: string;
+  connectedFormID: string[];
   connectedRequestIDList: FormslyFormType;
+  connectedForm: { form_name: string; form_id: string }[];
 };
 
-const Page = ({ request, connectedFormID, connectedRequestIDList }: Props) => {
+const Page = ({
+  request,
+  connectedFormID,
+  connectedRequestIDList,
+  connectedForm,
+}: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Order to Purchase") {
       return (
         <OrderToPurchaseRequestPage
           request={request}
-          connectedFormID={connectedFormID}
+          connectedForm={connectedForm}
           connectedRequestIDList={connectedRequestIDList}
         />
       );

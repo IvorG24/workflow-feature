@@ -8,8 +8,10 @@ import RequestSignerSection from "@/components/RequestPage/RequestSignerSection"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
+import { GROUP_CONNECTION } from "@/utils/constant";
 import {
   FormStatusType,
+  FormslyFormKeyType,
   FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
@@ -31,18 +33,17 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
-import SummarySection from "../SummarySection/QuotationSummary";
 import OrderToPurchaseSummary from "../SummarySection/OrderToPurchaseSummary";
 
 type Props = {
   request: RequestWithResponseType;
-  connectedFormID: string;
+  connectedForm: { form_name: string; form_id: string }[];
   connectedRequestIDList: FormslyFormType;
 };
 
 const OrderToPurchaseRequestPage = ({
   request,
-  connectedFormID,
+  connectedForm,
   connectedRequestIDList,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
@@ -193,19 +194,31 @@ const OrderToPurchaseRequestPage = ({
             request={request}
             sectionWithDuplicateList={sectionWithDuplicateList}
           />
-          {requestStatus === "APPROVED" &&
-          teamMember?.team_member_group_list.includes(
-            "Accounting Processor"
-          ) ? (
-            <Button
-              onClick={() =>
-                router.push(
-                  `/team-requests/forms/${connectedFormID}/create?otpId=${request.request_id}`
-                )
-              }
-            >
-              Create Quotation
-            </Button>
+          {requestStatus === "APPROVED" ? (
+            <Group>
+              {connectedForm.map((form) => {
+                if (
+                  teamMember?.team_member_group_list.includes(
+                    GROUP_CONNECTION[form.form_name as FormslyFormKeyType]
+                  )
+                ) {
+                  return (
+                    <Button
+                      key={form.form_id}
+                      onClick={() =>
+                        router.push(
+                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                        )
+                      }
+                    >
+                      Create {form.form_name}
+                    </Button>
+                  );
+                } else {
+                  return null;
+                }
+              })}
+            </Group>
           ) : null}
         </Group>
       </Flex>
@@ -230,20 +243,6 @@ const OrderToPurchaseRequestPage = ({
           />
         ))}
 
-        {(isUserOwner &&
-          (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
-        (isUserSigner && requestStatus === "PENDING") ? (
-          <RequestActionSection
-            isUserOwner={isUserOwner}
-            requestStatus={requestStatus as FormStatusType}
-            requestId={request.request_id}
-            handleCancelRequest={handleCancelRequest}
-            openPromptDeleteModal={openPromptDeleteModal}
-            isUserSigner={Boolean(isUserSigner)}
-            handleUpdateRequest={handleUpdateRequest}
-          />
-        ) : null}
-
         <OrderToPurchaseSummary
           summaryData={sectionWithDuplicateList
             .slice(1)
@@ -257,6 +256,20 @@ const OrderToPurchaseRequestPage = ({
                 : 0
             )}
         />
+
+        {(isUserOwner &&
+          (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
+        (isUserSigner && requestStatus === "PENDING") ? (
+          <RequestActionSection
+            isUserOwner={isUserOwner}
+            requestStatus={requestStatus as FormStatusType}
+            requestId={request.request_id}
+            handleCancelRequest={handleCancelRequest}
+            openPromptDeleteModal={openPromptDeleteModal}
+            isUserSigner={Boolean(isUserSigner)}
+            handleUpdateRequest={handleUpdateRequest}
+          />
+        ) : null}
 
         <RequestSignerSection signerList={signerList} />
       </Stack>

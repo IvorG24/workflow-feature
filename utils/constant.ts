@@ -13,12 +13,8 @@ export const ROW_PER_PAGE = 10;
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
   "Receiving Inspecting Report",
+  "Cheque Reference",
 ];
-
-export const FORM_CONNECTION = {
-  "Order to Purchase": "Quotation",
-  Quotation: "Receiving Inspecting Report",
-};
 
 export const GROUP_CONNECTION = {
   "Order to Purchase": "Warehouse Processor",
@@ -75,6 +71,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const quotationItemSectionId = uuidv4();
   const rirIdSectionId = uuidv4();
   const rirMainSectionId = uuidv4();
+  const chequeReferenceIdSectionId = uuidv4();
   const chequeReferenceTreasurySectionId = uuidv4();
   const chequeReferenceChequeSectionId = uuidv4();
   const auditMainSectionId = uuidv4();
@@ -328,7 +325,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quotation ID",
           field_type: "LINK",
-          field_order: 3,
+          field_order: 2,
           field_section_id: rirIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -364,21 +361,36 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       },
       section: [
         {
+          section_id: chequeReferenceIdSectionId,
+          section_name: "ID",
+          section_order: 1,
+          section_is_duplicatable: false,
+          section_form_id: chequeReferenceFormId,
+        },
+        {
           section_id: chequeReferenceTreasurySectionId,
           section_name: "Treasury",
-          section_order: 1,
+          section_order: 2,
           section_is_duplicatable: false,
           section_form_id: chequeReferenceFormId,
         },
         {
           section_id: chequeReferenceChequeSectionId,
           section_name: "Cheque",
-          section_order: 2,
+          section_order: 3,
           section_is_duplicatable: false,
           section_form_id: chequeReferenceFormId,
         },
       ],
       field: [
+        {
+          field_name: "Order to Purchase ID",
+          field_type: "LINK",
+          field_order: 1,
+          field_section_id: chequeReferenceIdSectionId,
+          field_is_required: true,
+          field_is_read_only: true,
+        },
         {
           field_name: "Cheque Cancelled",
           field_type: "SWITCH",
@@ -477,7 +489,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Audit Remarks",
           field_type: "TEXTAREA",
-          field_order: 3,
+          field_order: 2,
           field_section_id: auditMainSectionId,
           field_is_required: false,
           field_is_read_only: false,
@@ -485,7 +497,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Date Audit Work Complete",
           field_type: "DATE",
-          field_order: 4,
+          field_order: 3,
           field_section_id: auditMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -529,7 +541,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field_id: rirReceivingStatusFieldId,
       field_name: "Receiving Status",
       field_type: "DROPDOWN",
-      field_order: 6,
+      field_order: 3,
       field_section_id: rirMainSectionId,
       field_is_required: true,
       field_is_read_only: false,
@@ -547,7 +559,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field_id: auditRowCheckFieldId,
       field_name: "SSOT PO Prioritization Row Check",
       field_type: "DROPDOWN",
-      field_order: 2,
+      field_order: 1,
       field_section_id: auditMainSectionId,
       field_is_required: true,
       field_is_read_only: false,

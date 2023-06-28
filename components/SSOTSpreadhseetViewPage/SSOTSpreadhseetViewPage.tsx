@@ -59,6 +59,58 @@ type Props = {
 const SSOTSpreadsheetView = ({ data }: Props) => {
   const { classes } = useStyles();
 
+  const renderChequeReference = (
+    request: SSOTType["otp_cheque_reference_request"]
+  ) => {
+    return request.map((request) => {
+      return (
+        <tr
+          key={request.cheque_reference_request_id}
+          className={classes.cell}
+          style={{ borderTop: "solid 1px #DEE2E6" }}
+        >
+          <td>{request.cheque_reference_request_id}</td>
+          <td>
+            {new Date(
+              request.cheque_reference_request_date_created
+            ).toLocaleDateString()}
+          </td>
+          <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
+          {request.cheque_reference_request_response
+            .slice(1)
+            .map((response, index) => {
+              return (
+                <td key={index}>
+                  {response.request_response_field_type === "DATE" ? (
+                    new Date(
+                      JSON.parse(response.request_response)
+                    ).toLocaleDateString()
+                  ) : response.request_response_field_type === "FILE" ? (
+                    <ActionIcon
+                      w="100%"
+                      variant="outline"
+                      onClick={() =>
+                        window.open(
+                          `${JSON.parse(response.request_response)}`,
+                          "_blank"
+                        )
+                      }
+                    >
+                      <Flex align="center" justify="center" gap={2}>
+                        <Text size={14}>File</Text> <IconFile size={14} />
+                      </Flex>
+                    </ActionIcon>
+                  ) : (
+                    `${JSON.parse(response.request_response)}`
+                  )}
+                </td>
+              );
+            })}
+        </tr>
+      );
+    });
+  };
+
   const renderRir = (
     request: SSOTType["otp_quotation_request"][0]["quotation_rir_request"]
   ) => {
@@ -176,7 +228,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           {request.quotation_rir_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
               <Table withBorder withColumnBorders h="100%">
-                <thead style={{ backgroundColor: "#4DABF7" }}>
+                <thead style={{ backgroundColor: "#74C0FC" }}>
                   <tr>
                     <th className={classes.long}>RIR ID</th>
                     <th className={classes.date}>Date Created</th>
@@ -305,6 +357,34 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               </Table>
             </td>
           ) : null}
+          {request.otp_cheque_reference_request.length !== 0 ? (
+            <td style={{ padding: 0 }}>
+              <Table withBorder withColumnBorders h="100%">
+                <thead style={{ backgroundColor: "#8CE99A" }}>
+                  <tr>
+                    <th className={classes.long}>Cheque Reference ID</th>
+                    <th className={classes.date}>Date Created</th>
+                    <th className={classes.processor}>Treasury Processor</th>
+                    <th className={classes.normal}>Treasury Status</th>
+                    <th className={classes.short}>Cheque Cancelled</th>
+                    <th className={classes.date}>Cheque Printed Date</th>
+                    <th className={classes.date}>Cheque Clearing Date</th>
+                    <th className={classes.processor}>
+                      Cheque First Signatory Name
+                    </th>
+                    <th className={classes.date}>Cheque First Date Signed</th>
+                    <th className={classes.processor}>
+                      Cheque Second Signatory Name
+                    </th>
+                    <th className={classes.date}>Cheque Second Date Signed</th>
+                  </tr>
+                </thead>
+                <tbody style={{ backgroundColor: "#EBFBEE" }}>
+                  {renderChequeReference(request.otp_cheque_reference_request)}
+                </tbody>
+              </Table>
+            </td>
+          ) : null}
         </tr>
       );
     });
@@ -317,7 +397,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       </Title>
 
       <Paper mt="xl" p="xl" shadow="sm">
-        <ScrollArea scrollbarSize={10}>
+        <ScrollArea scrollbarSize={10} offsetScrollbars>
           <Box mah={710}>
             <Table withBorder withColumnBorders pos="relative" h="100%">
               <thead style={{ backgroundColor: "#FFA8A8" }}>
@@ -334,6 +414,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th className={classes.short}>Unit</th>
                   <th className={classes.description}>Description</th>
                   <th>Quotation</th>
+                  <th>Cheque Reference</th>
                 </tr>
               </thead>
               <tbody style={{ backgroundColor: "#FFF5F5" }}>

@@ -70,6 +70,7 @@ const CreateItem = ({
           item_general_name: data.generalName,
           item_is_available: data.isAvailable,
           item_unit: data.unit,
+          item_purpose: data.purpose,
           item_team_id: activeTeam.team_id,
         },
         formId: formId,

@@ -6,6 +6,7 @@ import {
   getItemResponse,
   getUserActiveTeamId,
 } from "@/backend/api/get";
+import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
@@ -237,9 +238,7 @@ const Page = ({ form, itemOptions }: Props) => {
       case "Receiving Inspecting Report":
         return <CreateReceivingInspectingReportPage form={form} />;
       case "Cheque Reference":
-        return (
-          <CreateRequestPage form={form} formslyFormName="Cheque Reference" />
-        );
+        return <CreateChequeReferenceRequestPage form={form} />;
       case "Audit":
         return <CreateRequestPage form={form} formslyFormName="Audit" />;
     }
