@@ -24,7 +24,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { modals, openConfirmModal } from "@mantine/modals";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
@@ -109,16 +109,16 @@ const RequestPage = ({
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       if (!teamMember) return;
-      setIsLoading(true);
-      const signer = isUserSigner;
-      const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
-      if (!signer) {
+      if (!isUserSigner) {
         notifications.show({
           message: "Invalid signer.",
           color: "orange",
         });
         return;
       }
+      setIsLoading(true);
+      const signer = isUserSigner;
+      const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
 
       if (
         request.request_form.form_is_formsly_form &&
@@ -142,42 +142,65 @@ const RequestPage = ({
         );
 
         if (warningItemList.length !== 0) {
-          setIsLoading(false);
-          openConfirmModal({
-            title: (
-              <Text size={14} color="dimmed">
-                Are you sure you want to approve this request?
-              </Text>
-            ),
+          modals.open({
+            title: "You cannot approve create this request.",
+            centered: true,
             children: (
               <Box maw={390}>
                 <Title order={5}>
-                  By approving this request, there are items that will exceed
-                  quantity limit
+                  There are items that will exceed the quantity limit of the OTP
                 </Title>
                 <List size="sm" mt="md">
                   {warningItemList.map((item) => (
                     <List.Item key={item}>{item}</List.Item>
                   ))}
                 </List>
+                <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                  Close
+                </Button>
               </Box>
             ),
-            labels: { confirm: "Proceed", cancel: "Cancel" },
-            centered: true,
-            onConfirm: () =>
-              handleApproveOrRejectRequest(status, signer, signerFullName),
           });
-        } else {
-          handleApproveOrRejectRequest(status, signer, signerFullName);
+          return;
         }
-      } else {
-        handleApproveOrRejectRequest(status, signer, signerFullName);
       }
+
+      await approveOrRejectRequest(supabaseClient, {
+        requestAction: status,
+        requestId: request.request_id,
+        isPrimarySigner: signer.signer_is_primary_signer,
+        requestSignerId: signer.signer_id,
+        requestOwnerId: request.request_team_member.team_member_user.user_id,
+        signerFullName: signerFullName,
+        formName: request.request_form.form_name,
+        memberId: `${teamMember?.team_member_id}`,
+        teamId: request.request_team_member.team_member_team_id,
+      });
+
+      if (signer.signer_is_primary_signer) {
+        setRequestStatus(status);
+      }
+
+      setSignerList((prev) =>
+        prev.map((signer) => {
+          if (signer.signer_id !== signer.signer_id) return signer;
+          return {
+            ...signer,
+            signer_status: status,
+          };
+        })
+      );
+      notifications.show({
+        message: `Request ${lowerCase(status)}.`,
+        color: "green",
+      });
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -218,52 +241,6 @@ const RequestPage = ({
         color: "green",
       });
       router.push("/team-requests/requests");
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleApproveOrRejectRequest = async (
-    status: "APPROVED" | "REJECTED",
-    signer: RequestWithResponseType["request_signer"][0]["request_signer_signer"],
-    signerFullName: string
-  ) => {
-    setIsLoading(true);
-    try {
-      await approveOrRejectRequest(supabaseClient, {
-        requestAction: status,
-        requestId: request.request_id,
-        isPrimarySigner: signer.signer_is_primary_signer,
-        requestSignerId: signer.signer_id,
-        requestOwnerId: request.request_team_member.team_member_user.user_id,
-        signerFullName: signerFullName,
-        formName: request.request_form.form_name,
-        memberId: `${teamMember?.team_member_id}`,
-        teamId: request.request_team_member.team_member_team_id,
-      });
-
-      if (signer.signer_is_primary_signer) {
-        setRequestStatus(status);
-      }
-
-      setSignerList((prev) =>
-        prev.map((signer) => {
-          if (signer.signer_id !== signer.signer_id) return signer;
-          return {
-            ...signer,
-            signer_status: status,
-          };
-        })
-      );
-      notifications.show({
-        message: `Request ${lowerCase(status)}.`,
-        color: "green",
-      });
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

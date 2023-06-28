@@ -1,3 +1,4 @@
+import { checkQuotationItemQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -11,7 +12,16 @@ import {
   OptionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  List,
+  Space,
+  Stack,
+  Title,
+} from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
@@ -104,18 +114,79 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       if (!teamMember) return;
       setIsLoading(true);
 
-      const request = await createRequest(supabaseClient, {
-        requestFormValues: data,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: form.form_signer,
+      const otpID = JSON.stringify(
+        data.sections[0].section_field[0].field_response
+      );
+      const itemSection = data.sections[2];
+      const tempRequestId = uuidv4();
+
+      const itemFieldList: RequestResponseTableRow[] = [];
+      const quantityFieldList: RequestResponseTableRow[] = [];
+
+      data.sections.forEach((section) => {
+        section.section_field.forEach((field) => {
+          if (field.field_name === "Item") {
+            itemFieldList.push({
+              request_response_id: uuidv4(),
+              request_response: JSON.stringify(field.field_response),
+              request_response_duplicatable_section_id: null,
+              request_response_field_id: field.field_id,
+              request_response_request_id: tempRequestId,
+            });
+          } else if (field.field_name === "Quantity") {
+            quantityFieldList.push({
+              request_response_id: uuidv4(),
+              request_response: JSON.stringify(field.field_response),
+              request_response_duplicatable_section_id: null,
+              request_response_field_id: field.field_id,
+              request_response_request_id: tempRequestId,
+            });
+          }
+        });
       });
 
-      notifications.show({
-        message: "Request created.",
-        color: "green",
+      const warningItemList = await checkQuotationItemQuantity(supabaseClient, {
+        otpID,
+        itemFieldId: itemSection.section_field[0].field_id,
+        quantityFieldId: itemSection.section_field[2].field_id,
+        itemFieldList,
+        quantityFieldList,
       });
-      router.push(`/team-requests/requests/${request.request_id}`);
+
+      if (warningItemList.length !== 0) {
+        modals.open({
+          title: "You cannot create this request.",
+          centered: true,
+          children: (
+            <Box maw={390}>
+              <Title order={5}>
+                There are items that will exceed the quantity limit of the OTP
+              </Title>
+              <List size="sm" mt="md">
+                {warningItemList.map((item) => (
+                  <List.Item key={item}>{item}</List.Item>
+                ))}
+              </List>
+              <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                Close
+              </Button>
+            </Box>
+          ),
+        });
+      } else {
+        const request = await createRequest(supabaseClient, {
+          requestFormValues: data,
+          formId,
+          teamMemberId: teamMember.team_member_id,
+          signers: form.form_signer,
+        });
+
+        notifications.show({
+          message: "Request created.",
+          color: "green",
+        });
+        router.push(`/team-requests/requests/${request.request_id}`);
+      }
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",

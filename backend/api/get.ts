@@ -1324,7 +1324,7 @@ export const getItemResponse = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 3) {
+      if (response.request_response_field.field_order > 4) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
             name: "",
@@ -1437,13 +1437,19 @@ export const checkQuotationItemQuantity = async (
   const regExp = /\(([^)]+)\)/;
   for (let i = 0; i < itemList.length; i++) {
     const matches = regExp.exec(itemList[i]);
-    const expectedQuantity = matches ? Number(matches[1]) : 0;
+    if (!matches) continue;
+
+    const quanityMatch = matches[1].match(/(\d+)/);
+    if (!quanityMatch) continue;
+
+    const expectedQuantity = Number(quanityMatch[1]);
+    const unit = matches[1].replace(/\d+/g, "").trim();
 
     if (quantityList[i] > expectedQuantity) {
       returnData.push(
         `${JSON.parse(itemList[i])} exceeds quantity limit by ${
           quantityList[i] - expectedQuantity
-        }`
+        } ${unit}`
       );
     }
   }
