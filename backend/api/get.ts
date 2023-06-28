@@ -1,4 +1,5 @@
 import { Database } from "@/utils/database";
+import { regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
@@ -1434,7 +1435,6 @@ export const checkQuotationItemQuantity = async (
   }
 
   const returnData: string[] = [];
-  const regExp = /\(([^)]+)\)/;
   for (let i = 0; i < itemList.length; i++) {
     const matches = regExp.exec(itemList[i]);
     if (!matches) continue;

@@ -1,3 +1,4 @@
+import { regExp } from "@/utils/string";
 import { SSOTType } from "@/utils/types";
 import {
   ActionIcon,
@@ -96,7 +97,9 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
         } else if (item.request_response_field_name === "Price") {
           itemPrice.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
-          itemQuantity.push(JSON.parse(item.request_response));
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit = matches && matches[1].replace(/\d+/g, "").trim();
+          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
         }
       });
 
@@ -156,7 +159,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemPrice.map((item, index) => (
                 <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
+                  <Text size={14}>₱{item}</Text>
                 </List.Item>
               ))}
             </List>

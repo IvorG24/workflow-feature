@@ -4,7 +4,7 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSingerSection from "@/components/RequestPage/RequestSignerSection";
+import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions";
@@ -31,6 +31,8 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
+import SummarySection from "../SummarySection/QuotationSummary";
+import OrderToPurchaseSummary from "../SummarySection/OrderToPurchaseSummary";
 
 type Props = {
   request: RequestWithResponseType;
@@ -242,7 +244,21 @@ const OrderToPurchaseRequestPage = ({
           />
         ) : null}
 
-        <RequestSingerSection signerList={signerList} />
+        <OrderToPurchaseSummary
+          summaryData={sectionWithDuplicateList
+            .slice(1)
+            .sort((a, b) =>
+              `${a.section_field[0].field_response?.request_response}` >
+              `${b.section_field[0].field_response?.request_response}`
+                ? 1
+                : `${b.section_field[0].field_response?.request_response}` >
+                  `${a.section_field[0].field_response?.request_response}`
+                ? -1
+                : 0
+            )}
+        />
+
+        <RequestSignerSection signerList={signerList} />
       </Stack>
       <RequestCommentList
         requestData={{

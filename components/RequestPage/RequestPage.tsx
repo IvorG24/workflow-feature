@@ -31,12 +31,13 @@ import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
+import QuotationSummary from "../SummarySection/QuotationSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
 import RequestSection from "./RequestSection";
-import RequestSingerSection from "./RequestSignerSection";
+import RequestSignerSection from "./RequestSignerSection";
 
 type Props = {
   request: RequestWithResponseType;
@@ -328,6 +329,24 @@ const RequestPage = ({
             />
           ))}
         </Stack>
+
+        {request.request_form.form_name === "Quotation" &&
+        request.request_form.form_is_formsly_form ? (
+          <QuotationSummary
+            summaryData={sectionWithDuplicateList
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
+
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
         (isUserSigner && requestStatus === "PENDING") ? (
@@ -341,7 +360,7 @@ const RequestPage = ({
             handleUpdateRequest={handleUpdateRequest}
           />
         ) : null}
-        <RequestSingerSection signerList={signerList} />
+        <RequestSignerSection signerList={signerList} />
       </Stack>
 
       <RequestCommentList
