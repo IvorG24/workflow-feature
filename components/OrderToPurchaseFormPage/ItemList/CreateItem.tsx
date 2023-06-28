@@ -1,6 +1,7 @@
 import { checkItemName } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { ITEM_PURPOSE_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -10,6 +11,7 @@ import {
   Divider,
   Flex,
   LoadingOverlay,
+  Select,
   Stack,
   TextInput,
   Title,
@@ -18,7 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import wordExists from "word-exists";
 import InputAddRemove from "../InputAddRemove";
 
@@ -45,6 +47,7 @@ const CreateItem = ({
         descriptions: [{ description: "" }],
         generalName: "",
         unit: "",
+        purpose: "",
         isAvailable: true,
       },
     });
@@ -143,6 +146,28 @@ const CreateItem = ({
               w="100%"
               label="Unit"
               error={formState.errors.unit?.message}
+            />
+            <Controller
+              control={control}
+              name="purpose"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value as string}
+                  onChange={onChange}
+                  data={ITEM_PURPOSE_CHOICES}
+                  withAsterisk
+                  error={formState.errors.purpose?.message}
+                  searchable
+                  clearable
+                  label="Purpose"
+                />
+              )}
+              rules={{
+                required: {
+                  value: true,
+                  message: "Purpose is required",
+                },
+              }}
             />
             {fields.map((field, index) => {
               return (

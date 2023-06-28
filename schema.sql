@@ -204,6 +204,7 @@ CREATE TABLE item_table(
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_general_name VARCHAR(4000) NOT NULL,
   item_unit VARCHAR(4000) NOT NULL,
+  item_purpose VARCHAR(4000) NOT NULL,
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 

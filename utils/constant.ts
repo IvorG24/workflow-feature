@@ -601,3 +601,23 @@ export const FORMSLY_GROUP = [
   "Treasury Processor",
   "Audit Processor",
 ];
+
+export const ITEM_PURPOSE_CHOICES = [
+  "Major Material (cement, aggregates, ready-mix concerete, rebar, admixture, RC pipe, CHB)",
+  "Formworks (all parts and types including accessories)",
+  "Temporary Facilities",
+  "Office Supplies, Furnitures, and Equipment",
+  "Light Equipment & Tools",
+  "PPE & Safety Paraphernalia",
+  "Subcontractor (supply of labor, materials, fabrication, manufacture, production)",
+  "Permanent Materials w/ BAC (line items in BOQ)",
+  "Imported Material",
+  "IT Equipment",
+  "Fuel",
+  "Hauling Works",
+  "Survey, Calibration & Testing of Instruments",
+  "Consumable/Common Materials for Permanent",
+  "PED Transactions",
+  "Repairs and Maintenance",
+  "Other Services",
+];

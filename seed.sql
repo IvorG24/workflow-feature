@@ -273,10 +273,10 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04'),
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04');
 
-INSERT INTO item_table (item_id, item_general_name, item_unit, item_team_id) VALUES 
-('5bc0f573-9c7f-4053-a387-21e744399b0c', 'Wood', 'piece', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('64de1a67-18dd-4010-ac2a-326aa7178908', 'Gasoline', 'litre', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('bf56098b-3869-4c28-a1e8-896c82b9386e', 'Nail', 'bag', 'a5a28977-6956-45c1-a624-b9e90911502e');
+INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id) VALUES 
+('5bc0f573-9c7f-4053-a387-21e744399b0c', 'Wood', 'piece', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('64de1a67-18dd-4010-ac2a-326aa7178908', 'Gasoline', 'litre', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('bf56098b-3869-4c28-a1e8-896c82b9386e', 'Nail', 'bag', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
 ('164a75f3-09cc-42ae-9d9e-276eb33166f3', 'Length', '5bc0f573-9c7f-4053-a387-21e744399b0c', '59a6093c-5733-44c0-8a99-e12011207ff8'),
