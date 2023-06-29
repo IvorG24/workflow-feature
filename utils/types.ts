@@ -606,3 +606,22 @@ export type SSOTType = {
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
 };
+
+export type Section = SectionTableRow & {
+  section_duplicatable_id?: string | null;
+} & {
+  section_field: (FieldTableRow & {
+    field_option?: OptionTableRow[];
+    field_response: RequestResponseTableRow[];
+  })[];
+};
+
+// contains only 1 field_response per field
+export type DuplicateSectionType = SectionTableRow & {
+  section_duplicatable_id?: string | null;
+} & {
+  section_field: (FieldTableRow & {
+    field_option?: OptionTableRow[];
+    field_response: RequestResponseTableRow | null;
+  })[];
+};

@@ -1,5 +1,4 @@
-import { DuplicateSectionType } from "@/utils/arrayFunctions/arrayFunctions";
-import { FieldType } from "@/utils/types";
+import { DuplicateSectionType, FieldType } from "@/utils/types";
 import { Box, Paper, Space, Stack, Title } from "@mantine/core";
 import RequestResponse from "./RequestResponse";
 

@@ -1,5 +1,5 @@
-import { DuplicateSectionType } from "@/utils/arrayFunctions";
 import { regExp } from "@/utils/string";
+import { DuplicateSectionType } from "@/utils/types";
 import { Paper, Table, Title } from "@mantine/core";
 
 type Props = {

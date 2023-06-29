@@ -1,4 +1,4 @@
-import { DuplicateSectionType } from "@/utils/arrayFunctions";
+import { DuplicateSectionType } from "@/utils/types";
 import { Paper, Table, Title } from "@mantine/core";
 
 type Props = {
