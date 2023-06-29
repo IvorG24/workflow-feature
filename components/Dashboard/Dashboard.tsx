@@ -41,7 +41,6 @@ const Dashboard = () => {
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const [teamId, setTeamId] = useState(activeTeam.team_id);
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
@@ -56,7 +55,7 @@ const Dashboard = () => {
     requestListCount,
     isLoading,
   } = useFetchRequestListByForm({
-    teamId: teamId,
+    teamId: activeTeam.team_id,
     formId: selectedForm,
     requestStatus: selectedStatus,
     supabaseClient,
@@ -165,9 +164,8 @@ const Dashboard = () => {
     if (selectedForm) {
       handleResponseTabData(requestListData);
     }
-    setTeamId(activeTeam.team_id);
     setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
-  }, [selectedForm, activeTeam.team_id]);
+  }, [selectedForm]);
 
   const renderTabs = (tab: string) => {
     switch (tab) {
