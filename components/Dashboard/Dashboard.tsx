@@ -1,4 +1,5 @@
 import { getRequestListByForm } from "@/backend/api/get";
+import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { generateFormslyResponseData } from "@/utils/arrayFunctions/dashboard";
@@ -32,6 +33,7 @@ type DashboardProps = {
   requestList: RequestByFormType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  teamId: string;
 };
 
 const filteredResponseTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
@@ -45,7 +47,11 @@ const statusFilter = [
 // REMOVED "responses" TAB
 const TABS = ["overview", "requisition"];
 
-const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
+const Dashboard = ({
+  requestList,
+  requestListCount,
+  teamId,
+}: DashboardProps) => {
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
@@ -59,6 +65,15 @@ const Dashboard = ({ requestList, requestListCount }: DashboardProps) => {
   const [fieldResponseData, setFieldResponseData] = useState<
     RequestResponseDataType[] | null
   >(null);
+
+  const { requestList: requestListData } = useFetchRequestListByForm({
+    teamId: teamId,
+    formId: selectedForm,
+    requestStatus: selectedStatus,
+    supabaseClient,
+  });
+
+  console.log(requestListData);
 
   // check if selected form is formsly form
   const isFormslyForm =

@@ -31,6 +31,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           requestList: data,
           requestListCount: count,
           teamMemberList,
+          teamId,
         },
       };
     } catch (error) {
@@ -49,9 +50,15 @@ type Props = {
   requestList: RequestByFormType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  teamId: string;
 };
 
-const Page = ({ requestList, requestListCount, teamMemberList }: Props) => {
+const Page = ({
+  requestList,
+  requestListCount,
+  teamMemberList,
+  teamId,
+}: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/team-requests/requests" />
@@ -59,6 +66,7 @@ const Page = ({ requestList, requestListCount, teamMemberList }: Props) => {
         requestList={requestList}
         requestListCount={requestListCount}
         teamMemberList={teamMemberList}
+        teamId={teamId}
       />
     </>
   );
