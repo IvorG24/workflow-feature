@@ -34,11 +34,49 @@ function useFetchRequestListByForm(params: Params) {
   const { data, error, isLoading } = useSWR(params, fetcher);
 
   const requestList = data ? data.requestList : [];
-  const requestCount = data ? data.requestListCount : 0;
+  const requestListCount = data ? data.requestListCount : 0;
+
+  const requestListWithMatchingResponses = requestList.map((request) => {
+    const matchingResponses = request.request_form.form_section.map(
+      (section) => {
+        const sectionFields = section.section_field.map((field) => {
+          const filteredResponseByRequestId = field.field_response.filter(
+            (response) =>
+              response.request_response_request_id === request.request_id
+          );
+
+          const filteredResponseWithDateCreated =
+            filteredResponseByRequestId.map((response) => ({
+              ...response,
+              request_response_date_purchased: request.request_date_created,
+              request_response_team_member_id: request.request_team_member_id,
+              request_response_request_status: request.request_status,
+            }));
+
+          return {
+            ...field,
+            field_response: filteredResponseWithDateCreated,
+          };
+        });
+
+        return {
+          ...section,
+          section_field: sectionFields,
+        };
+      }
+    );
+    return {
+      ...request,
+      request_form: {
+        ...request.request_form,
+        form_section: matchingResponses,
+      },
+    };
+  });
 
   return {
-    requestList,
-    requestCount,
+    requestList: requestListWithMatchingResponses,
+    requestListCount,
     isLoading,
     isError: error,
   };

@@ -1,17 +1,13 @@
-import { getRequestListByForm } from "@/backend/api/get";
 import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
 import { useFormList } from "@/stores/useFormStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { generateFormslyResponseData } from "@/utils/arrayFunctions/dashboard";
 import {
   FieldWithResponseType,
   RequestByFormType,
   RequestResponseDataType,
-  TeamMemberWithUserType,
 } from "@/utils/types";
 import {
   Box,
-  Button,
   Container,
   Flex,
   Group,
@@ -25,14 +21,11 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
 import RequisitionTab from "./RequisitionTab/RequisitionTab";
 
 type DashboardProps = {
-  requestList: RequestByFormType[];
-  requestListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
   teamId: string;
 };
 
@@ -47,33 +40,28 @@ const statusFilter = [
 // REMOVED "responses" TAB
 const TABS = ["overview", "requisition"];
 
-const Dashboard = ({
-  requestList,
-  requestListCount,
-  teamId,
-}: DashboardProps) => {
+const Dashboard = ({ teamId }: DashboardProps) => {
   const formList = useFormList();
-  const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const [isFetchingData, setIsFetchingData] = useState(false);
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isOTPForm, setIsOTPForm] = useState(false);
-  const [visibleRequestList, setVisibleRequestList] = useState(requestList);
-  const [requestCount, setRequestCount] = useState(requestListCount);
   const [fieldResponseData, setFieldResponseData] = useState<
     RequestResponseDataType[] | null
   >(null);
 
-  const { requestList: requestListData } = useFetchRequestListByForm({
+  // swr fetching
+  const {
+    requestList: requestListData,
+    requestListCount,
+    isLoading,
+  } = useFetchRequestListByForm({
     teamId: teamId,
     formId: selectedForm,
     requestStatus: selectedStatus,
     supabaseClient,
   });
-
-  console.log(requestListData);
 
   // check if selected form is formsly form
   const isFormslyForm =
@@ -82,79 +70,10 @@ const Dashboard = ({
   const selectedFormName =
     formList.find((form) => form.form_id === selectedForm)?.form_name || false;
 
-  const handleFilterRequestList = async () => {
-    try {
-      setIsFetchingData(true);
-      const { data, count } = await getRequestListByForm(supabaseClient, {
-        teamId: activeTeam.team_id,
-        formId: selectedForm ? selectedForm : undefined,
-        requestStatus: selectedStatus ? selectedStatus : undefined,
-      });
-
-      if (!data) throw Error;
-
-      const requestListWithMatchingResponses = data.map((request) => {
-        const matchingResponses = request.request_form.form_section.map(
-          (section) => {
-            const sectionFields = section.section_field.map((field) => {
-              const filteredResponseByRequestId = field.field_response.filter(
-                (response) =>
-                  response.request_response_request_id === request.request_id
-              );
-
-              const filteredResponseWithDateCreated =
-                filteredResponseByRequestId.map((response) => ({
-                  ...response,
-                  request_response_date_purchased: request.request_date_created,
-                  request_response_team_member_id:
-                    request.request_team_member_id,
-                  request_response_request_status: request.request_status,
-                }));
-
-              return {
-                ...field,
-                field_response: filteredResponseWithDateCreated,
-              };
-            });
-
-            return {
-              ...section,
-              section_field: sectionFields,
-            };
-          }
-        );
-        return {
-          ...request,
-          request_form: {
-            ...request.request_form,
-            form_section: matchingResponses,
-          },
-        };
-      });
-
-      if (!selectedForm) {
-        setFieldResponseData(null);
-      }
-      if (selectedForm) {
-        handleResponseTabData(requestListWithMatchingResponses);
-      }
-
-      setVisibleRequestList(data as RequestByFormType[]);
-      setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
-      setRequestCount(count as number);
-    } catch (error) {
-      notifications.show({
-        title: "Something went wrong.",
-        message: "Please try again later",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingData(false);
-    }
-  };
-
   const handleResponseTabData = (requestListByForm: RequestByFormType[]) => {
     try {
+      setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
+
       if (!requestListByForm) return;
 
       const sectionList = requestListByForm.flatMap(
@@ -244,13 +163,19 @@ const Dashboard = ({
     }
   };
 
+  useEffect(() => {
+    if (selectedForm) {
+      handleResponseTabData(requestListData);
+    }
+  }, [selectedForm]);
+
   const renderTabs = (tab: string) => {
     switch (tab) {
       case "overview":
         return (
           <Overview
-            requestList={visibleRequestList}
-            requestCount={requestCount}
+            requestList={requestListData}
+            requestCount={requestListCount ? requestListCount : 0}
           />
         );
 
@@ -269,20 +194,12 @@ const Dashboard = ({
         ) : (
           <Text>No data available.</Text>
         );
-
-      default:
-        return (
-          <Overview
-            requestList={visibleRequestList}
-            requestCount={requestCount}
-          />
-        );
     }
   };
 
   return (
     <Container p={0} maw={1024} h="100%">
-      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
 
       <Stack>
         <Title order={2}>Dashboard</Title>
@@ -313,9 +230,6 @@ const Dashboard = ({
               onChange={setSelectedStatus}
               clearable
             />
-            <Button onClick={() => handleFilterRequestList()}>
-              Fetch Data
-            </Button>
           </Group>
         </Flex>
 
