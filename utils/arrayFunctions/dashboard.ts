@@ -1,11 +1,14 @@
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
+import { DataItem } from "@/components/Dashboard/RequisitionTab/PurchaseTrend";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import moment from "moment";
 import {
   FieldType,
   FieldWithResponseType,
   LineChartDataType,
+  PurchaseTrendChartDataType,
   RequestByFormType,
+  RequestResponseDataType,
   ResponseDataType,
   SearchKeywordResponseType,
 } from "../types";
@@ -282,4 +285,47 @@ export const getStackedBarChartData = (
   });
 
   return updatedChartData;
+};
+
+export const getItemPurchaseTrendData = (data: RequestResponseDataType[]) => {
+  const itemPurchaseTrendData: PurchaseTrendChartDataType[] = [];
+  const fieldList = data.flatMap((d) => d.responseData);
+  const generalNameFieldList = fieldList.filter(
+    (f) => f.field_name === "General Name"
+  );
+  generalNameFieldList.forEach((field) => {
+    if (field.field_response.length > 0) {
+      itemPurchaseTrendData.push(...field.field_response);
+    }
+  });
+
+  return itemPurchaseTrendData;
+};
+
+export const getItemStatusCount = (data: PurchaseTrendChartDataType[]) => {
+  const itemStatusCount = data.reduce((acc, item) => {
+    const parseResponse = JSON.parse(item.request_response);
+    const requestStatus: string = item.request_response_request_status
+      ? item.request_response_request_status
+      : "";
+    const itemMatch = acc.findIndex(
+      (accItem) =>
+        accItem.item === parseResponse && accItem.label === requestStatus
+    );
+
+    if (itemMatch >= 0 && requestStatus) {
+      acc[itemMatch].value++;
+    } else {
+      const newItem = {
+        label: requestStatus,
+        value: 1,
+        item: parseResponse,
+      };
+      acc.push(newItem);
+    }
+
+    return acc;
+  }, [] as DataItem[]);
+
+  return itemStatusCount;
 };

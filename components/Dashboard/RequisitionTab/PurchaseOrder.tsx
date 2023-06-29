@@ -1,6 +1,9 @@
 import BarChart from "@/components/Chart/BarChart";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { getUniqueResponseData } from "@/utils/arrayFunctions/dashboard";
+import {
+  getItemStatusCount,
+  getUniqueResponseData,
+} from "@/utils/arrayFunctions/dashboard";
 import { RequestResponseDataType } from "@/utils/types";
 import {
   Box,
@@ -15,14 +18,12 @@ import {
 import { lowerCase, startCase } from "lodash";
 import { Dispatch, SetStateAction, useState } from "react";
 import validator from "validator";
-import { DataItem } from "./PurchaseTrend";
 
-type UserPurchaseDataProps = {
+type Props = {
   selectedPurchaseData: string;
   selectedBarChartItem: string;
   setSelectedBarChartItem: Dispatch<SetStateAction<string>>;
   purchaseOrderData: RequestResponseDataType[];
-  itemStatusCount: DataItem[];
 };
 
 const STATUS_LIST = ["PENDING", "APPROVED", "REJECTED", "CANCELED"];
@@ -32,8 +33,7 @@ const PurchaseOrder = ({
   setSelectedBarChartItem,
   selectedBarChartItem,
   purchaseOrderData,
-  itemStatusCount,
-}: UserPurchaseDataProps) => {
+}: Props) => {
   const authUserMember = useUserTeamMember();
   const [searchItemKey, setSearchItemKey] = useState("");
 
@@ -65,7 +65,12 @@ const PurchaseOrder = ({
     })
   );
 
+  const selectedItemSection = purchaseOrderData.filter(
+    (section) => section.sectionLabel === selectedBarChartItem
+  );
+
   // get number of order by status
+  const itemStatusCount = getItemStatusCount(selectedTabItemGeneralNameList);
   const selectedItemStatusCount = itemStatusCount.filter(
     (item) => item.item === selectedBarChartItem
   );
@@ -82,9 +87,7 @@ const PurchaseOrder = ({
   };
 
   //get all Quantity field responses from selected item
-  const selectedItemSection = purchaseOrderData.filter(
-    (section) => section.sectionLabel === selectedBarChartItem
-  );
+
   const itemQuantityList = selectedItemSection.flatMap(
     (section) =>
       section.responseData.filter((res) => res.field_name === "Quantity")[0]
