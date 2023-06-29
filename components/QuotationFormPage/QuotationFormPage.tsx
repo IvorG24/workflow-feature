@@ -40,7 +40,7 @@ type Props = {
   supplierListCount: number;
 };
 
-const InvoiceFormPage = ({
+const QuotationFormPage = ({
   teamMemberList,
   form,
   suppliers,
@@ -256,4 +256,4 @@ const InvoiceFormPage = ({
   );
 };
 
-export default InvoiceFormPage;
+export default QuotationFormPage;

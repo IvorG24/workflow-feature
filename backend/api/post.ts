@@ -382,7 +382,7 @@ export const createItem = async (
       field_id: fieldId,
       field_name: description,
       field_type: "DROPDOWN",
-      field_order: 6,
+      field_order: 8,
       field_section_id: section.section_id,
       field_is_required: true,
     });

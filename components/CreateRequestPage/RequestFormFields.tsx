@@ -32,12 +32,15 @@ type RequestFormFieldsProps = {
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
-  invoiceFormMethods?: {
+  quotationFormMethods?: {
     onItemChange: (
       index: number,
       value: string | null,
       prevValue: string | null
     ) => void;
+  };
+  rirFormMethods?: {
+    onQuantityChange: (index: number, value: number) => void;
   };
   formslyFormName?: string;
 };
@@ -47,7 +50,8 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   orderToPurchaseFormMethods,
-  invoiceFormMethods,
+  quotationFormMethods,
+  rirFormMethods,
   formslyFormName = "",
 }: RequestFormFieldsProps) => {
   const {
@@ -152,7 +156,15 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <NumberInput
                 value={value as number}
-                onChange={(value) => onChange(value)}
+                onChange={(value) => {
+                  onChange(value);
+                  if (field.field_name === "Quantity" && rirFormMethods) {
+                    rirFormMethods.onQuantityChange(
+                      sectionIndex,
+                      Number(value)
+                    );
+                  }
+                }}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
@@ -205,7 +217,7 @@ const RequestFormFields = ({
                       value
                     );
                   if (field.field_name === "Item")
-                    invoiceFormMethods?.onItemChange(
+                    quotationFormMethods?.onItemChange(
                       sectionIndex,
                       value,
                       prevValue === null ? null : `${prevValue}`
@@ -261,6 +273,7 @@ const RequestFormFields = ({
                   {...inputProps}
                   icon={<IconCalendar size={16} />}
                   error={fieldError}
+                  minDate={formslyFormName ? new Date() : undefined}
                 />
               );
             }}
@@ -347,7 +360,9 @@ const RequestFormFields = ({
                 onChange={field.onChange}
                 error={fieldError}
                 accept={
-                  formslyFormName === "Invoice" ? "application/pdf" : undefined
+                  formslyFormName === "Quotation"
+                    ? "application/pdf"
+                    : undefined
                 }
               />
             )}

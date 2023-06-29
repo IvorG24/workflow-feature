@@ -32,7 +32,7 @@ type Props = {
   form: FormType;
 };
 
-const CreateAccountPayableVoucherRequestPage = ({ form }: Props) => {
+const CreateChequeReferenceRequestPage = ({ form }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -65,10 +65,6 @@ const CreateAccountPayableVoucherRequestPage = ({ form }: Props) => {
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
       router.query.otpId
-    );
-    setValue(
-      `sections.${0}.section_field.${1}.field_response`,
-      router.query.invoiceId
     );
   }, [form, replaceSection]);
 
@@ -117,7 +113,7 @@ const CreateAccountPayableVoucherRequestPage = ({ form }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Account Payable Voucher"
+                    formslyFormName="Cheque Reference"
                   />
                 </Box>
               );
@@ -131,4 +127,4 @@ const CreateAccountPayableVoucherRequestPage = ({ form }: Props) => {
   );
 };
 
-export default CreateAccountPayableVoucherRequestPage;
+export default CreateChequeReferenceRequestPage;

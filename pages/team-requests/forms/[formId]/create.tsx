@@ -3,12 +3,13 @@ import {
   getAllItems,
   getAllNames,
   getForm,
-  getItemResponse,
+  getItemResponseForQuotation,
+  getItemResponseForRIR,
   getUserActiveTeamId,
 } from "@/backend/api/get";
-import CreateAccountPayableVoucherRequestPage from "@/components/CreateAccountPayableVoucherRequestPage/CreateAccountPayableVoucherRequestPage";
-import CreateInvoiceRequestPage from "@/components/CreateInvoiceRequestPage/CreateInvoiceRequestPage";
+import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
+import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
@@ -77,7 +78,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       },
                       ...form.form_section[0].section_field.slice(
                         2,
-                        form.form_section[0].section_field.length
                       ),
                     ],
                   },
@@ -88,8 +88,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Invoice
-        else if (form.form_name === "Invoice") {
+        // Quotation
+        else if (form.form_name === "Quotation") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.otpId}`],
           });
@@ -118,7 +118,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           });
 
-          const items = await getItemResponse(supabaseClient, {
+          const items = await getItemResponseForQuotation(supabaseClient, {
             requestId: `${context.query.otpId}`,
           });
 
@@ -128,7 +128,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               option_field_id: form.form_section[2].section_field[0].field_id,
               option_id: item,
               option_order: index,
-              option_value: `${items[item].name} (${items[item].quantity}) (${items[item].description})`,
+              option_value: `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`,
             };
           });
 
@@ -149,7 +149,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       },
                       ...form.form_section[1].section_field.slice(
                         1,
-                        form.form_section[1].section_field.length
+       
                       ),
                     ],
                   },
@@ -162,34 +162,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Account Payable Voucher
-        else if (form.form_name === "Account Payable Voucher ") {
-          const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.otpId}`, `${context.query.invoiceId}`],
-          });
-
-          if (!isRequestIdValid) {
-            return {
-              redirect: {
-                destination: "/404",
-                permanent: false,
-              },
-            };
-          }
-
-          return {
-            props: {
-              form,
-            },
-          };
-        }
         // Receiving Inspecting Report
         else if (form.form_name === "Receiving Inspecting Report") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
               `${context.query.otpId}`,
-              `${context.query.invoiceId}`,
-              `${context.query.apvId}`,
+              `${context.query.quotationId}`,
             ],
           });
 
@@ -202,9 +180,31 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           }
 
+          const items = await getItemResponseForRIR(supabaseClient, {
+            requestId: `${context.query.quotationId}`,
+          });
+
+          const regex = /\(([^()]+)\)/g;
+          const itemOptions = Object.keys(items).map((item, index) => {
+            const result = items[item].item.match(regex);
+            const value =
+              result &&
+              items[item].item.replace(
+                result[0],
+                `(${items[item].quantity} / ${result[0].slice(1, -1)})`
+              );
+            return {
+              option_description: null,
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item,
+              option_order: index,
+              option_value: value,
+            };
+          });
           return {
             props: {
               form,
+              itemOptions,
             },
           };
         }
@@ -246,25 +246,26 @@ const Page = ({ form, itemOptions }: Props) => {
                 {
                   ...form.form_section[1],
                   section_field: [
-                    ...form.form_section[1].section_field.slice(0, 2),
+                    ...form.form_section[1].section_field.slice(0, 3),
                   ],
                 },
               ],
             }}
           />
         );
-      case "Invoice":
+      case "Quotation":
         return (
-          <CreateInvoiceRequestPage form={form} itemOptions={itemOptions} />
+          <CreateQuotationRequestPage form={form} itemOptions={itemOptions} />
         );
-      case "Account Payable Voucher":
-        return <CreateAccountPayableVoucherRequestPage form={form} />;
       case "Receiving Inspecting Report":
-        return <CreateReceivingInspectingReportPage form={form} />;
-      case "Cheque Reference":
         return (
-          <CreateRequestPage form={form} formslyFormName="Cheque Reference" />
+          <CreateReceivingInspectingReportPage
+            form={form}
+            itemOptions={itemOptions}
+          />
         );
+      case "Cheque Reference":
+        return <CreateChequeReferenceRequestPage form={form} />;
       case "Audit":
         return <CreateRequestPage form={form} formslyFormName="Audit" />;
     }

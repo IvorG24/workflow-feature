@@ -1,3 +1,4 @@
+import { regExp } from "@/utils/string";
 import { SSOTType } from "@/utils/types";
 import {
   ActionIcon,
@@ -19,6 +20,36 @@ const useStyles = createStyles(() => ({
   cell: {
     verticalAlign: "top",
   },
+  date: {
+    width: 120,
+    minWidth: 120,
+    maxWidth: 120,
+  },
+  processor: {
+    width: 180,
+    minWidth: 180,
+    maxWidth: 180,
+  },
+  short: {
+    width: 80,
+    minWidth: 80,
+    maxWidth: 80,
+  },
+  normal: {
+    width: 100,
+    minWidth: 100,
+    maxWidth: 100,
+  },
+  long: {
+    width: 200,
+    minWidth: 200,
+    maxWidth: 200,
+  },
+  description: {
+    width: 300,
+    minWidth: 300,
+    maxWidth: 300,
+  },
 }));
 
 type Props = {
@@ -28,10 +59,80 @@ type Props = {
 const SSOTSpreadsheetView = ({ data }: Props) => {
   const { classes } = useStyles();
 
-  const renderRir = (
-    request: SSOTType["otp_invoice_request"][0]["invoice_apv_request"][0]["apv_rir_request"]
+  const renderChequeReference = (
+    request: SSOTType["otp_cheque_reference_request"]
   ) => {
     return request.map((request) => {
+      return (
+        <tr
+          key={request.cheque_reference_request_id}
+          className={classes.cell}
+          style={{ borderTop: "solid 1px #DEE2E6" }}
+        >
+          <td>{request.cheque_reference_request_id}</td>
+          <td>
+            {new Date(
+              request.cheque_reference_request_date_created
+            ).toLocaleDateString()}
+          </td>
+          <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
+          {request.cheque_reference_request_response
+            .slice(1)
+            .map((response, index) => {
+              return (
+                <td key={index}>
+                  {response.request_response_field_type === "DATE" ? (
+                    new Date(
+                      JSON.parse(response.request_response)
+                    ).toLocaleDateString()
+                  ) : response.request_response_field_type === "FILE" ? (
+                    <ActionIcon
+                      w="100%"
+                      variant="outline"
+                      onClick={() =>
+                        window.open(
+                          `${JSON.parse(response.request_response)}`,
+                          "_blank"
+                        )
+                      }
+                    >
+                      <Flex align="center" justify="center" gap={2}>
+                        <Text size={14}>File</Text> <IconFile size={14} />
+                      </Flex>
+                    </ActionIcon>
+                  ) : (
+                    `${JSON.parse(response.request_response)}`
+                  )}
+                </td>
+              );
+            })}
+        </tr>
+      );
+    });
+  };
+
+  const renderRir = (
+    request: SSOTType["otp_quotation_request"][0]["quotation_rir_request"]
+  ) => {
+    return request.map((request) => {
+      const itemName: string[] = [];
+      const itemQuantity: string[] = [];
+      const itemStatus: string[] = [];
+      const items = request.rir_request_response;
+
+      items.forEach((item) => {
+        if (item.request_response_field_name === "Item") {
+          itemName.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Quantity") {
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit =
+            matches && matches[1].replace(/\d+/g, "").trim().split("/")[0];
+          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
+        } else if (item.request_response_field_name === "Receiving Status") {
+          itemStatus.push(JSON.parse(item.request_response));
+        }
+      });
+
       return (
         <tr
           key={request.rir_request_id}
@@ -44,62 +145,45 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
           <td>
-            {JSON.parse(request.rir_request_response[3].request_response)}
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemName.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
           </td>
-        </tr>
-      );
-    });
-  };
-
-  const renderApv = (
-    request: SSOTType["otp_invoice_request"][0]["invoice_apv_request"]
-  ) => {
-    return request.map((request) => {
-      return (
-        <tr
-          key={request.apv_request_id}
-          className={classes.cell}
-          style={{ borderTop: "solid 1px #DEE2E6" }}
-        >
-          <td>{request.apv_request_id}</td>
           <td>
-            {new Date(request.apv_request_date_created).toLocaleDateString()}
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
           </td>
-          <td>{`${request.apv_request_owner.user_first_name} ${request.apv_request_owner.user_last_name}`}</td>
-          {request.apv_request_response.slice(0, 2).map((response, index) => {
-            return <td key={index}>{JSON.parse(response.request_response)}</td>;
-          })}
-
-          {request.apv_rir_request.length !== 0 ? (
-            <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders>
-                <thead style={{ backgroundColor: "#69DB7C" }}>
-                  <tr>
-                    <th style={{ minWidth: 200 }}>RIR ID</th>
-                    <th style={{ minWidth: 100 }}>Date Created</th>
-                    <th style={{ minWidth: 200 }}>Warehouse Receiver</th>
-                    <th>Receiving Status</th>
-                  </tr>
-                </thead>
-                <tbody style={{ backgroundColor: "#EBFBEE" }}>
-                  {renderRir(request.apv_rir_request)}
-                </tbody>
-              </Table>
-            </td>
-          ) : null}
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemStatus.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
         </tr>
       );
     });
   };
 
-  const renderInvoice = (request: SSOTType["otp_invoice_request"]) => {
+  const renderQuotation = (request: SSOTType["otp_quotation_request"]) => {
     return request.map((request) => {
       const itemName: string[] = [];
       const itemPrice: string[] = [];
       const itemQuantity: string[] = [];
-      const items = request.invoice_request_response.slice(
+      const items = request.quotation_request_response.slice(
         3,
-        request.invoice_request_response.length
+        request.quotation_request_response.length
       );
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -107,25 +191,27 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
         } else if (item.request_response_field_name === "Price") {
           itemPrice.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
-          itemQuantity.push(JSON.parse(item.request_response));
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit = matches && matches[1].replace(/\d+/g, "").trim();
+          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
         }
       });
 
       return (
         <tr
-          key={request.invoice_request_id}
+          key={request.quotation_request_id}
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.invoice_request_id}</td>
+          <td>{request.quotation_request_id}</td>
           <td>
             {new Date(
-              request.invoice_request_date_created
+              request.quotation_request_date_created
             ).toLocaleDateString()}
           </td>
-          <td>{`${request.invoice_request_owner.user_first_name} ${request.invoice_request_owner.user_last_name}`}</td>
-          {request.invoice_request_response
-            .slice(1, 5)
+          <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
+          {request.quotation_request_response
+            .slice(1, 3)
             .map((response, index) => {
               return (
                 <td key={index}>
@@ -155,7 +241,33 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               );
             })}
           <td>
-            <List sx={{ listStyle: "none" }}>
+            {request.quotation_request_response[3]
+              .request_response_field_name === "Send Method" &&
+              request.quotation_request_response[3].request_response_field_name}
+          </td>
+          <td>
+            {request.quotation_request_response[4]
+              .request_response_field_name === "Proof of Sending" && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() =>
+                  window.open(
+                    `${JSON.parse(
+                      request.quotation_request_response[4].request_response
+                    )}`,
+                    "_blank"
+                  )
+                }
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -164,16 +276,16 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemPrice.map((item, index) => (
                 <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
+                  <Text size={14}>₱{item}</Text>
                 </List.Item>
               ))}
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -181,21 +293,21 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               ))}
             </List>
           </td>
-          {request.invoice_apv_request.length !== 0 ? (
+          {request.quotation_rir_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders>
-                <thead style={{ backgroundColor: "#4DABF7" }}>
+              <Table withBorder withColumnBorders h="100%">
+                <thead style={{ backgroundColor: "#74C0FC" }}>
                   <tr>
-                    <th style={{ minWidth: 200 }}>APV ID</th>
-                    <th style={{ minWidth: 100 }}>Date Created</th>
-                    <th>Requestor</th>
-                    <th style={{ minWidth: 200 }}>OTP ID</th>
-                    <th style={{ minWidth: 200 }}>Invoice ID</th>
-                    <th>RIR</th>
+                    <th className={classes.long}>RIR ID</th>
+                    <th className={classes.date}>Date Created</th>
+                    <th className={classes.processor}>Warehouse Receiver</th>
+                    <th className={classes.description}>Item</th>
+                    <th className={classes.normal}>Quantity</th>
+                    <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#E7F5FF" }}>
-                  {renderApv(request.invoice_apv_request)}
+                  {renderRir(request.quotation_rir_request)}
                 </tbody>
               </Table>
             </td>
@@ -208,6 +320,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   const renderOtp = () => {
     return data.map((request) => {
       const itemName: string[] = [];
+      const itemUnit: string[] = [];
       const itemQuantity: string[] = [];
       const itemDescription: string[] = [];
       const items = request.otp_request_response.slice(
@@ -223,6 +336,8 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               itemDescription.length - 2
             ].slice(0, -2);
           }
+        } else if (item.request_response_field_name === "Unit") {
+          itemUnit.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           itemQuantity.push(JSON.parse(item.request_response));
         } else {
@@ -241,7 +356,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             {new Date(request.otp_request_date_created).toLocaleDateString()}
           </td>
           <td>{`${request.otp_request_owner.user_first_name} ${request.otp_request_owner.user_last_name}`}</td>
-          {request.otp_request_response.slice(0, 3).map((response, index) => {
+          {request.otp_request_response.slice(0, 4).map((response, index) => {
             return (
               <td key={index}>
                 {response.request_response_field_type === "DATE"
@@ -253,7 +368,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             );
           })}
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -262,7 +377,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -271,7 +386,16 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             </List>
           </td>
           <td>
-            <List sx={{ listStyle: "none" }}>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemUnit.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
               {itemDescription.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
@@ -279,26 +403,54 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               ))}
             </List>
           </td>
-          {request.otp_invoice_request.length !== 0 ? (
+          {request.otp_quotation_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders>
+              <Table withBorder withColumnBorders h="100%">
                 <thead style={{ backgroundColor: "#E599F7" }}>
                   <tr>
-                    <th style={{ minWidth: 200 }}>Invoice ID</th>
-                    <th style={{ minWidth: 100 }}>Date Created</th>
-                    <th style={{ minWidth: 200 }}>Accounting Processor</th>
-                    <th style={{ minWidth: 300 }}>Supplier</th>
-                    <th>Supplier Invoice</th>
-                    <th>Request Send Method</th>
-                    <th>Proof of Sending</th>
-                    <th style={{ minWidth: 400 }}>Item</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>APV</th>
+                    <th className={classes.long}>Quotation ID</th>
+                    <th className={classes.date}>Date Created</th>
+                    <th className={classes.processor}>Accounting Processor</th>
+                    <th className={classes.long}>Supplier</th>
+                    <th className={classes.normal}>Supplier Quotation</th>
+                    <th className={classes.short}> Send Method</th>
+                    <th className={classes.normal}>Proof of Sending</th>
+                    <th className={classes.description}>Item</th>
+                    <th className={classes.short}>Price</th>
+                    <th className={classes.short}>Quantity</th>
+                    <th>RIR</th>
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#F8F0FC" }}>
-                  {renderInvoice(request.otp_invoice_request)}
+                  {renderQuotation(request.otp_quotation_request)}
+                </tbody>
+              </Table>
+            </td>
+          ) : null}
+          {request.otp_cheque_reference_request.length !== 0 ? (
+            <td style={{ padding: 0 }}>
+              <Table withBorder withColumnBorders h="100%">
+                <thead style={{ backgroundColor: "#8CE99A" }}>
+                  <tr>
+                    <th className={classes.long}>Cheque Reference ID</th>
+                    <th className={classes.date}>Date Created</th>
+                    <th className={classes.processor}>Treasury Processor</th>
+                    <th className={classes.normal}>Treasury Status</th>
+                    <th className={classes.short}>Cheque Cancelled</th>
+                    <th className={classes.date}>Cheque Printed Date</th>
+                    <th className={classes.date}>Cheque Clearing Date</th>
+                    <th className={classes.processor}>
+                      Cheque First Signatory Name
+                    </th>
+                    <th className={classes.date}>Cheque First Date Signed</th>
+                    <th className={classes.processor}>
+                      Cheque Second Signatory Name
+                    </th>
+                    <th className={classes.date}>Cheque Second Date Signed</th>
+                  </tr>
+                </thead>
+                <tbody style={{ backgroundColor: "#EBFBEE" }}>
+                  {renderChequeReference(request.otp_cheque_reference_request)}
                 </tbody>
               </Table>
             </td>
@@ -309,30 +461,40 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   };
 
   return (
-    <Box p="xl">
-      <Title>SSOT Spreadsheet View</Title>
-      <ScrollArea type="auto" offsetScrollbars scrollbarSize={5}>
-        <Paper mt="xl">
-          <Table withBorder withColumnBorders>
-            <thead style={{ backgroundColor: "#FFA8A8" }}>
-              <tr>
-                <th style={{ minWidth: 200 }}>OTP ID</th>
-                <th style={{ minWidth: 100 }}>Date Created</th>
-                <th style={{ minWidth: 150 }}>Warehouse Processor</th>
-                <th>Project Name</th>
-                <th>Type</th>
-                <th style={{ minWidth: 100 }}>Date Needed</th>
-                <th>Item Name</th>
-                <th>Quantity</th>
-                <th style={{ minWidth: 400 }}>Description</th>
-                <th>Invoice</th>
-              </tr>
-            </thead>
-            <tbody style={{ backgroundColor: "#FFF5F5" }}>{renderOtp()}</tbody>
-          </Table>
-        </Paper>
-      </ScrollArea>
-    </Box>
+    <Flex direction="column" p="xl">
+      <Title order={2} color="dimmed">
+        SSOT Spreadsheet View
+      </Title>
+
+      <Paper mt="xl" p="xl" shadow="sm">
+        <ScrollArea scrollbarSize={10} offsetScrollbars type="always">
+          <Box mah={710}>
+            <Table withBorder withColumnBorders pos="relative" h="100%">
+              <thead style={{ backgroundColor: "#FFA8A8" }}>
+                <tr>
+                  <th className={classes.long}>OTP ID</th>
+                  <th className={classes.date}>Date Created</th>
+                  <th className={classes.processor}>Warehouse Processor</th>
+                  <th className={classes.long}>Project Name</th>
+                  <th className={classes.normal}>Type</th>
+                  <th className={classes.date}>Date Needed</th>
+                  <th className={classes.normal}>Cost Code</th>
+                  <th className={classes.normal}>Item Name</th>
+                  <th className={classes.short}>Quantity</th>
+                  <th className={classes.short}>Unit</th>
+                  <th className={classes.description}>Description</th>
+                  <th>Quotation</th>
+                  <th>Cheque Reference</th>
+                </tr>
+              </thead>
+              <tbody style={{ backgroundColor: "#FFF5F5" }}>
+                {renderOtp()}
+              </tbody>
+            </Table>
+          </Box>
+        </ScrollArea>
+      </Paper>
+    </Flex>
   );
 };
 

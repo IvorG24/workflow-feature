@@ -15,3 +15,5 @@ export const isValidTeamName = (name: string): boolean => {
 export const requestPath = (requestId: string) => {
   return `http://${window.location.host}/team-requests/requests/${requestId}`;
 };
+
+export const regExp = /\(([^)]+)\)/;
