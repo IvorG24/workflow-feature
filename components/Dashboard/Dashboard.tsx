@@ -223,7 +223,7 @@ const Dashboard = () => {
             <Select
               w={120}
               placeholder="Status"
-              data={statusFilter}
+              data={formList.length > 0 ? statusFilter : []}
               value={selectedStatus}
               onChange={setSelectedStatus}
               clearable
