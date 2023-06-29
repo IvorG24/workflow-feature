@@ -1,5 +1,5 @@
 import { getAvatarColor } from "@/utils/styling";
-import { RequestSignerListType } from "@/utils/types";
+import { RequestByFormType, RequestSignerListType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -23,11 +23,36 @@ const useStyles = createStyles(() => ({
 }));
 
 type SignerTableProps = {
-  signerList: RequestSignerListType[];
+  requestList: RequestByFormType[];
 };
-const SignerTable = ({ signerList }: SignerTableProps) => {
+
+const SignerTable = ({ requestList }: SignerTableProps) => {
   const { classes } = useStyles();
-  const sortSignerListByTotalRequests = signerList.sort(
+  // get signers
+  const signerList = requestList.flatMap((request) => request.request_signer);
+  const reducedSignerList = signerList.reduce((acc, signer) => {
+    const isRequestApproved = signer.request_signer_status === "APPROVED";
+    const duplicateSignerIndex = acc.findIndex(
+      (d) =>
+        d.signer_team_member.team_member_id ===
+        signer.request_signer_signer.signer_team_member.team_member_id
+    );
+
+    if (isRequestApproved) {
+      if (duplicateSignerIndex >= 0) {
+        acc[duplicateSignerIndex].count++;
+      } else {
+        const newSigner = {
+          ...signer.request_signer_signer,
+          count: 1,
+        };
+        acc.push(newSigner);
+      }
+    }
+
+    return acc;
+  }, [] as RequestSignerListType[]);
+  const sortSignerListByTotalRequests = reducedSignerList.sort(
     (a, b) => b.count - a.count
   );
 
@@ -42,7 +67,7 @@ const SignerTable = ({ signerList }: SignerTableProps) => {
         </Group>
 
         <Stack p="lg" mb="sm" spacing={32}>
-          {signerList.length > 0 ? (
+          {requestList.length > 0 ? (
             sortSignerListByTotalRequests.map((signer) => {
               const user = signer.signer_team_member.team_member_user;
               return (

@@ -1,5 +1,6 @@
 import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
 import { useFormList } from "@/stores/useFormStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { generateFormslyResponseData } from "@/utils/arrayFunctions/dashboard";
 import {
   FieldWithResponseType,
@@ -25,10 +26,6 @@ import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
 import RequisitionTab from "./RequisitionTab/RequisitionTab";
 
-type DashboardProps = {
-  teamId: string;
-};
-
 const filteredResponseTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
 const statusFilter = [
   { value: "APPROVED", label: "Approved" },
@@ -40,9 +37,11 @@ const statusFilter = [
 // REMOVED "responses" TAB
 const TABS = ["overview", "requisition"];
 
-const Dashboard = ({ teamId }: DashboardProps) => {
+const Dashboard = () => {
   const formList = useFormList();
+  const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const [teamId, setTeamId] = useState(activeTeam.team_id);
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
@@ -70,10 +69,9 @@ const Dashboard = ({ teamId }: DashboardProps) => {
   const selectedFormName =
     formList.find((form) => form.form_id === selectedForm)?.form_name || false;
 
+  // update data for response and requisition tabs
   const handleResponseTabData = (requestListByForm: RequestByFormType[]) => {
     try {
-      setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
-
       if (!requestListByForm) return;
 
       const sectionList = requestListByForm.flatMap(
@@ -167,7 +165,9 @@ const Dashboard = ({ teamId }: DashboardProps) => {
     if (selectedForm) {
       handleResponseTabData(requestListData);
     }
-  }, [selectedForm]);
+    setTeamId(activeTeam.team_id);
+    setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
+  }, [selectedForm, activeTeam.team_id]);
 
   const renderTabs = (tab: string) => {
     switch (tab) {

@@ -10,14 +10,13 @@ type Params = {
   supabaseClient: SupabaseClient<Database>;
 };
 
-const fetcher = async (params: Params) => {
+const fetcher = async (key: string, params: Params) => {
   try {
     const { data, count } = await getRequestListByForm(params.supabaseClient, {
       teamId: params.teamId,
       formId: params.formId ? params.formId : undefined,
       requestStatus: params.requestStatus ? params.requestStatus : undefined,
     });
-
     if (!data) throw new Error();
 
     const requestList = data;
@@ -31,7 +30,10 @@ const fetcher = async (params: Params) => {
 };
 
 function useFetchRequestListByForm(params: Params) {
-  const { data, error, isLoading } = useSWR(params, fetcher);
+  const { data, error, isLoading } = useSWR(
+    [`/api/fetchDashboardData?teamId=${params.teamId}`, params],
+    ([key, params]) => fetcher(key, params)
+  );
 
   const requestList = data ? data.requestList : [];
   const requestListCount = data ? data.requestListCount : 0;

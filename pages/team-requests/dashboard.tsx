@@ -30,15 +30,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   }
 );
 
-type Props = {
-  teamId: string;
-};
-
-const Page = ({ teamId }: Props) => {
+const Page = () => {
   return (
     <>
       <Meta description="Request List Page" url="/team-requests/requests" />
-      <Dashboard teamId={teamId} />
+      <Dashboard />
     </>
   );
 };
