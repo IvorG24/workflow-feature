@@ -125,7 +125,7 @@ const CreateItem = ({
                     return isExisting ? "Item already exists" : true;
                   },
                   validCharacters: (value) =>
-                    value.match(/^[a-z][a-z\s]*$/)
+                    value.match(/^[a-zA-Z ]*$/)
                       ? true
                       : "General name must not include invalid character/s",
                 },
