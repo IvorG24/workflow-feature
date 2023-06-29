@@ -124,6 +124,10 @@ const CreateItem = ({
                     });
                     return isExisting ? "Item already exists" : true;
                   },
+                  validCharacters: (value) =>
+                    value.match(/^[a-z][a-z\s]*$/)
+                      ? true
+                      : "General name must not include invalid character/s",
                 },
               })}
               withAsterisk
