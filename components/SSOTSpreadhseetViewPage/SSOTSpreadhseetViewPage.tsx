@@ -242,8 +242,10 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             })}
           <td>
             {request.quotation_request_response[3]
-              .request_response_field_name === "Send Method" &&
-              request.quotation_request_response[3].request_response_field_name}
+              .request_response_field_name === "Request Send Method" &&
+              JSON.parse(
+                request.quotation_request_response[3].request_response
+              )}
           </td>
           <td>
             {request.quotation_request_response[4]
