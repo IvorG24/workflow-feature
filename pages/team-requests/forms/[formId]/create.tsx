@@ -76,9 +76,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       {
                         ...form.form_section[0].section_field[1],
                       },
-                      ...form.form_section[0].section_field.slice(
-                        2,
-                      ),
+                      ...form.form_section[0].section_field.slice(2),
                     ],
                   },
                   form.form_section[1],
@@ -147,10 +145,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                         ...form.form_section[1].section_field[0],
                         field_option: supplierOptions,
                       },
-                      ...form.form_section[1].section_field.slice(
-                        1,
-       
-                      ),
+                      ...form.form_section[1].section_field.slice(1),
                     ],
                   },
                   {

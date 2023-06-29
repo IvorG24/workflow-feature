@@ -596,6 +596,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     fieldWithId: fieldsWithId,
     options: [
       ...orderToPurchase.option,
+      ...quotation.option,
       ...chequeReference.option,
       ...audit.option,
     ],
