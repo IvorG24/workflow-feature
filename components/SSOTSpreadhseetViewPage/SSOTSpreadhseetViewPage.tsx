@@ -211,7 +211,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
           {request.quotation_request_response
-            .slice(1, 5)
+            .slice(1, 3)
             .map((response, index) => {
               return (
                 <td key={index}>
@@ -240,6 +240,32 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                 </td>
               );
             })}
+          <td>
+            {request.quotation_request_response[3]
+              .request_response_field_name === "Send Method" &&
+              request.quotation_request_response[3].request_response_field_name}
+          </td>
+          <td>
+            {request.quotation_request_response[4]
+              .request_response_field_name === "Proof of Sending" && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() =>
+                  window.open(
+                    `${JSON.parse(
+                      request.quotation_request_response[4].request_response
+                    )}`,
+                    "_blank"
+                  )
+                }
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
