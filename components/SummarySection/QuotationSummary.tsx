@@ -13,8 +13,21 @@ const QuotationSummary = ({ summaryData }: Props) => {
         Summary
       </Title>
 
-      <Table mt="md" highlightOnHover withColumnBorders withBorder>
-        <thead style={{ backgroundColor: "#A5D8FF" }}>
+      <Table
+        mt="md"
+        highlightOnHover
+        withColumnBorders
+        withBorder
+        sx={(theme) => ({
+          "& th": {
+            backgroundColor:
+              theme.colorScheme === "dark"
+                ? theme.colors.blue[9]
+                : theme.colors.blue[2],
+          },
+        })}
+      >
+        <thead>
           <tr>
             <th>Item</th>
             <th>Price</th>
