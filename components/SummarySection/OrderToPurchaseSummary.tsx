@@ -39,12 +39,11 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
                 )}, `;
               }
             });
-            description.slice(0, -2);
 
             return (
               <tr key={index}>
                 <td>{item}</td>
-                <td>{description}</td>
+                <td>{description.slice(0, -2)}</td>
                 <td>{quantity}</td>
               </tr>
             );
