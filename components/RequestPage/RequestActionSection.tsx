@@ -29,9 +29,9 @@ const RequestActionSection = ({
         Request Action
       </Title>
       <Space h="xl" />
-      {isUserOwner && requestStatus === "PENDING" && (
-        <>
-          <Stack spacing="sm">
+      <Stack>
+        {isUserOwner && requestStatus === "PENDING" && (
+          <>
             <Button
               variant="outline"
               fullWidth
@@ -44,17 +44,15 @@ const RequestActionSection = ({
             <Button variant="default" fullWidth onClick={handleCancelRequest}>
               Cancel Request
             </Button>
-          </Stack>
-        </>
-      )}
-      {isUserOwner && requestStatus === "CANCELED" && (
-        <Button color="red" fullWidth onClick={openPromptDeleteModal}>
-          Delete Request
-        </Button>
-      )}
-      {isUserSigner && requestStatus === "PENDING" && (
-        <>
-          <Stack>
+          </>
+        )}
+        {isUserOwner && requestStatus === "CANCELED" && (
+          <Button color="red" fullWidth onClick={openPromptDeleteModal}>
+            Delete Request
+          </Button>
+        )}
+        {isUserSigner && requestStatus === "PENDING" && (
+          <>
             <Button
               color="green"
               fullWidth
@@ -69,9 +67,9 @@ const RequestActionSection = ({
             >
               Reject Request
             </Button>
-          </Stack>
-        </>
-      )}
+          </>
+        )}
+      </Stack>
     </Paper>
   );
 };

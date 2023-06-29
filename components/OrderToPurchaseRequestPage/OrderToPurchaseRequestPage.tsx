@@ -4,12 +4,14 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSingerSection from "@/components/RequestPage/RequestSignerSection";
+import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { GROUP_CONNECTION } from "@/utils/constant";
 import {
   FormStatusType,
+  FormslyFormKeyType,
   FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
@@ -31,16 +33,17 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
+import OrderToPurchaseSummary from "../SummarySection/OrderToPurchaseSummary";
 
 type Props = {
   request: RequestWithResponseType;
-  connectedFormID: string;
+  connectedForm: { form_name: string; form_id: string }[];
   connectedRequestIDList: FormslyFormType;
 };
 
 const OrderToPurchaseRequestPage = ({
   request,
-  connectedFormID,
+  connectedForm,
   connectedRequestIDList,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
@@ -186,24 +189,38 @@ const OrderToPurchaseRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {requestStatus === "APPROVED" &&
-        teamMember?.team_member_group_list.includes("Accounting Processor") ? (
-          <Group>
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-            />
-            <Button
-              onClick={() =>
-                router.push(
-                  `/team-requests/forms/${connectedFormID}/create?otpId=${request.request_id}`
-                )
-              }
-            >
-              Create Invoice
-            </Button>
-          </Group>
-        ) : null}
+        <Group>
+          <ExportToPdf
+            request={request}
+            sectionWithDuplicateList={sectionWithDuplicateList}
+          />
+          {requestStatus === "APPROVED" ? (
+            <Group>
+              {connectedForm.map((form) => {
+                if (
+                  teamMember?.team_member_group_list.includes(
+                    GROUP_CONNECTION[form.form_name as FormslyFormKeyType]
+                  )
+                ) {
+                  return (
+                    <Button
+                      key={form.form_id}
+                      onClick={() =>
+                        router.push(
+                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                        )
+                      }
+                    >
+                      Create {form.form_name}
+                    </Button>
+                  );
+                } else {
+                  return null;
+                }
+              })}
+            </Group>
+          ) : null}
+        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -226,6 +243,20 @@ const OrderToPurchaseRequestPage = ({
           />
         ))}
 
+        <OrderToPurchaseSummary
+          summaryData={sectionWithDuplicateList
+            .slice(1)
+            .sort((a, b) =>
+              `${a.section_field[0].field_response?.request_response}` >
+              `${b.section_field[0].field_response?.request_response}`
+                ? 1
+                : `${b.section_field[0].field_response?.request_response}` >
+                  `${a.section_field[0].field_response?.request_response}`
+                ? -1
+                : 0
+            )}
+        />
+
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
         (isUserSigner && requestStatus === "PENDING") ? (
@@ -240,7 +271,7 @@ const OrderToPurchaseRequestPage = ({
           />
         ) : null}
 
-        <RequestSingerSection signerList={signerList} />
+        <RequestSignerSection signerList={signerList} />
       </Stack>
       <RequestCommentList
         requestData={{

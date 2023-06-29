@@ -415,6 +415,7 @@ export type ItemForm = {
   descriptions: { description: string }[];
   unit: string;
   isAvailable: boolean;
+  purpose: string;
 };
 
 export type ItemDescriptionFieldForm = {
@@ -550,15 +551,13 @@ export type RequestResponseDataType = {
 };
 export type FormslyFormType = {
   "Order to Purchase": string[];
-  Invoice: string[];
-  "Account Payable Voucher": string[];
+  Quotation: string[];
   "Receiving Inspecting Report": string[];
 };
 
 export type FormslyFormKeyType =
   | "Order to Purchase"
-  | "Invoice"
-  | "Account Payable Voucher"
+  | "Quotation"
   | "Receiving Inspecting Report";
 
 export type RequestSignerListType =
@@ -567,7 +566,7 @@ export type RequestSignerListType =
   };
 export type TeamGroupForFormType =
   | "Order to Purchase"
-  | "Invoice"
+  | "Quotation"
   | "Receiving Inspecting Report"
   | "Cheque Reference"
   | "Audit";
@@ -588,22 +587,22 @@ export type SSOTType = {
   otp_request_date_created: string;
   otp_request_owner: SSOTRequestOwnerType;
   otp_request_response: SSOTResponseType[];
-  otp_invoice_request: {
-    invoice_request_id: string;
-    invoice_request_date_created: string;
-    invoice_request_owner: SSOTRequestOwnerType;
-    invoice_request_response: SSOTResponseType[];
-    invoice_apv_request: {
-      apv_request_id: string;
-      apv_request_date_created: string;
-      apv_request_owner: SSOTRequestOwnerType;
-      apv_request_response: SSOTResponseType[];
-      apv_rir_request: {
-        rir_request_id: string;
-        rir_request_date_created: string;
-        rir_request_owner: SSOTRequestOwnerType;
-        rir_request_response: SSOTResponseType[];
-      }[];
+  otp_quotation_request: {
+    quotation_request_id: string;
+    quotation_request_date_created: string;
+    quotation_request_owner: SSOTRequestOwnerType;
+    quotation_request_response: SSOTResponseType[];
+    quotation_rir_request: {
+      rir_request_id: string;
+      rir_request_date_created: string;
+      rir_request_owner: SSOTRequestOwnerType;
+      rir_request_response: SSOTResponseType[];
     }[];
+  }[];
+  otp_cheque_reference_request: {
+    cheque_reference_request_id: string;
+    cheque_reference_request_date_created: string;
+    cheque_reference_request_response: SSOTResponseType[];
+    cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
 };

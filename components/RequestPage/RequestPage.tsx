@@ -1,17 +1,18 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { checkInvoiceItemQuantity } from "@/backend/api/get";
+import {
+  checkQuotationItemQuantity,
+  checkRIRItemQuantity,
+} from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { FORM_CONNECTION, GROUP_CONNECTION } from "@/utils/constant";
+import { GROUP_CONNECTION } from "@/utils/constant";
 import {
-  ConnectedFormsType,
   FormStatusType,
   FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
-  TeamGroupForFormType,
 } from "@/utils/types";
 import {
   Box,
@@ -24,24 +25,26 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { modals, openConfirmModal } from "@mantine/modals";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
+import QuotationSummary from "../SummarySection/QuotationSummary";
+import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
 import RequestSection from "./RequestSection";
-import RequestSingerSection from "./RequestSignerSection";
+import RequestSignerSection from "./RequestSignerSection";
 
 type Props = {
   request: RequestWithResponseType;
   isFormslyForm?: boolean;
-  connectedFormID?: string;
+  connectedFormID?: string[];
   connectedRequestIDList?: FormslyFormType;
 };
 
@@ -59,19 +62,10 @@ const RequestPage = ({
 
   const isGroupMember =
     request.request_form.form_is_formsly_form &&
-    GROUP_CONNECTION[
-      FORM_CONNECTION[
-        request.request_form.form_name as ConnectedFormsType
-      ] as TeamGroupForFormType
-    ]
-      ? teamMember?.team_member_group_list.includes(
-          GROUP_CONNECTION[
-            FORM_CONNECTION[
-              request.request_form.form_name as ConnectedFormsType
-            ] as TeamGroupForFormType
-          ]
-        )
-      : true;
+    request.request_form.form_name === "Quotation" &&
+    teamMember?.team_member_group_list.includes(
+      GROUP_CONNECTION["Receiving Inspecting Report"]
+    );
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
@@ -109,72 +103,136 @@ const RequestPage = ({
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       if (!teamMember) return;
-      setIsLoading(true);
-      const signer = isUserSigner;
-      const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
-      if (!signer) {
+      if (!isUserSigner) {
         notifications.show({
           message: "Invalid signer.",
           color: "orange",
         });
         return;
       }
+      setIsLoading(true);
+      const signer = isUserSigner;
+      const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
 
-      if (
-        request.request_form.form_is_formsly_form &&
-        request.request_form.form_name === "Invoice" &&
-        status === "APPROVED"
-      ) {
-        const otpID =
-          request.request_form.form_section[0].section_field[0]
-            .field_response[0].request_response;
-        const itemSection = request.request_form.form_section[2];
+      if (request.request_form.form_is_formsly_form && status === "APPROVED") {
+        if (request.request_form.form_name === "Quotation") {
+          const otpID =
+            request.request_form.form_section[0].section_field[0]
+              .field_response[0].request_response;
+          const itemSection = request.request_form.form_section[2];
 
-        const warningItemList = await checkInvoiceItemQuantity(supabaseClient, {
-          otpID,
-          itemFieldId: itemSection.section_field[0].field_id,
-          quantityFieldId: itemSection.section_field[2].field_id,
-          itemFieldList: itemSection.section_field[0].field_response,
-          quantityFieldList: itemSection.section_field[2].field_response,
-        });
+          const warningItemList = await checkQuotationItemQuantity(
+            supabaseClient,
+            {
+              otpID,
+              itemFieldId: itemSection.section_field[0].field_id,
+              quantityFieldId: itemSection.section_field[2].field_id,
+              itemFieldList: itemSection.section_field[0].field_response,
+              quantityFieldList: itemSection.section_field[2].field_response,
+            }
+          );
 
-        if (warningItemList.length !== 0) {
-          setIsLoading(false);
-          openConfirmModal({
-            title: (
-              <Text size={14} color="dimmed">
-                Are you sure you want to approve this request?
-              </Text>
-            ),
-            children: (
-              <Box maw={390}>
-                <Title order={5}>
-                  By approving this request, there are items that will exceed
-                  quantity limit
-                </Title>
-                <List size="sm" mt="md">
-                  {warningItemList.map((item) => (
-                    <List.Item key={item}>{item}</List.Item>
-                  ))}
-                </List>
-              </Box>
-            ),
-            labels: { confirm: "Proceed", cancel: "Cancel" },
-            centered: true,
-            onConfirm: () =>
-              handleApproveOrRejectRequest(status, signer, signerFullName),
+          if (warningItemList.length !== 0) {
+            modals.open({
+              title: "You cannot approve create this request.",
+              centered: true,
+              children: (
+                <Box maw={390}>
+                  <Title order={5}>
+                    There are items that will exceed the quantity limit of the
+                    OTP
+                  </Title>
+                  <List size="sm" mt="md" spacing="xs">
+                    {warningItemList.map((item) => (
+                      <List.Item key={item}>{item}</List.Item>
+                    ))}
+                  </List>
+                  <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                    Close
+                  </Button>
+                </Box>
+              ),
+            });
+            return;
+          }
+        } else if (
+          request.request_form.form_name === "Receiving Inspecting Report"
+        ) {
+          const quotationId =
+            request.request_form.form_section[0].section_field[1]
+              .field_response[0].request_response;
+          const itemSection = request.request_form.form_section[1];
+
+          const warningItemList = await checkRIRItemQuantity(supabaseClient, {
+            quotationId,
+            itemFieldId: itemSection.section_field[0].field_id,
+            quantityFieldId: itemSection.section_field[1].field_id,
+            itemFieldList: itemSection.section_field[0].field_response,
+            quantityFieldList: itemSection.section_field[1].field_response,
           });
-        } else {
-          handleApproveOrRejectRequest(status, signer, signerFullName);
+
+          if (warningItemList.length !== 0) {
+            modals.open({
+              title: "You cannot approve create this request.",
+              centered: true,
+              children: (
+                <Box maw={390}>
+                  <Title order={5}>
+                    There are items that will exceed the quantity limit of the
+                    Quotation
+                  </Title>
+                  <List size="sm" mt="md" spacing="xs">
+                    {warningItemList.map((item) => (
+                      <List.Item key={item}>{item}</List.Item>
+                    ))}
+                  </List>
+                  <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                    Close
+                  </Button>
+                </Box>
+              ),
+            });
+            return;
+          }
         }
-      } else {
-        handleApproveOrRejectRequest(status, signer, signerFullName);
       }
+
+      await approveOrRejectRequest(supabaseClient, {
+        requestAction: status,
+        requestId: request.request_id,
+        isPrimarySigner: signer.signer_is_primary_signer,
+        requestSignerId: signer.signer_id,
+        requestOwnerId: request.request_team_member.team_member_user.user_id,
+        signerFullName: signerFullName,
+        formName: request.request_form.form_name,
+        memberId: `${teamMember?.team_member_id}`,
+        teamId: request.request_team_member.team_member_team_id,
+      });
+
+      if (signer.signer_is_primary_signer) {
+        setRequestStatus(status);
+      }
+
+      setSignerList((prev) =>
+        prev.map((signer) => {
+          if (signer.signer_id !== signer.signer_id) return signer;
+          return {
+            ...signer,
+            signer_status: status,
+          };
+        })
+      );
+      notifications.show({
+        message: `Request ${lowerCase(status)}.`,
+        color: "green",
+      });
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -225,52 +283,6 @@ const RequestPage = ({
     }
   };
 
-  const handleApproveOrRejectRequest = async (
-    status: "APPROVED" | "REJECTED",
-    signer: RequestWithResponseType["request_signer"][0]["request_signer_signer"],
-    signerFullName: string
-  ) => {
-    setIsLoading(true);
-    try {
-      await approveOrRejectRequest(supabaseClient, {
-        requestAction: status,
-        requestId: request.request_id,
-        isPrimarySigner: signer.signer_is_primary_signer,
-        requestSignerId: signer.signer_id,
-        requestOwnerId: request.request_team_member.team_member_user.user_id,
-        signerFullName: signerFullName,
-        formName: request.request_form.form_name,
-        memberId: `${teamMember?.team_member_id}`,
-        teamId: request.request_team_member.team_member_team_id,
-      });
-
-      if (signer.signer_is_primary_signer) {
-        setRequestStatus(status);
-      }
-
-      setSignerList((prev) =>
-        prev.map((signer) => {
-          if (signer.signer_id !== signer.signer_id) return signer;
-          return {
-            ...signer,
-            signer_status: status,
-          };
-        })
-      );
-      notifications.show({
-        message: `Request ${lowerCase(status)}.`,
-        color: "green",
-      });
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const openPromptDeleteModal = () =>
     modals.openConfirmModal({
       title: "Are you sure you want to delete this request?",
@@ -286,54 +298,32 @@ const RequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const handleRedirectToConnectedRequest = () => {
-    switch (request.request_form.form_name) {
-      case "Order to Purchase":
-        return router.push(
-          `/team-requests/forms/${connectedFormID}/create?otpId=${request.request_id}`
-        );
-      case "Invoice":
-        return router.push(
-          `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
-            request.request_form.form_section[0].section_field[0]
-              .field_response[0].request_response
-          )}&invoiceId=${request.request_id}`
-        );
-      case "Account Payable Voucher":
-        return router.push(
-          `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
-            request.request_form.form_section[0].section_field[0]
-              .field_response[0].request_response
-          )}&invoiceId=${JSON.parse(
-            request.request_form.form_section[0].section_field[1]
-              .field_response[0].request_response
-          )}&apvId=${request.request_id}`
-        );
-    }
-  };
-
   return (
     <Container>
       <Flex justify="space-between">
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
-          <Group>
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-            />
-            <Button onClick={handleRedirectToConnectedRequest}>
-              Create{" "}
-              {
-                FORM_CONNECTION[
-                  request.request_form.form_name as ConnectedFormsType
-                ]
-              }
+        <Group>
+          <ExportToPdf
+            request={request}
+            sectionWithDuplicateList={sectionWithDuplicateList}
+          />
+          {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
+            <Button
+              onClick={() => {
+                router.push(
+                  `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
+                    request.request_form.form_section[0].section_field[0]
+                      .field_response[0].request_response
+                  )}&quotationId=${request.request_id}`
+                );
+              }}
+            >
+              Create Receiving Inspecting Report
             </Button>
-          </Group>
-        ) : null}
+          ) : null}
+        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <Stack spacing="xl" ref={pageContentRef}>
@@ -358,6 +348,41 @@ const RequestPage = ({
             />
           ))}
         </Stack>
+
+        {request.request_form.form_name === "Quotation" &&
+        request.request_form.form_is_formsly_form ? (
+          <QuotationSummary
+            summaryData={sectionWithDuplicateList
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
+
+        {request.request_form.form_name === "Receiving Inspecting Report" &&
+        request.request_form.form_is_formsly_form ? (
+          <ReceivingInspectingReportSummary
+            summaryData={sectionWithDuplicateList
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
+
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
         (isUserSigner && requestStatus === "PENDING") ? (
@@ -371,7 +396,7 @@ const RequestPage = ({
             handleUpdateRequest={handleUpdateRequest}
           />
         ) : null}
-        <RequestSingerSection signerList={signerList} />
+        <RequestSignerSection signerList={signerList} />
       </Stack>
 
       <RequestCommentList

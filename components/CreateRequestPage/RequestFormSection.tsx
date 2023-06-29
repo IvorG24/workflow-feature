@@ -18,12 +18,15 @@ type RequestFormSectionProps = {
   orderToPurchaseFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
-  invoiceFormMethods?: {
+  quotationFormMethods?: {
     onItemChange: (
       index: number,
       value: string | null,
       prevValue: string | null
     ) => void;
+  };
+  rirFormMethods?: {
+    onQuantityChange: (index: number, value: number) => void;
   };
   formslyFormName?: string;
 };
@@ -33,7 +36,8 @@ const RequestFormSection = ({
   sectionIndex,
   onRemoveSection,
   orderToPurchaseFormMethods,
-  invoiceFormMethods,
+  quotationFormMethods,
+  rirFormMethods,
   formslyFormName = "",
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
@@ -70,7 +74,8 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             orderToPurchaseFormMethods={orderToPurchaseFormMethods}
-            invoiceFormMethods={invoiceFormMethods}
+            quotationFormMethods={quotationFormMethods}
+            rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
           />
         ))}

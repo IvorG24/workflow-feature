@@ -164,7 +164,6 @@ const RequestListPage = ({
         }}
         total={Math.ceil(requestListCount / DEFAULT_REQUEST_LIST_LIMIT)}
         mt="xl"
-        position="right"
       />
     </Container>
   );

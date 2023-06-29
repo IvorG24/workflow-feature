@@ -48,6 +48,7 @@
     "use-deep-compare-effect": "^1.8.1",
     "uuidv4": "^6.2.13",
     "validator": "^13.9.0",
+    "word-exists": "^1.0.0",
     "zustand": "^4.3.8"
   },
   "devDependencies": {

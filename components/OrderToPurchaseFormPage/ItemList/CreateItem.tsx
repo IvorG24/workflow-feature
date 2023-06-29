@@ -1,6 +1,7 @@
 import { checkItemName } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { ITEM_PURPOSE_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -10,6 +11,7 @@ import {
   Divider,
   Flex,
   LoadingOverlay,
+  Select,
   Stack,
   TextInput,
   Title,
@@ -18,7 +20,8 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
+import wordExists from "word-exists";
 import InputAddRemove from "../InputAddRemove";
 
 type Props = {
@@ -44,6 +47,7 @@ const CreateItem = ({
         descriptions: [{ description: "" }],
         generalName: "",
         unit: "",
+        purpose: "",
         isAvailable: true,
       },
     });
@@ -66,6 +70,7 @@ const CreateItem = ({
           item_general_name: data.generalName,
           item_is_available: data.isAvailable,
           item_unit: data.unit,
+          item_purpose: data.purpose,
           item_team_id: activeTeam.team_id,
         },
         formId: formId,
@@ -119,6 +124,10 @@ const CreateItem = ({
                     });
                     return isExisting ? "Item already exists" : true;
                   },
+                  validCharacters: (value) =>
+                    value.match(/^[a-zA-Z ]*$/)
+                      ? true
+                      : "General name must not include invalid character/s",
                 },
               })}
               withAsterisk
@@ -133,11 +142,37 @@ const CreateItem = ({
                   message: "Unit must be shorter than 500 characters",
                   value: 500,
                 },
+                validate: {
+                  isWordExists: (value) =>
+                    wordExists(value) ? true : "Not a valid word",
+                },
               })}
               withAsterisk
               w="100%"
               label="Unit"
               error={formState.errors.unit?.message}
+            />
+            <Controller
+              control={control}
+              name="purpose"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value as string}
+                  onChange={onChange}
+                  data={ITEM_PURPOSE_CHOICES}
+                  withAsterisk
+                  error={formState.errors.purpose?.message}
+                  searchable
+                  clearable
+                  label="Purpose"
+                />
+              )}
+              rules={{
+                required: {
+                  value: true,
+                  message: "Purpose is required",
+                },
+              }}
             />
             {fields.map((field, index) => {
               return (
