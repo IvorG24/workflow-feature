@@ -3,7 +3,8 @@ import {
   getAllItems,
   getAllNames,
   getForm,
-  getItemResponse,
+  getItemResponseForQuotation,
+  getItemResponseForRIR,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
@@ -77,7 +78,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       },
                       ...form.form_section[0].section_field.slice(
                         2,
-                        form.form_section[0].section_field.length
                       ),
                     ],
                   },
@@ -118,7 +118,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           });
 
-          const items = await getItemResponse(supabaseClient, {
+          const items = await getItemResponseForQuotation(supabaseClient, {
             requestId: `${context.query.otpId}`,
           });
 
@@ -149,7 +149,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       },
                       ...form.form_section[1].section_field.slice(
                         1,
-                        form.form_section[1].section_field.length
+       
                       ),
                     ],
                   },
@@ -180,9 +180,31 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           }
 
+          const items = await getItemResponseForRIR(supabaseClient, {
+            requestId: `${context.query.quotationId}`,
+          });
+
+          const regex = /\(([^()]+)\)/g;
+          const itemOptions = Object.keys(items).map((item, index) => {
+            const result = items[item].item.match(regex);
+            const value =
+              result &&
+              items[item].item.replace(
+                result[0],
+                `(${items[item].quantity} / ${result[0].slice(1, -1)})`
+              );
+            return {
+              option_description: null,
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item,
+              option_order: index,
+              option_value: value,
+            };
+          });
           return {
             props: {
               form,
+              itemOptions,
             },
           };
         }
@@ -236,7 +258,12 @@ const Page = ({ form, itemOptions }: Props) => {
           <CreateQuotationRequestPage form={form} itemOptions={itemOptions} />
         );
       case "Receiving Inspecting Report":
-        return <CreateReceivingInspectingReportPage form={form} />;
+        return (
+          <CreateReceivingInspectingReportPage
+            form={form}
+            itemOptions={itemOptions}
+          />
+        );
       case "Cheque Reference":
         return <CreateChequeReferenceRequestPage form={form} />;
       case "Audit":

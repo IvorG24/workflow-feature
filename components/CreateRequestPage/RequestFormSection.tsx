@@ -25,6 +25,9 @@ type RequestFormSectionProps = {
       prevValue: string | null
     ) => void;
   };
+  rirFormMethods?: {
+    onQuantityChange: (index: number, value: number) => void;
+  };
   formslyFormName?: string;
 };
 
@@ -34,6 +37,7 @@ const RequestFormSection = ({
   onRemoveSection,
   orderToPurchaseFormMethods,
   quotationFormMethods,
+  rirFormMethods,
   formslyFormName = "",
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
@@ -71,6 +75,7 @@ const RequestFormSection = ({
             fieldIndex={idx}
             orderToPurchaseFormMethods={orderToPurchaseFormMethods}
             quotationFormMethods={quotationFormMethods}
+            rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
           />
         ))}

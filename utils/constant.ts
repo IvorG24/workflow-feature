@@ -70,7 +70,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const quotationMainSectionId = uuidv4();
   const quotationItemSectionId = uuidv4();
   const rirIdSectionId = uuidv4();
-  const rirMainSectionId = uuidv4();
+  const rirItemSectionId = uuidv4();
   const chequeReferenceIdSectionId = uuidv4();
   const chequeReferenceTreasurySectionId = uuidv4();
   const chequeReferenceChequeSectionId = uuidv4();
@@ -79,7 +79,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   // field ids
   const otpTypeFieldId = uuidv4();
   const quotationRequestSendMethodId = uuidv4();
-  const rirReceivingStatusFieldId = uuidv4();
   const chequeReferenceTreasuryStatusFieldId = uuidv4();
   const auditRowCheckFieldId = uuidv4();
 
@@ -306,10 +305,10 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           section_form_id: receivingInspectingReportFormId,
         },
         {
-          section_id: rirMainSectionId,
-          section_name: "Main",
+          section_id: rirItemSectionId,
+          section_name: "Item",
           section_order: 2,
-          section_is_duplicatable: false,
+          section_is_duplicatable: true,
           section_form_id: receivingInspectingReportFormId,
         },
       ],
@@ -330,22 +329,29 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_required: true,
           field_is_read_only: true,
         },
-      ],
-      option: [
         {
-          option_value: "Not Received",
-          option_order: 1,
-          option_field_id: rirReceivingStatusFieldId,
+          field_name: "Item",
+          field_type: "DROPDOWN",
+          field_order: 3,
+          field_section_id: rirItemSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
         },
         {
-          option_value: "Partially Receive",
-          option_order: 2,
-          option_field_id: rirReceivingStatusFieldId,
+          field_name: "Quantity",
+          field_type: "NUMBER",
+          field_order: 4,
+          field_section_id: rirItemSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
         },
         {
-          option_value: "Fully Received",
-          option_order: 3,
-          option_field_id: rirReceivingStatusFieldId,
+          field_name: "Receiving Status",
+          field_type: "TEXT",
+          field_order: 5,
+          field_section_id: rirItemSectionId,
+          field_is_required: true,
+          field_is_read_only: true,
         },
       ],
     },
@@ -538,15 +544,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field_is_read_only: false,
     },
     {
-      field_id: rirReceivingStatusFieldId,
-      field_name: "Receiving Status",
-      field_type: "DROPDOWN",
-      field_order: 3,
-      field_section_id: rirMainSectionId,
-      field_is_required: true,
-      field_is_read_only: false,
-    },
-    {
       field_id: chequeReferenceTreasuryStatusFieldId,
       field_name: "Treasury Status",
       field_type: "DROPDOWN",
@@ -599,7 +596,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     fieldWithId: fieldsWithId,
     options: [
       ...orderToPurchase.option,
-      ...receivingInspectingReport.option,
       ...chequeReference.option,
       ...audit.option,
     ],

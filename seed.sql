@@ -45,7 +45,7 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 
 -- Receiving Inspecting Report
 ('b79c9a66-f112-4bfa-8d5c-88267be24fd8', 'ID', 1, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
-('00341355-1ece-47e6-88a2-060fbab8b11a', 'Main', 2, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
+('00341355-1ece-47e6-88a2-060fbab8b11a', 'Item', 2, true, '5782d70a-5f6b-486c-a77f-401066afd005'),
 
 -- Cheque Reference
 ('5e9cf483-98dd-4b44-820d-4c020ae50279', 'ID', 1, false, '913a09d8-88f9-4139-a039-a77394405b62'),
@@ -113,7 +113,9 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 -- Receiving Inspecting Report Form
 ('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Order to Purchase ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Quotation ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
-('b74ff20b-33d5-444f-b39d-07745ba0d332', 'Receiving Status', 'DROPDOWN', 3, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false), 
+('cf0af133-5e81-4665-aa44-6dd3d5e28b43', 'Item', 'DROPDOWN', 3, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
+('3ca0dbf6-800f-44e5-ba30-149dd5c211fc', 'Quantity', 'NUMBER', 4, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
+('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 5, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
 
 -- Cheque Reference Form
 ('618770e4-40d1-4d8d-b5a0-189eca838ac7', 'Order to Purchase ID', 'LINK', 1, '5e9cf483-98dd-4b44-820d-4c020ae50279', true, true),
@@ -159,11 +161,6 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('345214ae-9523-4f81-b3c1-d118f7735999', 'Email', 1, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
 ('3b8437da-7135-4fc5-ae4f-d9e294f096ab', 'Text', 2, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
 ('5ca3971c-ab0b-46e0-ad0b-cc48719360d4', 'Other', 3, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
-
--- Receiving Inspecting Report Form
-('448d9bb2-f09c-4a9f-9b03-632bc849c3aa', 'Not Received', 1, 'b74ff20b-33d5-444f-b39d-07745ba0d332'),
-('5376f40c-2dae-400a-9cb5-ed3d0fa003b7', 'Partially Received', 2, 'b74ff20b-33d5-444f-b39d-07745ba0d332'),
-('78717371-9d2d-4e9c-ad86-cd39e51929ad', 'Fully Received', 3, 'b74ff20b-33d5-444f-b39d-07745ba0d332'),
 
 -- Cheque Reference Form
 ('dff5176c-2e56-43a2-bbad-51d5d300a6f1', 'No Cheque', 1, '8d245864-66be-46b7-8944-cef61c86a1ce'),

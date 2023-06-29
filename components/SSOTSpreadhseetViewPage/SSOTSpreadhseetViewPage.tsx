@@ -115,6 +115,24 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
     request: SSOTType["otp_quotation_request"][0]["quotation_rir_request"]
   ) => {
     return request.map((request) => {
+      const itemName: string[] = [];
+      const itemQuantity: string[] = [];
+      const itemStatus: string[] = [];
+      const items = request.rir_request_response;
+
+      items.forEach((item) => {
+        if (item.request_response_field_name === "Item") {
+          itemName.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Quantity") {
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit =
+            matches && matches[1].replace(/\d+/g, "").trim().split("/")[0];
+          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
+        } else if (item.request_response_field_name === "Receiving Status") {
+          itemStatus.push(JSON.parse(item.request_response));
+        }
+      });
+
       return (
         <tr
           key={request.rir_request_id}
@@ -127,7 +145,31 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
           <td>
-            {JSON.parse(request.rir_request_response[2].request_response)}
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemName.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemStatus.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
           </td>
         </tr>
       );
@@ -233,7 +275,9 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.long}>RIR ID</th>
                     <th className={classes.date}>Date Created</th>
                     <th className={classes.processor}>Warehouse Receiver</th>
-                    <th className={classes.normal}>Receiving Status</th>
+                    <th className={classes.description}>Item</th>
+                    <th className={classes.normal}>Quantity</th>
+                    <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "#E7F5FF" }}>
@@ -397,7 +441,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       </Title>
 
       <Paper mt="xl" p="xl" shadow="sm">
-        <ScrollArea scrollbarSize={10} offsetScrollbars>
+        <ScrollArea scrollbarSize={10} offsetScrollbars type="always">
           <Box mah={710}>
             <Table withBorder withColumnBorders pos="relative" h="100%">
               <thead style={{ backgroundColor: "#FFA8A8" }}>

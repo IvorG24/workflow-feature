@@ -162,7 +162,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
               <Title order={5}>
                 There are items that will exceed the quantity limit of the OTP
               </Title>
-              <List size="sm" mt="md">
+              <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
                   <List.Item key={item}>{item}</List.Item>
                 ))}
@@ -258,7 +258,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           });
 
           const sectionList = getValues(`sections`);
-          const itemSectionList = sectionList.slice(2, sectionList.length);
+          const itemSectionList = sectionList.slice(2);
 
           itemSectionList.forEach((section, sectionIndex) => {
             sectionIndex += 2;
@@ -275,10 +275,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
                       return a.option_order - b.option_order;
                     }),
                   },
-                  ...section.section_field.slice(
-                    1,
-                    section.section_field.length
-                  ),
+                  ...section.section_field.slice(1),
                 ],
               });
             }
@@ -297,7 +294,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
     prevValue: string | null
   ) => {
     const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(2, sectionList.length);
+    const itemSectionList = sectionList.slice(2);
 
     if (value) {
       setAvailableItems((prev) =>
@@ -317,7 +314,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
                   ),
                 ],
               },
-              ...section.section_field.slice(1, section.section_field.length),
+              ...section.section_field.slice(1),
             ],
           });
         }
@@ -340,13 +337,15 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
               {
                 ...section.section_field[0],
                 field_option: [
-                  ...section.section_field[0].field_option,
+                  ...section.section_field[0].field_option.filter(
+                    (option) => option.option_value !== value
+                  ),
                   newOption,
                 ].sort((a, b) => {
                   return a.option_order - b.option_order;
                 }),
               },
-              ...section.section_field.slice(1, section.section_field.length),
+              ...section.section_field.slice(1),
             ],
           });
         }

@@ -79,7 +79,7 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
 
       setIsLoading(true);
 
-      const toBeCheckedSections = data.sections.slice(1, data.sections.length);
+      const toBeCheckedSections = data.sections.slice(1);
       const newSections: RequestFormValues["sections"] = [];
       toBeCheckedSections.forEach((section) => {
         // if new section if empty

@@ -39,6 +39,9 @@ type RequestFormFieldsProps = {
       prevValue: string | null
     ) => void;
   };
+  rirFormMethods?: {
+    onQuantityChange: (index: number, value: number) => void;
+  };
   formslyFormName?: string;
 };
 
@@ -48,6 +51,7 @@ const RequestFormFields = ({
   fieldIndex,
   orderToPurchaseFormMethods,
   quotationFormMethods,
+  rirFormMethods,
   formslyFormName = "",
 }: RequestFormFieldsProps) => {
   const {
@@ -152,7 +156,15 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <NumberInput
                 value={value as number}
-                onChange={(value) => onChange(value)}
+                onChange={(value) => {
+                  onChange(value);
+                  if (field.field_name === "Quantity" && rirFormMethods) {
+                    rirFormMethods.onQuantityChange(
+                      sectionIndex,
+                      Number(value)
+                    );
+                  }
+                }}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
