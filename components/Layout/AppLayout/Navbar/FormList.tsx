@@ -6,12 +6,11 @@ import { FormTableRow, TeamGroupForFormType } from "@/utils/types";
 import {
   Anchor,
   Autocomplete,
-  Box,
   Button,
   Group,
   NavLink,
+  Navbar,
   ScrollArea,
-  Stack,
   Text,
 } from "@mantine/core";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
@@ -43,10 +42,10 @@ const FormList = () => {
   };
 
   return (
-    <Box h="fit-content">
+    <>
       {teamMember?.team_member_role === "ADMIN" ||
       teamMember?.team_member_role === "OWNER" ? (
-        <Group mb="sm" position="apart">
+        <Group mb="sm" position="apart" mt="sm">
           <Text mb={4} size="xs" weight={400}>
             <Anchor
               onClick={() =>
@@ -76,35 +75,31 @@ const FormList = () => {
         onChange={handleSearchForm}
         data={formList?.map((form) => form.form_name) as string[]}
       />
-      <ScrollArea h={{ base: 400, sm: 500 }} mt="xs" scrollbarSize={5}>
-        <Stack mt="sm" spacing={0}>
-          {formList.map((form) => {
-            const isGroupMember =
-              form.form_is_formsly_form &&
-              GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
-                ? teamMember?.team_member_group_list.includes(
-                    GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
-                  )
-                : true;
+      <Navbar.Section grow component={ScrollArea} mx="-xs" px="xs" mt="sm">
+        {formList.map((form) => {
+          const isGroupMember =
+            form.form_is_formsly_form &&
+            GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+              ? teamMember?.team_member_group_list.includes(
+                  GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
+                )
+              : true;
 
-            return !form.form_is_hidden && isGroupMember ? (
-              <NavLink
-                key={form.form_id}
-                label={form.form_name}
-                rightSection={<IconPlus size={14} />}
-                onClick={() =>
-                  router.push(
-                    `/team-${lowerCase(activeApp)}s/forms/${
-                      form.form_id
-                    }/create`
-                  )
-                }
-              />
-            ) : null;
-          })}
-        </Stack>
-      </ScrollArea>
-    </Box>
+          return !form.form_is_hidden && isGroupMember ? (
+            <NavLink
+              key={form.form_id}
+              label={form.form_name}
+              rightSection={<IconPlus size={14} />}
+              onClick={() =>
+                router.push(
+                  `/team-${lowerCase(activeApp)}s/forms/${form.form_id}/create`
+                )
+              }
+            />
+          ) : null;
+        })}
+      </Navbar.Section>
+    </>
   );
 };
 
