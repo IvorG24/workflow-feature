@@ -1,10 +1,8 @@
 import BarChart from "@/components/Chart/BarChart";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { getUniqueResponseData } from "@/utils/arrayFunctions/dashboard";
-import { getStatusToColor } from "@/utils/styling";
 import { RequestResponseDataType } from "@/utils/types";
 import {
-  Badge,
   Box,
   Center,
   Divider,
@@ -39,13 +37,12 @@ const PurchaseOrder = ({
   const authUserMember = useUserTeamMember();
   const [searchItemKey, setSearchItemKey] = useState("");
 
-  const itemSections = purchaseOrderData.filter(
-    (d) => d.sectionLabel !== "Main"
-  );
-
   //get all General Name field responses
-  const itemGeneralNameList = itemSections.flatMap(
-    (section) => section.responseData[0].field_response
+  const itemGeneralNameList = purchaseOrderData.flatMap(
+    (section) =>
+      section.responseData.filter(
+        (data) => data.field_name === "General Name"
+      )[0].field_response
   );
 
   // filter General Name responses -> user or team responses
@@ -85,7 +82,7 @@ const PurchaseOrder = ({
   };
 
   //get all Quantity field responses from selected item
-  const selectedItemSection = itemSections.filter(
+  const selectedItemSection = purchaseOrderData.filter(
     (section) => section.sectionLabel === selectedBarChartItem
   );
   const itemQuantityList = selectedItemSection.flatMap(
@@ -156,39 +153,32 @@ const PurchaseOrder = ({
           <Text weight={600}>{selectedItemStatusCount[0].item}</Text>
           <Divider my="md" />
           <Text weight={600}>
-            Total Order:{" "}
+            Total Purchase Order:{" "}
             {generalNameChartData
               .find((name) => name.label === selectedBarChartItem)
               ?.value.toLocaleString()}
           </Text>
-          <Group mt="sm">
-            <Text>Breakdown:</Text>
+          <Stack mt="sm">
             {STATUS_LIST.map((status, idx) => (
-              <Badge
-                key={status + idx}
-                color={getStatusToColor(lowerCase(status))}
-              >{`${startCase(lowerCase(status))}: ${getOrderCountByStatus(
-                status
-              ).toLocaleString()}`}</Badge>
+              <Text key={status + idx} weight={600}>{`${startCase(
+                lowerCase(status)
+              )}: ${getOrderCountByStatus(status).toLocaleString()}`}</Text>
             ))}
-          </Group>
+          </Stack>
           <Divider my="md" />
           <Text weight={600}>
             Total Item Quantity: {getTotalQuantityCount().toLocaleString()}
           </Text>
-          <Group mt="sm">
-            <Text>Breakdown:</Text>
+          <Stack mt="sm">
             {STATUS_LIST.map((status, idx) => (
-              <Badge
-                key={status + idx}
-                color={getStatusToColor(lowerCase(status))}
-              >{`${startCase(lowerCase(status))}: ${getQuantityCountByStatus(
-                status
-              ).toLocaleString()}`}</Badge>
+              <Text key={status + idx} weight={600}>{`${startCase(
+                lowerCase(status)
+              )}: ${getQuantityCountByStatus(status).toLocaleString()}`}</Text>
             ))}
-          </Group>
+          </Stack>
         </Paper>
       )}
+
       {/* {selectedBarChartItem !== "" && (
         <ResponseSection
           responseSection={

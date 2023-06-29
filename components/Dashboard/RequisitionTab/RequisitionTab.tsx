@@ -1,14 +1,19 @@
+import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { generateFormslyResponseData } from "@/utils/arrayFunctions/dashboard";
 import {
   PurchaseTrendChartDataType,
   RequestResponseDataType,
 } from "@/utils/types";
 import { Container, SegmentedControl, Text } from "@mantine/core";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import PurchaseOrder from "./PurchaseOrder";
 import PurchaseTrend, { DataItem } from "./PurchaseTrend";
 
 type Props = {
-  fieldResponseData: RequestResponseDataType[];
+  selectedStatus: string | null;
+  selectedForm: string | null;
 };
 
 const getItemPurchaseTrendData = (data: RequestResponseDataType[]) => {
@@ -54,9 +59,23 @@ const getItemStatusCount = (data: PurchaseTrendChartDataType[]) => {
   return itemStatusCount;
 };
 
-const RequisitionTab = ({ fieldResponseData }: Props) => {
+const RequisitionTab = ({ selectedForm, selectedStatus }: Props) => {
+  const activeTeam = useActiveTeam();
+  const supabaseClient = useSupabaseClient();
   const [selectedPurchaseData, setSelectedPurchaseData] = useState("user");
   const [selectedBarChartItem, setSelectedBarChartItem] = useState("");
+
+  const { requestList } = useFetchRequestListByForm({
+    teamId: activeTeam.team_id,
+    formId: selectedForm,
+    requestStatus: selectedStatus,
+    supabaseClient,
+  });
+
+  const sectionList = requestList.flatMap(
+    (request) => request.request_form.form_section
+  );
+  const fieldResponseData = generateFormslyResponseData(sectionList);
 
   const approvedFieldResponseData = fieldResponseData.map((data) => {
     const responseData = data.responseData.map((field) => {

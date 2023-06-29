@@ -52,7 +52,8 @@ function useFetchRequestListByForm(params: Params) {
             filteredResponseByRequestId.map((response) => ({
               ...response,
               request_response_date_purchased: request.request_date_created,
-              request_response_team_member_id: request.request_team_member_id,
+              request_response_team_member_id:
+                request.request_team_member.team_member_team_id,
               request_response_request_status: request.request_status,
             }));
 

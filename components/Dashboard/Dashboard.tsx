@@ -1,12 +1,7 @@
 import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { generateFormslyResponseData } from "@/utils/arrayFunctions/dashboard";
-import {
-  FieldWithResponseType,
-  RequestByFormType,
-  RequestResponseDataType,
-} from "@/utils/types";
+
 import {
   Box,
   Container,
@@ -19,14 +14,12 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { startCase } from "lodash";
 import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
 import RequisitionTab from "./RequisitionTab/RequisitionTab";
 
-const filteredResponseTypes = ["TEXT", "TEXTAREA", "LINK", "FILE"];
 const statusFilter = [
   { value: "APPROVED", label: "Approved" },
   { value: "PENDING", label: "Pending" },
@@ -45,9 +38,6 @@ const Dashboard = () => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [isOTPForm, setIsOTPForm] = useState(false);
-  const [fieldResponseData, setFieldResponseData] = useState<
-    RequestResponseDataType[] | null
-  >(null);
 
   // swr fetching
   const {
@@ -69,103 +59,38 @@ const Dashboard = () => {
     formList.find((form) => form.form_id === selectedForm)?.form_name || false;
 
   // update data for response and requisition tabs
-  const handleResponseTabData = (requestListByForm: RequestByFormType[]) => {
-    try {
-      if (!requestListByForm) return;
+  // const handleResponseTabData = () => {
+  //   try {
+  //     if (!requestListData) return;
 
-      const sectionList = requestListByForm.flatMap(
-        (request) => request.request_form.form_section
-      );
+  //     const sectionList = requestListData.flatMap(
+  //       (request) => request.request_form.form_section
+  //     );
 
-      const fieldWithResponse: FieldWithResponseType = [];
-      sectionList.forEach((section) =>
-        section.section_field.forEach((field) => {
-          if (field.field_response.length > 0) {
-            fieldWithResponse.push(field);
-          }
-        })
-      );
-
-      const uniqueFieldList = fieldWithResponse.reduce((acc, field) => {
-        const duplicateFieldIndex = acc.findIndex(
-          (f) => f.field_id === field.field_id
-        );
-
-        if (duplicateFieldIndex >= 0) {
-          const updatedResponseList = [
-            ...acc[duplicateFieldIndex].field_response,
-            ...field.field_response,
-          ];
-          acc[duplicateFieldIndex].field_response = updatedResponseList;
-        } else {
-          acc.push(field);
-        }
-
-        return acc;
-      }, [] as FieldWithResponseType);
-
-      if (
-        isFormslyForm &&
-        selectedFormName === "Order to Purchase" &&
-        sectionList.length > 0
-      ) {
-        const responseData = generateFormslyResponseData(
-          uniqueFieldList,
-          sectionList
-        );
-        setFieldResponseData(responseData);
-      } else {
-        const nonDynamicFieldList = uniqueFieldList.filter(
-          (field) => !filteredResponseTypes.includes(field.field_type)
-        );
-        const groupedRequestFormData = nonDynamicFieldList.map((field) => {
-          const isMultiSelect = field.field_type === "MULTISELECT";
-          // get multiselect response
-          const multiSelectResponseData: FieldWithResponseType[0]["field_response"] =
-            [];
-
-          if (isMultiSelect) {
-            field.field_response.forEach((response) => {
-              const parseResponse = JSON.parse(response.request_response);
-              parseResponse.forEach((responseItem: string) => {
-                const newResponse = {
-                  ...response,
-                  request_response: JSON.stringify(responseItem),
-                };
-
-                multiSelectResponseData.push(newResponse);
-              });
-            });
-          }
-
-          const multiSelectData = {
-            ...field,
-            field_response: multiSelectResponseData,
-          };
-
-          return {
-            sectionLabel: field.field_name,
-            responseData: [isMultiSelect ? multiSelectData : field],
-          };
-        });
-        setFieldResponseData(groupedRequestFormData);
-      }
-    } catch (error) {
-      console.log(error);
-      notifications.show({
-        title: "Can't fetch data at the moment.",
-        message: "Please try again later.",
-        color: "red",
-      });
-    }
-  };
+  //     if (
+  //       isFormslyForm &&
+  //       selectedFormName === "Order to Purchase" &&
+  //       sectionList.length > 0
+  //     ) {
+  //       const responseData = generateFormslyResponseData(sectionList);
+  //       setFieldResponseData(responseData);
+  //     } else {
+  //       const groupedRequestFormData = getRequestFormData(sectionList);
+  //       setFieldResponseData(groupedRequestFormData);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     notifications.show({
+  //       title: "Can't fetch data at the moment.",
+  //       message: "Please try again later.",
+  //       color: "red",
+  //     });
+  //   }
+  // };
 
   useEffect(() => {
-    if (selectedForm) {
-      handleResponseTabData(requestListData);
-    }
     setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
-  }, [selectedForm]);
+  }, [isFormslyForm, selectedFormName]);
 
   const renderTabs = (tab: string) => {
     switch (tab) {
@@ -187,8 +112,11 @@ const Dashboard = () => {
       //   );
 
       case "requisition":
-        return isOTPForm && fieldResponseData ? (
-          <RequisitionTab fieldResponseData={fieldResponseData} />
+        return isOTPForm && selectedForm ? (
+          <RequisitionTab
+            selectedForm={selectedForm}
+            selectedStatus={selectedStatus}
+          />
         ) : (
           <Text>No data available.</Text>
         );
