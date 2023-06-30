@@ -63,7 +63,7 @@ const HeaderMenu = () => {
     router.push(
       activeApp === "REQUEST"
         ? "/team-reviews/reviews"
-        : "/team-requests/requests"
+        : "/team-requests/dashboard"
     );
 
     // fetch form list

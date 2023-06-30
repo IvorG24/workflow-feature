@@ -25,7 +25,7 @@ export const GROUP_CONNECTION = {
 };
 
 export const SIGN_IN_PAGE_PATH = "/sign-in";
-export const DEFAULT_LANDING_PAGE = "/team-requests/requests";
+export const DEFAULT_LANDING_PAGE = "/team-requests/dashboard";
 
 export const defaultRequestFormBuilderSection = (
   formId: string
