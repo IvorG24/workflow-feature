@@ -1,7 +1,6 @@
 "use client";
 
-import { DuplicateSectionType } from "@/utils/arrayFunctions";
-import { RequestWithResponseType } from "@/utils/types";
+import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
 import { Button } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { lowerCase, startCase } from "lodash";

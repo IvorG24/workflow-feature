@@ -30,10 +30,10 @@ type SignInFormValues = {
 };
 
 const SignInPage = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [openResetPasswordModal, setOpenResetPasswordModal] = useState(false);
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
+  const [isLoading, setIsLoading] = useState(false);
+  const [openResetPasswordModal, setOpenResetPasswordModal] = useState(false);
   const {
     register,
     handleSubmit,

@@ -48,9 +48,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
         {activeApp ? (
           <UnstyledButton
             onClick={() =>
-              router.push(
-                `/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`
-              )
+              router.push(`/team-${lowerCase(activeApp)}s/dashboard`)
             }
           >
             <Image

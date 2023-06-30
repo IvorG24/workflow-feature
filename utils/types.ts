@@ -443,6 +443,112 @@ export type InvitationWithTeam = InvitationTableRow & {
   };
 };
 
+export type RequestByFormType = RequestTableRow & {
+  request_form: {
+    form_id: string;
+    form_name: string;
+    form_description: string;
+    form_is_formsly_form: boolean;
+    form_section: (SectionTableRow & {
+      section_field: (FieldTableRow & {
+        field_option: OptionTableRow[];
+        field_response: (RequestResponseTableRow & {
+          request_response_team_member_id?: string | null;
+          request_response_request_status?: string;
+        })[];
+      })[];
+    })[];
+  };
+} & {
+  request_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_username: string;
+      user_avatar: string;
+    };
+  };
+} & {
+  request_signer: (RequestSignerTableRow & {
+    request_signer_id: string;
+    request_signer_status: string;
+    request_signer_signer: {
+      signer_id: string;
+      signer_is_primary_signer: boolean;
+      signer_action: string;
+      signer_order: number;
+      signer_team_member: {
+        team_member_id: string;
+        team_member_user: {
+          user_first_name: string;
+          user_last_name: string;
+          user_avatar: string | null;
+        };
+      };
+    };
+  })[];
+};
+
+export type ConnectedFormsType =
+  | "Order to Purchase"
+  | "Invoice"
+  | "Account Payable Voucher";
+
+export type SearchKeywordResponseType = RequestResponseTableRow & {
+  request_form: {
+    request_id: string;
+    request_form_id: string;
+  };
+} & { response_field: FieldTableRow };
+
+export type FieldWithResponseType =
+  RequestByFormType["request_form"]["form_section"][0]["section_field"];
+
+export type ResponseDataType = {
+  id: string;
+  type: FieldType;
+  label: string;
+  optionList: string[];
+  section_id?: string;
+  responseList: {
+    label: string;
+    value: number;
+    groupId?: string | null;
+  }[];
+};
+
+export type RequestorListType =
+  RequestType["request_team_member"]["team_member_user"] & {
+    request: {
+      total: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+      canceled: number;
+    };
+  };
+
+export type LineChartDataType = {
+  label: string;
+  value: number;
+};
+
+export type PurchaseTrendChartDataType = {
+  request_response_id: string;
+  request_response: string;
+  request_response_request_id: string;
+  request_response_field_id: string;
+  request_response_date_purchased?: string | undefined;
+  request_response_team_member_id?: string | null;
+  request_response_request_status?: string | null;
+};
+
+export type RequestResponseDataType = {
+  sectionLabel: string;
+  responseData: FieldWithResponseType;
+};
 export type FormslyFormType = {
   "Order to Purchase": string[];
   Quotation: string[];
@@ -454,6 +560,13 @@ export type FormslyFormKeyType =
   | "Quotation"
   | "Receiving Inspecting Report";
 
+export type RequestSignerListType =
+  RequestByFormType["request_signer"][0]["request_signer_signer"] & {
+    signerCount: {
+      approved: number;
+      rejected: number;
+    };
+  };
 export type TeamGroupForFormType =
   | "Order to Purchase"
   | "Quotation"
@@ -495,4 +608,23 @@ export type SSOTType = {
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
+};
+
+export type Section = SectionTableRow & {
+  section_duplicatable_id?: string | null;
+} & {
+  section_field: (FieldTableRow & {
+    field_option?: OptionTableRow[];
+    field_response: RequestResponseTableRow[];
+  })[];
+};
+
+// contains only 1 field_response per field
+export type DuplicateSectionType = SectionTableRow & {
+  section_duplicatable_id?: string | null;
+} & {
+  section_field: (FieldTableRow & {
+    field_option?: OptionTableRow[];
+    field_response: RequestResponseTableRow | null;
+  })[];
 };

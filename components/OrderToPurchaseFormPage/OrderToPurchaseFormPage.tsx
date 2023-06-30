@@ -196,7 +196,10 @@ const OrderToPurchaseFormPage = ({
         <Group>
           <Button
             onClick={() =>
-              router.push(`/team-requests/forms/${formId}/analytics`)
+              router.push({
+                pathname: `/team-requests/dashboard/`,
+                query: { ...router.query, formId },
+              })
             }
             variant="light"
           >

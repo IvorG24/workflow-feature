@@ -2,6 +2,7 @@ import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
 import { Box } from "@mantine/core";
 import {
   IconCirclePlus,
+  IconDashboard,
   IconMessage2,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -16,6 +17,15 @@ const ReviewAppNavLink = () => {
   const activeTeam = useActiveTeam();
 
   const overviewSection = [
+    {
+      label: `Dashboard`,
+      icon: (
+        <Box ml="sm" py={5} mt={3}>
+          <IconDashboard {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/team-${lowerCase(activeApp)}s/dashboard`,
+    },
     {
       label: `${capitalize(activeApp)}`,
       icon: (

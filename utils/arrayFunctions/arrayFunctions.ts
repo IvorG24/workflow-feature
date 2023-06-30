@@ -1,28 +1,8 @@
 import {
-  FieldTableRow,
-  OptionTableRow,
+  DuplicateSectionType,
   RequestResponseTableRow,
-  SectionTableRow,
-} from "./types";
-
-export type Section = SectionTableRow & {
-  section_duplicatable_id?: string | null;
-} & {
-  section_field: (FieldTableRow & {
-    field_option?: OptionTableRow[];
-    field_response: RequestResponseTableRow[];
-  })[];
-};
-
-// contains only 1 field_response per field
-export type DuplicateSectionType = SectionTableRow & {
-  section_duplicatable_id?: string | null;
-} & {
-  section_field: (FieldTableRow & {
-    field_option?: OptionTableRow[];
-    field_response: RequestResponseTableRow | null;
-  })[];
-};
+  Section,
+} from "../types";
 
 export const generateDuplicateSection = (originalSection: Section) => {
   const fieldResponse: RequestResponseTableRow[] =
