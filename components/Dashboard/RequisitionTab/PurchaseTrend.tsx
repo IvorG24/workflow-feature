@@ -111,7 +111,7 @@ const PurchaseTrend = ({ itemPurchaseTrendData }: PurchaseTrendProps) => {
   }, [selectedItem]);
 
   return (
-    <Paper p="md" w="100%" maw={700} h="fit-content">
+    <Paper p="md" w="100%" h="fit-content">
       <Group mb="sm">
         <Text weight={600}>Purchase Trend of</Text>
         <Select
