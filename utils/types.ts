@@ -562,7 +562,10 @@ export type FormslyFormKeyType =
 
 export type RequestSignerListType =
   RequestByFormType["request_signer"][0]["request_signer_signer"] & {
-    count: number;
+    signerCount: {
+      approved: number;
+      rejected: number;
+    };
   };
 export type TeamGroupForFormType =
   | "Order to Purchase"

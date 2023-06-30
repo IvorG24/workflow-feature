@@ -1,7 +1,11 @@
 import { getResponseDataByKeyword } from "@/backend/api/get";
-import { searchResponseReducer } from "@/utils/arrayFunctions/dashboard";
 import {
-  RequestResponseDataType,
+  generateFormslyResponseData,
+  getRequestFormData,
+  searchResponseReducer,
+} from "@/utils/arrayFunctions/dashboard";
+import {
+  RequestByFormType,
   ResponseDataType,
   SearchKeywordResponseType,
 } from "@/utils/types";
@@ -18,6 +22,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { usePrevious } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
@@ -26,16 +31,17 @@ import {
   IconMessageSearch,
   IconSearch,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import RequisitionTab from "../RequisitionTab/RequisitionTab";
 import FormslyFormResponseSection from "./ResponseSection/FormslyFormResponseSection";
 import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchResponseTable from "./ResponseSection/SearchResponseTable";
 
 type ResponseDataProps = {
   selectedForm: string | null;
-  fieldResponseData: RequestResponseDataType[] | null;
   isOTPForm: boolean;
+  requestList: RequestByFormType[];
 };
 
 type FormValues = {
@@ -44,17 +50,25 @@ type FormValues = {
 
 const ResponseTab = ({
   selectedForm,
-  fieldResponseData,
   isOTPForm,
+  requestList,
 }: ResponseDataProps) => {
+  const previousSelectedForm = usePrevious(selectedForm);
   const supabaseClient = useSupabaseClient();
   const [isFetchingData, setIsFetchingData] = useState(false);
-
   const [searchKeywordResponse, setSearchKeywordResponse] = useState<
     ResponseDataType[] | null
   >(null);
 
   const { handleSubmit, register } = useForm<FormValues>();
+
+  const sectionList = requestList.flatMap(
+    (request) => request.request_form.form_section
+  );
+
+  const fieldResponseData = isOTPForm
+    ? generateFormslyResponseData(sectionList)
+    : getRequestFormData(sectionList);
 
   const handleSearchByKeyword = async (data: FormValues) => {
     try {
@@ -80,6 +94,12 @@ const ResponseTab = ({
     }
   };
 
+  useEffect(() => {
+    if (previousSelectedForm !== selectedForm) {
+      setSearchKeywordResponse(null);
+    }
+  }, [previousSelectedForm, selectedForm]);
+
   return (
     <Container p={0} fluid>
       {fieldResponseData && fieldResponseData.length > 0 ? (
@@ -100,12 +120,7 @@ const ResponseTab = ({
           <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
 
           {searchKeywordResponse && (
-            <Paper
-              mt="sm"
-              p="md"
-              w={{ base: "100%", sm: "fit-content" }}
-              withBorder
-            >
+            <Paper my="md" p="md" w={{ base: "100%" }} withBorder>
               <Group>
                 <IconMessageSearch />
                 <Title order={3}>Keyword Search Data</Title>
@@ -125,18 +140,21 @@ const ResponseTab = ({
             </Paper>
           )}
           {isOTPForm ? (
-            <Paper mt="xl" p="xl">
-              <Group spacing="xs">
-                <IconBolt />
-                <Title order={3}>Field Response Data</Title>
-              </Group>
-              {fieldResponseData.map((response, idx) => (
-                <FormslyFormResponseSection
-                  key={response.sectionLabel + idx}
-                  responseSection={response}
-                />
-              ))}
-            </Paper>
+            <Box mt="md">
+              <RequisitionTab fieldResponseData={fieldResponseData} />
+              <Paper mt="xl" p="xl">
+                <Group spacing="xs">
+                  <IconBolt />
+                  <Title order={3}>Field Response Data</Title>
+                </Group>
+                {fieldResponseData.map((response, idx) => (
+                  <FormslyFormResponseSection
+                    key={response.sectionLabel + idx}
+                    responseSection={response}
+                  />
+                ))}
+              </Paper>
+            </Box>
           ) : (
             <RequestResponseSection requestResponse={fieldResponseData} />
           )}

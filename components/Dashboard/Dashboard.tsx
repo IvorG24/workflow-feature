@@ -3,6 +3,7 @@ import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 
 import {
+  Alert,
   Box,
   Container,
   Flex,
@@ -11,32 +12,27 @@ import {
   SegmentedControl,
   Select,
   Stack,
-  Text,
   Title,
 } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { startCase } from "lodash";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
-import RequisitionTab from "./RequisitionTab/RequisitionTab";
+import ResponseTab from "./ResponseTab/ResponseTab";
 
-const statusFilter = [
-  { value: "APPROVED", label: "Approved" },
-  { value: "PENDING", label: "Pending" },
-  { value: "REJECTED", label: "Rejected" },
-  { value: "CANCELED", label: "Canceled" },
-];
-
-// REMOVED "responses" TAB
-const TABS = ["overview", "requisition"];
+const TABS = ["overview", "responses"];
 
 const Dashboard = () => {
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const router = useRouter();
+  const routerFormId =
+    router.query.formId !== undefined ? `${router.query.formId}` : null;
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
   const [isOTPForm, setIsOTPForm] = useState(false);
 
   // swr fetching
@@ -47,7 +43,6 @@ const Dashboard = () => {
   } = useFetchRequestListByForm({
     teamId: activeTeam.team_id,
     formId: selectedForm,
-    requestStatus: selectedStatus,
     supabaseClient,
   });
 
@@ -57,36 +52,6 @@ const Dashboard = () => {
       ?.form_is_formsly_form || false;
   const selectedFormName =
     formList.find((form) => form.form_id === selectedForm)?.form_name || false;
-
-  // update data for response and requisition tabs
-  // const handleResponseTabData = () => {
-  //   try {
-  //     if (!requestListData) return;
-
-  //     const sectionList = requestListData.flatMap(
-  //       (request) => request.request_form.form_section
-  //     );
-
-  //     if (
-  //       isFormslyForm &&
-  //       selectedFormName === "Order to Purchase" &&
-  //       sectionList.length > 0
-  //     ) {
-  //       const responseData = generateFormslyResponseData(sectionList);
-  //       setFieldResponseData(responseData);
-  //     } else {
-  //       const groupedRequestFormData = getRequestFormData(sectionList);
-  //       setFieldResponseData(groupedRequestFormData);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     notifications.show({
-  //       title: "Can't fetch data at the moment.",
-  //       message: "Please try again later.",
-  //       color: "red",
-  //     });
-  //   }
-  // };
 
   useEffect(() => {
     setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
@@ -102,23 +67,17 @@ const Dashboard = () => {
           />
         );
 
-      // case "responses":
-      //   return (
-      //     <ResponseTab
-      //       isOTPForm={isOTPForm}
-      //       selectedForm={selectedForm}
-      //       fieldResponseData={fieldResponseData}
-      //     />
-      //   );
-
-      case "requisition":
-        return isOTPForm && selectedForm ? (
-          <RequisitionTab
+      case "responses":
+        return selectedForm ? (
+          <ResponseTab
+            isOTPForm={isOTPForm}
             selectedForm={selectedForm}
-            selectedStatus={selectedStatus}
+            requestList={requestListData}
           />
         ) : (
-          <Text>No data available.</Text>
+          <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
+            Please select a form to generate data.
+          </Alert>
         );
     }
   };
@@ -146,14 +105,6 @@ const Dashboard = () => {
               }))}
               value={selectedForm}
               onChange={setSelectedForm}
-              clearable
-            />
-            <Select
-              w={120}
-              placeholder="Status"
-              data={formList.length > 0 ? statusFilter : []}
-              value={selectedStatus}
-              onChange={setSelectedStatus}
               clearable
             />
           </Group>

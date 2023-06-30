@@ -1,37 +1,17 @@
-import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
-import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  generateFormslyResponseData,
-  getItemPurchaseTrendData,
-} from "@/utils/arrayFunctions/dashboard";
+import { getItemPurchaseTrendData } from "@/utils/arrayFunctions/dashboard";
+import { RequestResponseDataType } from "@/utils/types";
 import { Container, SegmentedControl, Text } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import PurchaseOrder from "./PurchaseOrder";
 import PurchaseTrend from "./PurchaseTrend";
 
 type Props = {
-  selectedStatus: string | null;
-  selectedForm: string | null;
+  fieldResponseData: RequestResponseDataType[];
 };
 
-const RequisitionTab = ({ selectedForm, selectedStatus }: Props) => {
-  const activeTeam = useActiveTeam();
-  const supabaseClient = useSupabaseClient();
+const RequisitionTab = ({ fieldResponseData }: Props) => {
   const [selectedPurchaseData, setSelectedPurchaseData] = useState("user");
   const [selectedBarChartItem, setSelectedBarChartItem] = useState("");
-
-  const { requestList } = useFetchRequestListByForm({
-    teamId: activeTeam.team_id,
-    formId: selectedForm,
-    requestStatus: selectedStatus,
-    supabaseClient,
-  });
-
-  const sectionList = requestList.flatMap(
-    (request) => request.request_form.form_section
-  );
-  const fieldResponseData = generateFormslyResponseData(sectionList);
 
   const approvedFieldResponseData = fieldResponseData.map((data) => {
     const responseData = data.responseData.map((field) => {
@@ -71,13 +51,13 @@ const RequisitionTab = ({ selectedForm, selectedStatus }: Props) => {
           />
 
           {selectedPurchaseData !== "purchase" &&
-            fieldResponseData &&
-            fieldResponseData.length > 0 && (
+            approvedFieldResponseData &&
+            approvedFieldResponseData.length > 0 && (
               <PurchaseOrder
                 selectedPurchaseData={selectedPurchaseData}
                 selectedBarChartItem={selectedBarChartItem}
                 setSelectedBarChartItem={setSelectedBarChartItem}
-                purchaseOrderData={fieldResponseData}
+                purchaseOrderData={approvedFieldResponseData}
               />
             )}
 

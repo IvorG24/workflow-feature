@@ -1168,10 +1168,9 @@ export const getRequestListByForm = async (
   params: {
     teamId: string;
     formId?: string;
-    requestStatus?: string;
   }
 ) => {
-  const { formId, teamId, requestStatus } = params;
+  const { formId, teamId } = params;
   let query = supabaseClient
     .from("request_table")
     .select(
@@ -1185,11 +1184,6 @@ export const getRequestListByForm = async (
   if (formId) {
     const formCondition = `request_form_id.eq.${formId}`;
     query = query.or(formCondition);
-  }
-
-  if (requestStatus) {
-    const statusCondition = `request_status.eq.${requestStatus}`;
-    query = query.or(statusCondition);
   }
   const { data, error, count } = await query;
   if (error) throw error;

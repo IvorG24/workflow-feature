@@ -1,4 +1,4 @@
-import { getAvatarColor } from "@/utils/styling";
+import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestByFormType, RequestSignerListType } from "@/utils/types";
 import {
   Avatar,
@@ -15,6 +15,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconShieldCheckFilled } from "@tabler/icons-react";
+import { lowerCase, startCase } from "lodash";
 
 const useStyles = createStyles(() => ({
   withBorderBottom: {
@@ -26,34 +27,63 @@ type SignerTableProps = {
   requestList: RequestByFormType[];
 };
 
+const getSignerStatusCount = (
+  signer: RequestSignerListType,
+  status: string
+) => {
+  switch (lowerCase(status)) {
+    case "approved":
+      signer.signerCount.approved++;
+      break;
+
+    case "rejected":
+      signer.signerCount.rejected++;
+      break;
+
+    default:
+      break;
+  }
+
+  return signer;
+};
+
 const SignerTable = ({ requestList }: SignerTableProps) => {
   const { classes } = useStyles();
   // get signers
   const signerList = requestList.flatMap((request) => request.request_signer);
+  console.log(signerList);
   const reducedSignerList = signerList.reduce((acc, signer) => {
-    const isRequestApproved = signer.request_signer_status === "APPROVED";
+    const requestStatus = signer.request_signer_status;
     const duplicateSignerIndex = acc.findIndex(
       (d) =>
         d.signer_team_member.team_member_id ===
         signer.request_signer_signer.signer_team_member.team_member_id
     );
 
-    if (isRequestApproved) {
-      if (duplicateSignerIndex >= 0) {
-        acc[duplicateSignerIndex].count++;
-      } else {
-        const newSigner = {
-          ...signer.request_signer_signer,
-          count: 1,
-        };
-        acc.push(newSigner);
-      }
+    if (duplicateSignerIndex >= 0) {
+      const updateRequestor = getSignerStatusCount(
+        acc[duplicateSignerIndex],
+        requestStatus
+      );
+      acc[duplicateSignerIndex] = updateRequestor;
+    } else {
+      const newSigner = {
+        ...signer.request_signer_signer,
+        signerCount: {
+          approved: requestStatus === "APPROVED" ? 1 : 0,
+          rejected: requestStatus === "REJECTED" ? 1 : 0,
+        },
+      };
+      acc.push(newSigner);
     }
 
     return acc;
   }, [] as RequestSignerListType[]);
   const sortSignerListByTotalRequests = reducedSignerList.sort(
-    (a, b) => b.count - a.count
+    (a, b) =>
+      b.signerCount.approved +
+      b.signerCount.rejected -
+      (a.signerCount.approved - a.signerCount.rejected)
   );
 
   return (
@@ -70,6 +100,15 @@ const SignerTable = ({ requestList }: SignerTableProps) => {
           {requestList.length > 0 ? (
             sortSignerListByTotalRequests.map((signer) => {
               const user = signer.signer_team_member.team_member_user;
+              const totalSigned =
+                signer.signerCount.approved + signer.signerCount.rejected;
+              const statusCount = Object.entries(signer.signerCount);
+              const progressSections = statusCount.map(([key, value]) => ({
+                value: (value / signerList.length) * 100,
+                color: `${getStatusToColor(key) || "dark"}`,
+                tooltip: `${startCase(key)}: ${value}`,
+              }));
+
               return (
                 <Stack key={signer.signer_id} spacing="xs">
                   <Group position="apart">
@@ -91,14 +130,14 @@ const SignerTable = ({ requestList }: SignerTableProps) => {
                     </Group>
 
                     <Badge size="sm" variant="filled" color="dark">
-                      Total: {signer.count}
+                      Total: {totalSigned}
                     </Badge>
                   </Group>
                   <Progress
                     size="md"
                     radius="lg"
                     color="green"
-                    value={(signer.count / signerList.length) * 100}
+                    sections={progressSections}
                   />
                 </Stack>
               );
