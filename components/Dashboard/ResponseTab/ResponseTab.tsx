@@ -26,14 +26,12 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconAlertCircle,
-  IconBolt,
   IconMessageSearch,
   IconSearch,
 } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import RequisitionTab from "../RequisitionTab/RequisitionTab";
-import FormslyFormResponseSection from "./ResponseSection/FormslyFormResponseSection";
 import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchResponseTable from "./ResponseSection/SearchResponseTable";
 
@@ -60,7 +58,11 @@ const ResponseTab = ({
 
   const { handleSubmit, register } = useForm<FormValues>();
 
-  const sectionList = requestList.flatMap(
+  const approvedRequestList = requestList.filter(
+    (request) => request.request_status === "APPROVED"
+  );
+
+  const sectionList = approvedRequestList.flatMap(
     (request) => request.request_form.form_section
   );
 
@@ -143,18 +145,6 @@ const ResponseTab = ({
           {isOTPForm ? (
             <Box mt="md">
               <RequisitionTab fieldResponseData={fieldResponseData} />
-              <Paper mt="xl" p="xl">
-                <Group spacing="xs">
-                  <IconBolt />
-                  <Title order={3}>Field Response Data</Title>
-                </Group>
-                {fieldResponseData.map((response, idx) => (
-                  <FormslyFormResponseSection
-                    key={response.sectionLabel + idx}
-                    responseSection={response}
-                  />
-                ))}
-              </Paper>
             </Box>
           ) : (
             <RequestResponseSection requestResponse={fieldResponseData} />
