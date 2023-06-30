@@ -23,7 +23,10 @@ const ResponseChart = ({ type, data }: ResponseChartProps) => {
         }));
         return <LineChart data={getDataWithStartingPoint(dateChartData)} />;
 
-      case "NUMBER" || "TIME":
+      case "NUMBER":
+        return <LineChart data={getDataWithStartingPoint(data)} />;
+
+      case "TIME":
         return <LineChart data={getDataWithStartingPoint(data)} />;
 
       default:

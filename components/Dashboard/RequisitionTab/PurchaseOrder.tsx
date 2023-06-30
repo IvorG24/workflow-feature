@@ -3,6 +3,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { getUniqueResponseData } from "@/utils/arrayFunctions/dashboard";
 import { RequestResponseDataType } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   Center,
   Group,
@@ -11,6 +12,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import validator from "validator";
 
@@ -59,66 +61,6 @@ const PurchaseOrder = ({
     })
   );
 
-  // const selectedItemSection = purchaseOrderData.filter(
-  //   (section) => section.sectionLabel === selectedBarChartItem
-  // );
-
-  // get number of order by status
-  // const itemStatusCount = getItemStatusCount(selectedTabItemGeneralNameList);
-  // const selectedItemStatusCount = itemStatusCount.filter(
-  //   (item) => item.item === selectedBarChartItem
-  // );
-
-  // const getOrderCountByStatus = (selectedStatus: string) => {
-  //   const selectedItem = selectedItemStatusCount.filter(
-  //     (item) => item.label === selectedStatus
-  //   )[0];
-  //   if (selectedItem) {
-  //     return selectedItem.value;
-  //   }
-
-  //   return 0;
-  // };
-
-  //get all Quantity field responses from selected item
-
-  // const itemQuantityList = selectedItemSection.flatMap(
-  //   (section) =>
-  //     section.responseData.filter((res) => res.field_name === "Quantity")[0]
-  //       .field_response
-  // );
-
-  // filter Quantity responses -> user or team responses
-  // const selectedItemQuantityList =
-  //   selectedPurchaseData === "user"
-  //     ? itemQuantityList.filter(
-  //         (item) =>
-  //           item.request_response_team_member_id ===
-  //           authUserMember?.team_member_id
-  //       )
-  //     : itemQuantityList;
-
-  // const getTotalQuantityCount = () => {
-  //   const total = selectedItemQuantityList.reduce((total, item) => {
-  //     const itemQuantity = JSON.parse(item.request_response);
-  //     return total + itemQuantity;
-  //   }, 0);
-
-  //   return total;
-  // };
-  // const getQuantityCountByStatus = (selectedStatus: string) => {
-  //   const itemQuantity = selectedItemQuantityList.filter(
-  //     (item) => item.request_response_request_status === selectedStatus
-  //   );
-  //   const total = itemQuantity.reduce((total, item) => {
-  //     const itemQuantity = JSON.parse(item.request_response);
-
-  //     return total + itemQuantity;
-  //   }, 0);
-
-  //   return total;
-  // };
-
   return (
     <Stack>
       <Paper p="md" w="100%" h="fit-content">
@@ -128,6 +70,11 @@ const PurchaseOrder = ({
             placeholder="Search item"
             value={searchItemKey}
             onChange={(e) => setSearchItemKey(e.currentTarget.value)}
+            rightSection={
+              <ActionIcon size="xs" type="submit">
+                <IconSearch />
+              </ActionIcon>
+            }
           />
         </Group>
         <Box mih={334}>

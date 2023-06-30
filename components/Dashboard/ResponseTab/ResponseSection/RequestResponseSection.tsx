@@ -20,7 +20,7 @@ const RequestResponseSection = ({
         <IconBolt />
         <Title order={3}>Field Response Data</Title>
       </Group>
-      <Flex gap="lg" wrap="wrap">
+      <Flex gap="lg" wrap="wrap" justify="center">
         {responseData.map((response) => (
           <FieldResponseTable key={response.field_id} response={response} />
         ))}
