@@ -50,9 +50,13 @@ const getSignerStatusCount = (
 const SignerTable = ({ requestList }: SignerTableProps) => {
   const { classes } = useStyles();
   // get signers
+  const signerStatus = ["APPROVED", "REJECTED"];
   const signerList = requestList.flatMap((request) => request.request_signer);
-  console.log(signerList);
-  const reducedSignerList = signerList.reduce((acc, signer) => {
+  const filterSignerList = signerList.filter((signer) =>
+    signerStatus.includes(signer.request_signer_status)
+  );
+
+  const reducedSignerList = filterSignerList.reduce((acc, signer) => {
     const requestStatus = signer.request_signer_status;
     const duplicateSignerIndex = acc.findIndex(
       (d) =>
@@ -97,7 +101,7 @@ const SignerTable = ({ requestList }: SignerTableProps) => {
         </Group>
 
         <Stack p="lg" mb="sm" spacing={32}>
-          {requestList.length > 0 ? (
+          {filterSignerList.length > 0 ? (
             sortSignerListByTotalRequests.map((signer) => {
               const user = signer.signer_team_member.team_member_user;
               const totalSigned =
