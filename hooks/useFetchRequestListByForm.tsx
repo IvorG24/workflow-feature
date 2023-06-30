@@ -6,7 +6,6 @@ import useSWR from "swr";
 type Params = {
   teamId: string;
   formId?: string | null;
-  requestStatus?: string | null;
   supabaseClient: SupabaseClient<Database>;
 };
 
@@ -16,7 +15,6 @@ const fetcher = async (key: string, params: Params) => {
     const { data, count } = await getRequestListByForm(params.supabaseClient, {
       teamId: params.teamId,
       formId: params.formId ? params.formId : undefined,
-      requestStatus: params.requestStatus ? params.requestStatus : undefined,
     });
     if (!data) throw new Error();
 
