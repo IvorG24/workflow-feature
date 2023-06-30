@@ -1,5 +1,6 @@
 import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
 import { Navbar as MantineNavbar, Skeleton, Stack } from "@mantine/core";
+import { useScrollLock } from "@mantine/hooks";
 import { isEmpty } from "lodash";
 import FormList from "./FormList";
 import NavLink from "./NavLink";
@@ -12,6 +13,7 @@ type NavbarProps = {
 const Navbar = ({ openNavbar }: NavbarProps) => {
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
+  useScrollLock(openNavbar);
 
   return (
     <MantineNavbar
@@ -20,35 +22,33 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
       hidden={!openNavbar}
       width={{ sm: 200, lg: 300 }}
     >
-      <Stack>
-        {!isEmpty(activeTeam) ? <SelectTeam /> : null}
-        {!activeApp ? (
-          <>
-            <Stack spacing={5}>
-              <Skeleton height={20} width={60} />
-              <Skeleton height={30} />
-            </Stack>
-            <Stack spacing={5}>
-              <Skeleton height={20} width={60} />
-              <Skeleton height={30} />
-              <Skeleton height={30} />
-            </Stack>
-            <Stack spacing={5}>
-              <Skeleton height={20} width={60} />
-              <Skeleton height={30} />
-              <Skeleton height={30} />
-              <Skeleton height={30} />
-              <Skeleton height={30} />
-            </Stack>
-          </>
-        ) : null}
-        {activeApp ? (
-          <>
-            <NavLink />
-            {!isEmpty(activeTeam) ? <FormList /> : null}
-          </>
-        ) : null}
-      </Stack>
+      {!isEmpty(activeTeam) ? <SelectTeam /> : null}
+      {!activeApp ? (
+        <Stack>
+          <Stack spacing={5}>
+            <Skeleton height={20} width={60} />
+            <Skeleton height={30} />
+          </Stack>
+          <Stack spacing={5}>
+            <Skeleton height={20} width={60} />
+            <Skeleton height={30} />
+            <Skeleton height={30} />
+          </Stack>
+          <Stack spacing={5}>
+            <Skeleton height={20} width={60} />
+            <Skeleton height={30} />
+            <Skeleton height={30} />
+            <Skeleton height={30} />
+            <Skeleton height={30} />
+          </Stack>
+        </Stack>
+      ) : null}
+      {activeApp ? (
+        <>
+          <NavLink />
+          {!isEmpty(activeTeam) ? <FormList /> : null}
+        </>
+      ) : null}
     </MantineNavbar>
   );
 };
