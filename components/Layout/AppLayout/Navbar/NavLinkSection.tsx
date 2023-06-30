@@ -17,7 +17,7 @@ const NavLinkSection = ({ label, links, ...props }: NavLinkSectionProps) => {
   const router = useRouter();
 
   return (
-    <Box h="fit-content">
+    <Box h="fit-content" mt="sm">
       <Text mb={4} size="xs" weight={400}>
         {label}
       </Text>

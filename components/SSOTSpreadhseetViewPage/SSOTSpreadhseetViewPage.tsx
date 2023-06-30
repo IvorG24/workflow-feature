@@ -16,7 +16,7 @@ import { IconFile } from "@tabler/icons-react";
 
 // TODO: Refactor
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme) => ({
   cell: {
     verticalAlign: "top",
   },
@@ -49,6 +49,62 @@ const useStyles = createStyles(() => ({
     width: 300,
     minWidth: 300,
     maxWidth: 300,
+  },
+  otpTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.red[6]
+          : theme.colors.red[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.red[9]
+          : theme.colors.red[0],
+    },
+  },
+  quotationTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.grape[6]
+          : theme.colors.grape[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.grape[9]
+          : theme.colors.grape[0],
+    },
+  },
+  rirTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.blue[6]
+          : theme.colors.blue[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.blue[9]
+          : theme.colors.blue[0],
+    },
+  },
+  chequeReferenceTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.green[6]
+          : theme.colors.green[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.green[9]
+          : theme.colors.green[0],
+    },
   },
 }));
 
@@ -297,8 +353,13 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           {request.quotation_rir_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders h="100%">
-                <thead style={{ backgroundColor: "#74C0FC" }}>
+              <Table
+                withBorder
+                withColumnBorders
+                h="100%"
+                className={classes.rirTable}
+              >
+                <thead>
                   <tr>
                     <th className={classes.long}>RIR ID</th>
                     <th className={classes.date}>Date Created</th>
@@ -308,9 +369,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
-                <tbody style={{ backgroundColor: "#E7F5FF" }}>
-                  {renderRir(request.quotation_rir_request)}
-                </tbody>
+                <tbody>{renderRir(request.quotation_rir_request)}</tbody>
               </Table>
             </td>
           ) : null}
@@ -407,8 +466,13 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           {request.otp_quotation_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders h="100%">
-                <thead style={{ backgroundColor: "#E599F7" }}>
+              <Table
+                withBorder
+                withColumnBorders
+                h="100%"
+                className={classes.quotationTable}
+              >
+                <thead>
                   <tr>
                     <th className={classes.long}>Quotation ID</th>
                     <th className={classes.date}>Date Created</th>
@@ -423,16 +487,19 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th>RIR</th>
                   </tr>
                 </thead>
-                <tbody style={{ backgroundColor: "#F8F0FC" }}>
-                  {renderQuotation(request.otp_quotation_request)}
-                </tbody>
+                <tbody>{renderQuotation(request.otp_quotation_request)}</tbody>
               </Table>
             </td>
           ) : null}
           {request.otp_cheque_reference_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
-              <Table withBorder withColumnBorders h="100%">
-                <thead style={{ backgroundColor: "#8CE99A" }}>
+              <Table
+                withBorder
+                withColumnBorders
+                h="100%"
+                className={classes.chequeReferenceTable}
+              >
+                <thead>
                   <tr>
                     <th className={classes.long}>Cheque Reference ID</th>
                     <th className={classes.date}>Date Created</th>
@@ -451,7 +518,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.date}>Cheque Second Date Signed</th>
                   </tr>
                 </thead>
-                <tbody style={{ backgroundColor: "#EBFBEE" }}>
+                <tbody>
                   {renderChequeReference(request.otp_cheque_reference_request)}
                 </tbody>
               </Table>
@@ -471,8 +538,14 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       <Paper mt="xl" p="xl" shadow="sm">
         <ScrollArea scrollbarSize={10} offsetScrollbars type="always">
           <Box mah={710}>
-            <Table withBorder withColumnBorders pos="relative" h="100%">
-              <thead style={{ backgroundColor: "#FFA8A8" }}>
+            <Table
+              withBorder
+              withColumnBorders
+              pos="relative"
+              h="100%"
+              className={classes.otpTable}
+            >
+              <thead>
                 <tr>
                   <th className={classes.long}>OTP ID</th>
                   <th className={classes.date}>Date Created</th>
@@ -489,9 +562,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th>Cheque Reference</th>
                 </tr>
               </thead>
-              <tbody style={{ backgroundColor: "#FFF5F5" }}>
-                {renderOtp()}
-              </tbody>
+              <tbody>{renderOtp()}</tbody>
             </Table>
           </Box>
         </ScrollArea>
