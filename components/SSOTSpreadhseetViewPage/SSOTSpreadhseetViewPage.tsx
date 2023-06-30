@@ -50,42 +50,60 @@ const useStyles = createStyles((theme) => ({
     minWidth: 300,
     maxWidth: 300,
   },
-  tbody: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[6]
-        : theme.colors.gray[0],
-  },
   otpTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.red[9]
+          ? theme.colors.red[6]
           : theme.colors.red[3],
     },
-  },
-  chequeReferenceTable: {
-    "& th": {
+    "& tbody": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.green[9]
-          : theme.colors.green[3],
+          ? theme.colors.red[9]
+          : theme.colors.red[0],
     },
   },
   quotationTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.grape[9]
+          ? theme.colors.grape[6]
           : theme.colors.grape[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.grape[9]
+          : theme.colors.grape[0],
     },
   },
   rirTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.blue[9]
+          ? theme.colors.blue[6]
           : theme.colors.blue[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.blue[9]
+          : theme.colors.blue[0],
+    },
+  },
+  chequeReferenceTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.green[6]
+          : theme.colors.green[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.green[9]
+          : theme.colors.green[0],
     },
   },
 }));
@@ -351,9 +369,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
-                <tbody className={classes.tbody}>
-                  {renderRir(request.quotation_rir_request)}
-                </tbody>
+                <tbody>{renderRir(request.quotation_rir_request)}</tbody>
               </Table>
             </td>
           ) : null}
@@ -471,9 +487,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th>RIR</th>
                   </tr>
                 </thead>
-                <tbody className={classes.tbody}>
-                  {renderQuotation(request.otp_quotation_request)}
-                </tbody>
+                <tbody>{renderQuotation(request.otp_quotation_request)}</tbody>
               </Table>
             </td>
           ) : null}
@@ -504,7 +518,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.date}>Cheque Second Date Signed</th>
                   </tr>
                 </thead>
-                <tbody className={classes.tbody}>
+                <tbody>
                   {renderChequeReference(request.otp_cheque_reference_request)}
                 </tbody>
               </Table>
@@ -548,7 +562,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th>Cheque Reference</th>
                 </tr>
               </thead>
-              <tbody className={classes.tbody}>{renderOtp()}</tbody>
+              <tbody>{renderOtp()}</tbody>
             </Table>
           </Box>
         </ScrollArea>
