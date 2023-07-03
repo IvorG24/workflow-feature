@@ -1438,7 +1438,7 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].name = JSON.parse(
             response.request_response
           );
-        } else if (fieldName === "Unit") {
+        } else if (fieldName === "Unit of Measurement") {
           options[duplicatableSectionId].unit = JSON.parse(
             response.request_response
           );

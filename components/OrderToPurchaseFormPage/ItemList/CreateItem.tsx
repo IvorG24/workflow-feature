@@ -18,7 +18,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { capitalize } from "lodash";
+import { capitalize, upperCase } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -64,10 +64,10 @@ const CreateItem = ({
     try {
       const newItem = await createItem(supabaseClient, {
         itemDescription: data.descriptions.map((decription) =>
-          capitalize(decription.description)
+          upperCase(decription.description)
         ),
         itemData: {
-          item_general_name: capitalize(data.generalName),
+          item_general_name: upperCase(data.generalName),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_purpose: data.purpose,
@@ -137,7 +137,7 @@ const CreateItem = ({
               label="General Name"
               sx={{
                 input: {
-                  textTransform: "capitalize",
+                  textTransform: "uppercase",
                 },
               }}
               error={formState.errors.generalName?.message}
@@ -270,9 +270,9 @@ const CreateItem = ({
                   })}
                   sx={{
                     input: {
-                      textTransform: "capitalize",
+                      textTransform: "uppercase",
                     },
-                  }}
+                  }} 
                   error={
                     formState.errors.descriptions !== undefined &&
                     formState.errors.descriptions[index]?.description?.message

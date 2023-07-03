@@ -399,7 +399,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               itemDescription.length - 2
             ].slice(0, -2);
           }
-        } else if (item.request_response_field_name === "Unit") {
+        } else if (item.request_response_field_name === "Unit of Measurement") {
           itemUnit.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           itemQuantity.push(JSON.parse(item.request_response));
