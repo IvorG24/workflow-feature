@@ -1,7 +1,7 @@
 import { checkItemName } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ITEM_PURPOSE_CHOICES } from "@/utils/constant";
+import { ITEM_PURPOSE_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -22,7 +22,6 @@ import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import wordExists from "word-exists";
 import InputAddRemove from "../InputAddRemove";
 
 type Props = {
@@ -141,26 +140,27 @@ const CreateItem = ({
               }}
               error={formState.errors.generalName?.message}
             />
-            <TextInput
-              {...register("unit", {
+            <Controller
+              control={control}
+              name="unit"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value as string}
+                  onChange={onChange}
+                  data={ITEM_UNIT_CHOICES}
+                  withAsterisk
+                  error={formState.errors.unit?.message}
+                  searchable
+                  clearable
+                  label="Unit of Measurement"
+                />
+              )}
+              rules={{
                 required: {
                   message: "Unit of Measurement is required",
                   value: true,
                 },
-                maxLength: {
-                  message:
-                    "Unit of Measurement must be shorter than 500 characters",
-                  value: 500,
-                },
-                validate: {
-                  isWordExists: (value) =>
-                    wordExists(value) ? true : "Not a valid word",
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Unit of Measurement"
-              error={formState.errors.unit?.message}
+              }}
             />
             <Controller
               control={control}
