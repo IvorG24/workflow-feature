@@ -416,6 +416,8 @@ export type ItemForm = {
   unit: string;
   isAvailable: boolean;
   purpose: string;
+  costCode: string;
+  glAccount: string;
 };
 
 export type ItemDescriptionFieldForm = {

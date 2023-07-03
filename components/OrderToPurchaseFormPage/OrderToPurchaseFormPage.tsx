@@ -301,7 +301,7 @@ const OrderToPurchaseFormPage = ({
           <FormSection
             section={{
               ...form.form_section[1],
-              section_field: form.form_section[1].section_field.slice(0, 3),
+              section_field: form.form_section[1].section_field.slice(0, 5),
             }}
           />
         </Stack>

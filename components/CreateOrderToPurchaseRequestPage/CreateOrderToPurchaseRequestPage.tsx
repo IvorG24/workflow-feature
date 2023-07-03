@@ -83,7 +83,7 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
       const newSections: RequestFormValues["sections"] = [];
       toBeCheckedSections.forEach((section) => {
         // if new section if empty
-        if (newSections.length == 0) {
+        if (newSections.length === 0) {
           newSections.push(section);
         } else {
           let uniqueItem = true;
@@ -95,7 +95,7 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
             ) {
               let uniqueField = false;
               // loop on every field except name and quantity
-              for (let i = 2; i < newSection.section_field.length; i++) {
+              for (let i = 5; i < newSection.section_field.length; i++) {
                 if (
                   newSection.section_field[i].field_response !==
                   section.section_field[i].field_response
@@ -105,9 +105,9 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
                 }
               }
               if (!uniqueField) {
-                newSection.section_field[1].field_response =
-                  Number(newSection.section_field[1].field_response) +
-                  Number(section.section_field[1].field_response);
+                newSection.section_field[2].field_response =
+                  Number(newSection.section_field[2].field_response) +
+                  Number(section.section_field[2].field_response);
                 uniqueItem = false;
               }
             }
@@ -117,6 +117,7 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
           }
         }
       });
+      console.log(newSections);
       const newData = { sections: [data.sections[0], ...newSections] };
 
       const request = await createRequest(supabaseClient, {
@@ -219,6 +220,14 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
         {
           ...newSection.section_field[2],
         },
+        {
+          ...newSection.section_field[3],
+          field_response: item.item_cost_code,
+        },
+        {
+          ...newSection.section_field[4],
+          field_response: item.item_gl_account,
+        },
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
@@ -258,17 +267,27 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
             ...generalField[2],
             field_section_duplicatable_id: duplicatableSectionId,
           },
+          {
+            ...generalField[3],
+            field_section_duplicatable_id: duplicatableSectionId,
+          },
+          {
+            ...generalField[4],
+            field_section_duplicatable_id: duplicatableSectionId,
+          },
           ...newFields,
         ],
       });
     } else {
       const generalField = [
+        ...newSection.section_field.slice(0, 3),
         {
-          ...newSection.section_field[0],
-          field_description: null,
+          ...newSection.section_field[3],
+          field_response: "",
         },
         {
-          ...newSection.section_field[1],
+          ...newSection.section_field[4],
+          field_response: "",
         },
       ];
       updateSection(index, {

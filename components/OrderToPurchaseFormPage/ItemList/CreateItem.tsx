@@ -1,4 +1,4 @@
-import { checkItemName } from "@/backend/api/get";
+import { checkItemCode, checkItemName } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ITEM_PURPOSE_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
@@ -71,6 +71,8 @@ const CreateItem = ({
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_purpose: data.purpose,
+          item_cost_code: data.costCode,
+          item_gl_account: data.glAccount,
           item_team_id: activeTeam.team_id,
         },
         formId: formId,
@@ -183,6 +185,58 @@ const CreateItem = ({
                   message: "Purpose is required",
                 },
               }}
+            />
+            <TextInput
+              {...register("costCode", {
+                required: { message: "Cost Code is required", value: true },
+                minLength: {
+                  message: "Cost Code must have atleast 3 characters",
+                  value: 3,
+                },
+                maxLength: {
+                  message: "Cost Code must be shorter than 500 characters",
+                  value: 500,
+                },
+                validate: {
+                  duplicate: async (value) => {
+                    const isExisting = await checkItemCode(supabaseClient, {
+                      itemCode: value,
+                      teamId: activeTeam.team_id,
+                    });
+                    return isExisting ? "Cost Code already exists" : true;
+                  },
+                },
+              })}
+              withAsterisk
+              w="100%"
+              label="Cost Code"
+              error={formState.errors.costCode?.message}
+            />
+            <TextInput
+              {...register("glAccount", {
+                required: { message: "GL Account is required", value: true },
+                minLength: {
+                  message: "GL Account must have atleast 3 characters",
+                  value: 3,
+                },
+                maxLength: {
+                  message: "GL Account must be shorter than 500 characters",
+                  value: 500,
+                },
+                validate: {
+                  duplicate: async (value) => {
+                    const isExisting = await checkItemCode(supabaseClient, {
+                      itemCode: value,
+                      teamId: activeTeam.team_id,
+                    });
+                    return isExisting ? "GL Account already exists" : true;
+                  },
+                },
+              })}
+              withAsterisk
+              w="100%"
+              label="GL Account"
+              error={formState.errors.glAccount?.message}
             />
             {fields.map((field, index) => {
               return (

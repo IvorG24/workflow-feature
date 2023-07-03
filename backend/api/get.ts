@@ -789,6 +789,24 @@ export const checkItemName = async (
   return Boolean(count);
 };
 
+// check if item's code already exists
+export const checkItemCode = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { itemCode: string; teamId: string }
+) => {
+  const { itemCode, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("item_table")
+    .select("*", { count: "exact", head: true })
+    .or(`item_cost_code.eq.${itemCode}, item_gl_account.eq.${itemCode}`)
+    .eq("item_is_disabled", false)
+    .eq("item_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
 // check if item description already exists
 export const checkItemDescription = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1406,7 +1424,7 @@ export const getItemResponseForQuotation = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 4) {
+      if (response.request_response_field.field_order > 3) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
             name: "",
@@ -1420,7 +1438,7 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].name = JSON.parse(
             response.request_response
           );
-        } else if (fieldName === "Unit of Measurement") {
+        } else if (fieldName === "Unit") {
           options[duplicatableSectionId].unit = JSON.parse(
             response.request_response
           );
@@ -1428,6 +1446,7 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].quantity = Number(
             response.request_response
           );
+        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
         } else {
           options[duplicatableSectionId].description += `${
             options[duplicatableSectionId].description ? ", " : ""

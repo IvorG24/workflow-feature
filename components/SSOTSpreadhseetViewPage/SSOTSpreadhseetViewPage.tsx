@@ -384,6 +384,8 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       const itemUnit: string[] = [];
       const itemQuantity: string[] = [];
       const itemDescription: string[] = [];
+      const itemCostCode: string[] = [];
+      const itemGlAccount: string[] = [];
       const items = request.otp_request_response.slice(
         3,
         request.otp_request_response.length
@@ -397,10 +399,14 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               itemDescription.length - 2
             ].slice(0, -2);
           }
-        } else if (item.request_response_field_name === "Unit of Measurement") {
+        } else if (item.request_response_field_name === "Unit") {
           itemUnit.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           itemQuantity.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Cost Code") {
+          itemCostCode.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "GL Account") {
+          itemGlAccount.push(JSON.parse(item.request_response));
         } else {
           itemDescription[itemName.length - 1] += `${
             item.request_response_field_name
@@ -464,6 +470,24 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               ))}
             </List>
           </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemCostCode.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemGlAccount.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
           {request.otp_quotation_request.length !== 0 ? (
             <td style={{ padding: 0 }}>
               <Table
@@ -484,6 +508,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.description}>Item</th>
                     <th className={classes.short}>Price</th>
                     <th className={classes.short}>Quantity</th>
+
                     <th>RIR</th>
                   </tr>
                 </thead>
@@ -558,6 +583,8 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th className={classes.short}>Quantity</th>
                   <th className={classes.date}>Unit of Measurement</th>
                   <th className={classes.description}>Description</th>
+                  <th className={classes.short}>Cost Code</th>
+                  <th className={classes.short}>GL Account</th>
                   <th>Quotation</th>
                   <th>Cheque Reference</th>
                 </tr>

@@ -241,7 +241,7 @@ const Page = ({ form, itemOptions }: Props) => {
                 {
                   ...form.form_section[1],
                   section_field: [
-                    ...form.form_section[1].section_field.slice(0, 3),
+                    ...form.form_section[1].section_field.slice(0, 5),
                   ],
                 },
               ],
