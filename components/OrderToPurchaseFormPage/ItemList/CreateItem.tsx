@@ -18,6 +18,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -63,11 +64,11 @@ const CreateItem = ({
   const onSubmit = async (data: ItemForm) => {
     try {
       const newItem = await createItem(supabaseClient, {
-        itemDescription: data.descriptions.map(
-          (decription) => decription.description
+        itemDescription: data.descriptions.map((decription) =>
+          capitalize(decription.description)
         ),
         itemData: {
-          item_general_name: data.generalName,
+          item_general_name: capitalize(data.generalName),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_purpose: data.purpose,
@@ -133,13 +134,22 @@ const CreateItem = ({
               withAsterisk
               w="100%"
               label="General Name"
+              sx={{
+                input: {
+                  textTransform: "capitalize",
+                },
+              }}
               error={formState.errors.generalName?.message}
             />
             <TextInput
               {...register("unit", {
-                required: { message: "Unit is required", value: true },
+                required: {
+                  message: "Unit of Measurement is required",
+                  value: true,
+                },
                 maxLength: {
-                  message: "Unit must be shorter than 500 characters",
+                  message:
+                    "Unit of Measurement must be shorter than 500 characters",
                   value: 500,
                 },
                 validate: {
@@ -149,7 +159,7 @@ const CreateItem = ({
               })}
               withAsterisk
               w="100%"
-              label="Unit"
+              label="Unit of Measurement"
               error={formState.errors.unit?.message}
             />
             <Controller
@@ -204,6 +214,11 @@ const CreateItem = ({
                       },
                     },
                   })}
+                  sx={{
+                    input: {
+                      textTransform: "capitalize",
+                    },
+                  }}
                   error={
                     formState.errors.descriptions !== undefined &&
                     formState.errors.descriptions[index]?.description?.message

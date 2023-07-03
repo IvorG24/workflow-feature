@@ -312,7 +312,7 @@ const ItemList = ({
           },
           {
             accessor: "item_unit",
-            title: "Unit",
+            title: "Unit of Measurement",
             render: ({ item_unit, item_id }) => (
               <Text
                 className={classes.clickableColumn}

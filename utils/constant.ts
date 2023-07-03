@@ -143,7 +143,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Unit",
+          field_name: "Unit of Measurement",
           field_type: "TEXT",
           field_order: 6,
           field_section_id: otpItemSectionId,

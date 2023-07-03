@@ -397,7 +397,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               itemDescription.length - 2
             ].slice(0, -2);
           }
-        } else if (item.request_response_field_name === "Unit") {
+        } else if (item.request_response_field_name === "Unit of Measurement") {
           itemUnit.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           itemQuantity.push(JSON.parse(item.request_response));
@@ -556,7 +556,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th className={classes.normal}>Cost Code</th>
                   <th className={classes.normal}>Item Name</th>
                   <th className={classes.short}>Quantity</th>
-                  <th className={classes.short}>Unit</th>
+                  <th className={classes.date}>Unit of Measurement</th>
                   <th className={classes.description}>Description</th>
                   <th>Quotation</th>
                   <th>Cheque Reference</th>
