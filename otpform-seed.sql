@@ -79,7 +79,7 @@ INSERT INTO item_description_field_table (item_description_field_id, item_descri
 ('1f0480e1-b81d-4e0f-9c83-f39bdea97f28', 'Shell',  'ef1b1cd1-98d1-410f-a621-3f331a9e5a96'),
 ('e8a32583-2676-4487-8ace-c0978fa5fb30', 'Petron',  'ef1b1cd1-98d1-410f-a621-3f331a9e5a96'),
 ('ef251b7b-b2cb-4d98-b42a-74a0cf790ce8', 'Metal', '442cd87f-25c4-482b-ba4b-d2ab1a852725'),
-('d86f3986-1444-446a-b4ad-ce9fdf405abc', '5 inch', '442cd87f-25c4-482b-ba4b-d2ab1a852725');
+('d86f3986-1444-446a-b4ad-ce9fdf405abc', '5 inch', '3cff6f0b-bc0e-4d29-a040-7417439f164b');
 
 INSERT INTO project_table (project_id, project_name, project_team_id) VALUES
 ('2c58737d-b8bc-4614-bdb3-8008d8eec645', 'Philip Morris', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
@@ -167,5 +167,6 @@ BEGIN
     counter := counter + 1;
   END LOOP;
 END $$;
+
 
 
