@@ -35,7 +35,7 @@ const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
     scales: {
       x: {
         beginAtZero: true,
-        max: Math.max(...data.map((item) => item.value)) + 5,
+        max: Math.max(...data.map((item) => item.value)),
       },
     },
     plugins: {

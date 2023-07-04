@@ -228,6 +228,44 @@ export const getUniqueResponseData = (
   return sortedUniqueResponseData;
 };
 
+export const getChartData = (
+  data: RequestResponseDataType[],
+  options: { selectedPurchaseData: string; teamMemberId?: string }
+) => {
+  const itemQuantityData = data.reduce((acc, item) => {
+    const quantityField = item.responseData.filter(
+      (response) => response.field_name === "Quantity"
+    );
+    const quantityResponse = quantityField.flatMap(
+      (field) => field.field_response
+    );
+
+    const selectedQuantityResponse =
+      options.selectedPurchaseData === "user"
+        ? quantityResponse.filter(
+            (response) =>
+              response.request_response_team_member_id === options.teamMemberId
+          )
+        : quantityResponse;
+
+    const totalQuantity = selectedQuantityResponse.reduce((total, response) => {
+      const quantityValue = JSON.parse(response.request_response);
+      return total + quantityValue;
+    }, 0);
+
+    const newItemData = {
+      label: item.sectionLabel,
+      value: totalQuantity,
+    };
+
+    acc.push(newItemData);
+
+    return acc;
+  }, [] as LineChartDataType[]);
+
+  return itemQuantityData;
+};
+
 export const getStackedBarChartData = (
   requestList: RequestByFormType[],
   initialChartData: StackedBarChartDataType[]

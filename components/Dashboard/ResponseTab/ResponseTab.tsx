@@ -98,7 +98,7 @@ const ResponseTab = ({
   };
 
   return (
-    <Container p={0} fluid>
+    <Container p={0}>
       <Paper p="md" pos="relative">
         <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
         <form onSubmit={handleSubmit(handleSearchByKeyword)}>
