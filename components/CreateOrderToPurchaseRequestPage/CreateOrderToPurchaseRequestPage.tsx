@@ -117,7 +117,7 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
           }
         }
       });
-      console.log(newSections);
+
       const newData = { sections: [data.sections[0], ...newSections] };
 
       const request = await createRequest(supabaseClient, {

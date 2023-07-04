@@ -5,6 +5,7 @@ import {
   getForm,
   getItemResponseForQuotation,
   getItemResponseForRIR,
+  getMemberProjectList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
@@ -47,17 +48,17 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           });
 
           // projects
-          const projects = await getAllNames(supabaseClient, {
-            table: "project",
+          const projects = await getMemberProjectList(supabaseClient, {
+            userId: user.id,
             teamId: teamId,
           });
           const projectOptions = projects.map((project, index) => {
             return {
               option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: project.project_id,
+              option_id: project,
               option_order: index,
-              option_value: project.project_name,
+              option_value: project,
             };
           });
 

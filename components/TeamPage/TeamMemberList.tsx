@@ -20,12 +20,12 @@ import { IconSearch } from "@tabler/icons-react";
 import { lowerCase, startCase } from "lodash";
 import { useFormContext } from "react-hook-form";
 import TeamMemberMenu from "./TeamMemberMenu";
-import { SearchTeamMemberForm } from "./TeamPage";
+import { SearchForm } from "./TeamPage";
 
 type Props = {
   teamMemberList: TeamMemberType[];
   isUpdatingTeamMembers: boolean;
-  onSearchTeamMember: (data: SearchTeamMemberForm) => void;
+  onSearchTeamMember: (data: SearchForm) => void;
   onRemoveFromTeam: (memberId: string) => void;
   onUpdateMemberRole: (memberId: string, role: MemberRoleType) => void;
   onTransferOwnership: (ownerId: string, memberId: string) => void;
@@ -52,7 +52,7 @@ const TeamMemberList = ({
     (member) => member.team_member_id === teamMember?.team_member_id
   ) as TeamMemberType;
 
-  const { register, handleSubmit } = useFormContext<SearchTeamMemberForm>();
+  const { register, handleSubmit } = useFormContext<SearchForm>();
 
   const sortByRole = (members: TeamMemberType[]): TeamMemberType[] => {
     const roleOrder: Record<string, number> = {

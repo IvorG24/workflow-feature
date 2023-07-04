@@ -7,7 +7,6 @@ import { Database } from "@/utils/database";
 import {
   FormType,
   ItemWithDescriptionType,
-  ProjectTableRow,
   TeamGroupForFormType,
   TeamMemberWithUserType,
 } from "@/utils/types";
@@ -38,14 +37,10 @@ import FormSection from "../RequestFormPage/FormSection";
 import ItemDescription from "./ItemDescription/ItemDescription";
 import CreateItem from "./ItemList/CreateItem";
 import ItemList from "./ItemList/ItemList";
-import CreateProject from "./ProjectList/CreateProject";
-import ProjectList from "./ProjectList/ProjectList";
 
 type Props = {
   items: ItemWithDescriptionType[];
   itemListCount: number;
-  projects: ProjectTableRow[];
-  projectListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
 };
@@ -53,8 +48,6 @@ type Props = {
 const OrderToPurchaseFormPage = ({
   items,
   itemListCount,
-  projects,
-  projectListCount,
   teamMemberList,
   form,
 }: Props) => {
@@ -70,10 +63,6 @@ const OrderToPurchaseFormPage = ({
     useState<ItemWithDescriptionType | null>(null);
   const [itemList, setItemList] = useState(items);
   const [itemCount, setItemCount] = useState(itemListCount);
-
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [projectList, setProjectList] = useState(projects);
-  const [projectCount, setProjectCount] = useState(projectListCount);
 
   const [isSavingSigners, setIsSavingSigner] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -270,25 +259,6 @@ const OrderToPurchaseFormPage = ({
               <ItemDescription
                 selectedItem={selectedItem}
                 setSelectedItem={setSelectedItem}
-              />
-            ) : null}
-          </Paper>
-          <Space h="xl" />
-          <Paper p="xl" shadow="xs">
-            {!isCreatingProject ? (
-              <ProjectList
-                projectList={projectList}
-                setProjectList={setProjectList}
-                projectCount={projectCount}
-                setProjectCount={setProjectCount}
-                setIsCreatingProject={setIsCreatingProject}
-              />
-            ) : null}
-            {isCreatingProject ? (
-              <CreateProject
-                setIsCreatingProject={setIsCreatingProject}
-                setProjectList={setProjectList}
-                setProjectCount={setProjectCount}
               />
             ) : null}
           </Paper>

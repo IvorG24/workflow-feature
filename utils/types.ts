@@ -122,13 +122,6 @@ export type ItemDescriptionFieldTableInsert =
 export type ItemDescriptionFieldTableUpdate =
   Database["public"]["Tables"]["item_description_field_table"]["Update"];
 
-export type ProjectTableRow =
-  Database["public"]["Tables"]["project_table"]["Row"];
-export type ProjectTableInsert =
-  Database["public"]["Tables"]["project_table"]["Insert"];
-export type ProjectTableUpdate =
-  Database["public"]["Tables"]["project_table"]["Update"];
-
 export type SupplierTableRow =
   Database["public"]["Tables"]["supplier_table"]["Row"];
 export type SupplierTableInsert =
@@ -295,6 +288,7 @@ export type TeamMemberType = {
   team_member_id: string;
   team_member_role: MemberRoleType;
   team_member_group_list: string[];
+  team_member_project_list: string[];
   team_member_user: {
     user_id: string;
     user_first_name: string;

@@ -18,7 +18,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { capitalize, upperCase } from "lodash";
+import { upperCase } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -272,7 +272,7 @@ const CreateItem = ({
                     input: {
                       textTransform: "uppercase",
                     },
-                  }} 
+                  }}
                   error={
                     formState.errors.descriptions !== undefined &&
                     formState.errors.descriptions[index]?.description?.message

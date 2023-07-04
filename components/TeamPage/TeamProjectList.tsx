@@ -30,42 +30,42 @@ import { useFormContext } from "react-hook-form";
 import { SearchForm } from "./TeamPage";
 
 type Props = {
-  teamGroupList: Record<string, TeamMemberType[]>;
-  onSearchTeamGroup: (data: SearchForm) => void;
+  teamProjectList: Record<string, TeamMemberType[]>;
+  onSearchTeamProject: (data: SearchForm) => void;
   page: number;
   handlePageChange: (page: number) => void;
-  setIsCreatingTeamGroup: Dispatch<SetStateAction<boolean>>;
-  setEditGroupData: Dispatch<
+  setIsCreatingTeamProject: Dispatch<SetStateAction<boolean>>;
+  setEditProjectData: Dispatch<
     SetStateAction<
       | {
-          groupName: string;
-          groupMembers: string[];
+          projectName: string;
+          projectMembers: string[];
         }
       | undefined
     >
   >;
-  handleDeleteGroup: (group: string) => void;
+  handleDeleteProject: (project: string) => void;
 };
 
-const TeamGroupList = ({
-  teamGroupList,
-  onSearchTeamGroup,
+const TeamProjectList = ({
+  teamProjectList,
+  onSearchTeamProject,
   page,
   handlePageChange,
-  setIsCreatingTeamGroup,
-  setEditGroupData,
-  handleDeleteGroup,
+  setIsCreatingTeamProject,
+  setEditProjectData,
+  handleDeleteProject,
 }: Props) => {
   const totalPage = Math.ceil(
-    Object.keys(teamGroupList).length / DEFAULT_TEAM_GROUP_LIST_LIMIT
+    Object.keys(teamProjectList).length / DEFAULT_TEAM_GROUP_LIST_LIMIT
   );
-  const totalGroups = Object.keys(teamGroupList).length;
+  const totalProjects = Object.keys(teamProjectList).length;
 
   const { register, handleSubmit } = useFormContext<SearchForm>();
   const teamMember = useUserTeamMember();
 
-  const renderAvatar = (group: string) => {
-    return teamGroupList[group].slice(0, 3).map((member) => {
+  const renderAvatar = (project: string) => {
+    return teamProjectList[project].slice(0, 3).map((member) => {
       const fullName = `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`;
       return (
         <Tooltip label={fullName} withArrow key={member.team_member_id}>
@@ -85,59 +85,59 @@ const TeamGroupList = ({
     });
   };
 
-  const renderOtherMembers = (group: string) => {
+  const renderOtherMembers = (project: string) => {
     return (
       <Tooltip
         withArrow
-        label={teamGroupList[group]
-          .slice(3, teamGroupList[group].length)
+        label={teamProjectList[project]
+          .slice(3, teamProjectList[project].length)
           .map((member) => {
             const fullName = `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`;
             return <Text key={member.team_member_id}>{fullName}</Text>;
           })}
       >
         <Avatar size={30} radius="xl">
-          +{teamGroupList[group].length - 3}
+          +{teamProjectList[project].length - 3}
         </Avatar>
       </Tooltip>
     );
   };
 
-  const openDeleteModal = (group: string) =>
+  const openDeleteModal = (project: string) =>
     modals.openConfirmModal({
-      title: "Delete group",
+      title: "Delete project",
       centered: true,
       children: (
-        <Text size="sm">Are you sure you want to delete this group?</Text>
+        <Text size="sm">Are you sure you want to delete this project?</Text>
       ),
-      labels: { confirm: "Delete group", cancel: "No don't delete it" },
+      labels: { confirm: "Delete project", cancel: "No don't delete it" },
       confirmProps: { color: "red" },
-      onConfirm: () => handleDeleteGroup(group),
+      onConfirm: () => handleDeleteProject(project),
     });
 
   return (
     <Stack spacing={12}>
       <Flex align="center" justify="space-between">
-        <Text weight={600}>Group Management</Text>
+        <Text weight={600}>Project Management</Text>
         {teamMember?.team_member_role === "ADMIN" ||
         teamMember?.team_member_role === "OWNER" ? (
           <Button
             compact
             onClick={() => {
-              setEditGroupData(undefined);
-              setIsCreatingTeamGroup(true);
+              setEditProjectData(undefined);
+              setIsCreatingTeamProject(true);
             }}
           >
-            Add Group
+            Add Project
           </Button>
         ) : null}
       </Flex>
 
       <Divider />
 
-      <form onSubmit={handleSubmit(onSearchTeamGroup)}>
+      <form onSubmit={handleSubmit(onSearchTeamProject)}>
         <TextInput
-          placeholder="Search group"
+          placeholder="Search project"
           rightSection={
             <ActionIcon size="xs" type="submit">
               <IconSearch />
@@ -149,34 +149,34 @@ const TeamGroupList = ({
         />
       </form>
 
-      {totalGroups !== 0 ? (
+      {totalProjects !== 0 ? (
         <>
           <Table fontSize={14} verticalSpacing={7} highlightOnHover>
             <thead>
               <tr>
-                <th>Group</th>
+                <th>Project</th>
                 <th>Members</th>
                 <th></th>
               </tr>
             </thead>
 
             <tbody>
-              {Object.keys(teamGroupList).map((group) => {
+              {Object.keys(teamProjectList).map((project) => {
                 return (
-                  <tr key={group}>
-                    <td>{group}</td>
+                  <tr key={project}>
+                    <td>{project}</td>
                     <td>
                       <Tooltip.Group openDelay={300} closeDelay={100}>
                         <Avatar.Group spacing="sm">
-                          {teamGroupList[group].length !== 0 ? (
-                            renderAvatar(group)
+                          {teamProjectList[project].length !== 0 ? (
+                            renderAvatar(project)
                           ) : (
                             <Tooltip withArrow label="No member/s">
                               <Avatar radius="xl" size={30} />
                             </Tooltip>
                           )}
-                          {teamGroupList[group].length > 3
-                            ? renderOtherMembers(group)
+                          {teamProjectList[project].length > 3
+                            ? renderOtherMembers(project)
                             : null}
                         </Avatar.Group>
                       </Tooltip.Group>
@@ -193,25 +193,25 @@ const TeamGroupList = ({
                           <Menu.Item
                             icon={<IconEdit size={14} />}
                             onClick={() => {
-                              setIsCreatingTeamGroup(true);
-                              setEditGroupData({
-                                groupName: group,
-                                groupMembers: [
-                                  ...teamGroupList[group].map(
+                              setIsCreatingTeamProject(true);
+                              setEditProjectData({
+                                projectName: project,
+                                projectMembers: [
+                                  ...teamProjectList[project].map(
                                     (member) => member.team_member_id
                                   ),
                                 ],
                               });
                             }}
                           >
-                            Edit Group
+                            Edit Project
                           </Menu.Item>
                           <Menu.Item
-                            onClick={() => openDeleteModal(group)}
+                            onClick={() => openDeleteModal(project)}
                             color="red"
                             icon={<IconTrash size={14} />}
                           >
-                            Delete Group
+                            Delete Project
                           </Menu.Item>
                         </Menu.Dropdown>
                       </Menu>
@@ -225,7 +225,7 @@ const TeamGroupList = ({
       ) : (
         <Center>
           <Text color="dimmed" size={16}>
-            No group found.
+            No project found.
           </Text>
         </Center>
       )}
@@ -241,4 +241,4 @@ const TeamGroupList = ({
   );
 };
 
-export default TeamGroupList;
+export default TeamProjectList;

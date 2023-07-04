@@ -424,3 +424,87 @@ export const updateTeamAndTeamMemberGroupList = async (
     if (teamMemberUpsertError) throw teamMemberUpsertError;
   }
 };
+
+// Udpate team and team member project list
+export const updateTeamAndTeamMemberProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    teamProjectList: string[];
+    upsertProjectName: string;
+    addedProjectMembers: string[];
+    deletedProjectMembers: string[];
+  }
+) => {
+  const {
+    teamId,
+    teamProjectList,
+    upsertProjectName,
+    addedProjectMembers,
+    deletedProjectMembers,
+  } = params;
+  const { error: teamError } = await supabaseClient
+    .from("team_table")
+    .update({ team_project_list: teamProjectList })
+    .eq("team_id", teamId);
+  if (teamError) throw teamError;
+
+  if (addedProjectMembers.length !== 0) {
+    let addTeamMemberCondition = "";
+    addedProjectMembers.forEach((memberId) => {
+      addTeamMemberCondition += `team_member_id.eq.${memberId}, `;
+    });
+
+    const { data: teamMemberList, error: teamMemberListError } =
+      await supabaseClient
+        .from("team_member_table")
+        .select("*")
+        .or(addTeamMemberCondition.slice(0, -2));
+    if (teamMemberListError) throw teamMemberListError;
+
+    const upsertTeamMemberData = teamMemberList.map((member) => {
+      return {
+        ...member,
+        team_member_project_list: [
+          ...member.team_member_project_list,
+          upsertProjectName,
+        ],
+      };
+    });
+
+    const { error: teamMemberUpsertError } = await supabaseClient
+      .from("team_member_table")
+      .upsert(upsertTeamMemberData);
+
+    if (teamMemberUpsertError) throw teamMemberUpsertError;
+  }
+
+  if (deletedProjectMembers.length !== 0) {
+    let deleteTeamMemberCondition = "";
+    deletedProjectMembers.forEach((memberId) => {
+      deleteTeamMemberCondition += `team_member_id.eq.${memberId}, `;
+    });
+
+    const { data: teamMemberList, error: teamMemberListError } =
+      await supabaseClient
+        .from("team_member_table")
+        .select("*")
+        .or(deleteTeamMemberCondition.slice(0, -2));
+    if (teamMemberListError) throw teamMemberListError;
+
+    const upsertTeamMemberData = teamMemberList.map((member) => {
+      return {
+        ...member,
+        team_member_project_list: member.team_member_project_list.filter(
+          (project) => project !== upsertProjectName
+        ),
+      };
+    });
+
+    const { error: teamMemberUpsertError } = await supabaseClient
+      .from("team_member_table")
+      .upsert(upsertTeamMemberData);
+
+    if (teamMemberUpsertError) throw teamMemberUpsertError;
+  }
+};

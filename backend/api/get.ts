@@ -838,7 +838,7 @@ export const getTeamMemberList = async (
   let query = supabaseClient
     .from("team_member_table")
     .select(
-      "team_member_id, team_member_role, team_member_group_list, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
+      "team_member_id, team_member_role, team_member_group_list, team_member_project_list, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
     )
     .eq("team_member_team_id", teamId)
     .eq("team_member_is_disabled", false)
@@ -1745,4 +1745,24 @@ export const checkIfTeamHaveFormslyForms = async (
   if (error) throw error;
 
   return Boolean(count);
+};
+
+// Get team member list of projects
+export const getMemberProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    teamId: string;
+  }
+) => {
+  const { userId, teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select("team_member_project_list")
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId)
+    .single();
+  if (error) throw error;
+
+  return data.team_member_project_list;
 };
