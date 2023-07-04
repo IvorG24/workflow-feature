@@ -157,7 +157,13 @@ const ResponseTab = ({
               Please select a form to generate data.
             </Alert>
           ) : (
-            <Text>No data available.</Text>
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              color="orange"
+              mt="md"
+            >
+              No data available.
+            </Alert>
           )}
         </Box>
       )}

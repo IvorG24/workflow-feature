@@ -125,7 +125,7 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
       if (!isValid) {
         setIsLoading(false);
         notifications.show({
-          message: "There are invalid quantity",
+          message: "There are invalid quantities.",
           color: "orange",
         });
         return;
