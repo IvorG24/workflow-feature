@@ -14,7 +14,6 @@ import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import {
   FormType,
   ItemWithDescriptionType,
-  ProjectTableRow,
   SupplierTableRow,
   TeamMemberWithUserType,
 } from "@/utils/types";
@@ -47,24 +46,12 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
             }
           );
 
-          const { data: projects, count: projectListCount } = await getNameList(
-            supabaseClient,
-            {
-              table: "project",
-              teamId: teamId,
-              page: 1,
-              limit: ROW_PER_PAGE,
-            }
-          );
-
           return {
             props: {
               form,
               items,
               itemListCount,
               teamMemberList,
-              projects,
-              projectListCount,
             },
           };
         } else if (form.form_name === "Quotation") {
@@ -105,8 +92,6 @@ type Props = {
   teamMemberList: TeamMemberWithUserType[];
   items?: ItemWithDescriptionType[];
   itemListCount?: number;
-  projects?: ProjectTableRow[];
-  projectListCount?: number;
   suppliers?: SupplierTableRow[];
   supplierListCount?: number;
 };
@@ -116,8 +101,6 @@ const Page = ({
   teamMemberList = [],
   items = [],
   itemListCount = 0,
-  projects = [],
-  projectListCount = 0,
   suppliers = [],
   supplierListCount = 0,
 }: Props) => {
@@ -128,8 +111,6 @@ const Page = ({
           <OrderToPurchaseFormPage
             items={items}
             itemListCount={itemListCount}
-            projects={projects}
-            projectListCount={projectListCount}
             teamMemberList={teamMemberList}
             form={form}
           />

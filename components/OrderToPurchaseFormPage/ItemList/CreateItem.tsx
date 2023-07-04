@@ -1,7 +1,7 @@
-import { checkItemName } from "@/backend/api/get";
+import { checkItemCode, checkItemName } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ITEM_PURPOSE_CHOICES } from "@/utils/constant";
+import { ITEM_PURPOSE_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -18,10 +18,10 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { upperCase } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import wordExists from "word-exists";
 import InputAddRemove from "../InputAddRemove";
 
 type Props = {
@@ -63,14 +63,16 @@ const CreateItem = ({
   const onSubmit = async (data: ItemForm) => {
     try {
       const newItem = await createItem(supabaseClient, {
-        itemDescription: data.descriptions.map(
-          (decription) => decription.description
+        itemDescription: data.descriptions.map((decription) =>
+          upperCase(decription.description)
         ),
         itemData: {
-          item_general_name: data.generalName,
+          item_general_name: upperCase(data.generalName),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_purpose: data.purpose,
+          item_cost_code: data.costCode,
+          item_gl_account: data.glAccount,
           item_team_id: activeTeam.team_id,
         },
         formId: formId,
@@ -133,24 +135,34 @@ const CreateItem = ({
               withAsterisk
               w="100%"
               label="General Name"
+              sx={{
+                input: {
+                  textTransform: "uppercase",
+                },
+              }}
               error={formState.errors.generalName?.message}
             />
-            <TextInput
-              {...register("unit", {
-                required: { message: "Unit is required", value: true },
-                maxLength: {
-                  message: "Unit must be shorter than 500 characters",
-                  value: 500,
+            <Controller
+              control={control}
+              name="unit"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value as string}
+                  onChange={onChange}
+                  data={ITEM_UNIT_CHOICES}
+                  withAsterisk
+                  error={formState.errors.unit?.message}
+                  searchable
+                  clearable
+                  label="Unit of Measurement"
+                />
+              )}
+              rules={{
+                required: {
+                  message: "Unit of Measurement is required",
+                  value: true,
                 },
-                validate: {
-                  isWordExists: (value) =>
-                    wordExists(value) ? true : "Not a valid word",
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Unit"
-              error={formState.errors.unit?.message}
+              }}
             />
             <Controller
               control={control}
@@ -173,6 +185,58 @@ const CreateItem = ({
                   message: "Purpose is required",
                 },
               }}
+            />
+            <TextInput
+              {...register("costCode", {
+                required: { message: "Cost Code is required", value: true },
+                minLength: {
+                  message: "Cost Code must have atleast 3 characters",
+                  value: 3,
+                },
+                maxLength: {
+                  message: "Cost Code must be shorter than 500 characters",
+                  value: 500,
+                },
+                validate: {
+                  duplicate: async (value) => {
+                    const isExisting = await checkItemCode(supabaseClient, {
+                      itemCode: value,
+                      teamId: activeTeam.team_id,
+                    });
+                    return isExisting ? "Cost Code already exists" : true;
+                  },
+                },
+              })}
+              withAsterisk
+              w="100%"
+              label="Cost Code"
+              error={formState.errors.costCode?.message}
+            />
+            <TextInput
+              {...register("glAccount", {
+                required: { message: "GL Account is required", value: true },
+                minLength: {
+                  message: "GL Account must have atleast 3 characters",
+                  value: 3,
+                },
+                maxLength: {
+                  message: "GL Account must be shorter than 500 characters",
+                  value: 500,
+                },
+                validate: {
+                  duplicate: async (value) => {
+                    const isExisting = await checkItemCode(supabaseClient, {
+                      itemCode: value,
+                      teamId: activeTeam.team_id,
+                    });
+                    return isExisting ? "GL Account already exists" : true;
+                  },
+                },
+              })}
+              withAsterisk
+              w="100%"
+              label="GL Account"
+              error={formState.errors.glAccount?.message}
             />
             {fields.map((field, index) => {
               return (
@@ -204,6 +268,11 @@ const CreateItem = ({
                       },
                     },
                   })}
+                  sx={{
+                    input: {
+                      textTransform: "uppercase",
+                    },
+                  }}
                   error={
                     formState.errors.descriptions !== undefined &&
                     formState.errors.descriptions[index]?.description?.message

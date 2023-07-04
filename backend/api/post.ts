@@ -15,7 +15,6 @@ import {
   ItemTableInsert,
   NotificationTableInsert,
   OptionTableInsert,
-  ProjectTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   SectionTableInsert,
@@ -382,7 +381,7 @@ export const createItem = async (
       field_id: fieldId,
       field_name: description,
       field_type: "DROPDOWN",
-      field_order: 8,
+      field_order: 9,
       field_section_id: section.section_id,
       field_is_required: true,
     });
@@ -608,23 +607,6 @@ export const createFormslyPremadeForms = async (
     .from("option_table")
     .insert(options);
   if (optionError) throw optionError;
-};
-
-// Create Project
-export const createProject = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    projectData: ProjectTableInsert;
-  }
-) => {
-  const { projectData } = params;
-  const { data, error } = await supabaseClient
-    .from("project_table")
-    .insert(projectData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
 };
 
 // Create Supplier

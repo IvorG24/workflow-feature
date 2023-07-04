@@ -789,6 +789,24 @@ export const checkItemName = async (
   return Boolean(count);
 };
 
+// check if item's code already exists
+export const checkItemCode = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { itemCode: string; teamId: string }
+) => {
+  const { itemCode, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("item_table")
+    .select("*", { count: "exact", head: true })
+    .or(`item_cost_code.eq.${itemCode}, item_gl_account.eq.${itemCode}`)
+    .eq("item_is_disabled", false)
+    .eq("item_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
 // check if item description already exists
 export const checkItemDescription = async (
   supabaseClient: SupabaseClient<Database>,
@@ -820,7 +838,7 @@ export const getTeamMemberList = async (
   let query = supabaseClient
     .from("team_member_table")
     .select(
-      "team_member_id, team_member_role, team_member_group_list, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
+      "team_member_id, team_member_role, team_member_group_list, team_member_project_list, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
     )
     .eq("team_member_team_id", teamId)
     .eq("team_member_is_disabled", false)
@@ -1406,7 +1424,7 @@ export const getItemResponseForQuotation = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 4) {
+      if (response.request_response_field.field_order > 3) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
             name: "",
@@ -1420,7 +1438,7 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].name = JSON.parse(
             response.request_response
           );
-        } else if (fieldName === "Unit") {
+        } else if (fieldName === "Unit of Measurement") {
           options[duplicatableSectionId].unit = JSON.parse(
             response.request_response
           );
@@ -1428,6 +1446,7 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].quantity = Number(
             response.request_response
           );
+        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
         } else {
           options[duplicatableSectionId].description += `${
             options[duplicatableSectionId].description ? ", " : ""
@@ -1726,4 +1745,24 @@ export const checkIfTeamHaveFormslyForms = async (
   if (error) throw error;
 
   return Boolean(count);
+};
+
+// Get team member list of projects
+export const getMemberProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    teamId: string;
+  }
+) => {
+  const { userId, teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select("team_member_project_list")
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId)
+    .single();
+  if (error) throw error;
+
+  return data.team_member_project_list;
 };

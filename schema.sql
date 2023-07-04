@@ -62,6 +62,7 @@ CREATE TABLE team_table (
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
   team_logo VARCHAR(4000),
   team_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
+  team_project_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
   
   team_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
@@ -71,6 +72,7 @@ CREATE TABLE team_member_table(
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
   team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
   team_member_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
+  team_member_project_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
 
   team_member_user_id UUID REFERENCES user_table(user_id) NOT NULL,
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
@@ -207,6 +209,8 @@ CREATE TABLE item_table(
   item_purpose VARCHAR(4000) NOT NULL,
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  item_cost_code VARCHAR(4000) NOT NULL,
+  item_gl_account VARCHAR(4000) NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
@@ -230,16 +234,6 @@ CREATE TABLE item_description_field_table(
   item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
-);
-
-CREATE TABLE project_table(
-  project_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  project_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  project_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  project_name VARCHAR(4000) NOT NULL,
-
-  project_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Order to Purchase Form
