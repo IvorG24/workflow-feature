@@ -26,7 +26,7 @@ const OTPSearch = () => {
     { item_general_name: "", item_description_list: null },
   ];
   const [generalNameList, setGeneralNameList] = useState<string[]>([]);
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control } = useForm<FormValues>({
     defaultValues: {
       items: defaultFormValues,
     },
