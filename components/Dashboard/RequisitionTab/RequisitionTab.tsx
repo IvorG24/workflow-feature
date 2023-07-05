@@ -36,7 +36,7 @@ const RequisitionTab = ({ fieldResponseData }: Props) => {
   );
 
   return (
-    <Container maw={1024} h="100%" fluid>
+    <Container maw={1024} p={0} h="100%" fluid>
       {fieldResponseData.length > 0 ? (
         <>
           <SegmentedControl

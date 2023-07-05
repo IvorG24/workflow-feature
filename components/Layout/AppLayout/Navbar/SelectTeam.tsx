@@ -129,9 +129,7 @@ const SelectTeam = () => {
     // set form list
     setFormList(formList);
 
-    await router.push(
-      `/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`
-    );
+    await router.push(`/team-${lowerCase(activeApp)}s/dashboard`);
 
     setIsLoading(false);
   };

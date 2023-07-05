@@ -1,8 +1,17 @@
 import { getAllItems, getItem } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ActionIcon, Box, Button, Flex, Select } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Divider,
+  Flex,
+  Group,
+  Select,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconCircleMinus } from "@tabler/icons-react";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 
@@ -26,7 +35,7 @@ const OTPSearch = () => {
     { item_general_name: "", item_description_list: null },
   ];
   const [generalNameList, setGeneralNameList] = useState<string[]>([]);
-  const { control } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     defaultValues: {
       items: defaultFormValues,
     },
@@ -64,11 +73,22 @@ const OTPSearch = () => {
     remove(index);
   };
 
+  const handleSearchItemQuery = (data: FormValues) => {
+    if (data.items[0].item_general_name === "") {
+      return notifications.show({
+        message: "Please select an item and add item properties.",
+        color: "orange",
+      });
+    }
+    console.log(data);
+  };
+
   useEffect(() => {
     const fetchTeamItemList = async () => {
       const data = await getAllItems(supabaseClient, {
         teamId: activeTeam.team_id,
       });
+
       const itemGeneralNameList = data.map((d) => d.item_general_name);
       setGeneralNameList(itemGeneralNameList);
     };
@@ -77,64 +97,74 @@ const OTPSearch = () => {
 
   return (
     <Box>
-      <form>
+      <form onSubmit={handleSubmit(handleSearchItemQuery)}>
         {fields.map((field, fieldIndex) => (
-          <Flex key={field.id} align="flex-end" wrap="wrap" gap="sm">
-            <Controller
-              control={control}
-              name={`items.${fieldIndex}.item_general_name`}
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  value={value}
-                  label="General Name"
-                  data={generalNameList}
-                  onChange={(value: string) => {
-                    onChange(value);
-                    handleGeneralNameChange(value, fieldIndex);
-                  }}
-                />
-              )}
-            />
-            {field.item_description_list &&
-              field.item_description_list.map(
-                (description, descriptionIndex) => {
-                  const descriptionOptions =
-                    description.item_description_field_option;
+          <Box key={field.id}>
+            <Flex align="flex-end" wrap="wrap" gap="sm">
+              <Controller
+                control={control}
+                name={`items.${fieldIndex}.item_general_name`}
+                render={({ field: { value, onChange } }) => (
+                  <Select
+                    value={value}
+                    label="General Name"
+                    data={generalNameList}
+                    onChange={(value: string) => {
+                      onChange(value);
+                      handleGeneralNameChange(value, fieldIndex);
+                    }}
+                  />
+                )}
+              />
+              {field.item_description_list &&
+                field.item_description_list.map(
+                  (description, descriptionIndex) => {
+                    const descriptionOptions =
+                      description.item_description_field_option;
 
-                  return (
-                    <Controller
-                      key={descriptionIndex}
-                      control={control}
-                      name={`items.${fieldIndex}.item_description_list.${descriptionIndex}.item_description_field_value`}
-                      render={({ field: { value, onChange } }) => (
-                        <Select
-                          label={description.item_description_label}
-                          value={value}
-                          onChange={(value) => onChange(value)}
-                          data={descriptionOptions}
-                        />
-                      )}
-                    />
-                  );
-                }
-              )}
-            {/* don't show if item is index === 0 */}
-            {fieldIndex !== fields.length - 1 ? (
-              <ActionIcon
-                w={36}
-                h={36}
-                color="red"
-                onClick={() => handleRemoveItem(fieldIndex)}
-              >
-                <IconCircleMinus size="24px" />
-              </ActionIcon>
-            ) : null}
-          </Flex>
+                    return (
+                      <Controller
+                        key={descriptionIndex}
+                        control={control}
+                        name={`items.${fieldIndex}.item_description_list.${descriptionIndex}.item_description_field_value`}
+                        render={({ field: { value, onChange } }) => (
+                          <Select
+                            label={description.item_description_label}
+                            value={value}
+                            onChange={(value) => onChange(value)}
+                            data={descriptionOptions}
+                          />
+                        )}
+                      />
+                    );
+                  }
+                )}
+              {fieldIndex !== 0 ? (
+                <ActionIcon
+                  w={36}
+                  h={36}
+                  color="red"
+                  onClick={() => handleRemoveItem(fieldIndex)}
+                >
+                  <IconTrash size={20} />
+                </ActionIcon>
+              ) : null}
+            </Flex>
+            <Divider my="md" />
+          </Box>
         ))}
 
-        <Button mt="sm" onClick={() => handleAddItem()}>
-          Add Item
-        </Button>
+        <Group mt="md" position="center">
+          <Button
+            px={0}
+            variant="subtle"
+            leftIcon={<IconPlus size={14} />}
+            onClick={() => handleAddItem()}
+          >
+            Add another item
+          </Button>
+          <Button type="submit">Analyze Data</Button>
+        </Group>
       </form>
     </Box>
   );
