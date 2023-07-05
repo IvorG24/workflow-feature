@@ -730,31 +730,16 @@ export const checkOrderToPurchaseFormStatus = async (
 ) => {
   const { teamId, formId } = params;
 
-  const { count: itemCount, error: itemError } = await supabaseClient
-    .from("item_table")
-    .select("*", { count: "exact", head: true })
-    .eq("item_team_id", teamId)
-    .eq("item_is_available", true)
-    .eq("item_is_disabled", false);
+  const { data, error } = await supabaseClient
+    .rpc("check_order_to_purchase_form_status", {
+      form_id: formId,
+      team_id: teamId,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
 
-  if (itemError) throw itemError;
-
-  if (!itemCount) {
-    return "There must be at least one available item" as string;
-  }
-
-  const { count: signerCount, error: signerError } = await supabaseClient
-    .from("signer_table")
-    .select("*", { count: "exact", head: true })
-    .eq("signer_form_id", formId)
-    .eq("signer_is_disabled", false)
-    .eq("signer_is_primary_signer", true);
-  if (signerError) throw signerError;
-  if (!signerCount) {
-    return "You need to add a primary signer first" as string;
-  }
-
-  return true as boolean;
+  return data === "true" ? true : (data as string);
 };
 
 // check if item name already exists
