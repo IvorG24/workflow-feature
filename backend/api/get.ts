@@ -471,7 +471,7 @@ export const getForm = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
+      "form_id, form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_group, form_is_for_every_member, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
     )
     .eq("form_id", formId)
     .eq("form_is_disabled", false)
@@ -1211,8 +1211,8 @@ export const getRequestListByForm = async (
   return { data: requestList, count };
 };
 
-// Get specific formsly form id by name and team id
-export const getFormslyFormId = async (
+// Get specific formsly form by name and team id
+export const getFormslyForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formName: string;
@@ -1224,7 +1224,7 @@ export const getFormslyFormId = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_team_member: form_team_member_id!inner(team_member_team_id)"
+      "form_id, form_group, form_is_for_every_member, form_team_member: form_team_member_id!inner(team_member_team_id)"
     )
     .eq("form_name", formName)
     .eq("form_team_member.team_member_team_id", teamId)
@@ -1233,7 +1233,7 @@ export const getFormslyFormId = async (
 
   if (error) throw error;
 
-  return data ? data.form_id : "";
+  return data;
 };
 
 // Get specific OTP form id by name and team id
@@ -1247,7 +1247,7 @@ export const getFormIDForOTP = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_name, form_team_member: form_team_member_id!inner(team_member_team_id)"
+      "form_id, form_name, form_group, form_is_for_every_member, form_team_member: form_team_member_id!inner(team_member_team_id)"
     )
     .or("form_name.eq.Quotation, form_name.eq.Cheque Reference")
     .eq("form_team_member.team_member_team_id", teamId)
@@ -1258,6 +1258,8 @@ export const getFormIDForOTP = async (
     return {
       form_id: form.form_id,
       form_name: form.form_name,
+      form_group: form.form_group,
+      form_is_for_every_member: form.form_is_for_every_member,
     };
   });
 };
@@ -1765,4 +1767,22 @@ export const getMemberProjectList = async (
   if (error) throw error;
 
   return data.team_member_project_list;
+};
+
+// Get team group list
+export const getTeamGroupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_table")
+    .select("team_group_list")
+    .eq("team_id", teamId)
+    .single();
+  if (error) throw error;
+
+  return data.team_group_list;
 };

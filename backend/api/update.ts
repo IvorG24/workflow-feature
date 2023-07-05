@@ -508,3 +508,21 @@ export const updateTeamAndTeamMemberProjectList = async (
     if (teamMemberUpsertError) throw teamMemberUpsertError;
   }
 };
+
+// Update form group
+export const updateFormGroup = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    groupList: string[];
+    isForEveryone: boolean;
+  }
+) => {
+  const { formId, groupList, isForEveryone } = params;
+  const { data, error } = await supabaseClient
+    .from("form_table")
+    .update({ form_group: groupList, form_is_for_every_member: isForEveryone })
+    .eq("form_id", formId);
+  if (error) throw error;
+  return data;
+};

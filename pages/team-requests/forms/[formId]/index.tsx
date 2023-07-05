@@ -3,6 +3,7 @@ import {
   getItemList,
   getNameList,
   getTeamAdminList,
+  getTeamGroupList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
@@ -35,6 +36,10 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         teamId,
       });
 
+      const teamGroupList = await getTeamGroupList(supabaseClient, {
+        teamId,
+      });
+
       if (form.form_is_formsly_form) {
         if (form.form_name === "Order to Purchase") {
           const { data: items, count: itemListCount } = await getItemList(
@@ -52,6 +57,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               items,
               itemListCount,
               teamMemberList,
+              teamGroupList,
             },
           };
         } else if (form.form_name === "Quotation") {
@@ -69,12 +75,14 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               teamMemberList,
               suppliers,
               supplierListCount,
+              teamGroupList,
             },
           };
         }
       }
+
       return {
-        props: { form, teamMemberList },
+        props: { form, teamMemberList, teamGroupList },
       };
     } catch (error) {
       return {
@@ -90,6 +98,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
 type Props = {
   form: FormType;
   teamMemberList: TeamMemberWithUserType[];
+  teamGroupList: string[];
   items?: ItemWithDescriptionType[];
   itemListCount?: number;
   suppliers?: SupplierTableRow[];
@@ -99,6 +108,7 @@ type Props = {
 const Page = ({
   form,
   teamMemberList = [],
+  teamGroupList = [],
   items = [],
   itemListCount = 0,
   suppliers = [],
@@ -113,6 +123,7 @@ const Page = ({
             itemListCount={itemListCount}
             teamMemberList={teamMemberList}
             form={form}
+            teamGroupList={teamGroupList}
           />
         );
       case "Quotation":
@@ -122,11 +133,18 @@ const Page = ({
             form={form}
             suppliers={suppliers}
             supplierListCount={supplierListCount}
+            teamGroupList={teamGroupList}
           />
         );
 
       default:
-        return <RequestFormPage form={form} teamMemberList={teamMemberList} />;
+        return (
+          <RequestFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+          />
+        );
     }
   };
 
@@ -135,7 +153,11 @@ const Page = ({
       <Meta description="Request Page" url="/team-requests/forms/[formId]" />
       {form.form_is_formsly_form ? formslyForm() : null}
       {!form.form_is_formsly_form ? (
-        <RequestFormPage form={form} teamMemberList={teamMemberList} />
+        <RequestFormPage
+          form={form}
+          teamMemberList={teamMemberList}
+          teamGroupList={teamGroupList}
+        />
       ) : null}
     </>
   );

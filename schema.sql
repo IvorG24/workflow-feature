@@ -115,6 +115,8 @@ CREATE TABLE form_table(
   form_is_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
   form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
   form_app VARCHAR(4000) NOT NULL,
+  form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
+  form_group VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
 
   form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );

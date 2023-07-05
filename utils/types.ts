@@ -320,11 +320,14 @@ export type TeamMemberWithUserType = {
 };
 
 export type FormType = {
+  form_id: string;
   form_name: string;
   form_description: string;
   form_date_created: string;
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
+  form_is_for_every_member: boolean;
+  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -357,11 +360,14 @@ export type FormType = {
 };
 
 export type FormWithResponseType = {
+  form_id: string;
   form_name: string;
   form_description: string;
   form_date_created: string;
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
+  form_is_for_every_member: boolean;
+  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {

@@ -16,14 +16,6 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Cheque Reference",
 ];
 
-export const GROUP_CONNECTION = {
-  "Order to Purchase": "Warehouse Processor",
-  Quotation: "Accounting Processor",
-  "Receiving Inspecting Report": "Warehouse Receiver",
-  "Cheque Reference": "Treasury Processor",
-  Audit: "Audit Processor",
-};
-
 export const SIGN_IN_PAGE_PATH = "/sign-in";
 export const DEFAULT_LANDING_PAGE = "/team-requests/dashboard";
 
