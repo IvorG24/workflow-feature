@@ -2,18 +2,26 @@ import { getAllItems, getItem } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   ActionIcon,
+  Alert,
   Box,
   Button,
-  Divider,
   Flex,
   Group,
+  Paper,
   Select,
+  Stack,
+  Text,
+  Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconCircleMinus,
+  IconPlus,
+} from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 
 type FormValues = {
   items: {
@@ -31,55 +39,88 @@ type FormValues = {
 const OTPSearch = () => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+
   const defaultFormValues = [
     { item_general_name: "", item_description_list: null },
   ];
+
   const [generalNameList, setGeneralNameList] = useState<string[]>([]);
-  const { control, handleSubmit } = useForm<FormValues>({
+  const [defaultItemList, setDefaultItemList] =
+    useState<FormValues["items"]>(defaultFormValues);
+
+  const {
+    control,
+    handleSubmit,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useForm<FormValues>({
     defaultValues: {
       items: defaultFormValues,
     },
   });
-  const { fields, append, update, remove } = useFieldArray({
+
+  const {
+    fields: itemList,
+    append: addItem,
+    update: updateItem,
+    remove: removeItem,
+  } = useFieldArray({
     control,
     name: "items",
   });
 
-  const handleGeneralNameChange = async (value: string, fieldIndex: number) => {
-    const item = await getItem(supabaseClient, {
-      teamId: activeTeam.team_id,
-      itemName: value,
-    });
+  const currentItemList = useWatch({ name: "items", control });
 
-    const itemWithDescription = {
-      item_general_name: item.item_general_name,
-      item_description_list: item.item_description.map((description) => ({
-        item_description_label: description.item_description_label,
-        item_description_field_value: "",
-        item_description_field_option: description.item_description_field.map(
-          (fieldDescription) => fieldDescription.item_description_field_value
-        ),
-      })),
-    };
+  const handleGeneralNameChange = async (
+    itemName: string,
+    fieldIndex: number
+  ) => {
+    const duplicateItem = defaultItemList.find(
+      (item) => item.item_general_name === itemName
+    );
+    if (duplicateItem && duplicateItem.item_description_list) {
+      const itemDescriptionListWithEmptyValue =
+        duplicateItem.item_description_list.map((description) => ({
+          ...description,
+          item_description_field_value: "",
+        }));
 
-    update(fieldIndex, itemWithDescription);
+      updateItem(fieldIndex, {
+        ...duplicateItem,
+        item_description_list: itemDescriptionListWithEmptyValue,
+      });
+    } else {
+      const item = await getItem(supabaseClient, {
+        teamId: activeTeam.team_id,
+        itemName,
+      });
+
+      const newItem = {
+        item_general_name: item.item_general_name,
+        item_description_list: item.item_description.map((description) => ({
+          item_description_label: description.item_description_label,
+          item_description_field_value: "",
+          item_description_field_option: description.item_description_field.map(
+            (fieldDescription) => fieldDescription.item_description_field_value
+          ),
+        })),
+      };
+      setDefaultItemList((prev) => [...prev, newItem]);
+      updateItem(fieldIndex, newItem);
+    }
   };
 
-  const handleAddItem = () => {
-    append(defaultFormValues);
-  };
+  const handleAnalyzeData = (data: FormValues) => {
+    const { items } = data;
 
-  const handleRemoveItem = (index: number) => {
-    remove(index);
-  };
-
-  const handleSearchItemQuery = (data: FormValues) => {
-    if (data.items[0].item_general_name === "") {
+    if (items[0].item_general_name === "") {
       return notifications.show({
         message: "Please select an item and add item properties.",
         color: "orange",
       });
     }
+
     console.log(data);
   };
 
@@ -95,71 +136,147 @@ const OTPSearch = () => {
     fetchTeamItemList();
   }, []);
 
+  // validation: check if each item is unique
+  useEffect(() => {
+    const duplicateItemsMap = new Map();
+
+    currentItemList.forEach((currentItem, currentIndex) => {
+      const duplicateItemIndex = duplicateItemsMap.get(
+        currentItem.item_general_name
+      );
+
+      if (duplicateItemIndex === undefined) {
+        clearErrors(`items.${currentIndex}`);
+      } else {
+        const duplicateItem = currentItemList[duplicateItemIndex];
+
+        const isDuplicate = currentItem.item_description_list?.every(
+          (currentDescription) => {
+            const duplicateDescription =
+              duplicateItem.item_description_list?.find(
+                (d) =>
+                  d.item_description_label ===
+                  currentDescription.item_description_label
+              );
+            return (
+              duplicateDescription?.item_description_field_value ===
+              currentDescription.item_description_field_value
+            );
+          }
+        );
+
+        if (isDuplicate) {
+          setError(`items.${currentIndex}`, {
+            type: "hasDuplicate",
+            message: "This item already exists.",
+          });
+        } else {
+          clearErrors(`items.${currentIndex}`);
+        }
+      }
+
+      // Store the index of the first occurrence of a duplicate item
+      if (!duplicateItemsMap.has(currentItem.item_general_name)) {
+        duplicateItemsMap.set(currentItem.item_general_name, currentIndex);
+      }
+    });
+  }, [setError, currentItemList, clearErrors]);
+
   return (
-    <Box>
-      <form onSubmit={handleSubmit(handleSearchItemQuery)}>
-        {fields.map((field, fieldIndex) => (
-          <Box key={field.id}>
-            <Flex align="flex-end" wrap="wrap" gap="sm">
-              <Controller
-                control={control}
-                name={`items.${fieldIndex}.item_general_name`}
-                render={({ field: { value, onChange } }) => (
-                  <Select
-                    value={value}
-                    label="General Name"
-                    data={generalNameList}
-                    onChange={(value: string) => {
-                      onChange(value);
-                      handleGeneralNameChange(value, fieldIndex);
-                    }}
-                  />
+    <Box p="md">
+      <Title mb="md" order={4}>
+        Get Data By Item Specs
+      </Title>
+      <form onSubmit={handleSubmit(handleAnalyzeData)}>
+        <Stack>
+          {itemList.map((item, itemIndex) => (
+            <Paper key={item.id} p="md" withBorder>
+              <Group position="apart">
+                <Text weight={600} c="dimmed">
+                  {`Item ${itemIndex + 1}`}
+                </Text>
+                {itemIndex !== 0 && (
+                  <ActionIcon
+                    size="sm"
+                    color="red"
+                    onClick={() => removeItem(itemIndex)}
+                  >
+                    <IconCircleMinus />
+                  </ActionIcon>
                 )}
-              />
-              {field.item_description_list &&
-                field.item_description_list.map(
-                  (description, descriptionIndex) => {
-                    const descriptionOptions =
-                      description.item_description_field_option;
+              </Group>
+              <Flex align="flex-end" wrap="wrap" gap="sm">
+                <Controller
+                  control={control}
+                  name={`items.${itemIndex}.item_general_name`}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value}
+                      label="General Name"
+                      data={generalNameList}
+                      onChange={(value: string) => {
+                        onChange(value);
+                        handleGeneralNameChange(value, itemIndex);
+                      }}
+                    />
+                  )}
+                />
+                {item.item_description_list &&
+                  item.item_description_list.map(
+                    (description, descriptionIndex) => {
+                      const descriptionOptions =
+                        description.item_description_field_option;
 
-                    return (
-                      <Controller
-                        key={descriptionIndex}
-                        control={control}
-                        name={`items.${fieldIndex}.item_description_list.${descriptionIndex}.item_description_field_value`}
-                        render={({ field: { value, onChange } }) => (
-                          <Select
-                            label={description.item_description_label}
-                            value={value}
-                            onChange={(value) => onChange(value)}
-                            data={descriptionOptions}
-                          />
-                        )}
-                      />
-                    );
-                  }
-                )}
-              {fieldIndex !== 0 ? (
-                <ActionIcon
-                  w={36}
-                  h={36}
+                      return (
+                        <Controller
+                          key={descriptionIndex}
+                          control={control}
+                          name={`items.${itemIndex}.item_description_list.${descriptionIndex}.item_description_field_value`}
+                          render={({ field: { value, onChange } }) => (
+                            <Select
+                              w={150}
+                              label={description.item_description_label}
+                              value={value}
+                              onChange={(value) => onChange(value)}
+                              data={descriptionOptions}
+                              error={
+                                errors.items?.[itemIndex]
+                                  ?.item_description_list?.[descriptionIndex]
+                                  ?.item_description_field_value?.message !==
+                                undefined
+                                  ? true
+                                  : false
+                              }
+                            />
+                          )}
+                          rules={{ required: true }}
+                        />
+                      );
+                    }
+                  )}
+              </Flex>
+
+              {errors.items?.[itemIndex]?.message && (
+                <Alert
+                  mt="sm"
+                  p="xs"
+                  variant="filled"
                   color="red"
-                  onClick={() => handleRemoveItem(fieldIndex)}
+                  icon={<IconAlertCircle size="1rem" />}
                 >
-                  <IconTrash size={20} />
-                </ActionIcon>
-              ) : null}
-            </Flex>
-            <Divider my="md" />
-          </Box>
-        ))}
+                  {errors.items[itemIndex]?.message}
+                </Alert>
+              )}
+            </Paper>
+          ))}
+        </Stack>
 
-        <Group mt="md" position="center">
+        <Group mt="xl" position="center">
           <Button
             px={0}
             variant="subtle"
             leftIcon={<IconPlus size={14} />}
-            onClick={() => handleAddItem()}
+            onClick={() => addItem(defaultFormValues)}
           >
             Add another item
           </Button>
