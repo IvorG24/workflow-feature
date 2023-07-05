@@ -7,6 +7,7 @@ import {
   getItemResponseForRIR,
   getMemberProjectList,
   getUserActiveTeamId,
+  getUserTeamMemberData,
 } from "@/backend/api/get";
 import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
 import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
@@ -14,6 +15,7 @@ import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReportPage/CreateReceivingInspectingReportPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
+import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -25,12 +27,33 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         formId: `${context.query.formId}`,
       });
 
-      if (form.form_is_formsly_form) {
-        const teamId = await getUserActiveTeamId(supabaseClient, {
-          userId: user.id,
-        });
-        if (!teamId) throw new Error("No team found");
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+      if (!teamId) throw new Error("No team found");
 
+      // check if the user have access to create request on the form.
+      const teamMember = await getUserTeamMemberData(supabaseClient, {
+        userId: user.id,
+        teamId: teamId,
+      });
+      if (!teamMember) throw new Error("No team member found");
+
+      if (
+        !checkIfTwoArrayHaveAtLeastOneEqualElement(
+          teamMember.team_member_group_list,
+          form.form_group
+        )
+      ) {
+        return {
+          redirect: {
+            destination: "/403",
+            permanent: false,
+          },
+        };
+      }
+
+      if (form.form_is_formsly_form) {
         // Order to Purchase Form
         if (form.form_name === "Order to Purchase") {
           // items
