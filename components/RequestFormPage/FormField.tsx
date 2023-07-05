@@ -26,7 +26,6 @@ type Props = {
 const FormField = ({ field }: Props) => {
   const inputProps = {
     variant: "filled",
-    withAsterisk: field.field_is_required,
   };
 
   const ref = useRef<HTMLInputElement>(null);
@@ -42,6 +41,7 @@ const FormField = ({ field }: Props) => {
               label={field.field_name}
               {...inputProps}
               style={{ flex: 1 }}
+              withAsterisk={field.field_is_required}
             />
             <ActionIcon mb={4} p={4} variant="light" color="blue">
               <IconExternalLink />
@@ -49,11 +49,29 @@ const FormField = ({ field }: Props) => {
           </Flex>
         );
       case "TEXT":
-        return <TextInput label={field.field_name} {...inputProps} />;
+        return (
+          <TextInput
+            label={field.field_name}
+            {...inputProps}
+            withAsterisk={field.field_is_required}
+          />
+        );
       case "TEXTAREA":
-        return <Textarea label={field.field_name} {...inputProps} />;
+        return (
+          <Textarea
+            label={field.field_name}
+            {...inputProps}
+            withAsterisk={field.field_is_required}
+          />
+        );
       case "NUMBER":
-        return <NumberInput label={field.field_name} {...inputProps} />;
+        return (
+          <NumberInput
+            label={field.field_name}
+            {...inputProps}
+            withAsterisk={field.field_is_required}
+          />
+        );
       case "SWITCH":
         return (
           <Switch
@@ -74,6 +92,7 @@ const FormField = ({ field }: Props) => {
             data={dropdownOption}
             {...inputProps}
             clearable
+            withAsterisk={field.field_is_required}
           />
         );
       case "MULTISELECT":
@@ -86,6 +105,7 @@ const FormField = ({ field }: Props) => {
             label={field.field_name}
             data={multiselectOption}
             {...inputProps}
+            withAsterisk={field.field_is_required}
           />
         );
       case "DATE":
@@ -94,6 +114,7 @@ const FormField = ({ field }: Props) => {
             icon={<IconCalendar size={16} />}
             label={field.field_name}
             {...inputProps}
+            withAsterisk={field.field_is_required}
           />
         );
       case "TIME":
@@ -102,6 +123,7 @@ const FormField = ({ field }: Props) => {
             label={field.field_name}
             icon={<IconClock size={16} />}
             {...inputProps}
+            withAsterisk={field.field_is_required}
             ref={ref}
             rightSection={
               <ActionIcon
@@ -139,6 +161,7 @@ const FormField = ({ field }: Props) => {
             icon={<IconFile size={16} />}
             clearable
             multiple={false}
+            withAsterisk={field.field_is_required}
           />
         );
     }

@@ -426,8 +426,15 @@ export const createRequestForm = async (
   }
 ) => {
   const { formBuilderData, teamMemberId } = params;
-  const { formDescription, formId, formName, formType, isSignatureRequired } =
-    formBuilderData;
+  const {
+    formDescription,
+    formId,
+    formName,
+    formType,
+    isSignatureRequired,
+    isForEveryone,
+    groupList,
+  } = formBuilderData;
   const { sections, signers } = formBuilderData;
 
   // create form
@@ -440,6 +447,8 @@ export const createRequestForm = async (
       form_team_member_id: teamMemberId,
       form_id: formId,
       form_is_signature_required: isSignatureRequired,
+      form_is_for_every_member: isForEveryone,
+      form_group: groupList,
     })
     .select()
     .single();

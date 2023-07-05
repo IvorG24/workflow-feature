@@ -44,9 +44,10 @@ const useStyles = createStyles((theme) => ({
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
   formId: string;
+  teamGroupList: string[];
 };
 
-const BuildFormPage = ({ teamMemberList, formId }: Props) => {
+const BuildFormPage = ({ teamMemberList, formId, teamGroupList }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -67,6 +68,8 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
     sections: defaultRequestFormBuilderSection(formId),
     signers: [],
     isSignatureRequired: false,
+    isForEveryone: true,
+    groupList: [],
   };
 
   const methods = useForm<FormBuilderData>({
@@ -231,6 +234,10 @@ const BuildFormPage = ({ teamMemberList, formId }: Props) => {
               </Button>
             }
           />
+
+          {formType === "REQUEST" && (
+            <FormBuilder.GroupSection mt={32} teamGroupList={teamGroupList} />
+          )}
 
           {formType === "REQUEST" && (
             <FormBuilder.SignerSection

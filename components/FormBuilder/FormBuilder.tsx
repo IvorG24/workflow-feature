@@ -6,6 +6,7 @@ import DescriptionInput from "./DescriptionInput";
 import Question from "./Field";
 import FormNameInput from "./FormNameInput";
 import GoBackLink from "./GoBackLink";
+import GroupSection from "./GroupSection";
 import RevieweeList from "./RevieweeList";
 import Section from "./Section";
 import SignerButtons from "./SignerButtons";
@@ -26,6 +27,8 @@ export type FormBuilderData = {
   sections: SectionWithField[];
   signers: RequestSigner[];
   isSignatureRequired: boolean;
+  isForEveryone: boolean;
+  groupList: string[];
 };
 
 const FormBuilder = ({ children }: Props) => {
@@ -61,3 +64,5 @@ FormBuilder.SignerSection = SignerSection;
 FormBuilder.UserSignature = UserSignature;
 
 FormBuilder.SignerButtons = SignerButtons;
+
+FormBuilder.GroupSection = GroupSection;
