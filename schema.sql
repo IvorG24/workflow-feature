@@ -428,6 +428,23 @@ RETURNS JSON as $$
  return ssot_data;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_user_active_team_id(
+    user_id TEXT
+)
+RETURNS TEXT as $$
+  let active_team_id;
+  plv8.subtransaction(function(){
+    const user_data = plv8.execute(`SELECT * FROM user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
+    
+    if(!user_data.user_active_team_id){
+      const team_member = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${user_id}' AND team_member_is_disabled='false' LIMIT 1`)[0];
+      active_team_id = team_member.team_member_team_id
+    }else{
+      active_team_id = user_data.user_active_team_id
+    }  
+ });
+ return active_team_id;
+$$ LANGUAGE plv8;
 ---------- End: FUNCTIONS
 
 

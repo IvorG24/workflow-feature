@@ -190,27 +190,13 @@ export const getUserActiveTeamId = async (
 ) => {
   const { userId } = params;
 
-  const { data, error } = await supabaseClient
-    .from("user_table")
-    .select("user_active_team_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
+  const { data: activeTeamId, error } = await supabaseClient
+    .rpc("get_user_active_team_id", { user_id: userId })
+    .select("*")
+    .single();
   if (error) throw error;
-  if (!data?.user_active_team_id) {
-    const { data: firstTeam, error: firstTeamError } = await supabaseClient
-      .from("team_member_table")
-      .select("*")
-      .eq("team_member_user_id", userId)
-      .eq("team_member_is_disabled", false)
-      .maybeSingle();
-    if (firstTeamError) throw firstTeamError;
 
-    if (!firstTeam) return null;
-    return firstTeam.team_member_team_id;
-  }
-
-  return data.user_active_team_id;
+  return activeTeamId;
 };
 
 // Get user with signature attachment
