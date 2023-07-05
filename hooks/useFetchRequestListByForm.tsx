@@ -23,7 +23,7 @@ const fetcher = async (key: string, params: Params) => {
 
     return { requestList, requestListCount };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     if (error) throw new Error("Failed to fetch request list by form");
   }
 };

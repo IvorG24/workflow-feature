@@ -1,8 +1,8 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { GROUP_CONNECTION } from "@/utils/constant";
-import { FormTableRow, TeamGroupForFormType } from "@/utils/types";
+import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
+import { FormTableRow } from "@/utils/types";
 import {
   Anchor,
   Autocomplete,
@@ -78,12 +78,12 @@ const FormList = () => {
       <Navbar.Section grow component={ScrollArea} mx="-xs" px="xs" mt="sm">
         {formList.map((form) => {
           const isGroupMember =
-            form.form_is_formsly_form &&
-            GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
-              ? teamMember?.team_member_group_list.includes(
-                  GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
-                )
-              : true;
+            form.form_is_for_every_member ||
+            (teamMember?.team_member_group_list &&
+              checkIfTwoArrayHaveAtLeastOneEqualElement(
+                form.form_group,
+                teamMember?.team_member_group_list
+              ));
 
           return !form.form_is_hidden && isGroupMember ? (
             <NavLink

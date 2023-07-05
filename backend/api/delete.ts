@@ -111,3 +111,50 @@ export const deleteTeamGroup = async (
     if (teamMemberGroupDeleteError) throw teamMemberGroupDeleteError;
   }
 };
+
+// Delete team project
+export const deleteTeamProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectList: string[];
+    teamId: string;
+    deletedProject: string;
+    projectMemberList: string[];
+  }
+) => {
+  const { projectList, teamId, deletedProject, projectMemberList } = params;
+  const { error } = await supabaseClient
+    .from("team_table")
+    .update({ team_project_list: projectList })
+    .eq("team_id", teamId);
+  if (error) throw error;
+
+  if (projectMemberList.length !== 0) {
+    let deleteTeamMemberCondition = "";
+    projectMemberList.forEach((memberId) => {
+      deleteTeamMemberCondition += `team_member_id.eq.${memberId}, `;
+    });
+
+    const { data: teamMemberList, error: teamMemberListError } =
+      await supabaseClient
+        .from("team_member_table")
+        .select("*")
+        .or(deleteTeamMemberCondition.slice(0, -2));
+    if (teamMemberListError) throw teamMemberListError;
+
+    const deleteTeamMemberProjectData = teamMemberList.map((member) => {
+      return {
+        ...member,
+        team_member_project_list: member.team_member_project_list.filter(
+          (project) => project !== deletedProject
+        ),
+      };
+    });
+
+    const { error: teamMemberProjectDeleteError } = await supabaseClient
+      .from("team_member_table")
+      .upsert(deleteTeamMemberProjectData);
+
+    if (teamMemberProjectDeleteError) throw teamMemberProjectDeleteError;
+  }
+};

@@ -1,6 +1,6 @@
 import {
   getFormIDForOTP,
-  getFormslyFormId,
+  getFormslyForm,
   getFormslyForwardLinkFormId,
   getRequest,
   getUserActiveTeamId,
@@ -49,13 +49,21 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           props: { request, connectedForm, connectedRequestIDList },
         };
       } else {
-        const connectedFormID = await getFormslyFormId(supabaseClient, {
+        const connectedForm = await getFormslyForm(supabaseClient, {
           formName: "Receiving Inspecting Report",
           teamId,
         });
 
         return {
-          props: { request, connectedFormID, connectedRequestIDList },
+          props: {
+            request,
+            connectedFormIdAndGroup: {
+              formId: connectedForm?.form_id,
+              formGroup: connectedForm?.form_group,
+              formIsForEveryone: connectedForm?.form_is_for_every_member,
+            },
+            connectedRequestIDList,
+          },
         };
       }
     } catch (error) {
@@ -72,14 +80,23 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   request: RequestWithResponseType;
-  connectedFormID: string[];
+  connectedFormIdAndGroup: {
+    formId: string;
+    formGroup: string[];
+    formIsForEveryone: boolean;
+  };
   connectedRequestIDList: FormslyFormType;
-  connectedForm: { form_name: string; form_id: string }[];
+  connectedForm: {
+    form_name: string;
+    form_id: string;
+    form_group: string[];
+    form_is_for_every_member: boolean;
+  }[];
 };
 
 const Page = ({
   request,
-  connectedFormID,
+  connectedFormIdAndGroup,
   connectedRequestIDList,
   connectedForm,
 }: Props) => {
@@ -97,7 +114,7 @@ const Page = ({
         <RequestPage
           request={request}
           isFormslyForm
-          connectedFormID={connectedFormID}
+          connectedFormIdAndGroup={connectedFormIdAndGroup}
           connectedRequestIDList={connectedRequestIDList}
         />
       );

@@ -6,8 +6,10 @@ import {
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { GROUP_CONNECTION } from "@/utils/constant";
+import {
+  checkIfTwoArrayHaveAtLeastOneEqualElement,
+  generateSectionWithDuplicateList,
+} from "@/utils/arrayFunctions/arrayFunctions";
 import {
   FormStatusType,
   FormslyFormType,
@@ -44,14 +46,18 @@ import RequestSignerSection from "./RequestSignerSection";
 type Props = {
   request: RequestWithResponseType;
   isFormslyForm?: boolean;
-  connectedFormID?: string[];
+  connectedFormIdAndGroup?: {
+    formId: string;
+    formGroup: string[];
+    formIsForEveryone: boolean;
+  };
   connectedRequestIDList?: FormslyFormType;
 };
 
 const RequestPage = ({
   request,
   isFormslyForm = false,
-  connectedFormID,
+  connectedFormIdAndGroup,
   connectedRequestIDList,
 }: Props) => {
   const router = useRouter();
@@ -60,12 +66,14 @@ const RequestPage = ({
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
 
-  const isGroupMember =
-    request.request_form.form_is_formsly_form &&
-    request.request_form.form_name === "Quotation" &&
-    teamMember?.team_member_group_list.includes(
-      GROUP_CONNECTION["Receiving Inspecting Report"]
-    );
+  const isGroupMember = connectedFormIdAndGroup
+    ? connectedFormIdAndGroup.formIsForEveryone ||
+      (teamMember &&
+        checkIfTwoArrayHaveAtLeastOneEqualElement(
+          teamMember?.team_member_group_list,
+          connectedFormIdAndGroup.formGroup
+        ))
+    : false;
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
@@ -309,11 +317,16 @@ const RequestPage = ({
             request={request}
             sectionWithDuplicateList={sectionWithDuplicateList}
           />
-          {connectedFormID && requestStatus === "APPROVED" && isGroupMember ? (
+          {connectedFormIdAndGroup &&
+          connectedFormIdAndGroup.formId &&
+          requestStatus === "APPROVED" &&
+          isGroupMember ? (
             <Button
               onClick={() => {
                 router.push(
-                  `/team-requests/forms/${connectedFormID}/create?otpId=${JSON.parse(
+                  `/team-requests/forms/${
+                    connectedFormIdAndGroup.formId
+                  }/create?otpId=${JSON.parse(
                     request.request_form.form_section[0].section_field[0]
                       .field_response[0].request_response
                   )}&quotationId=${request.request_id}`

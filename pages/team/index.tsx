@@ -35,10 +35,16 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
 
       const teamGroups: Record<string, TeamMemberType[]> = {};
-
       team.team_group_list
         ? team.team_group_list.forEach((group) => {
             teamGroups[group] = [];
+          })
+        : [];
+
+      const teamProjects: Record<string, TeamMemberType[]> = {};
+      team.team_project_list
+        ? team.team_project_list.forEach((project) => {
+            teamProjects[project] = [];
           })
         : [];
 
@@ -50,10 +56,18 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             }
           });
         }
+
+        if (member.team_member_project_list) {
+          member.team_member_project_list.forEach((project) => {
+            if (isArray(teamProjects[project])) {
+              teamProjects[project].push(member);
+            }
+          });
+        }
       });
 
       return {
-        props: { team, teamMembers, teamGroups },
+        props: { team, teamMembers, teamGroups, teamProjects },
       };
     } catch (error) {
       console.error(error);
@@ -71,13 +85,19 @@ type Props = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
   teamGroups: Record<string, TeamMemberType[]>;
+  teamProjects: Record<string, TeamMemberType[]>;
 };
 
-const Page = ({ team, teamMembers, teamGroups }: Props) => {
+const Page = ({ team, teamMembers, teamGroups, teamProjects }: Props) => {
   return (
     <>
       <Meta description="Team Page" url="/team" />
-      <TeamPage team={team} teamMembers={teamMembers} teamGroups={teamGroups} />
+      <TeamPage
+        team={team}
+        teamMembers={teamMembers}
+        teamGroups={teamGroups}
+        teamProjects={teamProjects}
+      />
     </>
   );
 };

@@ -1,14 +1,13 @@
 import { checkOrderToPurchaseFormStatus } from "@/backend/api/get";
-import { updateFormSigner } from "@/backend/api/update";
+import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
+import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { GROUP_CONNECTION } from "@/utils/constant";
+import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
 import {
   FormType,
   ItemWithDescriptionType,
-  ProjectTableRow,
-  TeamGroupForFormType,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
@@ -32,37 +31,36 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import GroupSection from "../FormBuilder/GroupSection";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSection from "../RequestFormPage/FormSection";
 import ItemDescription from "./ItemDescription/ItemDescription";
 import CreateItem from "./ItemList/CreateItem";
 import ItemList from "./ItemList/ItemList";
-import CreateProject from "./ProjectList/CreateProject";
-import ProjectList from "./ProjectList/ProjectList";
 
 type Props = {
   items: ItemWithDescriptionType[];
   itemListCount: number;
-  projects: ProjectTableRow[];
-  projectListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
+  teamGroupList: string[];
 };
 
 const OrderToPurchaseFormPage = ({
   items,
   itemListCount,
-  projects,
-  projectListCount,
   teamMemberList,
   form,
+  teamGroupList,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const { formId } = router.query;
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const formList = useFormList();
+  const { setFormList } = useFormActions();
   const initialSignerIds: string[] = [];
 
   const [isCreatingItem, setIsCreatingItem] = useState(false);
@@ -71,11 +69,7 @@ const OrderToPurchaseFormPage = ({
   const [itemList, setItemList] = useState(items);
   const [itemCount, setItemCount] = useState(itemListCount);
 
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [projectList, setProjectList] = useState(projects);
-  const [projectCount, setProjectCount] = useState(projectListCount);
-
-  const [isSavingSigners, setIsSavingSigner] = useState(false);
+  const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
     form.form_signer.map((signer) => {
       initialSignerIds.push(signer.signer_team_member.team_member_id);
@@ -93,10 +87,42 @@ const OrderToPurchaseFormPage = ({
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [switchValue, setSwitchValue] = useState(false);
 
-  const methods = useForm<{
+  const [initialRequester, setInitialRequester] = useState(form.form_group);
+  const [initialGroupBoolean, setInitialGroupBoolean] = useState(
+    form.form_is_for_every_member
+  );
+  const [isSavingRequester, setIsSavingRequester] = useState(false);
+
+  const [isGroupMember, setIsGroupMember] = useState(false);
+
+  useEffect(() => {
+    setIsGroupMember(
+      form.form_is_for_every_member ||
+        (teamMember?.team_member_group_list
+          ? checkIfTwoArrayHaveAtLeastOneEqualElement(
+              form.form_group,
+              teamMember?.team_member_group_list
+            )
+          : false)
+    );
+  }, [teamMember]);
+
+  const signerMethods = useForm<{
     signers: RequestSigner[];
     isSignatureRequired: boolean;
-  }>({});
+  }>();
+
+  const requesterMethods = useForm<{
+    groupList: string[];
+    isForEveryone: boolean;
+  }>({
+    defaultValues: {
+      groupList: form.form_group,
+      isForEveryone: form.form_is_for_every_member,
+    },
+  });
+
+  const watchGroup = requesterMethods.watch("groupList");
 
   useEffect(() => {
     const initialRequestSigners = form.form_signer.map((signer) => {
@@ -109,7 +135,7 @@ const OrderToPurchaseFormPage = ({
         signer_form_id: `${formId}`,
       };
     });
-    methods.setValue("signers", initialRequestSigners);
+    signerMethods.setValue("signers", initialRequestSigners);
   }, [form]);
 
   const newTeamMember = {
@@ -124,21 +150,14 @@ const OrderToPurchaseFormPage = ({
       },
     },
   };
+
   const newForm = {
     ...form,
     ...newTeamMember,
   };
 
-  const isGroupMember =
-    form.form_is_formsly_form &&
-    GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
-      ? teamMember?.team_member_group_list.includes(
-          GROUP_CONNECTION[form.form_name as TeamGroupForFormType]
-        )
-      : true;
-
   const handleSaveSigners = async () => {
-    const values = methods.getValues();
+    const values = signerMethods.getValues();
     const primarySigner = values.signers.filter(
       (signer) => signer.signer_is_primary_signer
     );
@@ -150,7 +169,7 @@ const OrderToPurchaseFormPage = ({
       return;
     }
 
-    setIsSavingSigner(true);
+    setIsSavingSigners(true);
     try {
       await updateFormSigner(supabaseClient, {
         signers: values.signers.map((signer) => {
@@ -169,7 +188,51 @@ const OrderToPurchaseFormPage = ({
         color: "red",
       });
     }
-    setIsSavingSigner(false);
+    setIsSavingSigners(false);
+  };
+
+  const handleSaveRequesters = async () => {
+    const values = requesterMethods.getValues();
+
+    setIsSavingRequester(true);
+    try {
+      await updateFormGroup(supabaseClient, {
+        formId: `${formId}`,
+        groupList: values.groupList,
+        isForEveryone: values.isForEveryone,
+      });
+      setInitialRequester(values.groupList);
+      setInitialGroupBoolean(values.isForEveryone);
+
+      const isStillMember =
+        values.isForEveryone ||
+        (teamMember?.team_member_group_list
+          ? checkIfTwoArrayHaveAtLeastOneEqualElement(
+              values.groupList,
+              teamMember?.team_member_group_list
+            )
+          : false);
+
+      if (isStillMember !== isGroupMember) {
+        const newForm = formList.map((form) => {
+          if (form.form_id !== formId) return form;
+          return { ...form, form_is_hidden: !isStillMember };
+        });
+        setFormList(newForm);
+      }
+      setIsGroupMember(isStillMember);
+
+      notifications.show({
+        message: "Requesters updated.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+    setIsSavingRequester(false);
   };
 
   const handleFormVisibilityRestriction = async () => {
@@ -273,25 +336,6 @@ const OrderToPurchaseFormPage = ({
               />
             ) : null}
           </Paper>
-          <Space h="xl" />
-          <Paper p="xl" shadow="xs">
-            {!isCreatingProject ? (
-              <ProjectList
-                projectList={projectList}
-                setProjectList={setProjectList}
-                projectCount={projectCount}
-                setProjectCount={setProjectCount}
-                setIsCreatingProject={setIsCreatingProject}
-              />
-            ) : null}
-            {isCreatingProject ? (
-              <CreateProject
-                setIsCreatingProject={setIsCreatingProject}
-                setProjectList={setProjectList}
-                setProjectCount={setProjectCount}
-              />
-            ) : null}
-          </Paper>
         </Box>
       ) : null}
 
@@ -301,16 +345,36 @@ const OrderToPurchaseFormPage = ({
           <FormSection
             section={{
               ...form.form_section[1],
-              section_field: form.form_section[1].section_field.slice(0, 3),
+              section_field: form.form_section[1].section_field.slice(0, 5),
             }}
           />
         </Stack>
       ) : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
+        <Title order={3}>Requester Details</Title>
+        <Space h="xl" />
+        <FormProvider {...requesterMethods}>
+          <GroupSection teamGroupList={teamGroupList} />
+        </FormProvider>
+
+        {!isEqual(initialRequester, watchGroup) ||
+        !isEqual(
+          initialGroupBoolean,
+          requesterMethods.getValues("isForEveryone")
+        ) ? (
+          <Center mt="xl">
+            <Button loading={isSavingRequester} onClick={handleSaveRequesters}>
+              Save Changes
+            </Button>
+          </Center>
+        ) : null}
+      </Paper>
+
+      <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Signer Details</Title>
         <Space h="xl" />
-        <FormProvider {...methods}>
+        <FormProvider {...signerMethods}>
           <SignerSection
             teamMemberList={teamMemberList}
             formId={`${formId}`}
@@ -320,7 +384,7 @@ const OrderToPurchaseFormPage = ({
           />
         </FormProvider>
 
-        {!isEqual(initialSigners, methods.getValues("signers")) &&
+        {!isEqual(initialSigners, signerMethods.getValues("signers")) &&
         activeSigner === null ? (
           <Center mt="xl">
             <Button loading={isSavingSigners} onClick={handleSaveSigners}>

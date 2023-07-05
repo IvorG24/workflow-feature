@@ -30,6 +30,8 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
           <tr>
             <th>Item</th>
             <th>Description</th>
+            <th>Cost Code</th>
+            <th>GL Account</th>
             <th>Quantity</th>
           </tr>
         </thead>
@@ -38,14 +40,9 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
             const item = JSON.parse(
               `${summary.section_field[0].field_response?.request_response}`
             );
-            const quantity = `${JSON.parse(
-              `${summary.section_field[2].field_response?.request_response}`
-            )} ${JSON.parse(
-              `${summary.section_field[1].field_response?.request_response}`
-            )}`;
 
             let description = "";
-            summary.section_field.slice(3).forEach((field) => {
+            summary.section_field.slice(5).forEach((field) => {
               if (field.field_response) {
                 description += `${field.field_name}: ${JSON.parse(
                   field.field_response.request_response
@@ -53,10 +50,25 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
               }
             });
 
+            const costCode = JSON.parse(
+              `${summary.section_field[3].field_response?.request_response}`
+            );
+            const glAccount = JSON.parse(
+              `${summary.section_field[4].field_response?.request_response}`
+            );
+
+            const quantity = `${JSON.parse(
+              `${summary.section_field[2].field_response?.request_response}`
+            )} ${JSON.parse(
+              `${summary.section_field[1].field_response?.request_response}`
+            )}`;
+
             return (
               <tr key={index}>
                 <td>{item}</td>
                 <td>{description.slice(0, -2)}</td>
+                <td>{costCode}</td>
+                <td>{glAccount}</td>
                 <td>{quantity}</td>
               </tr>
             );

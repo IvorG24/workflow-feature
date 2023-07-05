@@ -1,4 +1,8 @@
-import { getTeamAdminList, getUserActiveTeamId } from "@/backend/api/get";
+import {
+  getTeamAdminList,
+  getTeamGroupList,
+  getUserActiveTeamId,
+} from "@/backend/api/get";
 import BuildRequestFormPage from "@/components/BuildRequestFormPage/BuildRequestFormPage";
 import Meta from "@/components/Meta/Meta";
 import { withOwnerOrAdmin } from "@/utils/server-side-protections";
@@ -18,10 +22,14 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         teamId,
       });
 
+      const teamGroupList = await getTeamGroupList(supabaseClient, {
+        teamId,
+      });
+
       const formId = uuidv4();
 
       return {
-        props: { teamMemberList, formId },
+        props: { teamMemberList, formId, teamGroupList },
       };
     } catch (error) {
       console.error(error);
@@ -38,13 +46,18 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
   formId: string;
+  teamGroupList: string[];
 };
 
-const Page = ({ teamMemberList, formId }: Props) => {
+const Page = ({ teamMemberList, formId, teamGroupList }: Props) => {
   return (
     <>
       <Meta description="Build Request Page" url="/team-requests/forms/build" />
-      <BuildRequestFormPage teamMemberList={teamMemberList} formId={formId} />
+      <BuildRequestFormPage
+        teamMemberList={teamMemberList}
+        formId={formId}
+        teamGroupList={teamGroupList}
+      />
     </>
   );
 };

@@ -1,8 +1,13 @@
-import { deleteRow, deleteTeamGroup } from "@/backend/api/delete";
+import {
+  deleteRow,
+  deleteTeamGroup,
+  deleteTeamProject,
+} from "@/backend/api/delete";
 import { createTeamInvitation, uploadImage } from "@/backend/api/post";
 import {
   updateTeam,
   updateTeamAndTeamMemberGroupList,
+  updateTeamAndTeamMemberProjectList,
   updateTeamMemberRole,
   updateTeamOwner,
 } from "@/backend/api/update";
@@ -18,21 +23,19 @@ import { has, lowerCase } from "lodash";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import CreateTeamGroup, { TeamGroupFormType } from "./CreateTeamGroup";
+import CreateTeamProject, { TeamProjectFormType } from "./CreateTeamProject";
 import InviteMember from "./InviteMember";
 import TeamGroupList from "./TeamGroupList";
 import TeamInfoForm from "./TeamInfoForm";
 import TeamMemberList from "./TeamMemberList";
+import TeamProjectList from "./TeamProjectList";
 
 export type UpdateTeamInfoForm = {
   teamName: string;
   teamLogo: string;
 };
 
-export type SearchTeamMemberForm = {
-  keyword: string;
-};
-
-export type SearchTeamGroupForm = {
+export type SearchForm = {
   keyword: string;
 };
 
@@ -40,21 +43,31 @@ type Props = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
   teamGroups: Record<string, TeamMemberType[]>;
+  teamProjects: Record<string, TeamMemberType[]>;
 };
 
-const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
+const TeamPage = ({
+  team: initialTeam,
+  teamMembers,
+  teamGroups,
+  teamProjects,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
+  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
+  const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
+  const [isInvitingMember, setIsInvitingMember] = useState(false);
+  const { setTeamList, setActiveTeam } = useTeamActions();
+  const [teamMemberPage, setTeamMemberPage] = useState(1);
+
   const [teamGroupList, setTeamGroupList] =
     useState<Record<string, TeamMemberType[]>>(teamGroups);
-
-  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
-  const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const [isUpdatingTeamGroup, setIsUpdatingTeamGroup] = useState(false);
   const [isCreatingTeamGroup, setIsCreatingTeamGroup] = useState(false);
   const [editGroupData, setEditGroupData] = useState<
@@ -64,10 +77,20 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
       }
     | undefined
   >(undefined);
-  const [isInvitingMember, setIsInvitingMember] = useState(false);
-  const { setTeamList, setActiveTeam } = useTeamActions();
-  const [teamMemberPage, setTeamMemberPage] = useState(1);
   const [teamGroupPage, setTeamGroupPage] = useState(1);
+
+  const [teamProjectList, setTeamProjectList] =
+    useState<Record<string, TeamMemberType[]>>(teamProjects);
+  const [isUpdatingTeamProject, setIsUpdatingTeamProject] = useState(false);
+  const [isCreatingTeamProject, setIsCreatingTeamProject] = useState(false);
+  const [editProjectData, setEditProjectData] = useState<
+    | {
+        projectName: string;
+        projectMembers: string[];
+      }
+    | undefined
+  >(undefined);
+  const [teamProjectPage, setTeamProjectPage] = useState(1);
 
   const [emailList, setEmailList] = useState<string[]>([]);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
@@ -79,9 +102,10 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
   const updateTeamMethods = useForm<UpdateTeamInfoForm>({
     defaultValues: { teamName: team.team_name, teamLogo: team.team_logo || "" },
   });
-  const searchTeamMemberMethods = useForm<SearchTeamMemberForm>();
 
-  const searchTeamGroupMethods = useForm<SearchTeamGroupForm>();
+  const searchTeamMemberMethods = useForm<SearchForm>();
+  const searchTeamGroupMethods = useForm<SearchForm>();
+  const searchTeamProjectMethods = useForm<SearchForm>();
 
   const handleUpdateTeam = async (data: UpdateTeamInfoForm) => {
     const { teamName } = data;
@@ -152,7 +176,7 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
     }
   };
 
-  const handleSearchTeamMember = async (data: SearchTeamMemberForm) => {
+  const handleSearchTeamMember = async (data: SearchForm) => {
     setIsUpdatingTeamMembers(true);
     setTeamMemberPage(1);
     const { keyword } = data;
@@ -166,7 +190,7 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
     setIsUpdatingTeamMembers(false);
   };
 
-  const handleSearchTeamGroup = async (data: SearchTeamGroupForm) => {
+  const handleSearchTeamGroup = async (data: SearchForm) => {
     setIsUpdatingTeamGroup(true);
     setTeamGroupPage(1);
     const { keyword } = data;
@@ -179,6 +203,21 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
 
     setTeamGroupList(newGroupList);
     setIsUpdatingTeamGroup(false);
+  };
+
+  const handleSearchTeamProject = async (data: SearchForm) => {
+    setIsUpdatingTeamProject(true);
+    setTeamProjectPage(1);
+    const { keyword } = data;
+    const newProjectList: Record<string, TeamMemberType[]> = {};
+    Object.keys(teamProjects).forEach((project) => {
+      if (lowerCase(project).includes(lowerCase(keyword))) {
+        newProjectList[project] = teamProjects[project];
+      }
+    });
+
+    setTeamProjectList(newProjectList);
+    setIsUpdatingTeamProject(false);
   };
 
   const handleInvite = async () => {
@@ -338,6 +377,21 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
     setIsUpdatingTeamGroup(false);
   };
 
+  const handleProjectPageChange = async (page: number) => {
+    if (!team.team_project_list) return;
+    setTeamProjectPage(page);
+    setIsUpdatingTeamProject(true);
+    const keyword = searchTeamProjectMethods.getValues("keyword");
+    const newProjectList: Record<string, TeamMemberType[]> = {};
+    Object.keys(teamProjects).forEach((project) => {
+      if (project.includes(keyword)) {
+        newProjectList[project] = teamProjects[project];
+      }
+    });
+    setTeamProjectList(newProjectList);
+    setIsUpdatingTeamProject(false);
+  };
+
   const handleDeleteGroup = async (group: string) => {
     setIsUpdatingTeamGroup(true);
     try {
@@ -364,6 +418,34 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
       });
     }
     setIsUpdatingTeamGroup(false);
+  };
+
+  const handleDeleteProject = async (project: string) => {
+    setIsUpdatingTeamProject(true);
+    try {
+      const projectList = Object.keys(teamProjectList).filter(
+        (teamProject) => teamProject !== project
+      );
+      setTeamProjectList((prev) => {
+        const state = { ...prev };
+        delete state[project];
+        return state;
+      });
+      await deleteTeamProject(supabaseClient, {
+        teamId: team.team_id,
+        projectList: projectList,
+        deletedProject: project,
+        projectMemberList: teamProjectList[project].map(
+          (member) => member.team_member_id
+        ),
+      });
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+    setIsUpdatingTeamProject(false);
   };
 
   const handleUpsertGroup = async (data: TeamGroupFormType) => {
@@ -427,6 +509,67 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
     setIsUpdatingTeamGroup(false);
   };
 
+  const handleUpsertProject = async (data: TeamProjectFormType) => {
+    setIsUpdatingTeamProject(true);
+    const alreadyExists = has(teamProjectList, data.projectName);
+    if (alreadyExists && !editProjectData) {
+      notifications.show({
+        message: "Project already exists.",
+        color: "orange",
+      });
+      setIsUpdatingTeamProject(false);
+      return;
+    }
+    try {
+      const prevTeamMembers: string[] = [];
+      if (teamProjectList[data.projectName]) {
+        teamProjectList[data.projectName].forEach((member) =>
+          prevTeamMembers.push(member.team_member_id)
+        );
+      }
+      const prev = teamProjectList;
+      const newData: TeamMemberType[] = [];
+      data.projectMembers.forEach((memberId) => {
+        const newMember = teamMemberList.find(
+          (member) => member.team_member_id === memberId
+        );
+        if (newMember) {
+          newData.push(newMember);
+        }
+      });
+
+      if (editProjectData) {
+        delete prev[editProjectData.projectName];
+      }
+      prev[data.projectName] = newData;
+      setTeamProjectList(prev);
+
+      await updateTeamAndTeamMemberProjectList(supabaseClient, {
+        teamId: team.team_id,
+        teamProjectList: [...Object.keys(prev)],
+        upsertProjectName: data.projectName,
+        addedProjectMembers: data.projectMembers.filter(
+          (member) => !prevTeamMembers.includes(member)
+        ),
+        deletedProjectMembers: prevTeamMembers.filter(
+          (memberId) => !data.projectMembers.includes(memberId)
+        ),
+      });
+
+      notifications.show({
+        message: "Project created.",
+        color: "green",
+      });
+      setIsCreatingTeamProject(false);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+    setIsUpdatingTeamProject(false);
+  };
+
   return (
     <Container>
       <Title order={2}>Manage Team</Title>
@@ -485,6 +628,42 @@ const TeamPage = ({ team: initialTeam, teamMembers, teamGroups }: Props) => {
               })}
               editGroupData={editGroupData}
               handleUpsertGroup={handleUpsertGroup}
+            />
+          )}
+        </Paper>
+      </Container>
+
+      <Container p={0} mt="xl" pos="relative" fluid>
+        <LoadingOverlay
+          visible={isUpdatingTeamProject}
+          overlayBlur={2}
+          transitionDuration={500}
+        />
+        <Paper p="lg" shadow="xs">
+          {!isCreatingTeamProject ? (
+            <FormProvider {...searchTeamProjectMethods}>
+              <TeamProjectList
+                teamProjectList={teamProjectList}
+                onSearchTeamProject={handleSearchTeamProject}
+                page={teamProjectPage}
+                handlePageChange={handleProjectPageChange}
+                setIsCreatingTeamProject={setIsCreatingTeamProject}
+                setEditProjectData={setEditProjectData}
+                handleDeleteProject={handleDeleteProject}
+              />
+            </FormProvider>
+          ) : (
+            <CreateTeamProject
+              setIsCreatingTeamProject={setIsCreatingTeamProject}
+              teamMemberList={teamMemberList.map((member) => {
+                return {
+                  value: member.team_member_id,
+                  label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+                  member: member,
+                };
+              })}
+              editProjectData={editProjectData}
+              handleUpsertProject={handleUpsertProject}
             />
           )}
         </Paper>

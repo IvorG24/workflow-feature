@@ -7,11 +7,12 @@ import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { GROUP_CONNECTION } from "@/utils/constant";
+import {
+  checkIfTwoArrayHaveAtLeastOneEqualElement,
+  generateSectionWithDuplicateList,
+} from "@/utils/arrayFunctions/arrayFunctions";
 import {
   FormStatusType,
-  FormslyFormKeyType,
   FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
@@ -37,7 +38,12 @@ import OrderToPurchaseSummary from "../SummarySection/OrderToPurchaseSummary";
 
 type Props = {
   request: RequestWithResponseType;
-  connectedForm: { form_name: string; form_id: string }[];
+  connectedForm: {
+    form_name: string;
+    form_id: string;
+    form_group: string[];
+    form_is_for_every_member: boolean;
+  }[];
   connectedRequestIDList: FormslyFormType;
 };
 
@@ -198,9 +204,12 @@ const OrderToPurchaseRequestPage = ({
             <Group>
               {connectedForm.map((form) => {
                 if (
-                  teamMember?.team_member_group_list.includes(
-                    GROUP_CONNECTION[form.form_name as FormslyFormKeyType]
-                  )
+                  form.form_is_for_every_member ||
+                  (teamMember?.team_member_group_list &&
+                    checkIfTwoArrayHaveAtLeastOneEqualElement(
+                      teamMember?.team_member_group_list,
+                      form.form_group
+                    ))
                 ) {
                   return (
                     <Button

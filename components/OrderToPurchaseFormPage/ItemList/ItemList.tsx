@@ -312,7 +312,7 @@ const ItemList = ({
           },
           {
             accessor: "item_unit",
-            title: "Unit",
+            title: "Unit of Measurement",
             render: ({ item_unit, item_id }) => (
               <Text
                 className={classes.clickableColumn}
@@ -349,6 +349,34 @@ const ItemList = ({
                 }}
               >
                 {item_purpose}
+              </Text>
+            ),
+          },
+          {
+            accessor: "item_cost_code",
+            title: "Cost Code",
+            render: ({ item_cost_code, item_id }) => (
+              <Text
+                className={classes.clickableColumn}
+                onClick={() => {
+                  handleColumnClick(item_id);
+                }}
+              >
+                {item_cost_code}
+              </Text>
+            ),
+          },
+          {
+            accessor: "item_gl_account",
+            title: "GL Account",
+            render: ({ item_gl_account, item_id }) => (
+              <Text
+                className={classes.clickableColumn}
+                onClick={() => {
+                  handleColumnClick(item_id);
+                }}
+              >
+                {item_gl_account}
               </Text>
             ),
           },
