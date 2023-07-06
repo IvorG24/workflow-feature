@@ -9,6 +9,7 @@ import { Database } from "@/utils/database";
 import {
   Button,
   Center,
+  Flex,
   Group,
   Indicator,
   ScrollArea,
@@ -17,6 +18,13 @@ import {
   createStyles,
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import {
+  IconFileDislike,
+  IconFileLike,
+  IconMail,
+  IconMessage2,
+  IconMessages,
+} from "@tabler/icons-react";
 import { lowerCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
@@ -49,6 +57,18 @@ const Notification = () => {
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
 
+  const getIcon = (type: string) => {
+    if (type === "APPROVE") return <IconFileLike size={20} color="#40C057" />;
+    else if (type === "REJECT")
+      return <IconFileDislike size={20} color="#FA5252" />;
+    else if (type === "INVITE") return <IconMail size={20} color="#E64980" />;
+    else if (type === "COMMENT")
+      return <IconMessages size={20} color="#FD7E14" />;
+    else if (type === "REQUEST")
+      return <IconMessage2 size={20} color="#228BE6" />;
+    else if (type === "REVIEW") return <IconMessage2 size={20} />;
+  };
+
   return (
     <Stack spacing={8} p={8}>
       <Group position="apart">
@@ -58,7 +78,7 @@ const Notification = () => {
       <ScrollArea type="auto" offsetScrollbars scrollbarSize={5}>
         <Stack mah={300} pr={5} spacing={5}>
           {notificationList.map((notification) => (
-            <Stack
+            <Flex
               key={notification.notification_id}
               className={classes.notification}
               onClick={async () => {
@@ -79,14 +99,17 @@ const Notification = () => {
                 }
                 await router.push(`${notification.notification_redirect_url}`);
               }}
+              align="center"
+              gap="xs"
             >
+              <Group>{getIcon(notification.notification_type)}</Group>
               <Indicator disabled={notification.notification_is_read} size={5}>
                 <Text size={14}>{notification.notification_content}</Text>
                 <Text size={12} c="dimmed">
                   {moment(notification.notification_date_created).fromNow()}
                 </Text>
               </Indicator>
-            </Stack>
+            </Flex>
           ))}
           {notificationList.length === 0 ? (
             <Center>

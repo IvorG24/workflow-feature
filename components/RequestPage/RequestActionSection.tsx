@@ -30,6 +30,24 @@ const RequestActionSection = ({
       </Title>
       <Space h="xl" />
       <Stack>
+        {isUserSigner && requestStatus === "PENDING" && (
+          <>
+            <Button
+              color="green"
+              fullWidth
+              onClick={() => handleUpdateRequest("APPROVED")}
+            >
+              Approve Request
+            </Button>
+            <Button
+              color="red"
+              fullWidth
+              onClick={() => handleUpdateRequest("REJECTED")}
+            >
+              Reject Request
+            </Button>
+          </>
+        )}
         {isUserOwner && requestStatus === "PENDING" && (
           <>
             <Button
@@ -50,24 +68,6 @@ const RequestActionSection = ({
           <Button color="red" fullWidth onClick={openPromptDeleteModal}>
             Delete Request
           </Button>
-        )}
-        {isUserSigner && requestStatus === "PENDING" && (
-          <>
-            <Button
-              color="green"
-              fullWidth
-              onClick={() => handleUpdateRequest("APPROVED")}
-            >
-              Approve Request
-            </Button>
-            <Button
-              color="red"
-              fullWidth
-              onClick={() => handleUpdateRequest("REJECTED")}
-            >
-              Reject Request
-            </Button>
-          </>
         )}
       </Stack>
     </Paper>

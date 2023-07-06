@@ -30,9 +30,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       if (!request.request_form.form_is_formsly_form) {
         return {
-          props: {
-            request,
-          },
+          props: { request },
         };
       }
 
@@ -56,7 +54,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         return {
           props: { request, connectedForm, connectedRequestIDList },
         };
-      } else {
+      } else if (request.request_form.form_name === "Quotation") {
         const connectedForm = await getFormslyForm(supabaseClient, {
           formName: "Receiving Inspecting Report",
           teamId,
@@ -70,6 +68,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               formGroup: connectedForm?.form_group,
               formIsForEveryone: connectedForm?.form_is_for_every_member,
             },
+            connectedRequestIDList,
+          },
+        };
+      } else {
+        return {
+          props: {
+            request,
             connectedRequestIDList,
           },
         };

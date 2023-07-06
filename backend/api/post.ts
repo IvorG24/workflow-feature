@@ -504,9 +504,20 @@ export const createRequest = async (
     formId: string;
     teamMemberId: string;
     signers: FormType["form_signer"];
+    teamId: string;
+    requesterName: string;
+    formName: string;
   }
 ) => {
-  const { requestFormValues, formId, teamMemberId, signers } = params;
+  const {
+    requestFormValues,
+    formId,
+    teamMemberId,
+    signers,
+    teamId,
+    requesterName,
+    formName,
+  } = params;
 
   // create request
   const { data: request, error: requestError } = await supabaseClient
@@ -564,10 +575,22 @@ export const createRequest = async (
 
   // get request signers
   const requestSignerInput: RequestSignerTableInsert[] = [];
+
+  // get signer notifcation
+  const requestSignerNotificationInput: NotificationTableInsert[] = [];
+
   signers.forEach((signer) => {
     requestSignerInput.push({
       request_signer_signer_id: signer.signer_id,
       request_signer_request_id: request.request_id,
+    });
+    requestSignerNotificationInput.push({
+      notification_app: "REQUEST",
+      notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
+      notification_redirect_url: `/team-requests/requests/${request.request_id}`,
+      notification_team_id: teamId,
+      notification_type: "REQUEST",
+      notification_user_id: signer.signer_team_member.team_member_user.user_id,
     });
   });
 
@@ -576,6 +599,12 @@ export const createRequest = async (
     .from("request_signer_table")
     .insert(requestSignerInput);
   if (requestSignerError) throw requestSignerError;
+
+  // create signer notifications
+  const { error: notificationError } = await supabaseClient
+    .from("notification_table")
+    .insert(requestSignerNotificationInput);
+  if (notificationError) throw notificationError;
 
   return request;
 };

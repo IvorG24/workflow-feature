@@ -371,6 +371,7 @@ const RequestFormFields = ({
               ...fieldRules,
               validate: {
                 fileSize: (value) => {
+                  if (!value) return true;
                   const formattedValue = value as File;
                   return formattedValue.size <= MAX_FILE_SIZE
                     ? true
