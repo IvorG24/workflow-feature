@@ -1,53 +1,208 @@
+-- create a temporary table to access global variable values
+CREATE TEMPORARY TABLE seed_variable_table (
+  var_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  var_key VARCHAR(4000) UNIQUE NOT NULL,
+  var_value VARCHAR(4000) NOT NULL
+);
+
+INSERT INTO seed_variable_table (var_key, var_value) VALUES
+('ownerMemberId', gen_random_uuid()),
+('otpFormId', gen_random_uuid()),
+('quotationFormId', gen_random_uuid()),
+('rirFormId', gen_random_uuid());
+
+-- CREATE FORMS SEED
+
+DO $$
+DECLARE
+-- member ids
+  ownerMemberId UUID;
+  adminMemberId1 UUID;
+  adminMemberId2 UUID;
+-- form ids
+  allFieldsFormId UUID;
+  duplicateFieldsFormId UUID;
+  otpFormId UUID;
+  quotationFormId UUID;
+  rirFormId UUID;
+-- section ids
+  allFieldsSectionId1 UUID;
+  allFieldsSectionId2 UUID;
+  allFieldsSectionId3 UUID;
+  duplicateFieldsSection1 UUID;
+  duplicateFieldsSection2 UUID;
+  duplicateFieldsSection3 UUID;
+-- field ids
+  dropdownField1 UUID;
+  dropdownField2 UUID;
+  dropdownField3 UUID;
+  multiSelectField1 UUID;
+  multiSelectField2 UUID;
+-- signer ids
+  allFieldsSigner UUID;
+  duplicateFieldsSigner UUID;
+
+BEGIN
+
 -- Create new team
+INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list, team_project_list) VALUES
+('2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'XYZ Corp', '15de3182-6efe-47cf-b681-00f8ed10365f', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
 
-INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list) VALUES
-('2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'XYZ Corp', '15de3182-6efe-47cf-b681-00f8ed10365f', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']);
+SELECT var_value INTO ownerMemberId
+  FROM seed_variable_table
+  WHERE var_key = 'ownerMemberId';
 
--- Add Members
-INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list) VALUES
-('6bc6029f-03ea-4053-8f4b-52d91be69359', 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '15de3182-6efe-47cf-b681-00f8ed10365f', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
+adminMemberId1 := gen_random_uuid();
+adminMemberId2 := gen_random_uuid();
 
-('ea01e1dd-0bb0-4902-9ca9-63b9a5171ae2', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '66865893-dd0a-40f3-8acd-03fed41d4051', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']),
-('503148fd-fe66-4ae1-ac10-6c2fa068246c', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'bcaad583-4bb3-4d86-9067-956cf7f20688', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor']);
+INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list, team_member_project_list) VALUES
+(ownerMemberId, 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '15de3182-6efe-47cf-b681-00f8ed10365f', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
+(adminMemberId1, 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '66865893-dd0a-40f3-8acd-03fed41d4051', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
+(adminMemberId2, 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'bcaad583-4bb3-4d86-9067-956cf7f20688', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
 
--- Create OTP Form
-INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden) VALUES
-('281b7de3-e204-43c2-bc89-9cb7bfcb341e', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', '6bc6029f-03ea-4053-8f4b-52d91be69359', true, false);
+-- Create Forms
+allFieldsFormId := gen_random_uuid();
+duplicateFieldsFormId := gen_random_uuid();
 
--- Add signer
-INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
-('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, '281b7de3-e204-43c2-bc89-9cb7bfcb341e', 'ea01e1dd-0bb0-4902-9ca9-63b9a5171ae2'),
-('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, '281b7de3-e204-43c2-bc89-9cb7bfcb341e', '503148fd-fe66-4ae1-ac10-6c2fa068246c');
+SELECT var_value INTO otpFormId
+  FROM seed_variable_table
+  WHERE var_key = 'otpFormId';
+
+SELECT var_value INTO quotationFormId
+  FROM seed_variable_table
+  WHERE var_key = 'quotationFormId';
+
+SELECT var_value INTO rirFormId
+  FROM seed_variable_table
+  WHERE var_key = 'rirFormId';
+
+INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_group) VALUES
+(allFieldsFormId, 'All Fields', 'test all types of fields', 'REQUEST', ownerMemberId, false, false, true, ARRAY[]::VARCHAR[]),
+(duplicateFieldsFormId, 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', ownerMemberId, false, false, true, ARRAY[]::VARCHAR[]),
+(otpFormId, 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', ownerMemberId, true, false, false, ARRAY['Warehouse Processor']),
+(quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false, ARRAY['Accounting Processor']),
+(rirFormId, 'Receiving Inspecting Report', 'formsly premade Receiving Inspecting Report form', 'REQUEST', ownerMemberId, true, true, false, ARRAY['Warehouse Receiver']);
 
 -- Add section
+allFieldsSectionId1 := gen_random_uuid();
+allFieldsSectionId2 := gen_random_uuid();
+allFieldsSectionId3 := gen_random_uuid();
+duplicateFieldsSection1 := gen_random_uuid();
+duplicateFieldsSection2 := gen_random_uuid();
+duplicateFieldsSection3 := gen_random_uuid();
+
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES 
-('bbb22159-13cd-4a91-8579-175aa6344663', 'Main', 1, false, '281b7de3-e204-43c2-bc89-9cb7bfcb341e'),
-('275782b4-4291-40f9-bb9f-dd5d658b1943', 'Item', 2, true, '281b7de3-e204-43c2-bc89-9cb7bfcb341e');
+-- All fields Form
+(allFieldsSectionId1, 'All fields Section 1', 1, false, allFieldsFormId),
+(allFieldsSectionId2, 'All fields Section 2', 2, false, allFieldsFormId),
+(allFieldsSectionId3, 'All fields Section 3', 3, false, allFieldsFormId),
+
+-- Duplicatable Form
+(duplicateFieldsSection1, 'Duplicatable Section 1', 1, true, duplicateFieldsFormId),
+(duplicateFieldsSection2, 'Normal Section 2', 2, false, duplicateFieldsFormId),
+(duplicateFieldsSection3, 'Duplicatable Section 3', 3, true, duplicateFieldsFormId),
+
+-- OTP Form
+('bbb22159-13cd-4a91-8579-175aa6344663', 'Main', 1, false, otpFormId),
+('275782b4-4291-40f9-bb9f-dd5d658b1943', 'Item', 2, true, otpFormId),
+
+-- Quotation
+('829bdb96-8049-472f-96cd-e3e5c0414817', 'ID', 1, false, quotationFormId),
+('0ed3bd29-910c-4f6f-93e9-0f367cd37eab', 'Main', 2, false, quotationFormId),
+('f622cb4e-f6dc-40d9-9188-9911773787c8', 'Item', 3, true, quotationFormId),
+
+-- Receiving Inspecting Report Form
+('e2f8594c-a7c4-40bb-9ac3-de4618a73681', 'ID', 1, false, rirFormId),
+('aa0e7187-9e0e-4853-b536-fdaf484a26d8', 'Item', 2, true, rirFormId);
 
 -- Add fields
+dropdownField1 := gen_random_uuid();
+dropdownField2 := gen_random_uuid();
+dropdownField3 := gen_random_uuid();
+multiSelectField1 := gen_random_uuid();
+multiSelectField2 := gen_random_uuid();
+
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
--- Main Fields
+-- All Fields Form
+(gen_random_uuid(), 'Text field', 'TEXT', 1, allFieldsSectionId1, false, false),
+(gen_random_uuid(), 'Text area field', 'TEXTAREA', 2, allFieldsSectionId1, false, false),
+(gen_random_uuid(), 'Number field', 'NUMBER', 3, allFieldsSectionId1, false, false),
+(gen_random_uuid(), 'Switch field', 'SWITCH', 4, allFieldsSectionId2, false, false),
+(dropdownField1, 'Dropdown field', 'DROPDOWN', 5, allFieldsSectionId2, false, false),
+(multiSelectField1, 'Multiselect field', 'MULTISELECT', 6, allFieldsSectionId2, false, false),
+(gen_random_uuid(), 'Date field', 'DATE', 7, allFieldsSectionId3, false, false),
+(gen_random_uuid(), 'Time field', 'TIME', 8, allFieldsSectionId3, false, false),
+(gen_random_uuid(), 'File field', 'FILE', 9, allFieldsSectionId3, false, false),
+
+-- Duplicatable Section Form
+(gen_random_uuid(), 'Text field', 'TEXT', 1, duplicateFieldsSection1, false, false),
+(gen_random_uuid(), 'Number field', 'NUMBER', 2, duplicateFieldsSection1, false, false),
+(gen_random_uuid(), 'Switch field', 'SWITCH', 3, duplicateFieldsSection1, false, false),
+(dropdownField2, 'Dropdown field', 'DROPDOWN', 4, duplicateFieldsSection1, false, false),
+
+(gen_random_uuid(), 'Text field', 'TEXT', 5, duplicateFieldsSection2, false, false),
+(dropdownField3, 'Dropdown field', 'DROPDOWN', 6, duplicateFieldsSection2, false, false),
+(gen_random_uuid(), 'Date field', 'DATE', 7, duplicateFieldsSection2, false, false),
+
+(multiSelectField2, 'Multiselect field', 'MULTISELECT', 8, duplicateFieldsSection3, false, false),
+(gen_random_uuid(), 'Date field', 'DATE', 9, duplicateFieldsSection3, false, false),
+(gen_random_uuid(), 'Time field', 'TIME', 10, duplicateFieldsSection3, false, false),
+
+-- OTP Form
 ('a4733172-53af-47b1-b460-6869105f6405', 'Project Name', 'DROPDOWN', 1, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 ('d644d57b-dc0c-4f44-9cef-403fd73a7cf2', 'Type', 'DROPDOWN', 2, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 ('3b09156e-40c8-47f5-a5a8-4073ddb474de', 'Date Needed', 'DATE', 3, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
-('055b465c-52c9-4353-811c-fd002bb639d6', 'Cost Code', 'TEXT', 4, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
--- Item Fields
-('179be4af-5ef2-47f6-8d0f-51726736c801', 'General Name', 'DROPDOWN', 5, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('390cae92-815a-4851-8497-7c81cf62bc3e', 'Unit', 'TEXT', 6, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, true),
-('ad82b849-42e2-4eee-9f0d-2effb2a24395', 'Quantity', 'NUMBER', 7, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('bef47113-a186-4755-9764-263b5c246a41', 'Length', 'DROPDOWN', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('6e539c9f-8ab2-46f1-a8a6-89cc928c3612', 'Width', 'DROPDOWN', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('0af6a571-3bef-4f8c-8716-2bca5a5250fc', 'Height', 'DROPDOWN', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('25e93bd3-30f0-4920-a0e8-6bde5a44898c', 'Type', 'DROPDOWN', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('db862c96-01ec-499c-b9f1-faf7b674074d', 'Brand', 'DROPDOWN', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('03003ee0-811a-44e9-b420-aaac9f80d1de', 'Material', 'DROPDOWN', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('a6745b58-c88d-41dc-82f4-887c0062c03d', 'Size', 'DROPDOWN', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false);
+
+('179be4af-5ef2-47f6-8d0f-51726736c801', 'General Name', 'DROPDOWN', 4, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('390cae92-815a-4851-8497-7c81cf62bc3e', 'Unit of Measurement', 'TEXT', 5, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, true),
+('ad82b849-42e2-4eee-9f0d-2effb2a24395', 'Quantity', 'NUMBER', 6, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('055b465c-52c9-4353-811c-fd002bb639d6', 'Cost Code', 'TEXT', 7, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('2e0d9f52-e844-44c9-bb59-5dc2b887827c', 'GL Account', 'TEXT', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('bef47113-a186-4755-9764-263b5c246a41', 'Length', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('6e539c9f-8ab2-46f1-a8a6-89cc928c3612', 'Width', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('0af6a571-3bef-4f8c-8716-2bca5a5250fc', 'Height', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('25e93bd3-30f0-4920-a0e8-6bde5a44898c', 'Type', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('db862c96-01ec-499c-b9f1-faf7b674074d', 'Brand', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('03003ee0-811a-44e9-b420-aaac9f80d1de', 'Material', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+('a6745b58-c88d-41dc-82f4-887c0062c03d', 'Size', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
+
+-- Quotation Form fields
+('62f96be5-9e50-45a0-82d7-2b0d731eda91', 'Order to Purchase ID', 'LINK', 1, '829bdb96-8049-472f-96cd-e3e5c0414817', true, true),
+('4aee0513-c746-409c-83e3-1ac169afacfe', 'Supplier', 'DROPDOWN', 2, '0ed3bd29-910c-4f6f-93e9-0f367cd37eab', true, false),
+('97bfef27-660e-4533-add8-fc80cea23e40', 'Supplier Quotation', 'FILE', 3, '0ed3bd29-910c-4f6f-93e9-0f367cd37eab', true, false),
+('587fbe8c-d0e4-4e92-865d-9a005e1ad04a', 'Request Send Method', 'DROPDOWN', 4, '0ed3bd29-910c-4f6f-93e9-0f367cd37eab', false, false),
+('fd947409-24dd-4a2b-86fd-b225e5748fcb', 'Proof of Sending', 'FILE', 5, '0ed3bd29-910c-4f6f-93e9-0f367cd37eab', false, false),
+('bfdf6962-38d0-47ba-9c77-d840a87047e5', 'Item', 'DROPDOWN', 6, 'f622cb4e-f6dc-40d9-9188-9911773787c8', true, false),
+('a1c72d8e-5321-4e16-9307-41df5242fc6a', 'Price', 'NUMBER', 7, 'f622cb4e-f6dc-40d9-9188-9911773787c8', true, false),
+('536d7cc3-a458-467b-a716-ff7c39d83d9a', 'Quantity', 'NUMBER', 8, 'f622cb4e-f6dc-40d9-9188-9911773787c8', true, false),
+
+-- Receiving Inspecting Report Form fields
+('fd24e66d-d7f4-4f7e-859a-8ee0fcd0ff7c', 'Order to Purchase ID', 'LINK', 1, 'e2f8594c-a7c4-40bb-9ac3-de4618a73681', true, true),
+('d4bed2d2-1391-45af-96d9-38e0a92c23cf', 'Quotation ID', 'LINK', 2, 'e2f8594c-a7c4-40bb-9ac3-de4618a73681', true, true),
+('1a7f1785-0c4b-419a-b2a1-b4a937077d64', 'Item', 'DROPDOWN', 3, 'aa0e7187-9e0e-4853-b536-fdaf484a26d8', true, false),
+('3a44facc-d2a6-4346-b9b3-57731765555c', 'Quantity', 'NUMBER', 4, 'aa0e7187-9e0e-4853-b536-fdaf484a26d8', true, false),
+('6f12e069-3fa7-418a-bf09-87edfd711509', 'Receiving Status', 'TEXT', 5, 'aa0e7187-9e0e-4853-b536-fdaf484a26d8', true, true);
 
 -- Add options
 INSERT INTO option_table (option_id, option_value, option_order, option_field_id) VALUES
-('a4c9cf29-c4cc-4b6f-af3d-6a50946af85e', 'Cash Purchase - Advance Payment', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
-('c22aa5ed-7dc8-45b1-8917-2d12290f8936', 'Cash Purchase - Local Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
-('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Order to Purchase', 3, '6882287e-57c7-42ae-a672-b0d6c8979b01');
+(gen_random_uuid(), 'Dropdown 1', 1, dropdownField1),
+(gen_random_uuid(), 'Dropdown 2', 2, dropdownField1),
+(gen_random_uuid(), 'Dropdown 3', 3, dropdownField1),
+(gen_random_uuid(), 'Multiselect 1', 1, multiSelectField1),
+(gen_random_uuid(), 'Multiselect 2', 2, multiSelectField1),
+(gen_random_uuid(), 'Multiselect 3', 3, multiSelectField1),
+(gen_random_uuid(), 'Dropdown 1', 1, dropdownField2),
+(gen_random_uuid(), 'Dropdown 2', 2, dropdownField2),
+(gen_random_uuid(), 'Dropdown 3', 3, dropdownField2),
+(gen_random_uuid(), 'Dropdown 1', 1, dropdownField3),
+(gen_random_uuid(), 'Dropdown 2', 2, dropdownField3),
+(gen_random_uuid(), 'Dropdown 3', 3, dropdownField3),
+(gen_random_uuid(), 'Multiselect 1', 1, multiSelectField2),
+(gen_random_uuid(), 'Multiselect 2', 2, multiSelectField2),
+(gen_random_uuid(), 'Multiselect 3', 3, multiSelectField2),
+('a4c9cf29-c4cc-4b6f-af3d-6a50946af85e', 'Cash Purchase - Advance Payment', 1, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
+('c22aa5ed-7dc8-45b1-8917-2d12290f8936', 'Cash Purchase - Local Purchase', 2, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
+('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Order to Purchase', 3, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2');
 
 -- Add items
 INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
@@ -81,35 +236,62 @@ INSERT INTO item_description_field_table (item_description_field_id, item_descri
 ('ef251b7b-b2cb-4d98-b42a-74a0cf790ce8', 'Metal', '442cd87f-25c4-482b-ba4b-d2ab1a852725'),
 ('d86f3986-1444-446a-b4ad-ce9fdf405abc', '5 inch', '3cff6f0b-bc0e-4d29-a040-7417439f164b');
 
--- INSERT INTO project_table (project_id, project_name, project_team_id) VALUES
--- ('2c58737d-b8bc-4614-bdb3-8008d8eec645', 'Philip Morris', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
--- ('32c6c8b4-4a20-4a15-b47e-8ebe409f5fc7', 'Siguil Hydro', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
--- ('6258a2f9-ab85-47a8-beca-15c0f65ba534', 'Lake Mainit', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
--- ('ab060cc4-d320-4e94-be46-8571f85fbd49', 'Meralco HDD', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2');
-
 INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('d07f34da-75db-4fe1-a85b-8c540314769a', 'Techrom Computer Shop', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
 ('b501e500-eeb8-43c7-93ec-642ffe15d66a', 'Symmetric Intercontinental IT Solutions Inc', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
 ('39db91c4-4cd2-44ce-8482-b98862edfa40', 'Fire Solution Inc', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
 ('245db815-a8ab-4230-9d43-7ffa65ce0a47', 'Begul Builders Corporation', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2');
 
+-- Add signer
+allFieldsSigner := gen_random_uuid();
+duplicateFieldsSigner := gen_random_uuid();
 
--- Create OTP requests
+INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
+(allFieldsSigner, TRUE, 'Approved', 1, allFieldsFormId, adminMemberId1),
+(duplicateFieldsSigner, TRUE, 'Approved', 1, duplicateFieldsFormId, adminMemberId1),
+('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, otpFormId, adminMemberId1),
+('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, otpFormId, adminMemberId2),
+('5d640270-11a2-43e2-9316-de0414b837c0', TRUE, 'Approved', 1, quotationFormId, adminMemberId2),
+('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirFormId, adminMemberId1);
 
+END $$;
+
+
+-- CREATE REQUESTS SEED
 DO $$ 
 DECLARE
-  request_id UUID;
+  ownerMemberId UUID;
+  otpFormId UUID;
+  optRequestId UUID;
+  quotationFormId UUID;
+  quotationRequestId UUID;
+  quotation_request_status TEXT;
+  rirFormId UUID;
+  rirRequestId UUID;
   request_status TEXT;
   request_signer_status TEXT;
   request_date_created TIMESTAMPTZ;
   item_quantity1 TEXT;
   item_quantity2 TEXT;
   item_quantity3 TEXT;
+  duplicatatable_section_id1 UUID;
+  duplicatatable_section_id2 UUID;
+  duplicatatable_section_id3 UUID;
   counter INT := 1;
 BEGIN
+
+SELECT var_value INTO ownerMemberId
+  FROM seed_variable_table
+  WHERE var_key = 'ownerMemberId';
+
+SELECT var_value INTO otpFormId
+  FROM seed_variable_table
+  WHERE var_key = 'otpFormId';
+
   WHILE counter <= 100 LOOP
     -- Generate request_id
-    request_id := gen_random_uuid();
+    optRequestId := gen_random_uuid();
+    quotationRequestId := gen_random_uuid();
 
     -- Generate random request_status
   SELECT CASE 
@@ -132,45 +314,182 @@ BEGIN
   item_quantity1 := floor(random() * 100) + 1;
   item_quantity2 := floor(random() * 100) + 1;
   item_quantity3 := floor(random() * 100) + 1;
+
+  -- duplicatable section id
+  duplicatatable_section_id1 := gen_random_uuid();
+  duplicatatable_section_id2 := gen_random_uuid();
+  duplicatatable_section_id3 := gen_random_uuid();
  
   -- Generate random date within the current year
   request_date_created := date_trunc('year', current_date) + random() * (date_trunc('year', current_date + INTERVAL '1 year') - date_trunc('year', current_date));
 
-    -- Create request
+    -- Create OTP request
     INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
-      (request_id, '6bc6029f-03ea-4053-8f4b-52d91be69359', '281b7de3-e204-43c2-bc89-9cb7bfcb341e', request_status, request_date_created);
+      (optRequestId, ownerMemberId, otpFormId, request_status, request_date_created);
 
     -- Request signer table
     INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
-      (gen_random_uuid(), request_signer_status, request_id, 'ab5287ae-50df-4e27-a2f8-84c6ce472abc'),
-      (gen_random_uuid(), request_signer_status, request_id, '18dcb6e5-a572-4fe9-9ad9-c86279723098');
+      (gen_random_uuid(), request_signer_status, optRequestId, 'ab5287ae-50df-4e27-a2f8-84c6ce472abc'),
+      (gen_random_uuid(), request_signer_status, optRequestId, '18dcb6e5-a572-4fe9-9ad9-c86279723098');
 
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
       -- Main Section
-      (gen_random_uuid(), '"LAKE MAINIT"', NULL, 'a4733172-53af-47b1-b460-6869105f6405', request_id),
-      (gen_random_uuid(), '"Cash Purchase - Local Purchase"', NULL, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2', request_id),
-      (gen_random_uuid(), '"' || request_date_created || '"', NULL, '3b09156e-40c8-47f5-a5a8-4073ddb474de', request_id),
-      (gen_random_uuid(), '"33552"', NULL, '055b465c-52c9-4353-811c-fd002bb639d6', request_id),
+      -- Project Name
+      (gen_random_uuid(), '"LAKE MAINIT"', NULL, 'a4733172-53af-47b1-b460-6869105f6405', optRequestId),
+      -- Type
+      (gen_random_uuid(), '"Cash Purchase - Local Purchase"', NULL, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2', optRequestId),
+      -- Date Needed
+      (gen_random_uuid(), '"' || request_date_created || '"', NULL, '3b09156e-40c8-47f5-a5a8-4073ddb474de', optRequestId),
 
       -- Item Section
-      (gen_random_uuid(), '"Gasoline"', NULL, '179be4af-5ef2-47f6-8d0f-51726736c801', request_id),
-      (gen_random_uuid(), '"litre"', NULL, '390cae92-815a-4851-8497-7c81cf62bc3e', request_id),
-      (gen_random_uuid(), item_quantity1, NULL, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
-      (gen_random_uuid(), '"Diesel"', NULL, '25e93bd3-30f0-4920-a0e8-6bde5a44898c', request_id),
-      (gen_random_uuid(), '"Shell"', NULL, 'db862c96-01ec-499c-b9f1-faf7b674074d', request_id),
 
-      (gen_random_uuid(), '"Wood"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '179be4af-5ef2-47f6-8d0f-51726736c801', request_id),
-      (gen_random_uuid(), '"piece"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '390cae92-815a-4851-8497-7c81cf62bc3e', request_id),
-      (gen_random_uuid(), item_quantity2, '503c2843-3f16-4a53-9934-c0607b3cc0c7', 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
-      (gen_random_uuid(), '"1 inch"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', 'bef47113-a186-4755-9764-263b5c246a41', request_id),
-      (gen_random_uuid(), '"1 inch"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '6e539c9f-8ab2-46f1-a8a6-89cc928c3612', request_id),
-      (gen_random_uuid(), '"1 inch"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '0af6a571-3bef-4f8c-8716-2bca5a5250fc', request_id),
+      -- General Name
+      (gen_random_uuid(), '"Gasoline"', NULL, '179be4af-5ef2-47f6-8d0f-51726736c801', optRequestId),
+      -- Unit of Measurement
+      (gen_random_uuid(), '"litre"', NULL, '390cae92-815a-4851-8497-7c81cf62bc3e', optRequestId),
+      -- Quantity
+      (gen_random_uuid(), item_quantity1, NULL, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', optRequestId),
+      -- Cost Code
+      (gen_random_uuid(), '"33552"', NULL, '055b465c-52c9-4353-811c-fd002bb639d6', optRequestId),
+      -- GL Account
+      (gen_random_uuid(), '"0x22141"', NULL, '2e0d9f52-e844-44c9-bb59-5dc2b887827c', optRequestId),
+      -- Type
+      (gen_random_uuid(), '"Diesel"', NULL, '25e93bd3-30f0-4920-a0e8-6bde5a44898c', optRequestId),
+      -- Brand
+      (gen_random_uuid(), '"Shell"', NULL, 'db862c96-01ec-499c-b9f1-faf7b674074d', optRequestId),
 
-      (gen_random_uuid(), '"Nail"', 'f5682cce-9144-4f07-83ab-dd0db99af711', '179be4af-5ef2-47f6-8d0f-51726736c801', request_id),
-      (gen_random_uuid(), '"bag"', 'f5682cce-9144-4f07-83ab-dd0db99af711', '390cae92-815a-4851-8497-7c81cf62bc3e', request_id),
-      (gen_random_uuid(), item_quantity3, 'f5682cce-9144-4f07-83ab-dd0db99af711', 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
-      (gen_random_uuid(), '"Metal"', 'f5682cce-9144-4f07-83ab-dd0db99af711', '03003ee0-811a-44e9-b420-aaac9f80d1de', request_id),
-      (gen_random_uuid(), '"5 inch"', 'f5682cce-9144-4f07-83ab-dd0db99af711', 'a6745b58-c88d-41dc-82f4-887c0062c03d', request_id);
+      -- General Name
+      (gen_random_uuid(), '"Wood"', duplicatatable_section_id1, '179be4af-5ef2-47f6-8d0f-51726736c801', optRequestId),
+      -- Unit of Measurement
+      (gen_random_uuid(), '"piece"', duplicatatable_section_id1, '390cae92-815a-4851-8497-7c81cf62bc3e', optRequestId),
+      -- Quantity
+      (gen_random_uuid(), item_quantity2, duplicatatable_section_id1, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', optRequestId),
+      -- Cost Code
+      (gen_random_uuid(), '"664522"', duplicatatable_section_id1, '055b465c-52c9-4353-811c-fd002bb639d6', optRequestId),
+      -- GL Account
+      (gen_random_uuid(), '"0x22141"', duplicatatable_section_id1, '2e0d9f52-e844-44c9-bb59-5dc2b887827c', optRequestId),
+      -- Length
+      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, 'bef47113-a186-4755-9764-263b5c246a41', optRequestId),
+      -- Width
+      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, '6e539c9f-8ab2-46f1-a8a6-89cc928c3612', optRequestId),
+      -- Height
+      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, '0af6a571-3bef-4f8c-8716-2bca5a5250fc', optRequestId),
+
+      -- General Name
+      (gen_random_uuid(), '"Nail"', duplicatatable_section_id2, '179be4af-5ef2-47f6-8d0f-51726736c801', optRequestId),
+      -- Unit of Measurement
+      (gen_random_uuid(), '"bag"', duplicatatable_section_id2, '390cae92-815a-4851-8497-7c81cf62bc3e', optRequestId),
+      -- Quantity
+      (gen_random_uuid(), item_quantity3, duplicatatable_section_id2, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', optRequestId),
+      -- Cost Code
+      (gen_random_uuid(), '"064520"', duplicatatable_section_id2, '055b465c-52c9-4353-811c-fd002bb639d6', optRequestId),
+      -- GL Account
+      (gen_random_uuid(), '"0x221422"', duplicatatable_section_id2, '2e0d9f52-e844-44c9-bb59-5dc2b887827c', optRequestId),
+      -- Material
+      (gen_random_uuid(), '"Metal"', duplicatatable_section_id2, '03003ee0-811a-44e9-b420-aaac9f80d1de', optRequestId),
+      -- Size
+      (gen_random_uuid(), '"5 inch"', duplicatatable_section_id2, 'a6745b58-c88d-41dc-82f4-887c0062c03d', optRequestId);
+
+
+    -- Create Quotation Form
+    
+    -- Assign quotation_request_status based on odds
+    SELECT CASE 
+      WHEN random() < 0.5 THEN 'APPROVED'
+      WHEN random() < 0.25 THEN 'REJECTED'
+      ELSE 'PENDING'
+    END INTO quotation_request_status;
+
+
+    -- Create Quotation Request if OTP Request is APPROVED
+    IF request_status = 'APPROVED'
+    THEN
+
+    SELECT var_value INTO quotationFormId
+    FROM seed_variable_table
+    WHERE var_key = 'quotationFormId';
+
+    INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
+    (quotationRequestId, ownerMemberId, quotationFormId, quotation_request_status, request_date_created);
+
+    -- Request signer table
+    INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
+    (gen_random_uuid(), quotation_request_status, quotationRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
+
+    INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
+    -- OTP ID
+    (gen_random_uuid(), '"' || optRequestId || '"', NULL, '62f96be5-9e50-45a0-82d7-2b0d731eda91', quotationRequestId),
+    -- Supplier
+    (gen_random_uuid(), '"Begul Builders Corporation"', NULL, '4aee0513-c746-409c-83e3-1ac169afacfe', quotationRequestId),
+    -- Supplier Quotation
+    (gen_random_uuid(), '"test.pdf"', NULL, '97bfef27-660e-4533-add8-fc80cea23e40', quotationRequestId),
+
+    -- Item
+    (gen_random_uuid(), '"Gasoline (' || item_quantity1 || ' litre) (Type: Diesel, Brand: Shell)"', NULL, 'bfdf6962-38d0-47ba-9c77-d840a87047e5', quotationRequestId),
+    -- Price
+    (gen_random_uuid(), '50' , NULL, 'a1c72d8e-5321-4e16-9307-41df5242fc6a', quotationRequestId),
+    -- Quantity
+    (gen_random_uuid(), item_quantity1, NULL, '536d7cc3-a458-467b-a716-ff7c39d83d9a', quotationRequestId),
+
+    -- Item
+    (gen_random_uuid(), '"Wood (' || item_quantity2 || ' piece) (Length: 1 inch, Width: 1 inch, Height: 1 inch)"' , 'b613091d-bab2-457e-a1f7-119b4ee6e7d7', 'bfdf6962-38d0-47ba-9c77-d840a87047e5', quotationRequestId),
+    -- Price
+    (gen_random_uuid(), '20' , 'b613091d-bab2-457e-a1f7-119b4ee6e7d7', 'a1c72d8e-5321-4e16-9307-41df5242fc6a', quotationRequestId),
+    -- Quantity
+    (gen_random_uuid(), item_quantity2, 'b613091d-bab2-457e-a1f7-119b4ee6e7d7', '536d7cc3-a458-467b-a716-ff7c39d83d9a', quotationRequestId),
+
+    -- Item
+    (gen_random_uuid(), '"Nail (' || item_quantity3 || ' bag) (Material: Metal, Size: 5 inch)"' , 'a5008080-75e0-4960-9bfd-83d9a47da6a9', 'bfdf6962-38d0-47ba-9c77-d840a87047e5', quotationRequestId),
+    -- Price
+    (gen_random_uuid(), '40' , 'a5008080-75e0-4960-9bfd-83d9a47da6a9', 'a1c72d8e-5321-4e16-9307-41df5242fc6a', quotationRequestId),
+    -- Quantity
+    (gen_random_uuid(), item_quantity3, 'a5008080-75e0-4960-9bfd-83d9a47da6a9', '536d7cc3-a458-467b-a716-ff7c39d83d9a', quotationRequestId);
+
+    END IF;
+
+    -- Create RIR Request if Quotation Request is APPROVED
+    IF quotation_request_status = 'APPROVED' AND request_status = 'APPROVED'
+    THEN
+
+    SELECT var_value INTO rirFormId
+    FROM seed_variable_table
+    WHERE var_key = 'rirFormId';
+
+    rirRequestId := gen_random_uuid();
+
+    INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
+    (rirRequestId, ownerMemberId, rirFormId, 'APPROVED', request_date_created);
+
+    INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
+    (gen_random_uuid(), 'APPROVED', rirRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
+    
+    INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
+    -- OTP ID
+    (gen_random_uuid(), '"' || optRequestId || '"', NULL, 'fd24e66d-d7f4-4f7e-859a-8ee0fcd0ff7c', rirRequestId),
+    -- Quotation ID
+    (gen_random_uuid(), '"' || quotationRequestId || '"', NULL, 'd4bed2d2-1391-45af-96d9-38e0a92c23cf', rirRequestId),
+    -- Item
+    (gen_random_uuid(), '"Gasoline (' || item_quantity1 || ' litre / ' || item_quantity1 || ' litre) (Type: Diesel, Brand: Shell)"', '1ac9e2bc-966a-4da7-81be-56e44ae3ac52', '1a7f1785-0c4b-419a-b2a1-b4a937077d64', rirRequestId),
+    -- Quantity
+    (gen_random_uuid(), item_quantity1, '1ac9e2bc-966a-4da7-81be-56e44ae3ac52', '3a44facc-d2a6-4346-b9b3-57731765555c', rirRequestId),
+    -- Receiving Status
+    (gen_random_uuid(), '"Fully Received"', '1ac9e2bc-966a-4da7-81be-56e44ae3ac52', '6f12e069-3fa7-418a-bf09-87edfd711509', rirRequestId),
+
+    -- Item
+    (gen_random_uuid(), '"Wood (' || item_quantity2 || ' piece / ' || item_quantity2 || ' piece) (Length: 1 inch, Width: 1 inch, Height: 1 inch)"', 'c0b67fe1-c07b-4766-9b49-b95ec20e7026', '1a7f1785-0c4b-419a-b2a1-b4a937077d64', rirRequestId),
+    -- Quantity
+    (gen_random_uuid(), item_quantity2, 'c0b67fe1-c07b-4766-9b49-b95ec20e7026', '3a44facc-d2a6-4346-b9b3-57731765555c', rirRequestId),
+    -- Receiving Status
+    (gen_random_uuid(), '"Fully Received"', 'c0b67fe1-c07b-4766-9b49-b95ec20e7026', '6f12e069-3fa7-418a-bf09-87edfd711509', rirRequestId),
+
+    -- Item
+    (gen_random_uuid(), '"Nail (' || item_quantity3 || ' bag / ' || item_quantity3 || ' bag) (Material: Metal, Size: 5 inch)"', '712a97ec-c7da-4c04-9191-69147fbe9a50', '1a7f1785-0c4b-419a-b2a1-b4a937077d64', rirRequestId),
+    -- Quantity
+    (gen_random_uuid(), floor(random() * CAST(item_quantity3 as INTEGER)), '712a97ec-c7da-4c04-9191-69147fbe9a50', '3a44facc-d2a6-4346-b9b3-57731765555c', rirRequestId),
+    -- Receiving Status
+    (gen_random_uuid(), '"Partially Received"', '712a97ec-c7da-4c04-9191-69147fbe9a50', '6f12e069-3fa7-418a-bf09-87edfd711509', rirRequestId);
+
+    END IF;
 
     counter := counter + 1;
   END LOOP;

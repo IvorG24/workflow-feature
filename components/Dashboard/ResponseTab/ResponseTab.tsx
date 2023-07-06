@@ -23,9 +23,10 @@ const ResponseTab = ({
   isOTPForm,
   requestList,
 }: ResponseTabProps) => {
-  const approvedRequestList = requestList.filter(
-    (request) => request.request_status === "APPROVED"
-  );
+  const approvedRequestList =
+    selectedFormName !== "Receiving Inspecting Report"
+      ? requestList.filter((request) => request.request_status === "APPROVED")
+      : requestList;
 
   const sectionList = approvedRequestList.flatMap(
     (request) => request.request_form.form_section

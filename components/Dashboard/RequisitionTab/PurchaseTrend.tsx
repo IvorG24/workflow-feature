@@ -52,13 +52,15 @@ const getReducedPurchaseDataArray = (data: PurchaseTrendChartDataType[]) => {
       "MMM"
     );
     const itemName = item.request_response_item_general_name;
-    const itemQuantity = JSON.parse(item.request_response);
-    const existingItem = acc.find(
+    const itemQuantity = Number(item.request_response);
+
+    const existingItemIndex = acc.findIndex(
       (el) => el.item === itemName && el.label === monthLabel
     );
 
-    if (existingItem) {
-      existingItem.value + itemQuantity;
+    if (existingItemIndex >= 0) {
+      const newQuantity = acc[existingItemIndex].value + itemQuantity;
+      acc[existingItemIndex].value = newQuantity;
     } else {
       acc.push({
         label: monthLabel,
@@ -117,6 +119,7 @@ const PurchaseTrend = ({ itemPurchaseTrendData }: PurchaseTrendProps) => {
         <Text weight={600}>Purchase Trend of</Text>
         <Select
           size="xs"
+          w={500}
           value={selectedItem}
           onChange={(value: string) => setSelectedItem(value)}
           data={itemList as SelectItem[]}

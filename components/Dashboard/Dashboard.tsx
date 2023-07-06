@@ -89,7 +89,7 @@ const Dashboard = () => {
   };
 
   return (
-    <Container p={0} maw={1024} h="100%">
+    <Container p={0} maw={1024} h="100%" pos="relative">
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
 
       <Stack>

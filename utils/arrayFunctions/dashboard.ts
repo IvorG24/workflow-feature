@@ -56,6 +56,9 @@ export const generateFormslyResponseData = (
     case "Quotation":
       return generateQuotationFormData(sectionList);
 
+    case "Receiving Inspecting Report":
+      return generateQuotationFormData(sectionList);
+
     default:
       break;
   }
@@ -83,12 +86,22 @@ export const generateQuotationFormData = (
     section.section_field.filter((field) => field.field_name === "Item")
   );
 
+  // trim response to get item description
   const uniqueItemNameList = itemNameList.reduce((list, item) => {
     const parseResponse = JSON.parse(
       `${item.field_response?.request_response}`
     );
-    if (!list.includes(parseResponse)) {
-      list.push(parseResponse);
+
+    const trimStart = parseResponse.indexOf("(");
+    const trimEnd = parseResponse.indexOf(") ");
+    const excludedWord = parseResponse.substring(trimStart, trimEnd + 1);
+    const itemName = parseResponse
+      .replace(excludedWord, "")
+      // remove extra white space
+      .replace(/  +/g, " ");
+
+    if (!list.includes(itemName)) {
+      list.push(itemName);
     }
 
     return list;
@@ -96,15 +109,22 @@ export const generateQuotationFormData = (
 
   const groupSectionByItemName = uniqueItemNameList.map((itemName) => {
     const sectionMatch = sectionWithResponseList.filter((section) => {
-      const itemNameField = section.section_field.filter(
+      const itemField = section.section_field.filter(
         (field) => field.field_name === "Item"
       )[0];
 
-      if (itemNameField) {
+      if (itemField) {
         const parseItemName = JSON.parse(
-          `${itemNameField.field_response?.request_response}`
+          `${itemField.field_response?.request_response}`
         );
-        return parseItemName === itemName;
+        const trimStart = parseItemName.indexOf("(");
+        const trimEnd = parseItemName.indexOf(") ");
+        const excludedWord = parseItemName.substring(trimStart, trimEnd + 1);
+        const itemFieldName = parseItemName
+          .replace(excludedWord, "")
+          .replace(/  +/g, " ");
+
+        return itemFieldName === itemName;
       } else {
         return false;
       }
@@ -362,12 +382,13 @@ export const getChartData = (
       return total + quantityValue;
     }, 0);
 
-    const newItemData = {
-      label: item.sectionLabel,
-      value: totalQuantity,
-    };
-
-    acc.push(newItemData);
+    if (totalQuantity > 0) {
+      const newItemData = {
+        label: item.sectionLabel,
+        value: totalQuantity,
+      };
+      acc.push(newItemData);
+    }
 
     return acc;
   }, [] as LineChartDataType[]);

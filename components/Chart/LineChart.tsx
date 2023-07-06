@@ -28,6 +28,9 @@ type LineChartProps = {
 };
 
 const LineChart: React.FC<LineChartProps> = ({ data, legendLabel }) => {
+  const max = Math.max(...data.map((item) => item.value));
+  const roundedMax = Math.ceil(max / 10) * 10;
+
   const chartData = {
     labels: data.map((item) => item.label),
     datasets: [
@@ -54,7 +57,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, legendLabel }) => {
           },
         },
         beginAtZero: true,
-        max: Math.max(...data.map((item) => item.value)) + 10,
+        max: roundedMax,
       },
     },
     plugins: {

@@ -28,6 +28,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
+      if (!request.request_form.form_is_formsly_form) {
+        return {
+          props: {
+            request,
+          },
+        };
+      }
+
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
