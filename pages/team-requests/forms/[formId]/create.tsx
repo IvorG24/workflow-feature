@@ -40,6 +40,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       if (!teamMember) throw new Error("No team member found");
 
       if (
+        !form.form_is_for_every_member &&
         !checkIfTwoArrayHaveAtLeastOneEqualElement(
           teamMember.team_member_group_list,
           form.form_group
