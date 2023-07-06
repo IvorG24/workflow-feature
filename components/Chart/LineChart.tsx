@@ -54,17 +54,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, legendLabel }) => {
           },
         },
         beginAtZero: true,
-        max: Math.max(...data.map((item) => item.value)) + 5,
-      },
-      x: {
-        title: {
-          display: true,
-          text: "Label",
-          color: "black",
-          font: {
-            weight: "bold",
-          },
-        },
+        max: Math.max(...data.map((item) => item.value)) + 10,
       },
     },
     plugins: {

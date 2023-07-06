@@ -273,7 +273,6 @@ const OTPSearch = () => {
 
         <Group mt="xl" position="center">
           <Button
-            px={0}
             variant="subtle"
             leftIcon={<IconPlus size={14} />}
             onClick={() => addItem(defaultFormValues)}

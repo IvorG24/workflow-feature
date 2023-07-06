@@ -23,6 +23,11 @@ import Overview from "./OverviewTab/Overview";
 import ResponseTab from "./ResponseTab/ResponseTab";
 
 const TABS = ["overview", "responses"];
+const SPECIAL_FORMS = [
+  "Order to Purchase",
+  "Receiving Inspecting Report",
+  "Quotation",
+];
 
 const Dashboard = () => {
   const formList = useFormList();
@@ -51,10 +56,10 @@ const Dashboard = () => {
     formList.find((form) => form.form_id === selectedForm)
       ?.form_is_formsly_form || false;
   const selectedFormName =
-    formList.find((form) => form.form_id === selectedForm)?.form_name || false;
+    formList.find((form) => form.form_id === selectedForm)?.form_name || "";
 
   useEffect(() => {
-    setIsOTPForm(isFormslyForm && selectedFormName === "Order to Purchase");
+    setIsOTPForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
   }, [isFormslyForm, selectedFormName]);
 
   const renderTabs = (tab: string) => {
@@ -72,6 +77,7 @@ const Dashboard = () => {
           <ResponseTab
             isOTPForm={isOTPForm}
             selectedForm={selectedForm}
+            selectedFormName={selectedFormName}
             requestList={requestListData}
           />
         ) : (
@@ -97,7 +103,7 @@ const Dashboard = () => {
 
           <Group>
             <Select
-              maw={200}
+              w={300}
               placeholder="All forms"
               data={formList.map((form) => ({
                 value: form.form_id,
@@ -106,6 +112,7 @@ const Dashboard = () => {
               value={selectedForm}
               onChange={setSelectedForm}
               clearable
+              searchable
             />
           </Group>
         </Flex>

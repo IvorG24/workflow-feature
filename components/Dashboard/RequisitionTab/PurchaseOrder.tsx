@@ -2,17 +2,8 @@ import BarChart from "@/components/Chart/BarChart";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { getChartData } from "@/utils/arrayFunctions/dashboard";
 import { RequestResponseDataType } from "@/utils/types";
-import {
-  ActionIcon,
-  Box,
-  Center,
-  Group,
-  Paper,
-  Text,
-  TextInput,
-} from "@mantine/core";
-import { IconSearch } from "@tabler/icons-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Box, Center, Paper, Text } from "@mantine/core";
+import { Dispatch, SetStateAction } from "react";
 
 type Props = {
   selectedPurchaseData: string;
@@ -27,7 +18,6 @@ const PurchaseOrder = ({
   purchaseOrderData,
 }: Props) => {
   const authUserMember = useUserTeamMember();
-  const [searchItemKey, setSearchItemKey] = useState("");
 
   const chartData = getChartData(purchaseOrderData, {
     selectedPurchaseData,
@@ -41,19 +31,7 @@ const PurchaseOrder = ({
 
   return (
     <Paper maw={1024} p="md" h="fit-content">
-      <Group mb="lg" position="apart">
-        <Text weight={600}>Total Order Per Item</Text>
-        <TextInput
-          placeholder="Search item"
-          value={searchItemKey}
-          onChange={(e) => setSearchItemKey(e.currentTarget.value)}
-          rightSection={
-            <ActionIcon size="xs" type="submit">
-              <IconSearch />
-            </ActionIcon>
-          }
-        />
-      </Group>
+      <Text weight={600}>Total Order Per Item</Text>
       <Box maw={1024} mih={334}>
         {!isChartDataEmpty ? (
           <BarChart

@@ -46,6 +46,114 @@ export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
 };
 
 export const generateFormslyResponseData = (
+  sectionList: RequestByFormType["request_form"]["form_section"],
+  formName: string
+) => {
+  switch (formName) {
+    case "Order to Purchase":
+      return generateOTPFormData(sectionList);
+
+    case "Quotation":
+      return generateQuotationFormData(sectionList);
+
+    default:
+      break;
+  }
+};
+
+export const generateQuotationFormData = (
+  sectionList: RequestByFormType["request_form"]["form_section"]
+) => {
+  const itemSections = sectionList.filter(
+    (section) => section.section_name === "Item"
+  );
+  const duplicateSectionList = generateSectionWithDuplicateList(itemSections);
+  const sectionWithResponseList = duplicateSectionList.map((section) => {
+    const sectionFields = section.section_field.filter(
+      (field) => field.field_response !== null
+    );
+
+    return {
+      ...section,
+      section_field: sectionFields,
+    };
+  });
+
+  const itemNameList = sectionWithResponseList.flatMap((section) =>
+    section.section_field.filter((field) => field.field_name === "Item")
+  );
+
+  const uniqueItemNameList = itemNameList.reduce((list, item) => {
+    const parseResponse = JSON.parse(
+      `${item.field_response?.request_response}`
+    );
+    if (!list.includes(parseResponse)) {
+      list.push(parseResponse);
+    }
+
+    return list;
+  }, [] as string[]);
+
+  const groupSectionByItemName = uniqueItemNameList.map((itemName) => {
+    const sectionMatch = sectionWithResponseList.filter((section) => {
+      const itemNameField = section.section_field.filter(
+        (field) => field.field_name === "Item"
+      )[0];
+
+      if (itemNameField) {
+        const parseItemName = JSON.parse(
+          `${itemNameField.field_response?.request_response}`
+        );
+        return parseItemName === itemName;
+      } else {
+        return false;
+      }
+    });
+
+    const sectionFieldResponse: FieldWithResponseType = [];
+    sectionMatch.forEach((section) =>
+      section.section_field.forEach((field) => {
+        if (field.field_response) {
+          const newFieldWithResponse = {
+            ...field,
+            field_option: field.field_option ? field.field_option : [],
+            field_response: field.field_response ? [field.field_response] : [],
+          };
+          sectionFieldResponse.push(newFieldWithResponse);
+        }
+      })
+    );
+
+    const uniqueSectionField = sectionFieldResponse.reduce((acc, field) => {
+      const duplicateFieldIndex = acc.findIndex(
+        (f) => f.field_id === field.field_id
+      );
+
+      if (duplicateFieldIndex >= 0) {
+        const updatedResponseList = [
+          ...acc[duplicateFieldIndex].field_response,
+          ...field.field_response,
+        ];
+        acc[duplicateFieldIndex].field_response = updatedResponseList;
+      } else {
+        acc.push(field);
+      }
+
+      return acc;
+    }, [] as FieldWithResponseType);
+
+    const itemSection = {
+      sectionLabel: itemName,
+      responseData: uniqueSectionField,
+    };
+
+    return itemSection;
+  });
+
+  return groupSectionByItemName;
+};
+
+export const generateOTPFormData = (
   sectionList: RequestByFormType["request_form"]["form_section"]
 ) => {
   const duplicateSectionList = generateSectionWithDuplicateList(sectionList);
@@ -64,6 +172,7 @@ export const generateFormslyResponseData = (
   const generalNameList = sectionWithResponseList.flatMap((section) =>
     section.section_field.filter((field) => field.field_name === "General Name")
   );
+
   const uniqueGeneralNameList = generalNameList.reduce((list, name) => {
     const parseResponse = JSON.parse(
       `${name.field_response?.request_response}`
@@ -326,15 +435,23 @@ export const getStackedBarChartData = (
 };
 
 export const getItemPurchaseTrendData = (data: RequestResponseDataType[]) => {
-  const itemPurchaseTrendData: PurchaseTrendChartDataType[] = [];
-  const fieldList = data.flatMap((d) => d.responseData);
-  const generalNameFieldList = fieldList.filter(
-    (f) => f.field_name === "General Name"
-  );
-  generalNameFieldList.forEach((field) => {
-    if (field.field_response.length > 0) {
-      itemPurchaseTrendData.push(...field.field_response);
-    }
+  const itemPurchaseTrendData = data.flatMap((d) => {
+    const quantityFieldList = d.responseData.filter(
+      (field) =>
+        field.field_name === "Quantity" && field.field_response.length > 0
+    );
+
+    const newItemPurchaseTrend = quantityFieldList.flatMap((field) => {
+      const fieldResponseWithItemName = field.field_response.map(
+        (response) => ({
+          ...response,
+          request_response_item_general_name: d.sectionLabel,
+        })
+      );
+      return fieldResponseWithItemName;
+    });
+
+    return newItemPurchaseTrend;
   });
 
   return itemPurchaseTrendData;

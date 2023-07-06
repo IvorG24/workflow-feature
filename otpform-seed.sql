@@ -50,10 +50,10 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Order to Purchase', 3, '6882287e-57c7-42ae-a672-b0d6c8979b01');
 
 -- Add items
-INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id) VALUES 
-('5dc0a81e-fe9d-4da0-bafc-f498d575ef39', 'Wood', 'piece', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
-('245aa3d4-0d76-4124-9398-ab177b55c553', 'Gasoline', 'litre', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
-('5b4652ae-4460-4fc3-9a8a-923b30132d03', 'Nail', 'bag', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2');
+INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
+('5dc0a81e-fe9d-4da0-bafc-f498d575ef39', 'Wood', 'piece', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '22773', 'rX7VU'),
+('245aa3d4-0d76-4124-9398-ab177b55c553', 'Gasoline', 'litre', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '87943', 'dpRHk'),
+('5b4652ae-4460-4fc3-9a8a-923b30132d03', 'Nail', 'bag', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '48749', 'QAMFi');
 
 INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
 ('994a07a2-e968-4ce8-8246-45aac0bfdde4', 'Length', '5dc0a81e-fe9d-4da0-bafc-f498d575ef39', 'bef47113-a186-4755-9764-263b5c246a41'),
@@ -81,11 +81,11 @@ INSERT INTO item_description_field_table (item_description_field_id, item_descri
 ('ef251b7b-b2cb-4d98-b42a-74a0cf790ce8', 'Metal', '442cd87f-25c4-482b-ba4b-d2ab1a852725'),
 ('d86f3986-1444-446a-b4ad-ce9fdf405abc', '5 inch', '3cff6f0b-bc0e-4d29-a040-7417439f164b');
 
-INSERT INTO project_table (project_id, project_name, project_team_id) VALUES
-('2c58737d-b8bc-4614-bdb3-8008d8eec645', 'Philip Morris', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
-('32c6c8b4-4a20-4a15-b47e-8ebe409f5fc7', 'Siguil Hydro', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
-('6258a2f9-ab85-47a8-beca-15c0f65ba534', 'Lake Mainit', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
-('ab060cc4-d320-4e94-be46-8571f85fbd49', 'Meralco HDD', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2');
+-- INSERT INTO project_table (project_id, project_name, project_team_id) VALUES
+-- ('2c58737d-b8bc-4614-bdb3-8008d8eec645', 'Philip Morris', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
+-- ('32c6c8b4-4a20-4a15-b47e-8ebe409f5fc7', 'Siguil Hydro', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
+-- ('6258a2f9-ab85-47a8-beca-15c0f65ba534', 'Lake Mainit', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
+-- ('ab060cc4-d320-4e94-be46-8571f85fbd49', 'Meralco HDD', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2');
 
 INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('d07f34da-75db-4fe1-a85b-8c540314769a', 'Techrom Computer Shop', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
@@ -102,6 +102,9 @@ DECLARE
   request_status TEXT;
   request_signer_status TEXT;
   request_date_created TIMESTAMPTZ;
+  item_quantity1 TEXT;
+  item_quantity2 TEXT;
+  item_quantity3 TEXT;
   counter INT := 1;
 BEGIN
   WHILE counter <= 100 LOOP
@@ -125,7 +128,12 @@ BEGIN
     request_signer_status := 'PENDING';
   END IF;
 
-   -- Generate random date within the current year
+  -- Generate a random quantity
+  item_quantity1 := floor(random() * 100) + 1;
+  item_quantity2 := floor(random() * 100) + 1;
+  item_quantity3 := floor(random() * 100) + 1;
+ 
+  -- Generate random date within the current year
   request_date_created := date_trunc('year', current_date) + random() * (date_trunc('year', current_date + INTERVAL '1 year') - date_trunc('year', current_date));
 
     -- Create request
@@ -147,26 +155,23 @@ BEGIN
       -- Item Section
       (gen_random_uuid(), '"Gasoline"', NULL, '179be4af-5ef2-47f6-8d0f-51726736c801', request_id),
       (gen_random_uuid(), '"litre"', NULL, '390cae92-815a-4851-8497-7c81cf62bc3e', request_id),
-      (gen_random_uuid(), '20', NULL, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
+      (gen_random_uuid(), item_quantity1, NULL, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
       (gen_random_uuid(), '"Diesel"', NULL, '25e93bd3-30f0-4920-a0e8-6bde5a44898c', request_id),
       (gen_random_uuid(), '"Shell"', NULL, 'db862c96-01ec-499c-b9f1-faf7b674074d', request_id),
 
       (gen_random_uuid(), '"Wood"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '179be4af-5ef2-47f6-8d0f-51726736c801', request_id),
       (gen_random_uuid(), '"piece"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '390cae92-815a-4851-8497-7c81cf62bc3e', request_id),
-      (gen_random_uuid(), '100', '503c2843-3f16-4a53-9934-c0607b3cc0c7', 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
+      (gen_random_uuid(), item_quantity2, '503c2843-3f16-4a53-9934-c0607b3cc0c7', 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
       (gen_random_uuid(), '"1 inch"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', 'bef47113-a186-4755-9764-263b5c246a41', request_id),
       (gen_random_uuid(), '"1 inch"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '6e539c9f-8ab2-46f1-a8a6-89cc928c3612', request_id),
       (gen_random_uuid(), '"1 inch"', '503c2843-3f16-4a53-9934-c0607b3cc0c7', '0af6a571-3bef-4f8c-8716-2bca5a5250fc', request_id),
 
       (gen_random_uuid(), '"Nail"', 'f5682cce-9144-4f07-83ab-dd0db99af711', '179be4af-5ef2-47f6-8d0f-51726736c801', request_id),
       (gen_random_uuid(), '"bag"', 'f5682cce-9144-4f07-83ab-dd0db99af711', '390cae92-815a-4851-8497-7c81cf62bc3e', request_id),
-      (gen_random_uuid(), '40', 'f5682cce-9144-4f07-83ab-dd0db99af711', 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
+      (gen_random_uuid(), item_quantity3, 'f5682cce-9144-4f07-83ab-dd0db99af711', 'ad82b849-42e2-4eee-9f0d-2effb2a24395', request_id),
       (gen_random_uuid(), '"Metal"', 'f5682cce-9144-4f07-83ab-dd0db99af711', '03003ee0-811a-44e9-b420-aaac9f80d1de', request_id),
       (gen_random_uuid(), '"5 inch"', 'f5682cce-9144-4f07-83ab-dd0db99af711', 'a6745b58-c88d-41dc-82f4-887c0062c03d', request_id);
 
     counter := counter + 1;
   END LOOP;
 END $$;
-
-
-

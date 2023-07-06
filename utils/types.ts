@@ -545,6 +545,7 @@ export type PurchaseTrendChartDataType = {
   request_response_date_purchased?: string | undefined;
   request_response_team_member_id?: string | null;
   request_response_request_status?: string | null;
+  request_response_item_general_name?: string;
 };
 
 export type RequestResponseDataType = {

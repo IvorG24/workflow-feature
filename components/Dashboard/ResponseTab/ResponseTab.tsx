@@ -12,12 +12,14 @@ import SearchKeywordResponse from "./SearchKeywordResponse";
 
 type ResponseTabProps = {
   selectedForm: string | null;
+  selectedFormName: string | null;
   isOTPForm: boolean;
   requestList: RequestByFormType[];
 };
 
 const ResponseTab = ({
   selectedForm,
+  selectedFormName,
   isOTPForm,
   requestList,
 }: ResponseTabProps) => {
@@ -30,7 +32,7 @@ const ResponseTab = ({
   );
 
   const fieldResponseData = isOTPForm
-    ? generateFormslyResponseData(sectionList)
+    ? generateFormslyResponseData(sectionList, `${selectedFormName}`)
     : getRequestFormData(sectionList);
 
   return (

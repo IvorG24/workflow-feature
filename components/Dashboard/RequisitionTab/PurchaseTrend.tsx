@@ -51,18 +51,19 @@ const getReducedPurchaseDataArray = (data: PurchaseTrendChartDataType[]) => {
     const monthLabel = moment(item.request_response_date_purchased).format(
       "MMM"
     );
-    const parseResponse = JSON.parse(item.request_response);
+    const itemName = item.request_response_item_general_name;
+    const itemQuantity = JSON.parse(item.request_response);
     const existingItem = acc.find(
-      (el) => el.item === parseResponse && el.label === monthLabel
+      (el) => el.item === itemName && el.label === monthLabel
     );
 
     if (existingItem) {
-      existingItem.value++;
+      existingItem.value + itemQuantity;
     } else {
       acc.push({
         label: monthLabel,
-        value: 1,
-        item: parseResponse,
+        value: itemQuantity,
+        item: itemName,
       });
     }
 
