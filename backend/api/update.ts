@@ -164,18 +164,15 @@ export const cancelRequest = async (
 ) => {
   const { requestId, memberId } = params;
   const { error } = await supabaseClient
-    .from("request_table")
-    .update({ request_status: "CANCELED" })
-    .eq("request_id", requestId);
+    .rpc("cancel_request", {
+      request_id: requestId,
+      member_id: memberId,
+      comment_type: "REQUEST_CANCELED",
+      comment_content: "Request canceled",
+    })
+    .select("*")
+    .single();
   if (error) throw error;
-
-  // create comment
-  await createComment(supabaseClient, {
-    comment_request_id: requestId,
-    comment_team_member_id: memberId,
-    comment_type: "REQUEST_CANCELED",
-    comment_content: "Request canceled",
-  });
 };
 
 // Update comment

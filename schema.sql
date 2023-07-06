@@ -520,6 +520,24 @@ $$ LANGUAGE plv8;
 
 -- End: Accept team invitation
 
+-- Start: Update request status to canceled
+
+CREATE OR REPLACE FUNCTION cancel_request(
+    request_id TEXT,
+    member_id TEXT,
+    comment_type TEXT,
+    comment_content TEXT
+)
+RETURNS VOID as $$
+  plv8.subtransaction(function(){
+
+    plv8.execute(`UPDATE request_table SET request_status='CANCELED' WHERE request_id='${request_id}'`);
+    plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${request_id}', '${member_id}','${comment_type}', '${comment_content}')`);
+ });
+$$ LANGUAGE plv8;
+
+-- End: Accept team invitation
+
 ---------- End: FUNCTIONS
 
 
