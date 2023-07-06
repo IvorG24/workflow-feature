@@ -14,6 +14,7 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '63e913eb-746e-4eb9-a1b2-4b3c88df0659', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'f5ee3322-46a1-48ea-a40f-9244ab198f18', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
 ('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '657b418b-fd23-4fac-ba35-7b485eb62b99', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]),
+('cb06905e-e64b-4bfe-9f03-ee36dba0c809', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]),
 ('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]);
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_group) VALUES
