@@ -218,21 +218,11 @@ export const updateTeamOwner = async (
   params: { ownerId: string; memberId: string }
 ) => {
   const { ownerId, memberId } = params;
-  const { error: newOwnerError } = await supabaseClient
-    .from("team_member_table")
-    .update({
-      team_member_role: "OWNER",
-    })
-    .eq("team_member_id", memberId);
-  if (newOwnerError) throw newOwnerError;
-
-  const { error: previousOwnerError } = await supabaseClient
-    .from("team_member_table")
-    .update({
-      team_member_role: "ADMIN",
-    })
-    .eq("team_member_id", ownerId);
-  if (previousOwnerError) throw previousOwnerError;
+  const { error } = await supabaseClient
+    .rpc("transfer_ownership", { member_id: memberId, owner_id: ownerId })
+    .select("*")
+    .single();
+  if (error) throw error;
 };
 
 // Update status
@@ -298,17 +288,12 @@ export const acceptTeamInvitation = async (
   params: { invitationId: string; teamId: string; userId: string }
 ) => {
   const { invitationId, teamId, userId } = params;
-  const { error: invitationError } = await supabaseClient
-    .from("invitation_table")
-    .update({ invitation_status: "ACCEPTED" })
-    .eq("invitation_id", invitationId);
-  if (invitationError) throw invitationError;
-
-  const { error: teamMemberError } = await supabaseClient
-    .from("team_member_table")
-    .insert({ team_member_team_id: teamId, team_member_user_id: userId })
-    .select();
-  if (teamMemberError) throw teamMemberError;
+  const { error } = await supabaseClient.rpc("accept_team_invitation", {
+    invitation_id: invitationId,
+    team_id: teamId,
+    user_id: userId,
+  });
+  if (error) throw error;
 };
 
 // Decline team invitation

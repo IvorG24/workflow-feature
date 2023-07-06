@@ -258,6 +258,8 @@ CREATE TABLE supplier_table(
 
 ---------- Start: FUNCTIONS
 
+-- Start: Get current date
+
 CREATE FUNCTION get_current_date()
 RETURNS TIMESTAMPTZ
 AS $$
@@ -266,8 +268,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- End: Get current date
+
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS plv8;
+
+-- Start: Get get SSOT
 
 CREATE FUNCTION get_ssot(
     input_data JSON
@@ -428,6 +434,10 @@ RETURNS JSON as $$
  return ssot_data;
 $$ LANGUAGE plv8;
 
+-- End: Get get SSOT
+
+-- Start: Get user's active team id
+
 CREATE OR REPLACE FUNCTION get_user_active_team_id(
     user_id TEXT
 )
@@ -445,6 +455,10 @@ RETURNS TEXT as $$
  });
  return active_team_id;
 $$ LANGUAGE plv8;
+
+-- End: Get user's active team id
+
+-- Start: check if Order to Purchase form can be activated
 
 CREATE OR REPLACE FUNCTION check_order_to_purchase_form_status(
     team_id TEXT,
@@ -470,6 +484,42 @@ RETURNS Text as $$
 
  return return_data;
 $$ LANGUAGE plv8;
+
+-- End: check if Order to Purchase form can be activated
+
+-- Start: Transfer ownership 
+
+CREATE OR REPLACE FUNCTION transfer_ownership(
+    owner_id TEXT,
+    member_id TEXT
+)
+RETURNS VOID  as $$
+  plv8.subtransaction(function(){
+
+    plv8.execute(`UPDATE team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
+    plv8.execute(`UPDATE team_member_table SET team_member_role='ADMIN' WHERE team_member_id='${owner_id}'`);
+ });
+$$ LANGUAGE plv8;
+
+-- End: Transfer ownership
+
+-- Start: Accept team invitation
+
+CREATE OR REPLACE FUNCTION accept_team_invitation(
+    invitation_id TEXT,
+    team_id TEXT,
+    user_id TEXT
+)
+RETURNS VOID as $$
+  plv8.subtransaction(function(){
+
+    plv8.execute(`UPDATE invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
+    plv8.execute(`UPDATE team_member_table SET team_member_team_id='${team_id}' team_member_user_id='${user_id}'`);
+ });
+$$ LANGUAGE plv8;
+
+-- End: Accept team invitation
+
 ---------- End: FUNCTIONS
 
 
