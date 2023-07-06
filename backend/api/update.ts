@@ -288,11 +288,15 @@ export const acceptTeamInvitation = async (
   params: { invitationId: string; teamId: string; userId: string }
 ) => {
   const { invitationId, teamId, userId } = params;
-  const { error } = await supabaseClient.rpc("accept_team_invitation", {
-    invitation_id: invitationId,
-    team_id: teamId,
-    user_id: userId,
-  });
+  console.log(params);
+  const { error } = await supabaseClient
+    .rpc("accept_team_invitation", {
+      invitation_id: invitationId,
+      team_id: teamId,
+      user_id: userId,
+    })
+    .select("*")
+    .single();
   if (error) throw error;
 };
 

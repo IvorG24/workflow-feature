@@ -514,7 +514,7 @@ RETURNS VOID as $$
   plv8.subtransaction(function(){
 
     plv8.execute(`UPDATE invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
-    plv8.execute(`UPDATE team_member_table SET team_member_team_id='${team_id}' team_member_user_id='${user_id}'`);
+    plv8.execute(`INSERT INTO team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
  });
 $$ LANGUAGE plv8;
 
