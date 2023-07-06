@@ -1,3 +1,4 @@
+import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
@@ -366,7 +367,17 @@ const RequestFormFields = ({
                 }
               />
             )}
-            rules={{ ...fieldRules }}
+            rules={{
+              ...fieldRules,
+              validate: {
+                fileSize: (value) => {
+                  const formattedValue = value as File;
+                  return formattedValue.size <= MAX_FILE_SIZE
+                    ? true
+                    : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
+                },
+              },
+            }}
           />
         );
     }
