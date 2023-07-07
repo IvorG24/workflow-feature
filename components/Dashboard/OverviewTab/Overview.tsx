@@ -39,16 +39,16 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
         gap="md"
         wrap="wrap"
       >
-        <Box w={{ base: "100%", sm: 320 }} h={450}>
+        <Box w={{ base: "100%", sm: 360 }} h={450}>
           <RequestStatusTracker data={requestStatusData} />
         </Box>
-        <Box w={{ base: "100%", sm: 320 }} h={450}>
+        <Box w={{ base: "100%", sm: 300 }} h={450}>
           <RequestorTable
             requestList={requestList}
             totalRequest={requestCount}
           />
         </Box>
-        <Box w={{ base: "100%", sm: 320 }} h={450}>
+        <Box w={{ base: "100%", sm: 300 }} h={450}>
           <SignerTable requestList={requestList} />
         </Box>
       </Flex>

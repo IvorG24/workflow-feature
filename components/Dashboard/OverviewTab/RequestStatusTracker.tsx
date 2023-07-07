@@ -29,7 +29,7 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
       <Flex h="100%" direction="column" justify="space-between">
         <Title order={3}>Total Request: {totalCount}</Title>
         <Center w="100%">
-          <Box maw={175} mih={175}>
+          <Box maw={180} mih={180}>
             {totalCount > 0 ? (
               <RadialChart data={data} />
             ) : (
@@ -44,8 +44,8 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
         <Stack>
           {data.map((d, idx) => (
             <Box key={d.label + idx} fz={14}>
-              <Grid justify="flex-end">
-                <Grid.Col span={8}>
+              <Grid justify="space-between">
+                <Grid.Col span="auto">
                   <Flex gap="sm" w="fit-content">
                     <Box c={getStatusToColorForCharts(d.label)}>
                       <IconSquareRoundedFilled />
@@ -53,7 +53,7 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
                     <Text weight={600}>{`${d.label} Requests`}</Text>
                   </Flex>
                 </Grid.Col>
-                <Grid.Col span={2}>
+                <Grid.Col span="content">
                   <Text weight={600}>{`${d.value}/${d.totalCount}`}</Text>
                 </Grid.Col>
                 <Grid.Col span={2}>

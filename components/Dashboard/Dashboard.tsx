@@ -118,7 +118,7 @@ const Dashboard = ({ activeTeamId }: Props) => {
           <Group>
             <Select
               w={300}
-              placeholder="All forms"
+              placeholder="Select a Form"
               data={formList.map((form) => ({
                 value: form.form_id,
                 label: form.form_name,
@@ -129,7 +129,11 @@ const Dashboard = ({ activeTeamId }: Props) => {
             />
           </Group>
         </Flex>
-
+        {!selectedForm && (
+          <Alert icon={<IconAlertCircle size="1rem" />} color="blue">
+            Please select a form to generate data.
+          </Alert>
+        )}
         <Box>{renderTabs(selectedTab)}</Box>
       </Stack>
     </Container>
