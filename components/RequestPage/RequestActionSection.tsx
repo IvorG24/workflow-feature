@@ -50,7 +50,7 @@ const RequestActionSection = ({
         )}
         {isUserOwner && requestStatus === "PENDING" && (
           <>
-            <Button
+            {/* <Button
               variant="outline"
               fullWidth
               onClick={() =>
@@ -58,7 +58,7 @@ const RequestActionSection = ({
               }
             >
               Edit Request
-            </Button>
+            </Button> */}
             <Button variant="default" fullWidth onClick={handleCancelRequest}>
               Cancel Request
             </Button>
