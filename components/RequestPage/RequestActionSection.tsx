@@ -1,6 +1,5 @@
 import { FormStatusType } from "@/utils/types";
 import { Button, Paper, Space, Stack, Title } from "@mantine/core";
-import { useRouter } from "next/router";
 
 type Props = {
   isUserOwner: boolean;
@@ -15,13 +14,13 @@ type Props = {
 const RequestActionSection = ({
   isUserOwner,
   requestStatus,
-  requestId,
+  // requestId,
   handleCancelRequest,
   openPromptDeleteModal,
   isUserSigner,
   handleUpdateRequest,
 }: Props) => {
-  const router = useRouter();
+  // const router = useRouter();
 
   return (
     <Paper p="xl" shadow="xs">
