@@ -81,6 +81,15 @@ const Dashboard = ({ activeTeamId }: Props) => {
         return (
           <>
             <LoadingOverlay visible={isLoading} overlayBlur={2} />
+            {!selectedForm && (
+              <Alert
+                mb="sm"
+                icon={<IconAlertCircle size="1rem" />}
+                color="blue"
+              >
+                Please select a form to generate data.
+              </Alert>
+            )}
             <Overview
               requestList={overviewTabData ? overviewTabData : []}
               requestCount={overviewTabDataCount}
@@ -129,11 +138,6 @@ const Dashboard = ({ activeTeamId }: Props) => {
             />
           </Group>
         </Flex>
-        {!selectedForm && (
-          <Alert icon={<IconAlertCircle size="1rem" />} color="blue">
-            Please select a form to generate data.
-          </Alert>
-        )}
         <Box>{renderTabs(selectedTab)}</Box>
       </Stack>
     </Container>
