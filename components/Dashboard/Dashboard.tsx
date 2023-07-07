@@ -1,7 +1,5 @@
-import { useFormList } from "@/stores/useFormStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
-
 import { getDashboardOverViewData } from "@/backend/api/get";
+import { useFormList } from "@/stores/useFormStore";
 import { RequestDashboardOverviewData } from "@/utils/types";
 import {
   Alert,
@@ -9,6 +7,7 @@ import {
   Container,
   Flex,
   Group,
+  LoadingOverlay,
   SegmentedControl,
   Select,
   Stack,
@@ -29,9 +28,12 @@ const SPECIAL_FORMS = [
   "Quotation",
 ];
 
-const Dashboard = () => {
+type Props = {
+  activeTeamId: string;
+};
+
+const Dashboard = ({ activeTeamId }: Props) => {
   const formList = useFormList();
-  const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const routerFormId =
@@ -39,25 +41,28 @@ const Dashboard = () => {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
   const [isOTPForm, setIsOTPForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [overviewTabData, setOverviewTabData] = useState<
     RequestDashboardOverviewData[] | null
   >(null);
   const [overviewTabDataCount, setOverviewTabDataCount] = useState(0);
 
   useEffect(() => {
-    if (activeTeam.team_id && selectedForm) {
-      const fetchOverviewData = async () => {
-        const { data, count } = await getDashboardOverViewData(supabaseClient, {
-          teamId: activeTeam.team_id,
-          formId: selectedForm ? selectedForm : undefined,
-        });
-        setOverviewTabData(data);
-        setOverviewTabDataCount(count ? count : 0);
-      };
+    const fetchOverviewData = async () => {
+      setIsLoading(true);
+      const { data, count } = await getDashboardOverViewData(supabaseClient, {
+        teamId: activeTeamId,
+        formId: selectedForm ? selectedForm : undefined,
+      });
+      setOverviewTabData(data);
+      setOverviewTabDataCount(count ? count : 0);
+      setIsLoading(false);
+    };
 
+    if (selectedForm) {
       fetchOverviewData();
     }
-  }, [activeTeam.team_id, selectedForm]);
+  }, [activeTeamId, selectedForm, supabaseClient]);
 
   // check if selected form is formsly form
   const isFormslyForm =
@@ -74,10 +79,13 @@ const Dashboard = () => {
     switch (tab) {
       case "overview":
         return (
-          <Overview
-            requestList={overviewTabData ? overviewTabData : []}
-            requestCount={overviewTabDataCount}
-          />
+          <>
+            <LoadingOverlay visible={isLoading} overlayBlur={2} />
+            <Overview
+              requestList={overviewTabData ? overviewTabData : []}
+              requestCount={overviewTabDataCount}
+            />
+          </>
         );
 
       case "responses":
@@ -86,6 +94,7 @@ const Dashboard = () => {
             isOTPForm={isOTPForm}
             selectedForm={selectedForm}
             selectedFormName={selectedFormName}
+            activeTeamId={activeTeamId}
           />
         ) : (
           <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
@@ -97,8 +106,6 @@ const Dashboard = () => {
 
   return (
     <Container p={0} maw={1024} h="100%" pos="relative">
-      {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
-
       <Stack>
         <Title order={2}>Dashboard</Title>
         <Flex justify="space-between" rowGap="sm" wrap="wrap">

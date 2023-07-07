@@ -251,6 +251,7 @@ DECLARE
   quotation_request_status TEXT;
   rirFormId UUID;
   rirRequestId UUID;
+  rirRequestStatus TEXT;
   allFieldsFormId UUID;
   allFieldsRequestId UUID;
   duplicateFieldsFormId UUID;
@@ -444,11 +445,19 @@ SELECT var_value INTO otpFormId
 
     rirRequestId := gen_random_uuid();
 
+    -- Assign rirRequestStatus based on odds
+    SELECT CASE 
+      WHEN random() < 0.5 THEN 'APPROVED'
+      WHEN random() < 0.25 THEN 'REJECTED'
+      ELSE 'PENDING'
+    END INTO rirRequestStatus;
+
+
     INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
-    (rirRequestId, ownerMemberId, rirFormId, 'APPROVED', request_date_created);
+    (rirRequestId, ownerMemberId, rirFormId, rirRequestStatus, request_date_created);
 
     INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
-    (gen_random_uuid(), 'APPROVED', rirRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
+    (gen_random_uuid(), rirRequestStatus, rirRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
     
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
     -- OTP ID

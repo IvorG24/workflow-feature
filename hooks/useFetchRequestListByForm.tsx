@@ -30,7 +30,10 @@ const fetcher = async (key: string, params: Params) => {
 
 function useFetchRequestListByForm(params: Params) {
   const { data, error, isLoading } = useSWR(
-    [`/api/fetchDashboardData?teamId=${params.teamId}`, params],
+    [
+      `/api/fetchDashboardData?teamId=${params.teamId}&formId=${params.formId}`,
+      params,
+    ],
     ([key, params]) => fetcher(key, params)
   );
 

@@ -1,5 +1,4 @@
 import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   generateFormslyResponseData,
   getRequestFormData,
@@ -15,19 +14,20 @@ type ResponseTabProps = {
   selectedForm: string | null;
   selectedFormName: string | null;
   isOTPForm: boolean;
+  activeTeamId: string;
 };
 
 const ResponseTab = ({
   selectedForm,
   selectedFormName,
   isOTPForm,
+  activeTeamId,
 }: ResponseTabProps) => {
-  const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
 
   // // swr fetching
   const { requestList, isLoading } = useFetchRequestListByForm({
-    teamId: activeTeam.team_id,
+    teamId: activeTeamId,
     formId: selectedForm,
     supabaseClient,
   });

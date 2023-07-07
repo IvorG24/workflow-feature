@@ -7,7 +7,6 @@ import {
   Button,
   Flex,
   Group,
-  LoadingOverlay,
   Paper,
   Text,
   TextInput,
@@ -34,7 +33,6 @@ type FormValues = {
 
 const SearchKeywordResponse = ({ selectedForm }: Props) => {
   const supabaseClient = useSupabaseClient();
-  const [isFetchingData, setIsFetchingData] = useState(false);
   const [searchKeywordResponse, setSearchKeywordResponse] = useState<
     ResponseDataType[] | null
   >(null);
@@ -43,7 +41,6 @@ const SearchKeywordResponse = ({ selectedForm }: Props) => {
 
   const handleSearchByKeyword = async (data: FormValues) => {
     try {
-      setIsFetchingData(true);
       if (!data.search) {
         setSearchKeywordResponse(null);
         return;
@@ -63,14 +60,11 @@ const SearchKeywordResponse = ({ selectedForm }: Props) => {
         message: "Please try again later.",
         color: "red",
       });
-    } finally {
-      setIsFetchingData(false);
     }
   };
 
   return (
     <Box>
-      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
       <form onSubmit={handleSubmit(handleSearchByKeyword)}>
         <Group spacing={8}>
           <TextInput

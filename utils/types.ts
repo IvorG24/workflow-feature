@@ -474,25 +474,6 @@ export type RequestByFormType = RequestTableRow & {
       user_avatar: string;
     };
   };
-} & {
-  request_signer: (RequestSignerTableRow & {
-    request_signer_id: string;
-    request_signer_status: string;
-    request_signer_signer: {
-      signer_id: string;
-      signer_is_primary_signer: boolean;
-      signer_action: string;
-      signer_order: number;
-      signer_team_member: {
-        team_member_id: string;
-        team_member_user: {
-          user_first_name: string;
-          user_last_name: string;
-          user_avatar: string | null;
-        };
-      };
-    };
-  })[];
 };
 
 export type RequestDashboardOverviewData = RequestTableRow & {
@@ -605,7 +586,7 @@ export type FormslyFormKeyType =
   | "Receiving Inspecting Report";
 
 export type RequestSignerListType =
-  RequestByFormType["request_signer"][0]["request_signer_signer"] & {
+  RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
     signerCount: {
       approved: number;
       rejected: number;

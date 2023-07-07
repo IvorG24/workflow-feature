@@ -15,7 +15,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       return {
         props: {
-          teamId,
+          activeTeamId: teamId,
         },
       };
     } catch (error) {
@@ -30,11 +30,15 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   }
 );
 
-const Page = () => {
+type Props = {
+  activeTeamId: string;
+};
+
+const Page = ({ activeTeamId }: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/team-requests/requests" />
-      <Dashboard />
+      <Dashboard activeTeamId={activeTeamId} />
     </>
   );
 };
