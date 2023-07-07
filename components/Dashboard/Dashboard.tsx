@@ -1,14 +1,14 @@
-import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 
+import { getDashboardOverViewData } from "@/backend/api/get";
+import { RequestDashboardOverviewData } from "@/utils/types";
 import {
   Alert,
   Box,
   Container,
   Flex,
   Group,
-  LoadingOverlay,
   SegmentedControl,
   Select,
   Stack,
@@ -39,17 +39,25 @@ const Dashboard = () => {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
   const [isOTPForm, setIsOTPForm] = useState(false);
+  const [overviewTabData, setOverviewTabData] = useState<
+    RequestDashboardOverviewData[] | null
+  >(null);
+  const [overviewTabDataCount, setOverviewTabDataCount] = useState(0);
 
-  // swr fetching
-  const {
-    requestList: requestListData,
-    requestListCount,
-    isLoading,
-  } = useFetchRequestListByForm({
-    teamId: activeTeam.team_id,
-    formId: selectedForm,
-    supabaseClient,
-  });
+  useEffect(() => {
+    if (activeTeam.team_id && selectedForm) {
+      const fetchOverviewData = async () => {
+        const { data, count } = await getDashboardOverViewData(supabaseClient, {
+          teamId: activeTeam.team_id,
+          formId: selectedForm ? selectedForm : undefined,
+        });
+        setOverviewTabData(data);
+        setOverviewTabDataCount(count ? count : 0);
+      };
+
+      fetchOverviewData();
+    }
+  }, [activeTeam.team_id, selectedForm]);
 
   // check if selected form is formsly form
   const isFormslyForm =
@@ -67,8 +75,8 @@ const Dashboard = () => {
       case "overview":
         return (
           <Overview
-            requestList={requestListData}
-            requestCount={requestListCount ? requestListCount : 0}
+            requestList={overviewTabData ? overviewTabData : []}
+            requestCount={overviewTabDataCount}
           />
         );
 
@@ -78,7 +86,6 @@ const Dashboard = () => {
             isOTPForm={isOTPForm}
             selectedForm={selectedForm}
             selectedFormName={selectedFormName}
-            requestList={requestListData}
           />
         ) : (
           <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
@@ -90,7 +97,7 @@ const Dashboard = () => {
 
   return (
     <Container p={0} maw={1024} h="100%" pos="relative">
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
 
       <Stack>
         <Title order={2}>Dashboard</Title>
@@ -111,7 +118,6 @@ const Dashboard = () => {
               }))}
               value={selectedForm}
               onChange={setSelectedForm}
-              clearable
               searchable
             />
           </Group>

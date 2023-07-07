@@ -1,11 +1,12 @@
+import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   generateFormslyResponseData,
   getRequestFormData,
 } from "@/utils/arrayFunctions/dashboard";
-import { RequestByFormType } from "@/utils/types";
-import { Alert, Box, Container, Paper } from "@mantine/core";
+import { Alert, Box, Container, LoadingOverlay, Paper } from "@mantine/core";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle } from "@tabler/icons-react";
-import OTPSearch from "../OTPSearch";
 import RequisitionTab from "../RequisitionTab/RequisitionTab";
 import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchKeywordResponse from "./SearchKeywordResponse";
@@ -14,15 +15,23 @@ type ResponseTabProps = {
   selectedForm: string | null;
   selectedFormName: string | null;
   isOTPForm: boolean;
-  requestList: RequestByFormType[];
 };
 
 const ResponseTab = ({
   selectedForm,
   selectedFormName,
   isOTPForm,
-  requestList,
 }: ResponseTabProps) => {
+  const activeTeam = useActiveTeam();
+  const supabaseClient = useSupabaseClient();
+
+  // // swr fetching
+  const { requestList, isLoading } = useFetchRequestListByForm({
+    teamId: activeTeam.team_id,
+    formId: selectedForm,
+    supabaseClient,
+  });
+
   const approvedRequestList =
     selectedFormName !== "Receiving Inspecting Report"
       ? requestList.filter((request) => request.request_status === "APPROVED")
@@ -37,14 +46,23 @@ const ResponseTab = ({
     : getRequestFormData(sectionList);
 
   return (
-    <Container p={0}>
-      <Paper p="md" pos="relative">
-        {isOTPForm ? (
-          <OTPSearch />
-        ) : (
+    <Container p={0} pos="relative">
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+
+      {/* <Paper p="md" pos="relative">
+        {isOTPForm ? // <OTPSearch />
+        null : (
           <SearchKeywordResponse selectedForm={selectedForm} />
         )}
-      </Paper>
+      </Paper> */}
+
+      {!isOTPForm && (
+        <Paper p="md" pos="relative">
+          {" "}
+          <SearchKeywordResponse selectedForm={selectedForm} />{" "}
+        </Paper>
+      )}
+
       {fieldResponseData && fieldResponseData.length > 0 ? (
         <Box>
           {isOTPForm ? (

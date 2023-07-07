@@ -1,4 +1,4 @@
-import { RequestByFormType } from "@/utils/types";
+import { RequestDashboardOverviewData } from "@/utils/types";
 import { Box, Flex, Stack } from "@mantine/core";
 import { lowerCase } from "lodash";
 import RequestStatistics from "./RequestStatistics";
@@ -7,7 +7,7 @@ import RequestorTable from "./RequestorTable/RequestorTable";
 import SignerTable from "./SignerTable";
 
 type OverviewProps = {
-  requestList: RequestByFormType[];
+  requestList: RequestDashboardOverviewData[];
   requestCount: number;
 };
 

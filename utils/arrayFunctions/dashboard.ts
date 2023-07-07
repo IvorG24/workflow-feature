@@ -8,6 +8,7 @@ import {
   LineChartDataType,
   PurchaseTrendChartDataType,
   RequestByFormType,
+  RequestDashboardOverviewData,
   RequestResponseDataType,
   ResponseDataType,
   SearchKeywordResponseType,
@@ -397,7 +398,7 @@ export const getChartData = (
 };
 
 export const getStackedBarChartData = (
-  requestList: RequestByFormType[],
+  requestList: RequestDashboardOverviewData[],
   initialChartData: StackedBarChartDataType[]
 ) => {
   const reducedRequestList = requestList.reduce((acc, request) => {

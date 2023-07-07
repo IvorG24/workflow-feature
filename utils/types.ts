@@ -495,6 +495,45 @@ export type RequestByFormType = RequestTableRow & {
   })[];
 };
 
+export type RequestDashboardOverviewData = RequestTableRow & {
+  request_form: {
+    form_id: string;
+    form_name: string;
+    form_description: string;
+    form_is_formsly_form: boolean;
+  };
+} & {
+  request_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_username: string;
+      user_avatar: string;
+    };
+  };
+} & {
+  request_signer: (RequestSignerTableRow & {
+    request_signer_id: string;
+    request_signer_status: string;
+    request_signer_signer: {
+      signer_id: string;
+      signer_is_primary_signer: boolean;
+      signer_action: string;
+      signer_order: number;
+      signer_team_member: {
+        team_member_id: string;
+        team_member_user: {
+          user_first_name: string;
+          user_last_name: string;
+          user_avatar: string | null;
+        };
+      };
+    };
+  })[];
+};
+
 export type ConnectedFormsType =
   | "Order to Purchase"
   | "Invoice"

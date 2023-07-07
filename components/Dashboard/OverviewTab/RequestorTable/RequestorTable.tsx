@@ -1,4 +1,4 @@
-import { RequestByFormType, RequestorListType } from "@/utils/types";
+import { RequestDashboardOverviewData, RequestorListType } from "@/utils/types";
 import {
   Box,
   Center,
@@ -20,7 +20,7 @@ const useStyles = createStyles(() => ({
 }));
 
 type RequestorTableProps = {
-  requestList: RequestByFormType[];
+  requestList: RequestDashboardOverviewData[];
   totalRequest: number;
 };
 

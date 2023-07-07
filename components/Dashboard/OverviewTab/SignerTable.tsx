@@ -1,5 +1,8 @@
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { RequestByFormType, RequestSignerListType } from "@/utils/types";
+import {
+  RequestDashboardOverviewData,
+  RequestSignerListType,
+} from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -24,7 +27,7 @@ const useStyles = createStyles(() => ({
 }));
 
 type SignerTableProps = {
-  requestList: RequestByFormType[];
+  requestList: RequestDashboardOverviewData[];
 };
 
 const getSignerStatusCount = (

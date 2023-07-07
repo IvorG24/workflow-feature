@@ -1,6 +1,6 @@
 import { getStackedBarChartData } from "@/utils/arrayFunctions/dashboard";
 import { getStatusToColorForCharts } from "@/utils/styling";
-import { RequestByFormType } from "@/utils/types";
+import { RequestDashboardOverviewData } from "@/utils/types";
 import { Box, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import {
   IconFileAnalytics,
@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import StackedBarChart from "../../Chart/StackedBarChart";
 
 type RequestStatisticsProps = {
-  requestList: RequestByFormType[];
+  requestList: RequestDashboardOverviewData[];
 };
 
 const generateInitialChartData = () => {

@@ -9,7 +9,9 @@ INSERT INTO seed_variable_table (var_key, var_value) VALUES
 ('ownerMemberId', gen_random_uuid()),
 ('otpFormId', gen_random_uuid()),
 ('quotationFormId', gen_random_uuid()),
-('rirFormId', gen_random_uuid());
+('rirFormId', gen_random_uuid()),
+('allFieldsFormId', gen_random_uuid()),
+('duplicateFieldsFormId', gen_random_uuid());
 
 -- CREATE FORMS SEED
 
@@ -17,8 +19,6 @@ DO $$
 DECLARE
 -- member ids
   ownerMemberId UUID;
-  adminMemberId1 UUID;
-  adminMemberId2 UUID;
 -- form ids
   allFieldsFormId UUID;
   duplicateFieldsFormId UUID;
@@ -32,15 +32,6 @@ DECLARE
   duplicateFieldsSection1 UUID;
   duplicateFieldsSection2 UUID;
   duplicateFieldsSection3 UUID;
--- field ids
-  dropdownField1 UUID;
-  dropdownField2 UUID;
-  dropdownField3 UUID;
-  multiSelectField1 UUID;
-  multiSelectField2 UUID;
--- signer ids
-  allFieldsSigner UUID;
-  duplicateFieldsSigner UUID;
 
 BEGIN
 
@@ -52,17 +43,19 @@ SELECT var_value INTO ownerMemberId
   FROM seed_variable_table
   WHERE var_key = 'ownerMemberId';
 
-adminMemberId1 := gen_random_uuid();
-adminMemberId2 := gen_random_uuid();
-
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list, team_member_project_list) VALUES
 (ownerMemberId, 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '15de3182-6efe-47cf-b681-00f8ed10365f', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
-(adminMemberId1, 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '66865893-dd0a-40f3-8acd-03fed41d4051', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
-(adminMemberId2, 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'bcaad583-4bb3-4d86-9067-956cf7f20688', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
+('0a61a37f-7805-4fe5-8856-3c7fa801c744', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '66865893-dd0a-40f3-8acd-03fed41d4051', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
+('a750df8c-35fe-48d6-862a-1135c8f96a9a', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'bcaad583-4bb3-4d86-9067-956cf7f20688', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
 
 -- Create Forms
-allFieldsFormId := gen_random_uuid();
-duplicateFieldsFormId := gen_random_uuid();
+SELECT var_value INTO allFieldsFormId
+  FROM seed_variable_table
+  WHERE var_key = 'allFieldsFormId';
+
+SELECT var_value INTO duplicateFieldsFormId
+  FROM seed_variable_table
+  WHERE var_key = 'duplicateFieldsFormId';
 
 SELECT var_value INTO otpFormId
   FROM seed_variable_table
@@ -115,38 +108,31 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('e2f8594c-a7c4-40bb-9ac3-de4618a73681', 'ID', 1, false, rirFormId),
 ('aa0e7187-9e0e-4853-b536-fdaf484a26d8', 'Item', 2, true, rirFormId);
 
--- Add fields
-dropdownField1 := gen_random_uuid();
-dropdownField2 := gen_random_uuid();
-dropdownField3 := gen_random_uuid();
-multiSelectField1 := gen_random_uuid();
-multiSelectField2 := gen_random_uuid();
-
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
 -- All Fields Form
-(gen_random_uuid(), 'Text field', 'TEXT', 1, allFieldsSectionId1, false, false),
-(gen_random_uuid(), 'Text area field', 'TEXTAREA', 2, allFieldsSectionId1, false, false),
-(gen_random_uuid(), 'Number field', 'NUMBER', 3, allFieldsSectionId1, false, false),
-(gen_random_uuid(), 'Switch field', 'SWITCH', 4, allFieldsSectionId2, false, false),
-(dropdownField1, 'Dropdown field', 'DROPDOWN', 5, allFieldsSectionId2, false, false),
-(multiSelectField1, 'Multiselect field', 'MULTISELECT', 6, allFieldsSectionId2, false, false),
-(gen_random_uuid(), 'Date field', 'DATE', 7, allFieldsSectionId3, false, false),
-(gen_random_uuid(), 'Time field', 'TIME', 8, allFieldsSectionId3, false, false),
-(gen_random_uuid(), 'File field', 'FILE', 9, allFieldsSectionId3, false, false),
+('ade87336-6b9b-42d4-9a63-6cd9e982d230', 'Text field', 'TEXT', 1, allFieldsSectionId1, false, false),
+('3351c43a-901b-4fae-b4de-b60dcbafd362', 'Text area field', 'TEXTAREA', 2, allFieldsSectionId1, false, false),
+('3de74a80-fe10-457a-ad54-6a5144249e9e', 'Number field', 'NUMBER', 3, allFieldsSectionId1, false, false),
+('07e15382-948a-4224-9ada-ed547cf35f28', 'Switch field', 'SWITCH', 4, allFieldsSectionId2, false, false),
+('e2b59f56-4a94-40af-9adb-ad22571294cc', 'Dropdown field', 'DROPDOWN', 5, allFieldsSectionId2, false, false),
+('910ecd57-bc8e-4050-a252-8f333648ac70', 'Multiselect field', 'MULTISELECT', 6, allFieldsSectionId2, false, false),
+('936ac10f-63d5-42af-92c5-676191383f88', 'Date field', 'DATE', 7, allFieldsSectionId3, false, false),
+('ecbe6664-27be-4bb5-87a7-5891dbeb9c5d', 'Time field', 'TIME', 8, allFieldsSectionId3, false, false),
+('d8b23734-edbd-4200-adaa-bf562f88acb4', 'File field', 'FILE', 9, allFieldsSectionId3, false, false),
 
 -- Duplicatable Section Form
-(gen_random_uuid(), 'Text field', 'TEXT', 1, duplicateFieldsSection1, false, false),
-(gen_random_uuid(), 'Number field', 'NUMBER', 2, duplicateFieldsSection1, false, false),
-(gen_random_uuid(), 'Switch field', 'SWITCH', 3, duplicateFieldsSection1, false, false),
-(dropdownField2, 'Dropdown field', 'DROPDOWN', 4, duplicateFieldsSection1, false, false),
+('123782f5-cc53-453c-a709-123285daf450', 'Text field', 'TEXT', 1, duplicateFieldsSection1, false, false),
+('b28a9cb3-1d1f-4b7e-922a-15dfdf85ed73', 'Number field', 'NUMBER', 2, duplicateFieldsSection1, false, false),
+('ea199351-4cd2-4037-96b4-cdd2c060696e', 'Switch field', 'SWITCH', 3, duplicateFieldsSection1, false, false),
+('b02f350b-83f5-405a-be19-0bfb07803aa5', 'Dropdown field', 'DROPDOWN', 4, duplicateFieldsSection1, false, false),
 
-(gen_random_uuid(), 'Text field', 'TEXT', 5, duplicateFieldsSection2, false, false),
-(dropdownField3, 'Dropdown field', 'DROPDOWN', 6, duplicateFieldsSection2, false, false),
-(gen_random_uuid(), 'Date field', 'DATE', 7, duplicateFieldsSection2, false, false),
+('a3b16b09-83b4-4aba-9819-a88f10e92dee', 'Text field', 'TEXT', 5, duplicateFieldsSection2, false, false),
+('fe5cb192-f239-4415-87df-e86e293ada11', 'Dropdown field', 'DROPDOWN', 6, duplicateFieldsSection2, false, false),
+('38448ce5-abfd-42f4-a17b-1df39a971977', 'Date field', 'DATE', 7, duplicateFieldsSection2, false, false),
 
-(multiSelectField2, 'Multiselect field', 'MULTISELECT', 8, duplicateFieldsSection3, false, false),
-(gen_random_uuid(), 'Date field', 'DATE', 9, duplicateFieldsSection3, false, false),
-(gen_random_uuid(), 'Time field', 'TIME', 10, duplicateFieldsSection3, false, false),
+('ec6831ee-ea45-468e-bd5c-fb29a7297a56', 'Multiselect field', 'MULTISELECT', 8, duplicateFieldsSection3, false, false),
+('816ce049-4556-4340-8ee5-065e759d4196', 'Date field', 'DATE', 9, duplicateFieldsSection3, false, false),
+('57673976-7a46-4a8f-ae0b-67d9d1d24c95', 'Time field', 'TIME', 10, duplicateFieldsSection3, false, false),
 
 -- OTP Form
 ('a4733172-53af-47b1-b460-6869105f6405', 'Project Name', 'DROPDOWN', 1, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
@@ -185,21 +171,21 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 
 -- Add options
 INSERT INTO option_table (option_id, option_value, option_order, option_field_id) VALUES
-(gen_random_uuid(), 'Dropdown 1', 1, dropdownField1),
-(gen_random_uuid(), 'Dropdown 2', 2, dropdownField1),
-(gen_random_uuid(), 'Dropdown 3', 3, dropdownField1),
-(gen_random_uuid(), 'Multiselect 1', 1, multiSelectField1),
-(gen_random_uuid(), 'Multiselect 2', 2, multiSelectField1),
-(gen_random_uuid(), 'Multiselect 3', 3, multiSelectField1),
-(gen_random_uuid(), 'Dropdown 1', 1, dropdownField2),
-(gen_random_uuid(), 'Dropdown 2', 2, dropdownField2),
-(gen_random_uuid(), 'Dropdown 3', 3, dropdownField2),
-(gen_random_uuid(), 'Dropdown 1', 1, dropdownField3),
-(gen_random_uuid(), 'Dropdown 2', 2, dropdownField3),
-(gen_random_uuid(), 'Dropdown 3', 3, dropdownField3),
-(gen_random_uuid(), 'Multiselect 1', 1, multiSelectField2),
-(gen_random_uuid(), 'Multiselect 2', 2, multiSelectField2),
-(gen_random_uuid(), 'Multiselect 3', 3, multiSelectField2),
+(gen_random_uuid(), 'Dropdown 1', 1, 'e2b59f56-4a94-40af-9adb-ad22571294cc'),
+(gen_random_uuid(), 'Dropdown 2', 2, 'e2b59f56-4a94-40af-9adb-ad22571294cc'),
+(gen_random_uuid(), 'Dropdown 3', 3, 'e2b59f56-4a94-40af-9adb-ad22571294cc'),
+(gen_random_uuid(), 'Multiselect 1', 1, '910ecd57-bc8e-4050-a252-8f333648ac70'),
+(gen_random_uuid(), 'Multiselect 2', 2, '910ecd57-bc8e-4050-a252-8f333648ac70'),
+(gen_random_uuid(), 'Multiselect 3', 3, '910ecd57-bc8e-4050-a252-8f333648ac70'),
+(gen_random_uuid(), 'Dropdown 1', 1, 'b02f350b-83f5-405a-be19-0bfb07803aa5'),
+(gen_random_uuid(), 'Dropdown 2', 2, 'b02f350b-83f5-405a-be19-0bfb07803aa5'),
+(gen_random_uuid(), 'Dropdown 3', 3, 'b02f350b-83f5-405a-be19-0bfb07803aa5'),
+(gen_random_uuid(), 'Dropdown 1', 1, 'fe5cb192-f239-4415-87df-e86e293ada11'),
+(gen_random_uuid(), 'Dropdown 2', 2, 'fe5cb192-f239-4415-87df-e86e293ada11'),
+(gen_random_uuid(), 'Dropdown 3', 3, 'fe5cb192-f239-4415-87df-e86e293ada11'),
+(gen_random_uuid(), 'Multiselect 1', 1, 'ec6831ee-ea45-468e-bd5c-fb29a7297a56'),
+(gen_random_uuid(), 'Multiselect 2', 2, 'ec6831ee-ea45-468e-bd5c-fb29a7297a56'),
+(gen_random_uuid(), 'Multiselect 3', 3, 'ec6831ee-ea45-468e-bd5c-fb29a7297a56'),
 ('a4c9cf29-c4cc-4b6f-af3d-6a50946af85e', 'Cash Purchase - Advance Payment', 1, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
 ('c22aa5ed-7dc8-45b1-8917-2d12290f8936', 'Cash Purchase - Local Purchase', 2, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
 ('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Order to Purchase', 3, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2');
@@ -243,16 +229,13 @@ INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('245db815-a8ab-4230-9d43-7ffa65ce0a47', 'Begul Builders Corporation', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2');
 
 -- Add signer
-allFieldsSigner := gen_random_uuid();
-duplicateFieldsSigner := gen_random_uuid();
-
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
-(allFieldsSigner, TRUE, 'Approved', 1, allFieldsFormId, adminMemberId1),
-(duplicateFieldsSigner, TRUE, 'Approved', 1, duplicateFieldsFormId, adminMemberId1),
-('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, otpFormId, adminMemberId1),
-('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, otpFormId, adminMemberId2),
-('5d640270-11a2-43e2-9316-de0414b837c0', TRUE, 'Approved', 1, quotationFormId, adminMemberId2),
-('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirFormId, adminMemberId1);
+('a6be17fc-1298-411a-b158-abb3b16cdfb6', TRUE, 'Approved', 1, allFieldsFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
+('a92fa55d-9972-4dc5-9369-1cec51635c4a', TRUE, 'Approved', 1, duplicateFieldsFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
+('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, otpFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
+('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, otpFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
+('5d640270-11a2-43e2-9316-de0414b837c0', TRUE, 'Approved', 1, quotationFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
+('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744');
 
 END $$;
 
@@ -268,6 +251,10 @@ DECLARE
   quotation_request_status TEXT;
   rirFormId UUID;
   rirRequestId UUID;
+  allFieldsFormId UUID;
+  allFieldsRequestId UUID;
+  duplicateFieldsFormId UUID;
+  duplicateFieldsRequestId UUID;
   request_status TEXT;
   request_signer_status TEXT;
   request_date_created TIMESTAMPTZ;
@@ -490,6 +477,67 @@ SELECT var_value INTO otpFormId
     (gen_random_uuid(), '"Partially Received"', '712a97ec-c7da-4c04-9191-69147fbe9a50', '6f12e069-3fa7-418a-bf09-87edfd711509', rirRequestId);
 
     END IF;
+
+
+    --- Create All Fields and Duplicatable Fields Requests
+    SELECT var_value INTO allFieldsFormId
+    FROM seed_variable_table
+    WHERE var_key = 'allFieldsFormId';
+
+    SELECT var_value INTO duplicateFieldsFormId
+    FROM seed_variable_table
+    WHERE var_key = 'duplicateFieldsFormId';
+
+    allFieldsRequestId := gen_random_uuid();
+    duplicateFieldsRequestId := gen_random_uuid();
+
+    INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
+    (allFieldsRequestId, ownerMemberId, allFieldsFormId, request_status, request_date_created),
+    (duplicateFieldsRequestId, ownerMemberId, duplicateFieldsFormId, request_status, request_date_created);
+
+    INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
+    (gen_random_uuid(), request_status, allFieldsRequestId, 'a6be17fc-1298-411a-b158-abb3b16cdfb6'),
+    (gen_random_uuid(), request_status, duplicateFieldsRequestId, 'a92fa55d-9972-4dc5-9369-1cec51635c4a');
+
+    INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
+    -- All Fields
+    -- Section 1
+    (gen_random_uuid(), '"Text field response 1"', NULL, 'ade87336-6b9b-42d4-9a63-6cd9e982d230', allFieldsRequestId),
+    (gen_random_uuid(), '"Text area field response 1"', NULL, '3351c43a-901b-4fae-b4de-b60dcbafd362', allFieldsRequestId),
+    (gen_random_uuid(), '100', NULL, '3de74a80-fe10-457a-ad54-6a5144249e9e', allFieldsRequestId),
+    -- Section 2
+    (gen_random_uuid(), '"TRUE"', NULL, '07e15382-948a-4224-9ada-ed547cf35f28', allFieldsRequestId),
+    (gen_random_uuid(), '"Dropdown 1"', NULL, 'e2b59f56-4a94-40af-9adb-ad22571294cc', allFieldsRequestId),
+    (gen_random_uuid(), '["Multiselect 1","Multiselect 2"]', NULL, '910ecd57-bc8e-4050-a252-8f333648ac70', allFieldsRequestId),
+    -- Section 3
+    (gen_random_uuid(), '"01/01/23"', NULL, '936ac10f-63d5-42af-92c5-676191383f88', allFieldsRequestId),
+    (gen_random_uuid(), '"11:11"', NULL, 'ecbe6664-27be-4bb5-87a7-5891dbeb9c5d', allFieldsRequestId),
+
+    -- Duplicatable Fields
+    -- Section 1
+    (gen_random_uuid(), '"Original Text Field 1"', NULL, '123782f5-cc53-453c-a709-123285daf450', duplicateFieldsRequestId),
+    (gen_random_uuid(), '1', NULL, 'b28a9cb3-1d1f-4b7e-922a-15dfdf85ed73', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"TRUE"', NULL, 'ea199351-4cd2-4037-96b4-cdd2c060696e', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"Dropdown 1"', NULL, 'b02f350b-83f5-405a-be19-0bfb07803aa5', duplicateFieldsRequestId),
+    -- Duplicate Section 1
+    (gen_random_uuid(), '"Duplicate Text Field 1"', '5281ae81-26c1-4414-8f95-f7df983a8de8', '123782f5-cc53-453c-a709-123285daf450', duplicateFieldsRequestId),
+    (gen_random_uuid(), '2', '5281ae81-26c1-4414-8f95-f7df983a8de8', 'b28a9cb3-1d1f-4b7e-922a-15dfdf85ed73', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"FALSE"', '5281ae81-26c1-4414-8f95-f7df983a8de8', 'ea199351-4cd2-4037-96b4-cdd2c060696e', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"Dropdown 2"', '5281ae81-26c1-4414-8f95-f7df983a8de8', 'b02f350b-83f5-405a-be19-0bfb07803aa5', duplicateFieldsRequestId),
+
+    -- Section 2
+    (gen_random_uuid(), '"Original Text Field 2"', NULL, 'a3b16b09-83b4-4aba-9819-a88f10e92dee', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"Dropdown 2"', NULL, 'fe5cb192-f239-4415-87df-e86e293ada11', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"01/01/23"', NULL, '38448ce5-abfd-42f4-a17b-1df39a971977', duplicateFieldsRequestId),
+
+    -- Section 3
+    (gen_random_uuid(), '["Multiselect 1"]', NULL, 'ec6831ee-ea45-468e-bd5c-fb29a7297a56', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"01/01/23"', NULL, '816ce049-4556-4340-8ee5-065e759d4196', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"11:11"', NULL, '57673976-7a46-4a8f-ae0b-67d9d1d24c95', duplicateFieldsRequestId),
+    -- Duplicate Section 3
+    (gen_random_uuid(), '["Multiselect 1","Multiselect 2"]', '70df9615-6413-4bd1-91bc-ca9b4b9b5821', 'ec6831ee-ea45-468e-bd5c-fb29a7297a56', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"02/01/23"', '70df9615-6413-4bd1-91bc-ca9b4b9b5821', '816ce049-4556-4340-8ee5-065e759d4196', duplicateFieldsRequestId),
+    (gen_random_uuid(), '"12:12"', '70df9615-6413-4bd1-91bc-ca9b4b9b5821', '57673976-7a46-4a8f-ae0b-67d9d1d24c95', duplicateFieldsRequestId);
 
     counter := counter + 1;
   END LOOP;
