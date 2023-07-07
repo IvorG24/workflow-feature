@@ -221,7 +221,7 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
   const handleDuplicateSection = (sectionId: string) => {
     if (
       availableItems.length === 0 ||
-      formSections.length === itemOptions.length + 2
+      formSections.length === itemOptions.length + 1
     ) {
       notifications.show({
         message: "No available item.",
