@@ -1,4 +1,4 @@
-import { regExp } from "@/utils/string";
+import { addCommaToNumber, regExp } from "@/utils/string";
 import { DuplicateSectionType } from "@/utils/types";
 import { Paper, Table, Title } from "@mantine/core";
 
@@ -31,6 +31,7 @@ const ReceivingInspectingReportSummary = ({ summaryData }: Props) => {
           <tr>
             <th>Item</th>
             <th>Quantity</th>
+            <th>Unit</th>
             <th>Receiving Status</th>
           </tr>
         </thead>
@@ -46,7 +47,6 @@ const ReceivingInspectingReportSummary = ({ summaryData }: Props) => {
             const unit =
               matches && matches[1].replace(/\d+/g, "").trim().split("/")[0];
 
-            const quantity = `${parsedQuantity} ${unit}`;
             const status = JSON.parse(
               `${summary.section_field[2].field_response?.request_response}`
             );
@@ -54,7 +54,8 @@ const ReceivingInspectingReportSummary = ({ summaryData }: Props) => {
             return (
               <tr key={index}>
                 <td>{item}</td>
-                <td>{quantity}</td>
+                <td>{addCommaToNumber(parsedQuantity)}</td>
+                <td>{unit}</td>
                 <td>{status}</td>
               </tr>
             );

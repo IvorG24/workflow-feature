@@ -1,4 +1,4 @@
-import { regExp } from "@/utils/string";
+import { addCommaToNumber, regExp } from "@/utils/string";
 import { SSOTType } from "@/utils/types";
 import {
   ActionIcon,
@@ -173,6 +173,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
     return request.map((request) => {
       const itemName: string[] = [];
       const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
       const itemStatus: string[] = [];
       const items = request.rir_request_response;
 
@@ -183,7 +184,8 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           const matches = regExp.exec(itemName[itemQuantity.length]);
           const unit =
             matches && matches[1].replace(/\d+/g, "").trim().split("/")[0];
-          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
         } else if (item.request_response_field_name === "Receiving Status") {
           itemStatus.push(JSON.parse(item.request_response));
         }
@@ -213,6 +215,15 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
                 <List.Item key={index}>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemUnit.map((item, index) => (
+                <List.Item key={index}>
                   <Text size={14}>{item}</Text>
                 </List.Item>
               ))}
@@ -237,6 +248,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       const itemName: string[] = [];
       const itemPrice: string[] = [];
       const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
       const items = request.quotation_request_response.slice(
         3,
         request.quotation_request_response.length
@@ -244,12 +256,13 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
           itemName.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "Price") {
+        } else if (item.request_response_field_name === "Price per Unit") {
           itemPrice.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           const matches = regExp.exec(itemName[itemQuantity.length]);
           const unit = matches && matches[1].replace(/\d+/g, "").trim();
-          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
         }
       });
 
@@ -337,7 +350,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemPrice.map((item, index) => (
                 <List.Item key={index}>
-                  <Text size={14}>₱{item}</Text>
+                  <Text size={14}>₱ {addCommaToNumber(Number(item))}</Text>
                 </List.Item>
               ))}
             </List>
@@ -345,6 +358,15 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemUnit.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
                 </List.Item>
@@ -366,6 +388,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.processor}>Warehouse Receiver</th>
                     <th className={classes.description}>Item</th>
                     <th className={classes.normal}>Quantity</th>
+                    <th className={classes.normal}>Unit</th>
                     <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
@@ -447,7 +470,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
                 <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
                 </List.Item>
               ))}
             </List>
@@ -506,9 +529,9 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.short}> Send Method</th>
                     <th className={classes.normal}>Proof of Sending</th>
                     <th className={classes.description}>Item</th>
-                    <th className={classes.short}>Price</th>
-                    <th className={classes.short}>Quantity</th>
-
+                    <th className={classes.normal}>Price per Unit</th>
+                    <th className={classes.normal}>Quantity</th>
+                    <th className={classes.date}>Unit of Measurement</th>
                     <th>RIR</th>
                   </tr>
                 </thead>
@@ -580,7 +603,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th className={classes.date}>Date Needed</th>
                   <th className={classes.normal}>Cost Code</th>
                   <th className={classes.normal}>Item Name</th>
-                  <th className={classes.short}>Quantity</th>
+                  <th className={classes.normal}>Quantity</th>
                   <th className={classes.date}>Unit of Measurement</th>
                   <th className={classes.description}>Description</th>
                   <th className={classes.short}>Cost Code</th>

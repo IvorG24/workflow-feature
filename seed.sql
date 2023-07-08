@@ -108,7 +108,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Request Send Method', 'DROPDOWN', 4, '991d9830-ae1b-4c14-bdba-6167b64f50f7', false, false),
 ('4c201ab9-92d9-47dd-a661-a7bb2c4e3923', 'Proof of Sending', 'FILE', 5, '991d9830-ae1b-4c14-bdba-6167b64f50f7', false, false),
 ('ba52fb74-5663-41f9-a72b-5dbe0244f317', 'Item', 'DROPDOWN', 6, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
-('273a1161-2a86-4b96-a024-94cf4f6f4cdf', 'Price', 'NUMBER', 7, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
+('273a1161-2a86-4b96-a024-94cf4f6f4cdf', 'Price per Unit', 'NUMBER', 7, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 ('5dfbc04b-6f2d-4b55-818c-8f7031cdcdc2', 'Quantity', 'NUMBER', 8, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 
 -- Receiving Inspecting Report Form

@@ -254,7 +254,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Price",
+          field_name: "Price per Unit",
           field_type: "NUMBER",
           field_order: 7,
           field_section_id: quotationItemSectionId,
