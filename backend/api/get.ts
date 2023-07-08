@@ -1,5 +1,5 @@
 import { Database } from "@/utils/database";
-import { regExp } from "@/utils/string";
+import { addCommaToNumber, regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
@@ -1613,10 +1613,18 @@ export const checkQuotationItemQuantity = async (
     const unit = matches[1].replace(/\d+/g, "").trim();
 
     if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
       returnData.push(
-        `${JSON.parse(itemList[i])} exceeds quantity limit by ${
+        `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            addCommaToNumber(Number(quantityMatch[1]))
+          )
+        )} exceeds quantity limit by ${addCommaToNumber(
           quantityList[i] - expectedQuantity
-        } ${unit}`
+        )} ${unit}`
       );
     }
   }
@@ -1714,13 +1722,22 @@ export const checkRIRItemQuantity = async (
     const unit = matches[1].replace(/\d+/g, "").trim().split(" ")[0];
 
     if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
       returnData.push(
-        `${JSON.parse(itemList[i])} exceeds quantity limit by ${
+        `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            addCommaToNumber(Number(quantityMatch[1]))
+          )
+        )} exceeds quantity limit by ${addCommaToNumber(
           quantityList[i] - expectedQuantity
-        } ${unit}`
+        )} ${unit}`
       );
     }
   }
+
   return returnData;
 };
 

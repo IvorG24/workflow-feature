@@ -209,10 +209,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             const result = items[item].item.match(regex);
             const value =
               result &&
-              items[item].item.replace(
-                result[0],
-                `(${items[item].quantity} / ${result[0].slice(1, -1)})`
-              );
+              items[item].item.replace(result[0], `(${items[item].quantity})`);
             return {
               option_description: null,
               option_field_id: form.form_section[1].section_field[0].field_id,

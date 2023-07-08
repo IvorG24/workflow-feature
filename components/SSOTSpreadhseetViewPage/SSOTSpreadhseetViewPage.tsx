@@ -179,11 +179,20 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
-          itemName.push(JSON.parse(item.request_response));
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
         } else if (item.request_response_field_name === "Quantity") {
           const matches = regExp.exec(itemName[itemQuantity.length]);
-          const unit =
-            matches && matches[1].replace(/\d+/g, "").trim().split("/")[0];
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
           itemQuantity.push(JSON.parse(item.request_response));
           itemUnit.push(`${unit}`);
         } else if (item.request_response_field_name === "Receiving Status") {
@@ -255,12 +264,22 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       );
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
-          itemName.push(JSON.parse(item.request_response));
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
         } else if (item.request_response_field_name === "Price per Unit") {
           itemPrice.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           const matches = regExp.exec(itemName[itemQuantity.length]);
-          const unit = matches && matches[1].replace(/\d+/g, "").trim();
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
           itemQuantity.push(JSON.parse(item.request_response));
           itemUnit.push(`${unit}`);
         }

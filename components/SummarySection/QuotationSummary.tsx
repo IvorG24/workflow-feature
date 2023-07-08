@@ -39,9 +39,19 @@ const QuotationSummary = ({ summaryData }: Props) => {
         </thead>
         <tbody>
           {summaryData.map((summary, index) => {
-            const item = JSON.parse(
-              `${summary.section_field[0].field_response?.request_response}`
-            );
+            const quantityMatch =
+              summary.section_field[0].field_response?.request_response.match(
+                /(\d+)/
+              );
+            if (!quantityMatch) return;
+
+            const item =
+              summary.section_field[0].field_response?.request_response.replace(
+                `${quantityMatch[0]}`,
+                addCommaToNumber(Number(quantityMatch[0]))
+              );
+            if (!item) return;
+
             const price = JSON.parse(
               `${summary.section_field[1].field_response?.request_response}`
             );
@@ -49,14 +59,14 @@ const QuotationSummary = ({ summaryData }: Props) => {
               `${summary.section_field[2].field_response?.request_response}`
             );
             const matches = regExp.exec(item);
-            const unit = matches && matches[1].replace(/\d+/g, "").trim();
+            const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
 
             const totalPrice = parsedQuantity * price;
             totalPriceSummation += totalPrice;
 
             return (
               <tr key={index}>
-                <td>{item}</td>
+                <td>{JSON.parse(item)}</td>
                 <td>₱ {addCommaToNumber(price)}</td>
                 <td>{addCommaToNumber(parsedQuantity)}</td>
                 <td>{unit}</td>
