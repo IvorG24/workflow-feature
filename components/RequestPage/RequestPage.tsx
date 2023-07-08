@@ -140,7 +140,7 @@ const RequestPage = ({
             }
           );
 
-          if (warningItemList.length !== 0) {
+          if (warningItemList && warningItemList.length !== 0) {
             modals.open({
               title: "You cannot approve create this request.",
               centered: true,
@@ -169,7 +169,7 @@ const RequestPage = ({
           const quotationId =
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
-          const itemSection = request.request_form.form_section[1];
+          const itemSection = request.request_form.form_section[2];
 
           const warningItemList = await checkRIRItemQuantity(supabaseClient, {
             quotationId,
@@ -179,7 +179,7 @@ const RequestPage = ({
             quantityFieldList: itemSection.section_field[1].field_response,
           });
 
-          if (warningItemList.length !== 0) {
+          if (warningItemList && warningItemList.length !== 0) {
             modals.open({
               title: "You cannot approve create this request.",
               centered: true,
@@ -383,7 +383,7 @@ const RequestPage = ({
         request.request_form.form_is_formsly_form ? (
           <ReceivingInspectingReportSummary
             summaryData={sectionWithDuplicateList
-              .slice(1)
+              .slice(2)
               .sort((a, b) =>
                 `${a.section_field[0].field_response?.request_response}` >
                 `${b.section_field[0].field_response?.request_response}`

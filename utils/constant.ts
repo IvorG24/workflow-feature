@@ -64,6 +64,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const quotationMainSectionId = uuidv4();
   const quotationItemSectionId = uuidv4();
   const rirIdSectionId = uuidv4();
+  const rirQualityCheckSectionId = uuidv4();
   const rirItemSectionId = uuidv4();
   const chequeReferenceIdSectionId = uuidv4();
   const chequeReferenceTreasurySectionId = uuidv4();
@@ -307,9 +308,16 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           section_form_id: receivingInspectingReportFormId,
         },
         {
+          section_id: rirQualityCheckSectionId,
+          section_name: "Quality Check",
+          section_order: 2,
+          section_is_duplicatable: false,
+          section_form_id: receivingInspectingReportFormId,
+        },
+        {
           section_id: rirItemSectionId,
           section_name: "Item",
-          section_order: 2,
+          section_order: 3,
           section_is_duplicatable: true,
           section_form_id: receivingInspectingReportFormId,
         },
@@ -332,9 +340,25 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: true,
         },
         {
+          field_name: "DR",
+          field_type: "FILE",
+          field_order: 3,
+          field_section_id: rirQualityCheckSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "SI",
+          field_type: "FILE",
+          field_order: 4,
+          field_section_id: rirQualityCheckSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
           field_name: "Item",
           field_type: "DROPDOWN",
-          field_order: 3,
+          field_order: 5,
           field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -342,7 +366,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 4,
+          field_order: 6,
           field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -350,7 +374,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Receiving Status",
           field_type: "TEXT",
-          field_order: 5,
+          field_order: 7,
           field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: true,

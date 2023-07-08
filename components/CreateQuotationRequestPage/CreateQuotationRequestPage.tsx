@@ -153,7 +153,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
         quantityFieldList,
       });
 
-      if (warningItemList.length !== 0) {
+      if (warningItemList && warningItemList.length !== 0) {
         modals.open({
           title: "You cannot create this request.",
           centered: true,

@@ -176,6 +176,8 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       const itemUnit: string[] = [];
       const itemStatus: string[] = [];
       const items = request.rir_request_response;
+      let dr = "";
+      let si = "";
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -197,6 +199,10 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           itemUnit.push(`${unit}`);
         } else if (item.request_response_field_name === "Receiving Status") {
           itemStatus.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "DR") {
+          dr = item.request_response;
+        } else if (item.request_response_field_name === "SI") {
+          si = item.request_response;
         }
       });
 
@@ -211,6 +217,32 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             {new Date(request.rir_request_date_created).toLocaleDateString()}
           </td>
           <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
+          <td>
+            {dr && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
+          <td>
+            {si && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
@@ -405,9 +437,11 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.long}>RIR ID</th>
                     <th className={classes.date}>Date Created</th>
                     <th className={classes.processor}>Warehouse Receiver</th>
+                    <th className={classes.short}>DR</th>
+                    <th className={classes.short}>SI</th>
                     <th className={classes.description}>Item</th>
                     <th className={classes.normal}>Quantity</th>
-                    <th className={classes.normal}>Unit</th>
+                    <th className={classes.date}>Unit of Measurement</th>
                     <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
@@ -551,7 +585,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.normal}>Price per Unit</th>
                     <th className={classes.normal}>Quantity</th>
                     <th className={classes.date}>Unit of Measurement</th>
-                    <th>RIR</th>
+                    <th>Review Inspecting Report</th>
                   </tr>
                 </thead>
                 <tbody>{renderQuotation(request.otp_quotation_request)}</tbody>

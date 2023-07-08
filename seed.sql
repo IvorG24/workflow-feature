@@ -45,7 +45,8 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 
 -- Receiving Inspecting Report
 ('b79c9a66-f112-4bfa-8d5c-88267be24fd8', 'ID', 1, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
-('00341355-1ece-47e6-88a2-060fbab8b11a', 'Item', 2, true, '5782d70a-5f6b-486c-a77f-401066afd005'),
+('39831fe4-00f3-4b5e-b840-aae8f1469841', 'Quality Check', 2, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
+('00341355-1ece-47e6-88a2-060fbab8b11a', 'Item', 3, true, '5782d70a-5f6b-486c-a77f-401066afd005'),
 
 -- Cheque Reference
 ('5e9cf483-98dd-4b44-820d-4c020ae50279', 'ID', 1, false, '913a09d8-88f9-4139-a039-a77394405b62'),
@@ -114,9 +115,11 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 -- Receiving Inspecting Report Form
 ('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Order to Purchase ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Quotation ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
-('cf0af133-5e81-4665-aa44-6dd3d5e28b43', 'Item', 'DROPDOWN', 3, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
-('3ca0dbf6-800f-44e5-ba30-149dd5c211fc', 'Quantity', 'NUMBER', 4, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
-('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 5, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
+('18975198-02d3-49b4-af40-232c2c915ba7', 'DR', 'FILE', 3, '39831fe4-00f3-4b5e-b840-aae8f1469841', false, false),
+('6317b506-816f-4ce4-a083-b9a94c900446', 'SI', 'FILE', 4, '39831fe4-00f3-4b5e-b840-aae8f1469841', false, false),
+('cf0af133-5e81-4665-aa44-6dd3d5e28b43', 'Item', 'DROPDOWN', 5, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
+('3ca0dbf6-800f-44e5-ba30-149dd5c211fc', 'Quantity', 'NUMBER', 6, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
+('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 7, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
 
 -- Cheque Reference Form
 ('618770e4-40d1-4d8d-b5a0-189eca838ac7', 'Order to Purchase ID', 'LINK', 1, '5e9cf483-98dd-4b44-820d-4c020ae50279', true, true),
