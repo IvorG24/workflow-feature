@@ -29,9 +29,13 @@ export type StackedBarChartDataType = {
 
 type StackedBarChartProps = {
   data: StackedBarChartDataType[];
+  xAxisLabel?: string;
 };
 
-const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
+const StackedBarChart: React.FC<StackedBarChartProps> = ({
+  data,
+  xAxisLabel,
+}) => {
   const chartData = {
     labels: data.map((d) => d.month),
     datasets: [
@@ -103,20 +107,20 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data }) => {
     scales: {
       x: {
         stacked: true,
+        title: {
+          display: true,
+          text: xAxisLabel ? xAxisLabel : "",
+          color: "black",
+          font: {
+            weight: "bold",
+          },
+        },
       },
       y: { stacked: true },
     },
     plugins: {
       legend: {
         display: false,
-        // position: "right" as const,
-        // align: "start" as const,
-        // labels: {
-        //   boxWidth: 20,
-        //   boxHeight: 15,
-        //   usePointStyle: true,
-        //   pointStyle: "rectRounded",
-        // },
       },
     },
   };

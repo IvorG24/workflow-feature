@@ -1817,3 +1817,26 @@ export const getTeamGroupList = async (
 
   return data.team_group_list;
 };
+
+// Get request per status count
+export const getRequestStatusCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, startDate, endDate } = params;
+  const { data, count } = await supabaseClient
+    .from("request_table")
+    .select("request_status, request_date_created", { count: "exact" })
+    .eq("request_form_id", formId)
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  return {
+    data,
+    count,
+  };
+};

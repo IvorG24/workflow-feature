@@ -1,4 +1,5 @@
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
+import { RequestStatusDataType } from "@/components/Dashboard/OverviewTab/Overview";
 import { DataItem } from "@/components/Dashboard/RequisitionTab/PurchaseTrend";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import moment from "moment";
@@ -8,7 +9,6 @@ import {
   LineChartDataType,
   PurchaseTrendChartDataType,
   RequestByFormType,
-  RequestDashboardOverviewData,
   RequestResponseDataType,
   ResponseDataType,
   SearchKeywordResponseType,
@@ -398,10 +398,10 @@ export const getChartData = (
 };
 
 export const getStackedBarChartData = (
-  requestList: RequestDashboardOverviewData[],
+  requestData: RequestStatusDataType[],
   initialChartData: StackedBarChartDataType[]
 ) => {
-  const reducedRequestList = requestList.reduce((acc, request) => {
+  const reducedRequestList = requestData.reduce((acc, request) => {
     const requestMonthCreated = moment(request.request_date_created).format(
       "MMM"
     );

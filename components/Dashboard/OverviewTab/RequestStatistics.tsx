@@ -1,6 +1,5 @@
 import { getStackedBarChartData } from "@/utils/arrayFunctions/dashboard";
 import { getStatusToColorForCharts } from "@/utils/styling";
-import { RequestDashboardOverviewData } from "@/utils/types";
 import { Box, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import {
   IconFileAnalytics,
@@ -9,9 +8,10 @@ import {
 import { startCase } from "lodash";
 import { useEffect, useState } from "react";
 import StackedBarChart from "../../Chart/StackedBarChart";
+import { RequestStatusDataType } from "./Overview";
 
 type RequestStatisticsProps = {
-  requestList: RequestDashboardOverviewData[];
+  requestStatusData: RequestStatusDataType[];
 };
 
 const generateInitialChartData = () => {
@@ -43,9 +43,9 @@ const generateInitialChartData = () => {
 
 const statusList = ["pending", "approved", "rejected", "canceled"];
 
-const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
+const RequestStatistics = ({ requestStatusData }: RequestStatisticsProps) => {
   const initialChartData = getStackedBarChartData(
-    requestList,
+    requestStatusData,
     generateInitialChartData()
   );
 
@@ -92,7 +92,7 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
 
   useEffect(() => {
     setChartData(initialChartData);
-  }, [requestList]);
+  }, [requestStatusData]);
 
   return (
     <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
@@ -125,7 +125,10 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
           </Group>
         </Group>
         <Box p="xs" w="100%">
-          <StackedBarChart data={chartData} />
+          <StackedBarChart
+            data={chartData}
+            xAxisLabel={`${new Date().getFullYear()}`}
+          />
         </Box>
       </Stack>
     </Paper>

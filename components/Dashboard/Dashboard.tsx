@@ -1,4 +1,7 @@
-import { getDashboardOverViewData } from "@/backend/api/get";
+import {
+  getDashboardOverViewData,
+  getRequestStatusCount,
+} from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { RequestDashboardOverviewData } from "@/utils/types";
 import {
@@ -16,9 +19,10 @@ import {
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { startCase } from "lodash";
+import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import Overview from "./OverviewTab/Overview";
+import Overview, { RequestStatusDataType } from "./OverviewTab/Overview";
 import ResponseTab from "./ResponseTab/ResponseTab";
 
 const TABS = ["overview", "responses"];
@@ -45,17 +49,33 @@ const Dashboard = ({ activeTeamId }: Props) => {
   const [overviewTabData, setOverviewTabData] = useState<
     RequestDashboardOverviewData[] | null
   >(null);
-  const [overviewTabDataCount, setOverviewTabDataCount] = useState(0);
+  const [requestStatusData, setRequestStatusData] = useState<
+    RequestStatusDataType[] | null
+  >(null);
+  const [totalRequestCount, setTotalRequestCount] = useState(0);
+  const currentDate = moment();
+  const dateFilterList = [
+    {
+      value: moment({ year: currentDate.year(), month: 0, day: 1 }).format(
+        "YYYY-MM-DD"
+      ),
+      label: "This year",
+    },
+    {
+      value: moment(currentDate).subtract(6, "months").format("YYYY-MM-DD"),
+      label: "Last 6 months",
+    },
+  ];
+  const [dateFilter, setDateFilter] = useState(dateFilterList[0].value);
 
   useEffect(() => {
     const fetchOverviewData = async () => {
       setIsLoading(true);
-      const { data, count } = await getDashboardOverViewData(supabaseClient, {
+      const { data } = await getDashboardOverViewData(supabaseClient, {
         teamId: activeTeamId,
         formId: selectedForm ? selectedForm : undefined,
       });
       setOverviewTabData(data);
-      setOverviewTabDataCount(count ? count : 0);
       setIsLoading(false);
     };
 
@@ -75,6 +95,22 @@ const Dashboard = ({ activeTeamId }: Props) => {
     setIsOTPForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
   }, [isFormslyForm, selectedFormName]);
 
+  useEffect(() => {
+    const fetchRequestStatusCount = async (selectedForm: string) => {
+      const { data, count } = await getRequestStatusCount(supabaseClient, {
+        formId: selectedForm,
+        startDate: dateFilter,
+        endDate: currentDate.format("YYYY-MM-DD"),
+      });
+      setRequestStatusData(data);
+      setTotalRequestCount(count ? count : 0);
+    };
+
+    if (selectedForm) {
+      fetchRequestStatusCount(selectedForm);
+    }
+  }, [selectedForm, dateFilter]);
+
   const renderTabs = (tab: string) => {
     switch (tab) {
       case "overview":
@@ -91,8 +127,9 @@ const Dashboard = ({ activeTeamId }: Props) => {
               </Alert>
             )}
             <Overview
+              requestStatusData={requestStatusData ? requestStatusData : []}
+              requestCount={totalRequestCount}
               requestList={overviewTabData ? overviewTabData : []}
-              requestCount={overviewTabDataCount}
             />
           </>
         );
@@ -126,7 +163,7 @@ const Dashboard = ({ activeTeamId }: Props) => {
 
           <Group>
             <Select
-              w={300}
+              w={250}
               placeholder="Select a Form"
               data={formList.map((form) => ({
                 value: form.form_id,
@@ -135,6 +172,11 @@ const Dashboard = ({ activeTeamId }: Props) => {
               value={selectedForm}
               onChange={setSelectedForm}
               searchable
+            />
+            <Select
+              data={dateFilterList}
+              value={dateFilter}
+              onChange={(value: string) => setDateFilter(value)}
             />
           </Group>
         </Flex>

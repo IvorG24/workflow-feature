@@ -6,18 +6,28 @@ import RequestStatusTracker from "./RequestStatusTracker";
 import RequestorTable from "./RequestorTable/RequestorTable";
 import SignerTable from "./SignerTable";
 
+export type RequestStatusDataType = {
+  request_status: string;
+  request_date_created: string;
+};
+
 type OverviewProps = {
   requestList: RequestDashboardOverviewData[];
   requestCount: number;
+  requestStatusData: RequestStatusDataType[];
 };
 
 const status = ["Pending", "Approved", "Rejected", "Canceled"];
 
-const Overview = ({ requestList, requestCount }: OverviewProps) => {
+const Overview = ({
+  requestList,
+  requestCount,
+  requestStatusData,
+}: OverviewProps) => {
   // get request status meter data
-  const requestStatusData = status.map((status) => {
+  const requestStatusChartData = status.map((status) => {
     const requestMatch =
-      requestList.filter(
+      requestStatusData.filter(
         (request) => lowerCase(request.request_status) === lowerCase(status)
       ) || [];
 
@@ -30,6 +40,8 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
     return meterData;
   });
 
+  console.log(requestStatusChartData);
+
   return (
     <Stack w="100%" align="center">
       <Flex
@@ -40,7 +52,7 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
         wrap="wrap"
       >
         <Box w={{ base: "100%", sm: 360 }} h={450}>
-          <RequestStatusTracker data={requestStatusData} />
+          <RequestStatusTracker data={requestStatusChartData} />
         </Box>
         <Box w={{ base: "100%", sm: 300 }} h={450}>
           <RequestorTable
@@ -54,7 +66,7 @@ const Overview = ({ requestList, requestCount }: OverviewProps) => {
       </Flex>
       <Flex w="100%" align="flex-start" gap="xl" wrap="wrap">
         <Box sx={{ flex: 1 }} w="100%">
-          <RequestStatistics requestList={requestList} />
+          <RequestStatistics requestStatusData={requestStatusData} />
         </Box>
       </Flex>
     </Stack>
