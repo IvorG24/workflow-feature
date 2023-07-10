@@ -292,9 +292,9 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04');
 
 INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
-('5bc0f573-9c7f-4053-a387-21e744399b0c', 'WOOD', 'piece', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', '22773', 'rX7VU'),
-('64de1a67-18dd-4010-ac2a-326aa7178908', 'GASOLINE', 'litre', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', '87943', 'dpRHk'),
-('bf56098b-3869-4c28-a1e8-896c82b9386e', 'NAIL', 'bag', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', '48749', 'QAMFi');
+('5bc0f573-9c7f-4053-a387-21e744399b0c', 'WOOD', 'piece', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'KFEO2', 'RX7VU'),
+('64de1a67-18dd-4010-ac2a-326aa7178908', 'GASOLINE', 'litre', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'G2HF5', 'DPRHK'),
+('bf56098b-3869-4c28-a1e8-896c82b9386e', 'NAIL', 'bag', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'ZH123', 'QAMFI');
 
 INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
 ('164a75f3-09cc-42ae-9d9e-276eb33166f3', 'LENGTH', '5bc0f573-9c7f-4053-a387-21e744399b0c', '59a6093c-5733-44c0-8a99-e12011207ff8'),
