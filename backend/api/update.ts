@@ -531,3 +531,20 @@ export const updateFormGroup = async (
   if (error) throw error;
   return data;
 };
+
+// Update form description
+export const updateFormDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    description: string;
+  }
+) => {
+  const { formId, description } = params;
+
+  const { error } = await supabaseClient
+    .from("form_table")
+    .update({ form_description: description })
+    .eq("form_id", formId);
+  if (error) throw error;
+};
