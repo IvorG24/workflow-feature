@@ -1,4 +1,4 @@
-import { checkRIRItemQuantity } from "@/backend/api/get";
+import { checkRIRPurchasedItemQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -46,7 +46,10 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
+const CreateReceivingInspectingReportPurchasedPage = ({
+  form,
+  itemOptions,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -172,13 +175,16 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
         });
       });
 
-      const warningItemList = await checkRIRItemQuantity(supabaseClient, {
-        quotationId,
-        itemFieldId: itemSection.section_field[0].field_id,
-        quantityFieldId: itemSection.section_field[1].field_id,
-        itemFieldList,
-        quantityFieldList,
-      });
+      const warningItemList = await checkRIRPurchasedItemQuantity(
+        supabaseClient,
+        {
+          quotationId,
+          itemFieldId: itemSection.section_field[0].field_id,
+          quantityFieldId: itemSection.section_field[1].field_id,
+          itemFieldList,
+          quantityFieldList,
+        }
+      );
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
@@ -232,7 +238,7 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
   const handleDuplicateSection = (sectionId: string) => {
     if (
       availableItems.length === 0 ||
-      formSections.length === itemOptions.length + 1
+      formSections.length === itemOptions.length + 2
     ) {
       notifications.show({
         message: "No available item.",
@@ -475,4 +481,4 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
   );
 };
 
-export default CreateReceivingInspectingReportPage;
+export default CreateReceivingInspectingReportPurchasedPage;

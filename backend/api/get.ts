@@ -1249,7 +1249,9 @@ export const getFormIDForOTP = async (
     .select(
       "form_id, form_name, form_group, form_is_for_every_member, form_team_member: form_team_member_id!inner(team_member_team_id)"
     )
-    .or("form_name.eq.Quotation, form_name.eq.Cheque Reference")
+    .or(
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%"
+    )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_formsly_form", true);
   if (error) throw error;
@@ -1362,7 +1364,8 @@ export const getFormslyForwardLinkFormId = async (
   const requestList = {
     "Order to Purchase": [] as string[],
     Quotation: [] as string[],
-    "Receiving Inspecting Report": [] as string[],
+    "Receiving Inspecting Report (Purchased)": [] as string[],
+    "Receiving Inspecting Report (Sourced)": [] as string[],
   };
 
   formattedData.forEach((request) => {
@@ -1377,8 +1380,13 @@ export const getFormslyForwardLinkFormId = async (
           `"${request.request_response_request.request_id}"`
         );
         break;
-      case "Receiving Inspecting Report":
-        requestList["Receiving Inspecting Report"].push(
+      case "Receiving Inspecting Report (Purchased)":
+        requestList["Receiving Inspecting Report (Purchased)"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Receiving Inspecting Report (Sourced)":
+        requestList["Receiving Inspecting Report (Sourced)"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1460,8 +1468,8 @@ export const getItemResponseForQuotation = async (
   return options;
 };
 
-// Get item response of an quotation request
-export const getItemResponseForRIR = async (
+// Get item response of a quotation request
+export const getItemResponseForRIRPurchased = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1522,6 +1530,79 @@ export const getItemResponseForRIR = async (
       }
     }
   });
+  return options;
+};
+
+// Get item response of a otp request
+export const getItemResponseForRIRSourced = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { requestId } = params;
+
+  const { data: requestResponseData, error: requestResponseError } =
+    await supabaseClient
+      .from("request_response_table")
+      .select(
+        "*, request_response_field: request_response_field_id(field_name, field_order)"
+      )
+      .eq("request_response_request_id", requestId);
+
+  if (requestResponseError) throw requestResponseError;
+  const formattedRequestResponseData =
+    requestResponseData as unknown as (RequestResponseTableRow & {
+      request_response_field: { field_name: string; field_order: number };
+    })[];
+
+  const options: Record<
+    string,
+    {
+      generalName: string;
+      unit: string;
+      quantity: number;
+      description: string;
+    }
+  > = {};
+  const idForNullDuplicationId = uuidv4();
+  formattedRequestResponseData.forEach((response) => {
+    if (response.request_response_field) {
+      const fieldName = response.request_response_field.field_name;
+      const duplicatableSectionId =
+        response.request_response_duplicatable_section_id ??
+        idForNullDuplicationId;
+
+      if (response.request_response_field.field_order > 3) {
+        if (!options[duplicatableSectionId]) {
+          options[duplicatableSectionId] = {
+            generalName: "",
+            unit: "",
+            quantity: 0,
+            description: "",
+          };
+        }
+
+        if (fieldName === "General Name") {
+          options[duplicatableSectionId].generalName = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Unit of Measurement") {
+          options[duplicatableSectionId].unit = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Quantity") {
+          options[duplicatableSectionId].quantity = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
+        } else {
+          options[duplicatableSectionId].description += `${
+            response.request_response_field.field_name
+          }: ${JSON.parse(response.request_response)}, `;
+        }
+      }
+    }
+  });
+
   return options;
 };
 
@@ -1631,8 +1712,8 @@ export const checkQuotationItemQuantity = async (
   return returnData;
 };
 
-// Check if the approving or creating rir item quantity are less than the quotation quantity
-export const checkRIRItemQuantity = async (
+// Check if the approving or creating rir purchased item quantity are less than the quotation quantity
+export const checkRIRPurchasedItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     quotationId: string;
@@ -1661,7 +1742,117 @@ export const checkRIRItemQuantity = async (
     .eq("request_response_request.request_form.form_is_formsly_form", true)
     .eq(
       "request_response_request.request_form.form_name",
-      "Receiving Inspecting Report"
+      "Receiving Inspecting Report (Purchased)"
+    );
+
+  if (requestIdListError) throw requestIdListError;
+  const requestIdList = requestIds.map(
+    (response) => response.request_response_request_id
+  );
+
+  // fetch request responses
+  const { data: requestResponse, error: requestResponseError } =
+    await supabaseClient
+      .from("request_response_table")
+      .select("*")
+      .in("request_response_request_id", requestIdList)
+      .or(
+        `request_response_field_id.eq.${itemFieldId}, request_response_field_id.eq.${quantityFieldId}`
+      );
+  if (requestResponseError) throw requestResponseError;
+
+  // separate item to quantity response
+  const requestResponseItem: RequestResponseTableRow[] = [];
+  const requestResponseQuantity: RequestResponseTableRow[] = [];
+  requestResponse.forEach((response) => {
+    if (response.request_response_field_id === itemFieldId) {
+      requestResponseItem.push(response);
+    } else if (response.request_response_field_id === quantityFieldId) {
+      requestResponseQuantity.push(response);
+    }
+  });
+  requestResponseItem.push(...itemFieldList);
+  requestResponseQuantity.push(...quantityFieldList);
+
+  const itemList: string[] = [];
+  const quantityList: number[] = [];
+
+  for (let i = 0; i < requestResponseItem.length; i++) {
+    if (itemList.includes(requestResponseItem[i].request_response)) {
+      const quantityIndex = itemList.indexOf(
+        requestResponseItem[i].request_response
+      );
+      quantityList[quantityIndex] += Number(
+        requestResponseQuantity[i].request_response
+      );
+    } else {
+      itemList.push(requestResponseItem[i].request_response);
+      quantityList.push(Number(requestResponseQuantity[i].request_response));
+    }
+  }
+
+  const returnData: string[] = [];
+  for (let i = 0; i < itemList.length; i++) {
+    const matches = regExp.exec(itemList[i]);
+    if (!matches) continue;
+
+    const quantityMatch = matches[1].match(/(\d+)/);
+    if (!quantityMatch) continue;
+
+    const expectedQuantity = Number(quantityMatch[1]);
+    const unit = matches[1].replace(/\d+/g, "").trim().split(" ")[0];
+
+    if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
+      returnData.push(
+        `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            addCommaToNumber(Number(quantityMatch[1]))
+          )
+        )} exceeds quantity limit by ${addCommaToNumber(
+          quantityList[i] - expectedQuantity
+        )} ${unit}`
+      );
+    }
+  }
+
+  return returnData;
+};
+
+// Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+export const checkRIRSourcedItemQuantity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    otpId: string;
+    itemFieldId: string;
+    quantityFieldId: string;
+    itemFieldList: RequestResponseTableRow[];
+    quantityFieldList: RequestResponseTableRow[];
+  }
+) => {
+  const {
+    otpId,
+    itemFieldId,
+    quantityFieldId,
+    itemFieldList,
+    quantityFieldList,
+  } = params;
+
+  // fetch request id
+  const { data: requestIds, error: requestIdListError } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "*, request_response_request: request_response_request_id!inner(request_status, request_form: request_form_id!inner(form_is_formsly_form, form_name))"
+    )
+    .eq("request_response", otpId)
+    .eq("request_response_request.request_status", "APPROVED")
+    .eq("request_response_request.request_form.form_is_formsly_form", true)
+    .eq(
+      "request_response_request.request_form.form_name",
+      "Receiving Inspecting Report (Sourced)"
     );
 
   if (requestIdListError) throw requestIdListError;

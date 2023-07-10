@@ -22,9 +22,10 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[]),
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['Warehouse Processor']),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Accounting Processor']),
-('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'formsly premade Receiving Inspecting Report form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver']),
+('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver']),
+('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver']),
 ('913a09d8-88f9-4139-a039-a77394405b62', 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Treasury Processor']),
-('d2e3e618-7f9b-4439-8f76-72a05a0bf305', 'Audit', 'formsly premade Audit form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Audit Processor']);
+('d2e3e618-7f9b-4439-8f76-72a05a0bf305', 'Audit', 'formsly premade Audit form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['Audit Processor']);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
@@ -43,10 +44,15 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('991d9830-ae1b-4c14-bdba-6167b64f50f7', 'Main', 2, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 ('ee8a3bc7-4253-44f7-bd7c-53b0e8871601', 'Item', 3, true, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 
--- Receiving Inspecting Report
+-- Receiving Inspecting Report (Purchased)
 ('b79c9a66-f112-4bfa-8d5c-88267be24fd8', 'ID', 1, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
 ('39831fe4-00f3-4b5e-b840-aae8f1469841', 'Quality Check', 2, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
 ('00341355-1ece-47e6-88a2-060fbab8b11a', 'Item', 3, true, '5782d70a-5f6b-486c-a77f-401066afd005'),
+
+-- Receiving Inspecting Report (Sourced)
+('1416e947-3491-436f-9b20-f0cd705607d0', 'ID', 1, false, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
+('dacb6338-8839-4f66-ae70-2f1d3175e169', 'Quality Check', 2, false, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
+('0d630b15-3c88-49e0-b588-1e60dd839bcb', 'Item', 3, true, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
 
 -- Cheque Reference
 ('5e9cf483-98dd-4b44-820d-4c020ae50279', 'ID', 1, false, '913a09d8-88f9-4139-a039-a77394405b62'),
@@ -112,7 +118,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('273a1161-2a86-4b96-a024-94cf4f6f4cdf', 'Price per Unit', 'NUMBER', 7, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 ('5dfbc04b-6f2d-4b55-818c-8f7031cdcdc2', 'Quantity', 'NUMBER', 8, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 
--- Receiving Inspecting Report Form
+-- Receiving Inspecting Report (Purchased) Form
 ('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Order to Purchase ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Quotation ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('18975198-02d3-49b4-af40-232c2c915ba7', 'DR', 'FILE', 3, '39831fe4-00f3-4b5e-b840-aae8f1469841', false, false),
@@ -120,6 +126,14 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('cf0af133-5e81-4665-aa44-6dd3d5e28b43', 'Item', 'DROPDOWN', 5, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
 ('3ca0dbf6-800f-44e5-ba30-149dd5c211fc', 'Quantity', 'NUMBER', 6, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
 ('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 7, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
+
+-- Receiving Inspecting Report (Sourced) Form
+('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Order to Purchase ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
+('92cfe1b7-cce0-4632-83d6-8a03bd9a75f5', 'DR', 'FILE', 2, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
+('a5bd44e8-1fcf-4df0-a836-37e33b1b534a', 'SI', 'FILE', 3, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
+('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 4, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
+('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 5, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
+('d3d790fe-3d37-421c-91f3-e943ee5941b6', 'Receiving Status', 'TEXT', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
 
 -- Cheque Reference Form
 ('618770e4-40d1-4d8d-b5a0-189eca838ac7', 'Order to Purchase ID', 'LINK', 1, '5e9cf483-98dd-4b44-820d-4c020ae50279', true, true),
@@ -182,6 +196,7 @@ INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, si
 ('37067546-44b2-4bfa-a952-b0332e98298c', TRUE, 'Approved', 1, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('8321f613-6362-4d17-b9f2-f439ddd9a8a8', TRUE, 'Approved', 1, 'a732196f-9779-45e2-85fa-7320397e5b0a', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('37f8b92c-9e9e-4e97-a6f4-f2f55a7f1a87', TRUE, 'Approved', 1, '5782d70a-5f6b-486c-a77f-401066afd005', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
+('2c4504a3-6b38-42bb-af23-d489967205e3', TRUE, 'Approved', 1, '391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('72eb38d7-2933-4bda-99ad-a51e1ba62b71', TRUE, 'Approved', 1, '913a09d8-88f9-4139-a039-a77394405b62', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('a8a254ee-7294-48b1-9c14-252875d08330', TRUE, 'Approved', 1, 'd2e3e618-7f9b-4439-8f76-72a05a0bf305', 'd9c6c738-8a60-43de-965f-f1f666da1639');
 

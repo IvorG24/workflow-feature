@@ -100,6 +100,7 @@ export const approveOrRejectRequest = async (
     formName: string;
     memberId: string;
     teamId: string;
+    additionalInfo?: string;
   }
 ) => {
   const {
@@ -112,6 +113,7 @@ export const approveOrRejectRequest = async (
     requestAction,
     memberId,
     teamId,
+    additionalInfo,
   } = params;
 
   const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -150,7 +152,10 @@ export const approveOrRejectRequest = async (
   if (isPrimarySigner) {
     const { error: updateRequestError } = await supabaseClient
       .from("request_table")
-      .update({ request_status: requestAction })
+      .update({
+        request_status: requestAction,
+        request_additional_info: additionalInfo,
+      })
       .eq("request_id", requestId)
       .select();
     if (updateRequestError) throw updateRequestError;
