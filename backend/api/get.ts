@@ -3,6 +3,8 @@ import { addCommaToNumber, regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
+  CanvassLowestPriceType,
+  CanvassType,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -1993,4 +1995,129 @@ export const getTeamGroupList = async (
   if (error) throw error;
 
   return data.team_group_list;
+};
+
+// Get all quotation request for the otp
+export const getOTPPendingQuotationRequestList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "request_response_request: request_response_request_id!inner(request_id, request_status, request_form: request_form_id(form_name))"
+    )
+    .eq("request_response", `"${requestId}"`)
+    .eq("request_response_request.request_status", "PENDING")
+    .eq("request_response_request.request_form.form_name", "Quotation");
+
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    request_response_request: { request_id: string };
+  }[];
+  return formattedData.map(
+    (request) => request.request_response_request.request_id
+  );
+};
+
+// Get canvass data
+export const getCanvassData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const items = await getItemResponseForQuotation(supabaseClient, {
+    requestId,
+  });
+  const itemOptions = Object.keys(items).map(
+    (item) =>
+      `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
+  );
+
+  const canvassRequest = await getOTPPendingQuotationRequestList(
+    supabaseClient,
+    { requestId }
+  );
+
+  const summaryData: CanvassLowestPriceType = {};
+  const quotationRequestList = await Promise.all(
+    canvassRequest.map(async (canvassRequestId) => {
+      const { data: quotationResponseList, error: quotationResponseListError } =
+        await supabaseClient
+          .from("request_response_table")
+          .select(
+            "*, request_response_field: request_response_field_id!inner(field_name)"
+          )
+          .eq("request_response_request_id", canvassRequestId)
+          .in("request_response_field.field_name", [
+            "Item",
+            "Price per Unit",
+            "Quantity",
+          ]);
+      if (quotationResponseListError) throw quotationResponseListError;
+      summaryData[canvassRequestId] = 0;
+      return quotationResponseList;
+    })
+  );
+  const formattedQuotationRequestList =
+    quotationRequestList as unknown as (RequestResponseTableRow & {
+      request_response_field: { field_name: string };
+    })[][];
+
+  const canvassData: CanvassType = {};
+  const lowestPricePerItem: CanvassLowestPriceType = {};
+
+  itemOptions.forEach((item) => {
+    canvassData[item] = [];
+    lowestPricePerItem[item] = 999999999;
+  });
+
+  formattedQuotationRequestList.forEach((request) => {
+    let currentItem = "";
+    request.forEach((response) => {
+      if (response.request_response_field.field_name === "Item") {
+        currentItem = JSON.parse(response.request_response);
+        canvassData[currentItem].push({
+          quotationId: response.request_response_request_id,
+          price: 0,
+          quantity: 0,
+        });
+      } else if (
+        response.request_response_field.field_name === "Price per Unit"
+      ) {
+        const price = Number(response.request_response);
+        canvassData[currentItem][canvassData[currentItem].length - 1].price =
+          price;
+        if (price < lowestPricePerItem[currentItem]) {
+          lowestPricePerItem[currentItem] = price;
+        }
+        summaryData[response.request_response_request_id] += price;
+      } else if (response.request_response_field.field_name === "Quantity") {
+        canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
+          Number(response.request_response);
+      }
+    });
+  });
+
+  const sortedQuotation: Record<string, number> = Object.entries(summaryData)
+    .sort(([, a], [, b]) => a - b)
+    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+  const recommendedQuotationId = Object.keys(sortedQuotation)[0];
+
+  return {
+    canvassData,
+    lowestPricePerItem,
+    summaryData,
+    lowestQuotation: {
+      id: recommendedQuotationId,
+      value: sortedQuotation[recommendedQuotationId],
+    },
+  };
 };

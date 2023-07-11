@@ -33,6 +33,7 @@ import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
+import OrderToPurchaseCanvassSection from "../OrderToPurchaseCanvassPage/OrderToPurchaseCanvassSection";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import OrderToPurchaseSummary from "../SummarySection/OrderToPurchaseSummary";
 
@@ -45,12 +46,14 @@ type Props = {
     form_is_for_every_member: boolean;
   }[];
   connectedRequestIDList: FormslyFormType;
+  canvassRequest: string[];
 };
 
 const OrderToPurchaseRequestPage = ({
   request,
   connectedForm,
   connectedRequestIDList,
+  canvassRequest,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
@@ -264,6 +267,10 @@ const OrderToPurchaseRequestPage = ({
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus as FormStatusType}
         />
+
+        {canvassRequest.length !== 0 ? (
+          <OrderToPurchaseCanvassSection canvassRequest={canvassRequest} />
+        ) : null}
 
         <ConnectedRequestSection
           connectedRequestIDList={connectedRequestIDList}

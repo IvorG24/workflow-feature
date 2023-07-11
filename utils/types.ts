@@ -638,3 +638,9 @@ export type DuplicateSectionType = SectionTableRow & {
     field_response: RequestResponseTableRow | null;
   })[];
 };
+
+export type CanvassType = Record<
+  string,
+  { quotationId: string; price: number; quantity: number }[]
+>;
+export type CanvassLowestPriceType = Record<string, number>;
