@@ -1,3 +1,4 @@
+import { addCommaToNumber } from "@/utils/string";
 import { DuplicateSectionType } from "@/utils/types";
 import { Paper, Table, Title } from "@mantine/core";
 
@@ -33,6 +34,7 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
             <th>Cost Code</th>
             <th>GL Account</th>
             <th>Quantity</th>
+            <th>Unit</th>
           </tr>
         </thead>
         <tbody>
@@ -56,12 +58,12 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
             const glAccount = JSON.parse(
               `${summary.section_field[4].field_response?.request_response}`
             );
-
-            const quantity = `${JSON.parse(
+            const quantity = JSON.parse(
               `${summary.section_field[2].field_response?.request_response}`
-            )} ${JSON.parse(
+            );
+            const unit = JSON.parse(
               `${summary.section_field[1].field_response?.request_response}`
-            )}`;
+            );
 
             return (
               <tr key={index}>
@@ -69,7 +71,8 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
                 <td>{description.slice(0, -2)}</td>
                 <td>{costCode}</td>
                 <td>{glAccount}</td>
-                <td>{quantity}</td>
+                <td>{addCommaToNumber(quantity)}</td>
+                <td>{unit}</td>
               </tr>
             );
           })}

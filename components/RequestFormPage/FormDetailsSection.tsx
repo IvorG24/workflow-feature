@@ -1,4 +1,7 @@
-import { updateFormVisibility } from "@/backend/api/update";
+import {
+  updateFormDescription,
+  updateFormVisibility,
+} from "@/backend/api/update";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -6,13 +9,18 @@ import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
 import {
   Avatar,
+  Box,
+  Button,
   Flex,
   Group,
+  LoadingOverlay,
   Paper,
   Stack,
   Switch,
   Text,
+  Textarea,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -21,6 +29,7 @@ import { capitalize } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 
 type Props = {
   form: FormType;
@@ -37,6 +46,18 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
   const { setFormList } = useFormActions();
 
   const [isHidden, setIsHidden] = useState(form.form_is_hidden);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [description, setDescription] = useState(form.form_description);
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
+
+  const methods = useForm<{ description: string }>();
+  const {
+    handleSubmit,
+    setValue,
+    register,
+    formState: { errors },
+    watch,
+  } = methods;
 
   const handleToggleVisibility = async (checked: boolean) => {
     setIsHidden(!checked);
@@ -67,10 +88,88 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
     }
   };
 
+  const handleEditDescription = async (data: { description: string }) => {
+    setIsSavingDescription(true);
+    try {
+      await updateFormDescription(supabaseClient, {
+        formId,
+        description: data.description,
+      });
+      setDescription(data.description);
+      notifications.show({
+        message: "Form description updated",
+        color: "green",
+      });
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+
+    setIsEditingDescription(false);
+    setIsSavingDescription(false);
+  };
+
+  const descriptionWatch = watch("description");
+
   return (
     <Paper p="xl" shadow="xs">
       <Title order={2}>{form.form_name}</Title>
-      <Text mt="xs">{form.form_description}</Text>
+      {isEditingDescription ? (
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(handleEditDescription)}>
+            <Box mt="xs" pos="relative">
+              <LoadingOverlay visible={isSavingDescription} />
+              <Textarea
+                label="Description"
+                withAsterisk
+                {...register("description", {
+                  required: "Form description is required",
+                })}
+                sx={{ flex: 1 }}
+                error={errors.description?.message}
+              />
+              <Group mt="xs" spacing="xs" position="right">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditingDescription(false)}
+                  w={85}
+                  disabled={isSavingDescription}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  w={85}
+                  disabled={
+                    isSavingDescription || description === descriptionWatch
+                  }
+                >
+                  Save
+                </Button>
+              </Group>
+            </Box>
+          </form>
+        </FormProvider>
+      ) : (
+        <Group mt="xs">
+          <Text>{description}</Text>
+          <UnstyledButton>
+            <Text
+              size={14}
+              underline
+              color="blue"
+              onClick={() => {
+                setValue("description", description);
+                setIsEditingDescription(true);
+              }}
+            >
+              Edit
+            </Text>
+          </UnstyledButton>
+        </Group>
+      )}
 
       <Title order={5} mt="xl">
         Created by:

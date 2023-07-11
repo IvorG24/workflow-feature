@@ -1,4 +1,4 @@
-import { regExp } from "@/utils/string";
+import { addCommaToNumber, regExp } from "@/utils/string";
 import { SSOTType } from "@/utils/types";
 import {
   ActionIcon,
@@ -78,7 +78,21 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.grape[0],
     },
   },
-  rirTable: {
+  rirPurchasedTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.orange[6]
+          : theme.colors.orange[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.orange[9]
+          : theme.colors.orange[0],
+    },
+  },
+  rirSourcedTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -173,19 +187,36 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
     return request.map((request) => {
       const itemName: string[] = [];
       const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
       const itemStatus: string[] = [];
       const items = request.rir_request_response;
+      let dr = "";
+      let si = "";
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
-          itemName.push(JSON.parse(item.request_response));
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
         } else if (item.request_response_field_name === "Quantity") {
           const matches = regExp.exec(itemName[itemQuantity.length]);
-          const unit =
-            matches && matches[1].replace(/\d+/g, "").trim().split("/")[0];
-          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
         } else if (item.request_response_field_name === "Receiving Status") {
           itemStatus.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "DR") {
+          dr = item.request_response;
+        } else if (item.request_response_field_name === "SI") {
+          si = item.request_response;
         }
       });
 
@@ -201,6 +232,32 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           </td>
           <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
           <td>
+            {dr && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
+          <td>
+            {si && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
+          <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
                 <List.Item key={index}>
@@ -212,6 +269,15 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemUnit.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
                 </List.Item>
@@ -237,19 +303,31 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       const itemName: string[] = [];
       const itemPrice: string[] = [];
       const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
       const items = request.quotation_request_response.slice(
         3,
         request.quotation_request_response.length
       );
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
-          itemName.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "Price") {
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
+        } else if (item.request_response_field_name === "Price per Unit") {
           itemPrice.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Quantity") {
           const matches = regExp.exec(itemName[itemQuantity.length]);
-          const unit = matches && matches[1].replace(/\d+/g, "").trim();
-          itemQuantity.push(`${JSON.parse(item.request_response)} ${unit}`);
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
         }
       });
 
@@ -337,7 +415,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemPrice.map((item, index) => (
                 <List.Item key={index}>
-                  <Text size={14}>₱{item}</Text>
+                  <Text size={14}>₱ {addCommaToNumber(Number(item))}</Text>
                 </List.Item>
               ))}
             </List>
@@ -345,6 +423,15 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemUnit.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
                 </List.Item>
@@ -357,15 +444,18 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                 withBorder
                 withColumnBorders
                 h="100%"
-                className={classes.rirTable}
+                className={classes.rirPurchasedTable}
               >
                 <thead>
                   <tr>
                     <th className={classes.long}>RIR ID</th>
                     <th className={classes.date}>Date Created</th>
                     <th className={classes.processor}>Warehouse Receiver</th>
+                    <th className={classes.short}>DR</th>
+                    <th className={classes.short}>SI</th>
                     <th className={classes.description}>Item</th>
                     <th className={classes.normal}>Quantity</th>
+                    <th className={classes.date}>Unit of Measurement</th>
                     <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
@@ -447,7 +537,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemQuantity.map((item, index) => (
                 <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
                 </List.Item>
               ))}
             </List>
@@ -488,8 +578,8 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
               ))}
             </List>
           </td>
-          {request.otp_quotation_request.length !== 0 ? (
-            <td style={{ padding: 0 }}>
+          <td style={{ padding: 0 }}>
+            {request.otp_quotation_request.length !== 0 ? (
               <Table
                 withBorder
                 withColumnBorders
@@ -506,18 +596,43 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                     <th className={classes.short}> Send Method</th>
                     <th className={classes.normal}>Proof of Sending</th>
                     <th className={classes.description}>Item</th>
-                    <th className={classes.short}>Price</th>
-                    <th className={classes.short}>Quantity</th>
-
-                    <th>RIR</th>
+                    <th className={classes.normal}>Price per Unit</th>
+                    <th className={classes.normal}>Quantity</th>
+                    <th className={classes.date}>Unit of Measurement</th>
+                    <th>Receiving Inspecting Report (Purchased)</th>
                   </tr>
                 </thead>
                 <tbody>{renderQuotation(request.otp_quotation_request)}</tbody>
               </Table>
-            </td>
-          ) : null}
-          {request.otp_cheque_reference_request.length !== 0 ? (
-            <td style={{ padding: 0 }}>
+            ) : null}
+          </td>
+          <td style={{ padding: 0 }}>
+            {request.otp_rir_request.length !== 0 ? (
+              <Table
+                withBorder
+                withColumnBorders
+                h="100%"
+                className={classes.rirSourcedTable}
+              >
+                <thead>
+                  <tr>
+                    <th className={classes.long}>RIR ID</th>
+                    <th className={classes.date}>Date Created</th>
+                    <th className={classes.processor}>Warehouse Receiver</th>
+                    <th className={classes.short}>DR</th>
+                    <th className={classes.short}>SI</th>
+                    <th className={classes.description}>Item</th>
+                    <th className={classes.normal}>Quantity</th>
+                    <th className={classes.date}>Unit of Measurement</th>
+                    <th className={classes.long}>Receiving Status</th>
+                  </tr>
+                </thead>
+                <tbody>{renderRir(request.otp_rir_request)}</tbody>
+              </Table>
+            ) : null}
+          </td>
+          <td style={{ padding: 0 }}>
+            {request.otp_cheque_reference_request.length !== 0 ? (
               <Table
                 withBorder
                 withColumnBorders
@@ -547,15 +662,15 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   {renderChequeReference(request.otp_cheque_reference_request)}
                 </tbody>
               </Table>
-            </td>
-          ) : null}
+            ) : null}
+          </td>
         </tr>
       );
     });
   };
 
   return (
-    <Flex direction="column" p="xl">
+    <Flex direction="column" p="0">
       <Title order={2} color="dimmed">
         SSOT Spreadsheet View
       </Title>
@@ -580,12 +695,13 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th className={classes.date}>Date Needed</th>
                   <th className={classes.normal}>Cost Code</th>
                   <th className={classes.normal}>Item Name</th>
-                  <th className={classes.short}>Quantity</th>
+                  <th className={classes.normal}>Quantity</th>
                   <th className={classes.date}>Unit of Measurement</th>
                   <th className={classes.description}>Description</th>
                   <th className={classes.short}>Cost Code</th>
                   <th className={classes.short}>GL Account</th>
                   <th>Quotation</th>
+                  <th>Receiving Inspecting Report (Sourced)</th>
                   <th>Cheque Reference</th>
                 </tr>
               </thead>
