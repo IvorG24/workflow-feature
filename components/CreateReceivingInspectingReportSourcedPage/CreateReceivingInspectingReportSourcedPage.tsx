@@ -1,4 +1,4 @@
-import { checkQuotationItemQuantity } from "@/backend/api/get";
+import { checkRIRSourcedItemQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -6,6 +6,7 @@ import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { regExp } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -45,7 +46,10 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
+const CreateReceivingInspectingReportSourcedPage = ({
+  form,
+  itemOptions,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -53,10 +57,10 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
 
   const requestorProfile = useUserProfile();
 
-  const { setIsLoading } = useLoadingActions();
-
   const [availableItems, setAvailableItems] =
     useState<OptionTableRow[]>(itemOptions);
+
+  const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
     form_name: form.form_name,
@@ -91,12 +95,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       };
     });
     replaceSection([
-      {
-        ...form.form_section[0],
-      },
-      {
-        ...form.form_section[1],
-      },
+      ...form.form_section.slice(0, 2),
       {
         ...form.form_section[2],
         section_field: newFields,
@@ -113,8 +112,35 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       if (!requestorProfile) return;
       if (!teamMember) return;
       setIsLoading(true);
+      let isValid = true;
+      for (const section of data.sections.slice(2)) {
+        if (section.section_field[2].field_response === "Invalid") {
+          isValid = false;
+          break;
+        }
+      }
+      if (!isValid) {
+        setIsLoading(false);
+        notifications.show({
+          message: "There are invalid quantities.",
+          color: "orange",
+        });
+        return;
+      }
 
-      const otpID = JSON.stringify(
+      if (
+        !data.sections[1].section_field[0].field_response &&
+        !data.sections[1].section_field[1].field_response
+      ) {
+        setIsLoading(false);
+        notifications.show({
+          message: "There must be a DR or SI for Quality Check",
+          color: "orange",
+        });
+        return;
+      }
+
+      const otpId = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
       const itemSection = data.sections[2];
@@ -123,7 +149,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.forEach((section) => {
+      data.sections.slice(2).forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({
@@ -145,13 +171,16 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
         });
       });
 
-      const warningItemList = await checkQuotationItemQuantity(supabaseClient, {
-        otpID,
-        itemFieldId: itemSection.section_field[0].field_id,
-        quantityFieldId: itemSection.section_field[2].field_id,
-        itemFieldList,
-        quantityFieldList,
-      });
+      const warningItemList = await checkRIRSourcedItemQuantity(
+        supabaseClient,
+        {
+          otpId,
+          itemFieldId: itemSection.section_field[0].field_id,
+          quantityFieldId: itemSection.section_field[1].field_id,
+          itemFieldList,
+          quantityFieldList,
+        }
+      );
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
@@ -160,7 +189,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the OTP
+                There are items that will exceed the quantity limit of the
+                Quotation
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -190,7 +220,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
         });
         router.push(`/team-requests/requests/${request.request_id}`);
       }
-    } catch {
+    } catch (e) {
+      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -261,10 +292,10 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           });
 
           const sectionList = getValues(`sections`);
-          const itemSectionList = sectionList.slice(2);
+          const itemSectionList = sectionList.slice(1);
 
           itemSectionList.forEach((section, sectionIndex) => {
-            sectionIndex += 2;
+            sectionIndex += 1;
             if (sectionIndex !== sectionMatchIndex) {
               updateSection(sectionIndex, {
                 ...section,
@@ -297,14 +328,14 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
     prevValue: string | null
   ) => {
     const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(2);
+    const itemSectionList = sectionList.slice(1);
 
     if (value) {
       setAvailableItems((prev) =>
         prev.filter((item) => item.option_value !== value)
       );
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 2;
+        sectionIndex += 1;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -320,8 +351,16 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
               ...section.section_field.slice(1),
             ],
           });
+        } else {
+          const status = checkQuantity(
+            value,
+            Number(section.section_field[1].field_response)
+          );
+          setValue(`sections.${index}.section_field.2.field_response`, status);
         }
       });
+    } else {
+      setValue(`sections.${index}.section_field.2.field_response`, undefined);
     }
 
     const newOption = itemOptions.find(
@@ -332,7 +371,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
         return [...prev, newOption];
       });
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 2;
+        sectionIndex += 1;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -353,6 +392,36 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           });
         }
       });
+    }
+  };
+
+  const handleQuantityChange = async (index: number, value: number) => {
+    const section = getValues(`sections.${index}`);
+    const status = checkQuantity(
+      `${section.section_field[0].field_response}`,
+      value
+    );
+    setValue(`sections.${index}.section_field.2.field_response`, status);
+  };
+
+  const checkQuantity = (item: string, quantity: number) => {
+    if (isNaN(quantity)) return;
+
+    const matches = regExp.exec(item);
+    if (!matches) return;
+    const quantityMatch = matches[1].match(/(\d+)/);
+    if (!quantityMatch) return;
+
+    const maximumQuantity = Number(quantityMatch[1]);
+
+    if (maximumQuantity) {
+      if (quantity <= 0 || quantity > maximumQuantity) {
+        return "Invalid";
+      } else if (quantity < maximumQuantity) {
+        return "Partially Received";
+      } else {
+        return "Fully Received";
+      }
     }
   };
 
@@ -381,6 +450,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
                     formslyFormName="Quotation"
                     onRemoveSection={handleRemoveSection}
                     quotationFormMethods={{ onItemChange: handleItemChange }}
+                    rirFormMethods={{ onQuantityChange: handleQuantityChange }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -407,4 +477,4 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
   );
 };
 
-export default CreateQuotationRequestPage;
+export default CreateReceivingInspectingReportSourcedPage;

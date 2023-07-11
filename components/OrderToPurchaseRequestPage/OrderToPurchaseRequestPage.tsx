@@ -33,6 +33,7 @@ import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
+import OrderToPurchaseCanvassSection from "../OrderToPurchaseCanvassPage/OrderToPurchaseCanvassSection";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import OrderToPurchaseSummary from "../SummarySection/OrderToPurchaseSummary";
 
@@ -45,12 +46,14 @@ type Props = {
     form_is_for_every_member: boolean;
   }[];
   connectedRequestIDList: FormslyFormType;
+  canvassRequest: string[];
 };
 
 const OrderToPurchaseRequestPage = ({
   request,
   connectedForm,
   connectedRequestIDList,
+  canvassRequest,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
@@ -87,7 +90,10 @@ const OrderToPurchaseRequestPage = ({
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 
-  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
+  const handleUpdateRequest = async (
+    status: "APPROVED" | "REJECTED",
+    additionalInfo?: string
+  ) => {
     try {
       setIsLoading(true);
       const signer = isUserSigner;
@@ -111,11 +117,12 @@ const OrderToPurchaseRequestPage = ({
         formName: request.request_form.form_name,
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
+        additionalInfo: additionalInfo,
       });
 
       setRequestStatus(status);
       notifications.show({
-        message: `Requet ${lowerCase(status)}.`,
+        message: `Request ${lowerCase(status)}.`,
         color: "green",
       });
     } catch (error) {
@@ -211,18 +218,40 @@ const OrderToPurchaseRequestPage = ({
                       form.form_group
                     ))
                 ) {
-                  return (
-                    <Button
-                      key={form.form_id}
-                      onClick={() =>
-                        router.push(
-                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
-                        )
-                      }
-                    >
-                      Create {form.form_name}
-                    </Button>
-                  );
+                  if (
+                    request.request_additional_info ===
+                      "AVAILABLE_INTERNALLY" &&
+                    form.form_name === "Receiving Inspecting Report (Sourced)"
+                  ) {
+                    return (
+                      <Button
+                        key={form.form_id}
+                        onClick={() =>
+                          router.push(
+                            `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                          )
+                        }
+                      >
+                        Create Receiving Inspecting Report
+                      </Button>
+                    );
+                  } else if (
+                    request.request_additional_info === "FOR_PURCHASED" &&
+                    form.form_name !== "Receiving Inspecting Report (Sourced)"
+                  ) {
+                    return (
+                      <Button
+                        key={form.form_id}
+                        onClick={() =>
+                          router.push(
+                            `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                          )
+                        }
+                      >
+                        Create {form.form_name}
+                      </Button>
+                    );
+                  }
                 } else {
                   return null;
                 }
@@ -238,6 +267,10 @@ const OrderToPurchaseRequestPage = ({
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus as FormStatusType}
         />
+
+        {canvassRequest.length !== 0 ? (
+          <OrderToPurchaseCanvassSection canvassRequest={canvassRequest} />
+        ) : null}
 
         <ConnectedRequestSection
           connectedRequestIDList={connectedRequestIDList}
@@ -277,6 +310,7 @@ const OrderToPurchaseRequestPage = ({
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
+            isOTP
           />
         ) : null}
 

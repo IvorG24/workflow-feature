@@ -71,8 +71,8 @@ const CreateItem = ({
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_purpose: data.purpose,
-          item_cost_code: data.costCode,
-          item_gl_account: data.glAccount,
+          item_cost_code: upperCase(data.costCode),
+          item_gl_account: upperCase(data.glAccount),
           item_team_id: activeTeam.team_id,
         },
         formId: formId,
@@ -211,6 +211,11 @@ const CreateItem = ({
               w="100%"
               label="Cost Code"
               error={formState.errors.costCode?.message}
+              sx={{
+                input: {
+                  textTransform: "uppercase",
+                },
+              }}
             />
             <TextInput
               {...register("glAccount", {
@@ -237,6 +242,11 @@ const CreateItem = ({
               w="100%"
               label="GL Account"
               error={formState.errors.glAccount?.message}
+              sx={{
+                input: {
+                  textTransform: "uppercase",
+                },
+              }}
             />
             {fields.map((field, index) => {
               return (

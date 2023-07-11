@@ -177,7 +177,7 @@ export type NotificationType =
   | "INVITE"
   | "REVIEW"
   | "COMMENT";
-export type InvitationStatuType = "ACCEPTED" | "DECLINED" | "PENDING";
+export type InvitationStatusType = "ACCEPTED" | "DECLINED" | "PENDING";
 // End: Database Enums
 
 // Start: Joined Types
@@ -556,13 +556,13 @@ export type RequestResponseDataType = {
 export type FormslyFormType = {
   "Order to Purchase": string[];
   Quotation: string[];
-  "Receiving Inspecting Report": string[];
+  "Receiving Inspecting Report (Purchased)": string[];
 };
 
 export type FormslyFormKeyType =
   | "Order to Purchase"
   | "Quotation"
-  | "Receiving Inspecting Report";
+  | "Receiving Inspecting Report (Purchased)";
 
 export type RequestSignerListType =
   RequestByFormType["request_signer"][0]["request_signer_signer"] & {
@@ -574,7 +574,7 @@ export type RequestSignerListType =
 export type TeamGroupForFormType =
   | "Order to Purchase"
   | "Quotation"
-  | "Receiving Inspecting Report"
+  | "Receiving Inspecting Report (Purchased)"
   | "Cheque Reference"
   | "Audit";
 
@@ -612,6 +612,12 @@ export type SSOTType = {
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
+  otp_rir_request: {
+    rir_request_id: string;
+    rir_request_date_created: string;
+    rir_request_owner: SSOTRequestOwnerType;
+    rir_request_response: SSOTResponseType[];
+  }[];
 };
 
 export type Section = SectionTableRow & {
@@ -632,3 +638,9 @@ export type DuplicateSectionType = SectionTableRow & {
     field_response: RequestResponseTableRow | null;
   })[];
 };
+
+export type CanvassType = Record<
+  string,
+  { quotationId: string; price: number; quantity: number }[]
+>;
+export type CanvassLowestPriceType = Record<string, number>;

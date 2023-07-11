@@ -1,5 +1,5 @@
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
-import { requestPath } from "@/utils/string";
+import { addCommaToNumber, regExp, requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -195,10 +195,30 @@ const RequestFormFields = ({
         );
 
       case "DROPDOWN":
-        const dropdownOption = field.options.map((option) => ({
-          value: option.option_value,
-          label: option.option_value,
-        }));
+        const dropdownOption = field.options.map((option) => {
+          if (quotationFormMethods) {
+            const label = option.option_value;
+            const matches = regExp.exec(label);
+            if (matches) {
+              const quantityMatch = matches[1].match(/(\d+)/);
+              if (quantityMatch) {
+                const newLabel = label.replace(
+                  quantityMatch[0],
+                  addCommaToNumber(Number(quantityMatch[0]))
+                );
+                return {
+                  value: option.option_value,
+                  label: newLabel,
+                };
+              }
+            }
+          }
+
+          return {
+            value: option.option_value,
+            label: option.option_value,
+          };
+        });
         return (
           <Controller
             control={control}

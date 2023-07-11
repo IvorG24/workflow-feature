@@ -1,6 +1,6 @@
 import { FormStatusType } from "@/utils/types";
 import { Button, Paper, Space, Stack, Title } from "@mantine/core";
-import { useRouter } from "next/router";
+// import { useRouter } from "next/router";
 
 type Props = {
   isUserOwner: boolean;
@@ -9,19 +9,24 @@ type Props = {
   handleCancelRequest: () => void;
   openPromptDeleteModal: () => void;
   isUserSigner: boolean;
-  handleUpdateRequest: (status: "APPROVED" | "REJECTED") => void;
+  handleUpdateRequest: (
+    status: "APPROVED" | "REJECTED",
+    additionalInfo?: string
+  ) => void;
+  isOTP?: boolean;
 };
 
 const RequestActionSection = ({
   isUserOwner,
   requestStatus,
-  requestId,
+  // requestId,
   handleCancelRequest,
   openPromptDeleteModal,
   isUserSigner,
   handleUpdateRequest,
+  isOTP = false,
 }: Props) => {
-  const router = useRouter();
+  // const router = useRouter();
 
   return (
     <Paper p="xl" shadow="xs">
@@ -32,13 +37,37 @@ const RequestActionSection = ({
       <Stack>
         {isUserSigner && requestStatus === "PENDING" && (
           <>
-            <Button
-              color="green"
-              fullWidth
-              onClick={() => handleUpdateRequest("APPROVED")}
-            >
-              Approve Request
-            </Button>
+            {!isOTP && (
+              <Button
+                color="green"
+                fullWidth
+                onClick={() => handleUpdateRequest("APPROVED")}
+              >
+                Approve Request
+              </Button>
+            )}
+            {isOTP && (
+              <>
+                <Button
+                  color="green"
+                  fullWidth
+                  onClick={() =>
+                    handleUpdateRequest("APPROVED", "FOR_PURCHASED")
+                  }
+                >
+                  For Purchased
+                </Button>
+                <Button
+                  color="orange"
+                  fullWidth
+                  onClick={() =>
+                    handleUpdateRequest("APPROVED", "AVAILABLE_INTERNALLY")
+                  }
+                >
+                  Available Internally
+                </Button>
+              </>
+            )}
             <Button
               color="red"
               fullWidth
