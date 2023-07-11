@@ -1,4 +1,3 @@
-import { RequestDashboardOverviewData, RequestorListType } from "@/utils/types";
 import {
   Box,
   Center,
@@ -11,7 +10,8 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconTrophyFilled } from "@tabler/icons-react";
-import RequestorItem from "./RequestorItem";
+import { RequestorDataType } from "../Overview";
+import RequestorItem, { RequestorWithStatusCount } from "./RequestorItem";
 
 const useStyles = createStyles(() => ({
   withBorderBottom: {
@@ -20,12 +20,12 @@ const useStyles = createStyles(() => ({
 }));
 
 type RequestorTableProps = {
-  requestList: RequestDashboardOverviewData[];
-  totalRequest: number;
+  totalRequestCount: number;
+  requestorList: RequestorDataType[];
 };
 
 const incrementRequestorStatusCount = (
-  requestor: RequestorListType,
+  requestor: RequestorWithStatusCount,
   status: string
 ) => {
   switch (status) {
@@ -51,29 +51,32 @@ const incrementRequestorStatusCount = (
   return requestor;
 };
 
-const RequestorTable = ({ requestList, totalRequest }: RequestorTableProps) => {
+const RequestorTable = ({
+  totalRequestCount,
+  requestorList,
+}: RequestorTableProps) => {
   const { classes } = useStyles();
 
   // get all requestor and display in RequestorTable
-  const reducedRequestorList = requestList.reduce((acc, request) => {
-    if (!request.request_team_member) return acc;
-    const user = request.request_team_member.team_member_user;
-    const duplicateIndex = acc.findIndex(
-      (duplicate) => duplicate.user_id === user.user_id
+  const reducedRequestorList = requestorList.reduce((acc, requestor) => {
+    const requestorId = requestor.team_member_id;
+    const duplicateRequestorIndex = acc.findIndex(
+      (duplicateRequestor) => duplicateRequestor.team_member_id === requestorId
     );
-    const requestStatus = request.request_status.toLowerCase();
+    const requestStatus = requestor.request_status.toLowerCase();
 
-    if (duplicateIndex >= 0) {
+    if (duplicateRequestorIndex >= 0) {
       const updateRequestor = incrementRequestorStatusCount(
-        acc[duplicateIndex],
+        acc[duplicateRequestorIndex],
         requestStatus
       );
       updateRequestor.request.total++;
 
-      acc[duplicateIndex] = updateRequestor;
+      acc[duplicateRequestorIndex] = updateRequestor;
     } else {
-      const newRequestor: RequestorListType = {
-        ...user,
+      const newRequestor: RequestorWithStatusCount = {
+        ...requestor.user,
+        team_member_id: requestor.team_member_id,
         request: {
           total: 1,
           pending: 0,
@@ -90,7 +93,7 @@ const RequestorTable = ({ requestList, totalRequest }: RequestorTableProps) => {
     }
 
     return acc;
-  }, [] as RequestorListType[]);
+  }, [] as RequestorWithStatusCount[]);
 
   const sortRequestorListByTotalRequests = reducedRequestorList.sort(
     (a, b) => b.request.total - a.request.total
@@ -107,12 +110,12 @@ const RequestorTable = ({ requestList, totalRequest }: RequestorTableProps) => {
         </Group>
 
         <Stack p="lg" mb="sm" spacing={32}>
-          {requestList.length > 0 ? (
+          {sortRequestorListByTotalRequests.length > 0 ? (
             sortRequestorListByTotalRequests.map((requestor) => (
-              <Box key={requestor.user_id}>
+              <Box key={requestor.team_member_id}>
                 <RequestorItem
                   requestor={requestor}
-                  totalRequest={totalRequest}
+                  totalRequest={totalRequestCount}
                 />
               </Box>
             ))

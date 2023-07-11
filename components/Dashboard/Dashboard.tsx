@@ -1,16 +1,11 @@
-import {
-  getDashboardOverViewData,
-  getRequestStatusCount,
-} from "@/backend/api/get";
+import { getRequestorList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
-import { RequestDashboardOverviewData } from "@/utils/types";
 import {
   Alert,
   Box,
   Container,
   Flex,
   Group,
-  LoadingOverlay,
   SegmentedControl,
   Select,
   Stack,
@@ -22,7 +17,7 @@ import { startCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import Overview, { RequestStatusDataType } from "./OverviewTab/Overview";
+import Overview, { RequestorDataType } from "./OverviewTab/Overview";
 import ResponseTab from "./ResponseTab/ResponseTab";
 
 const TABS = ["overview", "responses"];
@@ -45,14 +40,9 @@ const Dashboard = ({ activeTeamId }: Props) => {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
   const [isOTPForm, setIsOTPForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [overviewTabData, setOverviewTabData] = useState<
-    RequestDashboardOverviewData[] | null
+  const [requestorList, setRequestorList] = useState<
+    RequestorDataType[] | null
   >(null);
-  const [requestStatusData, setRequestStatusData] = useState<
-    RequestStatusDataType[] | null
-  >(null);
-  const [totalRequestCount, setTotalRequestCount] = useState(0);
   const currentDate = moment();
   const dateFilterList = [
     {
@@ -68,22 +58,6 @@ const Dashboard = ({ activeTeamId }: Props) => {
   ];
   const [dateFilter, setDateFilter] = useState(dateFilterList[0].value);
 
-  useEffect(() => {
-    const fetchOverviewData = async () => {
-      setIsLoading(true);
-      const { data } = await getDashboardOverViewData(supabaseClient, {
-        teamId: activeTeamId,
-        formId: selectedForm ? selectedForm : undefined,
-      });
-      setOverviewTabData(data);
-      setIsLoading(false);
-    };
-
-    if (selectedForm) {
-      fetchOverviewData();
-    }
-  }, [activeTeamId, selectedForm, supabaseClient]);
-
   // check if selected form is formsly form
   const isFormslyForm =
     formList.find((form) => form.form_id === selectedForm)
@@ -96,18 +70,18 @@ const Dashboard = ({ activeTeamId }: Props) => {
   }, [isFormslyForm, selectedFormName]);
 
   useEffect(() => {
-    const fetchRequestStatusCount = async (selectedForm: string) => {
-      const { data, count } = await getRequestStatusCount(supabaseClient, {
+    const fetchRequestorList = async (selectedForm: string) => {
+      const requestorData = await getRequestorList(supabaseClient, {
         formId: selectedForm,
         startDate: dateFilter,
         endDate: currentDate.format("YYYY-MM-DD"),
+        teamId: activeTeamId,
       });
-      setRequestStatusData(data);
-      setTotalRequestCount(count ? count : 0);
+      setRequestorList(requestorData);
     };
 
     if (selectedForm) {
-      fetchRequestStatusCount(selectedForm);
+      fetchRequestorList(selectedForm);
     }
   }, [selectedForm, dateFilter]);
 
@@ -116,7 +90,6 @@ const Dashboard = ({ activeTeamId }: Props) => {
       case "overview":
         return (
           <>
-            <LoadingOverlay visible={isLoading} overlayBlur={2} />
             {!selectedForm && (
               <Alert
                 mb="sm"
@@ -127,9 +100,9 @@ const Dashboard = ({ activeTeamId }: Props) => {
               </Alert>
             )}
             <Overview
-              requestStatusData={requestStatusData ? requestStatusData : []}
-              requestCount={totalRequestCount}
-              requestList={overviewTabData ? overviewTabData : []}
+              requestorList={requestorList ? requestorList : []}
+              dateFilter={dateFilter}
+              selectedForm={selectedForm}
             />
           </>
         );

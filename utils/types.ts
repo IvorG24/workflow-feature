@@ -543,17 +543,6 @@ export type ResponseDataType = {
   }[];
 };
 
-export type RequestorListType =
-  RequestType["request_team_member"]["team_member_user"] & {
-    request: {
-      total: number;
-      pending: number;
-      approved: number;
-      rejected: number;
-      canceled: number;
-    };
-  };
-
 export type LineChartDataType = {
   label: string;
   value: number;

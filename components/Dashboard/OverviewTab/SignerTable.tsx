@@ -1,3 +1,5 @@
+import { getSignerList } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import {
   RequestDashboardOverviewData,
@@ -17,8 +19,11 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconShieldCheckFilled } from "@tabler/icons-react";
 import { lowerCase, startCase } from "lodash";
+import moment from "moment";
+import { useEffect } from "react";
 
 const useStyles = createStyles(() => ({
   withBorderBottom: {
@@ -28,6 +33,8 @@ const useStyles = createStyles(() => ({
 
 type SignerTableProps = {
   requestList: RequestDashboardOverviewData[];
+  selectedForm: string | null;
+  dateFilter: string;
 };
 
 const getSignerStatusCount = (
@@ -50,8 +57,14 @@ const getSignerStatusCount = (
   return signer;
 };
 
-const SignerTable = ({ requestList }: SignerTableProps) => {
+const SignerTable = ({
+  requestList,
+  selectedForm,
+  dateFilter,
+}: SignerTableProps) => {
   const { classes } = useStyles();
+  const activeTeam = useActiveTeam();
+  const supabaseClient = useSupabaseClient();
   // get signers
   const signerStatus = ["APPROVED", "REJECTED"];
   const signerList = requestList.flatMap((request) => request.request_signer);
@@ -92,6 +105,24 @@ const SignerTable = ({ requestList }: SignerTableProps) => {
       b.signerCount.rejected -
       (a.signerCount.approved - a.signerCount.rejected)
   );
+
+  useEffect(() => {
+    const handleFetchSignerList = async (selectedForm: string) => {
+      const endDate = moment().format("YYYY-MM-DD");
+      const signerList = await getSignerList(supabaseClient, {
+        formId: selectedForm,
+        startDate: dateFilter,
+        endDate: endDate,
+        teamId: activeTeam.team_id,
+      });
+
+      console.log(signerList);
+    };
+
+    if (selectedForm) {
+      handleFetchSignerList(selectedForm);
+    }
+  }, [selectedForm, dateFilter]);
 
   return (
     <ScrollArea w="100%" h="100%">

@@ -1,5 +1,4 @@
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { RequestorListType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -11,8 +10,22 @@ import {
 } from "@mantine/core";
 import { startCase } from "lodash";
 
+export type RequestorWithStatusCount = {
+  team_member_id: string;
+  user_avatar: string | null;
+  user_first_name: string;
+  user_last_name: string;
+  request: {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    canceled: number;
+  };
+};
+
 type RequestorItemProps = {
-  requestor: RequestorListType;
+  requestor: RequestorWithStatusCount;
   totalRequest: number;
 };
 
@@ -29,14 +42,16 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
   );
 
   return (
-    <Stack spacing="xs" key={requestor.user_id}>
+    <Stack spacing="xs" key={requestor.team_member_id}>
       <Group position="apart">
         <Group spacing="xs">
           <Avatar
             size="sm"
             radius="xl"
             src={requestor.user_avatar ?? null}
-            color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
+            color={getAvatarColor(
+              Number(`${requestor.team_member_id.charCodeAt(0)}`)
+            )}
           >
             {!requestor.user_avatar &&
               `${requestor.user_first_name[0]}${requestor.user_last_name[0]}`}

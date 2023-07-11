@@ -1,3 +1,4 @@
+import { RequestorDataType } from "@/components/Dashboard/OverviewTab/Overview";
 import { Database } from "@/utils/database";
 import { regExp } from "@/utils/string";
 import {
@@ -1823,15 +1824,20 @@ export const getRequestStatusCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formId: string;
+    teamId: string;
     startDate: string;
     endDate: string;
   }
 ) => {
-  const { formId, startDate, endDate } = params;
+  const { formId, teamId, startDate, endDate } = params;
   const { data, count } = await supabaseClient
     .from("request_table")
-    .select("request_status, request_date_created", { count: "exact" })
+    .select(
+      "request_status, request_date_created, request_team_member: request_team_member_id(team_member_team_id)",
+      { count: "exact" }
+    )
     .eq("request_form_id", formId)
+    .eq("request_team_member.team_member_team_id", teamId)
     .gte("request_date_created", startDate)
     .lte("request_date_created", endDate);
 
@@ -1839,4 +1845,58 @@ export const getRequestStatusCount = async (
     data,
     count,
   };
+};
+
+export const getRequestorList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamId, startDate, endDate } = params;
+  const { data } = await supabaseClient
+    .from("request_table")
+    .select(
+      "requestor: request_team_member_id(team_member_id, team_member_team_id, user: team_member_user_id(user_first_name, user_last_name, user_avatar)), request_status, request_form_id"
+    )
+    .eq("request_form_id", formId)
+    .eq("requestor.team_member_team_id", teamId)
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  const requestorList = data?.map((d) => ({
+    request_status: d.request_status,
+    ...d.requestor,
+  }));
+
+  return requestorList as RequestorDataType[];
+};
+
+export const getSignerList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamId, startDate, endDate } = params;
+  const { data } = await supabaseClient
+    .from("request_table")
+    .select(
+      "request_date_created, request_signer: request_signer_table(request_signer_status, request_signer_signer: request_signer_signer_id(signer_team_member: signer_team_member_id(team_member_team_id,team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))))"
+    )
+    .eq("request_form_id", formId)
+    .eq(
+      "request_signer.request_signer_signer.signer_team_member.team_member_team_id",
+      teamId
+    )
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  return data;
 };
