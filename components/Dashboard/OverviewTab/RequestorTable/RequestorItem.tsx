@@ -9,23 +9,10 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { startCase } from "lodash";
-
-export type RequestorWithStatusCount = {
-  team_member_id: string;
-  user_avatar: string | null;
-  user_first_name: string;
-  user_last_name: string;
-  request: {
-    total: number;
-    pending: number;
-    approved: number;
-    rejected: number;
-    canceled: number;
-  };
-};
+import { RequestorAndSignerDataType } from "../Overview";
 
 type RequestorItemProps = {
-  requestor: RequestorWithStatusCount;
+  requestor: RequestorAndSignerDataType;
   totalRequest: number;
 };
 
@@ -42,16 +29,14 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
   );
 
   return (
-    <Stack spacing="xs" key={requestor.team_member_id}>
+    <Stack spacing="xs">
       <Group position="apart">
         <Group spacing="xs">
           <Avatar
             size="sm"
             radius="xl"
             src={requestor.user_avatar ?? null}
-            color={getAvatarColor(
-              Number(`${requestor.team_member_id.charCodeAt(0)}`)
-            )}
+            color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
           >
             {!requestor.user_avatar &&
               `${requestor.user_first_name[0]}${requestor.user_last_name[0]}`}

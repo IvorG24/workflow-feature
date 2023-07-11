@@ -1,4 +1,3 @@
-import { getRequestorList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import {
   Alert,
@@ -11,13 +10,13 @@ import {
   Stack,
   Title,
 } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { usePrevious } from "@mantine/hooks";
+import { IconAlertCircle, IconCalendarEvent } from "@tabler/icons-react";
 import { startCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import Overview, { RequestorDataType } from "./OverviewTab/Overview";
+import Overview from "./OverviewTab/Overview";
 import ResponseTab from "./ResponseTab/ResponseTab";
 
 const TABS = ["overview", "responses"];
@@ -33,27 +32,26 @@ type Props = {
 
 const Dashboard = ({ activeTeamId }: Props) => {
   const formList = useFormList();
-  const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const routerFormId =
     router.query.formId !== undefined ? `${router.query.formId}` : null;
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
+  const previousActiveTeamId = usePrevious(activeTeamId);
   const [isOTPForm, setIsOTPForm] = useState(false);
-  const [requestorList, setRequestorList] = useState<
-    RequestorDataType[] | null
-  >(null);
-  const currentDate = moment();
+
   const dateFilterList = [
     {
-      value: moment({ year: currentDate.year(), month: 0, day: 1 }).format(
+      value: moment({ year: moment().year(), month: 0, day: 1 }).format(
         "YYYY-MM-DD"
       ),
-      label: "This year",
+      label: `This year, ${moment().year()}`,
     },
     {
-      value: moment(currentDate).subtract(6, "months").format("YYYY-MM-DD"),
-      label: "Last 6 months",
+      value: moment().subtract(6, "months").format("YYYY-MM-DD"),
+      label: `Last 6 months: ${moment()
+        .subtract(6, "months")
+        .format("MMM DD, YYYY")} - ${moment().format("MMM DD, YYYY")}`,
     },
   ];
   const [dateFilter, setDateFilter] = useState(dateFilterList[0].value);
@@ -70,20 +68,10 @@ const Dashboard = ({ activeTeamId }: Props) => {
   }, [isFormslyForm, selectedFormName]);
 
   useEffect(() => {
-    const fetchRequestorList = async (selectedForm: string) => {
-      const requestorData = await getRequestorList(supabaseClient, {
-        formId: selectedForm,
-        startDate: dateFilter,
-        endDate: currentDate.format("YYYY-MM-DD"),
-        teamId: activeTeamId,
-      });
-      setRequestorList(requestorData);
-    };
-
-    if (selectedForm) {
-      fetchRequestorList(selectedForm);
+    if (previousActiveTeamId !== activeTeamId) {
+      setSelectedForm(null);
     }
-  }, [selectedForm, dateFilter]);
+  }, [activeTeamId]);
 
   const renderTabs = (tab: string) => {
     switch (tab) {
@@ -99,11 +87,7 @@ const Dashboard = ({ activeTeamId }: Props) => {
                 Please select a form to generate data.
               </Alert>
             )}
-            <Overview
-              requestorList={requestorList ? requestorList : []}
-              dateFilter={dateFilter}
-              selectedForm={selectedForm}
-            />
+            <Overview dateFilter={dateFilter} selectedForm={selectedForm} />
           </>
         );
 
@@ -124,9 +108,18 @@ const Dashboard = ({ activeTeamId }: Props) => {
   };
 
   return (
-    <Container p={0} maw={1024} h="100%" pos="relative">
+    <Container p={0} maw={1024} h="100%">
       <Stack>
-        <Title order={2}>Dashboard</Title>
+        <Group position="apart">
+          <Title order={2}>Dashboard</Title>
+          <Select
+            w={300}
+            data={dateFilterList}
+            value={dateFilter}
+            onChange={(value: string) => setDateFilter(value)}
+            icon={<IconCalendarEvent />}
+          />
+        </Group>
         <Flex justify="space-between" rowGap="sm" wrap="wrap">
           <SegmentedControl
             value={selectedTab}
@@ -136,7 +129,7 @@ const Dashboard = ({ activeTeamId }: Props) => {
 
           <Group>
             <Select
-              w={250}
+              w={300}
               placeholder="Select a Form"
               data={formList.map((form) => ({
                 value: form.form_id,
@@ -145,11 +138,6 @@ const Dashboard = ({ activeTeamId }: Props) => {
               value={selectedForm}
               onChange={setSelectedForm}
               searchable
-            />
-            <Select
-              data={dateFilterList}
-              value={dateFilter}
-              onChange={(value: string) => setDateFilter(value)}
             />
           </Group>
         </Flex>

@@ -1,10 +1,4 @@
-import { getSignerList } from "@/backend/api/get";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import {
-  RequestDashboardOverviewData,
-  RequestSignerListType,
-} from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -19,11 +13,9 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconShieldCheckFilled } from "@tabler/icons-react";
-import { lowerCase, startCase } from "lodash";
-import moment from "moment";
-import { useEffect } from "react";
+import { startCase } from "lodash";
+import { RequestorAndSignerDataType } from "./Overview";
 
 const useStyles = createStyles(() => ({
   withBorderBottom: {
@@ -32,97 +24,15 @@ const useStyles = createStyles(() => ({
 }));
 
 type SignerTableProps = {
-  requestList: RequestDashboardOverviewData[];
-  selectedForm: string | null;
-  dateFilter: string;
+  signerList: RequestorAndSignerDataType[];
+  totalRequestCount: number;
 };
 
-const getSignerStatusCount = (
-  signer: RequestSignerListType,
-  status: string
-) => {
-  switch (lowerCase(status)) {
-    case "approved":
-      signer.signerCount.approved++;
-      break;
-
-    case "rejected":
-      signer.signerCount.rejected++;
-      break;
-
-    default:
-      break;
-  }
-
-  return signer;
-};
-
-const SignerTable = ({
-  requestList,
-  selectedForm,
-  dateFilter,
-}: SignerTableProps) => {
+const SignerTable = ({ signerList, totalRequestCount }: SignerTableProps) => {
   const { classes } = useStyles();
-  const activeTeam = useActiveTeam();
-  const supabaseClient = useSupabaseClient();
-  // get signers
-  const signerStatus = ["APPROVED", "REJECTED"];
-  const signerList = requestList.flatMap((request) => request.request_signer);
-  const filterSignerList = signerList.filter((signer) =>
-    signerStatus.includes(signer.request_signer_status)
+  const sortSignerListByTotalRequests = signerList.sort(
+    (a, b) => b.request.total - a.request.total
   );
-
-  const reducedSignerList = filterSignerList.reduce((acc, signer) => {
-    const requestStatus = signer.request_signer_status;
-    const duplicateSignerIndex = acc.findIndex(
-      (d) =>
-        d.signer_team_member.team_member_id ===
-        signer.request_signer_signer.signer_team_member.team_member_id
-    );
-
-    if (duplicateSignerIndex >= 0) {
-      const updateRequestor = getSignerStatusCount(
-        acc[duplicateSignerIndex],
-        requestStatus
-      );
-      acc[duplicateSignerIndex] = updateRequestor;
-    } else {
-      const newSigner = {
-        ...signer.request_signer_signer,
-        signerCount: {
-          approved: requestStatus === "APPROVED" ? 1 : 0,
-          rejected: requestStatus === "REJECTED" ? 1 : 0,
-        },
-      };
-      acc.push(newSigner);
-    }
-
-    return acc;
-  }, [] as RequestSignerListType[]);
-  const sortSignerListByTotalRequests = reducedSignerList.sort(
-    (a, b) =>
-      b.signerCount.approved +
-      b.signerCount.rejected -
-      (a.signerCount.approved - a.signerCount.rejected)
-  );
-
-  useEffect(() => {
-    const handleFetchSignerList = async (selectedForm: string) => {
-      const endDate = moment().format("YYYY-MM-DD");
-      const signerList = await getSignerList(supabaseClient, {
-        formId: selectedForm,
-        startDate: dateFilter,
-        endDate: endDate,
-        teamId: activeTeam.team_id,
-      });
-
-      console.log(signerList);
-    };
-
-    if (selectedForm) {
-      handleFetchSignerList(selectedForm);
-    }
-  }, [selectedForm, dateFilter]);
 
   return (
     <ScrollArea w="100%" h="100%">
@@ -135,40 +45,37 @@ const SignerTable = ({
         </Group>
 
         <Stack p="lg" mb="sm" spacing={32}>
-          {filterSignerList.length > 0 ? (
+          {totalRequestCount > 0 ? (
             sortSignerListByTotalRequests.map((signer) => {
-              const user = signer.signer_team_member.team_member_user;
-              const totalSigned =
-                signer.signerCount.approved + signer.signerCount.rejected;
-              const statusCount = Object.entries(signer.signerCount);
+              const statusCount = Object.entries(signer.request);
               const progressSections = statusCount.map(([key, value]) => ({
-                value: (value / signerList.length) * 100,
+                value: (value / totalRequestCount) * 100,
                 color: `${getStatusToColor(key) || "dark"}`,
                 tooltip: `${startCase(key)}: ${value}`,
               }));
 
               return (
-                <Stack key={signer.signer_id} spacing="xs">
+                <Stack key={signer.user_id} spacing="xs">
                   <Group position="apart">
                     <Group spacing="xs">
                       <Avatar
                         size="sm"
                         radius="xl"
-                        src={user.user_avatar ?? null}
+                        src={signer.user_avatar ?? null}
                         color={getAvatarColor(
-                          Number(`${signer.signer_id.charCodeAt(0)}`)
+                          Number(`${signer.user_id.charCodeAt(0)}`)
                         )}
                       >
-                        {!user.user_avatar &&
-                          `${user.user_first_name[0]}${user.user_last_name[0]}`}
+                        {!signer.user_avatar &&
+                          `${signer.user_first_name[0]}${signer.user_last_name[0]}`}
                       </Avatar>
                       <Text
                         weight={500}
-                      >{`${user.user_first_name} ${user.user_last_name}`}</Text>
+                      >{`${signer.user_first_name} ${signer.user_last_name}`}</Text>
                     </Group>
 
                     <Badge size="sm" variant="filled" color="dark">
-                      Total: {totalSigned}
+                      Total: {signer.request.total}
                     </Badge>
                   </Group>
                   <Progress

@@ -1,6 +1,12 @@
-import { getRequestStatusCount } from "@/backend/api/get";
+import {
+  getRequestStatusCount,
+  getRequestorData,
+  getSignerData,
+  getTeamMemberList,
+} from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { Box, Flex, Stack } from "@mantine/core";
+import { TeamMemberType } from "@/utils/types";
+import { Box, Flex, LoadingOverlay, Stack } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import moment from "moment";
@@ -15,18 +21,21 @@ export type RequestStatusDataType = {
   request_date_created: string;
 };
 
-export type RequestorDataType = {
-  team_member_id: string;
-  user: {
-    user_avatar: string | null;
-    user_first_name: string;
-    user_last_name: string;
+export type RequestorAndSignerDataType = {
+  user_id: string;
+  user_avatar: string | null;
+  user_first_name: string;
+  user_last_name: string;
+  request: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    canceled: number;
+    total: number;
   };
-  request_status: string;
 };
 
 type OverviewProps = {
-  requestorList: RequestorDataType[];
   dateFilter: string;
   selectedForm: string | null;
 };
@@ -39,14 +48,11 @@ type RequestStatusChartData = {
 
 const status = ["Pending", "Approved", "Rejected", "Canceled"];
 
-const Overview = ({
-  requestorList,
-  dateFilter,
-  selectedForm,
-}: OverviewProps) => {
+const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
+  const currentDate = moment();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const currentDate = moment();
+  const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>([]);
   const [requestStatusData, setRequestStatusData] = useState<
     RequestStatusDataType[] | null
   >(null);
@@ -54,18 +60,40 @@ const Overview = ({
   const [requestStatusChartData, setRequestStatusChartData] = useState<
     RequestStatusChartData[]
   >([]);
+  const [isFetchingData, setIsFetchingData] = useState(false);
+  const [requestorList, setRequestorList] = useState<
+    RequestorAndSignerDataType[]
+  >([]);
+  const [signerList, setSignerList] = useState<RequestorAndSignerDataType[]>(
+    []
+  );
 
   useEffect(() => {
-    const handleFetchRequestStatusTracker = async (selectedForm: string) => {
+    const fetchTeamMemberList = async () => {
+      const members = await getTeamMemberList(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
+      setTeamMemberList(members);
+    };
+    if (activeTeam.team_id) {
+      fetchTeamMemberList();
+    }
+  }, [activeTeam.team_id]);
+
+  useEffect(() => {
+    const fetchOverviewData = async (selectedForm: string, teamId: string) => {
+      setIsFetchingData(true);
+      // set request status tracker
       const { data, count: count } = await getRequestStatusCount(
         supabaseClient,
         {
           formId: selectedForm,
-          startDate: dateFilter,
-          endDate: currentDate.format("YYYY-MM-DD"),
-          teamId: activeTeam.team_id,
+          startDate: moment(dateFilter).format(),
+          endDate: currentDate.format(),
+          teamId: teamId,
         }
       );
+
       setRequestStatusData(data);
       setTotalRequestCount(count ? count : 0);
 
@@ -86,15 +114,91 @@ const Overview = ({
       });
 
       setRequestStatusChartData(chartData);
-    };
 
-    if (selectedForm) {
-      handleFetchRequestStatusTracker(selectedForm);
+      // set requestor data
+      const requestorList = await Promise.all(
+        teamMemberList.map(async (member) => {
+          const requestor = await getRequestorData(supabaseClient, {
+            formId: selectedForm,
+            teamMemberId: member.team_member_id,
+            startDate: moment(dateFilter).format(),
+            endDate: currentDate.format(),
+          });
+
+          const pendingCount = requestor?.filter(
+            (request) => request.request_status === "PENDING"
+          ).length;
+          const approvedCount = requestor?.filter(
+            (request) => request.request_status === "APPROVED"
+          ).length;
+          const rejectedCount = requestor?.filter(
+            (request) => request.request_status === "REJECTED"
+          ).length;
+          const canceledCount = requestor?.filter(
+            (request) => request.request_status === "CANCELED"
+          ).length;
+
+          const newRequestor = {
+            ...member.team_member_user,
+            request: {
+              pending: pendingCount || 0,
+              approved: approvedCount || 0,
+              rejected: rejectedCount || 0,
+              canceled: canceledCount || 0,
+              total: requestor?.length || 0,
+            },
+          };
+
+          return newRequestor;
+        })
+      );
+      setRequestorList(requestorList);
+
+      // set signer data
+      const signerList = await Promise.all(
+        teamMemberList.map(async (member) => {
+          const signer = await getSignerData(supabaseClient, {
+            formId: selectedForm,
+            teamMemberId: member.team_member_id,
+            startDate: moment(dateFilter).format(),
+            endDate: currentDate.format(),
+          });
+
+          const pendingCount = signer?.filter(
+            (signer) => signer.request_signer_status === "PENDING"
+          ).length;
+          const approvedCount = signer?.filter(
+            (signer) => signer.request_signer_status === "APPROVED"
+          ).length;
+          const rejectedCount = signer?.filter(
+            (signer) => signer.request_signer_status === "REJECTED"
+          ).length;
+
+          const newSigner = {
+            ...member.team_member_user,
+            request: {
+              pending: pendingCount || 0,
+              approved: approvedCount || 0,
+              rejected: rejectedCount || 0,
+              canceled: 0,
+              total: signer?.length || 0,
+            },
+          };
+
+          return newSigner;
+        })
+      );
+      setSignerList(signerList);
+      setIsFetchingData(false);
+    };
+    if (selectedForm && activeTeam.team_id) {
+      fetchOverviewData(selectedForm, activeTeam.team_id);
     }
-  }, [selectedForm, dateFilter, supabaseClient, currentDate]);
+  }, [selectedForm, dateFilter, activeTeam.team_id, teamMemberList]);
 
   return (
-    <Stack w="100%" align="center">
+    <Stack w="100%" align="center" pos="relative">
+      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
       <Flex
         w="100%"
         align="flex-start"
@@ -111,14 +215,13 @@ const Overview = ({
         <Box w={{ base: "100%", sm: 300 }} h={450}>
           <RequestorTable
             totalRequestCount={totalRequestCount}
-            requestorList={requestorList}
+            requestorList={requestorList.length > 0 ? requestorList : []}
           />
         </Box>
         <Box w={{ base: "100%", sm: 300 }} h={450}>
           <SignerTable
-            selectedForm={selectedForm}
-            dateFilter={dateFilter}
-            requestList={[]}
+            signerList={signerList.length > 0 ? signerList : []}
+            totalRequestCount={totalRequestCount}
           />
         </Box>
       </Flex>
