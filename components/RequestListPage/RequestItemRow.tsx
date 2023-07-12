@@ -1,8 +1,9 @@
-import { getAvatarColor } from "@/utils/styling";
-import { RequestType } from "@/utils/types";
+import { getAvatarColor, getStatusToColor } from "@/utils/styling";
+import { RequestTableViewData } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
+  Badge,
   CopyButton,
   Flex,
   Grid,
@@ -14,10 +15,10 @@ import {
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/router";
-import RequestSignerList from "./RequestCard/RequestSignerList";
+import RequestSignerList from "./RequestSignerList";
 
 type Props = {
-  request: RequestType;
+  request: RequestTableViewData;
 };
 
 const useStyles = createStyles(() => ({
@@ -30,11 +31,7 @@ const RequestItemRow = ({ request }: Props) => {
   const { classes } = useStyles();
   const router = useRouter();
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
-  const {
-    request_form: form,
-    request_team_member: { team_member_user: requestor },
-    request_signer,
-  } = request;
+  const { request_requestor: requestor, request_signers } = request;
 
   return (
     <Grid justify="space-between">
@@ -55,10 +52,15 @@ const RequestItemRow = ({ request }: Props) => {
         </Group>
       </Grid.Col>
       <Grid.Col span={3}>
-        <Text truncate>{form.form_name}</Text>
+        <Text truncate>{request.form_name}</Text>
+      </Grid.Col>
+      <Grid.Col span={1}>
+        <Badge color={getStatusToColor(request.request_status)}>
+          {request.request_status}
+        </Badge>
       </Grid.Col>
       <Grid.Col span={2}>
-        <Text>
+        <Text align="center">
           {moment(request.request_date_created).format("MMM DD, YYYY")}
         </Text>
       </Grid.Col>
@@ -76,7 +78,7 @@ const RequestItemRow = ({ request }: Props) => {
         </Flex>
       </Grid.Col>
       <Grid.Col span={1}>
-        <RequestSignerList signerList={request_signer} />
+        <RequestSignerList signerList={request_signers} />
       </Grid.Col>
       <Grid.Col span={1}>
         <Group position="center">

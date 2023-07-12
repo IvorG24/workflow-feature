@@ -1,9 +1,9 @@
-import { getRequestList } from "@/backend/api/get";
+import { getRequestTableView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import {
   FormStatusType,
-  RequestType,
+  RequestTableViewData,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
@@ -41,16 +41,12 @@ export type FilterFormValues = {
 };
 
 type Props = {
-  requestList: RequestType[];
-  requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
 };
 
 const RequestListPage = ({
-  requestList,
-  requestListCount: initialRequestListCount,
   teamMemberList,
   formList,
   isFormslyTeam,
@@ -58,13 +54,10 @@ const RequestListPage = ({
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const [visibleRequestList, setVisibleRequestList] =
-    useState<RequestType[]>(requestList);
+  const [requestList, setRequestList] = useState<RequestTableViewData[]>([]);
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
-  const [requestListCount, setRequestListCount] = useState(
-    initialRequestListCount
-  );
+  const [requestListCount, setRequestListCount] = useState(0);
 
   const filterFormMethods = useForm<FilterFormValues>({
     defaultValues: { isAscendingSort: false },
@@ -94,11 +87,11 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         search: search,
       };
-      const { data, count } = await getRequestList(supabaseClient, {
+      const { data, count } = await getRequestTableView(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
-      setVisibleRequestList(data as RequestType[]);
+      setRequestList(data as RequestTableViewData[]);
       setRequestListCount(count || 0);
     } catch (e) {
       notifications.show({
@@ -111,11 +104,29 @@ const RequestListPage = ({
   };
 
   useEffect(() => {
-    setVisibleRequestList(requestList || []);
-  }, [requestList]);
+    const fetchRequestListTableView = async () => {
+      try {
+        setIsFetchingRequestList(true);
+        if (!activeTeam.team_id) return;
+        const { data, count } = await getRequestTableView(supabaseClient, {
+          teamId: activeTeam.team_id,
+          page: 1,
+          limit: DEFAULT_REQUEST_LIST_LIMIT,
+        });
+        setRequestList(data as RequestTableViewData[]);
+        setRequestListCount(count || 0);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsFetchingRequestList(false);
+      }
+    };
+    fetchRequestListTableView();
+  }, [activeTeam.team_id]);
 
   return (
     <Container fluid>
+      <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
       <Flex align="center" gap="xl">
         <Box>
           <Title order={4}>Request List Page</Title>
@@ -142,10 +153,10 @@ const RequestListPage = ({
         </FormProvider>
       </Group>
       <Space h="sm" />
-      {visibleRequestList.length > 0 ? (
+
+      {!isFetchingRequestList && requestList.length > 0 ? (
         <Paper w="100%" maw={1300}>
           <ScrollArea w="auto">
-            <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
             <Stack miw={1076} w="100%" p="md">
               <Grid justify="space-between">
                 <Grid.Col span={2}>
@@ -154,8 +165,15 @@ const RequestListPage = ({
                 <Grid.Col span={3}>
                   <Text weight={600}>Form Name</Text>
                 </Grid.Col>
+                <Grid.Col span={1}>
+                  <Text weight={600} align="center">
+                    Status
+                  </Text>
+                </Grid.Col>
                 <Grid.Col span={2}>
-                  <Text weight={600}>Date Created</Text>
+                  <Text weight={600} align="center">
+                    Date Created
+                  </Text>
                 </Grid.Col>
                 <Grid.Col span={2}>
                   <Text weight={600}>Requested By</Text>
@@ -170,7 +188,7 @@ const RequestListPage = ({
                 </Grid.Col>
               </Grid>
               <Divider />
-              {visibleRequestList.map((request, idx) => (
+              {requestList.map((request, idx) => (
                 <Box key={request.request_id}>
                   <RequestItemRow request={request} />
                   {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? (
@@ -186,6 +204,7 @@ const RequestListPage = ({
           No request/s found
         </Text>
       )}
+
       <Pagination
         value={activePage}
         onChange={async (value) => {
