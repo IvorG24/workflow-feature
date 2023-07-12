@@ -1,4 +1,6 @@
-import { Container, Paper } from "@mantine/core";
+import { Box, Container, Paper } from "@mantine/core";
+import RequisitionTab from "../RequisitionTab/RequisitionTab";
+import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchKeywordResponse from "./SearchKeywordResponse";
 
 type ResponseTabProps = {
@@ -45,6 +47,16 @@ ResponseTabProps) => {
           <SearchKeywordResponse selectedForm={selectedForm} />
         )}
       </Paper>
+
+      <Box>
+        {isOTPForm ? (
+          <Box mt="md">
+            <RequisitionTab fieldResponseData={[]} />
+          </Box>
+        ) : (
+          <RequestResponseSection requestResponse={[]} />
+        )}
+      </Box>
 
       {/* {fieldResponseData && fieldResponseData.length > 0 ? (
         <Box>
