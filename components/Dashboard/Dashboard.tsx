@@ -10,6 +10,7 @@ import {
   Stack,
   Title,
 } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import { usePrevious } from "@mantine/hooks";
 import { IconAlertCircle, IconCalendarEvent } from "@tabler/icons-react";
 import { startCase } from "lodash";
@@ -40,21 +41,17 @@ const Dashboard = ({ activeTeamId }: Props) => {
   const previousActiveTeamId = usePrevious(activeTeamId);
   const [isOTPForm, setIsOTPForm] = useState(false);
 
-  const dateFilterList = [
-    {
-      value: moment({ year: moment().year(), month: 0, day: 1 }).format(
-        "YYYY-MM-DD"
-      ),
-      label: `This year, ${moment().year()}`,
-    },
-    {
-      value: moment().subtract(6, "months").format("YYYY-MM-DD"),
-      label: `Last 6 months: ${moment()
-        .subtract(6, "months")
-        .format("MMM DD, YYYY")} - ${moment().format("MMM DD, YYYY")}`,
-    },
-  ];
-  const [dateFilter, setDateFilter] = useState(dateFilterList[0].value);
+  const currentDate = moment().toDate();
+  const firstDayOfCurrentYear = moment({
+    year: moment().year(),
+    month: 0,
+    day: 1,
+  }).toDate();
+
+  const [dateFilter, setDateFilter] = useState<[Date | null, Date | null]>([
+    firstDayOfCurrentYear,
+    currentDate,
+  ]);
 
   // check if selected form is formsly form
   const isFormslyForm =
@@ -112,34 +109,40 @@ const Dashboard = ({ activeTeamId }: Props) => {
       <Stack>
         <Group position="apart">
           <Title order={2}>Dashboard</Title>
-          <Select
-            w={300}
-            data={dateFilterList}
+          <DatePickerInput
+            type="range"
+            placeholder="Select a start and end date"
             value={dateFilter}
-            onChange={(value: string) => setDateFilter(value)}
+            onChange={setDateFilter}
             icon={<IconCalendarEvent />}
+            dropdownType="popover"
+            maxDate={currentDate}
+            w={300}
           />
         </Group>
-        <Flex justify="space-between" rowGap="sm" wrap="wrap">
+        <Flex
+          justify="space-between"
+          rowGap="sm"
+          wrap="wrap"
+          direction={{ base: "column-reverse", sm: "row" }}
+        >
           <SegmentedControl
             value={selectedTab}
             onChange={setSelectedTab}
             data={TABS.map((tab) => ({ value: tab, label: startCase(tab) }))}
           />
 
-          <Group>
-            <Select
-              w={300}
-              placeholder="Select a Form"
-              data={formList.map((form) => ({
-                value: form.form_id,
-                label: form.form_name,
-              }))}
-              value={selectedForm}
-              onChange={setSelectedForm}
-              searchable
-            />
-          </Group>
+          <Select
+            w={300}
+            placeholder="Select a Form"
+            data={formList.map((form) => ({
+              value: form.form_id,
+              label: form.form_name,
+            }))}
+            value={selectedForm}
+            onChange={setSelectedForm}
+            searchable
+          />
         </Flex>
         <Box>{renderTabs(selectedTab)}</Box>
       </Stack>

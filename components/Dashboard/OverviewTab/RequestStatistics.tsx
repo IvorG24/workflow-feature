@@ -6,12 +6,14 @@ import {
   IconSquareRoundedFilled,
 } from "@tabler/icons-react";
 import { startCase } from "lodash";
+import moment from "moment";
 import { useEffect, useState } from "react";
 import StackedBarChart from "../../Chart/StackedBarChart";
 import { RequestStatusDataType } from "./Overview";
 
 type RequestStatisticsProps = {
   requestStatusData: RequestStatusDataType[];
+  dateFilter: [Date | null, Date | null];
 };
 
 const generateInitialChartData = () => {
@@ -43,7 +45,10 @@ const generateInitialChartData = () => {
 
 const statusList = ["pending", "approved", "rejected", "canceled"];
 
-const RequestStatistics = ({ requestStatusData }: RequestStatisticsProps) => {
+const RequestStatistics = ({
+  requestStatusData,
+  dateFilter,
+}: RequestStatisticsProps) => {
   const initialChartData = getStackedBarChartData(
     requestStatusData,
     generateInitialChartData()
@@ -90,6 +95,13 @@ const RequestStatistics = ({ requestStatusData }: RequestStatisticsProps) => {
     setChartData(newChartData);
   };
 
+  const startDateYear = moment(dateFilter[0]).format("YYYY");
+  const endDateYear = moment(dateFilter[1]).format("YYYY");
+  const xAxisChartLabel =
+    startDateYear !== endDateYear
+      ? `${startDateYear} - ${endDateYear}`
+      : startDateYear;
+
   useEffect(() => {
     setChartData(initialChartData);
   }, [requestStatusData]);
@@ -127,7 +139,8 @@ const RequestStatistics = ({ requestStatusData }: RequestStatisticsProps) => {
         <Box p="xs" w="100%">
           <StackedBarChart
             data={chartData}
-            xAxisLabel={`${new Date().getFullYear()}`}
+            xAxisLabel={xAxisChartLabel}
+            yAxisLabel="No. of Request"
           />
         </Box>
       </Stack>
