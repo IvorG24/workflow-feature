@@ -5,13 +5,9 @@ import {
   getTeamMemberList,
 } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { Database } from "@/utils/database";
 import { TeamMemberType } from "@/utils/types";
 import { Box, Flex, LoadingOverlay, Stack } from "@mantine/core";
-import {
-  SupabaseClient,
-  useSupabaseClient,
-} from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -78,9 +74,7 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
       });
       setTeamMemberList(members);
     };
-    if (activeTeam.team_id) {
-      fetchTeamMemberList();
-    }
+    fetchTeamMemberList();
   }, [activeTeam.team_id]);
 
   useEffect(() => {
@@ -97,7 +91,6 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
           teamId: teamId,
         }
       );
-
       setRequestStatusData(data);
       setTotalRequestCount(count ? count : 0);
 
@@ -116,10 +109,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
 
         return meterData;
       });
-
       setRequestStatusChartData(chartData);
 
-      // set requestor data
       const requestorList = await Promise.all(
         teamMemberList.map(async (member) => {
           const requestor = await getRequestorData(supabaseClient, {
@@ -178,7 +169,7 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
             (signer) => signer.request_signer_status === "REJECTED"
           ).length;
           const canceledCount = signer?.filter(
-            (request) => signer.request_signer_status === "CANCELED"
+            (signer) => signer.request_signer_status === "CANCELED"
           ).length;
 
           const newSigner = {
@@ -196,6 +187,7 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
         })
       );
       setSignerList(signerList);
+
       setIsFetchingData(false);
     };
     if (selectedForm && activeTeam.team_id) {
@@ -245,123 +237,3 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
 };
 
 export default Overview;
-
-type Params = {
-  teamId: string;
-  formId: string;
-  supabaseClient: SupabaseClient<Database>;
-  startDate: string;
-  endDate: string;
-};
-
-const overviewDataFetcher = async (key: string, params: Params) => {
-  try {
-    const { teamId, formId, supabaseClient, startDate, endDate } = params;
-
-    const { data, count: count } = await getRequestStatusCount(supabaseClient, {
-      formId: formId,
-      startDate: startDate,
-      endDate: endDate,
-      teamId: teamId,
-    });
-
-    if (!data) return;
-    const requestStatusData = status.map((status) => {
-      const requestMatch =
-        data.filter(
-          (request) => lowerCase(request.request_status) === lowerCase(status)
-        ) || [];
-
-      const meterData = {
-        label: status,
-        value: requestMatch.length,
-        totalCount: count ? count : 0,
-      };
-
-      return meterData;
-    });
-
-    const members = await getTeamMemberList(supabaseClient, {
-      teamId: teamId,
-    });
-
-    // set requestor data
-    const requestorList = await Promise.all(
-      members.map(async (member) => {
-        const requestor = await getRequestorData(supabaseClient, {
-          formId: formId,
-          teamMemberId: member.team_member_id,
-          startDate: startDate,
-          endDate: endDate,
-        });
-
-        const pendingCount = requestor?.filter(
-          (request) => request.request_status === "PENDING"
-        ).length;
-        const approvedCount = requestor?.filter(
-          (request) => request.request_status === "APPROVED"
-        ).length;
-        const rejectedCount = requestor?.filter(
-          (request) => request.request_status === "REJECTED"
-        ).length;
-        const canceledCount = requestor?.filter(
-          (request) => request.request_status === "CANCELED"
-        ).length;
-
-        const newRequestor = {
-          ...member.team_member_user,
-          request: {
-            pending: pendingCount || 0,
-            approved: approvedCount || 0,
-            rejected: rejectedCount || 0,
-            canceled: canceledCount || 0,
-            total: requestor?.length || 0,
-          },
-        };
-
-        return newRequestor;
-      })
-    );
-
-    // set signer data
-    const signerList = await Promise.all(
-      members.map(async (member) => {
-        const signer = await getSignerData(supabaseClient, {
-          formId: formId,
-          teamMemberId: member.team_member_id,
-          startDate: startDate,
-          endDate: endDate,
-        });
-
-        const pendingCount = signer?.filter(
-          (signer) => signer.request_signer_status === "PENDING"
-        ).length;
-        const approvedCount = signer?.filter(
-          (signer) => signer.request_signer_status === "APPROVED"
-        ).length;
-        const rejectedCount = signer?.filter(
-          (signer) => signer.request_signer_status === "REJECTED"
-        ).length;
-        const canceledCount = signer?.filter(
-          (signer) => signer.request_signer_status === "CANCELED"
-        ).length;
-
-        const newSigner = {
-          ...member.team_member_user,
-          request: {
-            pending: pendingCount || 0,
-            approved: approvedCount || 0,
-            rejected: rejectedCount || 0,
-            canceled: canceledCount || 0,
-            total: signer?.length || 0,
-          },
-        };
-
-        return newSigner;
-      })
-    );
-  } catch (error) {
-    console.error(error);
-    if (error) throw new Error("Failed to fetch request list by form");
-  }
-};

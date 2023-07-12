@@ -1,4 +1,5 @@
 import { useFormList } from "@/stores/useFormStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   Alert,
   Box,
@@ -18,28 +19,25 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
-import ResponseTab from "./ResponseTab/ResponseTab";
 
-const TABS = ["overview", "responses"];
-const SPECIAL_FORMS = [
-  "Order to Purchase",
-  "Receiving Inspecting Report",
-  "Quotation",
-];
+// response tab is hidden
+const TABS = ["overview"];
+// const SPECIAL_FORMS = [
+//   "Order to Purchase",
+//   "Receiving Inspecting Report",
+//   "Quotation",
+// ];
 
-type Props = {
-  activeTeamId: string;
-};
-
-const Dashboard = ({ activeTeamId }: Props) => {
+const Dashboard = () => {
   const formList = useFormList();
   const router = useRouter();
+  const activeTeam = useActiveTeam();
   const routerFormId =
     router.query.formId !== undefined ? `${router.query.formId}` : null;
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
-  const previousActiveTeamId = usePrevious(activeTeamId);
-  const [isOTPForm, setIsOTPForm] = useState(false);
+  const previousActiveTeamId = usePrevious(activeTeam.team_id);
+  // const [isOTPForm, setIsOTPForm] = useState(false);
 
   const currentDate = moment().toDate();
   const firstDayOfCurrentYear = moment({
@@ -54,21 +52,21 @@ const Dashboard = ({ activeTeamId }: Props) => {
   ]);
 
   // check if selected form is formsly form
-  const isFormslyForm =
-    formList.find((form) => form.form_id === selectedForm)
-      ?.form_is_formsly_form || false;
-  const selectedFormName =
-    formList.find((form) => form.form_id === selectedForm)?.form_name || "";
+  // const isFormslyForm =
+  //   formList.find((form) => form.form_id === selectedForm)
+  //     ?.form_is_formsly_form || false;
+  // const selectedFormName =
+  //   formList.find((form) => form.form_id === selectedForm)?.form_name || "";
+
+  // useEffect(() => {
+  //   setIsOTPForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
+  // }, [isFormslyForm, selectedFormName]);
 
   useEffect(() => {
-    setIsOTPForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
-  }, [isFormslyForm, selectedFormName]);
-
-  useEffect(() => {
-    if (previousActiveTeamId !== activeTeamId) {
+    if (previousActiveTeamId !== activeTeam.team_id) {
       setSelectedForm(null);
     }
-  }, [activeTeamId]);
+  }, [activeTeam.team_id]);
 
   const renderTabs = (tab: string) => {
     switch (tab) {
@@ -88,19 +86,19 @@ const Dashboard = ({ activeTeamId }: Props) => {
           </>
         );
 
-      case "responses":
-        return selectedForm ? (
-          <ResponseTab
-            isOTPForm={isOTPForm}
-            selectedForm={selectedForm}
-            selectedFormName={selectedFormName}
-            activeTeamId={activeTeamId}
-          />
-        ) : (
-          <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
-            Please select a form to generate data.
-          </Alert>
-        );
+      // case "responses":
+      //   return selectedForm ? (
+      //     <ResponseTab
+      //       isOTPForm={isOTPForm}
+      //       selectedForm={selectedForm}
+      //       selectedFormName={selectedFormName}
+      //       activeTeamId={activeTeamId}
+      //     />
+      //   ) : (
+      //     <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
+      //       Please select a form to generate data.
+      //     </Alert>
+      //   );
     }
   };
 

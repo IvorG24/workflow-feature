@@ -139,7 +139,7 @@ const RequestStatistics = ({
         <Box p="xs" w="100%">
           <StackedBarChart
             data={chartData}
-            xAxisLabel={xAxisChartLabel}
+            xAxisLabel={`Year: ${xAxisChartLabel}`}
             yAxisLabel="No. of Request"
           />
         </Box>
