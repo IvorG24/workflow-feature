@@ -11,7 +11,7 @@ import {
   InvitationTableInsert,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
-  ItemTDescriptionableInsert,
+  ItemDescriptionableInsert,
   ItemTableInsert,
   NotificationTableInsert,
   OptionTableInsert,
@@ -358,7 +358,7 @@ export const createItem = async (
     .single();
   if (error) throw error;
 
-  const itemDescriptionInput: ItemTDescriptionableInsert[] = [];
+  const itemDescriptionInput: ItemDescriptionableInsert[] = [];
   const fieldInput: FieldTableInsert[] = [];
 
   const { data: section, error: sectionError } = await supabaseClient
