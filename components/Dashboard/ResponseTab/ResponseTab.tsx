@@ -1,13 +1,4 @@
-import useFetchRequestListByForm from "@/hooks/useFetchRequestListByForm";
-import {
-  generateFormslyResponseData,
-  getRequestFormData,
-} from "@/utils/arrayFunctions/dashboard";
-import { Alert, Box, Container, LoadingOverlay, Paper } from "@mantine/core";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle } from "@tabler/icons-react";
-import RequisitionTab from "../RequisitionTab/RequisitionTab";
-import RequestResponseSection from "./ResponseSection/RequestResponseSection";
+import { Container, Paper } from "@mantine/core";
 import SearchKeywordResponse from "./SearchKeywordResponse";
 
 type ResponseTabProps = {
@@ -19,51 +10,43 @@ type ResponseTabProps = {
 
 const ResponseTab = ({
   selectedForm,
-  selectedFormName,
+  // selectedFormName,
   isOTPForm,
-  activeTeamId,
-}: ResponseTabProps) => {
-  const supabaseClient = useSupabaseClient();
+}: // activeTeamId,
+ResponseTabProps) => {
+  // const supabaseClient = useSupabaseClient();
 
   // // swr fetching
-  const { requestList, isLoading } = useFetchRequestListByForm({
-    teamId: activeTeamId,
-    formId: selectedForm,
-    supabaseClient,
-  });
+  // const { requestList, isLoading } = useFetchRequestListByForm({
+  //   teamId: activeTeamId,
+  //   formId: selectedForm,
+  //   supabaseClient,
+  // });
 
-  const approvedRequestList =
-    selectedFormName !== "Receiving Inspecting Report"
-      ? requestList.filter((request) => request.request_status === "APPROVED")
-      : requestList;
+  // const approvedRequestList =
+  //   selectedFormName !== "Receiving Inspecting Report"
+  //     ? requestList.filter((request) => request.request_status === "APPROVED")
+  //     : requestList;
 
-  const sectionList = approvedRequestList.flatMap(
-    (request) => request.request_form.form_section
-  );
+  // const sectionList = approvedRequestList.flatMap(
+  //   (request) => request.request_form.form_section
+  // );
 
-  const fieldResponseData = isOTPForm
-    ? generateFormslyResponseData(sectionList, `${selectedFormName}`)
-    : getRequestFormData(sectionList);
+  // const fieldResponseData = isOTPForm
+  //   ? generateFormslyResponseData(sectionList, `${selectedFormName}`)
+  //   : getRequestFormData(sectionList);
 
   return (
     <Container p={0} pos="relative">
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
 
-      {/* <Paper p="md" pos="relative">
-        {isOTPForm ? // <OTPSearch />
-        null : (
+      <Paper p="md" pos="relative">
+        {isOTPForm ? null : (
           <SearchKeywordResponse selectedForm={selectedForm} />
         )}
-      </Paper> */}
+      </Paper>
 
-      {!isOTPForm && (
-        <Paper p="md" pos="relative">
-          {" "}
-          <SearchKeywordResponse selectedForm={selectedForm} />{" "}
-        </Paper>
-      )}
-
-      {fieldResponseData && fieldResponseData.length > 0 ? (
+      {/* {fieldResponseData && fieldResponseData.length > 0 ? (
         <Box>
           {isOTPForm ? (
             <Box mt="md">
@@ -89,7 +72,7 @@ const ResponseTab = ({
             </Alert>
           )}
         </Box>
-      )}
+      )} */}
     </Container>
   );
 };
