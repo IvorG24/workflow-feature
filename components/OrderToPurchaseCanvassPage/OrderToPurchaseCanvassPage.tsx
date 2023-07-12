@@ -3,6 +3,7 @@ import { CanvassLowestPriceType, CanvassType } from "@/utils/types";
 import {
   ActionIcon,
   Alert,
+  Box,
   Button,
   Center,
   Container,
@@ -68,6 +69,13 @@ const OrderToPurchaseCanvassPage = ({
             <Title order={6}>Total Price: </Title>
             <Text>₱{addCommaToNumber(lowestQuotation.value)}</Text>
           </Group>
+        </Alert>
+        <Box
+          sx={(theme) => ({
+            backgroundColor: theme.colors.blue[0],
+          })}
+          pb="xs"
+        >
           <Center>
             <Button
               variant="light"
@@ -78,7 +86,7 @@ const OrderToPurchaseCanvassPage = ({
               View Quotation
             </Button>
           </Center>
-        </Alert>
+        </Box>
       </Paper>
 
       <Paper p="xl" shadow="xs" mt="xl">
