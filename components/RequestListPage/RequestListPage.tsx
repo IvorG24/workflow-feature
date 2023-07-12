@@ -143,7 +143,7 @@ const RequestListPage = ({
       </Group>
       <Space h="sm" />
       {visibleRequestList.length > 0 ? (
-        <Paper w="100%" maw={1440}>
+        <Paper w="100%" maw={1300}>
           <ScrollArea w="auto">
             <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
             <Stack miw={1076} w="100%" p="md">
