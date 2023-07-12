@@ -1,4 +1,5 @@
 import { Box, Container, Paper } from "@mantine/core";
+import OTPSearch from "../OTPSearch";
 import RequisitionTab from "../RequisitionTab/RequisitionTab";
 import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchKeywordResponse from "./SearchKeywordResponse";
@@ -43,7 +44,9 @@ ResponseTabProps) => {
       {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
 
       <Paper p="md" pos="relative">
-        {isOTPForm ? null : (
+        {isOTPForm ? (
+          <OTPSearch />
+        ) : (
           <SearchKeywordResponse selectedForm={selectedForm} />
         )}
       </Paper>
