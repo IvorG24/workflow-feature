@@ -47,6 +47,10 @@ const Layout = ({ children }: LayoutProps) => {
   const [openNavbar, setOpenNavbar] = useState(false);
 
   useEffect(() => {
+    setOpenNavbar(false);
+  }, [router]);
+
+  useEffect(() => {
     const fetchInitialData = async () => {
       if (!userId) return;
       try {

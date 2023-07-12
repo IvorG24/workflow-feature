@@ -1094,7 +1094,7 @@ const itemData = [
   {
     generalName: "CABLE",
     unit: "",
-    description: ["CABLE TYPE", "VOLTAGE", "COLORS", "INSULATION THICKNESS"],
+    description: ["CABLE TYPE", "VOLTAGE", "COLOR", "INSULATION THICKNESS"],
     descriptionField: [
       ["XLPE"],
       ["MEDIUM"],
@@ -1185,11 +1185,6 @@ const Page = () => {
           });
         });
       });
-
-      console.log("Item: ", itemInput);
-      console.log("Field: ", fieldInput);
-      console.log("Item Description: ", itemDescriptionInput);
-      console.log("Item Description Field: ", itemDescriptionFieldInput);
 
       const { error: itemError } = await supabaseClient
         .from("item_table")
