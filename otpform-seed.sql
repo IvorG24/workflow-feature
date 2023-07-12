@@ -276,7 +276,7 @@ SELECT var_value INTO otpFormId
   FROM seed_variable_table
   WHERE var_key = 'otpFormId';
 
-  WHILE counter <= 100 LOOP
+  WHILE counter <= 5000 LOOP
     -- Generate request_id
     optRequestId := gen_random_uuid();
     quotationRequestId := gen_random_uuid();
@@ -309,7 +309,8 @@ SELECT var_value INTO otpFormId
   duplicatatable_section_id3 := gen_random_uuid();
  
   -- Generate random date within the current year
-  request_date_created := date_trunc('year', current_date) + random() * (date_trunc('year', current_date + INTERVAL '1 year') - date_trunc('year', current_date));
+  request_date_created := date_trunc('year', current_date) + random() * (current_date - date_trunc('year', current_date));
+
 
     -- Create OTP request
     INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
