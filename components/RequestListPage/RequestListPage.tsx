@@ -111,8 +111,8 @@ const RequestListPage = ({
 
   return (
     <Container fluid>
-      <Flex align="center" gap="xl">
-        <Box>
+      <Flex align="center" columnGap="xl" rowGap="sm" wrap="wrap">
+        <Box miw={200}>
           <Title order={4}>Request List Page</Title>
           <Text>Manage your team requests here.</Text>
         </Box>
@@ -120,6 +120,8 @@ const RequestListPage = ({
           <Button
             variant="light"
             onClick={() => router.push("/team-requests/spreadsheet-view")}
+            sx={{ flex: 1 }}
+            maw={300}
           >
             SSOT Spreadsheet View
           </Button>
