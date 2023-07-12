@@ -136,6 +136,8 @@ const RequestListPage = ({
           <Button
             variant="light"
             onClick={() => router.push("/team-requests/spreadsheet-view")}
+            sx={{ flex: 1 }}
+            maw={300}
           >
             SSOT Spreadsheet View
           </Button>
