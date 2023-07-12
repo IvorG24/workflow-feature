@@ -15,7 +15,7 @@ type RequestSignerListProps = {
 
 const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
   const { classes } = useStyles();
-  const defaultAvatarProps = { color: "blue", size: "md", radius: "xl" };
+  const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
   const otherSigners = signerList.slice(3);
 
   return (

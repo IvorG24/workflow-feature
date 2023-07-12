@@ -10,11 +10,16 @@ import {
   Box,
   Button,
   Container,
+  Divider,
   Flex,
+  Grid,
   Group,
   LoadingOverlay,
   Pagination,
+  Paper,
+  ScrollArea,
   Space,
+  Stack,
   Text,
   Title,
 } from "@mantine/core";
@@ -23,7 +28,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import RequestCard from "./RequestCard/RequestCard";
+import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
 
 export type FilterFormValues = {
@@ -138,19 +143,44 @@ const RequestListPage = ({
       </Group>
       <Space h="sm" />
       {visibleRequestList.length > 0 ? (
-        <Flex
-          direction={{ base: "column", md: "row" }}
-          align={{ base: "center", md: "flex-start" }}
-          columnGap="md"
-          rowGap="md"
-          wrap="wrap"
-          pos="relative"
-        >
-          <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
-          {visibleRequestList.map((request) => (
-            <RequestCard key={request.request_id} request={request} />
-          ))}
-        </Flex>
+        <Paper w="100%" maw={1440}>
+          <ScrollArea w="auto">
+            <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
+            <Stack miw={1076} w="100%" p="md">
+              <Grid justify="space-between">
+                <Grid.Col span={2}>
+                  <Text weight={600}>Request ID</Text>
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <Text weight={600}>Form Name</Text>
+                </Grid.Col>
+                <Grid.Col span={2}>
+                  <Text weight={600}>Date Created</Text>
+                </Grid.Col>
+                <Grid.Col span={2}>
+                  <Text weight={600}>Requested By</Text>
+                </Grid.Col>
+                <Grid.Col span={1}>
+                  <Text weight={600}>Approver</Text>
+                </Grid.Col>
+                <Grid.Col span={1}>
+                  <Text weight={600} align="center">
+                    View
+                  </Text>
+                </Grid.Col>
+              </Grid>
+              <Divider />
+              {visibleRequestList.map((request, idx) => (
+                <Box key={request.request_id}>
+                  <RequestItemRow request={request} />
+                  {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? (
+                    <Divider mt="sm" />
+                  ) : null}
+                </Box>
+              ))}
+            </Stack>
+          </ScrollArea>
+        </Paper>
       ) : (
         <Text align="center" size={24} weight="bolder" color="dark.1">
           No request/s found
