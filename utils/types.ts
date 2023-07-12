@@ -110,7 +110,7 @@ export type ItemTableUpdate =
 
 export type ItemDescriptionTableRow =
   Database["public"]["Tables"]["item_description_table"]["Row"];
-export type ItemTDescriptionableInsert =
+export type ItemDescriptionableInsert =
   Database["public"]["Tables"]["item_description_table"]["Insert"];
 export type ItemDescriptionTableUpdate =
   Database["public"]["Tables"]["item_description_table"]["Update"];
