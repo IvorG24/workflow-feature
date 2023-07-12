@@ -74,7 +74,9 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
       });
       setTeamMemberList(members);
     };
-    fetchTeamMemberList();
+    if (activeTeam.team_id) {
+      fetchTeamMemberList();
+    }
   }, [activeTeam.team_id]);
 
   useEffect(() => {
