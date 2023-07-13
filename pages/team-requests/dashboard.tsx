@@ -15,7 +15,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       return {
         props: {
-          teamId,
+          noData: "",
         },
       };
     } catch (error) {

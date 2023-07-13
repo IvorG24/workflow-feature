@@ -1,4 +1,5 @@
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
+import { RequestStatusDataType } from "@/components/Dashboard/OverviewTab/Overview";
 import { DataItem } from "@/components/Dashboard/RequisitionTab/PurchaseTrend";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import moment from "moment";
@@ -46,6 +47,134 @@ export const searchResponseReducer = (data: SearchKeywordResponseType[]) => {
 };
 
 export const generateFormslyResponseData = (
+  sectionList: RequestByFormType["request_form"]["form_section"],
+  formName: string
+) => {
+  switch (formName) {
+    case "Order to Purchase":
+      return generateOTPFormData(sectionList);
+
+    case "Quotation":
+      return generateQuotationFormData(sectionList);
+
+    case "Receiving Inspecting Report":
+      return generateQuotationFormData(sectionList);
+
+    default:
+      break;
+  }
+};
+
+export const generateQuotationFormData = (
+  sectionList: RequestByFormType["request_form"]["form_section"]
+) => {
+  const itemSections = sectionList.filter(
+    (section) => section.section_name === "Item"
+  );
+  const duplicateSectionList = generateSectionWithDuplicateList(itemSections);
+  const sectionWithResponseList = duplicateSectionList.map((section) => {
+    const sectionFields = section.section_field.filter(
+      (field) => field.field_response !== null
+    );
+
+    return {
+      ...section,
+      section_field: sectionFields,
+    };
+  });
+
+  const itemNameList = sectionWithResponseList.flatMap((section) =>
+    section.section_field.filter((field) => field.field_name === "Item")
+  );
+
+  // trim response to get item description
+  const uniqueItemNameList = itemNameList.reduce((list, item) => {
+    const parseResponse = JSON.parse(
+      `${item.field_response?.request_response}`
+    );
+
+    const trimStart = parseResponse.indexOf("(");
+    const trimEnd = parseResponse.indexOf(") ");
+    const excludedWord = parseResponse.substring(trimStart, trimEnd + 1);
+    const itemName = parseResponse
+      .replace(excludedWord, "")
+      // remove extra white space
+      .replace(/  +/g, " ");
+
+    if (!list.includes(itemName)) {
+      list.push(itemName);
+    }
+
+    return list;
+  }, [] as string[]);
+
+  const groupSectionByItemName = uniqueItemNameList.map((itemName) => {
+    const sectionMatch = sectionWithResponseList.filter((section) => {
+      const itemField = section.section_field.filter(
+        (field) => field.field_name === "Item"
+      )[0];
+
+      if (itemField) {
+        const parseItemName = JSON.parse(
+          `${itemField.field_response?.request_response}`
+        );
+        const trimStart = parseItemName.indexOf("(");
+        const trimEnd = parseItemName.indexOf(") ");
+        const excludedWord = parseItemName.substring(trimStart, trimEnd + 1);
+        const itemFieldName = parseItemName
+          .replace(excludedWord, "")
+          .replace(/  +/g, " ");
+
+        return itemFieldName === itemName;
+      } else {
+        return false;
+      }
+    });
+
+    const sectionFieldResponse: FieldWithResponseType = [];
+    sectionMatch.forEach((section) =>
+      section.section_field.forEach((field) => {
+        if (field.field_response) {
+          const newFieldWithResponse = {
+            ...field,
+            field_option: field.field_option ? field.field_option : [],
+            field_response: field.field_response ? [field.field_response] : [],
+          };
+          sectionFieldResponse.push(newFieldWithResponse);
+        }
+      })
+    );
+
+    const uniqueSectionField = sectionFieldResponse.reduce((acc, field) => {
+      const duplicateFieldIndex = acc.findIndex(
+        (f) => f.field_id === field.field_id
+      );
+
+      if (duplicateFieldIndex >= 0) {
+        const updatedResponseList = [
+          ...acc[duplicateFieldIndex].field_response,
+          ...field.field_response,
+        ];
+        acc[duplicateFieldIndex].field_response = updatedResponseList;
+      } else {
+        acc.push(field);
+      }
+
+      return acc;
+    }, [] as FieldWithResponseType);
+
+    const itemSection = {
+      sectionLabel: itemName,
+      responseData: uniqueSectionField,
+    };
+
+    return itemSection;
+  });
+
+  return groupSectionByItemName;
+};
+
+export const generateOTPFormData = (
   sectionList: RequestByFormType["request_form"]["form_section"]
 ) => {
   const duplicateSectionList = generateSectionWithDuplicateList(sectionList);
@@ -64,6 +193,7 @@ export const generateFormslyResponseData = (
   const generalNameList = sectionWithResponseList.flatMap((section) =>
     section.section_field.filter((field) => field.field_name === "General Name")
   );
+
   const uniqueGeneralNameList = generalNameList.reduce((list, name) => {
     const parseResponse = JSON.parse(
       `${name.field_response?.request_response}`
@@ -228,11 +358,50 @@ export const getUniqueResponseData = (
   return sortedUniqueResponseData;
 };
 
+export const getChartData = (
+  data: RequestResponseDataType[],
+  options: { selectedPurchaseData: string; teamMemberId?: string }
+) => {
+  const itemQuantityData = data.reduce((acc, item) => {
+    const quantityField = item.responseData.filter(
+      (response) => response.field_name === "Quantity"
+    );
+    const quantityResponse = quantityField.flatMap(
+      (field) => field.field_response
+    );
+
+    const selectedQuantityResponse =
+      options.selectedPurchaseData === "user"
+        ? quantityResponse.filter(
+            (response) =>
+              response.request_response_team_member_id === options.teamMemberId
+          )
+        : quantityResponse;
+
+    const totalQuantity = selectedQuantityResponse.reduce((total, response) => {
+      const quantityValue = JSON.parse(response.request_response);
+      return total + quantityValue;
+    }, 0);
+
+    if (totalQuantity > 0) {
+      const newItemData = {
+        label: item.sectionLabel,
+        value: totalQuantity,
+      };
+      acc.push(newItemData);
+    }
+
+    return acc;
+  }, [] as LineChartDataType[]);
+
+  return itemQuantityData;
+};
+
 export const getStackedBarChartData = (
-  requestList: RequestByFormType[],
+  requestData: RequestStatusDataType[],
   initialChartData: StackedBarChartDataType[]
 ) => {
-  const reducedRequestList = requestList.reduce((acc, request) => {
+  const reducedRequestList = requestData.reduce((acc, request) => {
     const requestMonthCreated = moment(request.request_date_created).format(
       "MMM"
     );
@@ -288,15 +457,23 @@ export const getStackedBarChartData = (
 };
 
 export const getItemPurchaseTrendData = (data: RequestResponseDataType[]) => {
-  const itemPurchaseTrendData: PurchaseTrendChartDataType[] = [];
-  const fieldList = data.flatMap((d) => d.responseData);
-  const generalNameFieldList = fieldList.filter(
-    (f) => f.field_name === "General Name"
-  );
-  generalNameFieldList.forEach((field) => {
-    if (field.field_response.length > 0) {
-      itemPurchaseTrendData.push(...field.field_response);
-    }
+  const itemPurchaseTrendData = data.flatMap((d) => {
+    const quantityFieldList = d.responseData.filter(
+      (field) =>
+        field.field_name === "Quantity" && field.field_response.length > 0
+    );
+
+    const newItemPurchaseTrend = quantityFieldList.flatMap((field) => {
+      const fieldResponseWithItemName = field.field_response.map(
+        (response) => ({
+          ...response,
+          request_response_item_general_name: d.sectionLabel,
+        })
+      );
+      return fieldResponseWithItemName;
+    });
+
+    return newItemPurchaseTrend;
   });
 
   return itemPurchaseTrendData;

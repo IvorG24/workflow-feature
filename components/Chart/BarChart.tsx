@@ -1,5 +1,5 @@
-import React, { Dispatch, MouseEvent, SetStateAction, useRef } from "react";
-import { Bar, getElementAtEvent } from "react-chartjs-2";
+import React, { Dispatch, SetStateAction, useRef } from "react";
+import { Bar } from "react-chartjs-2";
 
 type DataItem = {
   label: string;
@@ -11,10 +11,7 @@ type HorizontalBarChartProps = {
   setSelectedBarChartItem?: Dispatch<SetStateAction<string>>;
 };
 
-const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
-  data,
-  setSelectedBarChartItem,
-}) => {
+const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({ data }) => {
   const chartRef = useRef();
   const chartData = {
     labels: data.map((item) => item.label),
@@ -35,7 +32,7 @@ const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
     scales: {
       x: {
         beginAtZero: true,
-        max: Math.max(...data.map((item) => item.value)) + 5,
+        max: Math.max(...data.map((item) => item.value)),
       },
     },
     plugins: {
@@ -45,26 +42,26 @@ const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
     },
   };
 
-  const handleOnClick = (e: MouseEvent<HTMLCanvasElement>) => {
-    const { current: chart } = chartRef;
+  // const handleOnClick = (e: MouseEvent<HTMLCanvasElement>) => {
+  //   const { current: chart } = chartRef;
 
-    if (!chart) {
-      return;
-    }
-    const clickedElement = getElementAtEvent(chart, e);
-    const { index } = clickedElement[0];
-    const elementLabel = chartData.labels[index];
-    if (setSelectedBarChartItem) {
-      setSelectedBarChartItem(elementLabel);
-    }
-  };
+  //   if (!chart) {
+  //     return;
+  //   }
+  //   const clickedElement = getElementAtEvent(chart, e);
+  //   const { index } = clickedElement[0];
+  //   const elementLabel = chartData.labels[index];
+  //   if (setSelectedBarChartItem) {
+  //     setSelectedBarChartItem(elementLabel);
+  //   }
+  // };
 
   return (
     <Bar
       ref={chartRef}
       data={chartData}
       options={chartOptions}
-      onClick={handleOnClick}
+      // onClick={handleOnClick}
     />
   );
 };

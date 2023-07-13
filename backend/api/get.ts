@@ -9,6 +9,7 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   RequestByFormType,
+  RequestDashboardOverviewData,
   RequestResponseTableRow,
   RequestWithResponseType,
   TeamMemberType,
@@ -1194,7 +1195,7 @@ export const getRequestListByForm = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)))), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table!inner(request_response_field_id, request_response_id, request_response, request_response_duplicatable_section_id, request_response_request_id))))",
+      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table!inner(request_response_field_id, request_response_id, request_response, request_response_duplicatable_section_id, request_response_request_id))))",
       { count: "exact" }
     )
     .eq("request_team_member.team_member_team_id", teamId)
@@ -1209,6 +1210,36 @@ export const getRequestListByForm = async (
   if (error) throw error;
 
   const requestList = data as RequestByFormType[];
+
+  return { data: requestList, count };
+};
+
+export const getDashboardOverViewData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    formId?: string;
+  }
+) => {
+  const { formId, teamId } = params;
+  let query = supabaseClient
+    .from("request_table")
+    .select(
+      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)))), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form)))",
+      { count: "exact" }
+    )
+    .eq("request_team_member.team_member_team_id", teamId)
+    .eq("request_is_disabled", false)
+    .eq("request_form.form_is_disabled", false);
+
+  if (formId) {
+    const formCondition = `request_form_id.eq.${formId}`;
+    query = query.or(formCondition);
+  }
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const requestList = data as unknown as RequestDashboardOverviewData[];
 
   return { data: requestList, count };
 };
@@ -1995,6 +2026,79 @@ export const getTeamGroupList = async (
   if (error) throw error;
 
   return data.team_group_list;
+};
+
+// Get request per status count
+export const getRequestStatusCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamId, startDate, endDate } = params;
+  const { data, count } = await supabaseClient
+    .from("request_table")
+    .select(
+      "request_status, request_date_created, request_team_member: request_team_member_id!inner(team_member_team_id)",
+      { count: "exact" }
+    )
+    .eq("request_form_id", formId)
+    .eq("request_team_member.team_member_team_id", teamId)
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  return {
+    data,
+    count,
+  };
+};
+
+export const getRequestorData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamMemberId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamMemberId, startDate, endDate } = params;
+  const { data } = await supabaseClient
+    .from("request_table")
+    .select("request_team_member_id, request_status, request_date_created")
+    .eq("request_form_id", formId)
+    .eq("request_team_member_id", teamMemberId)
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  return data;
+};
+
+export const getSignerData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamMemberId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamMemberId, startDate, endDate } = params;
+  const { data } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      "request: request_signer_request_id!inner(request_form_id, request_date_created), request_signer: request_signer_signer_id!inner(team_member: signer_team_member_id!inner(team_member_id, team_member_team_id)), request_signer_status",
+      { count: "exact" }
+    )
+    .eq("request.request_form_id", formId)
+    .eq("request_signer.team_member.team_member_id", teamMemberId)
+    .gte("request.request_date_created", startDate)
+    .lte("request.request_date_created", endDate);
+
+  return data;
 };
 
 // Get all quotation request for the otp

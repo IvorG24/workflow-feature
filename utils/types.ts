@@ -474,6 +474,26 @@ export type RequestByFormType = RequestTableRow & {
       user_avatar: string;
     };
   };
+};
+
+export type RequestDashboardOverviewData = RequestTableRow & {
+  request_form: {
+    form_id: string;
+    form_name: string;
+    form_description: string;
+    form_is_formsly_form: boolean;
+  };
+} & {
+  request_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_username: string;
+      user_avatar: string;
+    };
+  };
 } & {
   request_signer: (RequestSignerTableRow & {
     request_signer_id: string;
@@ -523,17 +543,6 @@ export type ResponseDataType = {
   }[];
 };
 
-export type RequestorListType =
-  RequestType["request_team_member"]["team_member_user"] & {
-    request: {
-      total: number;
-      pending: number;
-      approved: number;
-      rejected: number;
-      canceled: number;
-    };
-  };
-
 export type LineChartDataType = {
   label: string;
   value: number;
@@ -547,6 +556,7 @@ export type PurchaseTrendChartDataType = {
   request_response_date_purchased?: string | undefined;
   request_response_team_member_id?: string | null;
   request_response_request_status?: string | null;
+  request_response_item_general_name?: string;
 };
 
 export type RequestResponseDataType = {
@@ -565,7 +575,7 @@ export type FormslyFormKeyType =
   | "Receiving Inspecting Report (Purchased)";
 
 export type RequestSignerListType =
-  RequestByFormType["request_signer"][0]["request_signer_signer"] & {
+  RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
     signerCount: {
       approved: number;
       rejected: number;
