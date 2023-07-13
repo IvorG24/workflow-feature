@@ -34,7 +34,7 @@ const RequestItemRow = ({ request }: Props) => {
   const { request_requestor: requestor, request_signers } = request;
 
   return (
-    <Grid justify="space-between">
+    <Grid m={0} px="sm" py={0} justify="space-between">
       <Grid.Col span={2}>
         <Group spacing={0}>
           <Text truncate w={100}>
@@ -52,20 +52,19 @@ const RequestItemRow = ({ request }: Props) => {
         </Group>
       </Grid.Col>
       <Grid.Col span={3}>
-        <Text truncate>{request.form_name}</Text>
+        <Text>{request.form_name}</Text>
       </Grid.Col>
       <Grid.Col span={1}>
-        <Badge color={getStatusToColor(request.request_status)}>
+        <Badge
+          variant="filled"
+          color={getStatusToColor(request.request_status)}
+        >
           {request.request_status}
         </Badge>
       </Grid.Col>
-      <Grid.Col span={2}>
-        <Text align="center">
-          {moment(request.request_date_created).format("MMM DD, YYYY")}
-        </Text>
-      </Grid.Col>
-      <Grid.Col span={2}>
-        <Flex w={200} gap={8} justify="flex-start" wrap="wrap">
+
+      <Grid.Col span="auto" offset={0.5}>
+        <Flex px={0} gap={8} wrap="wrap">
           <Avatar
             src={requestor.user_avatar}
             {...defaultAvatarProps}
@@ -80,7 +79,12 @@ const RequestItemRow = ({ request }: Props) => {
       <Grid.Col span={1}>
         <RequestSignerList signerList={request_signers} />
       </Grid.Col>
-      <Grid.Col span={1}>
+      <Grid.Col span="content">
+        <Text miw={105}>
+          {moment(request.request_date_created).format("MMM DD, YYYY")}
+        </Text>
+      </Grid.Col>
+      <Grid.Col span="content">
         <Group position="center">
           <ActionIcon color="blue">
             <IconArrowsMaximize

@@ -13,7 +13,6 @@ import {
   Divider,
   Flex,
   Grid,
-  Group,
   LoadingOverlay,
   Pagination,
   Paper,
@@ -125,7 +124,7 @@ const RequestListPage = ({
   }, [activeTeam.team_id]);
 
   return (
-    <Container fluid>
+    <Container maw={1300} h="100%">
       <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
       <Flex align="center" gap="xl">
         <Box>
@@ -143,59 +142,55 @@ const RequestListPage = ({
           </Button>
         ) : null}
       </Flex>
-      <Group spacing={4} mt="sm">
-        <FormProvider {...filterFormMethods}>
-          <form onSubmit={handleSubmit(handleFilterForms)}>
-            <RequestListFilter
-              teamMemberList={teamMemberList}
-              handleFilterForms={handleFilterForms}
-              formList={formList}
-            />
-          </form>
-        </FormProvider>
-      </Group>
+      <Space h="sm" />
+      <FormProvider {...filterFormMethods}>
+        <form onSubmit={handleSubmit(handleFilterForms)}>
+          <RequestListFilter
+            teamMemberList={teamMemberList}
+            handleFilterForms={handleFilterForms}
+            formList={formList}
+          />
+        </form>
+      </FormProvider>
       <Space h="sm" />
 
       {!isFetchingRequestList && requestList.length > 0 ? (
-        <Paper w="100%" maw={1300}>
-          <ScrollArea w="auto">
-            <Stack miw={1076} w="100%" p="md">
-              <Grid justify="space-between">
-                <Grid.Col span={2}>
-                  <Text weight={600}>Request ID</Text>
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <Text weight={600}>Form Name</Text>
-                </Grid.Col>
-                <Grid.Col span={1}>
-                  <Text weight={600} align="center">
-                    Status
-                  </Text>
-                </Grid.Col>
-                <Grid.Col span={2}>
-                  <Text weight={600} align="center">
-                    Date Created
-                  </Text>
-                </Grid.Col>
-                <Grid.Col span={2}>
-                  <Text weight={600}>Requested By</Text>
-                </Grid.Col>
-                <Grid.Col span={1}>
-                  <Text weight={600}>Approver</Text>
-                </Grid.Col>
-                <Grid.Col span={1}>
-                  <Text weight={600} align="center">
-                    View
-                  </Text>
-                </Grid.Col>
-              </Grid>
-              <Divider />
+        <Paper withBorder>
+          <ScrollArea h="fit-content" type="auto">
+            <Stack spacing={0} miw={1074}>
+              <Box bg="gray.1">
+                <Grid m={0} px="sm" justify="space-between">
+                  <Grid.Col span={2}>
+                    <Text weight={600}>Request ID</Text>
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <Text weight={600}>Form Name</Text>
+                  </Grid.Col>
+                  <Grid.Col span={1}>
+                    <Text weight={600}>Status</Text>
+                  </Grid.Col>
+
+                  <Grid.Col span="auto" offset={0.5}>
+                    <Text weight={600} pl={8}>
+                      Requested By
+                    </Text>
+                  </Grid.Col>
+                  <Grid.Col span={1}>
+                    <Text weight={600}>Approver</Text>
+                  </Grid.Col>
+                  <Grid.Col span="content">
+                    <Text weight={600}>Date Created</Text>
+                  </Grid.Col>
+                  <Grid.Col span="content">
+                    <Text weight={600}>View</Text>
+                  </Grid.Col>
+                </Grid>
+                <Divider />
+              </Box>
               {requestList.map((request, idx) => (
                 <Box key={request.request_id}>
                   <RequestItemRow request={request} />
-                  {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? (
-                    <Divider mt="sm" />
-                  ) : null}
+                  {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
                 </Box>
               ))}
             </Stack>
@@ -207,15 +202,17 @@ const RequestListPage = ({
         </Text>
       )}
 
-      <Pagination
-        value={activePage}
-        onChange={async (value) => {
-          setActivePage(value);
-          await handleFilterForms();
-        }}
-        total={Math.ceil(requestListCount / DEFAULT_REQUEST_LIST_LIMIT)}
-        mt="xl"
-      />
+      <Flex justify="flex-end">
+        <Pagination
+          value={activePage}
+          onChange={async (value) => {
+            setActivePage(value);
+            await handleFilterForms();
+          }}
+          total={Math.ceil(requestListCount / DEFAULT_REQUEST_LIST_LIMIT)}
+          mt="xl"
+        />
+      </Flex>
     </Container>
   );
 };
