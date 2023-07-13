@@ -356,7 +356,7 @@ const RequestPage = ({
 
   return (
     <Container>
-      <Flex justify="space-between">
+      <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
@@ -380,6 +380,7 @@ const RequestPage = ({
                   )}&quotationId=${request.request_id}`
                 );
               }}
+              sx={{ flex: 1 }}
             >
               Create Receiving Inspecting Report
             </Button>

@@ -198,7 +198,7 @@ const OrderToPurchaseRequestPage = ({
 
   return (
     <Container>
-      <Flex justify="space-between">
+      <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
@@ -231,6 +231,7 @@ const OrderToPurchaseRequestPage = ({
                             `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
                           )
                         }
+                        sx={{ flex: 1 }}
                       >
                         Create Receiving Inspecting Report
                       </Button>
@@ -247,6 +248,7 @@ const OrderToPurchaseRequestPage = ({
                             `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
                           )
                         }
+                        sx={{ flex: 1 }}
                       >
                         Create {form.form_name}
                       </Button>

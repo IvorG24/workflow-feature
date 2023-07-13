@@ -126,7 +126,7 @@ const RequestListPage = ({
   return (
     <Container maw={1300} h="100%">
       <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
-      <Flex align="center" gap="xl">
+      <Flex align="center" gap="xl" wrap="wrap">
         <Box>
           <Title order={4}>Request List Page</Title>
           <Text>Manage your team requests here.</Text>
