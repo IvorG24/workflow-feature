@@ -44,7 +44,7 @@ const RequestItemRow = ({ request }: Props) => {
             {({ copied, copy }) => (
               <Tooltip label={copied ? "Copied" : "Copy"} onClick={copy}>
                 <ActionIcon>
-                  <IconCopy />
+                  <IconCopy size={16} />
                 </ActionIcon>
               </Tooltip>
             )}
@@ -84,6 +84,7 @@ const RequestItemRow = ({ request }: Props) => {
         <Group position="center">
           <ActionIcon color="blue">
             <IconArrowsMaximize
+              size={16}
               onClick={() =>
                 router.push(`/team-requests/requests/${request.request_id}`)
               }

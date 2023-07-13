@@ -37,16 +37,16 @@ BEGIN
 
 -- Create new team
 INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list, team_project_list) VALUES
-('2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'XYZ Corp', '15de3182-6efe-47cf-b681-00f8ed10365f', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
+('2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'XYZ Corp', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
 
 SELECT var_value INTO ownerMemberId
   FROM seed_variable_table
   WHERE var_key = 'ownerMemberId';
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list, team_member_project_list) VALUES
-(ownerMemberId, 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '15de3182-6efe-47cf-b681-00f8ed10365f', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
-('0a61a37f-7805-4fe5-8856-3c7fa801c744', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '66865893-dd0a-40f3-8acd-03fed41d4051', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
-('a750df8c-35fe-48d6-862a-1135c8f96a9a', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'bcaad583-4bb3-4d86-9067-956cf7f20688', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
+(ownerMemberId, 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
+('0a61a37f-7805-4fe5-8856-3c7fa801c744', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '63e913eb-746e-4eb9-a1b2-4b3c88df0659', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
+('a750df8c-35fe-48d6-862a-1135c8f96a9a', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'f5ee3322-46a1-48ea-a40f-9244ab198f18', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
 
 -- Create Forms
 SELECT var_value INTO allFieldsFormId
