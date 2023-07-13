@@ -644,3 +644,29 @@ export type CanvassType = Record<
   { quotationId: string; price: number; quantity: number }[]
 >;
 export type CanvassLowestPriceType = Record<string, number>;
+
+export type RequestTableViewData = {
+  request_id: string;
+  request_date_created: string;
+  request_status: string;
+  request_team_id: string;
+  request_team_member_id: string;
+  request_requestor: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    team_id: string;
+  };
+  request_form_id: string;
+  form_name: string;
+  form_description: string;
+  request_signers: {
+    request_signer_id: string;
+    is_primary_signer: boolean;
+    team_member_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+  }[];
+};

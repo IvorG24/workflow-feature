@@ -2121,3 +2121,76 @@ export const getCanvassData = async (
     },
   };
 };
+
+// Get request list
+export const getRequestTableView = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    requestor?: string[];
+    status?: FormStatusType[];
+    form?: string[];
+    sort?: "ascending" | "descending";
+    search?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    requestor,
+    status,
+    form,
+    sort = "descending",
+    search,
+  } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("request_list_table_view")
+    .select("*", { count: "exact" })
+    .eq("request_team_id", teamId);
+
+  if (requestor) {
+    let requestorCondition = "";
+    requestor.forEach((value) => {
+      requestorCondition += `request_team_member_id.eq.${value}, `;
+    });
+    query = query.or(requestorCondition.slice(0, -2));
+  }
+
+  if (status) {
+    let statusCondition = "";
+    status.forEach((value) => {
+      statusCondition += `request_status.eq.${value}, `;
+    });
+    query = query.or(statusCondition.slice(0, -2));
+  }
+
+  if (form) {
+    let formCondition = "";
+    form.forEach((value) => {
+      formCondition += `request_form_id.eq.${value}, `;
+    });
+    query = query.or(formCondition.slice(0, -2));
+  }
+
+  if (search) {
+    query = query.eq("request_id", search);
+  }
+
+  query = query.order("request_date_created", {
+    ascending: sort === "ascending",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return { data, count };
+};
