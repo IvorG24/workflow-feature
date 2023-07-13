@@ -82,7 +82,9 @@ const QuotationSummary = ({ summaryData }: Props) => {
               <td></td>
               <td></td>
               <td>
-                <Text fw={700}>₱ {addCommaToNumber(totalPriceSummation)}</Text>
+                <Text fw={700} sx={{ whiteSpace: "nowrap" }}>
+                  ₱ {addCommaToNumber(totalPriceSummation)}
+                </Text>
               </td>
             </tr>
           </tbody>

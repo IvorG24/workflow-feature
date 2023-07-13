@@ -291,36 +291,36 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04'),
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04');
 
-INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
-('5bc0f573-9c7f-4053-a387-21e744399b0c', 'WOOD', 'piece', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'KFEO2', 'RX7VU'),
-('64de1a67-18dd-4010-ac2a-326aa7178908', 'GASOLINE', 'litre', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'G2HF5', 'DPRHK'),
-('bf56098b-3869-4c28-a1e8-896c82b9386e', 'NAIL', 'bag', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'ZH123', 'QAMFI');
+-- INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
+-- ('5bc0f573-9c7f-4053-a387-21e744399b0c', 'WOOD', 'piece', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'KFEO2', 'RX7VU'),
+-- ('64de1a67-18dd-4010-ac2a-326aa7178908', 'GASOLINE', 'litre', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'G2HF5', 'DPRHK'),
+-- ('bf56098b-3869-4c28-a1e8-896c82b9386e', 'NAIL', 'bag', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'ZH123', 'QAMFI');
 
-INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
-('164a75f3-09cc-42ae-9d9e-276eb33166f3', 'LENGTH', '5bc0f573-9c7f-4053-a387-21e744399b0c', '59a6093c-5733-44c0-8a99-e12011207ff8'),
-('19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c', 'WIDTH', '5bc0f573-9c7f-4053-a387-21e744399b0c', 'd527a714-a49a-4162-a851-f73553f6bea1'),
-('b3090b4d-120e-4f68-8374-2080eee4b29c', 'HEIGHT', '5bc0f573-9c7f-4053-a387-21e744399b0c', '743ac520-e8a8-4801-a89b-abe4d666ff68'),
-('a80ef950-2a2a-4669-8dd7-b3b502f3e82d', 'TYPE', '64de1a67-18dd-4010-ac2a-326aa7178908', '84b92308-11bf-47b4-b006-00894ea3640d'),
-('f63b2370-0174-4a89-a047-a2680717d91a', 'BRAND', '64de1a67-18dd-4010-ac2a-326aa7178908', '2d0a3a6c-107d-4f86-bf3d-87a98607f832'),
-('0e5e970a-63aa-4b88-902a-e410a3611015', 'MATERIAL', 'bf56098b-3869-4c28-a1e8-896c82b9386e', 'ed1f9bbd-deab-4576-b83d-965b16b98522'),
-('0554d368-42e8-4b3b-a5d0-8fc68a7129ec', 'SIZE', 'bf56098b-3869-4c28-a1e8-896c82b9386e', '84e06984-45eb-4947-913e-7882e20f3bfd');
+-- INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
+-- ('164a75f3-09cc-42ae-9d9e-276eb33166f3', 'LENGTH', '5bc0f573-9c7f-4053-a387-21e744399b0c', '59a6093c-5733-44c0-8a99-e12011207ff8'),
+-- ('19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c', 'WIDTH', '5bc0f573-9c7f-4053-a387-21e744399b0c', 'd527a714-a49a-4162-a851-f73553f6bea1'),
+-- ('b3090b4d-120e-4f68-8374-2080eee4b29c', 'HEIGHT', '5bc0f573-9c7f-4053-a387-21e744399b0c', '743ac520-e8a8-4801-a89b-abe4d666ff68'),
+-- ('a80ef950-2a2a-4669-8dd7-b3b502f3e82d', 'TYPE', '64de1a67-18dd-4010-ac2a-326aa7178908', '84b92308-11bf-47b4-b006-00894ea3640d'),
+-- ('f63b2370-0174-4a89-a047-a2680717d91a', 'BRAND', '64de1a67-18dd-4010-ac2a-326aa7178908', '2d0a3a6c-107d-4f86-bf3d-87a98607f832'),
+-- ('0e5e970a-63aa-4b88-902a-e410a3611015', 'MATERIAL', 'bf56098b-3869-4c28-a1e8-896c82b9386e', 'ed1f9bbd-deab-4576-b83d-965b16b98522'),
+-- ('0554d368-42e8-4b3b-a5d0-8fc68a7129ec', 'SIZE', 'bf56098b-3869-4c28-a1e8-896c82b9386e', '84e06984-45eb-4947-913e-7882e20f3bfd');
 
-INSERT INTO item_description_field_table (item_description_field_id, item_description_field_value, item_description_field_item_description_id) VALUES 
-('f55f7011-16b4-4d68-913d-26b982851b78', '1 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('d943db75-d8cf-413e-b9c3-c5b499a73640', '2 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('4b6ce9ff-361c-4c81-977d-6aba7fa6382e', '3 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('44da0631-b20b-4887-85e7-2d979f840f04', '4 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
-('8331b319-569f-4613-b62a-338cc2d8359d', '1 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
-('a80b02c8-3068-40be-8a82-444a82e7f63f', '2 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
-('a1f5ae8e-71e9-43ed-8a4e-575614a0d5bc', '3 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
-('779a3de2-7cc0-4214-8b81-8ad82185cb94', '1 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
-('83d756f9-7238-4e0c-81e1-b284ffb4b7f2', '2 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
-('13a12596-3161-4893-a3fe-07ea73fbeffd', 'Unleaded',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
-('f1a11c5a-915b-4eff-a4d2-f36683998b2f', 'Shell',  'f63b2370-0174-4a89-a047-a2680717d91a'),
-('b113659c-8ae7-4650-8b19-1d88e2d76c37', 'Diesel',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
-('ed3fe8d0-a9c5-4e67-a9da-2d8617a8a550', 'Petron',  'f63b2370-0174-4a89-a047-a2680717d91a'),
-('0055da68-32c8-40f9-ad6e-d7be663dad70', 'Metal', '0e5e970a-63aa-4b88-902a-e410a3611015'),
-('1fc0f954-bd1a-46e8-905b-6a9c367a6cc0', '5 inch', '0554d368-42e8-4b3b-a5d0-8fc68a7129ec');
+-- INSERT INTO item_description_field_table (item_description_field_id, item_description_field_value, item_description_field_item_description_id) VALUES 
+-- ('f55f7011-16b4-4d68-913d-26b982851b78', '1 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+-- ('d943db75-d8cf-413e-b9c3-c5b499a73640', '2 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+-- ('4b6ce9ff-361c-4c81-977d-6aba7fa6382e', '3 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+-- ('44da0631-b20b-4887-85e7-2d979f840f04', '4 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
+-- ('8331b319-569f-4613-b62a-338cc2d8359d', '1 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
+-- ('a80b02c8-3068-40be-8a82-444a82e7f63f', '2 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
+-- ('a1f5ae8e-71e9-43ed-8a4e-575614a0d5bc', '3 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
+-- ('779a3de2-7cc0-4214-8b81-8ad82185cb94', '1 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
+-- ('83d756f9-7238-4e0c-81e1-b284ffb4b7f2', '2 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
+-- ('13a12596-3161-4893-a3fe-07ea73fbeffd', 'Unleaded',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
+-- ('f1a11c5a-915b-4eff-a4d2-f36683998b2f', 'Shell',  'f63b2370-0174-4a89-a047-a2680717d91a'),
+-- ('b113659c-8ae7-4650-8b19-1d88e2d76c37', 'Diesel',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
+-- ('ed3fe8d0-a9c5-4e67-a9da-2d8617a8a550', 'Petron',  'f63b2370-0174-4a89-a047-a2680717d91a'),
+-- ('0055da68-32c8-40f9-ad6e-d7be663dad70', 'Metal', '0e5e970a-63aa-4b88-902a-e410a3611015'),
+-- ('1fc0f954-bd1a-46e8-905b-6a9c367a6cc0', '5 inch', '0554d368-42e8-4b3b-a5d0-8fc68a7129ec');
 
 INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('0f61f7e2-8354-4022-a5bd-adeae3e4027e', 'Techrom Computer Shop', 'a5a28977-6956-45c1-a624-b9e90911502e'),
