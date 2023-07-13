@@ -17,7 +17,6 @@ import {
   LoadingOverlay,
   Pagination,
   Paper,
-  ScrollArea,
   Space,
   Stack,
   Text,
@@ -157,49 +156,47 @@ const RequestListPage = ({
       <Space h="sm" />
 
       {!isFetchingRequestList && requestList.length > 0 ? (
-        <Paper w="100%" maw={1300}>
-          <ScrollArea w="auto">
-            <Stack miw={1076} w="100%" p="md">
-              <Grid justify="space-between">
-                <Grid.Col span={2}>
-                  <Text weight={600}>Request ID</Text>
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <Text weight={600}>Form Name</Text>
-                </Grid.Col>
-                <Grid.Col span={1}>
-                  <Text weight={600} align="center">
-                    Status
-                  </Text>
-                </Grid.Col>
-                <Grid.Col span={2}>
-                  <Text weight={600} align="center">
-                    Date Created
-                  </Text>
-                </Grid.Col>
-                <Grid.Col span={2}>
-                  <Text weight={600}>Requested By</Text>
-                </Grid.Col>
-                <Grid.Col span={1}>
-                  <Text weight={600}>Approver</Text>
-                </Grid.Col>
-                <Grid.Col span={1}>
-                  <Text weight={600} align="center">
-                    View
-                  </Text>
-                </Grid.Col>
-              </Grid>
-              <Divider />
-              {requestList.map((request, idx) => (
-                <Box key={request.request_id}>
-                  <RequestItemRow request={request} />
-                  {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? (
-                    <Divider mt="sm" />
-                  ) : null}
-                </Box>
-              ))}
-            </Stack>
-          </ScrollArea>
+        <Paper w="100%" maw={1300} p="xs">
+          <Stack miw={1076} w="100%" p="md">
+            <Grid justify="space-between">
+              <Grid.Col span={2}>
+                <Text weight={600}>Request ID</Text>
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Text weight={600}>Form Name</Text>
+              </Grid.Col>
+              <Grid.Col span={1}>
+                <Text weight={600} align="center">
+                  Status
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <Text weight={600} align="center">
+                  Date Created
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <Text weight={600}>Requested By</Text>
+              </Grid.Col>
+              <Grid.Col span={1}>
+                <Text weight={600}>Approver</Text>
+              </Grid.Col>
+              <Grid.Col span={1}>
+                <Text weight={600} align="center">
+                  View
+                </Text>
+              </Grid.Col>
+            </Grid>
+            <Divider />
+            {requestList.map((request, idx) => (
+              <Box key={request.request_id}>
+                <RequestItemRow request={request} />
+                {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? (
+                  <Divider mt="sm" />
+                ) : null}
+              </Box>
+            ))}
+          </Stack>
         </Paper>
       ) : (
         <Text align="center" size={24} weight="bolder" color="dark.1">

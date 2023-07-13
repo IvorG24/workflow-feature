@@ -1,3 +1,6 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
 import { SSOTType } from "@/utils/types";
 import {
@@ -5,6 +8,7 @@ import {
   Box,
   Flex,
   List,
+  LoadingOverlay,
   Paper,
   ScrollArea,
   Table,
@@ -12,7 +16,10 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile } from "@tabler/icons-react";
+import { useEffect, useRef, useState } from "react";
 
 // TODO: Refactor
 
@@ -128,6 +135,66 @@ type Props = {
 
 const SSOTSpreadsheetView = ({ data }: Props) => {
   const { classes } = useStyles();
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const containerRef = useRef<HTMLTableElement>(null);
+  const team = useActiveTeam();
+
+  const [otpList, setOtpList] = useState(data);
+  const [offset, setOffset] = useState(1);
+  const [isInView, setIsInView] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [scrollBarType, setScrollBarType] = useState<"always" | "never">(
+    "always"
+  );
+  const [isFetchable, setIsFetchable] = useState(true);
+
+  const loadMoreRequests = async (offset: number) => {
+    try {
+      setIsLoading(true);
+      setScrollBarType("never");
+      const { data, error } = await supabaseClient.rpc("get_ssot", {
+        input_data: {
+          activeTeam: team.team_id,
+          pageNumber: offset,
+          rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+        },
+      });
+      if (error) throw error;
+
+      const formattedData = data as SSOTType[];
+      if (formattedData.length === 0) {
+        setIsFetchable(false);
+      } else {
+        setOtpList((prev) => [...prev, ...formattedData]);
+      }
+    } catch (e) {
+      console.error(e);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setScrollBarType("always");
+      setIsLoading(false);
+    }
+  };
+
+  const handleScroll = () => {
+    if (!isFetchable) return;
+    if (containerRef.current && typeof window !== "undefined") {
+      const container = containerRef.current;
+      const { bottom } = container.getBoundingClientRect();
+      const { innerHeight } = window;
+      setIsInView(bottom <= innerHeight);
+    }
+  };
+
+  useEffect(() => {
+    if (isInView) {
+      loadMoreRequests(offset + 1);
+      setOffset((prev) => (prev += 1));
+    }
+  }, [isInView]);
 
   const renderChequeReference = (
     request: SSOTType["otp_cheque_reference_request"]
@@ -469,7 +536,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   };
 
   const renderOtp = () => {
-    return data.map((request) => {
+    return otpList.map((request) => {
       const itemName: string[] = [];
       const itemUnit: string[] = [];
       const itemQuantity: string[] = [];
@@ -676,14 +743,21 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       </Title>
 
       <Paper mt="xl" p="xl" shadow="sm">
-        <ScrollArea scrollbarSize={10} offsetScrollbars type="always">
+        <ScrollArea
+          scrollbarSize={10}
+          offsetScrollbars
+          type={scrollBarType}
+          onScrollCapture={handleScroll}
+        >
           <Box mah={710}>
+            <LoadingOverlay visible={isLoading} />
             <Table
               withBorder
               withColumnBorders
               pos="relative"
               h="100%"
               className={classes.otpTable}
+              ref={containerRef}
             >
               <thead>
                 <tr>
