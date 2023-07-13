@@ -82,13 +82,13 @@ const RequestItemRow = ({ request }: Props) => {
       </Grid.Col>
       <Grid.Col span={1}>
         <Group position="center">
-          <ActionIcon color="blue">
-            <IconArrowsMaximize
-              size={16}
-              onClick={() =>
-                router.push(`/team-requests/requests/${request.request_id}`)
-              }
-            />
+          <ActionIcon
+            color="blue"
+            onClick={() =>
+              router.push(`/team-requests/requests/${request.request_id}`)
+            }
+          >
+            <IconArrowsMaximize size={16} />
           </ActionIcon>
         </Group>
       </Grid.Col>

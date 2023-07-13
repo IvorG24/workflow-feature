@@ -120,8 +120,6 @@ const OTPSearch = () => {
         color: "orange",
       });
     }
-
-    console.log(data);
   };
 
   useEffect(() => {
