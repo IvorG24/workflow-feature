@@ -4,7 +4,9 @@ import {
   getSignerData,
   getTeamMemberList,
 } from "@/backend/api/get";
+import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { TeamMemberType } from "@/utils/types";
 import { Box, Flex, LoadingOverlay, Stack } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -50,6 +52,7 @@ const status = ["Pending", "Approved", "Rejected", "Canceled"];
 
 const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
   const activeTeam = useActiveTeam();
+  const formList = useFormList();
   const supabaseClient = useSupabaseClient();
   const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>([]);
   const [requestStatusData, setRequestStatusData] = useState<
@@ -113,8 +116,30 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
       });
       setRequestStatusChartData(chartData);
 
+      const formMatch = formList.find((form) => form.form_id === selectedForm);
+      if (!formMatch) return;
       const requestorList = await Promise.all(
         teamMemberList.map(async (member) => {
+          // only fetch if requestor has same form group
+          const isGroupMember =
+            checkIfTwoArrayHaveAtLeastOneEqualElement(
+              formMatch?.form_group,
+              member.team_member_group_list
+            ) || formMatch.form_group.length === 0;
+          if (!isGroupMember) {
+            const newRequestor = {
+              ...member.team_member_user,
+              request: {
+                pending: 0,
+                approved: 0,
+                rejected: 0,
+                canceled: 0,
+                total: 0,
+              },
+            };
+
+            return newRequestor;
+          }
           const requestor = await getRequestorData(supabaseClient, {
             formId: selectedForm,
             teamMemberId: member.team_member_id,
@@ -149,11 +174,35 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
           return newRequestor;
         })
       );
-      setRequestorList(requestorList);
+      setRequestorList(
+        requestorList.filter((requestor) => requestor.request.total !== 0)
+      );
 
       // set signer data
       const signerList = await Promise.all(
         teamMemberList.map(async (member) => {
+          // only fetch if signer has same form group
+          const isGroupMember =
+            checkIfTwoArrayHaveAtLeastOneEqualElement(
+              formMatch.form_group,
+              member.team_member_group_list
+            ) || formMatch.form_group.length === 0;
+
+          if (!isGroupMember) {
+            const newSigner = {
+              ...member.team_member_user,
+              request: {
+                pending: 0,
+                approved: 0,
+                rejected: 0,
+                canceled: 0,
+                total: 0,
+              },
+            };
+
+            return newSigner;
+          }
+
           const signer = await getSignerData(supabaseClient, {
             formId: selectedForm,
             teamMemberId: member.team_member_id,
@@ -188,7 +237,7 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
           return newSigner;
         })
       );
-      setSignerList(signerList);
+      setSignerList(signerList.filter((signer) => signer.request.total !== 0));
 
       setIsFetchingData(false);
     };

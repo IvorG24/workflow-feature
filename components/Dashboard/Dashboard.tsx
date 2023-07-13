@@ -19,15 +19,14 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
-import ResponseTab from "./ResponseTab/ResponseTab";
 
 // response tab is hidden
-const TABS = ["overview", "responses"];
-const SPECIAL_FORMS = [
-  "Order to Purchase",
-  "Receiving Inspecting Report",
-  "Quotation",
-];
+const TABS = ["overview"];
+// const SPECIAL_FORMS = [
+//   "Order to Purchase",
+//   "Receiving Inspecting Report",
+//   "Quotation",
+// ];
 
 const Dashboard = () => {
   const formList = useFormList();
@@ -38,7 +37,7 @@ const Dashboard = () => {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
   const previousActiveTeamId = usePrevious(activeTeam.team_id);
-  const [isOTPForm, setIsOTPForm] = useState(false);
+  // const [isOTPForm, setIsOTPForm] = useState(false);
 
   const currentDate = moment().toDate();
   const firstDayOfCurrentYear = moment({
@@ -53,15 +52,15 @@ const Dashboard = () => {
   ]);
 
   //check if selected form is formsly form
-  const isFormslyForm =
-    formList.find((form) => form.form_id === selectedForm)
-      ?.form_is_formsly_form || false;
-  const selectedFormName =
-    formList.find((form) => form.form_id === selectedForm)?.form_name || "";
+  // const isFormslyForm =
+  //   formList.find((form) => form.form_id === selectedForm)
+  //     ?.form_is_formsly_form || false;
+  // const selectedFormName =
+  //   formList.find((form) => form.form_id === selectedForm)?.form_name || "";
 
-  useEffect(() => {
-    setIsOTPForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
-  }, [isFormslyForm, selectedFormName]);
+  // useEffect(() => {
+  //   setIsOTPForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
+  // }, [isFormslyForm, selectedFormName]);
 
   useEffect(() => {
     if (previousActiveTeamId !== activeTeam.team_id) {
@@ -87,19 +86,19 @@ const Dashboard = () => {
           </>
         );
 
-      case "responses":
-        return selectedForm ? (
-          <ResponseTab
-            isOTPForm={isOTPForm}
-            selectedForm={selectedForm}
-            selectedFormName={selectedFormName}
-            activeTeamId={activeTeam.team_id}
-          />
-        ) : (
-          <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
-            Please select a form to generate data.
-          </Alert>
-        );
+      // case "responses":
+      //   return selectedForm ? (
+      //     <ResponseTab
+      //       isOTPForm={isOTPForm}
+      //       selectedForm={selectedForm}
+      //       selectedFormName={selectedFormName}
+      //       activeTeamId={activeTeam.team_id}
+      //     />
+      //   ) : (
+      //     <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
+      //       Please select a form to generate data.
+      //     </Alert>
+      //   );
     }
   };
 
