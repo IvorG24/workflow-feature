@@ -1,7 +1,7 @@
 import { TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
-  Group,
+  Flex,
   MultiSelect,
   TextInput,
   Tooltip,
@@ -93,7 +93,7 @@ const RequestListFilter = ({
   };
 
   return (
-    <Group>
+    <Flex justify="space-between" gap="sm" wrap="wrap">
       <Controller
         control={control}
         name="isAscendingSort"
@@ -203,7 +203,7 @@ const RequestListFilter = ({
           />
         )}
       />
-    </Group>
+    </Flex>
   );
 };
 
