@@ -2,7 +2,7 @@ import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { v4 as uuidv4 } from "uuid";
 import { SectionWithField } from "./types";
 
-export const DEFAULT_REQUEST_LIST_LIMIT = 12;
+export const DEFAULT_REQUEST_LIST_LIMIT = 10;
 export const DEFAULT_FORM_LIST_LIMIT = 10;
 export const DEFAULT_TEAM_MEMBER_LIST_LIMIT = 10;
 export const DEFAULT_TEAM_GROUP_LIST_LIMIT = 10;
@@ -11,6 +11,7 @@ export const DEFAULT_NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
 export const MAX_FILE_SIZE_IN_MB = 5;
 export const MAX_FILE_SIZE = MAX_FILE_SIZE_IN_MB * 1024 * 1024;
+export const DEFAULT_NUMBER_SSOT_ROWS = 10;
 
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",

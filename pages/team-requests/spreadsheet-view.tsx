@@ -1,6 +1,7 @@
 import { getUserActiveTeamId } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import SSOTSpreadsheetView from "@/components/SSOTSpreadhseetViewPage/SSOTSpreadhseetViewPage";
+import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { SSOTType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -13,9 +14,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (activeTeam) {
         const { data, error } = await supabaseClient.rpc("get_ssot", {
-          input_data: { activeTeam: activeTeam },
+          input_data: {
+            activeTeam: activeTeam,
+            pageNumber: 1,
+            rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+          },
         });
-
         if (error) throw error;
         return {
           props: { data },
