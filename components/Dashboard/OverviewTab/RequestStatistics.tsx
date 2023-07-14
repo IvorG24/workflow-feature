@@ -77,7 +77,6 @@ const RequestStatistics = ({
 
   useEffect(() => {
     setChartData(monthlyChartData);
-    console.log(monthlyChartData);
   }, [monthlyChartData]);
 
   return (
