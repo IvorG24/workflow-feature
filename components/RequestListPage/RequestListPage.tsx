@@ -84,7 +84,6 @@ const RequestListPage = ({
     }: FilterFormValues = getValues()
   ) => {
     try {
-      console.log(activeTeam.team_id);
       if (!activeTeam.team_id) return;
       setIsFetchingRequestList(true);
       const params = {
