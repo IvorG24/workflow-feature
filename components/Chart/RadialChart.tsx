@@ -6,19 +6,19 @@ import { Doughnut } from "react-chartjs-2";
 export type RadialChartData = {
   label: string;
   value: number;
-  totalCount: number;
 };
 
 type RadialChartProps = {
   data: RadialChartData[];
+  totalCount: number;
 };
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const RadialChart: React.FC<RadialChartProps> = ({
   data,
+  totalCount,
 }: RadialChartProps) => {
-  const totalCount = data[0].totalCount;
   const labels = ["Approved", "Pending", "Rejected", "Canceled"];
   const dataSet = data.map((d) => ({
     label: d.label,

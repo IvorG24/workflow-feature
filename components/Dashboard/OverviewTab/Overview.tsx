@@ -1,16 +1,19 @@
 import {
+  getRequestMonthlyCount,
   getRequestStatusCount,
   getRequestorData,
   getSignerData,
   getTeamMemberList,
 } from "@/backend/api/get";
+import { RadialChartData } from "@/components/Chart/RadialChart";
+import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { TeamMemberType } from "@/utils/types";
 import { Box, Flex, LoadingOverlay, Stack } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { lowerCase } from "lodash";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import RequestStatistics from "./RequestStatistics";
@@ -42,25 +45,22 @@ type OverviewProps = {
   selectedForm: string | null;
 };
 
-type RequestStatusChartData = {
-  label: string;
-  value: number;
+export type MonthlyRequestDataTypeWithTotal = {
+  data: StackedBarChartDataType[];
   totalCount: number;
 };
-
-const status = ["Pending", "Approved", "Rejected", "Canceled"];
 
 const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
   const activeTeam = useActiveTeam();
   const formList = useFormList();
   const supabaseClient = useSupabaseClient();
   const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>([]);
-  const [requestStatusData, setRequestStatusData] = useState<
-    RequestStatusDataType[] | null
+  const [requestStatusCount, setRequestStatusCount] = useState<
+    RadialChartData[] | null
   >(null);
   const [totalRequestCount, setTotalRequestCount] = useState(0);
-  const [requestStatusChartData, setRequestStatusChartData] = useState<
-    RequestStatusChartData[]
+  const [monthlyChartData, setMonthlyChartData] = useState<
+    StackedBarChartDataType[]
   >([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [requestorList, setRequestorList] = useState<
@@ -85,161 +85,174 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
   useEffect(() => {
     if (!dateFilter[0] || !dateFilter[1]) return;
     const fetchOverviewData = async (selectedForm: string, teamId: string) => {
-      setIsFetchingData(true);
-      // set request status tracker
-      const { data, count: count } = await getRequestStatusCount(
-        supabaseClient,
-        {
-          formId: selectedForm,
-          startDate: moment(dateFilter[0]).format(),
-          endDate: moment(dateFilter[1]).format(),
-          teamId: teamId,
-        }
-      );
-      setRequestStatusData(data);
-      setTotalRequestCount(count ? count : 0);
+      try {
+        setIsFetchingData(true);
+        // set request status tracker
+        const { data: requestStatusCountData, totalCount } =
+          await getRequestStatusCount(supabaseClient, {
+            formId: selectedForm,
+            startDate: moment(dateFilter[0]).format(),
+            endDate: moment(dateFilter[1]).format(),
+            teamId: teamId,
+          });
 
-      if (!data) return;
-      const chartData = status.map((status) => {
-        const requestMatch =
-          data.filter(
-            (request) => lowerCase(request.request_status) === lowerCase(status)
-          ) || [];
+        setRequestStatusCount(requestStatusCountData);
+        setTotalRequestCount(totalCount);
 
-        const meterData = {
-          label: status,
-          value: requestMatch.length,
-          totalCount: count ? count : 0,
-        };
+        // get monthly statistics
+        const monthlyRequestData = await getRequestMonthlyCount(
+          supabaseClient,
+          {
+            formId: selectedForm,
+            startDate: moment(dateFilter[0]).format(),
+            endDate: moment(dateFilter[1]).format(),
+            teamId: teamId,
+          }
+        );
+        if (!monthlyRequestData) return;
 
-        return meterData;
-      });
-      setRequestStatusChartData(chartData);
+        const chartData = monthlyRequestData.data.map((d) => ({
+          ...d,
+          month: moment(d.month).format("MMM"),
+        }));
 
-      const formMatch = formList.find((form) => form.form_id === selectedForm);
-      if (!formMatch) return;
-      const requestorList = await Promise.all(
-        teamMemberList.map(async (member) => {
-          // only fetch if requestor has same form group
-          const isGroupMember =
-            checkIfTwoArrayHaveAtLeastOneEqualElement(
-              formMatch?.form_group,
-              member.team_member_group_list
-            ) || formMatch.form_group.length === 0;
-          if (!isGroupMember) {
+        setMonthlyChartData(chartData);
+
+        const formMatch = formList.find(
+          (form) => form.form_id === selectedForm
+        );
+        if (!formMatch) return;
+        const requestorList = await Promise.all(
+          teamMemberList.map(async (member) => {
+            // only fetch if requestor has same form group
+            const isGroupMember =
+              checkIfTwoArrayHaveAtLeastOneEqualElement(
+                formMatch?.form_group,
+                member.team_member_group_list
+              ) || formMatch.form_group.length === 0;
+            if (!isGroupMember) {
+              const newRequestor = {
+                ...member.team_member_user,
+                request: {
+                  pending: 0,
+                  approved: 0,
+                  rejected: 0,
+                  canceled: 0,
+                  total: 0,
+                },
+              };
+
+              return newRequestor;
+            }
+            const requestor = await getRequestorData(supabaseClient, {
+              formId: selectedForm,
+              teamMemberId: member.team_member_id,
+              startDate: moment(dateFilter[0]).format(),
+              endDate: moment(dateFilter[1]).format(),
+            });
+
+            const pendingCount = requestor?.filter(
+              (request) => request.request_status === "PENDING"
+            ).length;
+            const approvedCount = requestor?.filter(
+              (request) => request.request_status === "APPROVED"
+            ).length;
+            const rejectedCount = requestor?.filter(
+              (request) => request.request_status === "REJECTED"
+            ).length;
+            const canceledCount = requestor?.filter(
+              (request) => request.request_status === "CANCELED"
+            ).length;
+
             const newRequestor = {
               ...member.team_member_user,
               request: {
-                pending: 0,
-                approved: 0,
-                rejected: 0,
-                canceled: 0,
-                total: 0,
+                pending: pendingCount || 0,
+                approved: approvedCount || 0,
+                rejected: rejectedCount || 0,
+                canceled: canceledCount || 0,
+                total: requestor?.length || 0,
               },
             };
 
             return newRequestor;
-          }
-          const requestor = await getRequestorData(supabaseClient, {
-            formId: selectedForm,
-            teamMemberId: member.team_member_id,
-            startDate: moment(dateFilter[0]).format(),
-            endDate: moment(dateFilter[1]).format(),
-          });
+          })
+        );
+        setRequestorList(
+          requestorList.filter((requestor) => requestor.request.total !== 0)
+        );
 
-          const pendingCount = requestor?.filter(
-            (request) => request.request_status === "PENDING"
-          ).length;
-          const approvedCount = requestor?.filter(
-            (request) => request.request_status === "APPROVED"
-          ).length;
-          const rejectedCount = requestor?.filter(
-            (request) => request.request_status === "REJECTED"
-          ).length;
-          const canceledCount = requestor?.filter(
-            (request) => request.request_status === "CANCELED"
-          ).length;
+        // set signer data
+        const signerList = await Promise.all(
+          teamMemberList.map(async (member) => {
+            // only fetch if signer has same form group
+            const isGroupMember =
+              checkIfTwoArrayHaveAtLeastOneEqualElement(
+                formMatch.form_group,
+                member.team_member_group_list
+              ) || formMatch.form_group.length === 0;
 
-          const newRequestor = {
-            ...member.team_member_user,
-            request: {
-              pending: pendingCount || 0,
-              approved: approvedCount || 0,
-              rejected: rejectedCount || 0,
-              canceled: canceledCount || 0,
-              total: requestor?.length || 0,
-            },
-          };
+            if (!isGroupMember) {
+              const newSigner = {
+                ...member.team_member_user,
+                request: {
+                  pending: 0,
+                  approved: 0,
+                  rejected: 0,
+                  canceled: 0,
+                  total: 0,
+                },
+              };
 
-          return newRequestor;
-        })
-      );
-      setRequestorList(
-        requestorList.filter((requestor) => requestor.request.total !== 0)
-      );
+              return newSigner;
+            }
 
-      // set signer data
-      const signerList = await Promise.all(
-        teamMemberList.map(async (member) => {
-          // only fetch if signer has same form group
-          const isGroupMember =
-            checkIfTwoArrayHaveAtLeastOneEqualElement(
-              formMatch.form_group,
-              member.team_member_group_list
-            ) || formMatch.form_group.length === 0;
+            const signer = await getSignerData(supabaseClient, {
+              formId: selectedForm,
+              teamMemberId: member.team_member_id,
+              startDate: moment(dateFilter[0]).format(),
+              endDate: moment(dateFilter[1]).format(),
+            });
 
-          if (!isGroupMember) {
+            const pendingCount = signer?.filter(
+              (signer) => signer.request_signer_status === "PENDING"
+            ).length;
+            const approvedCount = signer?.filter(
+              (signer) => signer.request_signer_status === "APPROVED"
+            ).length;
+            const rejectedCount = signer?.filter(
+              (signer) => signer.request_signer_status === "REJECTED"
+            ).length;
+            const canceledCount = signer?.filter(
+              (signer) => signer.request_signer_status === "CANCELED"
+            ).length;
+
             const newSigner = {
               ...member.team_member_user,
               request: {
-                pending: 0,
-                approved: 0,
-                rejected: 0,
-                canceled: 0,
-                total: 0,
+                pending: pendingCount || 0,
+                approved: approvedCount || 0,
+                rejected: rejectedCount || 0,
+                canceled: canceledCount || 0,
+                total: signer?.length || 0,
               },
             };
 
             return newSigner;
-          }
-
-          const signer = await getSignerData(supabaseClient, {
-            formId: selectedForm,
-            teamMemberId: member.team_member_id,
-            startDate: moment(dateFilter[0]).format(),
-            endDate: moment(dateFilter[1]).format(),
-          });
-
-          const pendingCount = signer?.filter(
-            (signer) => signer.request_signer_status === "PENDING"
-          ).length;
-          const approvedCount = signer?.filter(
-            (signer) => signer.request_signer_status === "APPROVED"
-          ).length;
-          const rejectedCount = signer?.filter(
-            (signer) => signer.request_signer_status === "REJECTED"
-          ).length;
-          const canceledCount = signer?.filter(
-            (signer) => signer.request_signer_status === "CANCELED"
-          ).length;
-
-          const newSigner = {
-            ...member.team_member_user,
-            request: {
-              pending: pendingCount || 0,
-              approved: approvedCount || 0,
-              rejected: rejectedCount || 0,
-              canceled: canceledCount || 0,
-              total: signer?.length || 0,
-            },
-          };
-
-          return newSigner;
-        })
-      );
-      setSignerList(signerList.filter((signer) => signer.request.total !== 0));
-
-      setIsFetchingData(false);
+          })
+        );
+        setSignerList(
+          signerList.filter((signer) => signer.request.total !== 0)
+        );
+      } catch (error) {
+        notifications.show({
+          message:
+            "There was a problem while fetching the data. Please try again later",
+          color: "red",
+        });
+      } finally {
+        setIsFetchingData(false);
+      }
     };
     if (selectedForm && activeTeam.team_id) {
       fetchOverviewData(selectedForm, activeTeam.team_id);
@@ -258,7 +271,7 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
       >
         <Box w={{ base: "100%", sm: 360 }} h={450}>
           <RequestStatusTracker
-            data={requestStatusChartData}
+            data={requestStatusCount || []}
             totalRequestCount={totalRequestCount}
           />
         </Box>
@@ -278,7 +291,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
       <Flex w="100%" align="flex-start" gap="xl" wrap="wrap">
         <Box sx={{ flex: 1 }} w="100%">
           <RequestStatistics
-            requestStatusData={requestStatusData ? requestStatusData : []}
+            monthlyChartData={monthlyChartData}
+            totalRequestCount={totalRequestCount}
             dateFilter={dateFilter}
           />
         </Box>

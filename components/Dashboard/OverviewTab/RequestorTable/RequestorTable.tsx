@@ -37,10 +37,10 @@ const RequestorTable = ({
   return (
     <ScrollArea w="100%" h="100%">
       <Paper w={{ base: "100%" }} mih={450} withBorder>
-        <Group p="md" className={classes.withBorderBottom}>
-          <Box c="blue">
+        <Group p="md" spacing="xs" className={classes.withBorderBottom}>
+          <Center c="green">
             <IconTrophyFilled />
-          </Box>
+          </Center>
           <Title order={4}>Top Requestor</Title>
         </Group>
 
@@ -57,7 +57,7 @@ const RequestorTable = ({
           ) : (
             <Center h={175}>
               <Text size={20} color="dimmed" weight={600}>
-                No data available.
+                No data to display
               </Text>
             </Center>
           )}

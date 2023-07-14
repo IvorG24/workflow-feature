@@ -12,7 +12,10 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
-import { IconSquareRoundedFilled, IconTrophyFilled } from "@tabler/icons-react";
+import {
+  IconChartDonutFilled,
+  IconSquareRoundedFilled,
+} from "@tabler/icons-react";
 
 type RequestStatusTrackerProps = {
   data: RadialChartData[];
@@ -38,31 +41,31 @@ const RequestStatusTracker = ({
 
   return (
     <Paper w="100%" h="100%" withBorder>
-      <Group p="md" className={classes.withBorderBottom}>
-        <Box c="blue">
-          <IconTrophyFilled />
-        </Box>
+      <Group p="md" spacing="xs" className={classes.withBorderBottom}>
+        <Center c="green">
+          <IconChartDonutFilled />
+        </Center>
         <Title order={4}>Total Request: {totalRequestCount}</Title>
       </Group>
-      <Flex h="100%" direction="column" mt="sm">
+      <Flex h="100%" direction="column" mt="lg">
         <Center w="100%">
           <Box maw={175} mih={175}>
             {totalRequestCount > 0 ? (
-              <RadialChart data={data} />
+              <RadialChart data={data} totalCount={totalRequestCount} />
             ) : (
               <Center h={175}>
                 <Text size={20} color="dimmed" weight={600}>
-                  No data available.
+                  No data to display
                 </Text>
               </Center>
             )}
           </Box>
         </Center>
-        <Stack p="lg">
+        <Stack spacing="xs" p="lg">
           {data.map((d, idx) => (
             <Box key={d.label + idx} fz={14}>
               <Grid justify="space-between">
-                <Grid.Col span="auto">
+                <Grid.Col span={7}>
                   <Flex gap="sm" w="fit-content">
                     <Box c={getStatusToColorForCharts(d.label)}>
                       <IconSquareRoundedFilled />
@@ -71,11 +74,11 @@ const RequestStatusTracker = ({
                   </Flex>
                 </Grid.Col>
                 <Grid.Col span="content">
-                  <Text weight={600}>{`${d.value}/${d.totalCount}`}</Text>
+                  <Text weight={600}>{`${d.value}/${totalRequestCount}`}</Text>
                 </Grid.Col>
                 <Grid.Col span={2}>
                   <Text align="right" weight={600} c="dimmed">
-                    {getPercentage(d.value, d.totalCount)}
+                    {getPercentage(d.value, totalRequestCount)}
                   </Text>
                 </Grid.Col>
               </Grid>

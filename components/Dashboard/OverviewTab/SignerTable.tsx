@@ -2,7 +2,6 @@ import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import {
   Avatar,
   Badge,
-  Box,
   Center,
   Group,
   Paper,
@@ -37,10 +36,10 @@ const SignerTable = ({ signerList, totalRequestCount }: SignerTableProps) => {
   return (
     <ScrollArea w="100%" h="100%">
       <Paper w={{ base: "100%" }} mih={450} withBorder>
-        <Group p="md" className={classes.withBorderBottom}>
-          <Box c="green">
+        <Group p="md" spacing="xs" className={classes.withBorderBottom}>
+          <Center c="green">
             <IconShieldCheckFilled />
-          </Box>
+          </Center>
           <Title order={4}>Top Signer</Title>
         </Group>
 
@@ -48,11 +47,13 @@ const SignerTable = ({ signerList, totalRequestCount }: SignerTableProps) => {
           {totalRequestCount > 0 ? (
             sortSignerListByTotalRequests.map((signer) => {
               const statusCount = Object.entries(signer.request);
-              const progressSections = statusCount.map(([key, value]) => ({
-                value: (value / totalRequestCount) * 100,
-                color: `${getStatusToColor(key) || "dark"}`,
-                tooltip: `${startCase(key)}: ${value}`,
-              }));
+              const progressSections = statusCount
+                .map(([key, value]) => ({
+                  value: (value / totalRequestCount) * 100,
+                  color: `${getStatusToColor(key) || "dark"}`,
+                  tooltip: `${startCase(key)}: ${value}`,
+                }))
+                .filter((section) => !section.tooltip.includes("Total"));
 
               return (
                 <Stack key={signer.user_id} spacing="xs">
@@ -90,7 +91,7 @@ const SignerTable = ({ signerList, totalRequestCount }: SignerTableProps) => {
           ) : (
             <Center h={175}>
               <Text size={20} color="dimmed" weight={600}>
-                No data available.
+                No data to display
               </Text>
             </Center>
           )}

@@ -1,3 +1,4 @@
+import { MonthlyRequestDataTypeWithTotal } from "@/components/Dashboard/OverviewTab/Overview";
 import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
 import {
@@ -16,6 +17,7 @@ import {
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { lowerCase, startCase } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 
 // Get file url
@@ -2070,20 +2072,33 @@ export const getRequestStatusCount = async (
   }
 ) => {
   const { formId, teamId, startDate, endDate } = params;
-  const { data, count } = await supabaseClient
-    .from("request_table")
-    .select(
-      "request_status, request_date_created, request_team_member: request_team_member_id!inner(team_member_team_id)",
-      { count: "exact" }
-    )
-    .eq("request_form_id", formId)
-    .eq("request_team_member.team_member_team_id", teamId)
-    .gte("request_date_created", startDate)
-    .lte("request_date_created", endDate);
+  const status_list = ["PENDING", "APPROVED", "REJECTED", "CANCELED"];
+  const getCount = (status: string) =>
+    supabaseClient
+      .from("request_list_table_view")
+      .select("*", { count: "exact", head: true })
+      .eq("request_form_id", formId)
+      .eq("request_team_id", teamId)
+      .eq("request_status", status)
+      .gte("request_date_created", startDate)
+      .lte("request_date_created", endDate);
+
+  const data = await Promise.all(
+    status_list.map(async (status) => {
+      const { count: statusCount } = await getCount(status);
+
+      return {
+        label: startCase(lowerCase(status)),
+        value: statusCount || 0,
+      };
+    })
+  );
+
+  const totalCount = data.reduce((total, item) => item.value + total, 0);
 
   return {
     data,
-    count,
+    totalCount,
   };
 };
 
@@ -2328,4 +2343,29 @@ export const getRequestTableView = async (
   if (error) throw error;
 
   return { data, count };
+};
+
+export const getRequestMonthlyCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_request_monthly_count",
+    {
+      input_data: {
+        formId: params.formId,
+        teamId: params.teamId,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      },
+    }
+  );
+
+  if (error) throw error;
+  return data as MonthlyRequestDataTypeWithTotal;
 };
