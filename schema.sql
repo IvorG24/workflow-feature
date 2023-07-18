@@ -270,6 +270,8 @@ $$ LANGUAGE plpgsql;
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS plv8;
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
+
 CREATE FUNCTION get_ssot(
     input_data JSON
 )
@@ -470,6 +472,243 @@ RETURNS JSON as $$
  });
  return ssot_data;
 $$ LANGUAGE plv8;
+
+
+-- Start: Create user
+
+CREATE FUNCTION create_user(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let user_data;
+  plv8.subtransaction(function(){
+    const {
+      user_id,
+      user_email,
+      user_first_name,
+      user_last_name,
+      user_username,
+      user_avatar,
+      user_phone_number,
+      user_job_title
+    } = input_data;
+
+    user_data = plv8.execute(`INSERT INTO user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
+    
+    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
+
+    if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/team/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
+    
+ });
+ return user_data;
+$$ LANGUAGE plv8;
+
+-- End: Create user
+
+-- Start: Create request
+
+CREATE FUNCTION create_request(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let request_data;
+  plv8.subtransaction(function(){
+    const {
+      requestId,
+      formId,
+      teamMemberId,
+      responseValues,
+      signerValues,
+      notificationValues,
+    } = input_data;
+
+    
+    request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`);
+
+    plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
+
+    plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
+
+    plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+    
+ });
+ return request_data;
+$$ LANGUAGE plv8;
+
+-- End: Create request
+
+-- Start: Create formsly premade forms
+
+CREATE FUNCTION create_formsly_premade_forms(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      formValues,
+      sectionValues,
+      fieldWithIdValues,
+      fieldsWithoutIdValues,
+      optionsValues
+    } = input_data;
+
+    plv8.execute(`INSERT INTO form_table (form_id,form_name,form_description,form_app,form_is_formsly_form,form_is_hidden,form_team_member_id) VALUES ${formValues};`);
+    
+    plv8.execute(`INSERT INTO section_table (section_form_id,section_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues};`);
+
+    plv8.execute(`INSERT INTO field_table (field_id,field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldWithIdValues};`);
+
+    plv8.execute(`INSERT INTO field_table (field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldsWithoutIdValues};`);
+
+    plv8.execute(`INSERT INTO option_table (option_field_id,option_order,option_value) VALUES ${optionsValues};`);
+
+ });
+$$ LANGUAGE plv8;
+
+-- End: Create formsly premade forms
+
+-- Start: Create item
+
+CREATE FUNCTION create_item(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let item_data;
+  plv8.subtransaction(function(){
+    const {
+      formId,
+      itemData: {
+        item_general_name,
+        item_is_available,
+        item_unit,
+        item_purpose,
+        item_cost_code,
+        item_gl_account,
+        item_team_id
+      },
+      itemDescription
+    } = input_data;
+
+    
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_purpose,item_cost_code,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_purpose}','${item_cost_code}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
+
+    const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
+
+    const itemDescriptionInput = [];
+    const fieldInput= [];
+
+    itemDescription.forEach((description) => {
+      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4
+      itemDescriptionInput.push({
+        item_description_label: description,
+        item_description_item_id: item_result.item_id,
+        item_description_is_available: true,
+        item_description_field_id: fieldId,
+      });
+      fieldInput.push({
+        field_id: fieldId,
+        field_name: description,
+        field_type: "DROPDOWN",
+        field_order: 9,
+        field_section_id: section_id,
+        field_is_required: true,
+      });
+    });
+
+    const itemDescriptionValues = itemDescriptionInput
+      .map((item) =>
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}')`
+      )
+      .join(",");
+
+    const fieldValues = fieldInput
+      .map((field) =>
+        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+      )
+      .join(",");
+
+    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
+    
+    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id) VALUES ${itemDescriptionValues} RETURNING *;`);
+
+    item_data = {...item_result, item_description: item_description}
+
+ });
+ return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Create item
+
+-- Start: Create team invitation
+
+
+CREATE FUNCTION create_team_invitation(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let invitation_data;
+  plv8.subtransaction(function(){
+    const {
+      emailList,
+      teamMemberId,
+      teamName
+    } = input_data;
+
+    const invitationInput = [];
+    const notificationInput = [];
+
+    emailList.forEach((email) => {
+      const invitationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+
+      const  checkInvitationCount = plv8.execute(`
+SELECT COUNT(*) FROM invitation_table WHERE invitation_to_email='${email}' AND invitation_from_team_member_id='${teamMemberId}' AND invitation_is_disabled='false' AND invitation_status='PENDING';`)[0].count;
+        
+      if (!checkInvitationCount) {
+        invitationInput.push({
+          invitation_id: invitationId,
+          invitation_to_email: email,
+          invitation_from_team_member_id: teamMemberId,
+        });
+      }
+
+      const checkUserData = plv8.execute(`SELECT * FROM user_table WHERE user_email='${email}';`)[0];
+
+      if (checkUserData) {
+        notificationInput.push({
+          notification_app: "GENERAL",
+          notification_content: `You have been invited to join ${teamName}`,
+          notification_redirect_url: `/team/invitation/${invitationId}`,
+          notification_type: "INVITE",
+          notification_user_id: checkUserData.user_id,
+        });
+      }
+    });
+
+    if (invitationInput.length > 0){
+      const invitationValues = invitationInput
+        .map((invitation) =>
+          `('${invitation.invitation_id}','${invitation.invitation_to_email}','${invitation.invitation_from_team_member_id}')`
+        )
+        .join(",");
+
+      invitation_data = plv8.execute(`INSERT INTO invitation_table (invitation_id,invitation_to_email,invitation_from_team_member_id) VALUES ${invitationValues} RETURNING *;`);
+    }
+
+    if (notificationInput.length > 0){
+      const notificationValues = notificationInput
+        .map((notification) =>
+          `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_type}','${notification.notification_user_id}')`
+        )
+        .join(",");
+
+      plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ${notificationValues};`);
+    }
+  });
+  return invitation_data;
+$$ LANGUAGE plv8;
+
+
+-- End: Create team invitation
 
 ---------- End: FUNCTIONS
 
