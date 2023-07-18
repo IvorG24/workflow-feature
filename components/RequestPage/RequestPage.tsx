@@ -428,8 +428,10 @@ const RequestPage = ({
           />
         ) : null}
 
-        {request.request_form.form_name ===
-          "Receiving Inspecting Report (Purchased)" &&
+        {(request.request_form.form_name ===
+          "Receiving Inspecting Report (Purchased)" ||
+          request.request_form.form_name ===
+            "Receiving Inspecting Report (Sourced)") &&
         request.request_form.form_is_formsly_form ? (
           <ReceivingInspectingReportSummary
             summaryData={sectionWithDuplicateList
