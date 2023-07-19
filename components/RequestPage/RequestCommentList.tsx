@@ -4,7 +4,7 @@ import { RequestWithResponseType } from "@/utils/types";
 import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestComment from "./RequestComment";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
@@ -28,6 +28,10 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const user = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [commentList, setCommentList] = useState(requestCommentList);
+
+  useEffect(() => {
+    setCommentList(requestCommentList);
+  }, [requestCommentList]);
 
   // create comment
   const addCommentFormMethods = useForm<CommentFormProps>();
