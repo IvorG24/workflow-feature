@@ -70,7 +70,8 @@ const OrderToPurchaseRequestPage = ({
     request.request_signer.map((signer) => {
       return {
         ...signer.request_signer_signer,
-        signer_status: signer.request_signer_status as ReceiverStatusType,
+        request_signer_status:
+          signer.request_signer_status as ReceiverStatusType,
       };
     })
   );
