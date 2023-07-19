@@ -19,6 +19,8 @@ import {
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
+  IconFile,
+  IconFileAlert,
   IconFileDislike,
   IconFileLike,
   IconMail,
@@ -61,11 +63,12 @@ const Notification = () => {
     if (type === "APPROVE") return <IconFileLike size={20} color="#40C057" />;
     else if (type === "REJECT")
       return <IconFileDislike size={20} color="#FA5252" />;
+    else if (type === "PAUSE")
+      return <IconFileAlert size={20} color="#FD7E14" />;
     else if (type === "INVITE") return <IconMail size={20} color="#E64980" />;
     else if (type === "COMMENT")
-      return <IconMessages size={20} color="#FD7E14" />;
-    else if (type === "REQUEST")
-      return <IconMessage2 size={20} color="#228BE6" />;
+      return <IconMessages size={20} color="#BE4BDB" />;
+    else if (type === "REQUEST") return <IconFile size={20} color="#228BE6" />;
     else if (type === "REVIEW") return <IconMessage2 size={20} />;
   };
 
