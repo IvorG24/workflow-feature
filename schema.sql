@@ -581,6 +581,99 @@ $$ LANGUAGE plv8;
 
 -- End: Accept team invitation
 
+-- Start: Create request form
+
+CREATE FUNCTION create_request_form(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let form_data;
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      formBuilderData: {
+        formDescription,
+        formId,
+        formName,
+        formType,
+        groupList,
+        isForEveryone,
+        isSignatureRequired,
+        sections,
+        signers
+      },
+    } = input_data;
+    
+    const formmattedGroup = `{${groupList
+      .map((group) => `"${group}"`)
+      .join(",")}}`;
+
+    form_data = plv8.execute(`INSERT INTO form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member,form_group) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}', '${formmattedGroup}') RETURNING *`)[0];
+
+    const sectionInput = [];
+    const fieldInput = [];
+    const optionInput = [];
+
+    sections.forEach((section) => {
+      const { fields, ...newSection } = section;
+      sectionInput.push(newSection);
+      fields.forEach((field) => {
+        const { options, ...newField } = field;
+        fieldInput.push(newField);
+        options.forEach((option) => optionInput.push(option));
+      });
+    });
+
+    const sectionValues = sectionInput
+      .map(
+        (section) =>
+          `('${section.section_id}','${formId}','${section.section_is_duplicatable}','${section.section_name}','${section.section_order}')`
+      )
+      .join(",");
+
+    const fieldValues = fieldInput
+      .map(
+        (field) =>
+          `('${field.field_id}','${field.field_name}','${field.field_type}',${
+            field.field_description ? `'${field.field_description}'` : "NULL"
+          },'${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}')`
+      )
+      .join(",");
+
+
+    const optionValues = optionInput
+      .map(
+        (option) =>
+          `('${option.option_id}','${option.option_value}',${
+            option.option_description ? `'${option.option_description}'` : "NULL"
+          },'${option.option_order}','${option.option_field_id}')`
+      )
+      .join(",");
+    
+    const signerValues = signers
+      .map(
+        (signer) =>
+          `('${signer.signer_id}','${formId}','${signer.signer_team_member_id}','${signer.signer_action}','${signer.signer_is_primary_signer}','${signer.signer_order}')`
+      )
+      .join(",");
+    
+    const section_query = `INSERT INTO section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
+
+    const field_query = `INSERT INTO field_table (field_id,field_name,field_type,field_description,field_is_positive_metric,field_is_required,field_order,field_section_id) VALUES ${fieldValues}`;
+
+    const option_query = `INSERT INTO option_table (option_id,option_value,option_description,option_order,option_field_id) VALUES ${optionValues}`;
+
+    const signer_query = `INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
+
+    const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query};`
+    
+    plv8.execute(all_query);
+ });
+ return form_data;
+$$ LANGUAGE plv8;
+
+-- End: Create request form
+
 ---------- End: FUNCTIONS
 
 ---------- Start: VIEWS

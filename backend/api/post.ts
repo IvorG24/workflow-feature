@@ -7,6 +7,7 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   FieldTableInsert,
+  FormTableRow,
   FormType,
   InvitationTableInsert,
   InvitationTableRow,
@@ -418,7 +419,7 @@ export const createItemDescriptionField = async (
 };
 
 // Create request form
-export const createRequestForm = async (
+export const createRequestFormOld = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formBuilderData: FormBuilderData;
@@ -494,6 +495,24 @@ export const createRequestForm = async (
   if (signerError) throw signerError;
 
   return form;
+};
+
+export const createRequestForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formBuilderData: FormBuilderData;
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("create_request_form", {
+      input_data: params,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as unknown as FormTableRow;
 };
 
 // Create request
