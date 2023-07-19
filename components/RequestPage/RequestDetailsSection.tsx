@@ -1,5 +1,5 @@
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { FormStatusType, RequestWithResponseType } from "@/utils/types";
+import { RequestWithResponseType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -17,7 +17,7 @@ type Props = {
   request: RequestWithResponseType;
   requestor: RequestWithResponseType["request_team_member"]["team_member_user"];
   requestDateCreated: string;
-  requestStatus: FormStatusType;
+  requestStatus: string;
 };
 
 const RequestDetailsSection = ({
