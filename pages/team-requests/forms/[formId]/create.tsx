@@ -1,4 +1,5 @@
 import {
+  checkOTPRequestForSourced,
   checkRequest,
   getAllItems,
   getAllNames,
@@ -15,7 +16,10 @@ import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchase
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPurchasedPage from "@/components/CreateReceivingInspectingReportPurchasedPage/CreateReceivingInspectingReportPurchasedPage";
 import CreateReceivingInspectingReportSourcedPage from "@/components/CreateReceivingInspectingReportSourcedPage/CreateReceivingInspectingReportSourcedPage";
-import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
+import CreateRequestPage, {
+  RequestFormValues,
+} from "@/components/CreateRequestPage/CreateRequestPage";
+import CreateSourcedOrderToPurchaseRequestPage from "@/components/CreateSourcedOrderToPurchaseRequestPage/CreateSourcedOrderToPurchaseRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
@@ -94,21 +98,69 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ...form,
                 form_section: [
                   {
-                    ...form.form_section[0],
+                    ...form.form_section[1],
                     section_field: [
                       {
-                        ...form.form_section[0].section_field[0],
+                        ...form.form_section[1].section_field[0],
                         field_option: projectOptions,
                       },
                       {
-                        ...form.form_section[0].section_field[1],
+                        ...form.form_section[1].section_field[1],
                       },
-                      ...form.form_section[0].section_field.slice(2),
+                      ...form.form_section[1].section_field.slice(2),
                     ],
                   },
-                  form.form_section[1],
+                  form.form_section[2],
                 ],
               },
+              itemOptions,
+              otpIdSection: {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_response: "null",
+                  },
+                ],
+              },
+            },
+          };
+        }
+        // Sourced Order to Purchase Form,
+        else if (form.form_name === "Sourced Order to Purchase") {
+          const isRequestIdValid = await checkOTPRequestForSourced(
+            supabaseClient,
+            {
+              otpId: `${context.query.otpId}`,
+            }
+          );
+
+          if (!isRequestIdValid) {
+            return {
+              redirect: {
+                destination: "/404",
+                permanent: false,
+              },
+            };
+          }
+
+          const items = await getItemResponseForQuotation(supabaseClient, {
+            requestId: `${context.query.otpId}`,
+          });
+
+          const itemOptions = Object.keys(items).map((item, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: item,
+              option_order: index,
+              option_value: `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`,
+            };
+          });
+
+          return {
+            props: {
+              form,
               itemOptions,
             },
           };
@@ -289,9 +341,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
+  otpIdSection?: RequestFormValues["sections"][0];
 };
 
-const Page = ({ form, itemOptions }: Props) => {
+const Page = ({ form, itemOptions, otpIdSection }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Order to Purchase":
@@ -312,6 +365,14 @@ const Page = ({ form, itemOptions }: Props) => {
                 },
               ],
             }}
+            otpIdSection={otpIdSection}
+          />
+        );
+      case "Sourced Order to Purchase":
+        return (
+          <CreateSourcedOrderToPurchaseRequestPage
+            form={form}
+            itemOptions={itemOptions}
           />
         );
       case "Quotation":

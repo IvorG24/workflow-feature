@@ -35,9 +35,14 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  otpIdSection?: RequestFormValues["sections"][0];
 };
 
-const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
+const CreateOrderToPurchaseRequestPage = ({
+  form,
+  itemOptions,
+  otpIdSection,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -118,7 +123,13 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
         }
       });
 
-      const newData = { sections: [data.sections[0], ...newSections] };
+      const newData = {
+        sections: [
+          otpIdSection as RequestFormValues["sections"][0],
+          data.sections[0],
+          ...newSections,
+        ],
+      };
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: newData,
@@ -353,4 +364,4 @@ const CreateOrderToPurchasesRequestPage = ({ form, itemOptions }: Props) => {
   );
 };
 
-export default CreateOrderToPurchasesRequestPage;
+export default CreateOrderToPurchaseRequestPage;

@@ -76,6 +76,7 @@ const RequestListFilter = ({
     { value: "PENDING", label: "Pending" },
     { value: "REJECTED", label: "Rejected" },
     { value: "CANCELED", label: "Canceled" },
+    { value: "PAUSED", label: "Paused" },
   ];
 
   const { register, getValues, control, setValue } =
