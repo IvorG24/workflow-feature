@@ -772,7 +772,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th className={classes.long}>Project Name</th>
                   <th className={classes.normal}>Type</th>
                   <th className={classes.date}>Date Needed</th>
-                  <th className={classes.normal}>Item Name</th>
+                  <th className={classes.description}>Item Name</th>
                   <th className={classes.normal}>Quantity</th>
                   <th className={classes.date}>Unit of Measurement</th>
                   <th className={classes.description}>Description</th>
