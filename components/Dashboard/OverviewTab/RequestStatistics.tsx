@@ -1,17 +1,19 @@
 import { getStackedBarChartData } from "@/utils/arrayFunctions/dashboard";
 import { getStatusToColorForCharts } from "@/utils/styling";
-import { RequestByFormType } from "@/utils/types";
 import { Box, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import {
   IconFileAnalytics,
   IconSquareRoundedFilled,
 } from "@tabler/icons-react";
 import { startCase } from "lodash";
+import moment from "moment";
 import { useEffect, useState } from "react";
 import StackedBarChart from "../../Chart/StackedBarChart";
+import { RequestStatusDataType } from "./Overview";
 
 type RequestStatisticsProps = {
-  requestList: RequestByFormType[];
+  requestStatusData: RequestStatusDataType[];
+  dateFilter: [Date | null, Date | null];
 };
 
 const generateInitialChartData = () => {
@@ -43,9 +45,12 @@ const generateInitialChartData = () => {
 
 const statusList = ["pending", "approved", "rejected", "canceled"];
 
-const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
+const RequestStatistics = ({
+  requestStatusData,
+  dateFilter,
+}: RequestStatisticsProps) => {
   const initialChartData = getStackedBarChartData(
-    requestList,
+    requestStatusData,
     generateInitialChartData()
   );
 
@@ -90,9 +95,16 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
     setChartData(newChartData);
   };
 
+  const startDateYear = moment(dateFilter[0]).format("YYYY");
+  const endDateYear = moment(dateFilter[1]).format("YYYY");
+  const xAxisChartLabel =
+    startDateYear !== endDateYear
+      ? `${startDateYear} - ${endDateYear}`
+      : startDateYear;
+
   useEffect(() => {
     setChartData(initialChartData);
-  }, [requestList]);
+  }, [requestStatusData]);
 
   return (
     <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
@@ -125,7 +137,11 @@ const RequestStatistics = ({ requestList }: RequestStatisticsProps) => {
           </Group>
         </Group>
         <Box p="xs" w="100%">
-          <StackedBarChart data={chartData} />
+          <StackedBarChart
+            data={chartData}
+            xAxisLabel={`Year: ${xAxisChartLabel}`}
+            yAxisLabel="No. of Request"
+          />
         </Box>
       </Stack>
     </Paper>

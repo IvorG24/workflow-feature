@@ -76,7 +76,7 @@ const PersonalInfo = ({
                 initials={userInitials}
                 id={user?.user_id}
               />
-              <Button size="xs">View Public Profile</Button>
+              {/* <Button size="xs">View Public Profile</Button> */}
             </Flex>
 
             <Flex direction={{ base: "column", md: "row" }} gap={16}>

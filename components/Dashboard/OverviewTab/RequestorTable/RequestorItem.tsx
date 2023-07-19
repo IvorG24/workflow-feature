@@ -1,5 +1,4 @@
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { RequestorListType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -10,9 +9,10 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { startCase } from "lodash";
+import { RequestorAndSignerDataType } from "../Overview";
 
 type RequestorItemProps = {
-  requestor: RequestorListType;
+  requestor: RequestorAndSignerDataType;
   totalRequest: number;
 };
 
@@ -29,7 +29,7 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
   );
 
   return (
-    <Stack spacing="xs" key={requestor.user_id}>
+    <Stack spacing="xs">
       <Group position="apart">
         <Group spacing="xs">
           <Avatar

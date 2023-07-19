@@ -110,7 +110,7 @@ export type ItemTableUpdate =
 
 export type ItemDescriptionTableRow =
   Database["public"]["Tables"]["item_description_table"]["Row"];
-export type ItemTDescriptionableInsert =
+export type ItemDescriptionableInsert =
   Database["public"]["Tables"]["item_description_table"]["Insert"];
 export type ItemDescriptionTableUpdate =
   Database["public"]["Tables"]["item_description_table"]["Update"];
@@ -177,7 +177,7 @@ export type NotificationType =
   | "INVITE"
   | "REVIEW"
   | "COMMENT";
-export type InvitationStatuType = "ACCEPTED" | "DECLINED" | "PENDING";
+export type InvitationStatusType = "ACCEPTED" | "DECLINED" | "PENDING";
 // End: Database Enums
 
 // Start: Joined Types
@@ -346,6 +346,7 @@ export type FormType = {
     signer_team_member: {
       team_member_id: string;
       team_member_user: {
+        user_id: string;
         user_first_name: string;
         user_last_name: string;
         user_avatar: string;
@@ -386,6 +387,7 @@ export type FormWithResponseType = {
     signer_team_member: {
       team_member_id: string;
       team_member_user: {
+        user_id: string;
         user_first_name: string;
         user_last_name: string;
         user_avatar: string;
@@ -472,6 +474,26 @@ export type RequestByFormType = RequestTableRow & {
       user_avatar: string;
     };
   };
+};
+
+export type RequestDashboardOverviewData = RequestTableRow & {
+  request_form: {
+    form_id: string;
+    form_name: string;
+    form_description: string;
+    form_is_formsly_form: boolean;
+  };
+} & {
+  request_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_username: string;
+      user_avatar: string;
+    };
+  };
 } & {
   request_signer: (RequestSignerTableRow & {
     request_signer_id: string;
@@ -521,17 +543,6 @@ export type ResponseDataType = {
   }[];
 };
 
-export type RequestorListType =
-  RequestType["request_team_member"]["team_member_user"] & {
-    request: {
-      total: number;
-      pending: number;
-      approved: number;
-      rejected: number;
-      canceled: number;
-    };
-  };
-
 export type LineChartDataType = {
   label: string;
   value: number;
@@ -545,6 +556,7 @@ export type PurchaseTrendChartDataType = {
   request_response_date_purchased?: string | undefined;
   request_response_team_member_id?: string | null;
   request_response_request_status?: string | null;
+  request_response_item_general_name?: string;
 };
 
 export type RequestResponseDataType = {
@@ -554,16 +566,16 @@ export type RequestResponseDataType = {
 export type FormslyFormType = {
   "Order to Purchase": string[];
   Quotation: string[];
-  "Receiving Inspecting Report": string[];
+  "Receiving Inspecting Report (Purchased)": string[];
 };
 
 export type FormslyFormKeyType =
   | "Order to Purchase"
   | "Quotation"
-  | "Receiving Inspecting Report";
+  | "Receiving Inspecting Report (Purchased)";
 
 export type RequestSignerListType =
-  RequestByFormType["request_signer"][0]["request_signer_signer"] & {
+  RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
     signerCount: {
       approved: number;
       rejected: number;
@@ -572,7 +584,7 @@ export type RequestSignerListType =
 export type TeamGroupForFormType =
   | "Order to Purchase"
   | "Quotation"
-  | "Receiving Inspecting Report"
+  | "Receiving Inspecting Report (Purchased)"
   | "Cheque Reference"
   | "Audit";
 
@@ -610,6 +622,12 @@ export type SSOTType = {
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
+  otp_rir_request: {
+    rir_request_id: string;
+    rir_request_date_created: string;
+    rir_request_owner: SSOTRequestOwnerType;
+    rir_request_response: SSOTResponseType[];
+  }[];
 };
 
 export type Section = SectionTableRow & {
@@ -629,4 +647,36 @@ export type DuplicateSectionType = SectionTableRow & {
     field_option?: OptionTableRow[];
     field_response: RequestResponseTableRow | null;
   })[];
+};
+
+export type CanvassType = Record<
+  string,
+  { quotationId: string; price: number; quantity: number }[]
+>;
+export type CanvassLowestPriceType = Record<string, number>;
+
+export type RequestTableViewData = {
+  request_id: string;
+  request_date_created: string;
+  request_status: string;
+  request_team_id: string;
+  request_team_member_id: string;
+  request_requestor: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    team_id: string;
+  };
+  request_form_id: string;
+  form_name: string;
+  form_description: string;
+  request_signers: {
+    request_signer_id: string;
+    is_primary_signer: boolean;
+    team_member_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+  }[];
 };

@@ -3,18 +3,20 @@ import { getStatusToColorForCharts } from "@/utils/styling";
 import {
   Box,
   Center,
-  Divider,
   Flex,
   Grid,
+  Group,
   Paper,
   Stack,
   Text,
   Title,
+  createStyles,
 } from "@mantine/core";
-import { IconSquareRoundedFilled } from "@tabler/icons-react";
+import { IconSquareRoundedFilled, IconTrophyFilled } from "@tabler/icons-react";
 
 type RequestStatusTrackerProps = {
   data: RadialChartData[];
+  totalRequestCount: number;
 };
 
 const getPercentage = (value: number, total: number) => {
@@ -22,18 +24,33 @@ const getPercentage = (value: number, total: number) => {
   return !isNaN(percentage) ? `${percentage.toFixed(0)}%` : `0%`;
 };
 
-const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
-  const totalCount = data[0].totalCount;
+const useStyles = createStyles(() => ({
+  withBorderBottom: {
+    borderBottom: "0.0625rem solid #dee2e6",
+  },
+}));
+
+const RequestStatusTracker = ({
+  data,
+  totalRequestCount,
+}: RequestStatusTrackerProps) => {
+  const { classes } = useStyles();
+
   return (
-    <Paper p="lg" w="100%" h="100%" withBorder>
-      <Flex h="100%" direction="column" justify="space-between">
-        <Title order={3}>Total Request: {totalCount}</Title>
+    <Paper w="100%" h="100%" withBorder>
+      <Group p="md" className={classes.withBorderBottom}>
+        <Box c="blue">
+          <IconTrophyFilled />
+        </Box>
+        <Title order={4}>Total Request: {totalRequestCount}</Title>
+      </Group>
+      <Flex h="100%" direction="column" mt="sm">
         <Center w="100%">
           <Box maw={175} mih={175}>
-            {totalCount > 0 ? (
+            {totalRequestCount > 0 ? (
               <RadialChart data={data} />
             ) : (
-              <Center mih={175}>
+              <Center h={175}>
                 <Text size={20} color="dimmed" weight={600}>
                   No data available.
                 </Text>
@@ -41,11 +58,11 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
             )}
           </Box>
         </Center>
-        <Stack>
+        <Stack p="lg">
           {data.map((d, idx) => (
             <Box key={d.label + idx} fz={14}>
-              <Grid justify="flex-end">
-                <Grid.Col span={8}>
+              <Grid justify="space-between">
+                <Grid.Col span="auto">
                   <Flex gap="sm" w="fit-content">
                     <Box c={getStatusToColorForCharts(d.label)}>
                       <IconSquareRoundedFilled />
@@ -53,7 +70,7 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
                     <Text weight={600}>{`${d.label} Requests`}</Text>
                   </Flex>
                 </Grid.Col>
-                <Grid.Col span={2}>
+                <Grid.Col span="content">
                   <Text weight={600}>{`${d.value}/${d.totalCount}`}</Text>
                 </Grid.Col>
                 <Grid.Col span={2}>
@@ -62,7 +79,6 @@ const RequestStatusTracker = ({ data }: RequestStatusTrackerProps) => {
                   </Text>
                 </Grid.Col>
               </Grid>
-              {idx < data.length - 1 && <Divider />}
             </Box>
           ))}
         </Stack>

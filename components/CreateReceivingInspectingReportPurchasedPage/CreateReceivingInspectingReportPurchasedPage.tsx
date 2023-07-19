@@ -1,4 +1,4 @@
-import { checkRIRItemQuantity } from "@/backend/api/get";
+import { checkRIRPurchasedItemQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -46,7 +46,10 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
+const CreateReceivingInspectingReportPurchasedPage = ({
+  form,
+  itemOptions,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -85,18 +88,16 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[1].section_field.map((field) => {
+    const newFields = form.form_section[2].section_field.map((field) => {
       return {
         ...field,
         field_option: itemOptions,
       };
     });
     replaceSection([
+      ...form.form_section.slice(0, 2),
       {
-        ...form.form_section[0],
-      },
-      {
-        ...form.form_section[1],
+        ...form.form_section[2],
         section_field: newFields,
       },
     ]);
@@ -116,7 +117,7 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
       if (!teamMember) return;
       setIsLoading(true);
       let isValid = true;
-      for (const section of data.sections.slice(1)) {
+      for (const section of data.sections.slice(2)) {
         if (section.section_field[2].field_response === "Invalid") {
           isValid = false;
           break;
@@ -131,16 +132,28 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
         return;
       }
 
+      if (
+        !data.sections[1].section_field[0].field_response &&
+        !data.sections[1].section_field[1].field_response
+      ) {
+        setIsLoading(false);
+        notifications.show({
+          message: "There must be a DR or SI for Quality Check",
+          color: "orange",
+        });
+        return;
+      }
+
       const quotationId = JSON.stringify(
         data.sections[0].section_field[1].field_response
       );
-      const itemSection = data.sections[1];
+      const itemSection = data.sections[2];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.forEach((section) => {
+      data.sections.slice(2).forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({
@@ -162,15 +175,18 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
         });
       });
 
-      const warningItemList = await checkRIRItemQuantity(supabaseClient, {
-        quotationId,
-        itemFieldId: itemSection.section_field[0].field_id,
-        quantityFieldId: itemSection.section_field[1].field_id,
-        itemFieldList,
-        quantityFieldList,
-      });
+      const warningItemList = await checkRIRPurchasedItemQuantity(
+        supabaseClient,
+        {
+          quotationId,
+          itemFieldId: itemSection.section_field[0].field_id,
+          quantityFieldId: itemSection.section_field[1].field_id,
+          itemFieldList,
+          quantityFieldList,
+        }
+      );
 
-      if (warningItemList.length !== 0) {
+      if (warningItemList && warningItemList.length !== 0) {
         modals.open({
           title: "You cannot create this request.",
           centered: true,
@@ -197,6 +213,9 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
           formId,
           teamMemberId: teamMember.team_member_id,
           signers: form.form_signer,
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
         });
 
         notifications.show({
@@ -205,7 +224,8 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
         });
         router.push(`/team-requests/requests/${request.request_id}`);
       }
-    } catch {
+    } catch (e) {
+      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -461,4 +481,4 @@ const CreateReceivingInspectingReportPage = ({ form, itemOptions }: Props) => {
   );
 };
 
-export default CreateReceivingInspectingReportPage;
+export default CreateReceivingInspectingReportPurchasedPage;

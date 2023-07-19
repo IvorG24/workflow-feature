@@ -5,6 +5,7 @@ import { getAvatarColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
   ActionIcon,
+  Alert,
   Avatar,
   Box,
   Flex,
@@ -12,11 +13,12 @@ import {
   Spoiler,
   Stack,
   Text,
+  ThemeIcon,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconDots, IconEdit, IconX } from "@tabler/icons-react";
+import { IconCheck, IconDots, IconEdit, IconX } from "@tabler/icons-react";
 import { capitalize } from "lodash";
 import moment from "moment";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -115,62 +117,119 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         </FormProvider>
       ) : (
         <Stack spacing={8}>
-          <Flex mt="lg">
-            <Avatar
-              size={40}
-              src={commenter.user_avatar}
-              color={getAvatarColor(
-                Number(`${commenter.user_id.charCodeAt(0)}`)
-              )}
-              radius="xl"
-            >
-              {capitalize(commenter.user_first_name[0])}
-              {capitalize(commenter.user_last_name[0])}
-            </Avatar>
-            <Stack spacing={0} ml="md">
-              <Text size={14}>
-                {`${commenter.user_first_name} ${commenter.user_last_name}`}
-              </Text>
-              <Text color="dimmed" size={12}>
-                {commenter.user_username}
-              </Text>
-            </Stack>
-            <Text color="dimmed" size={12} ml="xs">
-              ({moment(comment.comment_date_created).fromNow()})
-            </Text>
-            {isUserOwner && (
-              <Menu shadow="md" width={200} position="bottom-end">
-                <Menu.Target>
-                  <ActionIcon ml="auto">
-                    <IconDots />
-                  </ActionIcon>
-                </Menu.Target>
+          {comment.comment_type === "ACTION_APPROVED" ||
+          comment.comment_type === "ACTION_REJECTED" ? (
+            <Flex align="center" gap="sm" mt="lg">
+              <Avatar
+                size={40}
+                src={commenter.user_avatar}
+                color={getAvatarColor(
+                  Number(`${commenter.user_id.charCodeAt(0)}`)
+                )}
+                radius="xl"
+              >
+                {capitalize(commenter.user_first_name[0])}
+                {capitalize(commenter.user_last_name[0])}
+              </Avatar>
 
-                <Menu.Dropdown>
-                  <Menu.Item
-                    icon={<IconEdit size={14} />}
-                    onClick={() => setIsEditingComment(true)}
+              <Alert
+                w="100%"
+                color={
+                  comment.comment_type === "ACTION_APPROVED" ? "green" : "red"
+                }
+                title={
+                  comment.comment_type === "ACTION_APPROVED"
+                    ? "Approved!"
+                    : "Rejeted!"
+                }
+              >
+                <Flex align="center" gap="md">
+                  <ThemeIcon
+                    radius="xl"
+                    color={
+                      comment.comment_type === "ACTION_APPROVED"
+                        ? "green"
+                        : "red"
+                    }
                   >
-                    Edit
-                  </Menu.Item>
-                  <Menu.Item
-                    icon={<IconX size={14} />}
-                    onClick={openPromptDeleteModal}
-                  >
-                    Delete
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-            )}
-          </Flex>
-          <Spoiler maxHeight={120} showLabel="Show more" hideLabel="Hide">
-            <Text size={14}> {commentContent}</Text>
-            <Text color="dimmed" size={12}>
-              {comment.comment_last_updated || isCommentEdited
-                ? "(edited)"
-                : ""}
-            </Text>
-          </Spoiler>
+                    {comment.comment_type === "ACTION_APPROVED" ? (
+                      <IconCheck size={16} />
+                    ) : (
+                      <IconX size={16} />
+                    )}
+                  </ThemeIcon>
+                  <Stack m={0} p={0} spacing={0}>
+                    <Text>
+                      {commentContent} on{" "}
+                      {new Date(comment.comment_date_created).toDateString()}
+                    </Text>
+                    <Text color="dimmed" size={12}>
+                      {moment(comment.comment_date_created).fromNow()}
+                    </Text>
+                  </Stack>
+                </Flex>
+              </Alert>
+            </Flex>
+          ) : (
+            <>
+              <Flex mt="lg">
+                <Avatar
+                  size={40}
+                  src={commenter.user_avatar}
+                  color={getAvatarColor(
+                    Number(`${commenter.user_id.charCodeAt(0)}`)
+                  )}
+                  radius="xl"
+                >
+                  {capitalize(commenter.user_first_name[0])}
+                  {capitalize(commenter.user_last_name[0])}
+                </Avatar>
+                <Stack spacing={0} ml="md">
+                  <Text size={14}>
+                    {`${commenter.user_first_name} ${commenter.user_last_name}`}
+                  </Text>
+                  <Text color="dimmed" size={12}>
+                    {commenter.user_username}
+                  </Text>
+                </Stack>
+                <Text color="dimmed" size={12} ml="xs">
+                  ({moment(comment.comment_date_created).fromNow()})
+                </Text>
+                {isUserOwner && (
+                  <Menu shadow="md" width={200} position="bottom-end">
+                    <Menu.Target>
+                      <ActionIcon ml="auto">
+                        <IconDots />
+                      </ActionIcon>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                      <Menu.Item
+                        icon={<IconEdit size={14} />}
+                        onClick={() => setIsEditingComment(true)}
+                      >
+                        Edit
+                      </Menu.Item>
+                      <Menu.Item
+                        icon={<IconX size={14} />}
+                        onClick={openPromptDeleteModal}
+                      >
+                        Delete
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                )}
+              </Flex>
+              <Spoiler maxHeight={120} showLabel="Show more" hideLabel="Hide">
+                <Text size={14}> {commentContent}</Text>
+                <Text color="dimmed" size={12}>
+                  {comment.comment_last_updated || isCommentEdited
+                    ? "(edited)"
+                    : ""}
+                </Text>
+              </Spoiler>
+            </>
+          )}
         </Stack>
       )}
     </Box>

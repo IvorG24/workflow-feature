@@ -1,7 +1,7 @@
 import { TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
-  Group,
+  Flex,
   MultiSelect,
   TextInput,
   Tooltip,
@@ -93,7 +93,7 @@ const RequestListFilter = ({
   };
 
   return (
-    <Group>
+    <Flex justify="space-between" gap="sm" wrap="wrap">
       <Controller
         control={control}
         name="isAscendingSort"
@@ -130,8 +130,10 @@ const RequestListFilter = ({
             <IconSearch />
           </ActionIcon>
         }
-        w={{ base: 200, sm: 300 }}
         {...register("search")}
+        sx={{ flex: 1 }}
+        miw={250}
+        maw={300}
       />
       <Controller
         control={control}
@@ -148,6 +150,9 @@ const RequestListFilter = ({
             }}
             onDropdownClose={() => handleFilterChange("formFilter", value)}
             {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={300}
           />
         )}
       />
@@ -168,6 +173,9 @@ const RequestListFilter = ({
             }}
             onDropdownClose={() => handleFilterChange("requestorFilter", value)}
             {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={300}
           />
         )}
       />
@@ -189,10 +197,13 @@ const RequestListFilter = ({
               handleFilterChange("statusFilter", value as string[])
             }
             {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={300}
           />
         )}
       />
-    </Group>
+    </Flex>
   );
 };
 

@@ -100,6 +100,7 @@ export const approveOrRejectRequest = async (
     formName: string;
     memberId: string;
     teamId: string;
+    additionalInfo?: string;
   }
 ) => {
   const {
@@ -112,6 +113,7 @@ export const approveOrRejectRequest = async (
     requestAction,
     memberId,
     teamId,
+    additionalInfo,
   } = params;
 
   const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -150,7 +152,10 @@ export const approveOrRejectRequest = async (
   if (isPrimarySigner) {
     const { error: updateRequestError } = await supabaseClient
       .from("request_table")
-      .update({ request_status: requestAction })
+      .update({
+        request_status: requestAction,
+        request_additional_info: additionalInfo,
+      })
       .eq("request_id", requestId)
       .select();
     if (updateRequestError) throw updateRequestError;
@@ -511,4 +516,21 @@ export const updateFormGroup = async (
     .eq("form_id", formId);
   if (error) throw error;
   return data;
+};
+
+// Update form description
+export const updateFormDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    description: string;
+  }
+) => {
+  const { formId, description } = params;
+
+  const { error } = await supabaseClient
+    .from("form_table")
+    .update({ form_description: description })
+    .eq("form_id", formId);
+  if (error) throw error;
 };

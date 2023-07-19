@@ -86,6 +86,9 @@ const CreateRequestPage = ({ form, formslyFormName = "" }: Props) => {
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: form.form_signer,
+        teamId: teamMember.team_member_team_id,
+        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+        formName: form.form_name,
       });
       removeLocalFormState();
       notifications.show({

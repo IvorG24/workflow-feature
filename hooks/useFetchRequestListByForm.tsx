@@ -11,7 +11,7 @@ type Params = {
 
 const fetcher = async (key: string, params: Params) => {
   try {
-    if (!params.teamId) throw new Error("Failed to fetch team");
+    if (!params.teamId) return;
     const { data, count } = await getRequestListByForm(params.supabaseClient, {
       teamId: params.teamId,
       formId: params.formId ? params.formId : undefined,
@@ -30,7 +30,10 @@ const fetcher = async (key: string, params: Params) => {
 
 function useFetchRequestListByForm(params: Params) {
   const { data, error, isLoading } = useSWR(
-    [`/api/fetchDashboardData?teamId=${params.teamId}`, params],
+    [
+      `/api/fetchDashboardData?teamId=${params.teamId}&formId=${params.formId}`,
+      params,
+    ],
     ([key, params]) => fetcher(key, params)
   );
 

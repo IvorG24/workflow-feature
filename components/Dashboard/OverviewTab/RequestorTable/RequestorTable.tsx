@@ -1,4 +1,3 @@
-import { RequestByFormType, RequestorListType } from "@/utils/types";
 import {
   Box,
   Center,
@@ -11,6 +10,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconTrophyFilled } from "@tabler/icons-react";
+import { RequestorAndSignerDataType } from "../Overview";
 import RequestorItem from "./RequestorItem";
 
 const useStyles = createStyles(() => ({
@@ -20,79 +20,17 @@ const useStyles = createStyles(() => ({
 }));
 
 type RequestorTableProps = {
-  requestList: RequestByFormType[];
-  totalRequest: number;
+  totalRequestCount: number;
+  requestorList: RequestorAndSignerDataType[];
 };
 
-const incrementRequestorStatusCount = (
-  requestor: RequestorListType,
-  status: string
-) => {
-  switch (status) {
-    case "approved":
-      requestor.request.approved++;
-      break;
-
-    case "rejected":
-      requestor.request.rejected++;
-      break;
-    case "pending":
-      requestor.request.pending++;
-      break;
-
-    case "canceled":
-      requestor.request.canceled++;
-      break;
-
-    default:
-      break;
-  }
-
-  return requestor;
-};
-
-const RequestorTable = ({ requestList, totalRequest }: RequestorTableProps) => {
+const RequestorTable = ({
+  totalRequestCount,
+  requestorList,
+}: RequestorTableProps) => {
   const { classes } = useStyles();
 
-  // get all requestor and display in RequestorTable
-  const reducedRequestorList = requestList.reduce((acc, request) => {
-    if (!request.request_team_member) return acc;
-    const user = request.request_team_member.team_member_user;
-    const duplicateIndex = acc.findIndex(
-      (duplicate) => duplicate.user_id === user.user_id
-    );
-    const requestStatus = request.request_status.toLowerCase();
-
-    if (duplicateIndex >= 0) {
-      const updateRequestor = incrementRequestorStatusCount(
-        acc[duplicateIndex],
-        requestStatus
-      );
-      updateRequestor.request.total++;
-
-      acc[duplicateIndex] = updateRequestor;
-    } else {
-      const newRequestor: RequestorListType = {
-        ...user,
-        request: {
-          total: 1,
-          pending: 0,
-          approved: 0,
-          rejected: 0,
-          canceled: 0,
-        },
-      };
-      const updatedNewRequestor = incrementRequestorStatusCount(
-        newRequestor,
-        requestStatus
-      );
-      acc[acc.length] = updatedNewRequestor;
-    }
-
-    return acc;
-  }, [] as RequestorListType[]);
-
-  const sortRequestorListByTotalRequests = reducedRequestorList.sort(
+  const sortRequestorListByTotalRequests = requestorList.sort(
     (a, b) => b.request.total - a.request.total
   );
 
@@ -107,12 +45,12 @@ const RequestorTable = ({ requestList, totalRequest }: RequestorTableProps) => {
         </Group>
 
         <Stack p="lg" mb="sm" spacing={32}>
-          {requestList.length > 0 ? (
+          {totalRequestCount > 0 ? (
             sortRequestorListByTotalRequests.map((requestor) => (
               <Box key={requestor.user_id}>
                 <RequestorItem
                   requestor={requestor}
-                  totalRequest={totalRequest}
+                  totalRequest={totalRequestCount}
                 />
               </Box>
             ))

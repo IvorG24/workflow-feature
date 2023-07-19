@@ -166,6 +166,7 @@ CREATE TABLE request_table(
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  request_additional_info VARCHAR(4000),
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL
@@ -282,8 +283,12 @@ RETURNS JSON as $$
   let ssot_data;
   plv8.subtransaction(function(){
     const {
-      activeTeam
+      activeTeam,
+      pageNumber,
+      rowLimit
     } = input_data;
+
+    const rowStart = (pageNumber - 1) * rowLimit;
 
     // Fetch owner of team
     const team_owner = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${activeTeam}' AND team_member_role='OWNER'`)[0];
@@ -291,10 +296,11 @@ RETURNS JSON as $$
     // Fetch team formsly forms
     const otp_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Order to Purchase' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const rir_purchased_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report (Purchased)' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const rir_sourced_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report (Sourced)' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
-    const otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${otp_form.form_id}' ORDER BY request_date_created DESC`);
+    const otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${otp_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
     ssot_data = otp_requests.map(otp => {
       // OTP request response
       const otp_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${otp.request_id}'`);
@@ -339,7 +345,7 @@ RETURNS JSON as $$
           // Quotation team member
           const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
-          const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_form.form_id}'`);
+          const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_purchased_form.form_id}'`);
           let rir_list = [];
           
           if(rir_ids.length !== 0){
@@ -421,6 +427,42 @@ RETURNS JSON as $$
         });
       }
 
+      const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_sourced_form.form_id}'`);
+      let rir_list = [];
+
+      if(rir_ids.length !== 0){
+        let rir_condition = "";
+        rir_ids.forEach(rir => {
+          rir_condition += `request_id='${rir.request_id}' OR `;
+        });
+
+        const rir_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        rir_list = rir_requests.map(rir => {
+          // rir request response
+          const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
+          
+          // rir request respone with fields
+          const rir_response_fields = rir_response.map(response => {
+            const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+            return {
+              request_response: response.request_response,
+              request_response_field_name: field.field_name,
+              request_response_field_type: field.field_type,
+            }
+          });
+
+          // rir team member
+          const rir_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${rir.request_team_member_id}'`)[0];
+
+          return {
+            rir_request_id: rir.request_id,
+            rir_request_date_created: rir.request_date_created,
+            rir_request_response: rir_response_fields,
+            rir_request_owner: rir_team_member,
+          }
+        });
+      }
+
       return {
         otp_request_id: otp.request_id,
         otp_request_date_created: otp.request_date_created,
@@ -428,6 +470,7 @@ RETURNS JSON as $$
         otp_request_owner: otp_team_member,
         otp_quotation_request: quotation_list,
         otp_cheque_reference_request: cheque_reference_list,
+        otp_rir_request: rir_list,
       }
     })
  });
@@ -539,6 +582,59 @@ $$ LANGUAGE plv8;
 -- End: Accept team invitation
 
 ---------- End: FUNCTIONS
+
+---------- Start: VIEWS
+
+CREATE VIEW request_list_table_view AS
+SELECT
+  r.request_id,
+  r.request_date_created,
+  r.request_status,
+  r.request_team_member_id,
+  tm.team_member_team_id as request_team_id,
+  json_build_object(
+    'user_id', tm.team_member_user_id,
+    'user_first_name', u.user_first_name,
+    'user_last_name', u.user_last_name,
+    'user_avatar', u.user_avatar,
+    'team_id', tm.team_member_team_id
+  ) AS request_requestor,
+  f.form_id AS request_form_id,
+  f.form_name,
+  f.form_description,
+  json_agg(
+    json_build_object(
+      'request_signer_id', rs.request_signer_id,
+      'is_primary_signer', s.signer_is_primary_signer,
+      'team_member_id', stm.team_member_user_id,
+      'user_first_name', su.user_first_name,
+      'user_last_name', su.user_last_name,
+      'user_avatar', su.user_avatar
+    )
+  ) AS request_signers
+FROM
+  request_table AS r
+  LEFT JOIN team_member_table AS tm ON r.request_team_member_id = tm.team_member_id
+  LEFT JOIN user_table AS u ON tm.team_member_user_id = u.user_id
+  LEFT JOIN form_table AS f ON r.request_form_id = f.form_id
+  LEFT JOIN request_signer_table AS rs ON r.request_id = rs.request_signer_request_id
+  LEFT JOIN signer_table AS s ON rs.request_signer_signer_id = s.signer_id
+  LEFT JOIN team_member_table AS stm ON s.signer_team_member_id = stm.team_member_id
+  LEFT JOIN user_table AS su ON stm.team_member_user_id = su.user_id
+GROUP BY
+  r.request_id,
+  r.request_date_created,
+  r.request_status,
+  tm.team_member_user_id,
+  u.user_first_name,
+  u.user_last_name,
+  u.user_avatar,
+  tm.team_member_team_id,
+  f.form_id,
+  f.form_name,
+  f.form_description;
+
+---------- End: VIEWS
 
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;

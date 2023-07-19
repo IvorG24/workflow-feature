@@ -2,6 +2,7 @@ import {
   getFormIDForOTP,
   getFormslyForm,
   getFormslyForwardLinkFormId,
+  getOTPPendingQuotationRequestList,
   getRequest,
   getUserActiveTeamId,
 } from "@/backend/api/get";
@@ -28,6 +29,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
+      if (!request.request_form.form_is_formsly_form) {
+        return {
+          props: { request },
+        };
+      }
+
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
@@ -45,12 +52,22 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           teamId,
         });
 
+        const canvassRequest = await getOTPPendingQuotationRequestList(
+          supabaseClient,
+          { requestId: request.request_id }
+        );
+
         return {
-          props: { request, connectedForm, connectedRequestIDList },
+          props: {
+            request,
+            connectedForm,
+            connectedRequestIDList,
+            canvassRequest,
+          },
         };
-      } else {
+      } else if (request.request_form.form_name === "Quotation") {
         const connectedForm = await getFormslyForm(supabaseClient, {
-          formName: "Receiving Inspecting Report",
+          formName: "Receiving Inspecting Report (Purchased)",
           teamId,
         });
 
@@ -62,6 +79,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               formGroup: connectedForm?.form_group,
               formIsForEveryone: connectedForm?.form_is_for_every_member,
             },
+            connectedRequestIDList,
+          },
+        };
+      } else {
+        return {
+          props: {
+            request,
             connectedRequestIDList,
           },
         };
@@ -92,6 +116,7 @@ type Props = {
     form_group: string[];
     form_is_for_every_member: boolean;
   }[];
+  canvassRequest?: string[];
 };
 
 const Page = ({
@@ -99,6 +124,7 @@ const Page = ({
   connectedFormIdAndGroup,
   connectedRequestIDList,
   connectedForm,
+  canvassRequest = [],
 }: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Order to Purchase") {
@@ -107,6 +133,7 @@ const Page = ({
           request={request}
           connectedForm={connectedForm}
           connectedRequestIDList={connectedRequestIDList}
+          canvassRequest={canvassRequest}
         />
       );
     } else {

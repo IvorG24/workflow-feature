@@ -50,3 +50,4 @@ export const getStatusToColorForCharts = (status: string) => {
       return "#868E96";
   }
 };
+

@@ -1,7 +1,8 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   checkQuotationItemQuantity,
-  checkRIRItemQuantity,
+  checkRIRPurchasedItemQuantity,
+  checkRIRSourcedItemQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -140,7 +141,7 @@ const RequestPage = ({
             }
           );
 
-          if (warningItemList.length !== 0) {
+          if (warningItemList && warningItemList.length !== 0) {
             modals.open({
               title: "You cannot approve create this request.",
               centered: true,
@@ -164,22 +165,26 @@ const RequestPage = ({
             return;
           }
         } else if (
-          request.request_form.form_name === "Receiving Inspecting Report"
+          request.request_form.form_name ===
+          "Receiving Inspecting Report (Purchased)"
         ) {
           const quotationId =
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
-          const itemSection = request.request_form.form_section[1];
+          const itemSection = request.request_form.form_section[2];
 
-          const warningItemList = await checkRIRItemQuantity(supabaseClient, {
-            quotationId,
-            itemFieldId: itemSection.section_field[0].field_id,
-            quantityFieldId: itemSection.section_field[1].field_id,
-            itemFieldList: itemSection.section_field[0].field_response,
-            quantityFieldList: itemSection.section_field[1].field_response,
-          });
+          const warningItemList = await checkRIRPurchasedItemQuantity(
+            supabaseClient,
+            {
+              quotationId,
+              itemFieldId: itemSection.section_field[0].field_id,
+              quantityFieldId: itemSection.section_field[1].field_id,
+              itemFieldList: itemSection.section_field[0].field_response,
+              quantityFieldList: itemSection.section_field[1].field_response,
+            }
+          );
 
-          if (warningItemList.length !== 0) {
+          if (warningItemList && warningItemList.length !== 0) {
             modals.open({
               title: "You cannot approve create this request.",
               centered: true,
@@ -188,6 +193,49 @@ const RequestPage = ({
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
                     Quotation
+                  </Title>
+                  <List size="sm" mt="md" spacing="xs">
+                    {warningItemList.map((item) => (
+                      <List.Item key={item}>{item}</List.Item>
+                    ))}
+                  </List>
+                  <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                    Close
+                  </Button>
+                </Box>
+              ),
+            });
+            return;
+          }
+        } else if (
+          request.request_form.form_name ===
+          "Receiving Inspecting Report (Sourced)"
+        ) {
+          const otpId =
+            request.request_form.form_section[0].section_field[0]
+              .field_response[0].request_response;
+          const itemSection = request.request_form.form_section[2];
+
+          const warningItemList = await checkRIRSourcedItemQuantity(
+            supabaseClient,
+            {
+              otpId,
+              itemFieldId: itemSection.section_field[0].field_id,
+              quantityFieldId: itemSection.section_field[1].field_id,
+              itemFieldList: itemSection.section_field[0].field_response,
+              quantityFieldList: itemSection.section_field[1].field_response,
+            }
+          );
+
+          if (warningItemList && warningItemList.length !== 0) {
+            modals.open({
+              title: "You cannot approve create this request.",
+              centered: true,
+              children: (
+                <Box maw={390}>
+                  <Title order={5}>
+                    There are items that will exceed the quantity limit of the
+                    OTP
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -308,7 +356,7 @@ const RequestPage = ({
 
   return (
     <Container>
-      <Flex justify="space-between">
+      <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
@@ -332,6 +380,7 @@ const RequestPage = ({
                   )}&quotationId=${request.request_id}`
                 );
               }}
+              sx={{ flex: 1 }}
             >
               Create Receiving Inspecting Report
             </Button>
@@ -379,11 +428,14 @@ const RequestPage = ({
           />
         ) : null}
 
-        {request.request_form.form_name === "Receiving Inspecting Report" &&
+        {(request.request_form.form_name ===
+          "Receiving Inspecting Report (Purchased)" ||
+          request.request_form.form_name ===
+            "Receiving Inspecting Report (Sourced)") &&
         request.request_form.form_is_formsly_form ? (
           <ReceivingInspectingReportSummary
             summaryData={sectionWithDuplicateList
-              .slice(1)
+              .slice(2)
               .sort((a, b) =>
                 `${a.section_field[0].field_response?.request_response}` >
                 `${b.section_field[0].field_response?.request_response}`

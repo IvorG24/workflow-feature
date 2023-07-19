@@ -118,6 +118,7 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
           component="a"
           href={instance.url ? instance.url : "#"}
           download={pdfFileName}
+          sx={{ flex: 1 }}
         >
           Export to PDF
         </Button>

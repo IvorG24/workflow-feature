@@ -1,12 +1,15 @@
 import { Database } from "@/utils/database";
-import { regExp } from "@/utils/string";
+import { addCommaToNumber, regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
+  CanvassLowestPriceType,
+  CanvassType,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
   RequestByFormType,
+  RequestDashboardOverviewData,
   RequestResponseTableRow,
   RequestWithResponseType,
   TeamMemberType,
@@ -136,7 +139,38 @@ export const getRequestList = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_form: request_form_id!inner(form_id, form_name, form_description), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer: request_signer_signer_id(signer_is_primary_signer, signer_team_member: signer_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar))))",
+      `request_id, 
+      request_date_created, 
+      request_status, 
+      request_team_member: request_team_member_id!inner(
+        team_member_team_id,
+        team_member_user: team_member_user_id(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar
+        )
+      ), 
+      request_form: request_form_id!inner(
+        form_id, 
+        form_name, 
+        form_description, 
+        form_is_disabled
+      ), 
+      request_signer: request_signer_table(
+        request_signer_id, 
+        request_signer_status, 
+        request_signer: request_signer_signer_id(
+          signer_is_primary_signer, 
+          signer_team_member: signer_team_member_id(
+            team_member_user: team_member_user_id(
+              user_id, user_first_name, 
+              user_last_name, 
+              user_avatar
+            )
+          )
+        )
+      )`,
       { count: "exact" }
     )
     .eq("request_team_member.team_member_team_id", teamId)
@@ -457,7 +491,7 @@ export const getForm = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_group, form_is_for_every_member, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
+      "form_id, form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_group, form_is_for_every_member, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
     )
     .eq("form_id", formId)
     .eq("form_is_disabled", false)
@@ -1163,7 +1197,7 @@ export const getRequestListByForm = async (
   let query = supabaseClient
     .from("request_table")
     .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)))), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table!inner(request_response_field_id, request_response_id, request_response, request_response_duplicatable_section_id, request_response_request_id))))",
+      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table!inner(request_response_field_id, request_response_id, request_response, request_response_duplicatable_section_id, request_response_request_id))))",
       { count: "exact" }
     )
     .eq("request_team_member.team_member_team_id", teamId)
@@ -1178,6 +1212,36 @@ export const getRequestListByForm = async (
   if (error) throw error;
 
   const requestList = data as RequestByFormType[];
+
+  return { data: requestList, count };
+};
+
+export const getDashboardOverViewData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    formId?: string;
+  }
+) => {
+  const { formId, teamId } = params;
+  let query = supabaseClient
+    .from("request_table")
+    .select(
+      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)))), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form)))",
+      { count: "exact" }
+    )
+    .eq("request_team_member.team_member_team_id", teamId)
+    .eq("request_is_disabled", false)
+    .eq("request_form.form_is_disabled", false);
+
+  if (formId) {
+    const formCondition = `request_form_id.eq.${formId}`;
+    query = query.or(formCondition);
+  }
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const requestList = data as unknown as RequestDashboardOverviewData[];
 
   return { data: requestList, count };
 };
@@ -1220,7 +1284,9 @@ export const getFormIDForOTP = async (
     .select(
       "form_id, form_name, form_group, form_is_for_every_member, form_team_member: form_team_member_id!inner(team_member_team_id)"
     )
-    .or("form_name.eq.Quotation, form_name.eq.Cheque Reference")
+    .or(
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%"
+    )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_formsly_form", true);
   if (error) throw error;
@@ -1333,7 +1399,8 @@ export const getFormslyForwardLinkFormId = async (
   const requestList = {
     "Order to Purchase": [] as string[],
     Quotation: [] as string[],
-    "Receiving Inspecting Report": [] as string[],
+    "Receiving Inspecting Report (Purchased)": [] as string[],
+    "Receiving Inspecting Report (Sourced)": [] as string[],
   };
 
   formattedData.forEach((request) => {
@@ -1348,8 +1415,13 @@ export const getFormslyForwardLinkFormId = async (
           `"${request.request_response_request.request_id}"`
         );
         break;
-      case "Receiving Inspecting Report":
-        requestList["Receiving Inspecting Report"].push(
+      case "Receiving Inspecting Report (Purchased)":
+        requestList["Receiving Inspecting Report (Purchased)"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Receiving Inspecting Report (Sourced)":
+        requestList["Receiving Inspecting Report (Sourced)"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1431,8 +1503,8 @@ export const getItemResponseForQuotation = async (
   return options;
 };
 
-// Get item response of an quotation request
-export const getItemResponseForRIR = async (
+// Get item response of a quotation request
+export const getItemResponseForRIRPurchased = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1493,6 +1565,79 @@ export const getItemResponseForRIR = async (
       }
     }
   });
+  return options;
+};
+
+// Get item response of a otp request
+export const getItemResponseForRIRSourced = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { requestId } = params;
+
+  const { data: requestResponseData, error: requestResponseError } =
+    await supabaseClient
+      .from("request_response_table")
+      .select(
+        "*, request_response_field: request_response_field_id(field_name, field_order)"
+      )
+      .eq("request_response_request_id", requestId);
+
+  if (requestResponseError) throw requestResponseError;
+  const formattedRequestResponseData =
+    requestResponseData as unknown as (RequestResponseTableRow & {
+      request_response_field: { field_name: string; field_order: number };
+    })[];
+
+  const options: Record<
+    string,
+    {
+      generalName: string;
+      unit: string;
+      quantity: number;
+      description: string;
+    }
+  > = {};
+  const idForNullDuplicationId = uuidv4();
+  formattedRequestResponseData.forEach((response) => {
+    if (response.request_response_field) {
+      const fieldName = response.request_response_field.field_name;
+      const duplicatableSectionId =
+        response.request_response_duplicatable_section_id ??
+        idForNullDuplicationId;
+
+      if (response.request_response_field.field_order > 3) {
+        if (!options[duplicatableSectionId]) {
+          options[duplicatableSectionId] = {
+            generalName: "",
+            unit: "",
+            quantity: 0,
+            description: "",
+          };
+        }
+
+        if (fieldName === "General Name") {
+          options[duplicatableSectionId].generalName = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Unit of Measurement") {
+          options[duplicatableSectionId].unit = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Quantity") {
+          options[duplicatableSectionId].quantity = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
+        } else {
+          options[duplicatableSectionId].description += `${
+            response.request_response_field.field_name
+          }: ${JSON.parse(response.request_response)}, `;
+        }
+      }
+    }
+  });
+
   return options;
 };
 
@@ -1584,18 +1729,26 @@ export const checkQuotationItemQuantity = async (
     const unit = matches[1].replace(/\d+/g, "").trim();
 
     if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
       returnData.push(
-        `${JSON.parse(itemList[i])} exceeds quantity limit by ${
+        `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            addCommaToNumber(Number(quantityMatch[1]))
+          )
+        )} exceeds quantity limit by ${addCommaToNumber(
           quantityList[i] - expectedQuantity
-        } ${unit}`
+        )} ${unit}`
       );
     }
   }
   return returnData;
 };
 
-// Check if the approving or creating rir item quantity are less than the quotation quantity
-export const checkRIRItemQuantity = async (
+// Check if the approving or creating rir purchased item quantity are less than the quotation quantity
+export const checkRIRPurchasedItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     quotationId: string;
@@ -1624,7 +1777,7 @@ export const checkRIRItemQuantity = async (
     .eq("request_response_request.request_form.form_is_formsly_form", true)
     .eq(
       "request_response_request.request_form.form_name",
-      "Receiving Inspecting Report"
+      "Receiving Inspecting Report (Purchased)"
     );
 
   if (requestIdListError) throw requestIdListError;
@@ -1685,13 +1838,132 @@ export const checkRIRItemQuantity = async (
     const unit = matches[1].replace(/\d+/g, "").trim().split(" ")[0];
 
     if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
       returnData.push(
-        `${JSON.parse(itemList[i])} exceeds quantity limit by ${
+        `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            addCommaToNumber(Number(quantityMatch[1]))
+          )
+        )} exceeds quantity limit by ${addCommaToNumber(
           quantityList[i] - expectedQuantity
-        } ${unit}`
+        )} ${unit}`
       );
     }
   }
+
+  return returnData;
+};
+
+// Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+export const checkRIRSourcedItemQuantity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    otpId: string;
+    itemFieldId: string;
+    quantityFieldId: string;
+    itemFieldList: RequestResponseTableRow[];
+    quantityFieldList: RequestResponseTableRow[];
+  }
+) => {
+  const {
+    otpId,
+    itemFieldId,
+    quantityFieldId,
+    itemFieldList,
+    quantityFieldList,
+  } = params;
+
+  // fetch request id
+  const { data: requestIds, error: requestIdListError } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "*, request_response_request: request_response_request_id!inner(request_status, request_form: request_form_id!inner(form_is_formsly_form, form_name))"
+    )
+    .eq("request_response", otpId)
+    .eq("request_response_request.request_status", "APPROVED")
+    .eq("request_response_request.request_form.form_is_formsly_form", true)
+    .eq(
+      "request_response_request.request_form.form_name",
+      "Receiving Inspecting Report (Sourced)"
+    );
+
+  if (requestIdListError) throw requestIdListError;
+  const requestIdList = requestIds.map(
+    (response) => response.request_response_request_id
+  );
+
+  // fetch request responses
+  const { data: requestResponse, error: requestResponseError } =
+    await supabaseClient
+      .from("request_response_table")
+      .select("*")
+      .in("request_response_request_id", requestIdList)
+      .or(
+        `request_response_field_id.eq.${itemFieldId}, request_response_field_id.eq.${quantityFieldId}`
+      );
+  if (requestResponseError) throw requestResponseError;
+
+  // separate item to quantity response
+  const requestResponseItem: RequestResponseTableRow[] = [];
+  const requestResponseQuantity: RequestResponseTableRow[] = [];
+  requestResponse.forEach((response) => {
+    if (response.request_response_field_id === itemFieldId) {
+      requestResponseItem.push(response);
+    } else if (response.request_response_field_id === quantityFieldId) {
+      requestResponseQuantity.push(response);
+    }
+  });
+  requestResponseItem.push(...itemFieldList);
+  requestResponseQuantity.push(...quantityFieldList);
+
+  const itemList: string[] = [];
+  const quantityList: number[] = [];
+
+  for (let i = 0; i < requestResponseItem.length; i++) {
+    if (itemList.includes(requestResponseItem[i].request_response)) {
+      const quantityIndex = itemList.indexOf(
+        requestResponseItem[i].request_response
+      );
+      quantityList[quantityIndex] += Number(
+        requestResponseQuantity[i].request_response
+      );
+    } else {
+      itemList.push(requestResponseItem[i].request_response);
+      quantityList.push(Number(requestResponseQuantity[i].request_response));
+    }
+  }
+
+  const returnData: string[] = [];
+  for (let i = 0; i < itemList.length; i++) {
+    const matches = regExp.exec(itemList[i]);
+    if (!matches) continue;
+
+    const quantityMatch = matches[1].match(/(\d+)/);
+    if (!quantityMatch) continue;
+
+    const expectedQuantity = Number(quantityMatch[1]);
+    const unit = matches[1].replace(/\d+/g, "").trim().split(" ")[0];
+
+    if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
+      returnData.push(
+        `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            addCommaToNumber(Number(quantityMatch[1]))
+          )
+        )} exceeds quantity limit by ${addCommaToNumber(
+          quantityList[i] - expectedQuantity
+        )} ${unit}`
+      );
+    }
+  }
+
   return returnData;
 };
 
@@ -1756,4 +2028,275 @@ export const getTeamGroupList = async (
   if (error) throw error;
 
   return data.team_group_list;
+};
+
+// Get request per status count
+export const getRequestStatusCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamId, startDate, endDate } = params;
+  const { data, count } = await supabaseClient
+    .from("request_table")
+    .select(
+      "request_status, request_date_created, request_team_member: request_team_member_id!inner(team_member_team_id)",
+      { count: "exact" }
+    )
+    .eq("request_form_id", formId)
+    .eq("request_team_member.team_member_team_id", teamId)
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  return {
+    data,
+    count,
+  };
+};
+
+export const getRequestorData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamMemberId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamMemberId, startDate, endDate } = params;
+  const { data } = await supabaseClient
+    .from("request_table")
+    .select("request_team_member_id, request_status, request_date_created")
+    .eq("request_form_id", formId)
+    .eq("request_team_member_id", teamMemberId)
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  return data;
+};
+
+export const getSignerData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamMemberId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { formId, teamMemberId, startDate, endDate } = params;
+  const { data } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      "request: request_signer_request_id!inner(request_form_id, request_date_created), request_signer: request_signer_signer_id!inner(team_member: signer_team_member_id!inner(team_member_id, team_member_team_id)), request_signer_status",
+      { count: "exact" }
+    )
+    .eq("request.request_form_id", formId)
+    .eq("request_signer.team_member.team_member_id", teamMemberId)
+    .gte("request.request_date_created", startDate)
+    .lte("request.request_date_created", endDate);
+
+  return data;
+};
+
+// Get all quotation request for the otp
+export const getOTPPendingQuotationRequestList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "request_response_request: request_response_request_id!inner(request_id, request_status, request_form: request_form_id(form_name))"
+    )
+    .eq("request_response", `"${requestId}"`)
+    .eq("request_response_request.request_status", "PENDING")
+    .eq("request_response_request.request_form.form_name", "Quotation");
+
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    request_response_request: { request_id: string };
+  }[];
+  return formattedData.map(
+    (request) => request.request_response_request.request_id
+  );
+};
+
+// Get canvass data
+export const getCanvassData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const items = await getItemResponseForQuotation(supabaseClient, {
+    requestId,
+  });
+  const itemOptions = Object.keys(items).map(
+    (item) =>
+      `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
+  );
+
+  const canvassRequest = await getOTPPendingQuotationRequestList(
+    supabaseClient,
+    { requestId }
+  );
+
+  const summaryData: CanvassLowestPriceType = {};
+  const quotationRequestList = await Promise.all(
+    canvassRequest.map(async (canvassRequestId) => {
+      const { data: quotationResponseList, error: quotationResponseListError } =
+        await supabaseClient
+          .from("request_response_table")
+          .select(
+            "*, request_response_field: request_response_field_id!inner(field_name)"
+          )
+          .eq("request_response_request_id", canvassRequestId)
+          .in("request_response_field.field_name", [
+            "Item",
+            "Price per Unit",
+            "Quantity",
+          ]);
+      if (quotationResponseListError) throw quotationResponseListError;
+      summaryData[canvassRequestId] = 0;
+      return quotationResponseList;
+    })
+  );
+  const formattedQuotationRequestList =
+    quotationRequestList as unknown as (RequestResponseTableRow & {
+      request_response_field: { field_name: string };
+    })[][];
+
+  const canvassData: CanvassType = {};
+  const lowestPricePerItem: CanvassLowestPriceType = {};
+
+  itemOptions.forEach((item) => {
+    canvassData[item] = [];
+    lowestPricePerItem[item] = 999999999;
+  });
+
+  formattedQuotationRequestList.forEach((request) => {
+    let currentItem = "";
+    request.forEach((response) => {
+      if (response.request_response_field.field_name === "Item") {
+        currentItem = JSON.parse(response.request_response);
+        canvassData[currentItem].push({
+          quotationId: response.request_response_request_id,
+          price: 0,
+          quantity: 0,
+        });
+      } else if (
+        response.request_response_field.field_name === "Price per Unit"
+      ) {
+        const price = Number(response.request_response);
+        canvassData[currentItem][canvassData[currentItem].length - 1].price =
+          price;
+        if (price < lowestPricePerItem[currentItem]) {
+          lowestPricePerItem[currentItem] = price;
+        }
+        summaryData[response.request_response_request_id] += price;
+      } else if (response.request_response_field.field_name === "Quantity") {
+        canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
+          Number(response.request_response);
+      }
+    });
+  });
+
+  const sortedQuotation: Record<string, number> = Object.entries(summaryData)
+    .sort(([, a], [, b]) => a - b)
+    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+  const recommendedQuotationId = Object.keys(sortedQuotation)[0];
+
+  return {
+    canvassData,
+    lowestPricePerItem,
+    summaryData,
+    lowestQuotation: {
+      id: recommendedQuotationId,
+      value: sortedQuotation[recommendedQuotationId],
+    },
+  };
+};
+
+// Get request list
+export const getRequestTableView = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    requestor?: string[];
+    status?: FormStatusType[];
+    form?: string[];
+    sort?: "ascending" | "descending";
+    search?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    requestor,
+    status,
+    form,
+    sort = "descending",
+    search,
+  } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("request_list_table_view")
+    .select("*", { count: "exact" })
+    .eq("request_team_id", teamId);
+
+  if (requestor) {
+    let requestorCondition = "";
+    requestor.forEach((value) => {
+      requestorCondition += `request_team_member_id.eq.${value}, `;
+    });
+    query = query.or(requestorCondition.slice(0, -2));
+  }
+
+  if (status) {
+    let statusCondition = "";
+    status.forEach((value) => {
+      statusCondition += `request_status.eq.${value}, `;
+    });
+    query = query.or(statusCondition.slice(0, -2));
+  }
+
+  if (form) {
+    let formCondition = "";
+    form.forEach((value) => {
+      formCondition += `request_form_id.eq.${value}, `;
+    });
+    query = query.or(formCondition.slice(0, -2));
+  }
+
+  if (search) {
+    query = query.eq("request_id", search);
+  }
+
+  query = query.order("request_date_created", {
+    ascending: sort === "ascending",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return { data, count };
 };

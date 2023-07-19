@@ -13,30 +13,10 @@ const RequisitionTab = ({ fieldResponseData }: Props) => {
   const [selectedPurchaseData, setSelectedPurchaseData] = useState("user");
   const [selectedBarChartItem, setSelectedBarChartItem] = useState("");
 
-  const approvedFieldResponseData = fieldResponseData.map((data) => {
-    const responseData = data.responseData.map((field) => {
-      const approvedResponseList = field.field_response.filter(
-        (res) => res.request_response_request_status === "APPROVED"
-      );
-
-      return {
-        ...field,
-        field_response: approvedResponseList,
-      };
-    });
-
-    return {
-      ...data,
-      responseData,
-    };
-  });
-
-  const itemPurchaseTrendData = getItemPurchaseTrendData(
-    approvedFieldResponseData
-  );
+  const itemPurchaseTrendData = getItemPurchaseTrendData(fieldResponseData);
 
   return (
-    <Container p={0} h="100%" fluid>
+    <Container maw={1024} p={0} h="100%" fluid>
       {fieldResponseData.length > 0 ? (
         <>
           <SegmentedControl
@@ -51,13 +31,13 @@ const RequisitionTab = ({ fieldResponseData }: Props) => {
           />
 
           {selectedPurchaseData !== "purchase" &&
-            approvedFieldResponseData &&
-            approvedFieldResponseData.length > 0 && (
+            fieldResponseData &&
+            fieldResponseData.length > 0 && (
               <PurchaseOrder
                 selectedPurchaseData={selectedPurchaseData}
                 selectedBarChartItem={selectedBarChartItem}
                 setSelectedBarChartItem={setSelectedBarChartItem}
-                purchaseOrderData={approvedFieldResponseData}
+                purchaseOrderData={fieldResponseData}
               />
             )}
 
