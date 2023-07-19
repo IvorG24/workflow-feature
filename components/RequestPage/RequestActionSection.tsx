@@ -1,11 +1,11 @@
-import { FormStatusType } from "@/utils/types";
+import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import { Button, Paper, Space, Stack, Title } from "@mantine/core";
+import { useRouter } from "next/router";
 // import { useRouter } from "next/router";
 
 type Props = {
   isUserOwner: boolean;
   requestStatus: FormStatusType;
-  requestId: string;
   handleCancelRequest: () => void;
   openPromptDeleteModal: () => void;
   isUserSigner: boolean;
@@ -14,19 +14,31 @@ type Props = {
     additionalInfo?: string
   ) => void;
   isOTP?: boolean;
+  sourcedOtpForm?: {
+    form_name: string;
+    form_id: string;
+    form_group: string[];
+    form_is_for_every_member: boolean;
+  };
+  requestId: string;
+  isUserPrimarySigner: boolean;
+  signer?: RequestWithResponseType["request_signer"][0];
 };
 
 const RequestActionSection = ({
   isUserOwner,
   requestStatus,
-  // requestId,
   handleCancelRequest,
   openPromptDeleteModal,
   isUserSigner,
   handleUpdateRequest,
   isOTP = false,
+  sourcedOtpForm,
+  requestId,
+  isUserPrimarySigner,
+  signer,
 }: Props) => {
-  // const router = useRouter();
+  const router = useRouter();
 
   return (
     <Paper p="xl" shadow="xs">
@@ -35,48 +47,54 @@ const RequestActionSection = ({
       </Title>
       <Space h="xl" />
       <Stack>
-        {isUserSigner && requestStatus === "PENDING" && (
-          <>
-            {!isOTP && (
-              <Button
-                color="green"
-                fullWidth
-                onClick={() => handleUpdateRequest("APPROVED")}
-              >
-                Approve Request
-              </Button>
-            )}
-            {isOTP && (
-              <>
+        {isUserSigner &&
+          signer &&
+          signer.request_signer_status === "PENDING" && (
+            <>
+              {!isOTP && (
                 <Button
                   color="green"
                   fullWidth
-                  onClick={() =>
-                    handleUpdateRequest("APPROVED", "FOR_PURCHASED")
-                  }
+                  onClick={() => handleUpdateRequest("APPROVED")}
                 >
-                  For Purchased
+                  Approve Request
                 </Button>
-                <Button
-                  color="orange"
-                  fullWidth
-                  onClick={() =>
-                    handleUpdateRequest("APPROVED", "AVAILABLE_INTERNALLY")
-                  }
-                >
-                  Available Internally
-                </Button>
-              </>
-            )}
-            <Button
-              color="red"
-              fullWidth
-              onClick={() => handleUpdateRequest("REJECTED")}
-            >
-              Reject Request
-            </Button>
-          </>
-        )}
+              )}
+              {isOTP && (
+                <>
+                  <Button
+                    color="green"
+                    fullWidth
+                    onClick={() =>
+                      handleUpdateRequest("APPROVED", "FOR_PURCHASED")
+                    }
+                  >
+                    For Purchased
+                  </Button>
+                  {sourcedOtpForm && isUserPrimarySigner && (
+                    <Button
+                      color="orange"
+                      fullWidth
+                      onClick={() => {
+                        router.push(
+                          `/team-requests/forms/${sourcedOtpForm.form_id}/create?otpId=${requestId}`
+                        );
+                      }}
+                    >
+                      Available Internally
+                    </Button>
+                  )}
+                </>
+              )}
+              <Button
+                color="red"
+                fullWidth
+                onClick={() => handleUpdateRequest("REJECTED")}
+              >
+                Reject Request
+              </Button>
+            </>
+          )}
         {isUserOwner && requestStatus === "PENDING" && (
           <>
             {/* <Button

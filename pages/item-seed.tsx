@@ -750,7 +750,7 @@ const itemData = [
       ["RIB TYPE", "TRAPEZOID", "R-SPAN", "TWIN RIB"],
       ["0.4 mm"],
       ["8 ft"],
-      ["4ft"],
+      ["4 ft"],
       ["RED", "GREEN", "BLUE", "NOT AVAILABLE"],
     ],
   },
@@ -1164,7 +1164,7 @@ const Page = () => {
             field_name: description,
             field_is_required: true,
             field_type: "DROPDOWN",
-            field_order: 9,
+            field_order: 10,
             field_section_id: SECTION_ID,
           });
 

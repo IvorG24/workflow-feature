@@ -33,7 +33,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
@@ -84,7 +84,8 @@ const RequestPage = ({
     request.request_signer.map((signer) => {
       return {
         ...signer.request_signer_signer,
-        signer_status: signer.request_signer_status as ReceiverStatusType,
+        request_signer_status:
+          signer.request_signer_status as ReceiverStatusType,
       };
     })
   );
@@ -104,10 +105,19 @@ const RequestPage = ({
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
+  const isUserPrimarySigner = signerList.find(
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id &&
+      signer.signer_is_primary_signer
+  );
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
+
+  useEffect(() => {
+    setRequestStatus(request.request_status);
+  }, [request.request_status]);
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
@@ -267,17 +277,20 @@ const RequestPage = ({
 
       if (signer.signer_is_primary_signer) {
         setRequestStatus(status);
+      } else {
+        router.reload();
       }
 
       setSignerList((prev) =>
-        prev.map((signer) => {
-          if (signer.signer_id !== signer.signer_id) return signer;
+        prev.map((signerItem) => {
+          if (signerItem.signer_id !== signer.signer_id) return signerItem;
           return {
             ...signer,
             signer_status: status,
           };
         })
       );
+
       notifications.show({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
@@ -454,11 +467,15 @@ const RequestPage = ({
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}
-            requestId={request.request_id}
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
+            requestId={request.request_id}
+            isUserPrimarySigner={Boolean(isUserPrimarySigner)}
+            signer={
+              isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
+            }
           />
         ) : null}
         <RequestSignerSection signerList={signerList} />

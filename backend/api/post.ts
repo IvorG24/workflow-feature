@@ -512,7 +512,7 @@ export const createRequest = async (
   // get request signers
   const requestSignerInput: RequestSignerTableInsert[] = [];
 
-  // get signer notifcation
+  // get signer notification
   const requestSignerNotificationInput: NotificationTableInsert[] = [];
 
   signers.forEach((signer) => {

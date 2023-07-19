@@ -21,6 +21,7 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[]),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[]),
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['Warehouse Processor']),
+('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Order to Purchase', 'formsly premade Sourced Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Processor']),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Accounting Processor']),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver']),
 ('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver']),
@@ -36,8 +37,12 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, true, '337658f1-0777-45f2-853f-b6f20551712e'),
 
 -- Order to Purchase
-('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
-('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+('333cd418-69d1-459b-82e4-cc67c34c2b8b', 'ID', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 2, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 3, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+
+-- Sourced Order to Purchase
+('2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', 'Item', 1, true, 'e5062660-9026-4629-bc2c-633826fdaa24'),
 
 -- Quotation
 ('7d6649c2-316b-4895-86eb-120def2e2f33', 'ID', 1, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
@@ -91,22 +96,21 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 -- ('5ed0f5c1-a97d-465b-ade4-758a5ae351a2', 'Slider field', 'SLIDER', 11, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 
 -- Order to Purchase Form
-('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 1, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('eb04956c-4164-4ca6-90ee-5081783884a1', 'Parent OTP ID', 'LINK', 1, '333cd418-69d1-459b-82e4-cc67c34c2b8b', true, true),
 
-('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 4, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('59a6093c-5733-44c0-8a99-e12011207ff8', 'LENGTH', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d527a714-a49a-4162-a851-f73553f6bea1', 'WIDTH', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('743ac520-e8a8-4801-a89b-abe4d666ff68', 'HEIGHT', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84b92308-11bf-47b4-b006-00894ea3640d', 'TYPE', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('2d0a3a6c-107d-4f86-bf3d-87a98607f832', 'BRAND', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('ed1f9bbd-deab-4576-b83d-965b16b98522', 'MATERIAL', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('84e06984-45eb-4947-913e-7882e20f3bfd', 'SIZE', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+
+('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+
+-- Sourced Order to Purchase Form
+('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 1, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
+('8c15e0f0-f360-4826-a684-5ab4ecb52009', 'Quantity', 'NUMBER', 2, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 
 -- Quotation Form
 ('df0cb109-e34d-498f-ac51-af2139628ac0', 'Order to Purchase ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
@@ -194,6 +198,7 @@ INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, si
 ('b7115738-8089-4e68-ac94-76ce6d0452f5', TRUE, 'Approved', 1, '337658f1-0777-45f2-853f-b6f20551712e', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('7d0781fe-eb57-4225-858d-abb6b93357c7', FALSE, 'Noted', 2, '337658f1-0777-45f2-853f-b6f20551712e', '1e9bb9c7-e4e6-42e4-9377-a33f9b645343'),
 ('37067546-44b2-4bfa-a952-b0332e98298c', TRUE, 'Approved', 1, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
+('b96ad041-2ad5-41be-9358-06d0a8524401', TRUE, 'Approved', 1, 'e5062660-9026-4629-bc2c-633826fdaa24', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('8321f613-6362-4d17-b9f2-f439ddd9a8a8', TRUE, 'Approved', 1, 'a732196f-9779-45e2-85fa-7320397e5b0a', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('37f8b92c-9e9e-4e97-a6f4-f2f55a7f1a87', TRUE, 'Approved', 1, '5782d70a-5f6b-486c-a77f-401066afd005', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('2c4504a3-6b38-42bb-af23-d489967205e3', TRUE, 'Approved', 1, '391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
@@ -290,37 +295,6 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('f5caeebf-8158-450a-88da-d7a098155a14', 'Test notification approve', TRUE, '/', 'APPROVE', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04'),
 ('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04'),
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '20ce163c-be18-49fa-a8e1-abf26c3a8a04');
-
--- INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
--- ('5bc0f573-9c7f-4053-a387-21e744399b0c', 'WOOD', 'piece', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'KFEO2', 'RX7VU'),
--- ('64de1a67-18dd-4010-ac2a-326aa7178908', 'GASOLINE', 'litre', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'G2HF5', 'DPRHK'),
--- ('bf56098b-3869-4c28-a1e8-896c82b9386e', 'NAIL', 'bag', 'Major Material', 'a5a28977-6956-45c1-a624-b9e90911502e', 'ZH123', 'QAMFI');
-
--- INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
--- ('164a75f3-09cc-42ae-9d9e-276eb33166f3', 'LENGTH', '5bc0f573-9c7f-4053-a387-21e744399b0c', '59a6093c-5733-44c0-8a99-e12011207ff8'),
--- ('19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c', 'WIDTH', '5bc0f573-9c7f-4053-a387-21e744399b0c', 'd527a714-a49a-4162-a851-f73553f6bea1'),
--- ('b3090b4d-120e-4f68-8374-2080eee4b29c', 'HEIGHT', '5bc0f573-9c7f-4053-a387-21e744399b0c', '743ac520-e8a8-4801-a89b-abe4d666ff68'),
--- ('a80ef950-2a2a-4669-8dd7-b3b502f3e82d', 'TYPE', '64de1a67-18dd-4010-ac2a-326aa7178908', '84b92308-11bf-47b4-b006-00894ea3640d'),
--- ('f63b2370-0174-4a89-a047-a2680717d91a', 'BRAND', '64de1a67-18dd-4010-ac2a-326aa7178908', '2d0a3a6c-107d-4f86-bf3d-87a98607f832'),
--- ('0e5e970a-63aa-4b88-902a-e410a3611015', 'MATERIAL', 'bf56098b-3869-4c28-a1e8-896c82b9386e', 'ed1f9bbd-deab-4576-b83d-965b16b98522'),
--- ('0554d368-42e8-4b3b-a5d0-8fc68a7129ec', 'SIZE', 'bf56098b-3869-4c28-a1e8-896c82b9386e', '84e06984-45eb-4947-913e-7882e20f3bfd');
-
--- INSERT INTO item_description_field_table (item_description_field_id, item_description_field_value, item_description_field_item_description_id) VALUES 
--- ('f55f7011-16b4-4d68-913d-26b982851b78', '1 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
--- ('d943db75-d8cf-413e-b9c3-c5b499a73640', '2 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
--- ('4b6ce9ff-361c-4c81-977d-6aba7fa6382e', '3 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
--- ('44da0631-b20b-4887-85e7-2d979f840f04', '4 inch', '164a75f3-09cc-42ae-9d9e-276eb33166f3'),
--- ('8331b319-569f-4613-b62a-338cc2d8359d', '1 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
--- ('a80b02c8-3068-40be-8a82-444a82e7f63f', '2 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
--- ('a1f5ae8e-71e9-43ed-8a4e-575614a0d5bc', '3 inch', '19bd52fb-c7a0-48c7-a0a3-0a453abf8a1c'),
--- ('779a3de2-7cc0-4214-8b81-8ad82185cb94', '1 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
--- ('83d756f9-7238-4e0c-81e1-b284ffb4b7f2', '2 inch', 'b3090b4d-120e-4f68-8374-2080eee4b29c'),
--- ('13a12596-3161-4893-a3fe-07ea73fbeffd', 'Unleaded',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
--- ('f1a11c5a-915b-4eff-a4d2-f36683998b2f', 'Shell',  'f63b2370-0174-4a89-a047-a2680717d91a'),
--- ('b113659c-8ae7-4650-8b19-1d88e2d76c37', 'Diesel',  'a80ef950-2a2a-4669-8dd7-b3b502f3e82d'),
--- ('ed3fe8d0-a9c5-4e67-a9da-2d8617a8a550', 'Petron',  'f63b2370-0174-4a89-a047-a2680717d91a'),
--- ('0055da68-32c8-40f9-ad6e-d7be663dad70', 'Metal', '0e5e970a-63aa-4b88-902a-e410a3611015'),
--- ('1fc0f954-bd1a-46e8-905b-6a9c367a6cc0', '5 inch', '0554d368-42e8-4b3b-a5d0-8fc68a7129ec');
 
 INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('0f61f7e2-8354-4022-a5bd-adeae3e4027e', 'Techrom Computer Shop', 'a5a28977-6956-45c1-a624-b9e90911502e'),

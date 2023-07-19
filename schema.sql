@@ -609,7 +609,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description,
         field_type: "DROPDOWN",
-        field_order: 9,
+        field_order: 10,
         field_section_id: section_id,
         field_is_required: true,
       });
