@@ -4,7 +4,6 @@ import {
   Box,
   Center,
   Flex,
-  Grid,
   Group,
   Paper,
   Stack,
@@ -45,7 +44,9 @@ const RequestStatusTracker = ({
         <Center c="green">
           <IconChartDonutFilled />
         </Center>
-        <Title order={4}>Total Request: {totalRequestCount}</Title>
+        <Title order={4}>
+          Total Request: {totalRequestCount.toLocaleString()}
+        </Title>
       </Group>
       <Flex h="100%" direction="column" mt="lg">
         <Center w="100%">
@@ -61,28 +62,27 @@ const RequestStatusTracker = ({
             )}
           </Box>
         </Center>
-        <Stack spacing="xs" p="lg">
+        <Stack p="lg">
           {data.map((d, idx) => (
-            <Box key={d.label + idx} fz={14}>
-              <Grid justify="space-between">
-                <Grid.Col span={7}>
-                  <Flex gap="sm" w="fit-content">
-                    <Box c={getStatusToColorForCharts(d.label)}>
-                      <IconSquareRoundedFilled />
-                    </Box>
-                    <Text weight={600}>{`${d.label} Requests`}</Text>
-                  </Flex>
-                </Grid.Col>
-                <Grid.Col span="content">
-                  <Text weight={600}>{`${d.value}/${totalRequestCount}`}</Text>
-                </Grid.Col>
-                <Grid.Col span={2}>
-                  <Text align="right" weight={600} c="dimmed">
-                    {getPercentage(d.value, totalRequestCount)}
-                  </Text>
-                </Grid.Col>
-              </Grid>
-            </Box>
+            <Flex
+              key={d.label + idx}
+              fz={14}
+              justify="space-between"
+              align="center"
+            >
+              <Group spacing="xs" w="fit-content" align="center">
+                <Center c={getStatusToColorForCharts(d.label)}>
+                  <IconSquareRoundedFilled />
+                </Center>
+                <Text weight={600}>{`${d.label} Requests`}</Text>
+                <Text align="right" weight={600} c="dimmed">
+                  {getPercentage(d.value, totalRequestCount)}
+                </Text>
+              </Group>
+              <Text
+                weight={600}
+              >{`${d.value.toLocaleString()}/${totalRequestCount.toLocaleString()}`}</Text>
+            </Flex>
           ))}
         </Stack>
       </Flex>

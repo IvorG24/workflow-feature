@@ -1,4 +1,3 @@
-import { MonthlyRequestDataTypeWithTotal } from "@/components/Dashboard/OverviewTab/Overview";
 import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
 import {
@@ -19,6 +18,8 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import { lowerCase, startCase } from "lodash";
 import { v4 as uuidv4 } from "uuid";
+
+const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED", "CANCELED"];
 
 // Get file url
 export async function getFileUrl(
@@ -2072,7 +2073,6 @@ export const getRequestStatusCount = async (
   }
 ) => {
   const { formId, teamId, startDate, endDate } = params;
-  const status_list = ["PENDING", "APPROVED", "REJECTED", "CANCELED"];
   const getCount = (status: string) =>
     supabaseClient
       .from("request_list_table_view")
@@ -2084,7 +2084,7 @@ export const getRequestStatusCount = async (
       .lte("request_date_created", endDate);
 
   const data = await Promise.all(
-    status_list.map(async (status) => {
+    REQUEST_STATUS_LIST.map(async (status) => {
       const { count: statusCount } = await getCount(status);
 
       return {
@@ -2112,13 +2112,27 @@ export const getRequestorData = async (
   }
 ) => {
   const { formId, teamMemberId, startDate, endDate } = params;
-  const { data } = await supabaseClient
-    .from("request_table")
-    .select("request_team_member_id, request_status, request_date_created")
-    .eq("request_form_id", formId)
-    .eq("request_team_member_id", teamMemberId)
-    .gte("request_date_created", startDate)
-    .lte("request_date_created", endDate);
+
+  const getRequestCount = (status: string) =>
+    supabaseClient
+      .from("request_list_table_view")
+      .select("*", { count: "exact", head: true })
+      .eq("request_form_id", formId)
+      .eq("request_status", status)
+      .eq("request_team_member_id", teamMemberId)
+      .gte("request_date_created", startDate)
+      .lte("request_date_created", endDate);
+
+  const data = await Promise.all(
+    REQUEST_STATUS_LIST.map(async (status) => {
+      const { count: statusCount } = await getRequestCount(status);
+
+      return {
+        label: startCase(lowerCase(status)),
+        value: statusCount || 0,
+      };
+    })
+  );
 
   return data;
 };
@@ -2133,16 +2147,29 @@ export const getSignerData = async (
   }
 ) => {
   const { formId, teamMemberId, startDate, endDate } = params;
-  const { data } = await supabaseClient
-    .from("request_signer_table")
-    .select(
-      "request: request_signer_request_id!inner(request_form_id, request_date_created), request_signer: request_signer_signer_id!inner(team_member: signer_team_member_id!inner(team_member_id, team_member_team_id)), request_signer_status",
-      { count: "exact" }
-    )
-    .eq("request.request_form_id", formId)
-    .eq("request_signer.team_member.team_member_id", teamMemberId)
-    .gte("request.request_date_created", startDate)
-    .lte("request.request_date_created", endDate);
+  const getSignedRequestCount = (status: string) =>
+    supabaseClient
+      .from("request_signer_table")
+      .select(
+        "request: request_signer_request_id!inner(request_form_id, request_date_created), request_signer: request_signer_signer_id!inner(team_member: signer_team_member_id!inner(team_member_id, team_member_team_id)), request_signer_status",
+        { count: "exact", head: true }
+      )
+      .eq("request.request_form_id", formId)
+      .eq("request_signer_status", status)
+      .eq("request_signer.team_member.team_member_id", teamMemberId)
+      .gte("request.request_date_created", startDate)
+      .lte("request.request_date_created", endDate);
+
+  const data = await Promise.all(
+    REQUEST_STATUS_LIST.map(async (status) => {
+      const { count: statusCount } = await getSignedRequestCount(status);
+
+      return {
+        label: startCase(lowerCase(status)),
+        value: statusCount || 0,
+      };
+    })
+  );
 
   return data;
 };
@@ -2345,7 +2372,7 @@ export const getRequestTableView = async (
   return { data, count };
 };
 
-export const getRequestMonthlyCount = async (
+export const getRequestStatusMonthlyCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formId: string;
@@ -2354,18 +2381,72 @@ export const getRequestMonthlyCount = async (
     endDate: string;
   }
 ) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_request_monthly_count",
-    {
-      input_data: {
-        formId: params.formId,
-        teamId: params.teamId,
-        startDate: params.startDate,
-        endDate: params.endDate,
-      },
-    }
+  const { formId, teamId, startDate, endDate } = params;
+
+  const getMonthlyCount = async (startOfMonth: string, endOfMonth: string) => {
+    const getCount = (status: string) =>
+      supabaseClient
+        .from("request_list_table_view")
+        .select("*", { count: "exact", head: true })
+        .eq("request_form_id", formId)
+        .eq("request_team_id", teamId)
+        .eq("request_status", status)
+        .gte("request_date_created", startOfMonth)
+        .lte("request_date_created", endOfMonth);
+
+    const { count: pendingCount } = await getCount("PENDING");
+    const { count: approvedCount } = await getCount("APPROVED");
+    const { count: rejectedCount } = await getCount("REJECTED");
+    const { count: canceledCount } = await getCount("CANCELED");
+
+    const statusData = {
+      pending: pendingCount || 0,
+      approved: approvedCount || 0,
+      rejected: rejectedCount || 0,
+      canceled: canceledCount || 0,
+    };
+
+    return {
+      month: startOfMonth,
+      ...statusData,
+    };
+  };
+
+  // Generate the list of month ranges within the specified date range
+  const startDateObj = new Date(startDate);
+  const endDateObj = new Date(endDate);
+  const monthRanges = [];
+
+  while (startDateObj < endDateObj) {
+    const startOfMonth = new Date(startDateObj);
+    const endOfMonth = new Date(
+      startDateObj.getFullYear(),
+      startDateObj.getMonth() + 1,
+      0
+    );
+    monthRanges.push({
+      start_of_month: startOfMonth.toISOString(),
+      end_of_month: endOfMonth.toISOString(),
+    });
+    startDateObj.setMonth(startDateObj.getMonth() + 1);
+  }
+
+  const monthlyData = await Promise.all(
+    monthRanges.map(async (range) => {
+      return getMonthlyCount(range.start_of_month, range.end_of_month);
+    })
   );
 
-  if (error) throw error;
-  return data as MonthlyRequestDataTypeWithTotal;
+  const { count: totalCount } = await supabaseClient
+    .from("request_list_table_view")
+    .select("*", { count: "exact", head: true })
+    .eq("request_form_id", formId)
+    .eq("request_team_id", teamId)
+    .gte("request_date_created", startDate)
+    .lte("request_date_created", endDate);
+
+  return {
+    data: monthlyData,
+    totalCount: totalCount,
+  };
 };

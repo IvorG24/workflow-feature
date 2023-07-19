@@ -1,6 +1,6 @@
 import {
-  getRequestMonthlyCount,
   getRequestStatusCount,
+  getRequestStatusMonthlyCount,
   getRequestorData,
   getSignerData,
   getTeamMemberList,
@@ -9,7 +9,6 @@ import { RadialChartData } from "@/components/Chart/RadialChart";
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { TeamMemberType } from "@/utils/types";
 import { Box, Flex, LoadingOverlay, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -26,28 +25,19 @@ export type RequestStatusDataType = {
   request_date_created: string;
 };
 
-export type RequestorAndSignerDataType = {
-  user_id: string;
-  user_avatar: string | null;
-  user_first_name: string;
-  user_last_name: string;
-  request: {
-    pending: number;
-    approved: number;
-    rejected: number;
-    canceled: number;
-    total: number;
-  };
-};
-
-type OverviewProps = {
-  dateFilter: [Date | null, Date | null];
-  selectedForm: string | null;
+export type RequestorAndSignerDataType = TeamMemberType & {
+  request: RadialChartData[];
+  total: number;
 };
 
 export type MonthlyRequestDataTypeWithTotal = {
   data: StackedBarChartDataType[];
   totalCount: number;
+};
+
+type OverviewProps = {
+  dateFilter: [Date | null, Date | null];
+  selectedForm: string | null;
 };
 
 const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
@@ -100,7 +90,7 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
         setTotalRequestCount(totalCount);
 
         // get monthly statistics
-        const monthlyRequestData = await getRequestMonthlyCount(
+        const monthlyRequestData = await getRequestStatusMonthlyCount(
           supabaseClient,
           {
             formId: selectedForm,
@@ -124,126 +114,56 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
         if (!formMatch) return;
         const requestorList = await Promise.all(
           teamMemberList.map(async (member) => {
-            // only fetch if requestor has same form group
-            const isGroupMember =
-              checkIfTwoArrayHaveAtLeastOneEqualElement(
-                formMatch?.form_group,
-                member.team_member_group_list
-              ) || formMatch.form_group.length === 0;
-            if (!isGroupMember) {
-              const newRequestor = {
-                ...member.team_member_user,
-                request: {
-                  pending: 0,
-                  approved: 0,
-                  rejected: 0,
-                  canceled: 0,
-                  total: 0,
-                },
-              };
-
-              return newRequestor;
-            }
-            const requestor = await getRequestorData(supabaseClient, {
+            const requestData = await getRequestorData(supabaseClient, {
               formId: selectedForm,
               teamMemberId: member.team_member_id,
               startDate: moment(dateFilter[0]).format(),
               endDate: moment(dateFilter[1]).format(),
             });
 
-            const pendingCount = requestor?.filter(
-              (request) => request.request_status === "PENDING"
-            ).length;
-            const approvedCount = requestor?.filter(
-              (request) => request.request_status === "APPROVED"
-            ).length;
-            const rejectedCount = requestor?.filter(
-              (request) => request.request_status === "REJECTED"
-            ).length;
-            const canceledCount = requestor?.filter(
-              (request) => request.request_status === "CANCELED"
-            ).length;
+            const totalRequestCount = requestData.reduce(
+              (sum, item) => sum + item.value,
+              0
+            );
 
             const newRequestor = {
-              ...member.team_member_user,
-              request: {
-                pending: pendingCount || 0,
-                approved: approvedCount || 0,
-                rejected: rejectedCount || 0,
-                canceled: canceledCount || 0,
-                total: requestor?.length || 0,
-              },
+              ...member,
+              request: requestData,
+              total: totalRequestCount,
             };
 
             return newRequestor;
           })
         );
         setRequestorList(
-          requestorList.filter((requestor) => requestor.request.total !== 0)
+          requestorList.filter((requestor) => requestor.total !== 0)
         );
 
         // set signer data
         const signerList = await Promise.all(
           teamMemberList.map(async (member) => {
-            // only fetch if signer has same form group
-            const isGroupMember =
-              checkIfTwoArrayHaveAtLeastOneEqualElement(
-                formMatch.form_group,
-                member.team_member_group_list
-              ) || formMatch.form_group.length === 0;
-
-            if (!isGroupMember) {
-              const newSigner = {
-                ...member.team_member_user,
-                request: {
-                  pending: 0,
-                  approved: 0,
-                  rejected: 0,
-                  canceled: 0,
-                  total: 0,
-                },
-              };
-
-              return newSigner;
-            }
-
-            const signer = await getSignerData(supabaseClient, {
+            const signedRequestData = await getSignerData(supabaseClient, {
               formId: selectedForm,
               teamMemberId: member.team_member_id,
               startDate: moment(dateFilter[0]).format(),
               endDate: moment(dateFilter[1]).format(),
             });
 
-            const pendingCount = signer?.filter(
-              (signer) => signer.request_signer_status === "PENDING"
-            ).length;
-            const approvedCount = signer?.filter(
-              (signer) => signer.request_signer_status === "APPROVED"
-            ).length;
-            const rejectedCount = signer?.filter(
-              (signer) => signer.request_signer_status === "REJECTED"
-            ).length;
-            const canceledCount = signer?.filter(
-              (signer) => signer.request_signer_status === "CANCELED"
-            ).length;
+            const totalRequestCount = signedRequestData.reduce(
+              (sum, item) => sum + item.value,
+              0
+            );
 
             const newSigner = {
-              ...member.team_member_user,
-              request: {
-                pending: pendingCount || 0,
-                approved: approvedCount || 0,
-                rejected: rejectedCount || 0,
-                canceled: canceledCount || 0,
-                total: signer?.length || 0,
-              },
+              ...member,
+              request: signedRequestData,
+              total: totalRequestCount,
             };
 
             return newSigner;
           })
         );
-        setSignerList(
-          signerList.filter((signer) => signer.request.total !== 0)
-        );
+        setSignerList(signerList.filter((signer) => signer.total !== 0));
       } catch (error) {
         notifications.show({
           message:

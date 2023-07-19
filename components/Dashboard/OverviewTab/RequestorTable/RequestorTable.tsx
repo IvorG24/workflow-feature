@@ -31,7 +31,7 @@ const RequestorTable = ({
   const { classes } = useStyles();
 
   const sortRequestorListByTotalRequests = requestorList.sort(
-    (a, b) => b.request.total - a.request.total
+    (a, b) => b.total - a.total
   );
 
   return (
@@ -47,7 +47,7 @@ const RequestorTable = ({
         <Stack p="lg" mb="sm" spacing={32}>
           {totalRequestCount > 0 ? (
             sortRequestorListByTotalRequests.map((requestor) => (
-              <Box key={requestor.user_id}>
+              <Box key={requestor.team_member_id}>
                 <RequestorItem
                   requestor={requestor}
                   totalRequest={totalRequestCount}
