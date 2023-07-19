@@ -31,7 +31,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import OrderToPurchaseCanvassSection from "../OrderToPurchaseCanvassPage/OrderToPurchaseCanvassSection";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
@@ -66,12 +66,15 @@ const OrderToPurchaseRequestPage = ({
 
   const requestor = request.request_team_member.team_member_user;
 
-  const signerList = request.request_signer.map((signer) => {
-    return {
-      ...signer.request_signer_signer,
-      request_signer_status: signer.request_signer_status as ReceiverStatusType,
-    };
-  });
+  const [signerList, setSignerList] = useState(
+    request.request_signer.map((signer) => {
+      return {
+        ...signer.request_signer_signer,
+        signer_status: signer.request_signer_status as ReceiverStatusType,
+      };
+    })
+  );
+
   const requestDateCreated = new Date(
     request.request_date_created
   ).toLocaleDateString("en-US", {
@@ -94,6 +97,10 @@ const OrderToPurchaseRequestPage = ({
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
+
+  useEffect(() => {
+    setRequestStatus(request.request_status);
+  }, [request.request_status]);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -125,7 +132,20 @@ const OrderToPurchaseRequestPage = ({
         additionalInfo: additionalInfo,
       });
 
-      isUserPrimarySigner && setRequestStatus(status);
+      if (signer.signer_is_primary_signer) {
+        setRequestStatus(status);
+      }
+
+      setSignerList((prev) =>
+        prev.map((signerItem) => {
+          if (signerItem.signer_id !== signer.signer_id) return signerItem;
+          return {
+            ...signer,
+            signer_status: status,
+          };
+        })
+      );
+
       notifications.show({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
@@ -275,7 +295,7 @@ const OrderToPurchaseRequestPage = ({
           request={request}
           requestor={requestor}
           requestDateCreated={requestDateCreated}
-          requestStatus={requestStatus as FormStatusType}
+          requestStatus={requestStatus}
         />
 
         {canvassRequest.length !== 0 ? (
