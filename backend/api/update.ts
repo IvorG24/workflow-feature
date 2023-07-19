@@ -1,5 +1,6 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
 import {
   AppType,
@@ -616,87 +617,113 @@ export const splitParentOtp = async (
     )
     .maybeSingle();
   if (otpRequestError) throw otpRequestError;
-  const formattedData = otpRequest as unknown as RequestWithResponseType;
+
+  const formattedOTP = otpRequest as unknown as RequestWithResponseType;
+  const formattedSection = generateSectionWithDuplicateList(
+    formattedOTP.request_form.form_section
+  );
+  const formattedData = {
+    ...formattedOTP,
+    request_form: {
+      ...formattedOTP.request_form,
+      form_section: formattedSection,
+    },
+  };
 
   // request response data
   const remainingOTPRequestResponseData: RequestResponseTableInsert[] = [];
   const approvedOTPRequestResponseData: RequestResponseTableInsert[] = [];
 
-  const itemList: Record<string, string> = {};
-  const parentQuantityList: Record<string, number> = {};
-  const remainingQuantityList: Record<string, number> = {};
-  const approvedQuantityList: Record<string, number> = {};
+  const remainingQuantityList: number[] = [];
+  const approvedQuantityList: number[] = [];
 
-  // build item with description
-  formattedData.request_form.form_section.forEach((section) => {
-    section.section_field.forEach((field) => {
-      field.field_response.forEach((response) => {
-        const dupId = `${response.request_response_duplicatable_section_id}`;
-        if (field.field_name === "General Name") {
-          itemList[dupId] = `${JSON.parse(response.request_response)} (`;
-        } else if (field.field_name === "Quantity") {
-          itemList[dupId] = itemList[dupId].replace(
-            "*",
-            `${response.request_response}`
-          );
-          parentQuantityList[dupId] = Number(response.request_response);
-        } else if (field.field_name === "Unit of Measurement") {
-          itemList[dupId] += `* ${JSON.parse(response.request_response)}) (`;
-        } else if (!["Cost Code", "GL Account"].includes(field.field_name)) {
-          itemList[dupId] += `${field.field_name}: ${JSON.parse(
-            response.request_response
-          )}, `;
-        }
-      });
-    });
-  });
-  Object.keys(itemList).forEach((item) => {
-    itemList[item] = `${itemList[item].slice(0, -2)})`;
-  });
+  // input the Item Section
+  const matchedIndex: number[] = [];
 
-  let isNoRemainingQuantity = true;
-  // subtract item quantity
-  data.sections.forEach((section) => {
-    for (const dupId in itemList) {
-      if (itemList[dupId] === section.section_field[0].field_response) {
-        approvedQuantityList[dupId] = Number(
-          section.section_field[1].field_response
-        );
-        const remainingQuantity =
-          parentQuantityList[dupId] -
-          Number(section.section_field[1].field_response);
-
-        remainingQuantityList[dupId] = remainingQuantity;
-        if (remainingQuantity !== 0) {
-          isNoRemainingQuantity = false;
-        }
-        break;
+  // loop parent otp sections
+  formattedSection.slice(2).map((section, sectionIndex) => {
+    // loop input sections
+    for (let j = 0; j < data.sections.length; j++) {
+      if (matchedIndex.includes(j)) {
+        continue;
       }
+      const item = `${data.sections[j].section_field[0].field_response}`;
+      let descriptionMatch = true;
+
+      // check if general name matches
+      const generalNameMatch = item.includes(
+        JSON.parse(
+          `${section.section_field[0].field_response?.request_response}`
+        )
+      );
+      if (generalNameMatch) {
+        for (let i = 5; i < section.section_field.length; i++) {
+          if (section.section_field[i].field_response) {
+            const fieldNameWithResponse = `${
+              section.section_field[i].field_name
+            }: ${JSON.parse(
+              `${section.section_field[i].field_response?.request_response}`
+            )}`;
+
+            if (!item.includes(fieldNameWithResponse)) {
+              descriptionMatch = false;
+              break;
+            }
+          }
+        }
+        if (descriptionMatch) {
+          matchedIndex.push(j);
+          remainingQuantityList.push(
+            Number(section.section_field[2].field_response?.request_response) -
+              Number(data.sections[j].section_field[1].field_response)
+          );
+          approvedQuantityList.push(
+            Number(data.sections[j].section_field[1].field_response)
+          );
+        }
+      }
+    }
+
+    if (remainingQuantityList[sectionIndex] === undefined) {
+      remainingQuantityList.push(
+        Number(section.section_field[2].field_response?.request_response)
+      );
+    }
+    if (approvedQuantityList[sectionIndex] === undefined) {
+      approvedQuantityList.push(0);
     }
   });
 
-  if (!isNoRemainingQuantity) {
+  let isNoRemaining = true;
+  for (const remaining of remainingQuantityList) {
+    if (Number(remaining) !== 0) {
+      isNoRemaining = false;
+      break;
+    }
+  }
+
+  if (!isNoRemaining) {
     // get OTP form
     const { data: otpForm, error: otpFormError } = await supabaseClient
       .from("form_table")
       .select(
         `*, 
-    form_signer: signer_table!inner(
-      signer_id, 
-      signer_is_primary_signer, 
-      signer_action, 
-      signer_order,
-      signer_is_disabled, 
-      signer_team_member: signer_team_member_id(
-        team_member_id, 
-        team_member_user: team_member_user_id(
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_avatar
-        )
-      )
-    )`
+        form_signer: signer_table!inner(
+          signer_id, 
+          signer_is_primary_signer, 
+          signer_action, 
+          signer_order,
+          signer_is_disabled, 
+          signer_team_member: signer_team_member_id(
+            team_member_id, 
+            team_member_user: team_member_user_id(
+              user_id, 
+              user_first_name, 
+              user_last_name, 
+              user_avatar
+            )
+          )
+        )`
       )
       .eq("form_name", "Order to Purchase")
       .eq("form_is_formsly_form", true)
@@ -731,81 +758,68 @@ export const splitParentOtp = async (
         .select();
     if (newOTPRequestError) throw newOTPRequestError;
 
-    // populate request response data
-    formattedData.request_form.form_section.forEach((section) => {
-      section.section_field.forEach((field) => {
-        field.field_response.forEach((response) => {
-          const duplicateId = `${response.request_response_duplicatable_section_id}`;
-          if (field.field_name === "Quantity") {
-            if (remainingQuantityList[duplicateId] !== 0) {
-              if (remainingQuantityList[duplicateId] === undefined) {
-                remainingOTPRequestResponseData.push({
-                  request_response: `${parentQuantityList[duplicateId]}`,
-                  request_response_duplicatable_section_id:
-                    response.request_response_duplicatable_section_id,
-                  request_response_field_id: response.request_response_field_id,
-                  request_response_request_id: newOTPRequest[0].request_id,
-                });
-              } else {
-                remainingOTPRequestResponseData.push({
-                  request_response: `${remainingQuantityList[duplicateId]}`,
-                  request_response_duplicatable_section_id:
-                    response.request_response_duplicatable_section_id,
-                  request_response_field_id: response.request_response_field_id,
-                  request_response_request_id: newOTPRequest[0].request_id,
-                });
-              }
-            }
-
-            if (approvedQuantityList[duplicateId]) {
-              approvedOTPRequestResponseData.push({
-                request_response: `${approvedQuantityList[duplicateId]}`,
-                request_response_duplicatable_section_id:
-                  response.request_response_duplicatable_section_id,
-                request_response_field_id: response.request_response_field_id,
-                request_response_request_id: newOTPRequest[1].request_id,
-              });
-            }
-          } else if (field.field_name === "Parent OTP ID") {
-            remainingOTPRequestResponseData.push({
-              request_response: `"${otpID}"`,
-              request_response_duplicatable_section_id:
-                response.request_response_duplicatable_section_id,
-              request_response_field_id: response.request_response_field_id,
-              request_response_request_id: newOTPRequest[0].request_id,
-            });
-            approvedOTPRequestResponseData.push({
-              request_response: `"${otpID}"`,
-              request_response_duplicatable_section_id:
-                response.request_response_duplicatable_section_id,
-              request_response_field_id: response.request_response_field_id,
-              request_response_request_id: newOTPRequest[1].request_id,
-            });
-          } else {
-            if (
-              remainingQuantityList[duplicateId] !== 0 ||
-              field.field_order < 5
-            ) {
-              remainingOTPRequestResponseData.push({
-                request_response: response.request_response,
-                request_response_duplicatable_section_id:
-                  response.request_response_duplicatable_section_id,
-                request_response_field_id: response.request_response_field_id,
-                request_response_request_id: newOTPRequest[0].request_id,
-              });
-            }
-            if (approvedQuantityList[duplicateId]) {
-              approvedOTPRequestResponseData.push({
-                request_response: response.request_response,
-                request_response_duplicatable_section_id:
-                  response.request_response_duplicatable_section_id,
-                request_response_field_id: response.request_response_field_id,
-                request_response_request_id: newOTPRequest[1].request_id,
-              });
-            }
-          }
+    // input the ID and Main section
+    formattedSection.slice(0, 2).map((section) => {
+      section.section_field.map((field) => {
+        remainingOTPRequestResponseData.push({
+          request_response:
+            field.field_name === "Parent OTP ID"
+              ? JSON.stringify(otpID)
+              : `${field.field_response?.request_response}`,
+          request_response_field_id: field.field_id,
+          request_response_request_id: newOTPRequest[0].request_id,
+          request_response_duplicatable_section_id:
+            section.section_duplicatable_id ?? null,
+        });
+        approvedOTPRequestResponseData.push({
+          request_response:
+            field.field_name === "Parent OTP ID"
+              ? JSON.stringify(otpID)
+              : `${field.field_response?.request_response}`,
+          request_response_field_id: field.field_id,
+          request_response_request_id: newOTPRequest[1].request_id,
+          request_response_duplicatable_section_id:
+            section.section_duplicatable_id ?? null,
         });
       });
+    });
+
+    // populate request response data
+    formattedSection.slice(2).map((section, sectionIndex) => {
+      if (remainingQuantityList[sectionIndex] !== 0) {
+        section.section_field.forEach((field) => {
+          if (field.field_response?.request_response) {
+            remainingOTPRequestResponseData.push({
+              request_response:
+                field.field_name === "Quantity"
+                  ? `${remainingQuantityList[sectionIndex]}`
+                  : `${field.field_response.request_response}`,
+              request_response_field_id: field.field_id,
+              request_response_request_id: newOTPRequest[0].request_id,
+              request_response_duplicatable_section_id:
+                field.field_response.request_response_duplicatable_section_id ??
+                null,
+            });
+          }
+        });
+      }
+      if (approvedQuantityList[sectionIndex] !== 0) {
+        section.section_field.forEach((field) => {
+          if (field.field_response?.request_response) {
+            approvedOTPRequestResponseData.push({
+              request_response:
+                field.field_name === "Quantity"
+                  ? `${approvedQuantityList[sectionIndex]}`
+                  : `${field.field_response.request_response}`,
+              request_response_field_id: field.field_id,
+              request_response_request_id: newOTPRequest[1].request_id,
+              request_response_duplicatable_section_id:
+                field.field_response.request_response_duplicatable_section_id ??
+                null,
+            });
+          }
+        });
+      }
     });
 
     // get request signers
