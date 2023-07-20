@@ -31,7 +31,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import OrderToPurchaseCanvassSection from "../OrderToPurchaseCanvassPage/OrderToPurchaseCanvassSection";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
@@ -66,12 +66,16 @@ const OrderToPurchaseRequestPage = ({
 
   const requestor = request.request_team_member.team_member_user;
 
-  const signerList = request.request_signer.map((signer) => {
-    return {
-      ...signer.request_signer_signer,
-      signer_status: signer.request_signer_status as ReceiverStatusType,
-    };
-  });
+  const [signerList, setSignerList] = useState(
+    request.request_signer.map((signer) => {
+      return {
+        ...signer.request_signer_signer,
+        request_signer_status:
+          signer.request_signer_status as ReceiverStatusType,
+      };
+    })
+  );
+
   const requestDateCreated = new Date(
     request.request_date_created
   ).toLocaleDateString("en-US", {
@@ -85,10 +89,19 @@ const OrderToPurchaseRequestPage = ({
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
+  const isUserPrimarySigner = signerList.find(
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id &&
+      signer.signer_is_primary_signer
+  );
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
+
+  useEffect(() => {
+    setRequestStatus(request.request_status);
+  }, [request.request_status]);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -120,11 +133,25 @@ const OrderToPurchaseRequestPage = ({
         additionalInfo: additionalInfo,
       });
 
-      setRequestStatus(status);
+      if (signer.signer_is_primary_signer) {
+        setRequestStatus(status);
+      }
+
+      setSignerList((prev) =>
+        prev.map((signerItem) => {
+          if (signerItem.signer_id !== signer.signer_id) return signerItem;
+          return {
+            ...signer,
+            signer_status: status,
+          };
+        })
+      );
+
       notifications.show({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
       });
+      !isUserPrimarySigner && router.reload();
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -238,7 +265,9 @@ const OrderToPurchaseRequestPage = ({
                     );
                   } else if (
                     request.request_additional_info === "FOR_PURCHASED" &&
-                    form.form_name !== "Receiving Inspecting Report (Sourced)"
+                    form.form_name !==
+                      "Receiving Inspecting Report (Sourced)" &&
+                    form.form_name !== "Sourced Order to Purchase"
                   ) {
                     return (
                       <Button
@@ -267,7 +296,7 @@ const OrderToPurchaseRequestPage = ({
           request={request}
           requestor={requestor}
           requestDateCreated={requestDateCreated}
-          requestStatus={requestStatus as FormStatusType}
+          requestStatus={requestStatus}
         />
 
         {canvassRequest.length !== 0 ? (
@@ -278,18 +307,27 @@ const OrderToPurchaseRequestPage = ({
           connectedRequestIDList={connectedRequestIDList}
         />
 
-        {sectionWithDuplicateList.map((section, idx) => (
-          <RequestSection
-            key={section.section_id + idx}
-            section={section}
-            isFormslyForm={true}
-            isOnlyWithResponse
-          />
-        ))}
+        {sectionWithDuplicateList.map((section, idx) => {
+          if (
+            idx === 0 &&
+            section.section_field[0].field_response?.request_response ===
+              '"null"'
+          )
+            return;
+
+          return (
+            <RequestSection
+              key={section.section_id + idx}
+              section={section}
+              isFormslyForm={true}
+              isOnlyWithResponse
+            />
+          );
+        })}
 
         <OrderToPurchaseSummary
           summaryData={sectionWithDuplicateList
-            .slice(1)
+            .slice(2)
             .sort((a, b) =>
               `${a.section_field[0].field_response?.request_response}` >
               `${b.section_field[0].field_response?.request_response}`
@@ -307,12 +345,19 @@ const OrderToPurchaseRequestPage = ({
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}
-            requestId={request.request_id}
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
             isOTP
+            sourcedOtpForm={connectedForm.find(
+              (form) => form.form_name === "Sourced Order to Purchase"
+            )}
+            requestId={request.request_id}
+            isUserPrimarySigner={Boolean(isUserPrimarySigner)}
+            signer={
+              isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
+            }
           />
         ) : null}
 

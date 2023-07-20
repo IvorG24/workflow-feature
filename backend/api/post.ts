@@ -382,7 +382,7 @@ export const createItem = async (
       field_id: fieldId,
       field_name: description,
       field_type: "DROPDOWN",
-      field_order: 9,
+      field_order: 10,
       field_section_id: section.section_id,
       field_is_required: true,
     });
@@ -595,7 +595,7 @@ export const createRequest = async (
   // get request signers
   const requestSignerInput: RequestSignerTableInsert[] = [];
 
-  // get signer notifcation
+  // get signer notification
   const requestSignerNotificationInput: NotificationTableInsert[] = [];
 
   signers.forEach((signer) => {

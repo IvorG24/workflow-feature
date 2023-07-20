@@ -147,13 +147,13 @@ const Page = ({
       );
     }
   };
+
   return (
     <>
       <Meta
         description="Request Page"
         url="/team-requests/requests/[requestId]"
       />
-
       {request.request_form.form_is_formsly_form ? formslyForm() : null}
       {!request.request_form.form_is_formsly_form ? (
         <RequestPage request={request} />

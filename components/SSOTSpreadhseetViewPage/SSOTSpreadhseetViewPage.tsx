@@ -146,7 +146,9 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   const [scrollBarType, setScrollBarType] = useState<"always" | "never">(
     "always"
   );
-  const [isFetchable, setIsFetchable] = useState(true);
+  const [isFetchable, setIsFetchable] = useState(
+    otpList.length === DEFAULT_NUMBER_SSOT_ROWS
+  );
 
   const loadMoreRequests = async (offset: number) => {
     try {
@@ -544,7 +546,7 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
       const items = request.otp_request_response.slice(
-        3,
+        4,
         request.otp_request_response.length
       );
       items.forEach((item) => {
@@ -587,7 +589,9 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   ? new Date(
                       JSON.parse(response.request_response)
                     ).toLocaleDateString()
-                  : JSON.parse(response.request_response)}
+                  : JSON.parse(response.request_response) !== "null"
+                  ? JSON.parse(response.request_response)
+                  : ""}
               </td>
             );
           })}
@@ -764,11 +768,11 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
                   <th className={classes.long}>OTP ID</th>
                   <th className={classes.date}>Date Created</th>
                   <th className={classes.processor}>Warehouse Processor</th>
+                  <th className={classes.long}>Parent OTP ID</th>
                   <th className={classes.long}>Project Name</th>
                   <th className={classes.normal}>Type</th>
                   <th className={classes.date}>Date Needed</th>
-                  <th className={classes.normal}>Cost Code</th>
-                  <th className={classes.normal}>Item Name</th>
+                  <th className={classes.description}>Item Name</th>
                   <th className={classes.normal}>Quantity</th>
                   <th className={classes.date}>Unit of Measurement</th>
                   <th className={classes.description}>Description</th>

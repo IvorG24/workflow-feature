@@ -18,7 +18,13 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconCheck, IconDots, IconEdit, IconX } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconDots,
+  IconEdit,
+  IconPlayerPause,
+  IconX,
+} from "@tabler/icons-react";
 import { capitalize } from "lodash";
 import moment from "moment";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -99,6 +105,45 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       onConfirm: async () => await handleDeleteComment(),
     });
 
+  const actionCommentList = [
+    "ACTION_APPROVED",
+    "ACTION_REJECTED",
+    "ACTION_PAUSED",
+  ];
+
+  const actionCommentColor = (type: string) => {
+    switch (type) {
+      case "ACTION_APPROVED":
+        return "green";
+      case "ACTION_REJECTED":
+        return "red";
+      case "ACTION_PAUSED":
+        return "orange";
+    }
+  };
+
+  const actionCommentTitle = (type: string) => {
+    switch (type) {
+      case "ACTION_APPROVED":
+        return "Approved!";
+      case "ACTION_REJECTED":
+        return "Rejected!";
+      case "ACTION_PAUSED":
+        return "Paused!";
+    }
+  };
+
+  const actionCommentIcon = (type: string) => {
+    switch (type) {
+      case "ACTION_APPROVED":
+        return <IconCheck size={16} />;
+      case "ACTION_REJECTED":
+        return <IconX size={16} />;
+      case "ACTION_PAUSED":
+        return <IconPlayerPause size={16} />;
+    }
+  };
+
   return (
     <Box pos="relative" mt="sm">
       {isEditingComment ? (
@@ -117,8 +162,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         </FormProvider>
       ) : (
         <Stack spacing={8}>
-          {comment.comment_type === "ACTION_APPROVED" ||
-          comment.comment_type === "ACTION_REJECTED" ? (
+          {actionCommentList.includes(comment.comment_type) ? (
             <Flex align="center" gap="sm" mt="lg">
               <Avatar
                 size={40}
@@ -134,29 +178,15 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
 
               <Alert
                 w="100%"
-                color={
-                  comment.comment_type === "ACTION_APPROVED" ? "green" : "red"
-                }
-                title={
-                  comment.comment_type === "ACTION_APPROVED"
-                    ? "Approved!"
-                    : "Rejeted!"
-                }
+                color={actionCommentColor(comment.comment_type)}
+                title={actionCommentTitle(comment.comment_type)}
               >
                 <Flex align="center" gap="md">
                   <ThemeIcon
                     radius="xl"
-                    color={
-                      comment.comment_type === "ACTION_APPROVED"
-                        ? "green"
-                        : "red"
-                    }
+                    color={actionCommentColor(comment.comment_type)}
                   >
-                    {comment.comment_type === "ACTION_APPROVED" ? (
-                      <IconCheck size={16} />
-                    ) : (
-                      <IconX size={16} />
-                    )}
+                    {actionCommentIcon(comment.comment_type)}
                   </ThemeIcon>
                   <Stack m={0} p={0} spacing={0}>
                     <Text>
