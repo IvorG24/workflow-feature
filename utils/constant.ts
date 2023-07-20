@@ -227,7 +227,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field: [
         {
           field_name: "Item",
-          field_type: "DROPDWON",
+          field_type: "DROPDOWN",
           field_order: 1,
           field_section_id: sourcedOtpItemSectionId,
           field_is_required: true,
