@@ -10,7 +10,7 @@ import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { TeamMemberType } from "@/utils/types";
-import { Box, Flex, LoadingOverlay, Stack } from "@mantine/core";
+import { Box, Flex, Loader, LoadingOverlay, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import moment from "moment";
@@ -181,7 +181,12 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
 
   return (
     <Stack w="100%" align="center" pos="relative">
-      <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
+      <LoadingOverlay
+        visible={isFetchingData}
+        overlayBlur={0}
+        overlayOpacity={0.2}
+        loader={<Loader variant="dots" />}
+      />
       <Flex
         w="100%"
         align="flex-start"

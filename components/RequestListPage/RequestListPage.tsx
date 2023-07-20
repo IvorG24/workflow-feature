@@ -100,7 +100,7 @@ const RequestListPage = ({
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
-      setRequestList(data as RequestTableViewData[]);
+      setRequestList(data as unknown as RequestTableViewData[]);
       setRequestListCount(count || 0);
     } catch (e) {
       notifications.show({
