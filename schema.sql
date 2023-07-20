@@ -3,7 +3,7 @@ DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public
   AUTHORIZATION postgres;
 
-  -- Remove all policies for files
+-- Remove all policies for files
 DROP POLICY IF EXISTS objects_policy ON storage.objects;
 DROP POLICY IF EXISTS buckets_policy ON storage.buckets;
 
@@ -526,6 +526,223 @@ GROUP BY
 
 ---------- End: VIEWS
 
+-------- Start: POLICIES
+ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invitation_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE request_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable CRUD for authenticated users only" ON attachment_table;
+
+DROP POLICY IF EXISTS "Enable CREATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+DROP POLICY IF EXISTS "Enable READ access for authenticated users" ON team_member_table;
+DROP POLICY IF EXISTS "Enable UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+DROP POLICY IF EXISTS "Enable DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+
+DROP POLICY IF EXISTS "Enable CREATE for authenticated users" ON comment_table;
+DROP POLICY IF EXISTS "Enable READ for authenticated users" ON comment_table;
+DROP POLICY IF EXISTS "Enable UPDATE for authenticated users based on team_member_id" ON comment_table;
+DROP POLICY IF EXISTS "Enable DELETE for authenticated users based on team_member_id" ON comment_table;
+
+DROP POLICY IF EXISTS "Enable CREATE for authenticated users" ON invitation_table;
+DROP POLICY IF EXISTS "Enable READ for users based on invitation_to_email" ON invitation_table;
+DROP POLICY IF EXISTS "Enable UPDATE for users based on invitation_from_team_member_id" ON invitation_table;
+DROP POLICY IF EXISTS "Enable DELETE for users based on invitation_from_team_member_id" ON invitation_table;
+
+DROP POLICY IF EXISTS "Enable CREATE for authenticated users" ON notification_table;
+DROP POLICY IF EXISTS "Enable READ for authenticated users on own notifications" ON notification_table;
+DROP POLICY IF EXISTS "Enable UPDATE for authenticated users on own notifications" ON notification_table;
+DROP POLICY IF EXISTS "Enable DELETE for authenticated users on own notifications" ON notification_table;
+
+DROP POLICY IF EXISTS "Enable CREATE for authenticated users" ON request_table;
+DROP POLICY IF EXISTS "Enable READ for authenticated users" ON request_table;
+DROP POLICY IF EXISTS "Enable UPDATE for authenticated users on own requests" ON request_table;
+DROP POLICY IF EXISTS "Enable DELETE for authenticated users on own requests" ON request_table;
+
+DROP POLICY IF EXISTS "Enable CREATE for authenticated users" ON team_table;
+DROP POLICY IF EXISTS "Enable READ for authenticated users" ON team_table;
+DROP POLICY IF EXISTS "Enable UPDATE for authenticated users on own teams" ON team_table;
+DROP POLICY IF EXISTS "Enable DELETE for authenticated users on own teams" ON team_table;
+
+DROP POLICY IF EXISTS "Enable CREATE for authenticated users" ON user_table;
+DROP POLICY IF EXISTS "Enable READ for authenticated users" ON user_table;
+DROP POLICY IF EXISTS "Enable UPDATE for authenticated users based on user_id" ON user_table;
+DROP POLICY IF EXISTS "Enable DELETE for authenticated users based on user_id" ON user_table;
+
+
+
+--- ATTACHMENT_TABLE
+CREATE POLICY "Enable CRUD for authenticated users only" ON "public"."attachment_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+--- TEAM_MEMBER_TABLE
+CREATE POLICY "Enable CREATE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Enable READ access for authenticated users" ON "public"."team_member_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Enable UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
+
+CREATE POLICY "Enable DELETE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
+
+--- COMMENT_TABLE
+CREATE POLICY "Enable CREATE for authenticated users" ON "public"."comment_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Enable READ for authenticated users" ON "public"."comment_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Enable UPDATE for authenticated users based on team_member_id" ON "public"."comment_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
+WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+
+CREATE POLICY "Enable DELETE for authenticated users based on team_member_id" ON "public"."comment_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+
+--- INVITATION_TABLE
+CREATE POLICY "Enable CREATE for authenticated users" ON "public"."invitation_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Enable READ for users based on invitation_to_email" ON "public"."invitation_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (invitation_to_email = (SELECT user_email FROM user_table WHERE user_id = auth.uid()) OR invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+
+CREATE POLICY "Enable UPDATE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
+WITH CHECK (invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+
+CREATE POLICY "Enable DELETE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+
+--- NOTIFICATION_TABLE
+CREATE POLICY "Enable INSERT for authenticated users" ON "public"."notification_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Enable READ for authenticated users on own notifications" ON "public"."notification_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (auth.uid() = notification_user_id);
+
+CREATE POLICY "Enable UPDATE for authenticated users on notification_user_id" ON "public"."notification_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (auth.uid() = notification_user_id)
+WITH CHECK (auth.uid() = notification_user_id);
+
+CREATE POLICY "Enable DELETE for authenticated users on notification_user_id" ON "public"."notification_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (auth.uid() = notification_user_id);
+
+--- REQUEST_TABLE
+CREATE POLICY "Enable CREATE access for all users" ON "public"."request_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Enable READ for authenticated users" ON "public"."request_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Enable UPDATE for authenticated users on own requests" ON "public"."request_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (request_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
+WITH CHECK (request_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+
+CREATE POLICY "Enable DELETE for authenticated users on own requests" ON "public"."request_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (request_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+
+--- TEAM_TABLE
+CREATE POLICY "Enable CREATE for authenticated users" ON "public"."team_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Enable READ for authenticated users" ON "public"."team_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Enable UPDATE for authenticated users on own teams" ON "public"."team_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (auth.uid() = team_user_id)
+WITH CHECK (auth.uid() = team_user_id);
+
+CREATE POLICY "Enable DELETE for authenticated users on own teams" ON "public"."team_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (auth.uid() = team_user_id);
+
+-- USER_TABLE
+CREATE POLICY "Enable CREATE for authenticated users" ON "public"."user_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Enable READ for authenticated users" ON "public"."user_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Enable UPDATE for authenticated users based on user_id" ON "public"."user_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Enable DELETE for authenticated users based on user_id" ON "public"."user_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (auth.uid() = user_id);
+
+-------- End: POLICIES
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
