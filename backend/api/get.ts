@@ -296,7 +296,66 @@ export const getRequest = async (
   const { data, error } = await supabaseClient
     .from("request_table")
     .select(
-      "*, request_team_member: request_team_member_id(team_member_team_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name)))), request_comment: comment_table(comment_id, comment_date_created, comment_content, comment_is_edited, comment_last_updated, comment_type, comment_team_member_id, comment_team_member: comment_team_member_id(team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_username, user_avatar))), request_form: request_form_id(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table(*)))))"
+      `*, 
+      request_team_member: request_team_member_id!inner(
+        team_member_team_id, 
+        team_member_user: team_member_user_id!inner(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_username, 
+          user_avatar
+        )
+      ), 
+      request_signer: request_signer_table!inner(
+        request_signer_id, 
+        request_signer_status, 
+        request_signer_signer: request_signer_signer_id!inner(
+          signer_id, 
+          signer_is_primary_signer, 
+          signer_action, 
+          signer_order, 
+          signer_team_member: signer_team_member_id!inner(
+            team_member_id, 
+            team_member_user: team_member_user_id!inner(
+              user_first_name, 
+              user_last_name
+            )
+          )
+        )
+      ), 
+      request_comment: comment_table(
+        comment_id, 
+        comment_date_created, 
+        comment_content, 
+        comment_is_edited,
+        comment_last_updated, 
+        comment_type, 
+        comment_team_member_id, 
+        comment_team_member: comment_team_member_id!inner(
+          team_member_user: team_member_user_id!inner(
+            user_id, 
+            user_first_name, 
+            user_last_name, 
+            user_username, 
+            user_avatar
+          )
+        )
+      ), 
+      request_form: request_form_id!inner(
+        form_id, 
+        form_name, 
+        form_description, 
+        form_is_formsly_form, 
+        form_section: section_table!inner(
+          *, 
+          section_field: field_table!inner(
+            *, 
+            field_option: option_table(*), 
+            field_response: request_response_table(*)
+          )
+        )
+      )`
     )
     .eq("request_id", requestId)
     .eq("request_is_disabled", false)
@@ -491,7 +550,7 @@ export const getTeamAdminList = async (
     )
     .eq("team_member_team_id", teamId)
     .eq("team_member_is_disabled", false)
-    .eq("team_member_role", "ADMIN");
+    .or("team_member_role.eq.ADMIN, team_member_role.eq.OWNER");
   if (error) throw error;
 
   return data;
@@ -508,7 +567,48 @@ export const getForm = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_name, form_description, form_date_created, form_is_hidden, form_is_formsly_form, form_group, form_is_for_every_member, form_team_member: form_team_member_id(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar, user_username)), form_signer: signer_table(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar))), form_section: section_table(*, section_field: field_table(*, field_option: option_table(*))))"
+      `form_id, 
+      form_name, 
+      form_description, 
+      form_date_created, 
+      form_is_hidden, 
+      form_is_formsly_form, 
+      form_group, 
+      form_is_for_every_member, 
+      form_team_member: form_team_member_id(
+        team_member_id, 
+        team_member_user: team_member_user_id(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar, 
+          user_username
+        )
+      ), 
+      form_signer: signer_table(
+        signer_id, 
+        signer_is_primary_signer, 
+        signer_action, 
+        signer_order,
+        signer_is_disabled, 
+        signer_team_member: signer_team_member_id(
+          team_member_id, 
+          team_member_user: team_member_user_id(
+            user_id, 
+            user_first_name, 
+            user_last_name, 
+            user_avatar
+          )
+        )
+      ), 
+      form_section: section_table(
+        *, 
+        section_field: 
+        field_table(
+          *, 
+          field_option: option_table(*)
+        )
+      )`
     )
     .eq("form_id", formId)
     .eq("form_is_disabled", false)
@@ -1317,7 +1417,7 @@ export const getFormIDForOTP = async (
       "form_id, form_name, form_group, form_is_for_every_member, form_team_member: form_team_member_id!inner(team_member_team_id)"
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%, form_name.eq.Sourced Order to Purchase"
     )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_formsly_form", true);
@@ -1356,6 +1456,26 @@ export const checkRequest = async (
 
   if (error) throw error;
   return count === requestId.length;
+};
+
+// Check if the request is pending
+export const checkOTPRequestForSourced = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    otpId: string;
+  }
+) => {
+  const { otpId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", { count: "exact" })
+    .eq("request_id", otpId)
+    .eq("request_status", "PENDING")
+    .eq("request_is_disabled", false);
+
+  if (error) throw error;
+  return Boolean(count);
 };
 
 // Get response data by keyword
@@ -1501,7 +1621,7 @@ export const getItemResponseForQuotation = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 3) {
+      if (response.request_response_field.field_order > 4) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
             name: "",
@@ -2186,7 +2306,13 @@ export const getOTPPendingQuotationRequestList = async (
   const { data, error } = await supabaseClient
     .from("request_response_table")
     .select(
-      "request_response_request: request_response_request_id!inner(request_id, request_status, request_form: request_form_id(form_name))"
+      `request_response_request: request_response_request_id!inner(
+        request_id, 
+        request_status, 
+        request_form: request_form_id!inner(
+          form_name
+        )
+      )`
     )
     .eq("request_response", `"${requestId}"`)
     .eq("request_response_request.request_status", "PENDING")

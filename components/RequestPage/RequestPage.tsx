@@ -84,7 +84,8 @@ const RequestPage = ({
     request.request_signer.map((signer) => {
       return {
         ...signer.request_signer_signer,
-        signer_status: signer.request_signer_status as ReceiverStatusType,
+        request_signer_status:
+          signer.request_signer_status as ReceiverStatusType,
       };
     })
   );
@@ -103,6 +104,11 @@ const RequestPage = ({
   const isUserSigner = signerList.find(
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
+  );
+  const isUserPrimarySigner = signerList.find(
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id &&
+      signer.signer_is_primary_signer
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -271,6 +277,8 @@ const RequestPage = ({
 
       if (signer.signer_is_primary_signer) {
         setRequestStatus(status);
+      } else {
+        router.reload();
       }
 
       setSignerList((prev) =>
@@ -459,11 +467,15 @@ const RequestPage = ({
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}
-            requestId={request.request_id}
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
+            requestId={request.request_id}
+            isUserPrimarySigner={Boolean(isUserPrimarySigner)}
+            signer={
+              isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
+            }
           />
         ) : null}
         <RequestSignerSection signerList={signerList} />

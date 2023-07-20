@@ -11,12 +11,13 @@ import {
 import {
   IconCircleCheck,
   IconCircleDashed,
+  IconCircleDotted,
   IconCircleX,
 } from "@tabler/icons-react";
 
 type Props = {
   signerList: (RequestWithResponseType["request_signer"][0]["request_signer_signer"] & {
-    signer_status: ReceiverStatusType;
+    request_signer_status: ReceiverStatusType;
   })[];
 };
 
@@ -41,6 +42,12 @@ const RequestSignerSection = ({ signerList }: Props) => {
             <IconCircleX />
           </ThemeIcon>
         );
+      case "PAUSED":
+        return (
+          <ThemeIcon color="orange" size="xs" radius="xl">
+            <IconCircleDotted />
+          </ThemeIcon>
+        );
     }
   };
 
@@ -56,6 +63,8 @@ const RequestSignerSection = ({ signerList }: Props) => {
         return `Will be signed as ${action} by ${fullname}`;
       case "REJECTED":
         return `Rejected to signed as ${action} by ${fullname}`;
+      case "PAUSED":
+        return `${fullname} paused this request`;
     }
   };
 
@@ -68,10 +77,10 @@ const RequestSignerSection = ({ signerList }: Props) => {
         {signerList.map((signer) => {
           return (
             <Group key={signer.signer_id} noWrap mt="xs">
-              {signerStatusIcon(signer.signer_status)}
+              {signerStatusIcon(signer.request_signer_status)}
               <Text size="sm">
                 {signerStatusMessage(
-                  signer.signer_status,
+                  signer.request_signer_status,
                   signer.signer_action,
                   `${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name}`
                 )}

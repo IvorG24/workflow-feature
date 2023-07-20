@@ -1,8 +1,11 @@
+import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
 import {
   AppType,
   MemberRoleType,
+  RequestWithResponseType,
   TeamTableUpdate,
   UserTableUpdate,
 } from "@/utils/types";
@@ -547,4 +550,208 @@ export const updateFormDescription = async (
     .update({ form_description: description })
     .eq("form_id", formId);
   if (error) throw error;
+};
+
+// Split parent otp
+export const splitParentOtp = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    otpID: string;
+    teamMemberId: string;
+    data: RequestFormValues;
+    signerFullName: string;
+    teamId: string;
+  }
+) => {
+  const { otpID, teamMemberId, data, signerFullName, teamId } = params;
+
+  // fetch the parent otp
+  const { data: otpRequest, error: otpRequestError } = await supabaseClient
+    .from("request_table")
+    .select(
+      `*, 
+      request_form: request_form_id!inner(
+        form_id, 
+        form_name, 
+        form_description, 
+        form_is_formsly_form, 
+        form_section: section_table!inner(
+          *, 
+          section_field: field_table!inner(
+            *, 
+            field_option: option_table(*), 
+            field_response: request_response_table!inner(*)
+          )
+        )
+      ),
+      request_team_member: request_team_member_id(
+        team_member_user: team_member_user_id(
+          user_id,
+          user_first_name,
+          user_last_name
+        )
+      ),
+      request_signer: request_signer_table!inner(
+        request_signer_id,
+        request_signer_signer_id,
+        request_signer_request_id,
+        request_signer_signer: request_signer_signer_id!inner(
+          signer_team_member_id
+        )
+      )`
+    )
+    .eq("request_id", otpID)
+    .eq("request_is_disabled", false)
+    .eq(
+      "request_form.form_section.section_field.field_response.request_response_request_id",
+      otpID
+    )
+    .eq(
+      "request_signer.request_signer_signer.signer_team_member_id",
+      teamMemberId
+    )
+    .maybeSingle();
+  if (otpRequestError) throw otpRequestError;
+
+  const formattedOTP = otpRequest as unknown as RequestWithResponseType;
+  const formattedSection = generateSectionWithDuplicateList(
+    formattedOTP.request_form.form_section
+  );
+  const formattedData = {
+    ...formattedOTP,
+    request_form: {
+      ...formattedOTP.request_form,
+      form_section: formattedSection,
+    },
+  };
+
+  const remainingQuantityList: number[] = [];
+  const approvedQuantityList: number[] = [];
+
+  // input the Item Section
+  const matchedIndex: number[] = [];
+
+  // loop parent otp sections
+  formattedSection.slice(2).map((section, sectionIndex) => {
+    // loop input sections
+    for (let j = 0; j < data.sections.length; j++) {
+      if (matchedIndex.includes(j)) {
+        continue;
+      }
+      const item = `${data.sections[j].section_field[0].field_response}`;
+      let descriptionMatch = true;
+
+      // check if general name matches
+      const generalNameMatch = item.includes(
+        JSON.parse(
+          `${section.section_field[0].field_response?.request_response}`
+        )
+      );
+      if (generalNameMatch) {
+        for (let i = 5; i < section.section_field.length; i++) {
+          if (section.section_field[i].field_response) {
+            const fieldNameWithResponse = `${
+              section.section_field[i].field_name
+            }: ${JSON.parse(
+              `${section.section_field[i].field_response?.request_response}`
+            )}`;
+
+            if (!item.includes(fieldNameWithResponse)) {
+              descriptionMatch = false;
+              break;
+            }
+          }
+        }
+        if (descriptionMatch) {
+          matchedIndex.push(j);
+          remainingQuantityList.push(
+            Number(section.section_field[2].field_response?.request_response) -
+              Number(data.sections[j].section_field[1].field_response)
+          );
+          approvedQuantityList.push(
+            Number(data.sections[j].section_field[1].field_response)
+          );
+        }
+      }
+    }
+
+    if (remainingQuantityList[sectionIndex] === undefined) {
+      remainingQuantityList.push(
+        Number(section.section_field[2].field_response?.request_response)
+      );
+    }
+    if (approvedQuantityList[sectionIndex] === undefined) {
+      approvedQuantityList.push(0);
+    }
+  });
+
+  let isNoRemaining = true;
+  for (const remaining of remainingQuantityList) {
+    if (Number(remaining) !== 0) {
+      isNoRemaining = false;
+      break;
+    }
+  }
+
+  if (!isNoRemaining) {
+    // get OTP form
+    const { data: otpForm, error: otpFormError } = await supabaseClient
+      .from("form_table")
+      .select(
+        `*, 
+        form_signer: signer_table!inner(
+          signer_id, 
+          signer_is_primary_signer, 
+          signer_action, 
+          signer_order,
+          signer_is_disabled, 
+          signer_team_member: signer_team_member_id(
+            team_member_id, 
+            team_member_user: team_member_user_id(
+              user_id, 
+              user_first_name, 
+              user_last_name, 
+              user_avatar
+            )
+          )
+        )`
+      )
+      .eq("form_name", "Order to Purchase")
+      .eq("form_is_formsly_form", true)
+      .single();
+    if (otpFormError) throw otpFormError;
+
+    const { error } = await supabaseClient.rpc("split_otp", {
+      input_data: {
+        otpForm,
+        formattedSection,
+        teamMemberId,
+        otpID,
+        remainingQuantityList,
+        approvedQuantityList,
+        formattedData,
+        teamId,
+        signerFullName,
+      },
+    });
+    if (error) throw error;
+
+    return true;
+  } else {
+    await approveOrRejectRequest(supabaseClient, {
+      requestAction: "APPROVED",
+      requestId: otpID,
+      isPrimarySigner: true,
+      requestSignerId: formattedData.request_signer[0].request_signer_signer_id,
+      requestOwnerId:
+        formattedData.request_team_member.team_member_user.user_id,
+      signerFullName: signerFullName,
+      formName: "Order to Purchase",
+      memberId: teamMemberId,
+      teamId: teamId,
+      additionalInfo: "AVAILABLE_INTERNALLY",
+    });
+
+    return false;
+  }
 };

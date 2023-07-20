@@ -140,7 +140,7 @@ export type AttachmentBucketType =
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS";
-export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
+export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED" | "PAUSED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type FieldType =
   | "TEXT"
