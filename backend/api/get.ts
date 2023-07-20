@@ -335,7 +335,7 @@ export const getRequest = async (
           section_field: field_table!inner(
             *, 
             field_option: option_table(*), 
-            field_response: request_response_table!inner(*)
+            field_response: request_response_table(*)
           )
         )
       )`
