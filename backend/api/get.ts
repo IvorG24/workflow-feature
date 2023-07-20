@@ -2455,6 +2455,7 @@ export const getRequestTableView = async (
   let query = supabaseClient
     .from("request_list_table_view")
     .select("*", { count: "exact" })
+    .eq("request_is_disabled", false)
     .eq("request_team_id", teamId);
 
   if (requestor) {
@@ -2514,6 +2515,7 @@ export const getRequestStatusMonthlyCount = async (
       supabaseClient
         .from("request_list_table_view")
         .select("*", { count: "exact", head: true })
+        .eq("request_is_disabled", false)
         .eq("request_form_id", formId)
         .eq("request_team_id", teamId)
         .eq("request_status", status)
@@ -2566,6 +2568,7 @@ export const getRequestStatusMonthlyCount = async (
   const { count: totalCount } = await supabaseClient
     .from("request_list_table_view")
     .select("*", { count: "exact", head: true })
+    .eq("request_is_disabled", false)
     .eq("request_form_id", formId)
     .eq("request_team_id", teamId)
     .gte("request_date_created", startDate)
