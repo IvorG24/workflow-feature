@@ -1731,99 +1731,13 @@ export const checkQuotationItemQuantity = async (
     quantityFieldList: RequestResponseTableRow[];
   }
 ) => {
-  const {
-    otpID,
-    itemFieldId,
-    quantityFieldId,
-    itemFieldList,
-    quantityFieldList,
-  } = params;
+  const { data, error } = await supabaseClient
+    .rpc("check_quotation_item_quantity", { input_data: params })
+    .select("*");
 
-  // fetch request id
-  const { data: requestIds, error: requestIdListError } = await supabaseClient
-    .from("request_response_table")
-    .select(
-      "*, request_response_request: request_response_request_id!inner(request_status, request_form: request_form_id!inner(form_is_formsly_form, form_name))"
-    )
-    .eq("request_response", otpID)
-    .eq("request_response_request.request_status", "APPROVED")
-    .eq("request_response_request.request_form.form_is_formsly_form", true)
-    .eq("request_response_request.request_form.form_name", "Quotation");
+  if (error) throw error;
 
-  if (requestIdListError) throw requestIdListError;
-  const requestIdList = requestIds.map(
-    (response) => response.request_response_request_id
-  );
-
-  // fetch request responses
-  const { data: requestResponse, error: requestResponseError } =
-    await supabaseClient
-      .from("request_response_table")
-      .select("*")
-      .in("request_response_request_id", requestIdList)
-      .or(
-        `request_response_field_id.eq.${itemFieldId}, request_response_field_id.eq.${quantityFieldId}`
-      );
-  if (requestResponseError) throw requestResponseError;
-
-  // separate item to quantity response
-  const requestResponseItem: RequestResponseTableRow[] = [];
-  const requestResponseQuantity: RequestResponseTableRow[] = [];
-  requestResponse.forEach((response) => {
-    if (response.request_response_field_id === itemFieldId) {
-      requestResponseItem.push(response);
-    } else if (response.request_response_field_id === quantityFieldId) {
-      requestResponseQuantity.push(response);
-    }
-  });
-  requestResponseItem.push(...itemFieldList);
-  requestResponseQuantity.push(...quantityFieldList);
-
-  const itemList: string[] = [];
-  const quantityList: number[] = [];
-
-  for (let i = 0; i < requestResponseItem.length; i++) {
-    if (itemList.includes(requestResponseItem[i].request_response)) {
-      const quantityIndex = itemList.indexOf(
-        requestResponseItem[i].request_response
-      );
-      quantityList[quantityIndex] += Number(
-        requestResponseQuantity[i].request_response
-      );
-    } else {
-      itemList.push(requestResponseItem[i].request_response);
-      quantityList.push(Number(requestResponseQuantity[i].request_response));
-    }
-  }
-
-  const returnData: string[] = [];
-  for (let i = 0; i < itemList.length; i++) {
-    const matches = regExp.exec(itemList[i]);
-    if (!matches) continue;
-
-    const quantityMatch = matches[1].match(/(\d+)/);
-    if (!quantityMatch) continue;
-
-    const expectedQuantity = Number(quantityMatch[1]);
-    const unit = matches[1].replace(/\d+/g, "").trim();
-
-    if (quantityList[i] > expectedQuantity) {
-      const quantityMatch = itemList[i].match(/(\d+)/);
-      if (!quantityMatch) return;
-
-      returnData.push(
-        `${JSON.parse(
-          itemList[i].replace(
-            quantityMatch[1],
-            addCommaToNumber(Number(quantityMatch[1]))
-          )
-        )} exceeds quantity limit by ${addCommaToNumber(
-          quantityList[i] - expectedQuantity
-        )} ${unit}`
-      );
-    }
-  }
-  return returnData;
+  return data as string[];
 };
 
 // Check if the approving or creating rir purchased item quantity are less than the quotation quantity
