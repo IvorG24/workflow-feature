@@ -11,6 +11,7 @@ import {
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestResponseTableRow,
+  RequestTableViewData,
   RequestWithResponseType,
   TeamMemberType,
   TeamTableRow,
@@ -2496,7 +2497,11 @@ export const getRequestTableView = async (
 
   if (error) throw error;
 
-  return { data, count };
+  const requestListData = data
+    ? (data as unknown as RequestTableViewData[])
+    : [];
+
+  return { data: requestListData, count };
 };
 
 export const getRequestStatusMonthlyCount = async (
