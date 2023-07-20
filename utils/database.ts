@@ -828,6 +828,7 @@ export type Database = {
           request_date_created: string | null;
           request_form_id: string | null;
           request_id: string | null;
+          request_is_disabled: boolean | null;
           request_requestor: Json | null;
           request_signers: Json | null;
           request_status: string | null;
