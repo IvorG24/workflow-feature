@@ -79,7 +79,6 @@ const itemData = [
         "100 mm",
         "25 mm",
         "63.5 mm",
-        "100 mm",
         "19 mm",
         "13 mm",
         "38 mm",
