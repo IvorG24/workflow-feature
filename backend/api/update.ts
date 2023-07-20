@@ -4,18 +4,13 @@ import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFu
 import { Database } from "@/utils/database";
 import {
   AppType,
-  FormWithResponseType,
   MemberRoleType,
-  NotificationTableInsert,
-  RequestResponseTableInsert,
-  RequestSignerTableInsert,
   RequestWithResponseType,
   SignerTableRow,
   TeamTableUpdate,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { v4 as uuidv4 } from "uuid";
 import { getCurrentDate } from "./get";
 
 // Update Team
@@ -433,10 +428,6 @@ export const splitParentOtp = async (
     },
   };
 
-  // request response data
-  const remainingOTPRequestResponseData: RequestResponseTableInsert[] = [];
-  const approvedOTPRequestResponseData: RequestResponseTableInsert[] = [];
-
   const remainingQuantityList: number[] = [];
   const approvedQuantityList: number[] = [];
 
@@ -533,206 +524,20 @@ export const splitParentOtp = async (
       .single();
     if (otpFormError) throw otpFormError;
 
-    // update parent top request status
-    const { error: updateRequestError } = await supabaseClient
-      .from("request_table")
-      .update({ request_status: "PAUSED" })
-      .eq("request_id", otpID);
-    if (updateRequestError) throw updateRequestError;
-
-    // create new otp request
-    const { data: newOTPRequest, error: newOTPRequestError } =
-      await supabaseClient
-        .from("request_table")
-        .insert([
-          {
-            request_form_id: otpForm.form_id,
-            request_team_member_id: teamMemberId,
-            request_additional_info: "SOURCED OTP",
-            request_status: "PENDING",
-          },
-          {
-            request_form_id: otpForm.form_id,
-            request_team_member_id: teamMemberId,
-            request_additional_info: "AVAILABLE_INTERNALLY",
-            request_status: "APPROVED",
-          },
-        ])
-        .select();
-    if (newOTPRequestError) throw newOTPRequestError;
-
-    // input the ID and Main section
-    formattedSection.slice(0, 2).map((section) => {
-      section.section_field.map((field) => {
-        remainingOTPRequestResponseData.push({
-          request_response:
-            field.field_name === "Parent OTP ID"
-              ? JSON.stringify(otpID)
-              : `${field.field_response?.request_response}`,
-          request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[0].request_id,
-          request_response_duplicatable_section_id:
-            section.section_duplicatable_id ?? null,
-        });
-        approvedOTPRequestResponseData.push({
-          request_response:
-            field.field_name === "Parent OTP ID"
-              ? JSON.stringify(otpID)
-              : `${field.field_response?.request_response}`,
-          request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[1].request_id,
-          request_response_duplicatable_section_id:
-            section.section_duplicatable_id ?? null,
-        });
-      });
+    const { error } = await supabaseClient.rpc("split_otp", {
+      input_data: {
+        otpForm,
+        formattedSection,
+        teamMemberId,
+        otpID,
+        remainingQuantityList,
+        approvedQuantityList,
+        formattedData,
+        teamId,
+        signerFullName,
+      },
     });
-
-    // populate request response data
-    formattedSection.slice(2).map((section, sectionIndex) => {
-      if (remainingQuantityList[sectionIndex] !== 0) {
-        section.section_field.forEach((field) => {
-          if (field.field_response?.request_response) {
-            remainingOTPRequestResponseData.push({
-              request_response:
-                field.field_name === "Quantity"
-                  ? `${remainingQuantityList[sectionIndex]}`
-                  : `${field.field_response.request_response}`,
-              request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[0].request_id,
-              request_response_duplicatable_section_id:
-                field.field_response.request_response_duplicatable_section_id ??
-                null,
-            });
-          }
-        });
-      }
-      if (approvedQuantityList[sectionIndex] !== 0) {
-        section.section_field.forEach((field) => {
-          if (field.field_response?.request_response) {
-            approvedOTPRequestResponseData.push({
-              request_response:
-                field.field_name === "Quantity"
-                  ? `${approvedQuantityList[sectionIndex]}`
-                  : `${field.field_response.request_response}`,
-              request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[1].request_id,
-              request_response_duplicatable_section_id:
-                field.field_response.request_response_duplicatable_section_id ??
-                null,
-            });
-          }
-        });
-      }
-    });
-
-    // get request signers
-    const remainingRequestSignerInput: RequestSignerTableInsert[] = [];
-    const approvedRequestSignerInput: RequestSignerTableInsert[] = [];
-
-    // request signer notification
-    const signerNotificationInput: NotificationTableInsert[] = [];
-
-    const formattedOtpForm = otpForm as unknown as FormWithResponseType;
-    formattedOtpForm.form_signer.forEach((signer) => {
-      remainingRequestSignerInput.push({
-        request_signer_id: uuidv4(),
-        request_signer_signer_id: signer.signer_id,
-        request_signer_request_id: newOTPRequest[0].request_id,
-        request_signer_status: "PENDING",
-      });
-
-      // remaining otp request signer notification
-      signerNotificationInput.push({
-        notification_app: "REQUEST",
-        notification_type: "REQUEST",
-        notification_content: `${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Order to Purchase request`,
-        notification_redirect_url: `/team-requests/requests/${newOTPRequest[0].request_id}`,
-        notification_user_id:
-          signer.signer_team_member.team_member_user.user_id,
-        notification_team_id: teamId,
-      });
-      if (signer.signer_team_member.team_member_id === teamMemberId) {
-        approvedRequestSignerInput.push({
-          request_signer_id: uuidv4(),
-          request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
-          request_signer_status: "APPROVED",
-        });
-      } else {
-        approvedRequestSignerInput.push({
-          request_signer_id: uuidv4(),
-          request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
-          request_signer_status: "PENDING",
-        });
-      }
-    });
-
-    // create request responses
-    const { error: requestResponseError } = await supabaseClient
-      .from("request_response_table")
-      .insert([
-        ...remainingOTPRequestResponseData,
-        ...approvedOTPRequestResponseData,
-      ]);
-    if (requestResponseError) throw requestResponseError;
-
-    // create request signers
-    const { error: requestSignerError } = await supabaseClient
-      .from("request_signer_table")
-      .upsert([
-        ...remainingRequestSignerInput,
-        ...approvedRequestSignerInput,
-        {
-          request_signer_id: formattedData.request_signer[0].request_signer_id,
-          request_signer_request_id:
-            formattedData.request_signer[0].request_signer_request_id,
-          request_signer_signer_id:
-            formattedData.request_signer[0].request_signer_signer_id,
-          request_signer_status: "PAUSED",
-        },
-      ]);
-    if (requestSignerError) throw requestSignerError;
-
-    await supabaseClient.from("comment_table").insert([
-      // create comment for parent otp
-      {
-        comment_request_id: otpID,
-        comment_team_member_id: teamMemberId,
-        comment_type: `ACTION_PAUSED`,
-        comment_content: `${signerFullName} paused this request`,
-      },
-      // create comment for approved otp
-      {
-        comment_request_id: newOTPRequest[1].request_id,
-        comment_team_member_id: teamMemberId,
-        comment_type: `ACTION_APPROVED`,
-        comment_content: `${signerFullName} approved this request`,
-      },
-    ]);
-
-    // create notification for parent otp requestor
-    await supabaseClient.from("notification_table").insert([
-      ...signerNotificationInput,
-      {
-        notification_app: "REQUEST",
-        notification_type: "PAUSE",
-        notification_content: `${signerFullName} paused your Order to Purchase request`,
-        notification_redirect_url: `/team-requests/requests/${otpID}`,
-        notification_user_id:
-          formattedData.request_team_member.team_member_user.user_id,
-        notification_team_id: teamId,
-      },
-      {
-        notification_app: "REQUEST",
-        notification_type: "APPROVE",
-        notification_content: `${signerFullName} approved your Order to Purchase request`,
-        notification_redirect_url: `/team-requests/requests/${newOTPRequest[1].request_id}`,
-        notification_user_id:
-          formattedData.request_team_member.team_member_user.user_id,
-        notification_team_id: teamId,
-      },
-    ]);
+    if (error) throw error;
 
     return true;
   } else {
