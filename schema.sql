@@ -272,6 +272,8 @@ CREATE EXTENSION IF NOT EXISTS plv8;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 
+-- Start: Get SSOT
+
 CREATE FUNCTION get_ssot(
     input_data JSON
 )
@@ -473,6 +475,7 @@ RETURNS JSON as $$
  return ssot_data;
 $$ LANGUAGE plv8;
 
+-- End: Get SSOT
 
 -- Start: Create user
 
@@ -660,8 +663,7 @@ RETURNS JSON AS $$
     emailList.forEach((email) => {
       const invitationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
 
-      const  checkInvitationCount = plv8.execute(`
-SELECT COUNT(*) FROM invitation_table WHERE invitation_to_email='${email}' AND invitation_from_team_member_id='${teamMemberId}' AND invitation_is_disabled='false' AND invitation_status='PENDING';`)[0].count;
+      const  checkInvitationCount = plv8.execute(`SELECT COUNT(*) FROM invitation_table WHERE invitation_to_email='${email}' AND invitation_from_team_member_id='${teamMemberId}' AND invitation_is_disabled='false' AND invitation_status='PENDING';`)[0].count;
         
       if (!checkInvitationCount) {
         invitationInput.push({
@@ -709,6 +711,194 @@ $$ LANGUAGE plv8;
 
 
 -- End: Create team invitation
+
+-- Start: Split OTP
+
+CREATE FUNCTION split_otp(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      otpForm,
+      formattedSection,
+      teamMemberId,
+      otpID,
+      remainingQuantityList,
+      approvedQuantityList,
+      formattedData,
+      teamId,
+      signerFullName
+    } = input_data;
+
+    // update parent top request status
+    plv8.execute(`UPDATE request_table SET request_status = 'PAUSED' WHERE request_id = '${otpID}'`);
+    
+    // create new otp request
+    const newOTPRequest = plv8.execute(`
+      INSERT INTO request_table 
+      (request_form_id, request_team_member_id, request_additional_info, request_status)
+      VALUES
+      ('${otpForm.form_id}', '${formattedData.request_team_member_id}', 'SOURCED_OTP', 'PENDING'),
+      ('${otpForm.form_id}', '${formattedData.request_team_member_id}', 'AVAILABLE_INTERNALLY', 'APPROVED')
+      RETURNING *;
+    `);
+
+    // request response data
+    const remainingOTPRequestResponseData = [];
+    const approvedOTPRequestResponseData = [];
+
+    // input the ID and Main section
+    formattedSection.slice(0, 2).map((section) => {
+      section.section_field.map((field) => {
+        remainingOTPRequestResponseData.push({
+          request_response:
+            field.field_name === "Parent OTP ID"
+              ? JSON.stringify(otpID)
+              : `${field.field_response?.request_response}`,
+          request_response_field_id: field.field_id,
+          request_response_request_id: newOTPRequest[0].request_id,
+          request_response_duplicatable_section_id:
+            section.section_duplicatable_id ?? null,
+        });
+        approvedOTPRequestResponseData.push({
+          request_response:
+            field.field_name === "Parent OTP ID"
+              ? JSON.stringify(otpID)
+              : `${field.field_response?.request_response}`,
+          request_response_field_id: field.field_id,
+          request_response_request_id: newOTPRequest[1].request_id,
+          request_response_duplicatable_section_id:
+            section.section_duplicatable_id ?? null,
+        });
+      });
+    });
+
+    // populate request response data
+    formattedSection.slice(2).map((section, sectionIndex) => {
+      if (remainingQuantityList[sectionIndex] !== 0) {
+        section.section_field.forEach((field) => {
+          if (field.field_response?.request_response) {
+            remainingOTPRequestResponseData.push({
+              request_response:
+                field.field_name === "Quantity"
+                  ? `${remainingQuantityList[sectionIndex]}`
+                  : `${field.field_response.request_response}`,
+              request_response_field_id: field.field_id,
+              request_response_request_id: newOTPRequest[0].request_id,
+              request_response_duplicatable_section_id:
+                field.field_response.request_response_duplicatable_section_id ??
+                null,
+            });
+          }
+        });
+      }
+      if (approvedQuantityList[sectionIndex] !== 0) {
+        section.section_field.forEach((field) => {
+          if (field.field_response?.request_response) {
+            approvedOTPRequestResponseData.push({
+              request_response:
+                field.field_name === "Quantity"
+                  ? `${approvedQuantityList[sectionIndex]}`
+                  : `${field.field_response.request_response}`,
+              request_response_field_id: field.field_id,
+              request_response_request_id: newOTPRequest[1].request_id,
+              request_response_duplicatable_section_id:
+                field.field_response.request_response_duplicatable_section_id ??
+                null,
+            });
+          }
+        });
+      }
+    });
+
+    // get request signers
+    const remainingRequestSignerInput = [];
+    const approvedRequestSignerInput = [];
+
+    // request signer notification
+    const signerNotificationInput = [];
+
+    const formattedOtpForm = otpForm;
+    formattedOtpForm.form_signer.forEach((signer) => {
+      remainingRequestSignerInput.push({
+        request_signer_signer_id: signer.signer_id,
+        request_signer_request_id: newOTPRequest[0].request_id,
+        request_signer_status: "PENDING",
+      });
+
+      // remaining otp request signer notification
+      signerNotificationInput.push({
+        notification_app: "REQUEST",
+        notification_type: "REQUEST",
+        notification_content: `${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Order to Purchase request`,
+        notification_redirect_url: `/team-requests/requests/${newOTPRequest[0].request_id}`,
+        notification_user_id:
+          signer.signer_team_member.team_member_user.user_id,
+        notification_team_id: teamId,
+      });
+      if (signer.signer_team_member.team_member_id === teamMemberId) {
+        approvedRequestSignerInput.push({
+          request_signer_signer_id: signer.signer_id,
+          request_signer_request_id: newOTPRequest[1].request_id,
+          request_signer_status: "APPROVED",
+        });
+      } else {
+        approvedRequestSignerInput.push({
+          request_signer_signer_id: signer.signer_id,
+          request_signer_request_id: newOTPRequest[1].request_id,
+          request_signer_status: "PENDING",
+        });
+      }
+    });
+
+    // create request responses
+    let requestResponseInput = "";
+    remainingOTPRequestResponseData.forEach((response) => {
+      requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
+    });
+    approvedOTPRequestResponseData.forEach((response) => {
+      requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
+    });
+    plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_request_id, request_response_duplicatable_section_id) VALUES ${requestResponseInput.slice(0, -2)};`);
+
+    let requestSignerInput = "";
+    remainingRequestSignerInput.forEach((signer) => {
+      requestSignerInput += `('${signer.request_signer_signer_id}', '${signer.request_signer_request_id}', '${signer.request_signer_status}'), `;
+    });
+    approvedRequestSignerInput.forEach((signer) => {
+      requestSignerInput += `('${signer.request_signer_signer_id}', '${signer.request_signer_request_id}', '${signer.request_signer_status}'), `;
+    });
+    plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id, request_signer_request_id, request_signer_status) VALUES ${requestSignerInput.slice(0, -2)};`);
+    
+    plv8.execute(`UPDATE request_signer_table SET request_signer_status = 'PAUSED' WHERE request_signer_id = '${formattedData.request_signer[0].request_signer_id}'`);
+    
+
+    // create comment
+    plv8.execute(`
+      INSERT INTO comment_table (comment_request_id, comment_team_member_id, comment_type, comment_content) 
+      VALUES 
+      ('${otpID}', '${teamMemberId}', 'ACTION_PAUSED', '${signerFullName} paused this request'),
+      ('${newOTPRequest[1].request_id}', '${teamMemberId}', 'ACTION_APPROVED', '${signerFullName} approved this request');
+    `);
+
+
+    let notificationInput = "";
+    signerNotificationInput.forEach((notification) => {
+      notificationInput += `('REQUEST', 'REQUEST', '${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Order to Purchase request', '/team-requests/requests/${newOTPRequest[0].request_id}', '${notification.notification_user_id}', '${teamId}'), `;
+    });
+    notificationInput += `('REQUEST', 'PAUSE', '${signerFullName} paused your Order to Purchase request', '/team-requests/requests/${otpID}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
+    notificationInput += `('REQUEST', 'APPROVE', '${signerFullName} approved your Order to Purchase request', '/team-requests/requests/${newOTPRequest[1].request_id}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
+
+    // create notification
+     plv8.execute(`
+      INSERT INTO notification_table (notification_app, notification_type, notification_content, notification_redirect_url, notification_user_id, notification_team_id) 
+      VALUES ${notificationInput.slice(0, -2)};
+    `);
+ });
+$$ LANGUAGE plv8;
+
+-- End: Split OTP
 
 ---------- End: FUNCTIONS
 

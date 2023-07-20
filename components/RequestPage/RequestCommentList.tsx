@@ -64,7 +64,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
           // create notification
           await createNotification(supabaseClient, {
             notification_app: "REQUEST",
-            notification_type: "REQUEST_COMMENT",
+            notification_type: "COMMENT",
             notification_content: `${commenterFullName} commented on your request`,
             notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
             notification_user_id: requestData.requestOwnerId,
