@@ -10,14 +10,13 @@ import {
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestWithResponseType,
+  SignerTableRow,
   TeamTableUpdate,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { lowerCase } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentDate } from "./get";
-import { createComment, createNotification } from "./post";
 
 // Update Team
 export const updateTeam = async (
@@ -111,63 +110,11 @@ export const approveOrRejectRequest = async (
     additionalInfo?: string;
   }
 ) => {
-  const {
-    requestId,
-    isPrimarySigner,
-    requestSignerId,
-    requestOwnerId,
-    signerFullName,
-    formName,
-    requestAction,
-    memberId,
-    teamId,
-    additionalInfo,
-  } = params;
-
-  const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
-
-  // update request signer
-  const { error: updateSignerError } = await supabaseClient
-    .from("request_signer_table")
-    .update({ request_signer_status: requestAction })
-    .eq("request_signer_signer_id", requestSignerId)
-    .eq("request_signer_request_id", requestId);
-  if (updateSignerError) throw updateSignerError;
-
-  // create comment
-  await createComment(supabaseClient, {
-    comment_request_id: requestId,
-    comment_team_member_id: memberId,
-    comment_type: `ACTION_${requestAction}`,
-    comment_content: `${signerFullName} ${lowerCase(
-      requestAction
-    )} this request`,
+  const { error } = await supabaseClient.rpc("approve_or_reject_request", {
+    input_data: { ...params, additionalInfo: params?.additionalInfo || "" },
   });
 
-  // create notification
-  await createNotification(supabaseClient, {
-    notification_app: "REQUEST",
-    notification_type: present[requestAction],
-    notification_content: `${signerFullName} ${lowerCase(
-      requestAction
-    )} your ${formName} request`,
-    notification_redirect_url: `/team-requests/requests/${requestId}`,
-    notification_user_id: requestOwnerId,
-    notification_team_id: teamId,
-  });
-
-  // update request status if the signer is the primary signer
-  if (isPrimarySigner) {
-    const { error: updateRequestError } = await supabaseClient
-      .from("request_table")
-      .update({
-        request_status: requestAction,
-        request_additional_info: additionalInfo,
-      })
-      .eq("request_id", requestId)
-      .select();
-    if (updateRequestError) throw updateRequestError;
-  }
+  if (error) throw error;
 };
 
 // Update request status to canceled
@@ -263,18 +210,14 @@ export const updateFormSigner = async (
     formId: string;
   }
 ) => {
-  const { signers, formId } = params;
-  const { error: disableAllError } = await supabaseClient
-    .from("signer_table")
-    .update({ signer_is_disabled: true })
-    .eq("signer_form_id", formId);
-  if (disableAllError) throw disableAllError;
-  const { data: signerData, error: signerError } = await supabaseClient
-    .from("signer_table")
-    .upsert(signers)
-    .select("*");
-  if (signerError) throw signerError;
-  return signerData;
+  const { data, error } = await supabaseClient
+    .rpc("update_form_signer", { input_data: params })
+    .select("*")
+    .single();
+
+  if (error) throw error;
+
+  return data as SignerTableRow[];
 };
 
 // Update notification status
@@ -340,7 +283,7 @@ export const readAllNotification = async (
   if (error) throw error;
 };
 
-// Udpate team and team member group list
+// Update team and team member group list
 export const updateTeamAndTeamMemberGroupList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -351,80 +294,17 @@ export const updateTeamAndTeamMemberGroupList = async (
     deletedGroupMembers: string[];
   }
 ) => {
-  const {
-    teamId,
-    teamGroupList,
-    upsertGroupName,
-    addedGroupMembers,
-    deletedGroupMembers,
-  } = params;
-  const { error: teamError } = await supabaseClient
-    .from("team_table")
-    .update({ team_group_list: teamGroupList })
-    .eq("team_id", teamId);
-  if (teamError) throw teamError;
+  const { error } = await supabaseClient.rpc(
+    "update_team_and_team_member_group_list",
+    {
+      input_data: params,
+    }
+  );
 
-  if (addedGroupMembers.length !== 0) {
-    let addTeamMemberCondition = "";
-    addedGroupMembers.forEach((memberId) => {
-      addTeamMemberCondition += `team_member_id.eq.${memberId}, `;
-    });
-
-    const { data: teamMemberList, error: teamMemberListError } =
-      await supabaseClient
-        .from("team_member_table")
-        .select("*")
-        .or(addTeamMemberCondition.slice(0, -2));
-    if (teamMemberListError) throw teamMemberListError;
-
-    const upsertTeamMemberData = teamMemberList.map((member) => {
-      return {
-        ...member,
-        team_member_group_list: [
-          ...member.team_member_group_list,
-          upsertGroupName,
-        ],
-      };
-    });
-
-    const { error: teamMemberUpsertError } = await supabaseClient
-      .from("team_member_table")
-      .upsert(upsertTeamMemberData);
-
-    if (teamMemberUpsertError) throw teamMemberUpsertError;
-  }
-
-  if (deletedGroupMembers.length !== 0) {
-    let deleteTeamMemberCondition = "";
-    deletedGroupMembers.forEach((memberId) => {
-      deleteTeamMemberCondition += `team_member_id.eq.${memberId}, `;
-    });
-
-    const { data: teamMemberList, error: teamMemberListError } =
-      await supabaseClient
-        .from("team_member_table")
-        .select("*")
-        .or(deleteTeamMemberCondition.slice(0, -2));
-    if (teamMemberListError) throw teamMemberListError;
-
-    const upsertTeamMemberData = teamMemberList.map((member) => {
-      return {
-        ...member,
-        team_member_group_list: member.team_member_group_list.filter(
-          (group) => group !== upsertGroupName
-        ),
-      };
-    });
-
-    const { error: teamMemberUpsertError } = await supabaseClient
-      .from("team_member_table")
-      .upsert(upsertTeamMemberData);
-
-    if (teamMemberUpsertError) throw teamMemberUpsertError;
-  }
+  if (error) throw error;
 };
 
-// Udpate team and team member project list
+// Update team and team member project list
 export const updateTeamAndTeamMemberProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -435,77 +315,14 @@ export const updateTeamAndTeamMemberProjectList = async (
     deletedProjectMembers: string[];
   }
 ) => {
-  const {
-    teamId,
-    teamProjectList,
-    upsertProjectName,
-    addedProjectMembers,
-    deletedProjectMembers,
-  } = params;
-  const { error: teamError } = await supabaseClient
-    .from("team_table")
-    .update({ team_project_list: teamProjectList })
-    .eq("team_id", teamId);
-  if (teamError) throw teamError;
+  const { error } = await supabaseClient.rpc(
+    "update_team_and_team_member_project_list",
+    {
+      input_data: params,
+    }
+  );
 
-  if (addedProjectMembers.length !== 0) {
-    let addTeamMemberCondition = "";
-    addedProjectMembers.forEach((memberId) => {
-      addTeamMemberCondition += `team_member_id.eq.${memberId}, `;
-    });
-
-    const { data: teamMemberList, error: teamMemberListError } =
-      await supabaseClient
-        .from("team_member_table")
-        .select("*")
-        .or(addTeamMemberCondition.slice(0, -2));
-    if (teamMemberListError) throw teamMemberListError;
-
-    const upsertTeamMemberData = teamMemberList.map((member) => {
-      return {
-        ...member,
-        team_member_project_list: [
-          ...member.team_member_project_list,
-          upsertProjectName,
-        ],
-      };
-    });
-
-    const { error: teamMemberUpsertError } = await supabaseClient
-      .from("team_member_table")
-      .upsert(upsertTeamMemberData);
-
-    if (teamMemberUpsertError) throw teamMemberUpsertError;
-  }
-
-  if (deletedProjectMembers.length !== 0) {
-    let deleteTeamMemberCondition = "";
-    deletedProjectMembers.forEach((memberId) => {
-      deleteTeamMemberCondition += `team_member_id.eq.${memberId}, `;
-    });
-
-    const { data: teamMemberList, error: teamMemberListError } =
-      await supabaseClient
-        .from("team_member_table")
-        .select("*")
-        .or(deleteTeamMemberCondition.slice(0, -2));
-    if (teamMemberListError) throw teamMemberListError;
-
-    const upsertTeamMemberData = teamMemberList.map((member) => {
-      return {
-        ...member,
-        team_member_project_list: member.team_member_project_list.filter(
-          (project) => project !== upsertProjectName
-        ),
-      };
-    });
-
-    const { error: teamMemberUpsertError } = await supabaseClient
-      .from("team_member_table")
-      .upsert(upsertTeamMemberData);
-
-    if (teamMemberUpsertError) throw teamMemberUpsertError;
-  }
+  if (error) throw error;
 };
 
 // Update form group

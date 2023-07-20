@@ -8,6 +8,7 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  NotificationTableRow,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestResponseTableRow,
@@ -634,68 +635,6 @@ export const getForm = async (
 };
 
 // Get notification
-export const getAllNotificationOld = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    userId: string;
-    app: AppType;
-    page: number;
-    limit: number;
-    teamId: string;
-  }
-) => {
-  const { userId, app, page, limit, teamId } = params;
-  const start = (page - 1) * limit;
-
-  let notificationListQuery = supabaseClient
-    .from("notification_table")
-    .select("*")
-    .eq("notification_user_id", userId)
-    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-    .order("notification_date_created", { ascending: false })
-    .limit(limit)
-    .range(start, start + limit - 1);
-
-  if (teamId) {
-    notificationListQuery = notificationListQuery.or(
-      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
-    );
-  } else {
-    notificationListQuery = notificationListQuery.is(
-      "notification_team_id",
-      null
-    );
-  }
-
-  const { data: notificationList, error: notificationListError } =
-    await notificationListQuery;
-  if (notificationListError) throw notificationListError;
-
-  let unreadNotificationCountQuery = supabaseClient
-    .from("notification_table")
-    .select("*", { count: "exact", head: true })
-    .eq("notification_user_id", userId)
-    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-    .eq("notification_is_read", false);
-
-  if (teamId) {
-    unreadNotificationCountQuery = unreadNotificationCountQuery.or(
-      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
-    );
-  } else {
-    unreadNotificationCountQuery = unreadNotificationCountQuery.is(
-      "notification_team_id",
-      null
-    );
-  }
-
-  const { count: unreadNotificationCount, error: unreadNotificationError } =
-    await unreadNotificationCountQuery;
-  if (unreadNotificationError) throw unreadNotificationError;
-
-  return { data: notificationList, count: unreadNotificationCount };
-};
-
 export const getAllNotification = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -706,56 +645,14 @@ export const getAllNotification = async (
     teamId: string;
   }
 ) => {
-  const { userId, app, page, limit, teamId } = params;
-  const start = (page - 1) * limit;
-
-  let notificationListQuery = supabaseClient
-    .from("notification_table")
+  const { data, error } = await supabaseClient
+    .rpc("get_all_notification", { input_data: params })
     .select("*")
-    .eq("notification_user_id", userId)
-    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-    .order("notification_date_created", { ascending: false })
-    .limit(limit)
-    .range(start, start + limit - 1);
+    .single();
 
-  if (teamId) {
-    notificationListQuery = notificationListQuery.or(
-      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
-    );
-  } else {
-    notificationListQuery = notificationListQuery.is(
-      "notification_team_id",
-      null
-    );
-  }
+  if (error) throw error;
 
-  const { data: notificationList, error: notificationListError } =
-    await notificationListQuery;
-  if (notificationListError) throw notificationListError;
-
-  let unreadNotificationCountQuery = supabaseClient
-    .from("notification_table")
-    .select("*", { count: "exact", head: true })
-    .eq("notification_user_id", userId)
-    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-    .eq("notification_is_read", false);
-
-  if (teamId) {
-    unreadNotificationCountQuery = unreadNotificationCountQuery.or(
-      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
-    );
-  } else {
-    unreadNotificationCountQuery = unreadNotificationCountQuery.is(
-      "notification_team_id",
-      null
-    );
-  }
-
-  const { count: unreadNotificationCount, error: unreadNotificationError } =
-    await unreadNotificationCountQuery;
-  if (unreadNotificationError) throw unreadNotificationError;
-
-  return { data: notificationList, count: unreadNotificationCount };
+  return data as { data: NotificationTableRow[]; count: number };
 };
 
 // Get item list
