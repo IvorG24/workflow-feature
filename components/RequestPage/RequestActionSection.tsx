@@ -1,7 +1,8 @@
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
-import { Button, Paper, Space, Stack, Title } from "@mantine/core";
+import { Button, Paper, Space, Stack, Text, Title } from "@mantine/core";
 import { useRouter } from "next/router";
 // import { useRouter } from "next/router";
+import { openConfirmModal } from "@mantine/modals";
 
 type Props = {
   isUserOwner: boolean;
@@ -40,6 +41,36 @@ const RequestActionSection = ({
 }: Props) => {
   const router = useRouter();
 
+  const handleAction = (
+    action: string,
+    color: string,
+    additionalInfo?: string
+  ) => {
+    openConfirmModal({
+      title: <Text>Please confirm your action.</Text>,
+      children: (
+        <Text size={14}>Are you sure you want to {action} this request?</Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      confirmProps: { color },
+
+      onConfirm: () => {
+        switch (action) {
+          case "approve":
+            handleUpdateRequest("APPROVED", additionalInfo);
+            break;
+          case "reject":
+            handleUpdateRequest("REJECTED");
+            break;
+          case "cancel":
+            handleCancelRequest();
+            break;
+        }
+      },
+    });
+  };
+
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -49,13 +80,14 @@ const RequestActionSection = ({
       <Stack>
         {isUserSigner &&
           signer &&
-          signer.request_signer_status === "PENDING" && (
+          signer.request_signer_status === "PENDING" &&
+          requestStatus === "PENDING" && (
             <>
               {!isOTP && (
                 <Button
                   color="green"
                   fullWidth
-                  onClick={() => handleUpdateRequest("APPROVED")}
+                  onClick={() => handleAction("approve", "green")}
                 >
                   Approve Request
                 </Button>
@@ -66,7 +98,7 @@ const RequestActionSection = ({
                     color="green"
                     fullWidth
                     onClick={() =>
-                      handleUpdateRequest("APPROVED", "FOR_PURCHASED")
+                      handleAction("approve", "green", "FOR_PURCHASED")
                     }
                   >
                     For Purchased
@@ -89,7 +121,7 @@ const RequestActionSection = ({
               <Button
                 color="red"
                 fullWidth
-                onClick={() => handleUpdateRequest("REJECTED")}
+                onClick={() => handleAction("reject", "red")}
               >
                 Reject Request
               </Button>
@@ -106,7 +138,11 @@ const RequestActionSection = ({
             >
               Edit Request
             </Button> */}
-            <Button variant="default" fullWidth onClick={handleCancelRequest}>
+            <Button
+              variant="default"
+              fullWidth
+              onClick={() => handleAction("cancel", "blue")}
+            >
               Cancel Request
             </Button>
           </>

@@ -2350,6 +2350,17 @@ export const getCanvassData = async (
     { requestId }
   );
 
+  const additionalChargeFields = [
+    "Delivery Fee",
+    "Bank Charge",
+    "Mobilization Charge",
+    "Demobilization Charge",
+    "Freight Charge",
+    "Hauling Charge",
+    "Handling Charge",
+    "Packing Charge",
+  ];
+
   const summaryData: CanvassLowestPriceType = {};
   const quotationRequestList = await Promise.all(
     canvassRequest.map(async (canvassRequestId) => {
@@ -2364,6 +2375,7 @@ export const getCanvassData = async (
             "Item",
             "Price per Unit",
             "Quantity",
+            ...additionalChargeFields,
           ]);
       if (quotationResponseListError) throw quotationResponseListError;
       summaryData[canvassRequestId] = 0;
@@ -2377,6 +2389,8 @@ export const getCanvassData = async (
 
   const canvassData: CanvassType = {};
   const lowestPricePerItem: CanvassLowestPriceType = {};
+  const requestAdditionalCharge: CanvassLowestPriceType = {};
+  let lowestAdditionalCharge = 999999999;
 
   itemOptions.forEach((item) => {
     canvassData[item] = [];
@@ -2385,6 +2399,8 @@ export const getCanvassData = async (
 
   formattedQuotationRequestList.forEach((request) => {
     let currentItem = "";
+    let tempAdditionalCharge = 0;
+
     request.forEach((response) => {
       if (response.request_response_field.field_name === "Item") {
         currentItem = JSON.parse(response.request_response);
@@ -2406,14 +2422,30 @@ export const getCanvassData = async (
       } else if (response.request_response_field.field_name === "Quantity") {
         canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
           Number(response.request_response);
+      } else if (
+        additionalChargeFields.includes(
+          response.request_response_field.field_name
+        )
+      ) {
+        const price = Number(response.request_response);
+        summaryData[response.request_response_request_id] += price;
+        tempAdditionalCharge += price;
       }
     });
+
+    requestAdditionalCharge[request[0].request_response_request_id] =
+      tempAdditionalCharge;
+    if (tempAdditionalCharge < lowestAdditionalCharge) {
+      lowestAdditionalCharge = tempAdditionalCharge;
+    }
   });
 
   const sortedQuotation: Record<string, number> = Object.entries(summaryData)
     .sort(([, a], [, b]) => a - b)
     .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
   const recommendedQuotationId = Object.keys(sortedQuotation)[0];
+
+  console.log(requestAdditionalCharge);
 
   return {
     canvassData,
@@ -2423,6 +2455,8 @@ export const getCanvassData = async (
       id: recommendedQuotationId,
       value: sortedQuotation[recommendedQuotationId],
     },
+    requestAdditionalCharge,
+    lowestAdditionalCharge,
   };
 };
 
