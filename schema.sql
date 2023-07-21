@@ -1473,13 +1473,13 @@ AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users on own requests" ON "public"."request_response_table"
+CREATE POLICY "Allow UPDATE for authenticated users on own request response" ON "public"."request_response_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING ((SELECT request_team_member_id FROM request_table WHERE request_id = request_response_request_id) = (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
 WITH CHECK ((SELECT request_team_member_id FROM request_table WHERE request_id = request_response_request_id) = (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
 
-CREATE POLICY "Allow DELETE for authenticated users on own requests" ON "public"."request_response_table"
+CREATE POLICY "Allow DELETE for authenticated users on own request response" ON "public"."request_response_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING ((SELECT request_team_member_id FROM request_table WHERE request_id = request_response_request_id) = (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
