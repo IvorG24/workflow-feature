@@ -9,10 +9,16 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, context }) => {
     try {
-      const { canvassData, lowestPricePerItem, summaryData, lowestQuotation } =
-        await getCanvassData(supabaseClient, {
-          requestId: `${context.query.requestId}`,
-        });
+      const {
+        canvassData,
+        lowestPricePerItem,
+        summaryData,
+        lowestQuotation,
+        requestAdditionalCharge,
+        lowestAdditionalCharge,
+      } = await getCanvassData(supabaseClient, {
+        requestId: `${context.query.requestId}`,
+      });
 
       if (
         isEmpty(summaryData) ||
@@ -28,6 +34,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           lowestPricePerItem,
           summaryData,
           lowestQuotation,
+          requestAdditionalCharge,
+          lowestAdditionalCharge,
         },
       };
     } catch (error) {
@@ -47,6 +55,8 @@ type Props = {
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
   lowestQuotation: { id: string; value: number };
+  requestAdditionalCharge: CanvassLowestPriceType;
+  lowestAdditionalCharge: number;
 };
 
 const Page = ({
@@ -54,6 +64,8 @@ const Page = ({
   lowestPricePerItem,
   summaryData,
   lowestQuotation,
+  requestAdditionalCharge,
+  lowestAdditionalCharge
 }: Props) => {
   return (
     <>
@@ -66,6 +78,8 @@ const Page = ({
         lowestPricePerItem={lowestPricePerItem}
         summaryData={summaryData}
         lowestQuotation={lowestQuotation}
+        requestAdditionalCharge={requestAdditionalCharge}
+        lowestAdditionalCharge={lowestAdditionalCharge}
       />
     </>
   );
