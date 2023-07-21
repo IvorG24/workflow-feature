@@ -11,6 +11,7 @@ import {
   LoadingOverlay,
   Paper,
   ScrollArea,
+  Space,
   Table,
   Text,
   Title,
@@ -20,6 +21,8 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
 
 // TODO: Refactor
 
@@ -129,11 +132,23 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-type Props = {
-  data: SSOTType[];
+export type SSOTFilterFormValues = {
+  search: string;
+  projectNameList: string[];
+  itemNameList: string[];
 };
 
-const SSOTSpreadsheetView = ({ data }: Props) => {
+type Props = {
+  data: SSOTType[];
+  projectNameList: string[];
+  itemNameList: string[];
+};
+
+const SSOTSpreadsheetView = ({
+  data,
+  projectNameList,
+  itemNameList,
+}: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
   const containerRef = useRef<HTMLTableElement>(null);
@@ -149,6 +164,23 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   const [isFetchable, setIsFetchable] = useState(
     otpList.length === DEFAULT_NUMBER_SSOT_ROWS
   );
+
+  const filterSSOTMethods = useForm<SSOTFilterFormValues>({
+    defaultValues: { search: "", itemNameList: [], projectNameList: [] },
+    mode: "onChange",
+  });
+
+  const { handleSubmit, getValues } = filterSSOTMethods;
+
+  const handleFilterSSOT = async (
+    {
+      search,
+      projectNameList,
+      itemNameList,
+    }: SSOTFilterFormValues = getValues()
+  ) => {
+    console.log({ search, projectNameList, itemNameList });
+  };
 
   const loadMoreRequests = async (offset: number) => {
     try {
@@ -745,6 +777,17 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
       <Title order={2} color="dimmed">
         SSOT Spreadsheet View
       </Title>
+
+      <Space h="sm" />
+      <FormProvider {...filterSSOTMethods}>
+        <form onSubmit={handleSubmit(handleFilterSSOT)}>
+          <SSOTSpreadsheetViewFilter
+            handleFilterSSOT={handleFilterSSOT}
+            projectNameList={projectNameList}
+            itemNameList={itemNameList}
+          />
+        </form>
+      </FormProvider>
 
       <Paper mt="xl" p="xl" shadow="sm">
         <ScrollArea
