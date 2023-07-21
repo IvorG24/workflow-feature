@@ -84,10 +84,12 @@ const RequestListFilter = ({
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
-    value: string[]
+    value: string[] = []
   ) => {
     const filterMatch = filterSelectedValues[`${key}`];
+
     if (value !== filterMatch) {
+      if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterForms();
     }
     setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
