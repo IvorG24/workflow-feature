@@ -1399,7 +1399,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_id = auth.uid() 
+    WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1421,7 +1421,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_id = auth.uid() 
+    WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1438,7 +1438,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_id = auth.uid() 
+    WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1513,7 +1513,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_member_table
-    WHERE team_member_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1535,7 +1535,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_member_table
-    WHERE team_member_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1552,7 +1552,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_member_table
-    WHERE team_member_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1565,7 +1565,7 @@ WITH CHECK (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1582,7 +1582,7 @@ USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1594,7 +1594,7 @@ USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
