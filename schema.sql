@@ -1082,14 +1082,17 @@ CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
-  EXISTS (
-    SELECT 1
+  (
+    SELECT tt.team_member_team_id
     FROM section_table AS st
     JOIN form_table AS fot ON st.section_form_id = fot.form_id
     JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
     WHERE st.section_id = field_section_id
-    AND tt.team_member_user_id = auth.uid()
-    AND tt.team_member_role IN ('OWNER', 'ADMIN')
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
@@ -1102,14 +1105,17 @@ CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING ( 
-  EXISTS (
-    SELECT 1
+  (
+    SELECT tt.team_member_team_id
     FROM section_table AS st
     JOIN form_table AS fot ON st.section_form_id = fot.form_id
     JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
     WHERE st.section_id = field_section_id
-    AND tt.team_member_user_id = auth.uid()
-    AND tt.team_member_role IN ('OWNER', 'ADMIN')
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
@@ -1117,14 +1123,17 @@ CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING ( 
-  EXISTS (
-    SELECT 1
+  (
+    SELECT tt.team_member_team_id
     FROM section_table AS st
     JOIN form_table AS fot ON st.section_form_id = fot.form_id
     JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
     WHERE st.section_id = field_section_id
-    AND tt.team_member_user_id = auth.uid()
-    AND tt.team_member_role IN ('OWNER', 'ADMIN')
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
@@ -1387,7 +1396,7 @@ USING (
 );
 
 --- REQUEST_SIGNER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -1399,8 +1408,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    WHERE team_member_user_id = auth.uid()
   )
 );
 
@@ -1456,7 +1464,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_member_table
-    WHERE team_member_team_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1475,10 +1483,10 @@ USING (
     FROM form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
-  ) IN (
+  ) = (
     SELECT team_member_team_id
     FROM team_member_table
-    WHERE team_member_team_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1492,10 +1500,10 @@ USING (
     FROM form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
-  ) IN (
+  ) = (
     SELECT team_member_team_id
     FROM team_member_table
-    WHERE team_member_team_id = auth.uid()
+    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -1770,6 +1778,15 @@ USING (
     SELECT team_member_id  
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid()
+  ) OR (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = request_team_member_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 )
 WITH CHECK (
@@ -1777,6 +1794,15 @@ WITH CHECK (
     SELECT team_member_id  
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid()
+  ) OR (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = request_team_member_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
