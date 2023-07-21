@@ -1081,7 +1081,11 @@ USING (true);
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."field_table"
 AS PERMISSIVE FOR SELECT
@@ -1110,7 +1114,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."form_table"
 AS PERMISSIVE FOR SELECT
@@ -1139,7 +1147,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR SELECT
@@ -1168,7 +1180,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_description_table"
 AS PERMISSIVE FOR SELECT
@@ -1197,7 +1213,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_table"
 AS PERMISSIVE FOR SELECT
@@ -1226,7 +1246,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."option_table"
 AS PERMISSIVE FOR SELECT
@@ -1255,7 +1279,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR SELECT
@@ -1284,7 +1312,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."section_table"
 AS PERMISSIVE FOR SELECT
@@ -1313,7 +1345,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."signer_table"
 AS PERMISSIVE FOR SELECT
@@ -1342,7 +1378,11 @@ USING (exists (
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (true);
+WITH CHECK (exists (
+  SELECT 1 from team_member_table
+  WHERE team_member_user_id = auth.uid()
+  AND team_member_role in ('OWNER', 'ADMIN')
+));
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."supplier_table"
 AS PERMISSIVE FOR SELECT
@@ -1368,7 +1408,7 @@ USING (exists (
 ));
 
 --- TEAM_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."team_member_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
