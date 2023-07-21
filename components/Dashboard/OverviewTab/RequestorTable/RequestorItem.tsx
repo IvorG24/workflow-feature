@@ -17,13 +17,13 @@ type RequestorItemProps = {
 };
 
 const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
-  const statusCount = Object.entries(requestor.request);
-  const progressSections = statusCount.map(([key, value]) => ({
+  const progressSections = requestor.request.map(({ label, value }) => ({
     value: (value / totalRequest) * 100,
-    color: `${getStatusToColor(key) || "dark"}`,
-    tooltip: `${startCase(key)}: ${value}`,
+    color: `${getStatusToColor(label) || "dark"}`,
+    tooltip: `${startCase(label)}: ${value}`,
     // label: `${startCase(key)}: ${value}`,
   }));
+  const user = requestor.team_member_user;
   const progressSectionsWithoutTotal = progressSections.filter(
     (section) => !section.tooltip.includes("Total")
   );
@@ -35,15 +35,15 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
           <Avatar
             size="sm"
             radius="xl"
-            src={requestor.user_avatar ?? null}
-            color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
+            src={user.user_avatar ?? null}
+            color={getAvatarColor(Number(`${user.user_id.charCodeAt(0)}`))}
           >
-            {!requestor.user_avatar &&
-              `${requestor.user_first_name[0]}${requestor.user_last_name[0]}`}
+            {!user.user_avatar &&
+              `${user.user_first_name[0]}${user.user_last_name[0]}`}
           </Avatar>
           <Text
             weight={500}
-          >{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
+          >{`${user.user_first_name} ${user.user_last_name}`}</Text>
         </Group>
         <Tooltip
           label={progressSectionsWithoutTotal.map((section, idx) => (
@@ -51,7 +51,7 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
           ))}
         >
           <Badge size="sm" variant="filled" color="dark">
-            Total: {requestor.request.total}
+            Total: {requestor.total.toLocaleString()}
           </Badge>
         </Tooltip>
       </Group>

@@ -1,4 +1,3 @@
-import { getFileUrl } from "@/backend/api/get";
 import {
   createAttachment,
   resetPassword,
@@ -15,6 +14,7 @@ import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import UploadSignature from "../UploadSignature/UploadSignature";
 import ChangePassword from "./ChangePassword";
 import PersonalInfo from "./PersonalInfo";
@@ -59,19 +59,22 @@ const UserSettingsPage = ({ user }: Props) => {
     const getUserSignatureUrl = async () => {
       try {
         setIsUpdatingSignature(true);
-        const url = await getFileUrl(supabaseClient, {
-          path: user.user_signature_attachment.attachment_value,
-          bucket: "USER_SIGNATURES",
-        });
+        const {
+          data: { publicUrl },
+        } = supabaseClient.storage
+          .from("USER_SIGNATURES")
+          .getPublicUrl(user.user_signature_attachment.attachment_value);
+        const url = `${publicUrl}?id=${uuidv4()}`;
 
         setSignatureUrl(url);
-        setIsUpdatingSignature(false);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
         router.push("/500");
+      } finally {
+        setIsUpdatingSignature(false);
       }
     };
     if (user.user_signature_attachment) {

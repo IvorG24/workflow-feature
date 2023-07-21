@@ -13,6 +13,7 @@ import {
   Divider,
   Flex,
   Grid,
+  Loader,
   LoadingOverlay,
   Pagination,
   Paper,
@@ -40,12 +41,16 @@ export type FilterFormValues = {
 };
 
 type Props = {
+  requestList: RequestTableViewData[];
+  requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
 };
 
 const RequestListPage = ({
+  requestList: initialRequestList,
+  requestListCount: initialRequestListCount,
   teamMemberList,
   formList,
   isFormslyTeam,
@@ -53,10 +58,14 @@ const RequestListPage = ({
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const [requestList, setRequestList] = useState<RequestTableViewData[]>([]);
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
-  const [requestListCount, setRequestListCount] = useState(0);
+  const [requestList, setRequestList] =
+    useState<RequestTableViewData[]>(initialRequestList);
+
+  const [requestListCount, setRequestListCount] = useState(
+    initialRequestListCount
+  );
 
   const filterFormMethods = useForm<FilterFormValues>({
     defaultValues: { isAscendingSort: false },
@@ -75,10 +84,11 @@ const RequestListPage = ({
     }: FilterFormValues = getValues()
   ) => {
     try {
+      if (!activeTeam.team_id) return;
       setIsFetchingRequestList(true);
       const params = {
         teamId: activeTeam.team_id,
-        page: 1,
+        page: activePage,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         requestor:
           requestorList && requestorList.length > 0 ? requestorList : undefined,
@@ -90,7 +100,7 @@ const RequestListPage = ({
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
-      setRequestList(data as RequestTableViewData[]);
+      setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
       notifications.show({
@@ -103,29 +113,11 @@ const RequestListPage = ({
   };
 
   useEffect(() => {
-    const fetchRequestListTableView = async () => {
-      try {
-        setIsFetchingRequestList(true);
-        if (!activeTeam.team_id) return;
-        const { data, count } = await getRequestTableView(supabaseClient, {
-          teamId: activeTeam.team_id,
-          page: 1,
-          limit: DEFAULT_REQUEST_LIST_LIMIT,
-        });
-        setRequestList(data as RequestTableViewData[]);
-        setRequestListCount(count || 0);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsFetchingRequestList(false);
-      }
-    };
-    fetchRequestListTableView();
-  }, [activeTeam.team_id]);
+    handleFilterForms();
+  }, [activePage]);
 
   return (
     <Container maw={1300} h="100%">
-      <LoadingOverlay visible={isFetchingRequestList} overlayBlur={2} />
       <Flex align="center" gap="xl" wrap="wrap">
         <Box>
           <Title order={4}>Request List Page</Title>
@@ -154,61 +146,66 @@ const RequestListPage = ({
       </FormProvider>
       <Space h="sm" />
 
-      {!isFetchingRequestList && requestList.length > 0 ? (
-        <Paper withBorder>
-          <ScrollArea h="fit-content" type="auto">
-            <Stack spacing={0} miw={1074}>
-              <Box bg="gray.1">
-                <Grid m={0} px="sm" justify="space-between">
-                  <Grid.Col span={2}>
-                    <Text weight={600}>Request ID</Text>
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <Text weight={600}>Form Name</Text>
-                  </Grid.Col>
-                  <Grid.Col span={1}>
-                    <Text weight={600}>Status</Text>
-                  </Grid.Col>
+      <Box h="fit-content" pos="relative">
+        <LoadingOverlay
+          visible={isFetchingRequestList}
+          overlayBlur={0}
+          overlayOpacity={0.2}
+          loader={<Loader variant="dots" />}
+        />
+        {requestList.length > 0 ? (
+          <Paper withBorder>
+            <ScrollArea h="fit-content" type="auto">
+              <Stack spacing={0} miw={1074}>
+                <Box bg="gray.1">
+                  <Grid m={0} px="sm" justify="space-between">
+                    <Grid.Col span={2}>
+                      <Text weight={600}>Request ID</Text>
+                    </Grid.Col>
+                    <Grid.Col span={3}>
+                      <Text weight={600}>Form Name</Text>
+                    </Grid.Col>
+                    <Grid.Col span={1}>
+                      <Text weight={600}>Status</Text>
+                    </Grid.Col>
 
-                  <Grid.Col span="auto" offset={0.5}>
-                    <Text weight={600} pl={8}>
-                      Requested By
-                    </Text>
-                  </Grid.Col>
-                  <Grid.Col span={1}>
-                    <Text weight={600}>Approver</Text>
-                  </Grid.Col>
-                  <Grid.Col span="content">
-                    <Text weight={600}>Date Created</Text>
-                  </Grid.Col>
-                  <Grid.Col span="content">
-                    <Text weight={600}>View</Text>
-                  </Grid.Col>
-                </Grid>
-                <Divider />
-              </Box>
-              {requestList.map((request, idx) => (
-                <Box key={request.request_id}>
-                  <RequestItemRow request={request} />
-                  {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
+                    <Grid.Col span="auto" offset={0.5}>
+                      <Text weight={600} pl={8}>
+                        Requested By
+                      </Text>
+                    </Grid.Col>
+                    <Grid.Col span={1}>
+                      <Text weight={600}>Approver</Text>
+                    </Grid.Col>
+                    <Grid.Col span="content">
+                      <Text weight={600}>Date Created</Text>
+                    </Grid.Col>
+                    <Grid.Col span="content">
+                      <Text weight={600}>View</Text>
+                    </Grid.Col>
+                  </Grid>
+                  <Divider />
                 </Box>
-              ))}
-            </Stack>
-          </ScrollArea>
-        </Paper>
-      ) : (
-        <Text align="center" size={24} weight="bolder" color="dark.1">
-          No request/s found
-        </Text>
-      )}
+                {requestList.map((request, idx) => (
+                  <Box key={request.request_id}>
+                    <RequestItemRow request={request} />
+                    {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
+                  </Box>
+                ))}
+              </Stack>
+            </ScrollArea>
+          </Paper>
+        ) : (
+          <Text align="center" size={24} weight="bolder" color="dark.1">
+            No request/s found
+          </Text>
+        )}
+      </Box>
 
       <Flex justify="flex-end">
         <Pagination
           value={activePage}
-          onChange={async (value) => {
-            setActivePage(value);
-            await handleFilterForms();
-          }}
+          onChange={setActivePage}
           total={Math.ceil(requestListCount / DEFAULT_REQUEST_LIST_LIMIT)}
           mt="xl"
         />

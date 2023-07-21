@@ -31,23 +31,23 @@ const RequestorTable = ({
   const { classes } = useStyles();
 
   const sortRequestorListByTotalRequests = requestorList.sort(
-    (a, b) => b.request.total - a.request.total
+    (a, b) => b.total - a.total
   );
 
   return (
     <ScrollArea w="100%" h="100%">
       <Paper w={{ base: "100%" }} mih={450} withBorder>
-        <Group p="md" className={classes.withBorderBottom}>
-          <Box c="blue">
+        <Group p="md" spacing="xs" className={classes.withBorderBottom}>
+          <Center c="green">
             <IconTrophyFilled />
-          </Box>
+          </Center>
           <Title order={4}>Top Requestor</Title>
         </Group>
 
         <Stack p="lg" mb="sm" spacing={32}>
           {totalRequestCount > 0 ? (
             sortRequestorListByTotalRequests.map((requestor) => (
-              <Box key={requestor.user_id}>
+              <Box key={requestor.team_member_id}>
                 <RequestorItem
                   requestor={requestor}
                   totalRequest={totalRequestCount}
@@ -57,7 +57,7 @@ const RequestorTable = ({
           ) : (
             <Center h={175}>
               <Text size={20} color="dimmed" weight={600}>
-                No data available.
+                No data to display
               </Text>
             </Center>
           )}

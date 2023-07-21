@@ -115,6 +115,7 @@ const Dashboard = () => {
             icon={<IconCalendarEvent />}
             dropdownType="popover"
             maxDate={currentDate}
+            allowSingleDateInRange
             w={300}
           />
         </Group>
