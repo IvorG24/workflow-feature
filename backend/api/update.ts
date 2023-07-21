@@ -122,7 +122,7 @@ export const cancelRequest = async (
     .rpc("cancel_request", {
       request_id: requestId,
       member_id: memberId,
-      comment_type: "REQUEST_CANCELED",
+      comment_type: "ACTION_CANCELED",
       comment_content: "Request canceled",
     })
     .select("*")
