@@ -139,11 +139,17 @@ const OrderToPurchaseRequestPage = ({
 
       setSignerList((prev) =>
         prev.map((signerItem) => {
-          if (signerItem.signer_id !== signer.signer_id) return signerItem;
-          return {
-            ...signer,
-            signer_status: status,
-          };
+          if (
+            signerItem.signer_team_member.team_member_id ===
+            teamMember.team_member_id
+          ) {
+            return {
+              ...signer,
+              request_signer_status: status,
+            };
+          } else {
+            return signerItem;
+          }
         })
       );
 
