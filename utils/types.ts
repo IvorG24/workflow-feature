@@ -651,7 +651,11 @@ export type DuplicateSectionType = SectionTableRow & {
 
 export type CanvassType = Record<
   string,
-  { quotationId: string; price: number; quantity: number }[]
+  {
+    quotationId: string;
+    price: number;
+    quantity: number;
+  }[]
 >;
 export type CanvassLowestPriceType = Record<string, number>;
 

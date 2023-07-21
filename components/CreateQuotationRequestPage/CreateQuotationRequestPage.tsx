@@ -84,21 +84,17 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[2].section_field.map((field) => {
+
+    const newFields = form.form_section[3].section_field.map((field) => {
       return {
         ...field,
         field_option: itemOptions,
       };
     });
     replaceSection([
+      ...form.form_section.slice(0, 3),
       {
-        ...form.form_section[0],
-      },
-      {
-        ...form.form_section[1],
-      },
-      {
-        ...form.form_section[2],
+        ...form.form_section[3],
         section_field: newFields,
       },
     ]);
@@ -117,7 +113,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       const otpID = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
-      const itemSection = data.sections[2];
+      const itemSection = data.sections[3];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
@@ -203,7 +199,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
   const handleDuplicateSection = (sectionId: string) => {
     if (
       availableItems.length === 0 ||
-      formSections.length === itemOptions.length + 2
+      formSections.length === itemOptions.length + 3
     ) {
       notifications.show({
         message: "No available item.",
@@ -261,10 +257,10 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           });
 
           const sectionList = getValues(`sections`);
-          const itemSectionList = sectionList.slice(2);
+          const itemSectionList = sectionList.slice(3);
 
           itemSectionList.forEach((section, sectionIndex) => {
-            sectionIndex += 2;
+            sectionIndex += 3;
             if (sectionIndex !== sectionMatchIndex) {
               updateSection(sectionIndex, {
                 ...section,
@@ -297,14 +293,14 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
     prevValue: string | null
   ) => {
     const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(2);
+    const itemSectionList = sectionList.slice(3);
 
     if (value) {
       setAvailableItems((prev) =>
         prev.filter((item) => item.option_value !== value)
       );
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 2;
+        sectionIndex += 3;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -332,7 +328,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
         return [...prev, newOption];
       });
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 2;
+        sectionIndex += 3;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,

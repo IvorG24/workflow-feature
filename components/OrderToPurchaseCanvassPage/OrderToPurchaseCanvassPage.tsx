@@ -33,6 +33,8 @@ type Props = {
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
   lowestQuotation: { id: string; value: number };
+  requestAdditionalCharge: CanvassLowestPriceType;
+  lowestAdditionalCharge: number;
 };
 
 const OrderToPurchaseCanvassPage = ({
@@ -40,6 +42,8 @@ const OrderToPurchaseCanvassPage = ({
   lowestPricePerItem,
   summaryData,
   lowestQuotation,
+  requestAdditionalCharge,
+  lowestAdditionalCharge,
 }: Props) => {
   const router = useRouter();
   const { classes } = useStyles();
@@ -130,6 +134,39 @@ const OrderToPurchaseCanvassPage = ({
       </Paper>
 
       <Stack mt="xl">
+        <Paper p="xl" shadow="xs">
+          <Title order={5} color="dimmed">
+            Additional Charge
+          </Title>
+          <Table withBorder withColumnBorders striped highlightOnHover mt="xl">
+            <thead>
+              <tr>
+                <th>Quotation ID</th>
+                <th>Total Additional Charge</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(requestAdditionalCharge).map((requestId, index) => {
+                return (
+                  <tr key={index}>
+                    <td>{requestId}</td>
+                    <td
+                      className={
+                        requestAdditionalCharge[requestId] ===
+                        lowestAdditionalCharge
+                          ? classes.lowestPrice
+                          : ""
+                      }
+                    >
+                      ₱ {addCommaToNumber(requestAdditionalCharge[requestId])}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </Paper>
+
         {Object.keys(canvassData).map((item) => {
           return (
             <Paper key={item} p="xl" shadow="xs">

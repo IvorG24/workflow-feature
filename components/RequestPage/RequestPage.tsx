@@ -434,7 +434,7 @@ const RequestPage = ({
         request.request_form.form_is_formsly_form ? (
           <QuotationSummary
             summaryData={sectionWithDuplicateList
-              .slice(2)
+              .slice(3)
               .sort((a, b) =>
                 `${a.section_field[0].field_response?.request_response}` >
                 `${b.section_field[0].field_response?.request_response}`
@@ -444,6 +444,9 @@ const RequestPage = ({
                   ? -1
                   : 0
               )}
+            additionalChargeData={request.request_form.form_section[2].section_field.filter(
+              (field) => field.field_response.length !== 0
+            )}
           />
         ) : null}
 
