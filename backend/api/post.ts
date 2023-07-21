@@ -420,7 +420,8 @@ export const createRequest = async (
       if (
         typeof responseValue === "boolean" ||
         responseValue ||
-        field.field_type === "SWITCH"
+        field.field_type === "SWITCH" ||
+        (field.field_type === "NUMBER" && responseValue === 0)
       ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
