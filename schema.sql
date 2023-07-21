@@ -1211,6 +1211,8 @@ RETURNS VOID AS $$
       upsertGroupName,
       addedGroupMembers,
       deletedGroupMembers,
+      previousName,
+      previousGroupMembers
     } = input_data;
 
     plv8.execute(`UPDATE team_table SET team_group_list='{${teamGroupList.join(',')}}' WHERE team_id='${teamId}';`);
@@ -1264,6 +1266,31 @@ RETURNS VOID AS $$
         
       plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
     }
+
+    if(previousName && (previousName !== upsertGroupName)){
+      const updateTeamMemberCondition = previousGroupMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
+
+      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${updateTeamMemberCondition}) ;`);
+
+      const upsertTeamMemberData = teamMemberList.map((member) => {
+        const groupList = member.team_member_group_list;
+        const previousNameIndex = groupList.indexOf(previousName);
+        groupList.splice(previousNameIndex, 1);
+        return {
+          ...member,
+          team_member_group_list: groupList,
+        };
+      }); 
+
+      const teamMemberValues = upsertTeamMemberData
+        .map(
+          (member) =>
+            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
+        )
+        .join(",");
+
+      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
+    }
  });
 $$ LANGUAGE plv8;
 
@@ -1282,6 +1309,8 @@ RETURNS VOID AS $$
       upsertProjectName,
       addedProjectMembers,
       deletedProjectMembers,
+      previousName,
+      previousProjectMembers
     } = input_data;
 
     plv8.execute(`UPDATE team_table SET team_project_list='{${teamProjectList.join(',')}}' WHERE team_id='${teamId}';`);
@@ -1334,6 +1363,31 @@ RETURNS VOID AS $$
         .join(",");
         
       plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
+    }
+
+    if(previousName && (previousName !== upsertProjectName)){
+      const updateTeamMemberCondition = previousProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
+
+      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${updateTeamMemberCondition}) ;`);
+
+      const upsertTeamMemberData = teamMemberList.map((member) => {
+        const projectList = member.team_member_project_list;
+        const previousNameIndex = projectList.indexOf(previousName);
+        projectList.splice(previousNameIndex, 1);
+        return {
+          ...member,
+          team_member_project_list: projectList,
+        };
+      }); 
+
+      const teamMemberValues = upsertTeamMemberData
+        .map(
+          (member) =>
+            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_group_list.join(',')}}','{${member.team_member_project_list.join(',')}}')`
+        )
+        .join(",");
+
+      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_group_list,team_member_project_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_group_list = excluded.team_member_group_list, team_member_project_list = excluded.team_member_project_list;`);
     }
     
  });

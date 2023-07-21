@@ -287,6 +287,8 @@ export const updateTeamAndTeamMemberGroupList = async (
     upsertGroupName: string;
     addedGroupMembers: string[];
     deletedGroupMembers: string[];
+    previousName?: string;
+    previousGroupMembers?: string[];
   }
 ) => {
   const { error } = await supabaseClient.rpc(
@@ -308,6 +310,8 @@ export const updateTeamAndTeamMemberProjectList = async (
     upsertProjectName: string;
     addedProjectMembers: string[];
     deletedProjectMembers: string[];
+    previousName?: string;
+    previousProjectMembers?: string[];
   }
 ) => {
   const { error } = await supabaseClient.rpc(
