@@ -1522,6 +1522,195 @@ $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating quotation item quantity are less than the otp quantity
 
+-- Start: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+
+CREATE FUNCTION check_rir_sourced_item_quantity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let item_data
+    plv8.subtransaction(function(){
+        const {
+        otpId,
+        itemFieldId,
+        quantityFieldId,
+        itemFieldList,
+        quantityFieldList
+        } = input_data;
+
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${otpId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report (Sourced)';`);
+        
+        let requestResponse = []
+        if(request.length>0) {
+
+            const requestIdList = request.map(
+                (response) => `'${response.request_response_request_id}'`
+            ).join(",");
+
+            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+        }
+
+        const requestResponseItem = [];
+        const requestResponseQuantity = [];
+
+        requestResponse.forEach((response) => {
+            if (response.request_response_field_id === itemFieldId) {
+            requestResponseItem.push(response);
+            } else if (response.request_response_field_id === quantityFieldId) {
+            requestResponseQuantity.push(response);
+            }
+        });
+
+        requestResponseItem.push(...itemFieldList);
+        requestResponseQuantity.push(...quantityFieldList);
+
+        const itemList = [];
+        const quantityList = [];
+
+        for (let i = 0; i < requestResponseItem.length; i++) {
+            if (itemList.includes(requestResponseItem[i].request_response)) {
+            const quantityIndex = itemList.indexOf(
+                requestResponseItem[i].request_response
+            );
+            quantityList[quantityIndex] += Number(
+                requestResponseQuantity[i].request_response
+            );
+            } else {
+            itemList.push(requestResponseItem[i].request_response);
+            quantityList.push(Number(requestResponseQuantity[i].request_response));
+            }
+        }
+
+        const returnData = [];
+        const regExp = /\(([^)]+)\)/;
+        for (let i = 0; i < itemList.length; i++) {
+            const matches = regExp.exec(itemList[i]);
+            if (!matches) continue;
+
+            const quantityMatch = matches[1].match(/(\d+)/);
+            if (!quantityMatch) continue;
+
+            const expectedQuantity = Number(quantityMatch[1]);
+            const unit = matches[1].replace(/\d+/g, "").trim();
+
+            if (quantityList[i] > expectedQuantity) {
+            const quantityMatch = itemList[i].match(/(\d+)/);
+            if (!quantityMatch) return;
+
+            returnData.push(
+                `${JSON.parse(
+                itemList[i].replace(
+                    quantityMatch[1],
+                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                )
+                )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+            );
+            }
+        }
+        item_data = returnData
+    });
+    return item_data;
+$$ LANGUAGE plv8;
+
+
+-- End: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+
+-- Start: Check if the approving or creating rir purchased item quantity are less than the quotation quantity
+
+CREATE FUNCTION check_rir_purchased_item_quantity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let item_data
+    plv8.subtransaction(function(){
+        const {
+        quotationId,
+        itemFieldId,
+        quantityFieldId,
+        itemFieldList,
+        quantityFieldList
+        } = input_data;
+
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${quotationId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report (Purchased)';`);
+        
+        let requestResponse = []
+        if(request.length>0) {
+
+            const requestIdList = request.map(
+                (response) => `'${response.request_response_request_id}'`
+            ).join(",");
+
+            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+        }
+
+        const requestResponseItem = [];
+        const requestResponseQuantity = [];
+
+        requestResponse.forEach((response) => {
+            if (response.request_response_field_id === itemFieldId) {
+            requestResponseItem.push(response);
+            } else if (response.request_response_field_id === quantityFieldId) {
+            requestResponseQuantity.push(response);
+            }
+        });
+
+        requestResponseItem.push(...itemFieldList);
+        requestResponseQuantity.push(...quantityFieldList);
+
+        const itemList = [];
+        const quantityList = [];
+
+        for (let i = 0; i < requestResponseItem.length; i++) {
+            if (itemList.includes(requestResponseItem[i].request_response)) {
+            const quantityIndex = itemList.indexOf(
+                requestResponseItem[i].request_response
+            );
+            quantityList[quantityIndex] += Number(
+                requestResponseQuantity[i].request_response
+            );
+            } else {
+            itemList.push(requestResponseItem[i].request_response);
+            quantityList.push(Number(requestResponseQuantity[i].request_response));
+            }
+        }
+
+        const returnData = [];
+        const regExp = /\(([^)]+)\)/;
+        for (let i = 0; i < itemList.length; i++) {
+            const matches = regExp.exec(itemList[i]);
+            if (!matches) continue;
+
+            const quantityMatch = matches[1].match(/(\d+)/);
+            if (!quantityMatch) continue;
+
+            const expectedQuantity = Number(quantityMatch[1]);
+            const unit = matches[1].replace(/\d+/g, "").trim();
+
+            if (quantityList[i] > expectedQuantity) {
+            const quantityMatch = itemList[i].match(/(\d+)/);
+            if (!quantityMatch) return;
+
+            returnData.push(
+                `${JSON.parse(
+                itemList[i].replace(
+                    quantityMatch[1],
+                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                )
+                )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+            );
+            }
+        }
+        item_data = returnData
+    });
+    return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Check if the approving or creating rir purchased item quantity are less than the quotation quantity
+
 
 
 ---------- End: FUNCTIONS
