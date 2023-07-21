@@ -1676,8 +1676,29 @@ USING (invitation_to_email = (SELECT user_email FROM user_table WHERE user_id = 
 CREATE POLICY "Allow UPDATE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
-WITH CHECK (invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (
+  invitation_from_team_member_id IN (
+    SELECT team_member_id 
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  ) OR invitation_to_email = (
+    SELECT user_email 
+    FROM user_table 
+    WHERE user_id = auth.uid()
+  )
+)
+
+WITH CHECK (
+  invitation_from_team_member_id IN (
+    SELECT team_member_id 
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  ) OR invitation_to_email = (
+    SELECT user_email 
+    FROM user_table 
+    WHERE user_id = auth.uid()
+  )
+);
 
 CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
 AS PERMISSIVE FOR DELETE
