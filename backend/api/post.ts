@@ -6,22 +6,21 @@ import {
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
-  FieldTableInsert,
+  FormTableRow,
   FormType,
   InvitationTableInsert,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
   ItemTableInsert,
   NotificationTableInsert,
-  OptionTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
-  RequestTableInsert,
-  SectionTableInsert,
+  RequestTableRow,
   SupplierTableInsert,
   TeamMemberTableInsert,
   TeamTableInsert,
   UserTableInsert,
+  UserTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -90,7 +89,7 @@ export const uploadFile = async (
 export const createUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: UserTableInsert
-): Promise<InvitationTableRow> => {
+) => {
   const { user_phone_number } = params;
 
   const { data, error } = await supabaseClient
@@ -104,7 +103,7 @@ export const createUser = async (
     .single();
   if (error) throw error;
 
-  return data;
+  return data as UserTableRow;
 };
 
 // Create Team
@@ -384,75 +383,15 @@ export const createRequestForm = async (
     teamMemberId: string;
   }
 ) => {
-  const { formBuilderData, teamMemberId } = params;
-  const {
-    formDescription,
-    formId,
-    formName,
-    formType,
-    isSignatureRequired,
-    isForEveryone,
-    groupList,
-  } = formBuilderData;
-  const { sections, signers } = formBuilderData;
-
-  // create form
-  const { data: form, error: formError } = await supabaseClient
-    .from("form_table")
-    .insert({
-      form_app: formType,
-      form_description: formDescription,
-      form_name: formName,
-      form_team_member_id: teamMemberId,
-      form_id: formId,
-      form_is_signature_required: isSignatureRequired,
-      form_is_for_every_member: isForEveryone,
-      form_group: groupList,
+  const { data, error } = await supabaseClient
+    .rpc("create_request_form", {
+      input_data: params,
     })
     .select()
     .single();
-  if (formError) throw formError;
 
-  const sectionInput: SectionTableInsert[] = [];
-  const fieldInput: FieldTableInsert[] = [];
-  const optionInput: OptionTableInsert[] = [];
-
-  // separate sections, fields, and options
-  sections.forEach((section) => {
-    const { fields, ...newSection } = section;
-    sectionInput.push(newSection);
-    fields.forEach((field) => {
-      const { options, ...newField } = field;
-      fieldInput.push(newField);
-      options.forEach((option) => optionInput.push(option));
-    });
-  });
-
-  // create section
-  const { error: sectionError } = await supabaseClient
-    .from("section_table")
-    .insert(sectionInput);
-  if (sectionError) throw sectionError;
-
-  // create fields
-  const { error: fieldError } = await supabaseClient
-    .from("field_table")
-    .insert(fieldInput);
-  if (fieldError) throw fieldError;
-
-  // create options
-  const { error: optionError } = await supabaseClient
-    .from("option_table")
-    .insert(optionInput);
-  if (optionError) throw optionError;
-
-  // create signers
-  const { error: signerError } = await supabaseClient
-    .from("signer_table")
-    .insert(signers);
-  if (signerError) throw signerError;
-
-  return form;
+  if (error) throw error;
+  return data as unknown as FormTableRow;
 };
 
 // Create request
@@ -467,7 +406,7 @@ export const createRequest = async (
     requesterName: string;
     formName: string;
   }
-): Promise<RequestTableInsert> => {
+) => {
   const { requestFormValues, signers, teamId, requesterName, formName } =
     params;
 
@@ -578,7 +517,7 @@ export const createRequest = async (
 
   if (error) throw error;
 
-  return data;
+  return data as RequestTableRow;
 };
 
 // Create formsly premade forms

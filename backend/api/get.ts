@@ -1,5 +1,5 @@
 import { Database } from "@/utils/database";
-import { addCommaToNumber, regExp } from "@/utils/string";
+import { regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
@@ -8,6 +8,7 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  NotificationTableRow,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestResponseTableRow,
@@ -228,27 +229,13 @@ export const getUserActiveTeamId = async (
 ) => {
   const { userId } = params;
 
-  const { data, error } = await supabaseClient
-    .from("user_table")
-    .select("user_active_team_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
+  const { data: activeTeamId, error } = await supabaseClient
+    .rpc("get_user_active_team_id", { user_id: userId })
+    .select("*")
+    .single();
   if (error) throw error;
-  if (!data?.user_active_team_id) {
-    const { data: firstTeam, error: firstTeamError } = await supabaseClient
-      .from("team_member_table")
-      .select("*")
-      .eq("team_member_user_id", userId)
-      .eq("team_member_is_disabled", false)
-      .maybeSingle();
-    if (firstTeamError) throw firstTeamError;
 
-    if (!firstTeam) return null;
-    return firstTeam.team_member_team_id;
-  }
-
-  return data.user_active_team_id;
+  return activeTeamId;
 };
 
 // Get user with signature attachment
@@ -662,56 +649,14 @@ export const getAllNotification = async (
     teamId: string;
   }
 ) => {
-  const { userId, app, page, limit, teamId } = params;
-  const start = (page - 1) * limit;
-
-  let notificationListQuery = supabaseClient
-    .from("notification_table")
+  const { data, error } = await supabaseClient
+    .rpc("get_all_notification", { input_data: params })
     .select("*")
-    .eq("notification_user_id", userId)
-    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-    .order("notification_date_created", { ascending: false })
-    .limit(limit)
-    .range(start, start + limit - 1);
+    .single();
 
-  if (teamId) {
-    notificationListQuery = notificationListQuery.or(
-      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
-    );
-  } else {
-    notificationListQuery = notificationListQuery.is(
-      "notification_team_id",
-      null
-    );
-  }
+  if (error) throw error;
 
-  const { data: notificationList, error: notificationListError } =
-    await notificationListQuery;
-  if (notificationListError) throw notificationListError;
-
-  let unreadNotificationCountQuery = supabaseClient
-    .from("notification_table")
-    .select("*", { count: "exact", head: true })
-    .eq("notification_user_id", userId)
-    .or(`notification_app.eq.GENERAL, notification_app.eq.${app}`)
-    .eq("notification_is_read", false);
-
-  if (teamId) {
-    unreadNotificationCountQuery = unreadNotificationCountQuery.or(
-      `notification_team_id.eq.${teamId}, notification_team_id.is.${null}`
-    );
-  } else {
-    unreadNotificationCountQuery = unreadNotificationCountQuery.is(
-      "notification_team_id",
-      null
-    );
-  }
-
-  const { count: unreadNotificationCount, error: unreadNotificationError } =
-    await unreadNotificationCountQuery;
-  if (unreadNotificationError) throw unreadNotificationError;
-
-  return { data: notificationList, count: unreadNotificationCount };
+  return data as { data: NotificationTableRow[]; count: number };
 };
 
 // Get item list
@@ -882,31 +827,16 @@ export const checkOrderToPurchaseFormStatus = async (
 ) => {
   const { teamId, formId } = params;
 
-  const { count: itemCount, error: itemError } = await supabaseClient
-    .from("item_table")
-    .select("*", { count: "exact", head: true })
-    .eq("item_team_id", teamId)
-    .eq("item_is_available", true)
-    .eq("item_is_disabled", false);
+  const { data, error } = await supabaseClient
+    .rpc("check_order_to_purchase_form_status", {
+      form_id: formId,
+      team_id: teamId,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
 
-  if (itemError) throw itemError;
-
-  if (!itemCount) {
-    return "There must be at least one available item" as string;
-  }
-
-  const { count: signerCount, error: signerError } = await supabaseClient
-    .from("signer_table")
-    .select("*", { count: "exact", head: true })
-    .eq("signer_form_id", formId)
-    .eq("signer_is_disabled", false)
-    .eq("signer_is_primary_signer", true);
-  if (signerError) throw signerError;
-  if (!signerCount) {
-    return "You need to add a primary signer first" as string;
-  }
-
-  return true as boolean;
+  return data === "true" ? true : (data as string);
 };
 
 // check if item name already exists
@@ -1805,99 +1735,13 @@ export const checkQuotationItemQuantity = async (
     quantityFieldList: RequestResponseTableRow[];
   }
 ) => {
-  const {
-    otpID,
-    itemFieldId,
-    quantityFieldId,
-    itemFieldList,
-    quantityFieldList,
-  } = params;
+  const { data, error } = await supabaseClient
+    .rpc("check_quotation_item_quantity", { input_data: params })
+    .select("*");
 
-  // fetch request id
-  const { data: requestIds, error: requestIdListError } = await supabaseClient
-    .from("request_response_table")
-    .select(
-      "*, request_response_request: request_response_request_id!inner(request_status, request_form: request_form_id!inner(form_is_formsly_form, form_name))"
-    )
-    .eq("request_response", otpID)
-    .eq("request_response_request.request_status", "APPROVED")
-    .eq("request_response_request.request_form.form_is_formsly_form", true)
-    .eq("request_response_request.request_form.form_name", "Quotation");
+  if (error) throw error;
 
-  if (requestIdListError) throw requestIdListError;
-  const requestIdList = requestIds.map(
-    (response) => response.request_response_request_id
-  );
-
-  // fetch request responses
-  const { data: requestResponse, error: requestResponseError } =
-    await supabaseClient
-      .from("request_response_table")
-      .select("*")
-      .in("request_response_request_id", requestIdList)
-      .or(
-        `request_response_field_id.eq.${itemFieldId}, request_response_field_id.eq.${quantityFieldId}`
-      );
-  if (requestResponseError) throw requestResponseError;
-
-  // separate item to quantity response
-  const requestResponseItem: RequestResponseTableRow[] = [];
-  const requestResponseQuantity: RequestResponseTableRow[] = [];
-  requestResponse.forEach((response) => {
-    if (response.request_response_field_id === itemFieldId) {
-      requestResponseItem.push(response);
-    } else if (response.request_response_field_id === quantityFieldId) {
-      requestResponseQuantity.push(response);
-    }
-  });
-  requestResponseItem.push(...itemFieldList);
-  requestResponseQuantity.push(...quantityFieldList);
-
-  const itemList: string[] = [];
-  const quantityList: number[] = [];
-
-  for (let i = 0; i < requestResponseItem.length; i++) {
-    if (itemList.includes(requestResponseItem[i].request_response)) {
-      const quantityIndex = itemList.indexOf(
-        requestResponseItem[i].request_response
-      );
-      quantityList[quantityIndex] += Number(
-        requestResponseQuantity[i].request_response
-      );
-    } else {
-      itemList.push(requestResponseItem[i].request_response);
-      quantityList.push(Number(requestResponseQuantity[i].request_response));
-    }
-  }
-
-  const returnData: string[] = [];
-  for (let i = 0; i < itemList.length; i++) {
-    const matches = regExp.exec(itemList[i]);
-    if (!matches) continue;
-
-    const quantityMatch = matches[1].match(/(\d+)/);
-    if (!quantityMatch) continue;
-
-    const expectedQuantity = Number(quantityMatch[1]);
-    const unit = matches[1].replace(/\d+/g, "").trim();
-
-    if (quantityList[i] > expectedQuantity) {
-      const quantityMatch = itemList[i].match(/(\d+)/);
-      if (!quantityMatch) return;
-
-      returnData.push(
-        `${JSON.parse(
-          itemList[i].replace(
-            quantityMatch[1],
-            addCommaToNumber(Number(quantityMatch[1]))
-          )
-        )} exceeds quantity limit by ${addCommaToNumber(
-          quantityList[i] - expectedQuantity
-        )} ${unit}`
-      );
-    }
-  }
-  return returnData;
+  return data as string[];
 };
 
 // Check if the approving or creating rir purchased item quantity are less than the quotation quantity
@@ -1911,103 +1755,13 @@ export const checkRIRPurchasedItemQuantity = async (
     quantityFieldList: RequestResponseTableRow[];
   }
 ) => {
-  const {
-    quotationId,
-    itemFieldId,
-    quantityFieldId,
-    itemFieldList,
-    quantityFieldList,
-  } = params;
+  const { data, error } = await supabaseClient
+    .rpc("check_rir_purchased_item_quantity", { input_data: params })
+    .select("*");
 
-  // fetch request id
-  const { data: requestIds, error: requestIdListError } = await supabaseClient
-    .from("request_response_table")
-    .select(
-      "*, request_response_request: request_response_request_id!inner(request_status, request_form: request_form_id!inner(form_is_formsly_form, form_name))"
-    )
-    .eq("request_response", quotationId)
-    .eq("request_response_request.request_status", "APPROVED")
-    .eq("request_response_request.request_form.form_is_formsly_form", true)
-    .eq(
-      "request_response_request.request_form.form_name",
-      "Receiving Inspecting Report (Purchased)"
-    );
+  if (error) throw error;
 
-  if (requestIdListError) throw requestIdListError;
-  const requestIdList = requestIds.map(
-    (response) => response.request_response_request_id
-  );
-
-  // fetch request responses
-  const { data: requestResponse, error: requestResponseError } =
-    await supabaseClient
-      .from("request_response_table")
-      .select("*")
-      .in("request_response_request_id", requestIdList)
-      .or(
-        `request_response_field_id.eq.${itemFieldId}, request_response_field_id.eq.${quantityFieldId}`
-      );
-  if (requestResponseError) throw requestResponseError;
-
-  // separate item to quantity response
-  const requestResponseItem: RequestResponseTableRow[] = [];
-  const requestResponseQuantity: RequestResponseTableRow[] = [];
-  requestResponse.forEach((response) => {
-    if (response.request_response_field_id === itemFieldId) {
-      requestResponseItem.push(response);
-    } else if (response.request_response_field_id === quantityFieldId) {
-      requestResponseQuantity.push(response);
-    }
-  });
-  requestResponseItem.push(...itemFieldList);
-  requestResponseQuantity.push(...quantityFieldList);
-
-  const itemList: string[] = [];
-  const quantityList: number[] = [];
-
-  for (let i = 0; i < requestResponseItem.length; i++) {
-    if (itemList.includes(requestResponseItem[i].request_response)) {
-      const quantityIndex = itemList.indexOf(
-        requestResponseItem[i].request_response
-      );
-      quantityList[quantityIndex] += Number(
-        requestResponseQuantity[i].request_response
-      );
-    } else {
-      itemList.push(requestResponseItem[i].request_response);
-      quantityList.push(Number(requestResponseQuantity[i].request_response));
-    }
-  }
-
-  const returnData: string[] = [];
-  for (let i = 0; i < itemList.length; i++) {
-    const matches = regExp.exec(itemList[i]);
-    if (!matches) continue;
-
-    const quantityMatch = matches[1].match(/(\d+)/);
-    if (!quantityMatch) continue;
-
-    const expectedQuantity = Number(quantityMatch[1]);
-    const unit = matches[1].replace(/\d+/g, "").trim().split(" ")[0];
-
-    if (quantityList[i] > expectedQuantity) {
-      const quantityMatch = itemList[i].match(/(\d+)/);
-      if (!quantityMatch) return;
-
-      returnData.push(
-        `${JSON.parse(
-          itemList[i].replace(
-            quantityMatch[1],
-            addCommaToNumber(Number(quantityMatch[1]))
-          )
-        )} exceeds quantity limit by ${addCommaToNumber(
-          quantityList[i] - expectedQuantity
-        )} ${unit}`
-      );
-    }
-  }
-
-  return returnData;
+  return data as string[];
 };
 
 // Check if the approving or creating rir sourced item quantity are less than the quotation quantity
@@ -2021,103 +1775,13 @@ export const checkRIRSourcedItemQuantity = async (
     quantityFieldList: RequestResponseTableRow[];
   }
 ) => {
-  const {
-    otpId,
-    itemFieldId,
-    quantityFieldId,
-    itemFieldList,
-    quantityFieldList,
-  } = params;
+  const { data, error } = await supabaseClient
+    .rpc("check_rir_sourced_item_quantity", { input_data: params })
+    .select("*");
 
-  // fetch request id
-  const { data: requestIds, error: requestIdListError } = await supabaseClient
-    .from("request_response_table")
-    .select(
-      "*, request_response_request: request_response_request_id!inner(request_status, request_form: request_form_id!inner(form_is_formsly_form, form_name))"
-    )
-    .eq("request_response", otpId)
-    .eq("request_response_request.request_status", "APPROVED")
-    .eq("request_response_request.request_form.form_is_formsly_form", true)
-    .eq(
-      "request_response_request.request_form.form_name",
-      "Receiving Inspecting Report (Sourced)"
-    );
+  if (error) throw error;
 
-  if (requestIdListError) throw requestIdListError;
-  const requestIdList = requestIds.map(
-    (response) => response.request_response_request_id
-  );
-
-  // fetch request responses
-  const { data: requestResponse, error: requestResponseError } =
-    await supabaseClient
-      .from("request_response_table")
-      .select("*")
-      .in("request_response_request_id", requestIdList)
-      .or(
-        `request_response_field_id.eq.${itemFieldId}, request_response_field_id.eq.${quantityFieldId}`
-      );
-  if (requestResponseError) throw requestResponseError;
-
-  // separate item to quantity response
-  const requestResponseItem: RequestResponseTableRow[] = [];
-  const requestResponseQuantity: RequestResponseTableRow[] = [];
-  requestResponse.forEach((response) => {
-    if (response.request_response_field_id === itemFieldId) {
-      requestResponseItem.push(response);
-    } else if (response.request_response_field_id === quantityFieldId) {
-      requestResponseQuantity.push(response);
-    }
-  });
-  requestResponseItem.push(...itemFieldList);
-  requestResponseQuantity.push(...quantityFieldList);
-
-  const itemList: string[] = [];
-  const quantityList: number[] = [];
-
-  for (let i = 0; i < requestResponseItem.length; i++) {
-    if (itemList.includes(requestResponseItem[i].request_response)) {
-      const quantityIndex = itemList.indexOf(
-        requestResponseItem[i].request_response
-      );
-      quantityList[quantityIndex] += Number(
-        requestResponseQuantity[i].request_response
-      );
-    } else {
-      itemList.push(requestResponseItem[i].request_response);
-      quantityList.push(Number(requestResponseQuantity[i].request_response));
-    }
-  }
-
-  const returnData: string[] = [];
-  for (let i = 0; i < itemList.length; i++) {
-    const matches = regExp.exec(itemList[i]);
-    if (!matches) continue;
-
-    const quantityMatch = matches[1].match(/(\d+)/);
-    if (!quantityMatch) continue;
-
-    const expectedQuantity = Number(quantityMatch[1]);
-    const unit = matches[1].replace(/\d+/g, "").trim().split(" ")[0];
-
-    if (quantityList[i] > expectedQuantity) {
-      const quantityMatch = itemList[i].match(/(\d+)/);
-      if (!quantityMatch) return;
-
-      returnData.push(
-        `${JSON.parse(
-          itemList[i].replace(
-            quantityMatch[1],
-            addCommaToNumber(Number(quantityMatch[1]))
-          )
-        )} exceeds quantity limit by ${addCommaToNumber(
-          quantityList[i] - expectedQuantity
-        )} ${unit}`
-      );
-    }
-  }
-
-  return returnData;
+  return data as string[];
 };
 
 // Get SSOT for spreadsheet view
