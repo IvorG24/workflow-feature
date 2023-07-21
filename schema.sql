@@ -1081,11 +1081,17 @@ USING (true);
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM section_table AS st
+    JOIN form_table AS fot ON st.section_form_id = fot.form_id
+    JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
+    WHERE st.section_id = field_section_id
+    AND tt.team_member_user_id = auth.uid()
+    AND tt.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."field_table"
 AS PERMISSIVE FOR SELECT
@@ -1095,30 +1101,49 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING ( 
+  EXISTS (
+    SELECT 1
+    FROM section_table AS st
+    JOIN form_table AS fot ON st.section_form_id = fot.form_id
+    JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
+    WHERE st.section_id = field_section_id
+    AND tt.team_member_user_id = auth.uid()
+    AND tt.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING ( 
+  EXISTS (
+    SELECT 1
+    FROM section_table AS st
+    JOIN form_table AS fot ON st.section_form_id = fot.form_id
+    JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
+    WHERE st.section_id = field_section_id
+    AND tt.team_member_user_id = auth.uid()
+    AND tt.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- FORM_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK ( 
+  (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_id = form_team_member_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."form_table"
 AS PERMISSIVE FOR SELECT
@@ -1128,30 +1153,51 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_id = form_team_member_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_id = form_team_member_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- ITEM_DESCRIPTION_FIELD_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM item_description_table as id
+    JOIN item_table as it ON it.item_id = id.item_description_item_id
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE id.item_description_id = item_description_field_item_description_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR SELECT
@@ -1161,30 +1207,50 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM item_description_table as id
+    JOIN item_table as it ON it.item_id = id.item_description_item_id
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE id.item_description_id = item_description_field_item_description_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM item_description_table as id
+    JOIN item_table as it ON it.item_id = id.item_description_item_id
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE id.item_description_id = item_description_field_item_description_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- ITEM_DESCRIPTION_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_description_table"
 AS PERMISSIVE FOR SELECT
@@ -1194,30 +1260,46 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- ITEM_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = item_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_table"
 AS PERMISSIVE FOR SELECT
@@ -1227,30 +1309,45 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = item_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = item_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- OPTION_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM field_table as ft
+    JOIN section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
+    WHERE ft.field_id = option_field_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."option_table"
 AS PERMISSIVE FOR SELECT
@@ -1260,30 +1357,52 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1
+    FROM field_table as ft
+    JOIN section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
+    WHERE ft.field_id = option_field_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  EXISTS (
+    SELECT 1
+    FROM field_table as ft
+    JOIN section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
+    WHERE ft.field_id = option_field_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- REQUEST_SIGNER_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  (
+    SELECT tm.team_member_team_id
+    FROM request_table as rt
+    JOIN team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
+    WHERE rt.request_id = request_signer_request_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR SELECT
@@ -1293,30 +1412,54 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT tm.team_member_team_id
+    FROM request_table as rt
+    JOIN team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
+    WHERE rt.request_id = request_signer_request_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT tm.team_member_team_id
+    FROM request_table as rt
+    JOIN team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
+    WHERE rt.request_id = request_signer_request_id
+  ) IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = auth.uid() 
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- SECTION_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  (
+    SELECT tm.team_member_team_id
+    FROM form_table as fo
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE fo.form_id = section_form_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_team_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."section_table"
 AS PERMISSIVE FOR SELECT
@@ -1326,30 +1469,54 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT tm.team_member_team_id
+    FROM form_table as fo
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE fo.form_id = section_form_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_team_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT tm.team_member_team_id
+    FROM form_table as fo
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE fo.form_id = section_form_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_team_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- SIGNER_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  (
+    SELECT tm.team_member_team_id
+    FROM form_table as fo
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE fo.form_id = signer_form_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."signer_table"
 AS PERMISSIVE FOR SELECT
@@ -1359,30 +1526,49 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT tm.team_member_team_id
+    FROM form_table as fo
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE fo.form_id = signer_form_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  (
+    SELECT tm.team_member_team_id
+    FROM form_table as fo
+    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE fo.form_id = signer_form_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- SUPPLIER_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+WITH CHECK (
+  supplier_team_id IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow READ access for authenticated users" ON "public"."supplier_table"
 AS PERMISSIVE FOR SELECT
@@ -1392,20 +1578,26 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  supplier_team_id IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  supplier_team_id IN (
+    SELECT team_member_team_id 
+    FROM team_member_table 
+    WHERE team_member_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- TEAM_MEMBER_TABLE
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."team_member_table"
@@ -1421,20 +1613,24 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  team_member_team_id IN (
+    SELECT team_member_team_id from team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (exists (
-  SELECT 1 from team_member_table
-  WHERE team_member_user_id = auth.uid()
-  AND team_member_role in ('OWNER', 'ADMIN')
-));
+USING (
+  team_member_team_id IN (
+    SELECT team_member_team_id from team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
 
 --- COMMENT_TABLE
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."comment_table"
@@ -1513,16 +1709,47 @@ AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users on own request response" ON "public"."request_response_table"
+CREATE POLICY "Allow UPDATE for authenticated users on own request response"
+ON "public"."request_response_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING ((SELECT request_team_member_id FROM request_table WHERE request_id = request_response_request_id) = (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
-WITH CHECK ((SELECT request_team_member_id FROM request_table WHERE request_id = request_response_request_id) = (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (
+  (
+    SELECT rt.request_team_member_id
+    FROM request_table as rt
+    WHERE rt.request_id = request_response_request_id
+  ) IN (
+    SELECT team_member_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  (
+    SELECT rt.request_team_member_id
+    FROM request_table as rt
+    WHERE rt.request_id = request_response_request_id
+  ) IN (
+    SELECT team_member_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users on own request response" ON "public"."request_response_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING ((SELECT request_team_member_id FROM request_table WHERE request_id = request_response_request_id) = (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (
+  (
+    SELECT rt.request_team_member_id
+    FROM request_table as rt
+    WHERE rt.request_id = request_response_request_id
+  ) IN (
+    SELECT team_member_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+  )
+);
 
 --- REQUEST_TABLE
 CREATE POLICY "Allow CREATE access for all users" ON "public"."request_table"
@@ -1538,13 +1765,31 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users on own requests" ON "public"."request_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (request_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
-WITH CHECK (request_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (
+  request_team_member_id IN (
+    SELECT team_member_id  
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  request_team_member_id IN (
+    SELECT team_member_id  
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  )
+);
 
 CREATE POLICY "Allow DELETE for authenticated users on own requests" ON "public"."request_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (request_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (
+  request_team_member_id IN (
+    SELECT team_member_id  
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  )
+);
 
 --- TEAM_TABLE
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."team_table"
