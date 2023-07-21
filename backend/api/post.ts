@@ -25,7 +25,6 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
 import { v4 as uuidv4 } from "uuid";
-import { getFileUrl } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -305,10 +304,15 @@ export const createAttachment = async (
 
   if (error) throw error;
 
-  const url = await getFileUrl(supabaseClient, {
-    path: data.attachment_value,
-    bucket: attachmentData.attachment_bucket as AttachmentBucketType,
-  });
+  // get public url
+  const {
+    data: { publicUrl },
+  } = supabaseClient.storage
+    .from(data.attachment_bucket)
+    .getPublicUrl(`${data.attachment_value}`);
+
+  const url = `${publicUrl}?id=${uuidv4()}`;
+
   return { data, url };
 };
 

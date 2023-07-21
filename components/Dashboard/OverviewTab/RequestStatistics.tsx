@@ -1,60 +1,35 @@
-import { getStackedBarChartData } from "@/utils/arrayFunctions/dashboard";
+import StackedBarChart from "@/components/Chart/StackedBarChart";
 import { getStatusToColorForCharts } from "@/utils/styling";
-import { Box, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import {
-  IconFileAnalytics,
-  IconSquareRoundedFilled,
-} from "@tabler/icons-react";
+  Box,
+  Center,
+  Flex,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
+import { IconChartBar, IconSquareRoundedFilled } from "@tabler/icons-react";
 import { startCase } from "lodash";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import StackedBarChart from "../../Chart/StackedBarChart";
-import { RequestStatusDataType } from "./Overview";
+import { MonthlyRequestDataTypeWithTotal } from "./Overview";
 
 type RequestStatisticsProps = {
-  requestStatusData: RequestStatusDataType[];
+  monthlyChartData: MonthlyRequestDataTypeWithTotal["data"];
+  totalRequestCount: number;
   dateFilter: [Date | null, Date | null];
-};
-
-const generateInitialChartData = () => {
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const initialChartData = months.map((month) => ({
-    month,
-    approved: 0,
-    rejected: 0,
-    pending: 0,
-    canceled: 0,
-  }));
-
-  return initialChartData;
 };
 
 const statusList = ["pending", "approved", "rejected", "canceled"];
 
 const RequestStatistics = ({
-  requestStatusData,
+  monthlyChartData,
+  totalRequestCount,
   dateFilter,
 }: RequestStatisticsProps) => {
-  const initialChartData = getStackedBarChartData(
-    requestStatusData,
-    generateInitialChartData()
-  );
-
-  const [chartData, setChartData] = useState(generateInitialChartData());
+  const [chartData, setChartData] = useState(monthlyChartData);
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
 
   const filterChart = (newFilter: string) => {
@@ -68,7 +43,7 @@ const RequestStatistics = ({
     }
     setSelectedFilter(updatedFilter);
 
-    const newChartData = initialChartData.map((d) => {
+    const newChartData = monthlyChartData.map((d) => {
       updatedFilter.forEach((filter) => {
         // update status
         switch (filter) {
@@ -95,23 +70,23 @@ const RequestStatistics = ({
     setChartData(newChartData);
   };
 
-  const startDateYear = moment(dateFilter[0]).format("YYYY");
-  const endDateYear = moment(dateFilter[1]).format("YYYY");
+  const startDate = moment(dateFilter[0]).format("MMM DD, YYYY");
+  const endDate = moment(dateFilter[1]).format("MMM DD, YYYY");
   const xAxisChartLabel =
-    startDateYear !== endDateYear
-      ? `${startDateYear} - ${endDateYear}`
-      : startDateYear;
+    startDate === endDate ? startDate : `${startDate} - ${endDate}`;
 
   useEffect(() => {
-    setChartData(initialChartData);
-  }, [requestStatusData]);
+    setChartData(monthlyChartData);
+  }, [monthlyChartData]);
 
   return (
     <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
       <Stack>
         <Group position="apart">
-          <Group mb="sm">
-            <IconFileAnalytics />
+          <Group spacing="xs" mb="sm">
+            <Center c="green">
+              <IconChartBar />
+            </Center>
             <Title order={3}>Monthly Statistics</Title>
           </Group>
           <Group fz={14}>
@@ -137,11 +112,19 @@ const RequestStatistics = ({
           </Group>
         </Group>
         <Box p="xs" w="100%">
-          <StackedBarChart
-            data={chartData}
-            xAxisLabel={`Year: ${xAxisChartLabel}`}
-            yAxisLabel="No. of Request"
-          />
+          {totalRequestCount > 0 ? (
+            <StackedBarChart
+              data={chartData}
+              xAxisLabel={xAxisChartLabel}
+              yAxisLabel="No. of Request"
+            />
+          ) : (
+            <Center mih={600}>
+              <Text size={20} color="dimmed" weight={600}>
+                No data to display
+              </Text>
+            </Center>
+          )}
         </Box>
       </Stack>
     </Paper>

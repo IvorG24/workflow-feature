@@ -1534,6 +1534,7 @@ SELECT
   r.request_date_created,
   r.request_status,
   r.request_team_member_id,
+  r.request_is_disabled,
   tm.team_member_team_id as request_team_id,
   json_build_object(
     'user_id', tm.team_member_user_id,
