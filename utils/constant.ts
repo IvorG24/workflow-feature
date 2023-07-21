@@ -69,6 +69,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const sourcedOtpItemSectionId = uuidv4();
   const quotationIdSectionId = uuidv4();
   const quotationMainSectionId = uuidv4();
+  const quotationAdditionalChargeSectionId = uuidv4();
   const quotationItemSectionId = uuidv4();
   const rirPurchasedIdSectionId = uuidv4();
   const rirPurchasedQualityCheckSectionId = uuidv4();
@@ -269,9 +270,16 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           section_form_id: quotationFormId,
         },
         {
+          section_id: quotationAdditionalChargeSectionId,
+          section_name: "Additional Charges",
+          section_order: 3,
+          section_is_duplicatable: false,
+          section_form_id: quotationFormId,
+        },
+        {
           section_id: quotationItemSectionId,
           section_name: "Item",
-          section_order: 3,
+          section_order: 4,
           section_is_duplicatable: true,
           section_form_id: quotationFormId,
         },
@@ -310,9 +318,73 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
+          field_name: "Delivery Fee",
+          field_type: "NUMBER",
+          field_order: 6,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Bank Charge",
+          field_type: "NUMBER",
+          field_order: 7,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Mobilization Charge",
+          field_type: "NUMBER",
+          field_order: 8,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Demobilization Charge",
+          field_type: "NUMBER",
+          field_order: 9,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Freight Charge",
+          field_type: "NUMBER",
+          field_order: 10,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Hauling Charge",
+          field_type: "NUMBER",
+          field_order: 11,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Handling Charge",
+          field_type: "NUMBER",
+          field_order: 12,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Packing Charge",
+          field_type: "NUMBER",
+          field_order: 13,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
           field_name: "Item",
           field_type: "DROPDOWN",
-          field_order: 6,
+          field_order: 14,
           field_section_id: quotationItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -320,7 +392,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Price per Unit",
           field_type: "NUMBER",
-          field_order: 7,
+          field_order: 15,
           field_section_id: quotationItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -328,7 +400,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 8,
+          field_order: 16,
           field_section_id: quotationItemSectionId,
           field_is_required: true,
           field_is_read_only: false,

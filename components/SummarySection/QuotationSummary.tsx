@@ -1,13 +1,25 @@
 import { addCommaToNumber, regExp } from "@/utils/string";
-import { DuplicateSectionType } from "@/utils/types";
-import { Paper, ScrollArea, Table, Text, Title } from "@mantine/core";
+import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
+import {
+  Alert,
+  Center,
+  Paper,
+  ScrollArea,
+  Table,
+  Text,
+  Title,
+} from "@mantine/core";
+import { IconReportMoney } from "@tabler/icons-react";
 
 type Props = {
   summaryData: DuplicateSectionType[];
+  additionalChargeData: RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
 };
 
-const QuotationSummary = ({ summaryData }: Props) => {
-  let totalPriceSummation = 0;
+const QuotationSummary = ({ summaryData, additionalChargeData }: Props) => {
+  let totalItemPrice = 0;
+  let totalAdditionalChargePrice = 0;
+
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -64,7 +76,7 @@ const QuotationSummary = ({ summaryData }: Props) => {
               const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
 
               const totalPrice = parsedQuantity * price;
-              totalPriceSummation += totalPrice;
+              totalItemPrice += totalPrice;
 
               return (
                 <tr key={index}>
@@ -83,13 +95,78 @@ const QuotationSummary = ({ summaryData }: Props) => {
               <td></td>
               <td>
                 <Text fw={700} sx={{ whiteSpace: "nowrap" }}>
-                  ₱ {addCommaToNumber(totalPriceSummation)}
+                  ₱ {addCommaToNumber(totalItemPrice)}
                 </Text>
               </td>
             </tr>
           </tbody>
         </Table>
       </ScrollArea>
+
+      {additionalChargeData.length !== 0 ? (
+        <>
+          <ScrollArea>
+            <Table
+              mt="md"
+              highlightOnHover
+              withColumnBorders
+              withBorder
+              sx={(theme) => ({
+                "& th": {
+                  backgroundColor:
+                    theme.colorScheme === "dark"
+                      ? theme.colors.blue[9]
+                      : theme.colors.blue[2],
+                },
+              })}
+              miw={600}
+            >
+              <thead>
+                <tr>
+                  <th>Additional Charge</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {additionalChargeData.map((charge, index) => {
+                  const price = Number(
+                    charge.field_response[0].request_response
+                  );
+                  totalAdditionalChargePrice += price;
+                  return (
+                    <tr key={index}>
+                      <td>{charge.field_name}</td>
+                      <td>₱ {addCommaToNumber(price)}</td>
+                    </tr>
+                  );
+                })}
+                <tr>
+                  <td></td>
+                  <td>
+                    <Text fw={700} sx={{ whiteSpace: "nowrap" }}>
+                      ₱ {addCommaToNumber(totalAdditionalChargePrice)}
+                    </Text>
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </ScrollArea>
+
+          <Alert
+            title="Total Price of Item with Additional Charge"
+            mt="xl"
+            icon={<IconReportMoney size="1rem" />}
+            color="blue"
+          >
+            <Center>
+              <Text fw={500} size={20}>
+                ₱{" "}
+                {addCommaToNumber(totalItemPrice + totalAdditionalChargePrice)}
+              </Text>
+            </Center>
+          </Alert>
+        </>
+      ) : null}
     </Paper>
   );
 };
