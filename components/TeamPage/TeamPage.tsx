@@ -493,6 +493,8 @@ const TeamPage = ({
         deletedGroupMembers: prevTeamMembers.filter(
           (memberId) => !data.groupMembers.includes(memberId)
         ),
+        previousName: editGroupData?.groupName,
+        previousGroupMembers: editGroupData?.groupMembers,
       });
 
       notifications.show({
@@ -554,6 +556,8 @@ const TeamPage = ({
         deletedProjectMembers: prevTeamMembers.filter(
           (memberId) => !data.projectMembers.includes(memberId)
         ),
+        previousName: editProjectData?.projectName,
+        previousProjectMembers: editProjectData?.projectMembers,
       });
 
       notifications.show({

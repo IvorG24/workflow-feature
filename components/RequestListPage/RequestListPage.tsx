@@ -157,7 +157,14 @@ const RequestListPage = ({
           <Paper withBorder>
             <ScrollArea h="fit-content" type="auto">
               <Stack spacing={0} miw={1074}>
-                <Box bg="gray.1">
+                <Box
+                  sx={(theme) => ({
+                    backgroundColor:
+                      theme.colorScheme === "dark"
+                        ? theme.colors.dark[5]
+                        : theme.colors.gray[1],
+                  })}
+                >
                   <Grid m={0} px="sm" justify="space-between">
                     <Grid.Col span={2}>
                       <Text weight={600}>Request ID</Text>

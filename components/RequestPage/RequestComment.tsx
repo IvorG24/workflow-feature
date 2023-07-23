@@ -22,6 +22,7 @@ import {
   IconCheck,
   IconDots,
   IconEdit,
+  IconFolderCancel,
   IconPlayerPause,
   IconX,
 } from "@tabler/icons-react";
@@ -109,6 +110,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     "ACTION_APPROVED",
     "ACTION_REJECTED",
     "ACTION_PAUSED",
+    "ACTION_CANCELED",
   ];
 
   const actionCommentColor = (type: string) => {
@@ -119,6 +121,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "red";
       case "ACTION_PAUSED":
         return "orange";
+      case "ACTION_CANCELED":
+        return "gray";
     }
   };
 
@@ -130,6 +134,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "Rejected!";
       case "ACTION_PAUSED":
         return "Paused!";
+      case "ACTION_CANCELED":
+        return "Canceled!";
     }
   };
 
@@ -141,6 +147,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return <IconX size={16} />;
       case "ACTION_PAUSED":
         return <IconPlayerPause size={16} />;
+      case "ACTION_CANCELED":
+        return <IconFolderCancel size={16} />;
     }
   };
 

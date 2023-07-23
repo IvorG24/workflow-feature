@@ -138,7 +138,7 @@ const RequestPage = ({
           const otpID =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
-          const itemSection = request.request_form.form_section[2];
+          const itemSection = request.request_form.form_section[3];
 
           const warningItemList = await checkQuotationItemQuantity(
             supabaseClient,

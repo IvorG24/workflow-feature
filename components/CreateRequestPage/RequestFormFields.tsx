@@ -171,7 +171,17 @@ const RequestFormFields = ({
                 error={fieldError}
               />
             )}
-            rules={{ ...fieldRules }}
+            rules={{
+              ...fieldRules,
+              validate: {
+                checkIfZero: (value) =>
+                  (orderToPurchaseFormMethods || quotationFormMethods) &&
+                  field.field_name === "Quantity" &&
+                  value === 0
+                    ? "Quantity value is required"
+                    : true,
+              },
+            }}
           />
         );
 
