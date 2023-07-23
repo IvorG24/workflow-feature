@@ -11,6 +11,7 @@ import {
   LoadingOverlay,
   Paper,
   ScrollArea,
+  Space,
   Table,
   Text,
   Title,
@@ -20,6 +21,8 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
 
 // TODO: Refactor
 
@@ -129,11 +132,23 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-type Props = {
-  data: SSOTType[];
+export type SSOTFilterFormValues = {
+  search: string;
+  projectNameList: string[];
+  itemNameList: string[];
 };
 
-const SSOTSpreadsheetView = ({ data }: Props) => {
+type Props = {
+  data: SSOTType[];
+  projectNameList: string[];
+  itemNameList: string[];
+};
+
+const SSOTSpreadsheetView = ({
+  data,
+  projectNameList,
+  itemNameList,
+}: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
   const containerRef = useRef<HTMLTableElement>(null);
@@ -149,6 +164,43 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
   const [isFetchable, setIsFetchable] = useState(
     otpList.length === DEFAULT_NUMBER_SSOT_ROWS
   );
+
+  const filterSSOTMethods = useForm<SSOTFilterFormValues>({
+    defaultValues: { search: "", itemNameList: [], projectNameList: [] },
+    mode: "onChange",
+  });
+
+  const { handleSubmit, getValues } = filterSSOTMethods;
+
+  const handleFilterSSOT = async (
+    {
+      search,
+      projectNameList,
+      itemNameList,
+    }: SSOTFilterFormValues = getValues()
+  ) => {
+    try {
+      const { data, error } = await supabaseClient.rpc("get_ssot", {
+        input_data: {
+          activeTeam: team.team_id,
+          pageNumber: 1,
+          rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+          search,
+          otpCondition: [...projectNameList, ...itemNameList],
+          numberOfCondition:
+            projectNameList.length !== 0 && itemNameList.length !== 0 ? 2 : 1,
+        },
+      });
+      if (error) throw error;
+
+      setOtpList(data as SSOTType[]);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
 
   const loadMoreRequests = async (offset: number) => {
     try {
@@ -746,7 +798,18 @@ const SSOTSpreadsheetView = ({ data }: Props) => {
         SSOT Spreadsheet View
       </Title>
 
-      <Paper mt="xl" p="xl" shadow="sm">
+      <Space h="sm" />
+      <FormProvider {...filterSSOTMethods}>
+        <form onSubmit={handleSubmit(handleFilterSSOT)}>
+          <SSOTSpreadsheetViewFilter
+            handleFilterSSOT={handleFilterSSOT}
+            projectNameList={projectNameList}
+            itemNameList={itemNameList}
+          />
+        </form>
+      </FormProvider>
+
+      <Paper mt="xs" p="xs" shadow="sm">
         <ScrollArea
           scrollbarSize={10}
           offsetScrollbars
