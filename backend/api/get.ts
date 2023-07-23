@@ -2109,8 +2109,6 @@ export const getCanvassData = async (
     .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
   const recommendedQuotationId = Object.keys(sortedQuotation)[0];
 
-  console.log(requestAdditionalCharge);
-
   return {
     canvassData,
     lowestPricePerItem,
