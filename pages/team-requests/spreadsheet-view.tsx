@@ -22,6 +22,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             activeTeam: activeTeam,
             pageNumber: 1,
             rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+            search: "",
+            otpCondition: [],
           },
         });
         if (error) throw error;

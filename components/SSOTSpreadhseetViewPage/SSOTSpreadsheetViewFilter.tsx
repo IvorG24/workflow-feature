@@ -1,7 +1,6 @@
 import { ActionIcon, Flex, MultiSelect, TextInput } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconSearch } from "@tabler/icons-react";
-import { startCase, toLower } from "lodash";
 import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { SSOTFilterFormValues } from "./SSOTSpreadhseetViewPage";
@@ -41,7 +40,7 @@ const SSOTSpreadsheetViewFilter = ({
   }));
 
   const itemNameListData = itemNameList.map((item) => ({
-    label: startCase(toLower(item)),
+    label: item,
     value: item,
   }));
 

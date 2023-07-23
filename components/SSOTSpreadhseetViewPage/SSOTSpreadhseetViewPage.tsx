@@ -179,7 +179,27 @@ const SSOTSpreadsheetView = ({
       itemNameList,
     }: SSOTFilterFormValues = getValues()
   ) => {
-    console.log({ search, projectNameList, itemNameList });
+    try {
+      const { data, error } = await supabaseClient.rpc("get_ssot", {
+        input_data: {
+          activeTeam: team.team_id,
+          pageNumber: 1,
+          rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+          search,
+          otpCondition: [...projectNameList, ...itemNameList],
+          numberOfCondition:
+            projectNameList.length !== 0 && itemNameList.length !== 0 ? 2 : 1,
+        },
+      });
+      if (error) throw error;
+
+      setOtpList(data as SSOTType[]);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
   };
 
   const loadMoreRequests = async (offset: number) => {
@@ -789,7 +809,7 @@ const SSOTSpreadsheetView = ({
         </form>
       </FormProvider>
 
-      <Paper mt="xl" p="xl" shadow="sm">
+      <Paper mt="xs" p="xs" shadow="sm">
         <ScrollArea
           scrollbarSize={10}
           offsetScrollbars
