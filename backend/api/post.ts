@@ -573,7 +573,7 @@ export const createFormslyPremadeForms = async (
   const formValues = forms
     .map(
       (form) =>
-        `('${form.form_id}','${form.form_name}','${form.form_description}','${form.form_app}','${form.form_is_formsly_form}','${form.form_is_hidden}','${form.form_team_member_id}')`
+        `('${form.form_id}','${form.form_name}','${form.form_description}','${form.form_app}','${form.form_is_formsly_form}','${form.form_is_hidden}','${form.form_team_member_id}','${form.form_is_disabled}')`
     )
     .join(",");
 

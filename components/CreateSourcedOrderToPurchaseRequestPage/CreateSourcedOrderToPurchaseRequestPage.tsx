@@ -2,7 +2,6 @@ import { checkQuotationItemQuantity } from "@/backend/api/get";
 import { splitParentOtp } from "@/backend/api/update";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
-import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -69,10 +68,6 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  const signerList = form.form_signer.map((signer) => ({
-    ...signer,
-    signer_action: signer.signer_action.toUpperCase(),
-  }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, setValue, control, getValues } = requestFormMethods;
@@ -395,7 +390,7 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
                 </Box>
               );
             })}
-            <RequestFormSigner signerList={signerList} />
+
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

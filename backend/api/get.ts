@@ -599,7 +599,7 @@ export const getForm = async (
       )`
     )
     .eq("form_id", formId)
-    .eq("form_is_disabled", false)
+    // .eq("form_is_disabled", false)
     .eq("form_signer.signer_is_disabled", false)
     .single();
   if (error) throw error;
@@ -2108,8 +2108,6 @@ export const getCanvassData = async (
     .sort(([, a], [, b]) => a - b)
     .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
   const recommendedQuotationId = Object.keys(sortedQuotation)[0];
-
-  console.log(requestAdditionalCharge);
 
   return {
     canvassData,

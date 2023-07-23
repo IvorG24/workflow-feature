@@ -17,16 +17,16 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('cb06905e-e64b-4bfe-9f03-ee36dba0c809', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]),
 ('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]);
 
-INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_group) VALUES
-('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[]),
-('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[]),
-('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['Warehouse Processor']),
-('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Order to Purchase', 'formsly premade Sourced Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Processor']),
-('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Accounting Processor']),
-('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver']),
-('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver']),
-('913a09d8-88f9-4139-a039-a77394405b62', 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Treasury Processor']),
-('d2e3e618-7f9b-4439-8f76-72a05a0bf305', 'Audit', 'formsly premade Audit form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['Audit Processor']);
+INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_group, form_is_disabled) VALUES
+('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[], false),
+('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[], false),
+('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['Warehouse Processor'], false),
+('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Order to Purchase', 'formsly premade Sourced Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Processor'], true),
+('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Accounting Processor'], false),
+('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver'], false),
+('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Warehouse Receiver'], false),
+('913a09d8-88f9-4139-a039-a77394405b62', 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['Treasury Processor'], false),
+('d2e3e618-7f9b-4439-8f76-72a05a0bf305', 'Audit', 'formsly premade Audit form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['Audit Processor'], false);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
