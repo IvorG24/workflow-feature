@@ -599,7 +599,7 @@ export const getForm = async (
       )`
     )
     .eq("form_id", formId)
-    .eq("form_is_disabled", false)
+    // .eq("form_is_disabled", false)
     .eq("form_signer.signer_is_disabled", false)
     .single();
   if (error) throw error;

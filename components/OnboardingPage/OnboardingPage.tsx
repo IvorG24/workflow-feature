@@ -129,7 +129,7 @@ const OnboardingPage = ({ user }: Props) => {
                 },
                 validate: {
                   validCharacters: (value) =>
-                    /^[a-z0-9_.]+$/.test(value) ||
+                    /^[a-zA-Z0-9_.]+$/.test(value) ||
                     "Username can only contain letters, numbers, underscore, and period",
                   alreadyUsed: async (value) => {
                     const isAlreadyUsed = await checkUsername(supabaseClient, {

@@ -95,7 +95,7 @@ const PersonalInfo = ({
                   },
                   validate: {
                     validCharacters: (value) =>
-                      /^[a-z0-9_.]+$/.test(value) ||
+                      /^[a-zA-Z0-9_.]+$/.test(value) ||
                       "Username can only contain letters, numbers, underscore, and period",
                     alreadyUsed: async (value) => {
                       if (defaultValues?.user_username === value) return true;

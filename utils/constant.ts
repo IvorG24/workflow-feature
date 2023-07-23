@@ -98,6 +98,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
+        form_is_disabled: false,
       },
       section: [
         {
@@ -215,6 +216,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
+        form_is_disabled: true,
       },
       section: [
         {
@@ -253,6 +255,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
+        form_is_disabled: false,
       },
       section: [
         {
@@ -434,6 +437,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
+        form_is_disabled: false,
       },
       section: [
         {
@@ -527,6 +531,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
+        form_is_disabled: false,
       },
       section: [
         {
@@ -611,6 +616,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
+        form_is_disabled: false,
       },
       section: [
         {
@@ -728,6 +734,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
+        form_is_disabled: false,
       },
       section: [
         {

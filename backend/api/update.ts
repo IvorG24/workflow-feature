@@ -236,7 +236,7 @@ export const acceptTeamInvitation = async (
   params: { invitationId: string; teamId: string; userId: string }
 ) => {
   const { invitationId, teamId, userId } = params;
-  console.log(params);
+
   const { error } = await supabaseClient
     .rpc("accept_team_invitation", {
       invitation_id: invitationId,
@@ -506,6 +506,7 @@ export const splitParentOtp = async (
       .from("form_table")
       .select(
         `*, 
+        form_team_member: form_team_member_id!inner(*),
         form_signer: signer_table!inner(
           signer_id, 
           signer_is_primary_signer, 
@@ -525,6 +526,7 @@ export const splitParentOtp = async (
       )
       .eq("form_name", "Order to Purchase")
       .eq("form_is_formsly_form", true)
+      .eq("form_team_member.team_member_team_id", teamId)
       .single();
     if (otpFormError) throw otpFormError;
 
