@@ -5,6 +5,7 @@ import {
   ActionIcon,
   FileInput,
   Flex,
+  Loader,
   MultiSelect,
   NumberInput,
   Select,
@@ -20,7 +21,7 @@ import {
   IconFile,
   IconLink,
 } from "@tabler/icons-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { RequestFormValues } from "./CreateRequestPage";
 
@@ -39,6 +40,8 @@ type RequestFormFieldsProps = {
       value: string | null,
       prevValue: string | null
     ) => void;
+    supplierSearch?: (value: string) => void;
+    isSearching?: boolean;
   };
   rirFormMethods?: {
     onQuantityChange: (index: number, value: number) => void;
@@ -63,6 +66,15 @@ const RequestFormFields = ({
   } = useFormContext<RequestFormValues>();
 
   const timeInputRef = useRef<HTMLInputElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
@@ -229,6 +241,7 @@ const RequestFormFields = ({
             label: option.option_value,
           };
         });
+
         return (
           <Controller
             control={control}
@@ -260,6 +273,30 @@ const RequestFormFields = ({
                 clearable
                 error={fieldError}
                 searchable={formslyFormName !== ""}
+                onSearchChange={(value) => {
+                  if (
+                    quotationFormMethods &&
+                    value &&
+                    field.field_name === "Supplier"
+                  ) {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+
+                    timeoutRef.current = setTimeout(() => {
+                      quotationFormMethods.supplierSearch &&
+                        quotationFormMethods.supplierSearch(value);
+                    }, 500);
+                  }
+                }}
+                rightSection={
+                  quotationFormMethods &&
+                  quotationFormMethods.isSearching &&
+                  field.field_name === "Supplier" ? (
+                    <Loader size={16} />
+                  ) : null
+                }
+                nothingFound="Nothing found. Try a different keyword"
               />
             )}
             rules={{ ...fieldRules }}

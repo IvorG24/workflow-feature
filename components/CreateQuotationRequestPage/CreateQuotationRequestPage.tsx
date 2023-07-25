@@ -1,4 +1,4 @@
-import { checkQuotationItemQuantity } from "@/backend/api/get";
+import { checkQuotationItemQuantity, getSupplier } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -57,6 +57,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
 
   const [availableItems, setAvailableItems] =
     useState<OptionTableRow[]>(itemOptions);
+  const [isSearching, setIsSearching] = useState(false);
 
   const formDetails = {
     form_name: form.form_name,
@@ -352,6 +353,31 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
     }
   };
 
+  const supplierSearch = async (value: string) => {
+    if (
+      !value ||
+      value === getValues("sections.1.section_field.0.field_response")
+    )
+      return;
+
+    try {
+      setIsSearching(true);
+      const supplierList = await getSupplier(supabaseClient, {
+        supplier: value,
+        teamId: `${teamMember?.team_member_team_id}`,
+        fieldId: form.form_section[1].section_field[0].field_id,
+      });
+      setValue(`sections.1.section_field.0.field_option`, supplierList);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -376,7 +402,11 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
                     sectionIndex={idx}
                     formslyFormName="Quotation"
                     onRemoveSection={handleRemoveSection}
-                    quotationFormMethods={{ onItemChange: handleItemChange }}
+                    quotationFormMethods={{
+                      onItemChange: handleItemChange,
+                      supplierSearch,
+                      isSearching,
+                    }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

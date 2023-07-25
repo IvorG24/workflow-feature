@@ -2280,3 +2280,30 @@ export const getRequestStatusMonthlyCount = async (
     totalCount: totalCount,
   };
 };
+
+// Get supplier
+export const getSupplier = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { supplier: string; teamId: string; fieldId: string }
+) => {
+  const { supplier, teamId, fieldId } = params;
+  const { data, error } = await supabaseClient
+    .from("supplier_table")
+    .select("*")
+    .eq("supplier_team_id", teamId)
+    .ilike("supplier_name", `%${supplier}%`)
+    .order("supplier_name", { ascending: true });
+  if (error) throw error;
+
+  const supplierList = data.map((supplier, index) => {
+    return {
+      option_description: null,
+      option_field_id: fieldId,
+      option_id: uuidv4(),
+      option_order: index + 1,
+      option_value: supplier.supplier_name,
+    };
+  });
+
+  return supplierList;
+};
