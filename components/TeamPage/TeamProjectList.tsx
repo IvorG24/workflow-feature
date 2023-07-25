@@ -30,6 +30,7 @@ import { useFormContext } from "react-hook-form";
 import { SearchForm } from "./TeamPage";
 
 type Props = {
+  isOwnerOrAdmin: boolean;
   teamProjectList: Record<string, TeamMemberType[]>;
   onSearchTeamProject: (data: SearchForm) => void;
   page: number;
@@ -48,6 +49,7 @@ type Props = {
 };
 
 const TeamProjectList = ({
+  isOwnerOrAdmin,
   teamProjectList,
   onSearchTeamProject,
   page,
@@ -156,7 +158,7 @@ const TeamProjectList = ({
               <tr>
                 <th>Project</th>
                 <th>Members</th>
-                <th></th>
+                {isOwnerOrAdmin && <th></th>}
               </tr>
             </thead>
 
@@ -181,41 +183,43 @@ const TeamProjectList = ({
                         </Avatar.Group>
                       </Tooltip.Group>
                     </td>
-                    <td>
-                      <Menu shadow="md" width={200}>
-                        <Menu.Target>
-                          <ActionIcon>
-                            <IconDotsVertical size={16} />
-                          </ActionIcon>
-                        </Menu.Target>
+                    {isOwnerOrAdmin && (
+                      <td>
+                        <Menu shadow="md" width={200}>
+                          <Menu.Target>
+                            <ActionIcon>
+                              <IconDotsVertical size={16} />
+                            </ActionIcon>
+                          </Menu.Target>
 
-                        <Menu.Dropdown>
-                          <Menu.Item
-                            icon={<IconEdit size={14} />}
-                            onClick={() => {
-                              setIsCreatingTeamProject(true);
-                              setEditProjectData({
-                                projectName: project,
-                                projectMembers: [
-                                  ...teamProjectList[project].map(
-                                    (member) => member.team_member_id
-                                  ),
-                                ],
-                              });
-                            }}
-                          >
-                            Edit Project
-                          </Menu.Item>
-                          <Menu.Item
-                            onClick={() => openDeleteModal(project)}
-                            color="red"
-                            icon={<IconTrash size={14} />}
-                          >
-                            Delete Project
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                    </td>
+                          <Menu.Dropdown>
+                            <Menu.Item
+                              icon={<IconEdit size={14} />}
+                              onClick={() => {
+                                setIsCreatingTeamProject(true);
+                                setEditProjectData({
+                                  projectName: project,
+                                  projectMembers: [
+                                    ...teamProjectList[project].map(
+                                      (member) => member.team_member_id
+                                    ),
+                                  ],
+                                });
+                              }}
+                            >
+                              Edit Project
+                            </Menu.Item>
+                            <Menu.Item
+                              onClick={() => openDeleteModal(project)}
+                              color="red"
+                              icon={<IconTrash size={14} />}
+                            >
+                              Delete Project
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      </td>
+                    )}
                   </tr>
                 );
               })}

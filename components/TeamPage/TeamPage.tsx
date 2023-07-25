@@ -99,6 +99,12 @@ const TeamPage = ({
     (member) => member.team_member_user.user_email
   );
 
+  const userRole = teamMemberList.find(
+    (member) => member.team_member_id === teamMember?.team_member_id
+  )?.team_member_role as MemberRoleType;
+
+  const isOwnerOrAdmin = userRole === "ADMIN" || userRole === "OWNER";
+
   const updateTeamMethods = useForm<UpdateTeamInfoForm>({
     defaultValues: { teamName: team.team_name, teamLogo: team.team_logo || "" },
   });
@@ -611,6 +617,7 @@ const TeamPage = ({
           {!isCreatingTeamGroup ? (
             <FormProvider {...searchTeamGroupMethods}>
               <TeamGroupList
+                isOwnerOrAdmin={isOwnerOrAdmin}
                 teamGroupList={teamGroupList}
                 onSearchTeamGroup={handleSearchTeamGroup}
                 page={teamGroupPage}
@@ -647,6 +654,7 @@ const TeamPage = ({
           {!isCreatingTeamProject ? (
             <FormProvider {...searchTeamProjectMethods}>
               <TeamProjectList
+                isOwnerOrAdmin={isOwnerOrAdmin}
                 teamProjectList={teamProjectList}
                 onSearchTeamProject={handleSearchTeamProject}
                 page={teamProjectPage}
