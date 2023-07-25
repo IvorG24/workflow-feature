@@ -8,6 +8,7 @@ import {
   Box,
   Flex,
   List,
+  Loader,
   LoadingOverlay,
   Paper,
   ScrollArea,
@@ -202,7 +203,14 @@ const SSOTSpreadsheetView = ({
     }
   };
 
-  const loadMoreRequests = async (offset: number) => {
+  const loadMoreRequests = async (
+    offset: number,
+    {
+      search,
+      projectNameList,
+      itemNameList,
+    }: SSOTFilterFormValues = getValues()
+  ) => {
     try {
       setIsLoading(true);
       setScrollBarType("never");
@@ -211,15 +219,20 @@ const SSOTSpreadsheetView = ({
           activeTeam: team.team_id,
           pageNumber: offset,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+          search,
+          otpCondition: [...projectNameList, ...itemNameList],
+          numberOfCondition:
+            projectNameList.length !== 0 && itemNameList.length !== 0 ? 2 : 1,
         },
       });
       if (error) throw error;
-
-      const formattedData = data as SSOTType[];
-      if (formattedData.length === 0) {
-        setIsFetchable(false);
-      } else {
-        setOtpList((prev) => [...prev, ...formattedData]);
+      if (data) {
+        const formattedData = data as SSOTType[];
+        if (formattedData.length === 0) {
+          setIsFetchable(false);
+        } else {
+          setOtpList((prev) => [...prev, ...formattedData]);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -817,7 +830,10 @@ const SSOTSpreadsheetView = ({
           onScrollCapture={handleScroll}
         >
           <Box mah={710}>
-            <LoadingOverlay visible={isLoading} />
+            <LoadingOverlay
+              visible={isLoading}
+              loader={<Loader variant="dots" />}
+            />
             <Table
               withBorder
               withColumnBorders
