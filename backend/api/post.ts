@@ -425,15 +425,20 @@ export const createRequest = async (
       ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
+          const uploadId = `${field.field_id}${
+            field.field_section_duplicatable_id
+              ? `_${field.field_section_duplicatable_id}`
+              : ""
+          }`;
           if (fileResponse["type"].split("/")[0] === "image") {
             responseValue = await uploadImage(supabaseClient, {
-              id: field.field_id,
+              id: uploadId,
               image: fileResponse,
               bucket: "REQUEST_ATTACHMENTS",
             });
           } else {
             responseValue = await uploadFile(supabaseClient, {
-              id: field.field_id,
+              id: uploadId,
               file: fileResponse,
               bucket: "REQUEST_ATTACHMENTS",
             });

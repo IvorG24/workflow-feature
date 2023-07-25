@@ -45,7 +45,7 @@ const FormList = () => {
     <>
       {teamMember?.team_member_role === "ADMIN" ||
       teamMember?.team_member_role === "OWNER" ? (
-        <Group mb="sm" position="apart" mt="sm">
+        <Group mb="sm" position="apart">
           <Text mb={4} size="xs" weight={400}>
             <Anchor
               onClick={() =>

@@ -1,4 +1,3 @@
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_TEAM_GROUP_LIST_LIMIT } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamMemberType } from "@/utils/types";
@@ -30,6 +29,7 @@ import { useFormContext } from "react-hook-form";
 import { SearchForm } from "./TeamPage";
 
 type Props = {
+  isOwnerOrAdmin: boolean;
   teamGroupList: Record<string, TeamMemberType[]>;
   onSearchTeamGroup: (data: SearchForm) => void;
   page: number;
@@ -48,6 +48,7 @@ type Props = {
 };
 
 const TeamGroupList = ({
+  isOwnerOrAdmin,
   teamGroupList,
   onSearchTeamGroup,
   page,
@@ -62,7 +63,6 @@ const TeamGroupList = ({
   const totalGroups = Object.keys(teamGroupList).length;
 
   const { register, handleSubmit } = useFormContext<SearchForm>();
-  const teamMember = useUserTeamMember();
 
   const renderAvatar = (group: string) => {
     return teamGroupList[group].slice(0, 3).map((member) => {
@@ -119,8 +119,7 @@ const TeamGroupList = ({
     <Stack spacing={12}>
       <Flex align="center" justify="space-between">
         <Text weight={600}>Group Management</Text>
-        {teamMember?.team_member_role === "ADMIN" ||
-        teamMember?.team_member_role === "OWNER" ? (
+        {isOwnerOrAdmin ? (
           <Button
             compact
             onClick={() => {
@@ -156,7 +155,7 @@ const TeamGroupList = ({
               <tr>
                 <th>Group</th>
                 <th>Members</th>
-                <th></th>
+                {isOwnerOrAdmin && <th></th>}
               </tr>
             </thead>
 
@@ -181,41 +180,43 @@ const TeamGroupList = ({
                         </Avatar.Group>
                       </Tooltip.Group>
                     </td>
-                    <td>
-                      <Menu shadow="md" width={200}>
-                        <Menu.Target>
-                          <ActionIcon>
-                            <IconDotsVertical size={16} />
-                          </ActionIcon>
-                        </Menu.Target>
+                    {isOwnerOrAdmin && (
+                      <td>
+                        <Menu shadow="md" width={200}>
+                          <Menu.Target>
+                            <ActionIcon>
+                              <IconDotsVertical size={16} />
+                            </ActionIcon>
+                          </Menu.Target>
 
-                        <Menu.Dropdown>
-                          <Menu.Item
-                            icon={<IconEdit size={14} />}
-                            onClick={() => {
-                              setIsCreatingTeamGroup(true);
-                              setEditGroupData({
-                                groupName: group,
-                                groupMembers: [
-                                  ...teamGroupList[group].map(
-                                    (member) => member.team_member_id
-                                  ),
-                                ],
-                              });
-                            }}
-                          >
-                            Edit Group
-                          </Menu.Item>
-                          <Menu.Item
-                            onClick={() => openDeleteModal(group)}
-                            color="red"
-                            icon={<IconTrash size={14} />}
-                          >
-                            Delete Group
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                    </td>
+                          <Menu.Dropdown>
+                            <Menu.Item
+                              icon={<IconEdit size={14} />}
+                              onClick={() => {
+                                setIsCreatingTeamGroup(true);
+                                setEditGroupData({
+                                  groupName: group,
+                                  groupMembers: [
+                                    ...teamGroupList[group].map(
+                                      (member) => member.team_member_id
+                                    ),
+                                  ],
+                                });
+                              }}
+                            >
+                              Edit Group
+                            </Menu.Item>
+                            <Menu.Item
+                              onClick={() => openDeleteModal(group)}
+                              color="red"
+                              icon={<IconTrash size={14} />}
+                            >
+                              Delete Group
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      </td>
+                    )}
                   </tr>
                 );
               })}

@@ -18,7 +18,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { upperCase } from "lodash";
+import { toUpper } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -64,15 +64,15 @@ const CreateItem = ({
     try {
       const newItem = await createItem(supabaseClient, {
         itemDescription: data.descriptions.map((decription) =>
-          upperCase(decription.description)
+          toUpper(decription.description)
         ),
         itemData: {
-          item_general_name: upperCase(data.generalName),
+          item_general_name: toUpper(data.generalName),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_purpose: data.purpose,
-          item_cost_code: upperCase(data.costCode),
-          item_gl_account: upperCase(data.glAccount),
+          item_cost_code: toUpper(data.costCode),
+          item_gl_account: toUpper(data.glAccount),
           item_team_id: activeTeam.team_id,
         },
         formId: formId,
