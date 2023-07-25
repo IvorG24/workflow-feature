@@ -1,5 +1,5 @@
 import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
-import { Box } from "@mantine/core";
+import { Box, Space } from "@mantine/core";
 import {
   IconCirclePlus,
   IconDashboard,
@@ -85,6 +85,8 @@ const ReviewAppNavLink = () => {
         links={!isEmpty(activeTeam) ? teamSectionWithManageTeam : teamSection}
         {...defaultNavLinkProps}
       />
+
+      <Space h="sm" />
     </>
   );
 };

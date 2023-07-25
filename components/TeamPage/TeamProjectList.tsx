@@ -1,4 +1,3 @@
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_TEAM_GROUP_LIST_LIMIT } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamMemberType } from "@/utils/types";
@@ -64,7 +63,6 @@ const TeamProjectList = ({
   const totalProjects = Object.keys(teamProjectList).length;
 
   const { register, handleSubmit } = useFormContext<SearchForm>();
-  const teamMember = useUserTeamMember();
 
   const renderAvatar = (project: string) => {
     return teamProjectList[project].slice(0, 3).map((member) => {
@@ -121,8 +119,7 @@ const TeamProjectList = ({
     <Stack spacing={12}>
       <Flex align="center" justify="space-between">
         <Text weight={600}>Project Management</Text>
-        {teamMember?.team_member_role === "ADMIN" ||
-        teamMember?.team_member_role === "OWNER" ? (
+        {isOwnerOrAdmin ? (
           <Button
             compact
             onClick={() => {

@@ -23,6 +23,7 @@ type Props = {
   onUpdateTeam: (data: UpdateTeamInfoForm) => void;
   teamLogoFile: File | null;
   onTeamLogoFileChange: Dispatch<SetStateAction<File | null>>;
+  isOwnerOrAdmin: boolean;
 };
 
 const TeamInfoForm = ({
@@ -31,6 +32,7 @@ const TeamInfoForm = ({
   onUpdateTeam,
   teamLogoFile,
   onTeamLogoFileChange,
+  isOwnerOrAdmin,
 }: Props) => {
   const {
     register,
@@ -65,6 +67,7 @@ const TeamInfoForm = ({
                 }
                 initials={upperCase(`${team.team_name[0]}${team.team_name[1]}`)}
                 id={team.team_id}
+                disabled={!isOwnerOrAdmin}
               />
             </Group>
 
@@ -93,15 +96,19 @@ const TeamInfoForm = ({
                   Inc.&quot;, &quot;The New Team 2023&quot;.
                 </Text>
               }
+              readOnly={!isOwnerOrAdmin}
+              variant={isOwnerOrAdmin ? "default" : "filled"}
             />
 
-            <Button
-              type="submit"
-              sx={{ alignSelf: "flex-end" }}
-              disabled={!isDirty && teamLogoFile === null}
-            >
-              Save Changes
-            </Button>
+            {isOwnerOrAdmin && (
+              <Button
+                type="submit"
+                sx={{ alignSelf: "flex-end" }}
+                disabled={!isDirty && teamLogoFile === null}
+              >
+                Save Changes
+              </Button>
+            )}
           </Stack>
         </form>
       </Paper>

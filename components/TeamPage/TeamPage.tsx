@@ -591,6 +591,7 @@ const TeamPage = ({
           onUpdateTeam={handleUpdateTeam}
           teamLogoFile={teamLogo}
           onTeamLogoFileChange={setTeamLogo}
+          isOwnerOrAdmin={isOwnerOrAdmin}
         />
       </FormProvider>
 
@@ -681,13 +682,15 @@ const TeamPage = ({
         </Paper>
       </Container>
 
-      <InviteMember
-        isInvitingMember={isInvitingMember}
-        onInviteMember={handleInvite}
-        onSetEmailList={setEmailList}
-        memberEmailList={memberEmailList}
-        emailList={emailList}
-      />
+      {isOwnerOrAdmin && (
+        <InviteMember
+          isInvitingMember={isInvitingMember}
+          onInviteMember={handleInvite}
+          onSetEmailList={setEmailList}
+          memberEmailList={memberEmailList}
+          emailList={emailList}
+        />
+      )}
 
       <Space mt={32} />
     </Container>
