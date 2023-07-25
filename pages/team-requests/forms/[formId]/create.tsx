@@ -2,7 +2,6 @@ import {
   checkOTPRequestForSourced,
   checkRequest,
   getAllItems,
-  getAllNames,
   getForm,
   getItemResponseForQuotation,
   getItemResponseForRIRPurchased,
@@ -180,21 +179,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           }
 
-          // suppliers
-          const suppliers = await getAllNames(supabaseClient, {
-            table: "supplier",
-            teamId: teamId,
-          });
-          const supplierOptions = suppliers.map((supplier, index) => {
-            return {
-              option_description: null,
-              option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: supplier.supplier_id,
-              option_order: index,
-              option_value: supplier.supplier_name,
-            };
-          });
-
           const items = await getItemResponseForQuotation(supabaseClient, {
             requestId: `${context.query.otpId}`,
           });
@@ -211,25 +195,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
           return {
             props: {
-              form: {
-                ...form,
-                form_section: [
-                  {
-                    ...form.form_section[0],
-                  },
-                  {
-                    ...form.form_section[1],
-                    section_field: [
-                      {
-                        ...form.form_section[1].section_field[0],
-                        field_option: supplierOptions,
-                      },
-                      ...form.form_section[1].section_field.slice(1),
-                    ],
-                  },
-                  ...form.form_section.slice(2),
-                ],
-              },
+              form,
               itemOptions,
             },
           };

@@ -24,6 +24,8 @@ type RequestFormSectionProps = {
       value: string | null,
       prevValue: string | null
     ) => void;
+    supplierSearch?: (value: string) => void;
+    isSearching?: boolean;
   };
   rirFormMethods?: {
     onQuantityChange: (index: number, value: number) => void;
