@@ -2289,10 +2289,11 @@ export const getSupplier = async (
   const { supplier, teamId, fieldId } = params;
   const { data, error } = await supabaseClient
     .from("supplier_table")
-    .select("*")
+    .select("supplier_name")
     .eq("supplier_team_id", teamId)
     .ilike("supplier_name", `%${supplier}%`)
-    .order("supplier_name", { ascending: true });
+    .order("supplier_name", { ascending: true })
+    .limit(500);
   if (error) throw error;
 
   const supplierList = data.map((supplier, index) => {
