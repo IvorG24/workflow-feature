@@ -18,6 +18,7 @@ import {
   Title,
   createStyles,
 } from "@mantine/core";
+import { useElementSize, useViewportSize } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile } from "@tabler/icons-react";
@@ -151,6 +152,8 @@ const SSOTSpreadsheetView = ({
   itemNameList,
 }: Props) => {
   const { classes } = useStyles();
+  const { height } = useViewportSize();
+  const { ref: topElementRef, height: topElementHeight } = useElementSize();
   const supabaseClient = createPagesBrowserClient<Database>();
   const containerRef = useRef<HTMLTableElement>(null);
   const team = useActiveTeam();
@@ -807,20 +810,22 @@ const SSOTSpreadsheetView = ({
 
   return (
     <Flex direction="column" p="0">
-      <Title order={2} color="dimmed">
-        SSOT Spreadsheet View
-      </Title>
+      <Box ref={topElementRef}>
+        <Title order={2} color="dimmed">
+          SSOT Spreadsheet View
+        </Title>
 
-      <Space h="sm" />
-      <FormProvider {...filterSSOTMethods}>
-        <form onSubmit={handleSubmit(handleFilterSSOT)}>
-          <SSOTSpreadsheetViewFilter
-            handleFilterSSOT={handleFilterSSOT}
-            projectNameList={projectNameList}
-            itemNameList={itemNameList}
-          />
-        </form>
-      </FormProvider>
+        <Space h="sm" />
+        <FormProvider {...filterSSOTMethods}>
+          <form onSubmit={handleSubmit(handleFilterSSOT)}>
+            <SSOTSpreadsheetViewFilter
+              handleFilterSSOT={handleFilterSSOT}
+              projectNameList={projectNameList}
+              itemNameList={itemNameList}
+            />
+          </form>
+        </FormProvider>
+      </Box>
 
       <Paper mt="xs" p="xs" shadow="sm">
         <ScrollArea
@@ -829,7 +834,17 @@ const SSOTSpreadsheetView = ({
           type={scrollBarType}
           onScrollCapture={handleScroll}
         >
-          <Box mah={710}>
+          <Box
+            mah={{
+              base: height - (topElementHeight + 130),
+              xs: height - (topElementHeight + 130),
+              sm: height - (topElementHeight + 130),
+              md: height - (topElementHeight + 150),
+              lg: height - (topElementHeight + 145),
+              600: height - (topElementHeight + 130),
+              1030: height - (topElementHeight + 150),
+            }}
+          >
             <LoadingOverlay
               visible={isLoading}
               loader={<Loader variant="dots" />}

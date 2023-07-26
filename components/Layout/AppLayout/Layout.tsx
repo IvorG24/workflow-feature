@@ -169,6 +169,7 @@ const Layout = ({ children }: LayoutProps) => {
               ? theme.colors.dark[8]
               : theme.colors.gray[0],
           position: "relative",
+          width: "0",
         },
       }}
       navbarOffsetBreakpoint="sm"
