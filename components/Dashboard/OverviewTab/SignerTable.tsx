@@ -76,7 +76,7 @@ const SignerTable = ({ signerList, totalRequestCount }: SignerTableProps) => {
                     </Group>
 
                     <Badge size="sm" variant="filled" color="dark">
-                      Total: {signer.total}
+                      Total: {signer.total.toLocaleString()}
                     </Badge>
                   </Group>
                   <Progress
