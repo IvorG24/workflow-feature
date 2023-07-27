@@ -581,13 +581,15 @@ RETURNS VOID AS $$
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
 
-    plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}' WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
+     plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}' WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
     
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
-
-    plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_additional_info='${additionalInfo}' WHERE request_id='${requestId}';`);
+    
+    if(isPrimarySigner===true){
+      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_additional_info='${additionalInfo}' WHERE request_id='${requestId}';`);
+    }
     
  });
 $$ LANGUAGE plv8;
