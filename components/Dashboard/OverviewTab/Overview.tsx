@@ -194,19 +194,19 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
         gap="md"
         wrap="wrap"
       >
-        <Box w={{ base: "100%", sm: 360 }} h={450}>
+        <Box w={{ base: "100%", sm: 360 }} h={420}>
           <RequestStatusTracker
             data={requestStatusCount || []}
             totalRequestCount={totalRequestCount}
           />
         </Box>
-        <Box w={{ base: "100%", sm: 300 }} h={450}>
+        <Box w={{ base: "100%", sm: 300 }} h={420}>
           <RequestorTable
             totalRequestCount={totalRequestCount}
             requestorList={requestorList.length > 0 ? requestorList : []}
           />
         </Box>
-        <Box w={{ base: "100%", sm: 300 }} h={450}>
+        <Box w={{ base: "100%", sm: 300 }} h={420}>
           <SignerTable
             signerList={signerList.length > 0 ? signerList : []}
             totalRequestCount={totalRequestCount}
