@@ -24,7 +24,6 @@ export type StackedBarChartDataType = {
   approved: number;
   rejected: number;
   pending: number;
-  canceled: number;
 };
 
 type StackedBarChartProps = {
@@ -75,21 +74,6 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
         label: "Pending",
         data: data.map((d) => d.pending),
         backgroundColor: "#228be6",
-        barPercentage: 0.7,
-        borderSkipped: false,
-        borderRadius: {
-          topLeft: 20,
-          topRight: 20,
-          bottomLeft: 20,
-          bottomRight: 20,
-        },
-        borderWidth: 2,
-        borderColor: "transparent",
-      },
-      {
-        label: "Canceled",
-        data: data.map((d) => d.canceled),
-        backgroundColor: "#ADB5BD",
         barPercentage: 0.7,
         borderSkipped: false,
         borderRadius: {

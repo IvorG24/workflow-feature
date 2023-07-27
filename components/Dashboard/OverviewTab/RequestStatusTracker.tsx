@@ -48,7 +48,7 @@ const RequestStatusTracker = ({
           Total Request: {totalRequestCount.toLocaleString()}
         </Title>
       </Group>
-      <Flex h="100%" direction="column" mt="lg">
+      <Flex direction="column" align="stretch" gap="sm" mt="lg">
         <Center w="100%">
           <Box maw={175} mih={175}>
             {totalRequestCount > 0 ? (
@@ -62,13 +62,14 @@ const RequestStatusTracker = ({
             )}
           </Box>
         </Center>
-        <Stack p="lg">
+        <Stack p="lg" spacing="lg">
           {data.map((d, idx) => (
             <Flex
               key={d.label + idx}
               fz={14}
               justify="space-between"
               align="center"
+              wrap="wrap"
             >
               <Group spacing="xs" w="fit-content" align="center">
                 <Center c={getStatusToColorForCharts(d.label)}>

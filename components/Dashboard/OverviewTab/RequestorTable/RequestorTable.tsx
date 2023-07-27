@@ -36,7 +36,7 @@ const RequestorTable = ({
 
   return (
     <ScrollArea w="100%" h="100%">
-      <Paper w={{ base: "100%" }} mih={450} withBorder>
+      <Paper w={{ base: "100%" }} mih={420} withBorder>
         <Group p="md" spacing="xs" className={classes.withBorderBottom}>
           <Center c="green">
             <IconTrophyFilled />

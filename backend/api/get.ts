@@ -21,7 +21,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { lowerCase, startCase } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 
-const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED", "CANCELED"];
+const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
 // Get file url
 export async function getFileUrl(
@@ -2226,13 +2226,11 @@ export const getRequestStatusMonthlyCount = async (
     const { count: pendingCount } = await getCount("PENDING");
     const { count: approvedCount } = await getCount("APPROVED");
     const { count: rejectedCount } = await getCount("REJECTED");
-    const { count: canceledCount } = await getCount("CANCELED");
 
     const statusData = {
       pending: pendingCount || 0,
       approved: approvedCount || 0,
       rejected: rejectedCount || 0,
-      canceled: canceledCount || 0,
     };
 
     return {

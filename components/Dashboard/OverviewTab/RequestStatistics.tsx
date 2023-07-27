@@ -22,7 +22,7 @@ type RequestStatisticsProps = {
   dateFilter: [Date | null, Date | null];
 };
 
-const statusList = ["pending", "approved", "rejected", "canceled"];
+const statusList = ["pending", "approved", "rejected"];
 
 const RequestStatistics = ({
   monthlyChartData,
@@ -55,9 +55,6 @@ const RequestStatistics = ({
             break;
           case "pending":
             d.pending = 0;
-            break;
-          case "canceled":
-            d.canceled = 0;
             break;
 
           default:
