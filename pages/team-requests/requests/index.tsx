@@ -81,7 +81,6 @@ const Page = ({
   formList,
   isFormslyTeam,
 }: Props) => {
-  console.log(requestList);
   return (
     <>
       <Meta description="Request List Page" url="/team-requests/requests" />
