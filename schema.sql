@@ -322,7 +322,7 @@ RETURNS JSON as $$
       
       if(!otp_response) return;
 
-      // OTP request respone with fields
+      // OTP request response with fields
       const otp_response_fields = otp_response.map(response => {
         const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
         return {
@@ -349,7 +349,7 @@ RETURNS JSON as $$
           // Quotation request response
           const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
           
-          // Quotation request respone with fields
+          // Quotation request response with fields
           const quotation_response_fields = quotation_response.map(response => {
             const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
             return {
@@ -376,7 +376,7 @@ RETURNS JSON as $$
               // rir request response
               const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
               
-              // rir request respone with fields
+              // rir request response with fields
               const rir_response_fields = rir_response.map(response => {
                 const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
                 return {
@@ -422,7 +422,7 @@ RETURNS JSON as $$
           // cheque_reference request response
           const cheque_reference_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${cheque_reference.request_id}'`);
           
-          // cheque_reference request respone with fields
+          // cheque_reference request response with fields
           const cheque_reference_response_fields = cheque_reference_response.map(response => {
             const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
             return {
@@ -458,7 +458,7 @@ RETURNS JSON as $$
           // rir request response
           const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
           
-          // rir request respone with fields
+          // rir request response with fields
           const rir_response_fields = rir_response.map(response => {
             const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
             return {
@@ -2767,6 +2767,12 @@ TO authenticated
 USING (auth.uid() = user_id);
 
 -------- End: POLICIES
+
+---------- Start: INDEXES
+
+CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
+
+-------- End: INDEXES
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
