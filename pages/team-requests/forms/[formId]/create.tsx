@@ -66,6 +66,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           const items = await getAllItems(supabaseClient, {
             teamId: teamId,
           });
+
           const itemOptions = items.map((item, index) => {
             return {
               option_description: null,

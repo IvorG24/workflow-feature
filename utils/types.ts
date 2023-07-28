@@ -593,10 +593,11 @@ type SSOTRequestOwnerType = {
   user_last_name: string;
 };
 
-type SSOTResponseType = {
+export type SSOTResponseType = {
   request_response: string;
   request_response_field_name: string;
   request_response_field_type: string;
+  request_response_duplicatable_section_id: string;
 };
 
 export type SSOTType = {

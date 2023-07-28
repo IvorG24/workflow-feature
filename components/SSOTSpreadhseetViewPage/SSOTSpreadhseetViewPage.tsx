@@ -1,8 +1,8 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { DEFAULT_NUMBER_SSOT_ROWS, OTP_FIELDS_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
-import { SSOTType } from "@/utils/types";
+import { SSOTResponseType, SSOTType } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -455,6 +455,7 @@ const SSOTSpreadsheetView = ({
       const itemPrice: string[] = [];
       const itemQuantity: string[] = [];
       const itemUnit: string[] = [];
+
       const items = request.quotation_request_response.slice(
         3,
         request.quotation_request_response.length
@@ -627,36 +628,42 @@ const SSOTSpreadsheetView = ({
       const itemDescription: string[] = [];
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
-      const items = request.otp_request_response.slice(
-        4,
-        request.otp_request_response.length
-      );
-      items.forEach((item) => {
-        if (item.request_response_field_name === "General Name") {
-          itemName.push(JSON.parse(item.request_response));
-          itemDescription.push("");
-          if (itemDescription.length !== 1) {
-            itemDescription[itemDescription.length - 2] = itemDescription[
-              itemDescription.length - 2
-            ].slice(0, -2);
-          }
-        } else if (item.request_response_field_name === "Unit of Measurement") {
-          itemUnit.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "Quantity") {
-          itemQuantity.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "Cost Code") {
-          itemCostCode.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "GL Account") {
-          itemGlAccount.push(JSON.parse(item.request_response));
-        } else {
-          itemDescription[itemName.length - 1] += `${
-            item.request_response_field_name
-          }: ${JSON.parse(item.request_response)}, `;
+
+      const fields = request.otp_request_response.sort(
+        (a: SSOTResponseType, b: SSOTResponseType) => {
+          return (
+            OTP_FIELDS_ORDER.indexOf(a.request_response_field_name) -
+            OTP_FIELDS_ORDER.indexOf(b.request_response_field_name)
+          );
         }
+      );
+
+      const items = fields.slice(0, -OTP_FIELDS_ORDER.length);
+      const sortedAndGroupedItems = sortAndGroupItems(items);
+      sortedAndGroupedItems.forEach((group, groupIndex) => {
+        itemDescription[groupIndex] = "";
+        group.forEach((item) => {
+          if (item.request_response_field_name === "General Name") {
+            itemName[groupIndex] = JSON.parse(item.request_response);
+          } else if (
+            item.request_response_field_name === "Unit of Measurement"
+          ) {
+            itemUnit[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "Quantity") {
+            itemQuantity[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "Cost Code") {
+            itemCostCode[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "GL Account") {
+            itemGlAccount[groupIndex] = JSON.parse(item.request_response);
+          } else {
+            itemDescription[groupIndex] += `${
+              item.request_response_field_name
+            }: ${JSON.parse(item.request_response)}, `;
+          }
+        });
+        itemDescription[groupIndex] = itemDescription[groupIndex].slice(0, -2);
       });
-      itemDescription[itemDescription.length - 1] = itemDescription[
-        itemDescription.length - 1
-      ].slice(0, -2);
+
       return (
         <tr key={request.otp_request_id} className={classes.cell}>
           <td>{request.otp_request_id}</td>
@@ -664,7 +671,7 @@ const SSOTSpreadsheetView = ({
             {new Date(request.otp_request_date_created).toLocaleDateString()}
           </td>
           <td>{`${request.otp_request_owner.user_first_name} ${request.otp_request_owner.user_last_name}`}</td>
-          {request.otp_request_response.slice(0, 4).map((response, index) => {
+          {fields.slice(-OTP_FIELDS_ORDER.length).map((response, index) => {
             return (
               <td key={index}>
                 {response.request_response_field_type === "DATE"
@@ -820,6 +827,32 @@ const SSOTSpreadsheetView = ({
         </tr>
       );
     });
+  };
+
+  const sortAndGroupItems = (fieldResponse: SSOTResponseType[]) => {
+    const uniqueIdList = fieldResponse.reduce((unique, item) => {
+      const { request_response_duplicatable_section_id } = item;
+      // Check if the item's duplicatable_section_id is already in the unique array
+      const isDuplicate = unique.some((uniqueItem) =>
+        uniqueItem.includes(`${request_response_duplicatable_section_id}`)
+      );
+      // If the item is not a duplicate, add it to the unique array
+      if (!isDuplicate) {
+        unique.push(`${request_response_duplicatable_section_id}`);
+      }
+
+      return unique;
+    }, [] as string[]);
+
+    const returnValue = uniqueIdList.map((id) => {
+      const fields = fieldResponse.filter(
+        (response) =>
+          `${response.request_response_duplicatable_section_id}` === id
+      );
+      return fields;
+    });
+
+    return returnValue;
   };
 
   return (
