@@ -2716,6 +2716,7 @@ USING (auth.uid() = user_id);
 ---------- Start: INDEXES
 
 CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
+CREATE INDEX request_id_date_created_form_id_team_id_status_idx ON request_table (request_id, request_date_created, request_form_id, request_team_id, request_status);
 
 -------- End: INDEXES
 
