@@ -2197,11 +2197,14 @@ export const getRequestStatusMonthlyCount = async (
   );
 
   const { count: totalCount } = await supabaseClient
-    .from("request_list_table_view")
-    .select("*", { count: "exact", head: true })
+    .from("request_table")
+    .select(
+      `request_team_member: request_team_member_id!inner(team_member_team_id)`,
+      { count: "exact", head: true }
+    )
     .eq("request_is_disabled", false)
     .eq("request_form_id", formId)
-    .eq("request_team_id", teamId)
+    .eq("request_team_member.team_member_team_id", teamId)
     .gte("request_date_created", startDate)
     .lte("request_date_created", endDate);
 
