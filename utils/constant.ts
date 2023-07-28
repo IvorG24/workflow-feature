@@ -993,3 +993,10 @@ export const ITEM_UNIT_CHOICES = [
   "week",
   "yard",
 ];
+
+export const OTP_FIELDS_ORDER = [
+  "Parent OTP ID",
+  "Project Name",
+  "Type",
+  "Date Needed",
+];
