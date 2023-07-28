@@ -11,8 +11,8 @@ import {
   NotificationTableRow,
   RequestByFormType,
   RequestDashboardOverviewData,
+  RequestListItemType,
   RequestResponseTableRow,
-  RequestTableViewData,
   RequestWithResponseType,
   TeamMemberType,
   TeamTableRow,
@@ -219,7 +219,11 @@ export const getRequestList = async (
   const { data, count, error } = await query;
   if (error) throw error;
 
-  return { data, count };
+  const requestListData = data
+    ? (data as unknown as RequestListItemType[])
+    : [];
+
+  return { data: requestListData, count };
 };
 
 // Get user's active team id
@@ -1860,10 +1864,13 @@ export const getRequestStatusCount = async (
   const { formId, teamId, startDate, endDate } = params;
   const getCount = (status: string) =>
     supabaseClient
-      .from("request_list_table_view")
-      .select("*", { count: "exact", head: true })
+      .from("request_table")
+      .select(
+        `request_team_member: request_team_member_id!inner(team_member_team_id)`,
+        { count: "exact", head: true }
+      )
       .eq("request_form_id", formId)
-      .eq("request_team_id", teamId)
+      .eq("request_team_member.team_member_team_id", teamId)
       .eq("request_status", status)
       .gte("request_date_created", startDate)
       .lte("request_date_created", endDate);
@@ -1900,7 +1907,7 @@ export const getRequestorData = async (
 
   const getRequestCount = (status: string) =>
     supabaseClient
-      .from("request_list_table_view")
+      .from("request_table")
       .select("*", { count: "exact", head: true })
       .eq("request_form_id", formId)
       .eq("request_status", status)
@@ -2122,84 +2129,6 @@ export const getCanvassData = async (
   };
 };
 
-// Get request list
-export const getRequestTableView = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    page: number;
-    limit: number;
-    requestor?: string[];
-    status?: FormStatusType[];
-    form?: string[];
-    sort?: "ascending" | "descending";
-    search?: string;
-  }
-) => {
-  const {
-    teamId,
-    page,
-    limit,
-    requestor,
-    status,
-    form,
-    sort = "descending",
-    search,
-  } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("request_list_table_view")
-    .select("*", { count: "exact" })
-    .eq("request_is_disabled", false)
-    .eq("request_team_id", teamId);
-
-  if (requestor) {
-    let requestorCondition = "";
-    requestor.forEach((value) => {
-      requestorCondition += `request_team_member_id.eq.${value}, `;
-    });
-    query = query.or(requestorCondition.slice(0, -2));
-  }
-
-  if (status) {
-    let statusCondition = "";
-    status.forEach((value) => {
-      statusCondition += `request_status.eq.${value}, `;
-    });
-    query = query.or(statusCondition.slice(0, -2));
-  }
-
-  if (form) {
-    let formCondition = "";
-    form.forEach((value) => {
-      formCondition += `request_form_id.eq.${value}, `;
-    });
-    query = query.or(formCondition.slice(0, -2));
-  }
-
-  if (search) {
-    query = query.eq("request_id", search);
-  }
-
-  query = query.order("request_date_created", {
-    ascending: sort === "ascending",
-  });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
-
-  if (error) throw error;
-
-  const requestListData = data
-    ? (data as unknown as RequestTableViewData[])
-    : [];
-
-  return { data: requestListData, count };
-};
-
 export const getRequestStatusMonthlyCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2214,11 +2143,14 @@ export const getRequestStatusMonthlyCount = async (
   const getMonthlyCount = async (startOfMonth: string, endOfMonth: string) => {
     const getCount = (status: string) =>
       supabaseClient
-        .from("request_list_table_view")
-        .select("*", { count: "exact", head: true })
+        .from("request_table")
+        .select(
+          `request_team_member: request_team_member_id!inner(team_member_team_id)`,
+          { count: "exact", head: true }
+        )
         .eq("request_is_disabled", false)
         .eq("request_form_id", formId)
-        .eq("request_team_id", teamId)
+        .eq("request_team_member.team_member_team_id", teamId)
         .eq("request_status", status)
         .gte("request_date_created", startOfMonth)
         .lte("request_date_created", endOfMonth);

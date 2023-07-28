@@ -1,9 +1,9 @@
-import { getRequestTableView } from "@/backend/api/get";
+import { getRequestList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import {
   FormStatusType,
-  RequestTableViewData,
+  RequestListItemType,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
@@ -41,7 +41,7 @@ export type FilterFormValues = {
 };
 
 type Props = {
-  requestList: RequestTableViewData[];
+  requestList: RequestListItemType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
@@ -61,7 +61,7 @@ const RequestListPage = ({
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] =
-    useState<RequestTableViewData[]>(initialRequestList);
+    useState<RequestListItemType[]>(initialRequestList);
 
   const [requestListCount, setRequestListCount] = useState(
     initialRequestListCount
@@ -97,7 +97,7 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         search: search,
       };
-      const { data, count } = await getRequestTableView(supabaseClient, {
+      const { data, count } = await getRequestList(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
@@ -131,7 +131,7 @@ const RequestListPage = ({
         search: search,
       };
 
-      const { data, count } = await getRequestTableView(supabaseClient, {
+      const { data, count } = await getRequestList(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });

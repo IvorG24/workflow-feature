@@ -3,14 +3,14 @@ import {
   checkIfTeamHaveFormslyForms,
   getAllTeamMembers,
   getFormList,
-  getRequestTableView,
+  getRequestList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { RequestTableViewData, TeamMemberWithUserType } from "@/utils/types";
+import { RequestListItemType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -31,7 +31,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       const [requestList, teamMemberList, formList, isFormslyTeam] =
         await Promise.all([
-          getRequestTableView(supabaseClient, {
+          getRequestList(supabaseClient, {
             teamId: teamId,
             page: 1,
             limit: DEFAULT_REQUEST_LIST_LIMIT,
@@ -67,7 +67,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 );
 
 type Props = {
-  requestList: RequestTableViewData[];
+  requestList: RequestListItemType[];
   requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
@@ -81,6 +81,7 @@ const Page = ({
   formList,
   isFormslyTeam,
 }: Props) => {
+  console.log(requestList);
   return (
     <>
       <Meta description="Request List Page" url="/team-requests/requests" />

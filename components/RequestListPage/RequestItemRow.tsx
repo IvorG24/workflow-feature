@@ -1,5 +1,5 @@
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { RequestTableViewData } from "@/utils/types";
+import { RequestListItemType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -18,7 +18,7 @@ import { useRouter } from "next/router";
 import RequestSignerList from "./RequestSignerList";
 
 type Props = {
-  request: RequestTableViewData;
+  request: RequestListItemType;
 };
 
 const useStyles = createStyles(() => ({
@@ -31,7 +31,10 @@ const RequestItemRow = ({ request }: Props) => {
   const { classes } = useStyles();
   const router = useRouter();
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
-  const { request_requestor: requestor, request_signers } = request;
+  const {
+    request_team_member: { team_member_user: requestor },
+    request_signer,
+  } = request;
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
@@ -52,7 +55,7 @@ const RequestItemRow = ({ request }: Props) => {
         </Group>
       </Grid.Col>
       <Grid.Col span={3}>
-        <Text>{request.form_name}</Text>
+        <Text>{request.request_form.form_name}</Text>
       </Grid.Col>
       <Grid.Col span={1}>
         <Badge
@@ -77,7 +80,7 @@ const RequestItemRow = ({ request }: Props) => {
         </Flex>
       </Grid.Col>
       <Grid.Col span={1}>
-        <RequestSignerList signerList={request_signers} />
+        <RequestSignerList signerList={request_signer} />
       </Grid.Col>
       <Grid.Col span="content">
         <Text miw={105}>
