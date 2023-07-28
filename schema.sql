@@ -318,7 +318,7 @@ RETURNS JSON as $$
     
     ssot_data = otp_requests.map((otp) => {
       // OTP request response
-      const otp_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${otp.request_id}'`);
+      const otp_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${otp.request_id}'`);
       
       if(!otp_response) return;
 
@@ -329,6 +329,7 @@ RETURNS JSON as $$
           request_response: response.request_response,
           request_response_field_name: field.field_name,
           request_response_field_type: field.field_type,
+          request_response_duplicatable_section_id: response.request_response_duplicatable_section_id
         }
       });
 
