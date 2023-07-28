@@ -85,10 +85,11 @@ const RequestListPage = ({
   ) => {
     try {
       if (!activeTeam.team_id) return;
+      setActivePage(1);
       setIsFetchingRequestList(true);
       const params = {
         teamId: activeTeam.team_id,
-        page: activePage,
+        page: 1,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         requestor:
           requestorList && requestorList.length > 0 ? requestorList : undefined,
@@ -112,8 +113,41 @@ const RequestListPage = ({
     }
   };
 
+  const handlePagination = async () => {
+    try {
+      if (!activeTeam.team_id) return;
+
+      const { search, requestorList, formList, status, isAscendingSort } =
+        getValues();
+
+      const params = {
+        teamId: activeTeam.team_id,
+        page: activePage,
+        limit: DEFAULT_REQUEST_LIST_LIMIT,
+        requestor:
+          requestorList && requestorList.length > 0 ? requestorList : undefined,
+        form: formList && formList.length > 0 ? formList : undefined,
+        status: status && status.length > 0 ? status : undefined,
+        search: search,
+      };
+
+      const { data, count } = await getRequestTableView(supabaseClient, {
+        ...params,
+        sort: isAscendingSort ? "ascending" : "descending",
+      });
+
+      setRequestList(data);
+      setRequestListCount(count || 0);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
-    handleFilterForms();
+    handlePagination();
   }, [activePage]);
 
   return (

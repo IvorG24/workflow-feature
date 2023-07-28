@@ -27,7 +27,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
 
 // TODO: Refactor
-
 const useStyles = createStyles((theme) => ({
   cell: {
     verticalAlign: "top",
@@ -157,6 +156,7 @@ const SSOTSpreadsheetView = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const containerRef = useRef<HTMLTableElement>(null);
   const team = useActiveTeam();
+  const viewport = useRef<HTMLDivElement>(null);
 
   const [otpList, setOtpList] = useState(data);
   const [offset, setOffset] = useState(1);
@@ -184,6 +184,9 @@ const SSOTSpreadsheetView = ({
     }: SSOTFilterFormValues = getValues()
   ) => {
     try {
+      setIsLoading(true);
+      setScrollBarType("never");
+      setOffset(1);
       const { data, error } = await supabaseClient.rpc("get_ssot", {
         input_data: {
           activeTeam: team.team_id,
@@ -196,13 +199,23 @@ const SSOTSpreadsheetView = ({
         },
       });
       if (error) throw error;
-
-      setOtpList(data as SSOTType[]);
+      const formattedData = data as SSOTType[];
+      if (formattedData.length === DEFAULT_NUMBER_SSOT_ROWS) {
+        setIsFetchable(true);
+      } else {
+        setIsFetchable(false);
+      }
+      setOtpList(formattedData);
+      viewport.current &&
+        viewport.current.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setScrollBarType("always");
+      setIsLoading(false);
     }
   };
 
@@ -231,9 +244,10 @@ const SSOTSpreadsheetView = ({
       if (error) throw error;
       if (data) {
         const formattedData = data as SSOTType[];
-        if (formattedData.length === 0) {
+        if (formattedData.length < DEFAULT_NUMBER_SSOT_ROWS) {
           setIsFetchable(false);
         } else {
+          setIsFetchable(true);
           setOtpList((prev) => [...prev, ...formattedData]);
         }
       }
@@ -833,6 +847,7 @@ const SSOTSpreadsheetView = ({
           offsetScrollbars
           type={scrollBarType}
           onScrollCapture={handleScroll}
+          viewportRef={viewport}
         >
           <Box
             mah={{
