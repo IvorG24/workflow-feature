@@ -1,5 +1,5 @@
 import { getAvatarColor } from "@/utils/styling";
-import { RequestTableViewData } from "@/utils/types";
+import { RequestListItemType } from "@/utils/types";
 import { Avatar, Tooltip, createStyles } from "@mantine/core";
 import { capitalize } from "lodash";
 
@@ -10,7 +10,7 @@ const useStyles = createStyles(() => ({
 }));
 
 type RequestSignerListProps = {
-  signerList: RequestTableViewData["request_signers"];
+  signerList: RequestListItemType["request_signer"];
 };
 
 const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
@@ -22,24 +22,29 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
     <Tooltip.Group openDelay={300} closeDelay={100}>
       <Avatar.Group spacing="sm">
         {signerList.map((signer, idx) => {
+          const user =
+            signer.request_signer.signer_team_member.team_member_user;
+
           if (idx < 3) {
             return (
               <Tooltip
                 key={signer.request_signer_id}
-                label={`${signer.user_first_name} ${signer.user_last_name}`}
+                label={`${user.user_first_name} ${user.user_last_name}`}
                 withArrow
               >
                 <Avatar
                   {...defaultAvatarProps}
                   color={getAvatarColor(
-                    Number(`${signer.team_member_id.charCodeAt(0)}`)
+                    Number(`${user.user_id.charCodeAt(0)}`)
                   )}
-                  src={signer.user_avatar}
+                  src={user.user_avatar}
                   className={
-                    signer.is_primary_signer ? classes.primarySigner : ""
+                    signer.request_signer.signer_is_primary_signer
+                      ? classes.primarySigner
+                      : ""
                   }
-                >{`${capitalize(signer.user_first_name[0])}${capitalize(
-                  signer.user_last_name[0]
+                >{`${capitalize(user.user_first_name[0])}${capitalize(
+                  user.user_last_name[0]
                 )}`}</Avatar>
               </Tooltip>
             );
@@ -48,11 +53,15 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
         {signerList.length > 3 && (
           <Tooltip
             withArrow
-            label={otherSigners.map((signer) => (
-              <div
-                key={signer.request_signer_id}
-              >{`${signer.user_first_name} ${signer.user_last_name}`}</div>
-            ))}
+            label={otherSigners.map((signer) => {
+              const user =
+                signer.request_signer.signer_team_member.team_member_user;
+              return (
+                <div
+                  key={signer.request_signer_id}
+                >{`${user.user_first_name} ${user.user_last_name}`}</div>
+              );
+            })}
           >
             <Avatar {...defaultAvatarProps}>+{signerList.length - 3}</Avatar>
           </Tooltip>
