@@ -115,6 +115,7 @@ const RequestListPage = ({
 
   const handlePagination = async () => {
     try {
+      setIsFetchingRequestList(true);
       if (!activeTeam.team_id) return;
 
       const { search, requestorList, formList, status, isAscendingSort } =
@@ -143,6 +144,8 @@ const RequestListPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsFetchingRequestList(false);
     }
   };
 
