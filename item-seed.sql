@@ -258,7 +258,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'GOGGLES',
-        unit: '',
+        unit: 'pair',
         description: ['SIMILAR NAME', 'COLOR'],
         descriptionField: [
           ['SAFETY GLASSES', 'FLASH GOGGLE', 'WELDING GOGGLES'],
@@ -706,7 +706,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'IRON SHEET',
-        unit: '',
+        unit: 'piece',
         description: [
           'FINISH',
           'SURFACE',
@@ -735,7 +735,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'PAINT BRUSH',
-        unit: '',
+        unit: 'piece',
         description: ['BRUSH TYPE', 'SIZE'],
         descriptionField: [
           [
@@ -789,7 +789,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'PAINT',
-        unit: '',
+        unit: 'liter',
         description: ['TYPE', 'FINISH', 'BRAND', 'MODEL', 'COLOR'],
         descriptionField: [
           [
@@ -862,7 +862,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'STOCK CARD',
-        unit: '',
+        unit: 'pad',
         description: ['LENGTH', 'WIDTH'],
         descriptionField: [
           ['7 inch', '11 inch'],
@@ -871,7 +871,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'INVENTORY STOCK TAG',
-        unit: '',
+        unit: 'pad',
         description: ['LENGTH', 'WIDTH'],
         descriptionField: [
           ['5.25 inch', '6.25 inch'],
@@ -880,7 +880,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'WASHER',
-        unit: '',
+        unit: 'piece',
         description: ['MATERIAL', 'TYPE', 'NOMINAL SIZE'],
         descriptionField: [
           ['STEEL', 'ALUMINUM'],
@@ -899,7 +899,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'NUTS',
-        unit: '',
+        unit: 'piece',
         description: ['MATERIAL', 'TYPE', 'NOMINAL SIZE'],
         descriptionField: [
           ['STEEL', 'ALUMINUM', 'STAINLESS'],
@@ -916,7 +916,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'PIPE HOOK',
-        unit: '',
+        unit: 'piece',
         description: ['AXIS', 'DESCRIPTION'],
         descriptionField: [
           ['HORIZONTAL', 'VERTICAL'],
@@ -943,7 +943,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'TIE ROD',
-        unit: '',
+        unit: 'piece',
         description: ['DIAMETER', 'LENGTH'],
         descriptionField: [
           ['17 mm'],
@@ -980,7 +980,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'TIE WIRE',
-        unit: '',
+        unit: 'meter',
         description: ['IS COATED', 'Gauge NO'],
         descriptionField: [
           ['With PVC Coat', 'Without PVC Coat'],
@@ -989,7 +989,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'SHORING JACK',
-        unit: '',
+        unit: 'piece',
         description: ['TYPE', 'LENGTH', 'DIAMETER'],
         descriptionField: [
           ['U HEAD', 'JACK BASE', 'SWIVEL JACK BASE', 'SCAFFOLDING BASE PLATE'],
@@ -999,13 +999,13 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'JOINT PIN',
-        unit: '',
+        unit: 'piece',
         description: ['FORMWORKS TYPE', 'SPECS', 'DIMENSION'],
         descriptionField: [['PUR', 'REN'], ['HD', 'RINGLOCK'], ['48 mm X 200 mm']],
       },
       {
         generalName: 'ACOUSTIC CEILING BOARD',
-        unit: '',
+        unit: 'piece',
         description: ['DESIGN', 'DIMENSION'],
         descriptionField: [
           [
@@ -1025,19 +1025,19 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'SUPERSLIM PIN',
-        unit: '',
+        unit: 'kilogram',
         description: ['FORMWORKS TYPE', 'SIZE'],
         descriptionField: [['PUR', 'REN'], ['19 mm']],
       },
       {
         generalName: 'SPRING CLIP',
-        unit: '',
+        unit: 'kilogram',
         description: ['FORMWORKS TYPE', 'MATERIAL', 'SIZE'],
         descriptionField: [['PUR', 'REN'], ['S/S'], ['19 mm']],
       },
       {
         generalName: 'GYPSUM SCREW',
-        unit: '',
+        unit: 'piece',
         description: [
           'TYPE',
           'MATERIAL ',
@@ -1055,13 +1055,13 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'AAC BLOCK ADHESIVE',
-        unit: '',
+        unit: 'bag',
         description: ['NET WEIGHT PER BAG'],
         descriptionField: [['25K g']],
       },
       {
         generalName: 'CABLE',
-        unit: '',
+        unit: 'meter',
         description: ['CABLE TYPE', 'VOLTAGE', 'COLOR', 'INSULATION THICKNESS'],
         descriptionField: [
           ['XLPE'],
@@ -1072,7 +1072,7 @@ RETURNS VOID AS $$
       },
       {
         generalName: 'ADMIXTURE',
-        unit: '',
+        unit: 'liter',
         description: ['BRAND'],
         descriptionField: [['CHRYSO OMEGA 98S']],
       },
