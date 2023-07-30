@@ -1851,12 +1851,12 @@ RETURNS JSON AS $$
               user_table.user_id,
               user_table.user_first_name,
               user_table.user_last_name,
-              user_table.user_avatar,
+              user_table.user_avatar
             FROM team_member_table
             INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
-            WHERE team_member_table.team_member_id = '${request.team_member_id}'
+            WHERE team_member_table.team_member_id = '${request.request_team_member_id}'
           `
-        )[0]
+        )[0];
         const request_form = plv8.execute(`SELECT form_id, form_name, form_description FROM form_table WHERE form_id = '${request.request_form_id}'`)[0];
         const request_signer = plv8.execute(
           `
