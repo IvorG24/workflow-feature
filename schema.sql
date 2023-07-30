@@ -1783,6 +1783,148 @@ $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating rir purchased item quantity are less than the quotation quantity
 
+-- Start: Fetch request list
+
+CREATE FUNCTION fetch_request_list(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let return_value
+    plv8.subtransaction(function(){
+      const {
+        teamId,
+        page,
+        limit,
+        requestor,
+        status,
+        form,
+        sort,
+        search,
+      } = input_data;
+
+      const start = (page - 1) * limit;
+
+      const request_list = plv8.execute(
+        `
+          SELECT 
+            request_table.request_id, 
+            request_date_created, 
+            request_status,
+            request_team_member_id,
+            request_form_id
+          FROM request_table
+          INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
+          INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+          WHERE team_member_table.team_member_team_id = '${teamId}'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
+          ${requestor}
+          ${status}
+          ${form}
+          ${search}
+          ORDER BY request_table.request_date_created ${sort} 
+          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+        `
+      );
+
+      const request_count = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM request_table
+          INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
+          INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+          WHERE team_member_table.team_member_team_id = '${teamId}'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
+          ${requestor}
+          ${status}
+          ${form}
+          ${search}
+        `
+      )[0];
+
+      const request_data = request_list.map(request => {
+        const request_team_member = plv8.execute(
+          `
+            SELECT 
+              team_member_table.team_member_team_id, 
+              user_table.user_id,
+              user_table.user_first_name,
+              user_table.user_last_name,
+              user_table.user_avatar,
+            FROM team_member_table
+            INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+            WHERE team_member_table.team_member_id = '${request.team_member_id}'
+          `
+        )[0]
+        const request_form = plv8.execute(`SELECT form_id, form_name, form_description FROM form_table WHERE form_id = '${request.request_form_id}'`)[0];
+        const request_signer = plv8.execute(
+          `
+            SELECT 
+              request_signer_table.request_signer_id, 
+              request_signer_table.request_signer_status, 
+              signer_table.signer_is_primary_signer,
+              user_table.user_id,
+              user_table.user_first_name,
+              user_table.user_last_name,
+              user_table.user_avatar
+            FROM request_signer_table
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            INNER JOIN team_member_table ON signer_table.signer_team_member_id = team_member_table.team_member_id
+            INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+            WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
+          `
+        ).map(signer => {
+          return {
+            request_signer_id: signer.request_signer_id,
+            request_signer_status: signer.request_signer_status,
+            request_signer: {
+              signer_is_primary_signer: signer.signer_is_primary_signer ,
+              signer_team_member: {
+                team_member_user: {
+                  user_id: signer.user_id,
+                  user_first_name: signer.user_first_name,
+                  user_last_name: signer.user_last_name,
+                  user_avatar: signer.user_avatar,
+                }
+              }
+            }
+          }
+        });
+
+        return {
+          request_id: request.request_id, 
+          request_date_created: request.request_date_created, 
+          request_status: request.request_status, 
+          request_team_member: {
+            team_member_team_id: request.request_team_member_id,
+            team_member_user: {
+              user_id: request_team_member.user_id, 
+              user_first_name: request_team_member.user_first_name,
+              user_last_name: request_team_member.user_last_name,
+              user_avatar: request_team_member.user_avatar,
+            },
+          }, 
+          request_form: {
+            form_id: request_form.form_id,
+            form_name: request_form.form_name,
+            form_description: request_form.form_description,
+            form_is_disabled: request_form.form_is_disabled,
+          }, 
+          request_signer: request_signer,
+        }
+      });
+
+      return_value = {
+        data: request_data, 
+        count: Number(request_count.count)
+      };
+    });
+    return return_value
+$$ LANGUAGE plv8;
+
+-- End: Fetch request list
+
 ---------- End: FUNCTIONS
 
 
@@ -2717,7 +2859,7 @@ USING (auth.uid() = user_id);
 ---------- Start: INDEXES
 
 CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
-CREATE INDEX request_id_date_created_form_id_team_member_id_status_idx ON request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
+CREATE INDEX request_list_idx ON request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
 
 -------- End: INDEXES
 

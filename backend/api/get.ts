@@ -139,91 +139,36 @@ export const getRequestList = async (
     search,
   } = params;
 
-  const start = (page - 1) * limit;
+  const requestorCondition = requestor
+    ?.map((value) => `request_table.request_team_member_id = '${value}'`)
+    .join(" OR ");
+  const statusCondition = status
+    ?.map((value) => `request_table.request_status = '${value}'`)
+    .join(" OR ");
+  const formCondition = form
+    ?.map((value) => `request_table.request_form_id = '${value}'`)
+    .join(" OR ");
 
-  let query = supabaseClient
-    .from("request_table")
-    .select(
-      `request_id, 
-      request_date_created, 
-      request_status, 
-      request_team_member: request_team_member_id!inner(
-        team_member_team_id,
-        team_member_user: team_member_user_id(
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_avatar
-        )
-      ), 
-      request_form: request_form_id!inner(
-        form_id, 
-        form_name, 
-        form_description, 
-        form_is_disabled
-      ), 
-      request_signer: request_signer_table(
-        request_signer_id, 
-        request_signer_status, 
-        request_signer: request_signer_signer_id(
-          signer_is_primary_signer, 
-          signer_team_member: signer_team_member_id(
-            team_member_user: team_member_user_id(
-              user_id, user_first_name, 
-              user_last_name, 
-              user_avatar
-            )
-          )
-        )
-      )`,
-      { count: "exact" }
-    )
-    .eq("request_team_member.team_member_team_id", teamId)
-    .eq("request_is_disabled", false)
-    .eq("request_form.form_is_disabled", false);
-
-  if (requestor) {
-    let requestorCondition = "";
-    requestor.forEach((value) => {
-      requestorCondition += `request_team_member_id.eq.${value}, `;
-    });
-    query = query.or(requestorCondition.slice(0, -2));
-  }
-
-  if (status) {
-    let statusCondition = "";
-    status.forEach((value) => {
-      statusCondition += `request_status.eq.${value}, `;
-    });
-    query = query.or(statusCondition.slice(0, -2));
-  }
-
-  if (form) {
-    let formCondition = "";
-    form.forEach((value) => {
-      formCondition += `request_form_id.eq.${value}, `;
-    });
-    query = query.or(formCondition.slice(0, -2));
-  }
-
-  if (search) {
-    query = query.eq("request_id", search);
-  }
-
-  query = query.order("request_date_created", {
-    ascending: sort === "ascending",
+  const { data, error } = await supabaseClient.rpc("fetch_request_list", {
+    input_data: {
+      teamId: teamId,
+      page: page,
+      limit: limit,
+      requestor: requestorCondition ? `AND ${requestorCondition}` : "",
+      form: formCondition ? `AND ${formCondition}` : "",
+      status: statusCondition ? `AND ${statusCondition}` : "",
+      search: search ? `AND request_table.request_id = '${search}'` : "",
+      sort: sort === "descending" ? "DESC" : "ASC",
+    },
   });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
 
-  const { data, count, error } = await query;
   if (error) throw error;
+  const dataFormat = data as unknown as {
+    data: RequestListItemType[];
+    count: number;
+  };
 
-  const requestListData = data
-    ? (data as unknown as RequestListItemType[])
-    : [];
-
-  return { data: requestListData, count };
+  return { data: dataFormat.data, count: dataFormat.count };
 };
 
 // Get user's active team id
