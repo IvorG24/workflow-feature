@@ -11,7 +11,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         userId: user.id,
       });
 
-      if (!teamId) throw Error;
+      if (!teamId) {
+        return {
+          redirect: {
+            destination: "/team/create",
+            permanent: false,
+          },
+        };
+      }
 
       return {
         props: {
