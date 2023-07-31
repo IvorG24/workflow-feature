@@ -19,6 +19,7 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { lowerCase, startCase } from "lodash";
+import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
@@ -2117,29 +2118,24 @@ export const getRequestStatusMonthlyCount = async (
   };
 
   // Generate the list of month ranges within the specified date range
-  const startDateObj = new Date(startDate);
-  const endDateObj = new Date(endDate);
+  // Generate the list of month ranges within the specified date range
+  const startDateObj = moment(startDate);
+  const endDateObj = moment(endDate).endOf("month");
+
   const monthRanges = [];
 
-  while (startDateObj < endDateObj) {
-    const startOfMonth = new Date(startDateObj);
-    let endOfMonth = new Date(
-      startDateObj.getFullYear(),
-      startDateObj.getMonth() + 1,
-      0
-    );
-    const lastDayOfMonth = endOfMonth.getDate();
-    endOfMonth.setDate(lastDayOfMonth);
+  while (startDateObj.isSameOrBefore(endDateObj, "month")) {
+    const startOfMonth = startDateObj.clone().startOf("month");
+    const endOfMonth = startDateObj.clone().endOf("month");
 
-    if (startDateObj.getMonth() === new Date().getMonth()) {
-      endOfMonth = endDateObj;
-    }
     monthRanges.push({
-      start_of_month: startOfMonth.toISOString(),
-      end_of_month: endOfMonth.toISOString(),
+      start_of_month: startOfMonth.format(),
+      end_of_month: endOfMonth.isSameOrBefore(endDateObj)
+        ? endOfMonth.format()
+        : endDateObj.format(),
     });
 
-    startDateObj.setMonth(startDateObj.getMonth() + 1);
+    startDateObj.add(1, "month");
   }
 
   const monthlyData = await Promise.all(
