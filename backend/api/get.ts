@@ -2123,15 +2123,22 @@ export const getRequestStatusMonthlyCount = async (
 
   while (startDateObj < endDateObj) {
     const startOfMonth = new Date(startDateObj);
-    const endOfMonth = new Date(
+    let endOfMonth = new Date(
       startDateObj.getFullYear(),
       startDateObj.getMonth() + 1,
       0
     );
+    const lastDayOfMonth = endOfMonth.getDate();
+    endOfMonth.setDate(lastDayOfMonth);
+
+    if (startDateObj.getMonth() === new Date().getMonth()) {
+      endOfMonth = endDateObj;
+    }
     monthRanges.push({
       start_of_month: startOfMonth.toISOString(),
       end_of_month: endOfMonth.toISOString(),
     });
+
     startDateObj.setMonth(startDateObj.getMonth() + 1);
   }
 
