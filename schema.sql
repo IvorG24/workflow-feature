@@ -971,7 +971,9 @@ RETURNS TEXT as $$
     
     if(!user_data.user_active_team_id){
       const team_member = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${user_id}' AND team_member_is_disabled='false' LIMIT 1`)[0];
-      active_team_id = team_member.team_member_team_id
+      if(team_member){
+        active_team_id = team_member.team_member_team_id
+      }
     }else{
       active_team_id = user_data.user_active_team_id
     }  
