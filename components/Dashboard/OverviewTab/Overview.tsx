@@ -75,6 +75,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
   useEffect(() => {
     if (!dateFilter[0] || !dateFilter[1]) return;
     const fetchOverviewData = async (selectedForm: string, teamId: string) => {
+      dateFilter[1]?.setHours(23, 59, 59, 999);
+
       try {
         setIsFetchingData(true);
         // set request status tracker

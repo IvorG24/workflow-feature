@@ -114,6 +114,7 @@ const Dashboard = () => {
             onChange={setDateFilter}
             icon={<IconCalendarEvent />}
             dropdownType="popover"
+            minDate={new Date("2023-01-01")}
             maxDate={currentDate}
             allowSingleDateInRange
             w={300}
