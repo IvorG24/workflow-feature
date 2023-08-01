@@ -866,11 +866,11 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 };
 
 export const FORMSLY_GROUP = [
-  "Warehouse Processor",
-  "Accounting Processor",
-  "Warehouse Receiver",
-  "Treasury Processor",
-  "Audit Processor",
+  "WAREHOUSE PROCESSOR",
+  "ACCOUNTING PROCESSOR",
+  "WAREHOUSE RECEIVER",
+  "TREASURY PROCESSOR",
+  "AUDIT PROCESSOR",
 ];
 
 export const ITEM_PURPOSE_CHOICES = [

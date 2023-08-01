@@ -19,7 +19,7 @@ import { MemberRoleType, TeamMemberType, TeamTableRow } from "@/utils/types";
 import { Container, LoadingOverlay, Paper, Space, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { has, lowerCase } from "lodash";
+import { has, lowerCase, toUpper } from "lodash";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import CreateTeamGroup, { TeamGroupFormType } from "./CreateTeamGroup";
@@ -456,7 +456,8 @@ const TeamPage = ({
 
   const handleUpsertGroup = async (data: TeamGroupFormType) => {
     setIsUpdatingTeamGroup(true);
-    const alreadyExists = has(teamGroupList, data.groupName);
+    const groupName = toUpper(data.groupName);
+    const alreadyExists = has(teamGroupList, groupName);
     if (alreadyExists && !editGroupData) {
       notifications.show({
         message: "Group already exists.",
@@ -467,8 +468,8 @@ const TeamPage = ({
     }
     try {
       const prevTeamMembers: string[] = [];
-      if (teamGroupList[data.groupName]) {
-        teamGroupList[data.groupName].forEach((member) =>
+      if (teamGroupList[groupName]) {
+        teamGroupList[groupName].forEach((member) =>
           prevTeamMembers.push(member.team_member_id)
         );
       }
@@ -486,13 +487,13 @@ const TeamPage = ({
       if (editGroupData) {
         delete prev[editGroupData.groupName];
       }
-      prev[data.groupName] = newData;
+      prev[groupName] = newData;
       setTeamGroupList(prev);
 
       await updateTeamAndTeamMemberGroupList(supabaseClient, {
         teamId: team.team_id,
         teamGroupList: [...Object.keys(prev)],
-        upsertGroupName: data.groupName,
+        upsertGroupName: groupName,
         addedGroupMembers: data.groupMembers.filter(
           (member) => !prevTeamMembers.includes(member)
         ),
@@ -519,7 +520,8 @@ const TeamPage = ({
 
   const handleUpsertProject = async (data: TeamProjectFormType) => {
     setIsUpdatingTeamProject(true);
-    const alreadyExists = has(teamProjectList, data.projectName);
+    const projectName = toUpper(data.projectName.trim());
+    const alreadyExists = has(teamProjectList, projectName);
     if (alreadyExists && !editProjectData) {
       notifications.show({
         message: "Project already exists.",
@@ -530,8 +532,8 @@ const TeamPage = ({
     }
     try {
       const prevTeamMembers: string[] = [];
-      if (teamProjectList[data.projectName]) {
-        teamProjectList[data.projectName].forEach((member) =>
+      if (teamProjectList[projectName]) {
+        teamProjectList[projectName].forEach((member) =>
           prevTeamMembers.push(member.team_member_id)
         );
       }
@@ -549,13 +551,13 @@ const TeamPage = ({
       if (editProjectData) {
         delete prev[editProjectData.projectName];
       }
-      prev[data.projectName] = newData;
+      prev[projectName] = newData;
       setTeamProjectList(prev);
 
       await updateTeamAndTeamMemberProjectList(supabaseClient, {
         teamId: team.team_id,
         teamProjectList: [...Object.keys(prev)],
-        upsertProjectName: data.projectName,
+        upsertProjectName: projectName,
         addedProjectMembers: data.projectMembers.filter(
           (member) => !prevTeamMembers.includes(member)
         ),

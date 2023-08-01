@@ -1244,12 +1244,12 @@ RETURNS VOID AS $$
       const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${addTeamMemberCondition}) ;`);
 
       const upsertTeamMemberData = teamMemberList.map((member) => {
+        const newGroupList = [...member.team_member_group_list, upsertGroupName];
         return {
           ...member,
-          team_member_group_list: [
-            ...member.team_member_group_list,
-            upsertGroupName,
-          ],
+          team_member_group_list: newGroupList.filter((c, index) => {
+            return newGroupList.indexOf(c) === index;
+          }),
         };
       }); 
 
@@ -1337,19 +1337,19 @@ RETURNS VOID AS $$
 
     if (addedProjectMembers.length !== 0) {
       
-      const addTeamMemberCondition = addedProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
+      const addTeamMemberCondition = addedProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
       const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${addTeamMemberCondition}) ;`);
 
       const upsertTeamMemberData = teamMemberList.map((member) => {
-      return {
-        ...member,
-        team_member_project_list: [
-          ...member.team_member_project_list,
-          upsertProjectName,
-        ],
-      };
-    });
+        const newProjectList = [...member.team_member_project_list, upsertProjectName];
+
+        return {
+          ...member,
+          team_member_project_list: newProjectList.filter((c, index) => {
+            return newProjectList.indexOf(c) === index;
+          }),
+        };
+      });
 
       const teamMemberValues = upsertTeamMemberData
         .map(
