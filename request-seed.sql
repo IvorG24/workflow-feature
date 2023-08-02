@@ -43,16 +43,16 @@ BEGIN
 
 -- Create new team
 INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list, team_project_list) VALUES
-('2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'XYZ Corp', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
+('2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'XYZ Corp', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']);
 
 SELECT var_value INTO ownerMemberId
   FROM seed_variable_table
   WHERE var_key = 'ownerMemberId';
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list, team_member_project_list) VALUES
-(ownerMemberId, 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
-('0a61a37f-7805-4fe5-8856-3c7fa801c744', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '63e913eb-746e-4eb9-a1b2-4b3c88df0659', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']),
-('a750df8c-35fe-48d6-862a-1135c8f96a9a', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'f5ee3322-46a1-48ea-a40f-9244ab198f18', ARRAY['Warehouse Processor', 'Accounting Processor','Warehouse Receiver', 'Treasury Processor', 'Audit Processor'], ARRAY['Philip Morris', 'Siguil Hydro', 'Lake Mainit', 'Meralco HDD']);
+(ownerMemberId, 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '20ce163c-be18-49fa-a8e1-abf26c3a8a04', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']),
+('0a61a37f-7805-4fe5-8856-3c7fa801c744', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '63e913eb-746e-4eb9-a1b2-4b3c88df0659', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']),
+('a750df8c-35fe-48d6-862a-1135c8f96a9a', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'f5ee3322-46a1-48ea-a40f-9244ab198f18', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']);
 
 -- Create Forms
 SELECT var_value INTO allFieldsFormId
@@ -90,12 +90,12 @@ SELECT var_value INTO auditFormId
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_group) VALUES
 (allFieldsFormId, 'All Fields', 'test all types of fields', 'REQUEST', ownerMemberId, false, false, true, ARRAY[]::VARCHAR[]),
 (duplicateFieldsFormId, 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', ownerMemberId, false, false, true, ARRAY[]::VARCHAR[]),
-(otpFormId, 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', ownerMemberId, true, false, false, ARRAY['Warehouse Processor']),
-(quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false, ARRAY['Accounting Processor']),
-(rirPurchasedFormId, 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false, ARRAY['Warehouse Receiver']),
-(rirSourcedFormId, 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false, ARRAY['Warehouse Receiver']),
-(chequeReferenceFormId, 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', ownerMemberId, true, true, false, ARRAY['Treasury Processor']),
-(auditFormId, 'Audit', 'formsly premade Audit form', 'REQUEST', ownerMemberId, true, false, false, ARRAY['Audit Processor']);
+(otpFormId, 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', ownerMemberId, true, false, false, ARRAY['WAREHOUSE PROCESSOR']),
+(quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false, ARRAY['ACCOUNTING PROCESSOR']),
+(rirPurchasedFormId, 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false, ARRAY['WAREHOUSE RECEIVER']),
+(rirSourcedFormId, 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false, ARRAY['WAREHOUSE RECEIVER']),
+(chequeReferenceFormId, 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', ownerMemberId, true, true, false, ARRAY['TREASURY PROCESSOR']),
+(auditFormId, 'Audit', 'formsly premade Audit form', 'REQUEST', ownerMemberId, true, false, false, ARRAY['AUDIT PROCESSOR']);
 
 -- Add section
 allFieldsSectionId1 := gen_random_uuid();

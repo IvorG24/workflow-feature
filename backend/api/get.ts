@@ -2189,3 +2189,19 @@ export const getSupplier = async (
 
   return supplierList;
 };
+
+// Get team member
+export const getTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string }
+) => {
+  const { teamMemberId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select("*, team_member_user: team_member_user_id(*)")
+    .eq("team_member_id", teamMemberId)
+    .single();
+  if (error) throw error;
+
+  return data;
+};

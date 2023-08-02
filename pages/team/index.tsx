@@ -36,16 +36,24 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       const teamGroups: Record<string, TeamMemberType[]> = {};
       team.team_group_list
-        ? team.team_group_list.forEach((group) => {
-            teamGroups[group] = [];
-          })
+        ? team.team_group_list
+            .filter((c, index) => {
+              return team.team_group_list.indexOf(c) === index;
+            })
+            .forEach((group) => {
+              teamGroups[group] = [];
+            })
         : [];
 
       const teamProjects: Record<string, TeamMemberType[]> = {};
       team.team_project_list
-        ? team.team_project_list.forEach((project) => {
-            teamProjects[project] = [];
-          })
+        ? team.team_project_list
+            .filter((c, index) => {
+              return team.team_project_list.indexOf(c) === index;
+            })
+            .forEach((project) => {
+              teamProjects[project] = [];
+            })
         : [];
 
       teamMembers.forEach((member) => {

@@ -15,6 +15,7 @@ import {
   Table,
   Text,
   TextInput,
+  Tooltip,
 } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
 import { lowerCase, startCase } from "lodash";
@@ -75,6 +76,50 @@ const TeamMemberList = ({
     });
   };
 
+  const getInitial = (value: string) => {
+    const parts = value.split(" ");
+    if (parts.length === 1) {
+      return `${value[0]}${value[1]}`;
+    } else {
+      return `${parts[0][0]}${parts[1][0]}`;
+    }
+  };
+
+  const renderAvatar = (valueList: string[]) => {
+    return valueList.slice(0, 3).map((value, index) => {
+      const initial = getInitial(value);
+
+      return (
+        <Tooltip label={value} withArrow key={index}>
+          <Avatar
+            color={getAvatarColor(
+              Number(`${initial.charCodeAt(0) + initial.charCodeAt(1)}`)
+            )}
+            radius="xl"
+            size={30}
+          >
+            {initial}
+          </Avatar>
+        </Tooltip>
+      );
+    });
+  };
+
+  const renderOtherAvatars = (valueList: string[]) => {
+    return (
+      <Tooltip
+        withArrow
+        label={valueList.slice(3, valueList.length).map((value, index) => {
+          return <Text key={index}>{value}</Text>;
+        })}
+      >
+        <Avatar size={30} radius="xl">
+          +{valueList.length - 3}
+        </Avatar>
+      </Tooltip>
+    );
+  };
+
   const start = (page - 1) * DEFAULT_TEAM_MEMBER_LIST_LIMIT;
   const rows = sortByRole(teamMemberList)
     .slice(start, start + DEFAULT_TEAM_MEMBER_LIST_LIMIT)
@@ -101,6 +146,36 @@ const TeamMemberList = ({
           </td>
 
           <td>{startCase(lowerCase(role))}</td>
+
+          <td>
+            <Tooltip.Group openDelay={300} closeDelay={100}>
+              <Avatar.Group spacing="sm">
+                {member.team_member_group_list.length !== 0 ? (
+                  renderAvatar(member.team_member_group_list)
+                ) : (
+                  <Text color="dimmed">No Group</Text>
+                )}
+                {member.team_member_group_list.length > 3
+                  ? renderOtherAvatars(member.team_member_group_list)
+                  : null}
+              </Avatar.Group>
+            </Tooltip.Group>
+          </td>
+
+          <td>
+            <Tooltip.Group openDelay={300} closeDelay={100}>
+              <Avatar.Group spacing="sm">
+                {member.team_member_project_list.length !== 0 ? (
+                  renderAvatar(member.team_member_project_list)
+                ) : (
+                  <Text color="dimmed">No Project</Text>
+                )}
+                {member.team_member_project_list.length > 3
+                  ? renderOtherAvatars(member.team_member_project_list)
+                  : null}
+              </Avatar.Group>
+            </Tooltip.Group>
+          </td>
 
           <td>
             <TeamMemberMenu
@@ -148,6 +223,8 @@ const TeamMemberList = ({
               <tr>
                 <th>Name</th>
                 <th>Role</th>
+                <th>Groups</th>
+                <th>Projects</th>
                 <th></th>
               </tr>
             </thead>

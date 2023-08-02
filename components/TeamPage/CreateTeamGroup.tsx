@@ -123,13 +123,16 @@ const CreateTeamGroup = ({
   editGroupData = { groupName: "", groupMembers: [] },
   handleUpsertGroup,
 }: Props) => {
-  const { formState, handleSubmit, control } = useForm<TeamGroupFormType>({
-    defaultValues: editGroupData,
-  });
+  const { formState, handleSubmit, control, watch, setValue } =
+    useForm<TeamGroupFormType>({
+      defaultValues: editGroupData,
+    });
 
   const onSubmit = async (data: TeamGroupFormType) => {
     handleUpsertGroup(data);
   };
+
+  const watchGroupMembers = watch("groupMembers");
 
   return (
     <Stack spacing={12}>
@@ -151,21 +154,26 @@ const CreateTeamGroup = ({
                   error={formState.errors.groupName?.message}
                   data={FORMSLY_GROUP}
                   onChange={onChange}
+                  sx={{
+                    input: {
+                      textTransform: "uppercase",
+                    },
+                  }}
                 />
               );
             }}
             rules={{
-              required: {
-                message: "Group Name is required",
-                value: true,
-              },
-              minLength: {
-                message: "Group Name must have atleast 3 characters",
-                value: 3,
-              },
-              maxLength: {
-                message: "Group Name must be shorter than 500 characters",
-                value: 500,
+              validate: {
+                required: (value) =>
+                  value.trim() ? true : "Group Name is required",
+                minLength: (value) =>
+                  value.trim().length > 2
+                    ? true
+                    : "Group Name must have atleast 3 characters",
+                maxLength: (value) =>
+                  value.trim().length < 500
+                    ? true
+                    : "Group Name must be shorter than 500 characters",
               },
             }}
           />
@@ -191,6 +199,20 @@ const CreateTeamGroup = ({
               );
             }}
           />
+
+          {watchGroupMembers.length < teamMemberList.length ? (
+            <Button
+              variant="subtle"
+              onClick={() => {
+                setValue(
+                  "groupMembers",
+                  teamMemberList.map((member) => member.value)
+                );
+              }}
+            >
+              Select all team members
+            </Button>
+          ) : null}
         </Flex>
 
         <Button type="submit" miw={100} mt={30} mr={14}>
