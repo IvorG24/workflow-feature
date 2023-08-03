@@ -74,7 +74,9 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
               )}
             </ActionIcon>
           </Group>
-          <Button onClick={handleLogout}>Log out</Button>
+          <Button onClick={handleLogout} data-cy="header-button-logout">
+            Log out
+          </Button>
         </Flex>
       </Box>
     </MantineHeader>
