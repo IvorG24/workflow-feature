@@ -129,6 +129,20 @@ export type SupplierTableInsert =
 export type SupplierTableUpdate =
   Database["public"]["Tables"]["supplier_table"]["Update"];
 
+export type TeamGroupTableRow =
+  Database["public"]["Tables"]["team_group_table"]["Row"];
+export type TeamGroupTableInsert =
+  Database["public"]["Tables"]["team_group_table"]["Insert"];
+export type TeamGroupTableUpdate =
+  Database["public"]["Tables"]["team_group_table"]["Update"];
+
+export type TeamProjectTableRow =
+  Database["public"]["Tables"]["team_project_table"]["Row"];
+export type TeamProjectTableInsert =
+  Database["public"]["Tables"]["team_project_table"]["Insert"];
+export type TeamProjectTableUpdate =
+  Database["public"]["Tables"]["team_project_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -287,8 +301,6 @@ export type RequestWithResponseType = RequestTableRow & {
 export type TeamMemberType = {
   team_member_id: string;
   team_member_role: MemberRoleType;
-  team_member_group_list: string[];
-  team_member_project_list: string[];
   team_member_user: {
     user_id: string;
     user_first_name: string;
@@ -327,7 +339,6 @@ export type FormType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
-  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -358,6 +369,13 @@ export type FormType = {
       field_option: OptionTableRow[];
     })[];
   })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
 };
 
 export type FormWithResponseType = {
@@ -368,7 +386,6 @@ export type FormWithResponseType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
-  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -402,6 +419,13 @@ export type FormWithResponseType = {
       field_response?: unknown;
     })[];
   })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
 };
 
 export type FormWithTeamMember = FormTableRow & {

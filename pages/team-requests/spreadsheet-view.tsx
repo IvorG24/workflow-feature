@@ -1,6 +1,6 @@
 import {
   getAllItems,
-  getMemberProjectList,
+  getAllTeamProjects,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
@@ -28,19 +28,24 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         });
         if (error) throw error;
 
-        const projectNameList = await getMemberProjectList(supabaseClient, {
-          teamId: activeTeam,
-          userId: user.id,
-        });
-
         const itemList = await getAllItems(supabaseClient, {
           teamId: activeTeam,
         });
 
         const itemNameList = itemList.map((item) => item.item_general_name);
 
+        const projectNameList = await getAllTeamProjects(supabaseClient, {
+          teamId: activeTeam,
+        });
+
         return {
-          props: { data, projectNameList, itemNameList },
+          props: {
+            data,
+            projectNameList: projectNameList.map(
+              (project) => project.team_project_name
+            ),
+            itemNameList,
+          },
         };
       } else {
         return {

@@ -13,17 +13,6 @@ import { FormBuilderData } from "./FormBuilder";
 
 export type Mode = "answer" | "edit" | "view";
 
-export type SignerActions = "approved" | "noted" | "purchased";
-
-export type RequestSigner = {
-  signer_id: string;
-  signer_team_member_id: string;
-  signer_action: SignerActions | string;
-  signer_is_primary_signer: boolean;
-  signer_order: number;
-  signer_form_id: string;
-};
-
 type UseStylesProps = {
   mode: Mode;
 };
@@ -49,7 +38,10 @@ const useStyles = createStyles((theme, { mode }: UseStylesProps) => ({
 
 type Props = {
   mode?: Mode;
-  teamGroupList: string[];
+  teamGroupList: {
+    label: string;
+    value: string;
+  }[];
 } & ContainerProps;
 
 const GroupSection = ({ mode = "edit", teamGroupList, ...props }: Props) => {

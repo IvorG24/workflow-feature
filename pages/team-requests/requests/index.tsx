@@ -5,6 +5,7 @@ import {
   getFormList,
   getRequestList,
   getUserActiveTeamId,
+  getUserTeamMemberData,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
@@ -18,6 +19,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
     try {
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
+      });
+
+      const teamMember = await getUserTeamMemberData(supabaseClient, {
+        userId: user.id,
+        teamId: teamId,
       });
 
       if (!teamId) {
@@ -39,7 +45,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           getAllTeamMembers(supabaseClient, {
             teamId,
           }),
-          getFormList(supabaseClient, { teamId, app: "REQUEST" }),
+          getFormList(supabaseClient, {
+            teamId,
+            app: "REQUEST",
+            memberId: `${teamMember?.team_member_id}`,
+          }),
           checkIfTeamHaveFormslyForms(supabaseClient, { teamId }),
         ]);
 

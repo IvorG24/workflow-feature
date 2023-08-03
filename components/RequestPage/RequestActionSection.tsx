@@ -18,7 +18,6 @@ type Props = {
   sourcedOtpForm?: {
     form_name: string;
     form_id: string;
-    form_group: string[];
     form_is_for_every_member: boolean;
   };
   requestId: string;

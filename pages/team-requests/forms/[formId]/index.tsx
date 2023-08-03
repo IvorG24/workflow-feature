@@ -1,9 +1,9 @@
 import {
+  getAllTeamGroups,
   getForm,
   getItemList,
   getNameList,
   getTeamAdminList,
-  getTeamGroupList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
@@ -16,6 +16,7 @@ import {
   FormType,
   ItemWithDescriptionType,
   SupplierTableRow,
+  TeamGroupTableRow,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -36,7 +37,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         teamId,
       });
 
-      const teamGroupList = await getTeamGroupList(supabaseClient, {
+      const teamGroupList = await getAllTeamGroups(supabaseClient, {
         teamId,
       });
 
@@ -85,6 +86,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         props: { form, teamMemberList, teamGroupList },
       };
     } catch (error) {
+   
       return {
         redirect: {
           destination: "/500",
@@ -98,7 +100,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
 type Props = {
   form: FormType;
   teamMemberList: TeamMemberWithUserType[];
-  teamGroupList: string[];
+  teamGroupList: TeamGroupTableRow[];
   items?: ItemWithDescriptionType[];
   itemListCount?: number;
   suppliers?: SupplierTableRow[];
@@ -108,11 +110,11 @@ type Props = {
 const Page = ({
   form,
   teamMemberList = [],
-  teamGroupList = [],
   items = [],
   itemListCount = 0,
   suppliers = [],
   supplierListCount = 0,
+  teamGroupList,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {

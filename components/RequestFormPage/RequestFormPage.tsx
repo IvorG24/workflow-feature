@@ -1,10 +1,11 @@
 import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
-import { useFormActions, useFormList } from "@/stores/useFormStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
-import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { FormType, TeamMemberWithUserType } from "@/utils/types";
+import {
+  FormType,
+  TeamGroupTableRow,
+  TeamMemberWithUserType,
+} from "@/utils/types";
 import {
   Button,
   Center,
@@ -22,6 +23,10 @@ import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+
+import { checkIfTeamGroupMember } from "@/backend/api/get";
+import { useFormActions, useFormList } from "@/stores/useFormStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import GroupSection from "../FormBuilder/GroupSection";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "./FormDetailsSection";
@@ -30,7 +35,7 @@ import FormSection from "./FormSection";
 type Props = {
   form: FormType;
   teamMemberList: TeamMemberWithUserType[];
-  teamGroupList: string[];
+  teamGroupList: TeamGroupTableRow[];
 };
 
 const RequestFormPage = ({ form, teamMemberList, teamGroupList }: Props) => {
@@ -59,7 +64,9 @@ const RequestFormPage = ({ form, teamMemberList, teamGroupList }: Props) => {
     })
   );
 
-  const [initialRequester, setInitialRequester] = useState(form.form_group);
+  const [initialRequester, setInitialRequester] = useState(
+    form.form_team_group.map((group) => group.team_group.team_group_id)
+  );
   const [initialGroupBoolean, setInitialGroupBoolean] = useState(
     form.form_is_for_every_member
   );
@@ -68,15 +75,18 @@ const RequestFormPage = ({ form, teamMemberList, teamGroupList }: Props) => {
   const [isGroupMember, setIsGroupMember] = useState(false);
 
   useEffect(() => {
-    setIsGroupMember(
-      form.form_is_for_every_member ||
-        (teamMember?.team_member_group_list
-          ? checkIfTwoArrayHaveAtLeastOneEqualElement(
-              form.form_group,
-              teamMember?.team_member_group_list
-            )
-          : false)
-    );
+    const checkIfMember = async () => {
+      if (teamMember) {
+        const isMember = await checkIfTeamGroupMember(supabaseClient, {
+          teamMemberId: teamMember.team_member_id,
+          groupId: form.form_team_group.map(
+            (group) => group.team_group.team_group_id
+          ),
+        });
+        setIsGroupMember(isMember);
+      }
+    };
+    checkIfMember();
   }, [teamMember]);
 
   const signerMethods = useForm<{
@@ -89,7 +99,9 @@ const RequestFormPage = ({ form, teamMemberList, teamGroupList }: Props) => {
     isForEveryone: boolean;
   }>({
     defaultValues: {
-      groupList: form.form_group,
+      groupList: form.form_team_group.map(
+        (group) => group.team_group.team_group_id
+      ),
       isForEveryone: form.form_is_for_every_member,
     },
   });
@@ -158,14 +170,10 @@ const RequestFormPage = ({ form, teamMemberList, teamGroupList }: Props) => {
       setInitialRequester(values.groupList);
       setInitialGroupBoolean(values.isForEveryone);
 
-      const isStillMember =
-        values.isForEveryone ||
-        (teamMember?.team_member_group_list
-          ? checkIfTwoArrayHaveAtLeastOneEqualElement(
-              values.groupList,
-              teamMember?.team_member_group_list
-            )
-          : false);
+      const isStillMember = await checkIfTeamGroupMember(supabaseClient, {
+        teamMemberId: `${teamMember?.team_member_id}`,
+        groupId: values.groupList,
+      });
 
       if (isStillMember !== isGroupMember) {
         const newForm = formList.map((form) => {
@@ -210,8 +218,9 @@ const RequestFormPage = ({ form, teamMemberList, teamGroupList }: Props) => {
 
           {(form.form_is_formsly_form &&
             !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name) &&
-            isGroupMember) ||
-          (!form.form_is_formsly_form && isGroupMember) ? (
+            (isGroupMember || initialGroupBoolean)) ||
+          (!form.form_is_formsly_form &&
+            (isGroupMember || initialGroupBoolean)) ? (
             <Button
               onClick={() =>
                 router.push(`/team-requests/forms/${formId}/create`)
@@ -233,7 +242,14 @@ const RequestFormPage = ({ form, teamMemberList, teamGroupList }: Props) => {
           <Title order={3}>Requester Details</Title>
           <Space h="xl" />
           <FormProvider {...requesterMethods}>
-            <GroupSection teamGroupList={teamGroupList} />
+            <GroupSection
+              teamGroupList={teamGroupList.map((group) => {
+                return {
+                  label: group.team_group_name,
+                  value: group.team_group_id,
+                };
+              })}
+            />
           </FormProvider>
 
           {!isEqual(initialRequester, watchGroup) ||

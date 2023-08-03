@@ -5,6 +5,7 @@ import {
   getOTPPendingQuotationRequestList,
   getRequest,
   getUserActiveTeamId,
+  getUserTeamMemberData,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import OrderToPurchaseRequestPage from "@/components/OrderToPurchaseRequestPage/OrderToPurchaseRequestPage";
@@ -40,6 +41,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (!teamId) throw new Error("No team found");
 
+      const teamMember = await getUserTeamMemberData(supabaseClient, {
+        teamId,
+        userId: user.id,
+      });
+
       const connectedRequestIDList = await getFormslyForwardLinkFormId(
         supabaseClient,
         {
@@ -50,6 +56,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       if (request.request_form.form_name === "Order to Purchase") {
         const connectedForm = await getFormIDForOTP(supabaseClient, {
           teamId,
+          memberId: `${teamMember?.team_member_id}`,
         });
 
         const canvassRequest = await getOTPPendingQuotationRequestList(
@@ -69,6 +76,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         const connectedForm = await getFormslyForm(supabaseClient, {
           formName: "Receiving Inspecting Report (Purchased)",
           teamId,
+          memberId: `${teamMember?.team_member_id}`,
         });
 
         return {
@@ -76,8 +84,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             request,
             connectedFormIdAndGroup: {
               formId: connectedForm?.form_id,
-              formGroup: connectedForm?.form_group,
               formIsForEveryone: connectedForm?.form_is_for_every_member,
+              formIsMember: connectedForm?.form_is_member,
             },
             connectedRequestIDList,
           },
@@ -106,15 +114,15 @@ type Props = {
   request: RequestWithResponseType;
   connectedFormIdAndGroup: {
     formId: string;
-    formGroup: string[];
     formIsForEveryone: boolean;
+    formIsMember: boolean;
   };
   connectedRequestIDList: FormslyFormType;
   connectedForm: {
     form_name: string;
     form_id: string;
-    form_group: string[];
     form_is_for_every_member: boolean;
+    form_is_member: boolean;
   }[];
   canvassRequest?: string[];
 };

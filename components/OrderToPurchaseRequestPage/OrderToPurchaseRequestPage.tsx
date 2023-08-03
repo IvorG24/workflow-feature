@@ -7,10 +7,7 @@ import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import {
-  checkIfTwoArrayHaveAtLeastOneEqualElement,
-  generateSectionWithDuplicateList,
-} from "@/utils/arrayFunctions/arrayFunctions";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   FormStatusType,
   FormslyFormType,
@@ -42,8 +39,8 @@ type Props = {
   connectedForm: {
     form_name: string;
     form_id: string;
-    form_group: string[];
     form_is_for_every_member: boolean;
+    form_is_member: boolean;
   }[];
   connectedRequestIDList: FormslyFormType;
   canvassRequest: string[];
@@ -244,53 +241,42 @@ const OrderToPurchaseRequestPage = ({
             <Group>
               {connectedForm.map((form) => {
                 if (
-                  form.form_is_for_every_member ||
-                  (teamMember?.team_member_group_list &&
-                    checkIfTwoArrayHaveAtLeastOneEqualElement(
-                      teamMember?.team_member_group_list,
-                      form.form_group
-                    ))
+                  (form.form_is_for_every_member || form.form_is_member) &&
+                  request.request_additional_info === "AVAILABLE_INTERNALLY" &&
+                  form.form_name === "Receiving Inspecting Report (Sourced)"
                 ) {
-                  if (
-                    request.request_additional_info ===
-                      "AVAILABLE_INTERNALLY" &&
-                    form.form_name === "Receiving Inspecting Report (Sourced)"
-                  ) {
-                    return (
-                      <Button
-                        key={form.form_id}
-                        onClick={() =>
-                          router.push(
-                            `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
-                          )
-                        }
-                        sx={{ flex: 1 }}
-                      >
-                        Create Receiving Inspecting Report
-                      </Button>
-                    );
-                  } else if (
-                    request.request_additional_info === "FOR_PURCHASED" &&
-                    form.form_name !==
-                      "Receiving Inspecting Report (Sourced)" &&
-                    form.form_name !== "Sourced Order to Purchase"
-                  ) {
-                    return (
-                      <Button
-                        key={form.form_id}
-                        onClick={() =>
-                          router.push(
-                            `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
-                          )
-                        }
-                        sx={{ flex: 1 }}
-                      >
-                        Create {form.form_name}
-                      </Button>
-                    );
-                  }
-                } else {
-                  return null;
+                  return (
+                    <Button
+                      key={form.form_id}
+                      onClick={() =>
+                        router.push(
+                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                        )
+                      }
+                      sx={{ flex: 1 }}
+                    >
+                      Create Receiving Inspecting Report
+                    </Button>
+                  );
+                } else if (
+                  (form.form_is_for_every_member || form.form_is_member) &&
+                  request.request_additional_info === "FOR_PURCHASED" &&
+                  form.form_name !== "Receiving Inspecting Report (Sourced)" &&
+                  form.form_name !== "Sourced Order to Purchase"
+                ) {
+                  return (
+                    <Button
+                      key={form.form_id}
+                      onClick={() =>
+                        router.push(
+                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                        )
+                      }
+                      sx={{ flex: 1 }}
+                    >
+                      Create {form.form_name}
+                    </Button>
+                  );
                 }
               })}
             </Group>

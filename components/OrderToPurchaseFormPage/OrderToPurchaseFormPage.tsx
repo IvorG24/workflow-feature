@@ -1,13 +1,14 @@
-import { checkOrderToPurchaseFormStatus } from "@/backend/api/get";
+import {
+  checkIfTeamGroupMember,
+  checkOrderToPurchaseFormStatus,
+} from "@/backend/api/get";
 import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
-import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
-import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
 import {
   FormType,
   ItemWithDescriptionType,
+  TeamGroupTableRow,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
@@ -31,6 +32,9 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+
+import { useFormActions, useFormList } from "@/stores/useFormStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import GroupSection from "../FormBuilder/GroupSection";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
@@ -44,7 +48,7 @@ type Props = {
   itemListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
-  teamGroupList: string[];
+  teamGroupList: TeamGroupTableRow[];
 };
 
 const OrderToPurchaseFormPage = ({
@@ -61,6 +65,7 @@ const OrderToPurchaseFormPage = ({
   const teamMember = useUserTeamMember();
   const formList = useFormList();
   const { setFormList } = useFormActions();
+
   const initialSignerIds: string[] = [];
 
   const [isCreatingItem, setIsCreatingItem] = useState(false);
@@ -87,7 +92,9 @@ const OrderToPurchaseFormPage = ({
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [switchValue, setSwitchValue] = useState(false);
 
-  const [initialRequester, setInitialRequester] = useState(form.form_group);
+  const [initialRequester, setInitialRequester] = useState(
+    form.form_team_group.map((group) => group.team_group.team_group_id)
+  );
   const [initialGroupBoolean, setInitialGroupBoolean] = useState(
     form.form_is_for_every_member
   );
@@ -96,15 +103,18 @@ const OrderToPurchaseFormPage = ({
   const [isGroupMember, setIsGroupMember] = useState(false);
 
   useEffect(() => {
-    setIsGroupMember(
-      form.form_is_for_every_member ||
-        (teamMember?.team_member_group_list
-          ? checkIfTwoArrayHaveAtLeastOneEqualElement(
-              form.form_group,
-              teamMember?.team_member_group_list
-            )
-          : false)
-    );
+    const checkIfMember = async () => {
+      if (teamMember) {
+        const isMember = await checkIfTeamGroupMember(supabaseClient, {
+          teamMemberId: teamMember.team_member_id,
+          groupId: form.form_team_group.map(
+            (group) => group.team_group.team_group_id
+          ),
+        });
+        setIsGroupMember(isMember);
+      }
+    };
+    checkIfMember();
   }, [teamMember]);
 
   const signerMethods = useForm<{
@@ -117,7 +127,9 @@ const OrderToPurchaseFormPage = ({
     isForEveryone: boolean;
   }>({
     defaultValues: {
-      groupList: form.form_group,
+      groupList: form.form_team_group.map(
+        (group) => group.team_group.team_group_id
+      ),
       isForEveryone: form.form_is_for_every_member,
     },
   });
@@ -178,6 +190,7 @@ const OrderToPurchaseFormPage = ({
         formId: formId as string,
       });
       setIntialSigners(values.signers);
+
       notifications.show({
         message: "Signers updated.",
         color: "green",
@@ -201,17 +214,14 @@ const OrderToPurchaseFormPage = ({
         groupList: values.groupList,
         isForEveryone: values.isForEveryone,
       });
+
       setInitialRequester(values.groupList);
       setInitialGroupBoolean(values.isForEveryone);
 
-      const isStillMember =
-        values.isForEveryone ||
-        (teamMember?.team_member_group_list
-          ? checkIfTwoArrayHaveAtLeastOneEqualElement(
-              values.groupList,
-              teamMember?.team_member_group_list
-            )
-          : false);
+      const isStillMember = await checkIfTeamGroupMember(supabaseClient, {
+        teamMemberId: `${teamMember?.team_member_id}`,
+        groupId: values.groupList,
+      });
 
       if (isStillMember !== isGroupMember) {
         const newForm = formList.map((form) => {
@@ -268,7 +278,8 @@ const OrderToPurchaseFormPage = ({
           >
             Analytics
           </Button>
-          {isGroupMember ? (
+
+          {isGroupMember || initialGroupBoolean ? (
             <Button
               onClick={() =>
                 router.push(`/team-requests/forms/${formId}/create`)
@@ -355,8 +366,16 @@ const OrderToPurchaseFormPage = ({
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>
         <Space h="xl" />
+
         <FormProvider {...requesterMethods}>
-          <GroupSection teamGroupList={teamGroupList} />
+          <GroupSection
+            teamGroupList={teamGroupList.map((group) => {
+              return {
+                label: group.team_group_name,
+                value: group.team_group_id,
+              };
+            })}
+          />
         </FormProvider>
 
         {!isEqual(initialRequester, watchGroup) ||

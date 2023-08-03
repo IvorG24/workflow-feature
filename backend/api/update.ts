@@ -278,68 +278,40 @@ export const readAllNotification = async (
   if (error) throw error;
 };
 
-// Update team and team member group list
-export const updateTeamAndTeamMemberGroupList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    teamGroupList: string[];
-    upsertGroupName: string;
-    addedGroupMembers: string[];
-    deletedGroupMembers: string[];
-    previousName?: string;
-    previousGroupMembers?: string[];
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_team_and_team_member_group_list",
-    {
-      input_data: params,
-    }
-  );
-
-  if (error) throw error;
-};
-
-// Update team and team member project list
-export const updateTeamAndTeamMemberProjectList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    teamProjectList: string[];
-    upsertProjectName: string;
-    addedProjectMembers: string[];
-    deletedProjectMembers: string[];
-    previousName?: string;
-    previousProjectMembers?: string[];
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_team_and_team_member_project_list",
-    {
-      input_data: params,
-    }
-  );
-
-  if (error) throw error;
-};
-
 // Update form group
 export const updateFormGroup = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formId: string;
-    groupList: string[];
     isForEveryone: boolean;
+    groupList: string[];
   }
 ) => {
-  const { formId, groupList, isForEveryone } = params;
-  const { data, error } = await supabaseClient
+  const { formId, isForEveryone, groupList } = params;
+  const { error } = await supabaseClient
     .from("form_table")
-    .update({ form_group: groupList, form_is_for_every_member: isForEveryone })
+    .update({ form_is_for_every_member: isForEveryone })
     .eq("form_id", formId);
   if (error) throw error;
-  return data;
+
+  const { error: deleteError } = await supabaseClient
+    .from("form_team_group_table")
+    .delete()
+    .eq("form_id", formId);
+  if (deleteError) throw deleteError;
+
+  const newGroupInsert = groupList.map((groupId) => {
+    return {
+      form_id: formId,
+      team_group_id: groupId,
+    };
+  });
+
+  const { error: newGroupError } = await supabaseClient
+    .from("form_team_group_table")
+    .insert(newGroupInsert)
+    .select("*");
+  if (newGroupError) throw newGroupError;
 };
 
 // Update form description

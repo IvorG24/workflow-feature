@@ -74,17 +74,3 @@ export const generateSectionWithDuplicateList = (
 
   return sectionWithDuplicateList;
 };
-
-export const checkIfTwoArrayHaveAtLeastOneEqualElement = (
-  firstArray: string[],
-  secondArray: string[]
-) => {
-  let returnValue = false;
-  for (const firstArrayValue of firstArray) {
-    if (secondArray.includes(firstArrayValue)) {
-      returnValue = true;
-      break;
-    }
-  }
-  return returnValue;
-};
