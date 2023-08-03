@@ -46,8 +46,17 @@ const ResetPasswordPage = () => {
         router.push("/sign-in");
         return;
       }
-      const updatePassword = await resetPassword(supabaseClient, data.password);
-      if (!updatePassword) throw new Error();
+
+      const { error } = await resetPassword(supabaseClient, data.password);
+
+      if (error?.toLowerCase().includes("old password")) {
+        notifications.show({
+          message: "New password should be different from the old password.",
+          color: "red",
+        });
+        return;
+      }
+
       notifications.show({
         message: "Password updated.",
         color: "green",
