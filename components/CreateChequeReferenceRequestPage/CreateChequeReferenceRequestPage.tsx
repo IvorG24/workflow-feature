@@ -64,7 +64,7 @@ const CreateChequeReferenceRequestPage = ({ form }: Props) => {
     replaceSection(form.form_section);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
   }, [form, replaceSection]);
 

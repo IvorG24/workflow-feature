@@ -331,24 +331,25 @@ export const updateFormDescription = async (
   if (error) throw error;
 };
 
-// Split parent otp
-export const splitParentOtp = async (
+// Split parent requisition
+export const splitParentRequisition = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpID: string;
+    requisitionID: string;
     teamMemberId: string;
     data: RequestFormValues;
     signerFullName: string;
     teamId: string;
   }
 ) => {
-  const { otpID, teamMemberId, data, signerFullName, teamId } = params;
+  const { requisitionID, teamMemberId, data, signerFullName, teamId } = params;
 
-  // fetch the parent otp
-  const { data: otpRequest, error: otpRequestError } = await supabaseClient
-    .from("request_table")
-    .select(
-      `*, 
+  // fetch the parent requisition
+  const { data: requisitionRequest, error: requisitionRequestError } =
+    await supabaseClient
+      .from("request_table")
+      .select(
+        `*, 
       request_form: request_form_id!inner(
         form_id, 
         form_name, 
@@ -378,28 +379,28 @@ export const splitParentOtp = async (
           signer_team_member_id
         )
       )`
-    )
-    .eq("request_id", otpID)
-    .eq("request_is_disabled", false)
-    .eq(
-      "request_form.form_section.section_field.field_response.request_response_request_id",
-      otpID
-    )
-    .eq(
-      "request_signer.request_signer_signer.signer_team_member_id",
-      teamMemberId
-    )
-    .maybeSingle();
-  if (otpRequestError) throw otpRequestError;
+      )
+      .eq("request_id", requisitionID)
+      .eq("request_is_disabled", false)
+      .eq(
+        "request_form.form_section.section_field.field_response.request_response_request_id",
+        requisitionID
+      )
+      .eq(
+        "request_signer.request_signer_signer.signer_team_member_id",
+        teamMemberId
+      )
+      .maybeSingle();
+  if (requisitionRequestError) throw requisitionRequestError;
 
-  const formattedOTP = otpRequest as unknown as RequestWithResponseType;
+  const formattedRequsition = requisitionRequest as unknown as RequestWithResponseType;
   const formattedSection = generateSectionWithDuplicateList(
-    formattedOTP.request_form.form_section
+    formattedRequsition.request_form.form_section
   );
   const formattedData = {
-    ...formattedOTP,
+    ...formattedRequsition,
     request_form: {
-      ...formattedOTP.request_form,
+      ...formattedRequsition.request_form,
       form_section: formattedSection,
     },
   };
@@ -410,7 +411,7 @@ export const splitParentOtp = async (
   // input the Item Section
   const matchedIndex: number[] = [];
 
-  // loop parent otp sections
+  // loop parent requisition sections
   formattedSection.slice(2).map((section, sectionIndex) => {
     // loop input sections
     for (let j = 0; j < data.sections.length; j++) {
@@ -473,11 +474,12 @@ export const splitParentOtp = async (
   }
 
   if (!isNoRemaining) {
-    // get OTP form
-    const { data: otpForm, error: otpFormError } = await supabaseClient
-      .from("form_table")
-      .select(
-        `*, 
+    // get Requisition form
+    const { data: requisitionForm, error: requisitionFormError } =
+      await supabaseClient
+        .from("form_table")
+        .select(
+          `*, 
         form_team_member: form_team_member_id!inner(*),
         form_signer: signer_table!inner(
           signer_id, 
@@ -495,19 +497,19 @@ export const splitParentOtp = async (
             )
           )
         )`
-      )
-      .eq("form_name", "Order to Purchase")
-      .eq("form_is_formsly_form", true)
-      .eq("form_team_member.team_member_team_id", teamId)
-      .single();
-    if (otpFormError) throw otpFormError;
+        )
+        .eq("form_name", "Requisition")
+        .eq("form_is_formsly_form", true)
+        .eq("form_team_member.team_member_team_id", teamId)
+        .single();
+    if (requisitionFormError) throw requisitionFormError;
 
-    const { error } = await supabaseClient.rpc("split_otp", {
+    const { error } = await supabaseClient.rpc("split_requisition", {
       input_data: {
-        otpForm,
+        requisitionForm,
         formattedSection,
         teamMemberId,
-        otpID,
+        requisitionID,
         remainingQuantityList,
         approvedQuantityList,
         formattedData,
@@ -521,13 +523,13 @@ export const splitParentOtp = async (
   } else {
     await approveOrRejectRequest(supabaseClient, {
       requestAction: "APPROVED",
-      requestId: otpID,
+      requestId: requisitionID,
       isPrimarySigner: true,
       requestSignerId: formattedData.request_signer[0].request_signer_signer_id,
       requestOwnerId:
         formattedData.request_team_member.team_member_user.user_id,
       signerFullName: signerFullName,
-      formName: "Order to Purchase",
+      formName: "Requisition",
       memberId: teamMemberId,
       teamId: teamId,
       additionalInfo: "AVAILABLE_INTERNALLY",

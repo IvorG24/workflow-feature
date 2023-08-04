@@ -30,9 +30,9 @@ import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
-import OrderToPurchaseCanvassSection from "../OrderToPurchaseCanvassPage/OrderToPurchaseCanvassSection";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
-import OrderToPurchaseSummary from "../SummarySection/OrderToPurchaseSummary";
+import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
+import RequisitionSummary from "../SummarySection/RequisitionSummary";
 
 type Props = {
   request: RequestWithResponseType;
@@ -46,7 +46,7 @@ type Props = {
   canvassRequest: string[];
 };
 
-const OrderToPurchaseRequestPage = ({
+const RequisitionRequestPage = ({
   request,
   connectedForm,
   connectedRequestIDList,
@@ -60,6 +60,9 @@ const OrderToPurchaseRequestPage = ({
   const user = useUserProfile();
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
+  const [requestAdditionalInfo, setRequestAdditionalInfo] = useState(
+    request.request_additional_info
+  );
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -132,6 +135,10 @@ const OrderToPurchaseRequestPage = ({
 
       if (signer.signer_is_primary_signer) {
         setRequestStatus(status);
+      }
+
+      if (additionalInfo) {
+        setRequestAdditionalInfo(additionalInfo);
       }
 
       setSignerList((prev) =>
@@ -242,34 +249,34 @@ const OrderToPurchaseRequestPage = ({
               {connectedForm.map((form) => {
                 if (
                   (form.form_is_for_every_member || form.form_is_member) &&
-                  request.request_additional_info === "AVAILABLE_INTERNALLY" &&
-                  form.form_name === "Receiving Inspecting Report (Sourced)"
+                  requestAdditionalInfo === "AVAILABLE_INTERNALLY" &&
+                  form.form_name === "Release Order"
                 ) {
                   return (
                     <Button
                       key={form.form_id}
                       onClick={() =>
                         router.push(
-                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                          `/team-requests/forms/${form.form_id}/create?requisitionId=${request.request_id}`
                         )
                       }
                       sx={{ flex: 1 }}
                     >
-                      Create Receiving Inspecting Report
+                      Create Release Order
                     </Button>
                   );
                 } else if (
                   (form.form_is_for_every_member || form.form_is_member) &&
-                  request.request_additional_info === "FOR_PURCHASED" &&
-                  form.form_name !== "Receiving Inspecting Report (Sourced)" &&
-                  form.form_name !== "Sourced Order to Purchase"
+                  requestAdditionalInfo === "FOR_PURCHASED" &&
+                  form.form_name !== "Release Order" &&
+                  form.form_name !== "Sourced Item"
                 ) {
                   return (
                     <Button
                       key={form.form_id}
                       onClick={() =>
                         router.push(
-                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                          `/team-requests/forms/${form.form_id}/create?requisitionId=${request.request_id}`
                         )
                       }
                       sx={{ flex: 1 }}
@@ -292,7 +299,7 @@ const OrderToPurchaseRequestPage = ({
         />
 
         {canvassRequest.length !== 0 ? (
-          <OrderToPurchaseCanvassSection canvassRequest={canvassRequest} />
+          <RequisitionCanvassSection canvassRequest={canvassRequest} />
         ) : null}
 
         <ConnectedRequestSection
@@ -317,7 +324,7 @@ const OrderToPurchaseRequestPage = ({
           );
         })}
 
-        <OrderToPurchaseSummary
+        <RequisitionSummary
           summaryData={sectionWithDuplicateList
             .slice(2)
             .sort((a, b) =>
@@ -341,9 +348,9 @@ const OrderToPurchaseRequestPage = ({
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
-            isOTP
-            sourcedOtpForm={connectedForm.find(
-              (form) => form.form_name === "Sourced Order to Purchase"
+            isRequsition
+            sourcedItemForm={connectedForm.find(
+              (form) => form.form_name === "Sourced Item"
             )}
             requestId={request.request_id}
             isUserPrimarySigner={Boolean(isUserPrimarySigner)}
@@ -367,4 +374,4 @@ const OrderToPurchaseRequestPage = ({
   );
 };
 
-export default OrderToPurchaseRequestPage;
+export default RequisitionRequestPage;

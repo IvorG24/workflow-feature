@@ -1,5 +1,5 @@
 import { checkQuotationItemQuantity } from "@/backend/api/get";
-import { splitParentOtp } from "@/backend/api/update";
+import { splitParentRequisition } from "@/backend/api/update";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -45,10 +45,7 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateSourcedOrderToPurchaseRequestPage = ({
-  form,
-  itemOptions,
-}: Props) => {
+const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -98,7 +95,7 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -106,8 +103,8 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
-      const otpID = router.query.otpId;
-      if (typeof otpID !== "string") return;
+      const requisitionID = router.query.requisitionId;
+      if (typeof requisitionID !== "string") return;
 
       setIsLoading(true);
 
@@ -140,7 +137,7 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
       });
 
       const warningItemList = await checkQuotationItemQuantity(supabaseClient, {
-        otpID,
+        requisitionID,
         itemFieldId: itemSection.section_field[0].field_id,
         quantityFieldId: itemSection.section_field[1].field_id,
         itemFieldList,
@@ -154,7 +151,8 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the OTP
+                There are items that will exceed the quantity limit of the
+                Requisition
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -168,8 +166,8 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
           ),
         });
       } else {
-        const isSplitted = await splitParentOtp(supabaseClient, {
-          otpID,
+        const isSplitted = await splitParentRequisition(supabaseClient, {
+          requisitionID,
           teamMemberId: teamMember.team_member_id,
           data,
           signerFullName: `${user?.user_first_name} ${user?.user_last_name}`,
@@ -177,12 +175,12 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
         });
 
         notifications.show({
-          message: `Order to Purchase request ${
+          message: `Requisition request ${
             isSplitted ? "splitted" : "approved"
           }.`,
           color: "green",
         });
-        router.push(`/team-requests/requests/${otpID}`);
+        router.push(`/team-requests/requests/${requisitionID}`);
       }
     } catch (e) {
       console.error(e);
@@ -399,4 +397,4 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
   );
 };
 
-export default CreateSourcedOrderToPurchaseRequestPage;
+export default CreateSourcedItemRequestPage;

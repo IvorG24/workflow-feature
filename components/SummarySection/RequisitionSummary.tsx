@@ -6,7 +6,7 @@ type Props = {
   summaryData: DuplicateSectionType[];
 };
 
-const OrderToPurchaseSummary = ({ summaryData }: Props) => {
+const RequisitionSummary = ({ summaryData }: Props) => {
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -85,4 +85,4 @@ const OrderToPurchaseSummary = ({ summaryData }: Props) => {
   );
 };
 
-export default OrderToPurchaseSummary;
+export default RequisitionSummary;

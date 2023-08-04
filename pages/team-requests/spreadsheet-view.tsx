@@ -23,7 +23,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             pageNumber: 1,
             rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
             search: "",
-            otpCondition: [],
+            requisitionCondition: [],
           },
         });
         if (error) throw error;

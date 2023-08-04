@@ -1,4 +1,4 @@
-import { checkOrderToPurchaseFormStatus } from "@/backend/api/get";
+import { checkRequisitionFormStatus } from "@/backend/api/get";
 import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
@@ -200,7 +200,7 @@ const QuotationFormPage = ({
 
   const handleFormVisibilityRestriction = async () => {
     try {
-      const result = await checkOrderToPurchaseFormStatus(supabaseClient, {
+      const result = await checkRequisitionFormStatus(supabaseClient, {
         teamId: team.team_id,
         formId: `${formId}`,
       });

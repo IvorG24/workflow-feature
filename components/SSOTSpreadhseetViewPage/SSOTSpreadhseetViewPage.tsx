@@ -1,5 +1,8 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { DEFAULT_NUMBER_SSOT_ROWS, OTP_FIELDS_ORDER } from "@/utils/constant";
+import {
+  DEFAULT_NUMBER_SSOT_ROWS,
+  REQUISITION_FIELDS_ORDER,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
 import { SSOTResponseType, SSOTType } from "@/utils/types";
@@ -61,7 +64,7 @@ const useStyles = createStyles((theme) => ({
     minWidth: 300,
     maxWidth: 300,
   },
-  otpTable: {
+  requisitionTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -89,7 +92,7 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.grape[0],
     },
   },
-  rirPurchasedTable: {
+  rirTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -103,7 +106,7 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.orange[0],
     },
   },
-  rirSourcedTable: {
+  roTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -158,7 +161,7 @@ const SSOTSpreadsheetView = ({
   const team = useActiveTeam();
   const viewport = useRef<HTMLDivElement>(null);
 
-  const [otpList, setOtpList] = useState(data);
+  const [requisitionList, setRequisitionList] = useState(data);
   const [offset, setOffset] = useState(1);
   const [isInView, setIsInView] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -166,7 +169,7 @@ const SSOTSpreadsheetView = ({
     "always"
   );
   const [isFetchable, setIsFetchable] = useState(
-    otpList.length === DEFAULT_NUMBER_SSOT_ROWS
+    requisitionList.length === DEFAULT_NUMBER_SSOT_ROWS
   );
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
@@ -193,7 +196,7 @@ const SSOTSpreadsheetView = ({
           pageNumber: 1,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search,
-          otpCondition: [...projectNameList, ...itemNameList],
+          requisitionCondition: [...projectNameList, ...itemNameList],
           numberOfCondition:
             projectNameList.length !== 0 && itemNameList.length !== 0 ? 2 : 1,
         },
@@ -205,7 +208,7 @@ const SSOTSpreadsheetView = ({
       } else {
         setIsFetchable(false);
       }
-      setOtpList(formattedData);
+      setRequisitionList(formattedData);
       viewport.current &&
         viewport.current.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
@@ -237,7 +240,7 @@ const SSOTSpreadsheetView = ({
           pageNumber: offset,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search,
-          otpCondition: [...projectNameList, ...itemNameList],
+          requisitionCondition: [...projectNameList, ...itemNameList],
           numberOfCondition:
             projectNameList.length !== 0 && itemNameList.length !== 0 ? 2 : 1,
         },
@@ -249,7 +252,7 @@ const SSOTSpreadsheetView = ({
           setIsFetchable(false);
         } else {
           setIsFetchable(true);
-          setOtpList((prev) => [...prev, ...formattedData]);
+          setRequisitionList((prev) => [...prev, ...formattedData]);
         }
       }
     } catch (e) {
@@ -282,7 +285,7 @@ const SSOTSpreadsheetView = ({
   }, [isInView]);
 
   const renderChequeReference = (
-    request: SSOTType["otp_cheque_reference_request"]
+    request: SSOTType["requisition_cheque_reference_request"]
   ) => {
     return request.map((request) => {
       return (
@@ -334,7 +337,7 @@ const SSOTSpreadsheetView = ({
   };
 
   const renderRir = (
-    request: SSOTType["otp_quotation_request"][0]["quotation_rir_request"]
+    request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"]
   ) => {
     return request.map((request) => {
       const itemName: string[] = [];
@@ -450,7 +453,9 @@ const SSOTSpreadsheetView = ({
     });
   };
 
-  const renderQuotation = (request: SSOTType["otp_quotation_request"]) => {
+  const renderQuotation = (
+    request: SSOTType["requisition_quotation_request"]
+  ) => {
     return request.map((request) => {
       const itemName: string[] = [];
       const itemPrice: string[] = [];
@@ -597,7 +602,7 @@ const SSOTSpreadsheetView = ({
                 withBorder
                 withColumnBorders
                 h="100%"
-                className={classes.rirPurchasedTable}
+                className={classes.rirTable}
               >
                 <thead>
                   <tr>
@@ -621,8 +626,8 @@ const SSOTSpreadsheetView = ({
     });
   };
 
-  const renderOtp = () => {
-    return otpList.map((request) => {
+  const renderRequisition = () => {
+    return requisitionList.map((request) => {
       const itemName: string[] = [];
       const itemUnit: string[] = [];
       const itemQuantity: string[] = [];
@@ -630,16 +635,16 @@ const SSOTSpreadsheetView = ({
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
 
-      const fields = request.otp_request_response.sort(
+      const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
           return (
-            OTP_FIELDS_ORDER.indexOf(a.request_response_field_name) -
-            OTP_FIELDS_ORDER.indexOf(b.request_response_field_name)
+            REQUISITION_FIELDS_ORDER.indexOf(a.request_response_field_name) -
+            REQUISITION_FIELDS_ORDER.indexOf(b.request_response_field_name)
           );
         }
       );
 
-      const items = fields.slice(0, -OTP_FIELDS_ORDER.length);
+      const items = fields.slice(0, -REQUISITION_FIELDS_ORDER.length);
       const sortedAndGroupedItems = sortAndGroupItems(items);
       sortedAndGroupedItems.forEach((group, groupIndex) => {
         itemDescription[groupIndex] = "";
@@ -666,25 +671,29 @@ const SSOTSpreadsheetView = ({
       });
 
       return (
-        <tr key={request.otp_request_id} className={classes.cell}>
-          <td>{request.otp_request_id}</td>
+        <tr key={request.requisition_request_id} className={classes.cell}>
+          <td>{request.requisition_request_id}</td>
           <td>
-            {new Date(request.otp_request_date_created).toLocaleDateString()}
+            {new Date(
+              request.requisition_request_date_created
+            ).toLocaleDateString()}
           </td>
-          <td>{`${request.otp_request_owner.user_first_name} ${request.otp_request_owner.user_last_name}`}</td>
-          {fields.slice(-OTP_FIELDS_ORDER.length).map((response, index) => {
-            return (
-              <td key={index}>
-                {response.request_response_field_type === "DATE"
-                  ? new Date(
-                      JSON.parse(response.request_response)
-                    ).toLocaleDateString()
-                  : JSON.parse(response.request_response) !== "null"
-                  ? JSON.parse(response.request_response)
-                  : ""}
-              </td>
-            );
-          })}
+          <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
+          {fields
+            .slice(-REQUISITION_FIELDS_ORDER.length)
+            .map((response, index) => {
+              return (
+                <td key={index}>
+                  {response.request_response_field_type === "DATE"
+                    ? new Date(
+                        JSON.parse(response.request_response)
+                      ).toLocaleDateString()
+                    : JSON.parse(response.request_response) !== "null"
+                    ? JSON.parse(response.request_response)
+                    : ""}
+                </td>
+              );
+            })}
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
@@ -740,7 +749,7 @@ const SSOTSpreadsheetView = ({
             </List>
           </td>
           <td style={{ padding: 0 }}>
-            {request.otp_quotation_request.length !== 0 ? (
+            {request.requisition_quotation_request.length !== 0 ? (
               <Table
                 withBorder
                 withColumnBorders
@@ -760,24 +769,26 @@ const SSOTSpreadsheetView = ({
                     <th className={classes.normal}>Price per Unit</th>
                     <th className={classes.normal}>Quantity</th>
                     <th className={classes.date}>Unit of Measurement</th>
-                    <th>Receiving Inspecting Report (Purchased)</th>
+                    <th>Receiving Inspecting Report</th>
                   </tr>
                 </thead>
-                <tbody>{renderQuotation(request.otp_quotation_request)}</tbody>
+                <tbody>
+                  {renderQuotation(request.requisition_quotation_request)}
+                </tbody>
               </Table>
             ) : null}
           </td>
           <td style={{ padding: 0 }}>
-            {request.otp_rir_request.length !== 0 ? (
+            {request.requisition_rir_request.length !== 0 ? (
               <Table
                 withBorder
                 withColumnBorders
                 h="100%"
-                className={classes.rirSourcedTable}
+                className={classes.roTable}
               >
                 <thead>
                   <tr>
-                    <th className={classes.long}>RIR ID</th>
+                    <th className={classes.long}>Release Order ID</th>
                     <th className={classes.date}>Date Created</th>
                     <th className={classes.processor}>Warehouse Receiver</th>
                     <th className={classes.short}>DR</th>
@@ -788,12 +799,12 @@ const SSOTSpreadsheetView = ({
                     <th className={classes.long}>Receiving Status</th>
                   </tr>
                 </thead>
-                <tbody>{renderRir(request.otp_rir_request)}</tbody>
+                <tbody>{renderRir(request.requisition_rir_request)}</tbody>
               </Table>
             ) : null}
           </td>
           <td style={{ padding: 0 }}>
-            {request.otp_cheque_reference_request.length !== 0 ? (
+            {request.requisition_cheque_reference_request.length !== 0 ? (
               <Table
                 withBorder
                 withColumnBorders
@@ -820,7 +831,9 @@ const SSOTSpreadsheetView = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {renderChequeReference(request.otp_cheque_reference_request)}
+                  {renderChequeReference(
+                    request.requisition_cheque_reference_request
+                  )}
                 </tbody>
               </Table>
             ) : null}
@@ -903,15 +916,15 @@ const SSOTSpreadsheetView = ({
               withColumnBorders
               pos="relative"
               h="100%"
-              className={classes.otpTable}
+              className={classes.requisitionTable}
               ref={containerRef}
             >
               <thead>
                 <tr>
-                  <th className={classes.long}>OTP ID</th>
+                  <th className={classes.long}>Requisition ID</th>
                   <th className={classes.date}>Date Created</th>
                   <th className={classes.processor}>Warehouse Processor</th>
-                  <th className={classes.long}>Parent OTP ID</th>
+                  <th className={classes.long}>Parent Requisition ID</th>
                   <th className={classes.long}>Project Name</th>
                   <th className={classes.normal}>Type</th>
                   <th className={classes.date}>Date Needed</th>
@@ -922,11 +935,11 @@ const SSOTSpreadsheetView = ({
                   <th className={classes.short}>Cost Code</th>
                   <th className={classes.short}>GL Account</th>
                   <th>Quotation</th>
-                  <th>Receiving Inspecting Report (Sourced)</th>
+                  <th>Release Order</th>
                   <th>Cheque Reference</th>
                 </tr>
               </thead>
-              <tbody>{renderOtp()}</tbody>
+              <tbody>{renderRequisition()}</tbody>
             </Table>
           </Box>
         </ScrollArea>

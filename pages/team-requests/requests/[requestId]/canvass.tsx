@@ -1,6 +1,6 @@
 import { getCanvassData } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import OrderToPurchaseCanvassPage from "@/components/OrderToPurchaseCanvassPage/OrderToPurchaseCanvassPage";
+import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { CanvassLowestPriceType, CanvassType } from "@/utils/types";
 import { isEmpty } from "lodash";
@@ -65,7 +65,7 @@ const Page = ({
   summaryData,
   lowestQuotation,
   requestAdditionalCharge,
-  lowestAdditionalCharge
+  lowestAdditionalCharge,
 }: Props) => {
   return (
     <>
@@ -73,7 +73,7 @@ const Page = ({
         description="Canvass Page"
         url="/team-requests/request/<requestId>/canvass"
       />
-      <OrderToPurchaseCanvassPage
+      <RequisitionCanvassPage
         canvassData={canvassData}
         lowestPricePerItem={lowestPricePerItem}
         summaryData={summaryData}

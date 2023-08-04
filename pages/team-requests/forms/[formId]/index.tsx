@@ -7,9 +7,9 @@ import {
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
+import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import {
@@ -42,7 +42,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
       });
 
       if (form.form_is_formsly_form) {
-        if (form.form_name === "Order to Purchase") {
+        if (form.form_name === "Requisition") {
           const { data: items, count: itemListCount } = await getItemList(
             supabaseClient,
             {
@@ -86,7 +86,6 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         props: { form, teamMemberList, teamGroupList },
       };
     } catch (error) {
-   
       return {
         redirect: {
           destination: "/500",
@@ -118,9 +117,9 @@ const Page = ({
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Order to Purchase":
+      case "Requisition":
         return (
-          <OrderToPurchaseFormPage
+          <RequisitionFormPage
             items={items}
             itemListCount={itemListCount}
             teamMemberList={teamMemberList}
