@@ -60,6 +60,9 @@ const RequisitionRequestPage = ({
   const user = useUserProfile();
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
+  const [requestAdditionalInfo, setRequestAdditionalInfo] = useState(
+    request.request_additional_info
+  );
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -132,6 +135,10 @@ const RequisitionRequestPage = ({
 
       if (signer.signer_is_primary_signer) {
         setRequestStatus(status);
+      }
+
+      if (additionalInfo) {
+        setRequestAdditionalInfo(additionalInfo);
       }
 
       setSignerList((prev) =>
@@ -242,7 +249,7 @@ const RequisitionRequestPage = ({
               {connectedForm.map((form) => {
                 if (
                   (form.form_is_for_every_member || form.form_is_member) &&
-                  request.request_additional_info === "AVAILABLE_INTERNALLY" &&
+                  requestAdditionalInfo === "AVAILABLE_INTERNALLY" &&
                   form.form_name === "Release Order"
                 ) {
                   return (
@@ -255,14 +262,14 @@ const RequisitionRequestPage = ({
                       }
                       sx={{ flex: 1 }}
                     >
-                      Create Receiving Inspecting Report
+                      Create Release Order
                     </Button>
                   );
                 } else if (
                   (form.form_is_for_every_member || form.form_is_member) &&
-                  request.request_additional_info === "FOR_PURCHASED" &&
+                  requestAdditionalInfo === "FOR_PURCHASED" &&
                   form.form_name !== "Release Order" &&
-                  form.form_name !== "ZZZ"
+                  form.form_name !== "Sourced Item"
                 ) {
                   return (
                     <Button
@@ -342,8 +349,8 @@ const RequisitionRequestPage = ({
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
             isRequsition
-            sourcedOtpForm={connectedForm.find(
-              (form) => form.form_name === "ZZZ"
+            sourcedItemForm={connectedForm.find(
+              (form) => form.form_name === "Sourced Item"
             )}
             requestId={request.request_id}
             isUserPrimarySigner={Boolean(isUserPrimarySigner)}

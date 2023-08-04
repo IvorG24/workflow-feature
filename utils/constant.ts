@@ -18,7 +18,7 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Receiving Inspecting Report",
   "Release Order",
   "Cheque Reference",
-  "ZZZ",
+  "Sourced Item",
 ];
 
 export const SIGN_IN_PAGE_PATH = "/sign-in";
@@ -55,7 +55,7 @@ export const defaultRequestFormBuilderSigners = (
 export const formslyPremadeFormsData = (teamMemberId: string) => {
   // form ids
   const requisitionFormId = uuidv4();
-  const sourcedRequisitionFormId = uuidv4();
+  const sourcedItemFormId = uuidv4();
   const quotationFormId = uuidv4();
   const receivingInspectingReportPurchasedFormId = uuidv4();
   const releaseOrderFormId = uuidv4();
@@ -66,7 +66,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const requisitionIdSectionId = uuidv4();
   const requisitionMainSectionId = uuidv4();
   const requisitionItemSectionId = uuidv4();
-  const sourcedOtpItemSectionId = uuidv4();
+  const sourcedItemItemSectionId = uuidv4();
   const quotationIdSectionId = uuidv4();
   const quotationMainSectionId = uuidv4();
   const quotationAdditionalChargeSectionId = uuidv4();
@@ -207,11 +207,11 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
     },
-    sourcedRequisition: {
+    sourcedItem: {
       form: {
-        form_id: sourcedRequisitionFormId,
-        form_name: "ZZZ",
-        form_description: "formsly premade ZZZ form",
+        form_id: sourcedItemFormId,
+        form_name: "Sourced Item",
+        form_description: "formsly premade Sourced Item form",
         form_app: "REQUEST",
         form_is_formsly_form: true,
         form_is_hidden: true,
@@ -220,11 +220,11 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       },
       section: [
         {
-          section_id: sourcedOtpItemSectionId,
+          section_id: sourcedItemItemSectionId,
           section_name: "Item",
           section_order: 1,
           section_is_duplicatable: true,
-          section_form_id: sourcedRequisitionFormId,
+          section_form_id: sourcedItemFormId,
         },
       ],
       field: [
@@ -232,7 +232,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Item",
           field_type: "DROPDOWN",
           field_order: 1,
-          field_section_id: sourcedOtpItemSectionId,
+          field_section_id: sourcedItemItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -240,7 +240,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Quantity",
           field_type: "NUMBER",
           field_order: 2,
-          field_section_id: sourcedOtpItemSectionId,
+          field_section_id: sourcedItemItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -817,7 +817,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 
   const {
     requisition,
-    sourcedRequisition,
+    sourcedItem,
     quotation,
     receivingInspectingReportPurchased,
     releaseOrder,
@@ -828,7 +828,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   return {
     forms: [
       requisition.form,
-      sourcedRequisition.form,
+      sourcedItem.form,
       quotation.form,
       receivingInspectingReportPurchased.form,
       releaseOrder.form,
@@ -837,7 +837,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
     sections: [
       ...requisition.section,
-      ...sourcedRequisition.section,
+      ...sourcedItem.section,
       ...quotation.section,
       ...receivingInspectingReportPurchased.section,
       ...releaseOrder.section,
@@ -846,7 +846,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
     fieldsWithoutId: [
       ...requisition.field,
-      ...sourcedRequisition.field,
+      ...sourcedItem.field,
       ...quotation.field,
       ...receivingInspectingReportPurchased.field,
       ...releaseOrder.field,

@@ -45,7 +45,7 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateSourcedRequisitionRequestPage = ({ form, itemOptions }: Props) => {
+const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -397,4 +397,4 @@ const CreateSourcedRequisitionRequestPage = ({ form, itemOptions }: Props) => {
   );
 };
 
-export default CreateSourcedRequisitionRequestPage;
+export default CreateSourcedItemRequestPage;

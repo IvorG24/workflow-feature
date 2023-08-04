@@ -831,7 +831,7 @@ RETURNS VOID AS $$
       INSERT INTO request_table 
       (request_form_id, request_team_member_id, request_additional_info, request_status)
       VALUES
-      ('${requisitionForm.form_id}', '${formattedData.request_team_member_id}', 'SOURCED_OTP', 'PENDING'),
+      ('${requisitionForm.form_id}', '${formattedData.request_team_member_id}', 'SOURCED_ITEM', 'PENDING'),
       ('${requisitionForm.form_id}', '${formattedData.request_team_member_id}', 'AVAILABLE_INTERNALLY', 'APPROVED')
       RETURNING *;
     `);

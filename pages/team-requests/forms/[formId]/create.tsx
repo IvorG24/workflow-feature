@@ -18,7 +18,7 @@ import CreateRequestPage, {
   RequestFormValues,
 } from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
-import CreateSourcedRequisitionRequestPage from "@/components/CreateSourcedOrderToPurchaseRequestPage/CreateSourcedOrderToPurchaseRequestPage";
+import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
 
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
@@ -111,8 +111,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // ZZZ Form,
-        else if (form.form_name === "ZZZ") {
+        // Sourced Item Form,
+        else if (form.form_name === "Sourced Item") {
           const isRequestIdValid = await checkRequsitionRequestForReleaseOrder(
             supabaseClient,
             {
@@ -318,12 +318,9 @@ const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
             requisitionIdSection={requisitionIdSection}
           />
         );
-      case "ZZZ":
+      case "Sourced Item":
         return (
-          <CreateSourcedRequisitionRequestPage
-            form={form}
-            itemOptions={itemOptions}
-          />
+          <CreateSourcedItemRequestPage form={form} itemOptions={itemOptions} />
         );
       case "Quotation":
         return (

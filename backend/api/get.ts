@@ -1370,7 +1370,7 @@ export const getFormIDForRequsition = async (
       `
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Release Order%, form_name.eq.ZZZ"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Release Order, form_name.eq.Sourced Item"
     )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)

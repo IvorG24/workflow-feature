@@ -788,7 +788,7 @@ const SSOTSpreadsheetView = ({
               >
                 <thead>
                   <tr>
-                    <th className={classes.long}>RIR ID</th>
+                    <th className={classes.long}>Release Order ID</th>
                     <th className={classes.date}>Date Created</th>
                     <th className={classes.processor}>Warehouse Receiver</th>
                     <th className={classes.short}>DR</th>

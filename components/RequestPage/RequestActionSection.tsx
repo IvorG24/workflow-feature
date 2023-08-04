@@ -15,7 +15,7 @@ type Props = {
     additionalInfo?: string
   ) => void;
   isRequsition?: boolean;
-  sourcedOtpForm?: {
+  sourcedItemForm?: {
     form_name: string;
     form_id: string;
     form_is_for_every_member: boolean;
@@ -33,7 +33,7 @@ const RequestActionSection = ({
   isUserSigner,
   handleUpdateRequest,
   isRequsition = false,
-  sourcedOtpForm,
+  sourcedItemForm,
   requestId,
   isUserPrimarySigner,
   signer,
@@ -102,13 +102,13 @@ const RequestActionSection = ({
                   >
                     For Purchased
                   </Button>
-                  {sourcedOtpForm && isUserPrimarySigner && (
+                  {sourcedItemForm && isUserPrimarySigner && (
                     <Button
                       color="orange"
                       fullWidth
                       onClick={() => {
                         router.push(
-                          `/team-requests/forms/${sourcedOtpForm.form_id}/create?requisitionId=${requestId}`
+                          `/team-requests/forms/${sourcedItemForm.form_id}/create?requisitionId=${requestId}`
                         );
                       }}
                     >
