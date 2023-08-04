@@ -67,7 +67,7 @@ const SSOTSpreadsheetViewFilter = ({
   return (
     <Flex justify="flex-start" gap="md" wrap="wrap">
       <TextInput
-        placeholder="Search by OTP ID"
+        placeholder="Search by Requisition ID"
         rightSection={
           <ActionIcon size="xs" type="submit">
             <IconSearch />

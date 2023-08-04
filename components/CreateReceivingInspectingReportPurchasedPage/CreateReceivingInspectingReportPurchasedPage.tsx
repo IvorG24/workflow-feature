@@ -103,7 +103,7 @@ const CreateReceivingInspectingReportPurchasedPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
     setValue(
       `sections.${0}.section_field.${1}.field_response`,

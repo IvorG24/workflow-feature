@@ -250,7 +250,7 @@ const OrderToPurchaseRequestPage = ({
                       key={form.form_id}
                       onClick={() =>
                         router.push(
-                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                          `/team-requests/forms/${form.form_id}/create?requisitionId=${request.request_id}`
                         )
                       }
                       sx={{ flex: 1 }}
@@ -262,14 +262,14 @@ const OrderToPurchaseRequestPage = ({
                   (form.form_is_for_every_member || form.form_is_member) &&
                   request.request_additional_info === "FOR_PURCHASED" &&
                   form.form_name !== "Receiving Inspecting Report (Sourced)" &&
-                  form.form_name !== "Sourced Order to Purchase"
+                  form.form_name !== "ZZZ"
                 ) {
                   return (
                     <Button
                       key={form.form_id}
                       onClick={() =>
                         router.push(
-                          `/team-requests/forms/${form.form_id}/create?otpId=${request.request_id}`
+                          `/team-requests/forms/${form.form_id}/create?requisitionId=${request.request_id}`
                         )
                       }
                       sx={{ flex: 1 }}
@@ -343,7 +343,7 @@ const OrderToPurchaseRequestPage = ({
             handleUpdateRequest={handleUpdateRequest}
             isOTP
             sourcedOtpForm={connectedForm.find(
-              (form) => form.form_name === "Sourced Order to Purchase"
+              (form) => form.form_name === "ZZZ"
             )}
             requestId={request.request_id}
             isUserPrimarySigner={Boolean(isUserPrimarySigner)}

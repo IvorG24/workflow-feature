@@ -42,7 +42,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
       });
 
       if (form.form_is_formsly_form) {
-        if (form.form_name === "Order to Purchase") {
+        if (form.form_name === "Requisition") {
           const { data: items, count: itemListCount } = await getItemList(
             supabaseClient,
             {
@@ -86,7 +86,6 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         props: { form, teamMemberList, teamGroupList },
       };
     } catch (error) {
-   
       return {
         redirect: {
           destination: "/500",
@@ -118,7 +117,7 @@ const Page = ({
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Order to Purchase":
+      case "Requisition":
         return (
           <OrderToPurchaseFormPage
             items={items}

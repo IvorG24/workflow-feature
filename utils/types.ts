@@ -540,7 +540,7 @@ export type RequestDashboardOverviewData = RequestTableRow & {
 };
 
 export type ConnectedFormsType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Invoice"
   | "Account Payable Voucher";
 
@@ -588,13 +588,13 @@ export type RequestResponseDataType = {
   responseData: FieldWithResponseType;
 };
 export type FormslyFormType = {
-  "Order to Purchase": string[];
+  Requisition: string[];
   Quotation: string[];
   "Receiving Inspecting Report (Purchased)": string[];
 };
 
 export type FormslyFormKeyType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Quotation"
   | "Receiving Inspecting Report (Purchased)";
 
@@ -606,7 +606,7 @@ export type RequestSignerListType =
     };
   };
 export type TeamGroupForFormType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Quotation"
   | "Receiving Inspecting Report (Purchased)"
   | "Cheque Reference"
@@ -625,11 +625,11 @@ export type SSOTResponseType = {
 };
 
 export type SSOTType = {
-  otp_request_id: string;
-  otp_request_date_created: string;
-  otp_request_owner: SSOTRequestOwnerType;
-  otp_request_response: SSOTResponseType[];
-  otp_quotation_request: {
+  requisition_request_id: string;
+  requisition_request_date_created: string;
+  requisition_request_owner: SSOTRequestOwnerType;
+  requisition_request_response: SSOTResponseType[];
+  requisition_quotation_request: {
     quotation_request_id: string;
     quotation_request_date_created: string;
     quotation_request_owner: SSOTRequestOwnerType;
@@ -641,13 +641,13 @@ export type SSOTType = {
       rir_request_response: SSOTResponseType[];
     }[];
   }[];
-  otp_cheque_reference_request: {
+  requisition_cheque_reference_request: {
     cheque_reference_request_id: string;
     cheque_reference_request_date_created: string;
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
-  otp_rir_request: {
+  requisition_rir_request: {
     rir_request_id: string;
     rir_request_date_created: string;
     rir_request_owner: SSOTRequestOwnerType;

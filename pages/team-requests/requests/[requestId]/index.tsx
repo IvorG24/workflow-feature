@@ -53,7 +53,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         }
       );
 
-      if (request.request_form.form_name === "Order to Purchase") {
+      if (request.request_form.form_name === "Requisition") {
         const connectedForm = await getFormIDForOTP(supabaseClient, {
           teamId,
           memberId: `${teamMember?.team_member_id}`,
@@ -135,7 +135,7 @@ const Page = ({
   canvassRequest = [],
 }: Props) => {
   const formslyForm = () => {
-    if (request.request_form.form_name === "Order to Purchase") {
+    if (request.request_form.form_name === "Requisition") {
       return (
         <OrderToPurchaseRequestPage
           request={request}

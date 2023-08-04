@@ -23,7 +23,7 @@ import Overview from "./OverviewTab/Overview";
 // response tab is hidden
 const TABS = ["overview"];
 // const SPECIAL_FORMS = [
-//   "Order to Purchase",
+//   "Requisition",
 //   "Receiving Inspecting Report",
 //   "Quotation",
 // ];

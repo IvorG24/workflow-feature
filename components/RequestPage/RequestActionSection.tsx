@@ -108,7 +108,7 @@ const RequestActionSection = ({
                       fullWidth
                       onClick={() => {
                         router.push(
-                          `/team-requests/forms/${sourcedOtpForm.form_id}/create?otpId=${requestId}`
+                          `/team-requests/forms/${sourcedOtpForm.form_id}/create?requisitionId=${requestId}`
                         );
                       }}
                     >

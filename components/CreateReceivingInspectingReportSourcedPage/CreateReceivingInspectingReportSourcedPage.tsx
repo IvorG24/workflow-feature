@@ -103,7 +103,7 @@ const CreateReceivingInspectingReportSourcedPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -140,7 +140,7 @@ const CreateReceivingInspectingReportSourcedPage = ({
         return;
       }
 
-      const otpId = JSON.stringify(
+      const requisitionId = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
       const itemSection = data.sections[2];
@@ -174,7 +174,7 @@ const CreateReceivingInspectingReportSourcedPage = ({
       const warningItemList = await checkRIRSourcedItemQuantity(
         supabaseClient,
         {
-          otpId,
+          requisitionId,
           itemFieldId: itemSection.section_field[0].field_id,
           quantityFieldId: itemSection.section_field[1].field_id,
           itemFieldList,

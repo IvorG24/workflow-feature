@@ -44,8 +44,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       if (!teamMember) throw new Error("No team member found");
 
       if (form.form_is_formsly_form) {
-        // Order to Purchase Form
-        if (form.form_name === "Order to Purchase") {
+        // Requisition Form
+        if (form.form_name === "Requisition") {
           // items
           const items = await getAllItems(supabaseClient, {
             teamId: teamId,
@@ -98,7 +98,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ],
               },
               itemOptions,
-              otpIdSection: {
+              requisitionIdSection: {
                 ...form.form_section[0],
                 section_field: [
                   {
@@ -110,12 +110,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Sourced Order to Purchase Form,
-        else if (form.form_name === "Sourced Order to Purchase") {
+        // ZZZ Form,
+        else if (form.form_name === "ZZZ") {
           const isRequestIdValid = await checkOTPRequestForSourced(
             supabaseClient,
             {
-              otpId: `${context.query.otpId}`,
+              requisitionId: `${context.query.requisitionId}`,
             }
           );
 
@@ -129,7 +129,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForQuotation(supabaseClient, {
-            requestId: `${context.query.otpId}`,
+            requestId: `${context.query.requisitionId}`,
           });
 
           const itemOptions = Object.keys(items).map((item, index) => {
@@ -152,7 +152,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         // Quotation
         else if (form.form_name === "Quotation") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.otpId}`],
+            requestId: [`${context.query.requisitionId}`],
           });
 
           if (!isRequestIdValid) {
@@ -165,7 +165,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForQuotation(supabaseClient, {
-            requestId: `${context.query.otpId}`,
+            requestId: `${context.query.requisitionId}`,
           });
 
           const itemOptions = Object.keys(items).map((item, index) => {
@@ -189,7 +189,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         else if (form.form_name === "Receiving Inspecting Report (Purchased)") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
-              `${context.query.otpId}`,
+              `${context.query.requisitionId}`,
               `${context.query.quotationId}`,
             ],
           });
@@ -231,7 +231,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         // Receiving Inspecting Report (Purchased)
         else if (form.form_name === "Receiving Inspecting Report (Sourced)") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.otpId}`],
+            requestId: [`${context.query.requisitionId}`],
           });
 
           if (!isRequestIdValid) {
@@ -244,7 +244,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForRIRSourced(supabaseClient, {
-            requestId: `${context.query.otpId}`,
+            requestId: `${context.query.requisitionId}`,
           });
 
           const itemOptions = Object.keys(items).map((item, index) => {
@@ -290,13 +290,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
-  otpIdSection?: RequestFormValues["sections"][0];
+  requisitionIdSection?: RequestFormValues["sections"][0];
 };
 
-const Page = ({ form, itemOptions, otpIdSection }: Props) => {
+const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Order to Purchase":
+      case "Requisition":
         return (
           <CreateOrderToPurchaseRequestPage
             itemOptions={itemOptions}
@@ -314,10 +314,10 @@ const Page = ({ form, itemOptions, otpIdSection }: Props) => {
                 },
               ],
             }}
-            otpIdSection={otpIdSection}
+            requisitionIdSection={requisitionIdSection}
           />
         );
-      case "Sourced Order to Purchase":
+      case "ZZZ":
         return (
           <CreateSourcedOrderToPurchaseRequestPage
             form={form}

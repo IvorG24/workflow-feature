@@ -48,7 +48,7 @@ export const generateFormslyResponseData = (
   formName: string
 ) => {
   switch (formName) {
-    case "Order to Purchase":
+    case "Requisition":
       return generateOTPFormData(sectionList);
 
     case "Quotation":

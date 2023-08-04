@@ -58,7 +58,7 @@ const OrderToPurchaseCanvassPage = ({
           response={{
             id: `${router.query.requestId}`,
             type: "LINK",
-            label: "OTP ID",
+            label: "Requisition ID",
             value: `"${router.query.requestId}"`,
             options: [],
           }}

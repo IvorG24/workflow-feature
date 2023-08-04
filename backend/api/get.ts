@@ -795,7 +795,7 @@ export const getItem = async (
   return data as ItemWithDescriptionAndField;
 };
 
-// check if Order to Purchase form can be activated
+// check if Requisition form can be activated
 export const checkOrderToPurchaseFormStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; formId: string }
@@ -803,7 +803,7 @@ export const checkOrderToPurchaseFormStatus = async (
   const { teamId, formId } = params;
 
   const { data, error } = await supabaseClient
-    .rpc("check_order_to_purchase_form_status", {
+    .rpc("check_requisition_form_status", {
       form_id: formId,
       team_id: teamId,
     })
@@ -1341,7 +1341,7 @@ export const getFormslyForm = async (
   };
 };
 
-// Get specific OTP form id by name and team id
+// Get specific Requisition form id by name and team id
 export const getFormIDForOTP = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1370,7 +1370,7 @@ export const getFormIDForOTP = async (
       `
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%, form_name.eq.Sourced Order to Purchase"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%, form_name.eq.ZZZ"
     )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
@@ -1431,15 +1431,15 @@ export const checkRequest = async (
 export const checkOTPRequestForSourced = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpId: string;
+    requisitionId: string;
   }
 ) => {
-  const { otpId } = params;
+  const { requisitionId } = params;
 
   const { count, error } = await supabaseClient
     .from("request_table")
     .select("*", { count: "exact" })
-    .eq("request_id", otpId)
+    .eq("request_id", requisitionId)
     .eq("request_status", "PENDING")
     .eq("request_is_disabled", false);
 
@@ -1518,7 +1518,7 @@ export const getFormslyForwardLinkFormId = async (
   }[];
 
   const requestList = {
-    "Order to Purchase": [] as string[],
+    Requisition: [] as string[],
     Quotation: [] as string[],
     "Receiving Inspecting Report (Purchased)": [] as string[],
     "Receiving Inspecting Report (Sourced)": [] as string[],
@@ -1526,8 +1526,8 @@ export const getFormslyForwardLinkFormId = async (
 
   formattedData.forEach((request) => {
     switch (request.request_response_request.request_form.form_name) {
-      case "Order to Purchase":
-        requestList["Order to Purchase"].push(
+      case "Requisition":
+        requestList["Requisition"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1552,7 +1552,7 @@ export const getFormslyForwardLinkFormId = async (
   return requestList;
 };
 
-// Get item response of an otp request
+// Get item response of an requisition request
 export const getItemResponseForQuotation = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
@@ -1689,7 +1689,7 @@ export const getItemResponseForRIRPurchased = async (
   return options;
 };
 
-// Get item response of a otp request
+// Get item response of a requisition request
 export const getItemResponseForRIRSourced = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
@@ -1762,11 +1762,11 @@ export const getItemResponseForRIRSourced = async (
   return options;
 };
 
-// Check if the approving or creating quotation item quantity are less than the otp quantity
+// Check if the approving or creating quotation item quantity are less than the requisition quantity
 export const checkQuotationItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpID: string;
+    requisitionID: string;
     itemFieldId: string;
     quantityFieldId: string;
     itemFieldList: RequestResponseTableRow[];
@@ -1806,7 +1806,7 @@ export const checkRIRPurchasedItemQuantity = async (
 export const checkRIRSourcedItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpId: string;
+    requisitionId: string;
     itemFieldId: string;
     quantityFieldId: string;
     itemFieldList: RequestResponseTableRow[];
@@ -1962,7 +1962,7 @@ export const getSignerData = async (
   return data;
 };
 
-// Get all quotation request for the otp
+// Get all quotation request for the requisition
 export const getOTPPendingQuotationRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

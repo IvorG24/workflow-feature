@@ -18,7 +18,7 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Receiving Inspecting Report (Purchased)",
   "Receiving Inspecting Report (Sourced)",
   "Cheque Reference",
-  "Sourced Order to Purchase",
+  "ZZZ",
 ];
 
 export const SIGN_IN_PAGE_PATH = "/sign-in";
@@ -54,7 +54,7 @@ export const defaultRequestFormBuilderSigners = (
 
 export const formslyPremadeFormsData = (teamMemberId: string) => {
   // form ids
-  const orderToPurchaseFormId = uuidv4();
+  const requisitionFormId = uuidv4();
   const sourcedOrderToPurchaseFormId = uuidv4();
   const quotationFormId = uuidv4();
   const receivingInspectingReportPurchasedFormId = uuidv4();
@@ -63,9 +63,9 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const auditFormId = uuidv4();
 
   // section ids
-  const otpIdSectionId = uuidv4();
-  const otpMainSectionId = uuidv4();
-  const otpItemSectionId = uuidv4();
+  const requisitionIdSectionId = uuidv4();
+  const requisitionMainSectionId = uuidv4();
+  const requisitionItemSectionId = uuidv4();
   const sourcedOtpItemSectionId = uuidv4();
   const quotationIdSectionId = uuidv4();
   const quotationMainSectionId = uuidv4();
@@ -83,17 +83,17 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const auditMainSectionId = uuidv4();
 
   // field ids
-  const otpTypeFieldId = uuidv4();
+  const requisitionTypeFieldId = uuidv4();
   const quotationRequestSendMethodId = uuidv4();
   const chequeReferenceTreasuryStatusFieldId = uuidv4();
   const auditRowCheckFieldId = uuidv4();
 
   const formData = {
-    orderToPurchase: {
+    requisition: {
       form: {
-        form_id: orderToPurchaseFormId,
-        form_name: "Order to Purchase",
-        form_description: "formsly premade Order to Purchase form",
+        form_id: requisitionFormId,
+        form_name: "Requisition",
+        form_description: "formsly premade Requisition form",
         form_app: "REQUEST",
         form_is_formsly_form: true,
         form_is_hidden: true,
@@ -102,33 +102,33 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       },
       section: [
         {
-          section_id: otpIdSectionId,
+          section_id: requisitionIdSectionId,
           section_name: "ID",
           section_order: 1,
           section_is_duplicatable: false,
-          section_form_id: orderToPurchaseFormId,
+          section_form_id: requisitionFormId,
         },
         {
-          section_id: otpMainSectionId,
+          section_id: requisitionMainSectionId,
           section_name: "Main",
           section_order: 2,
           section_is_duplicatable: false,
-          section_form_id: orderToPurchaseFormId,
+          section_form_id: requisitionFormId,
         },
         {
-          section_id: otpItemSectionId,
+          section_id: requisitionItemSectionId,
           section_name: "Item",
           section_order: 3,
           section_is_duplicatable: true,
-          section_form_id: orderToPurchaseFormId,
+          section_form_id: requisitionFormId,
         },
       ],
       field: [
         {
-          field_name: "Parent OTP ID",
+          field_name: "Parent Requisition ID",
           field_type: "LINK",
           field_order: 1,
-          field_section_id: otpIdSectionId,
+          field_section_id: requisitionIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -136,7 +136,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Project Name",
           field_type: "DROPDOWN",
           field_order: 2,
-          field_section_id: otpMainSectionId,
+          field_section_id: requisitionMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -144,7 +144,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Date Needed",
           field_type: "DATE",
           field_order: 4,
-          field_section_id: otpMainSectionId,
+          field_section_id: requisitionMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -152,7 +152,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "General Name",
           field_type: "DROPDOWN",
           field_order: 5,
-          field_section_id: otpItemSectionId,
+          field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -160,7 +160,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Unit of Measurement",
           field_type: "TEXT",
           field_order: 6,
-          field_section_id: otpItemSectionId,
+          field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -168,7 +168,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Quantity",
           field_type: "NUMBER",
           field_order: 7,
-          field_section_id: otpItemSectionId,
+          field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -176,7 +176,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Cost Code",
           field_type: "TEXT",
           field_order: 8,
-          field_section_id: otpItemSectionId,
+          field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -184,7 +184,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "GL Account",
           field_type: "TEXT",
           field_order: 9,
-          field_section_id: otpItemSectionId,
+          field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -193,25 +193,25 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           option_value: "Cash Purchase - Advance Payment",
           option_order: 1,
-          option_field_id: otpTypeFieldId,
+          option_field_id: requisitionTypeFieldId,
         },
         {
           option_value: "Cash Purchase - Local Purchase",
           option_order: 2,
-          option_field_id: otpTypeFieldId,
+          option_field_id: requisitionTypeFieldId,
         },
         {
           option_value: "Order to Purchase",
           option_order: 3,
-          option_field_id: otpTypeFieldId,
+          option_field_id: requisitionTypeFieldId,
         },
       ],
     },
     sourcedOrderToPurchase: {
       form: {
         form_id: sourcedOrderToPurchaseFormId,
-        form_name: "Sourced Order to Purchase",
-        form_description: "formsly premade Sourced Order to Purchase form",
+        form_name: "ZZZ",
+        form_description: "formsly premade ZZZ form",
         form_app: "REQUEST",
         form_is_formsly_form: true,
         form_is_hidden: true,
@@ -289,7 +289,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ],
       field: [
         {
-          field_name: "Order to Purchase ID",
+          field_name: "Requisition ID",
           field_type: "LINK",
           field_order: 1,
           field_section_id: quotationIdSectionId,
@@ -464,7 +464,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ],
       field: [
         {
-          field_name: "Order to Purchase ID",
+          field_name: "Requisition ID",
           field_type: "LINK",
           field_order: 1,
           field_section_id: rirPurchasedIdSectionId,
@@ -558,7 +558,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ],
       field: [
         {
-          field_name: "Order to Purchase ID",
+          field_name: "Requisition ID",
           field_type: "LINK",
           field_order: 1,
           field_section_id: rirSourcedIdSectionId,
@@ -643,7 +643,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ],
       field: [
         {
-          field_name: "Order to Purchase ID",
+          field_name: "Requisition ID",
           field_type: "LINK",
           field_order: 1,
           field_section_id: chequeReferenceIdSectionId,
@@ -780,11 +780,11 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 
   const fieldsWithId = [
     {
-      field_id: otpTypeFieldId,
+      field_id: requisitionTypeFieldId,
       field_name: "Type",
       field_type: "DROPDOWN",
       field_order: 3,
-      field_section_id: otpMainSectionId,
+      field_section_id: requisitionMainSectionId,
       field_is_required: true,
       field_is_read_only: false,
     },
@@ -818,7 +818,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   ];
 
   const {
-    orderToPurchase,
+    requisition,
     sourcedOrderToPurchase,
     quotation,
     receivingInspectingReportPurchased,
@@ -829,7 +829,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 
   return {
     forms: [
-      orderToPurchase.form,
+      requisition.form,
       sourcedOrderToPurchase.form,
       quotation.form,
       receivingInspectingReportPurchased.form,
@@ -838,7 +838,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       audit.form,
     ],
     sections: [
-      ...orderToPurchase.section,
+      ...requisition.section,
       ...sourcedOrderToPurchase.section,
       ...quotation.section,
       ...receivingInspectingReportPurchased.section,
@@ -847,7 +847,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...audit.section,
     ],
     fieldsWithoutId: [
-      ...orderToPurchase.field,
+      ...requisition.field,
       ...sourcedOrderToPurchase.field,
       ...quotation.field,
       ...receivingInspectingReportPurchased.field,
@@ -857,7 +857,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
     fieldWithId: fieldsWithId,
     options: [
-      ...orderToPurchase.option,
+      ...requisition.option,
       ...quotation.option,
       ...chequeReference.option,
       ...audit.option,
@@ -995,7 +995,7 @@ export const ITEM_UNIT_CHOICES = [
 ];
 
 export const OTP_FIELDS_ORDER = [
-  "Parent OTP ID",
+  "Parent Requisition ID",
   "Project Name",
   "Type",
   "Date Needed",

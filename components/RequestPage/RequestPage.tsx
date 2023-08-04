@@ -123,7 +123,7 @@ const RequestPage = ({
 
       if (request.request_form.form_is_formsly_form && status === "APPROVED") {
         if (request.request_form.form_name === "Quotation") {
-          const otpID =
+          const requisitionID =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
@@ -131,7 +131,7 @@ const RequestPage = ({
           const warningItemList = await checkQuotationItemQuantity(
             supabaseClient,
             {
-              otpID,
+              requisitionID,
               itemFieldId: itemSection.section_field[0].field_id,
               quantityFieldId: itemSection.section_field[2].field_id,
               itemFieldList: itemSection.section_field[0].field_response,
@@ -147,7 +147,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    OTP
+                    Requisition
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -209,7 +209,7 @@ const RequestPage = ({
           request.request_form.form_name ===
           "Receiving Inspecting Report (Sourced)"
         ) {
-          const otpId =
+          const requisitionId =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
@@ -217,7 +217,7 @@ const RequestPage = ({
           const warningItemList = await checkRIRSourcedItemQuantity(
             supabaseClient,
             {
-              otpId,
+              requisitionId,
               itemFieldId: itemSection.section_field[0].field_id,
               quantityFieldId: itemSection.section_field[1].field_id,
               itemFieldList: itemSection.section_field[0].field_response,
@@ -233,7 +233,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    OTP
+                    Requisition
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -382,7 +382,7 @@ const RequestPage = ({
                 router.push(
                   `/team-requests/forms/${
                     connectedFormIdAndGroup.formId
-                  }/create?otpId=${JSON.parse(
+                  }/create?requisitionId=${JSON.parse(
                     request.request_form.form_section[0].section_field[0]
                       .field_response[0].request_response
                   )}&quotationId=${request.request_id}`
