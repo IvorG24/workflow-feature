@@ -31,6 +31,24 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
       });
     }
   };
+
+  const handleSignInWithAzure = async () => {
+    try {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "azure",
+        options: {
+          scopes: "email",
+        },
+      });
+      if (error) throw error;
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <Flex {...flexprops}>
       <Button
@@ -57,7 +75,7 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
       <Button
         leftIcon={<AzureIcon />}
         {...buttonprops}
-        onClick={() => handleSignin("azure")}
+        onClick={() => handleSignInWithAzure()}
       >
         Azure
       </Button>
