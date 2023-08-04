@@ -795,15 +795,15 @@ export const getItem = async (
   return data as ItemWithDescriptionAndField;
 };
 
-// check if Order to Purchase form can be activated
-export const checkOrderToPurchaseFormStatus = async (
+// check if Requisition form can be activated
+export const checkRequisitionFormStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; formId: string }
 ) => {
   const { teamId, formId } = params;
 
   const { data, error } = await supabaseClient
-    .rpc("check_order_to_purchase_form_status", {
+    .rpc("check_requisition_form_status", {
       form_id: formId,
       team_id: teamId,
     })
@@ -1341,8 +1341,8 @@ export const getFormslyForm = async (
   };
 };
 
-// Get specific OTP form id by name and team id
-export const getFormIDForOTP = async (
+// Get specific Requisition form id by name and team id
+export const getFormIDForRequsition = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
@@ -1370,7 +1370,7 @@ export const getFormIDForOTP = async (
       `
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%, form_name.eq.Sourced Order to Purchase"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Release Order, form_name.eq.Sourced Item"
     )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
@@ -1428,18 +1428,18 @@ export const checkRequest = async (
 };
 
 // Check if the request is pending
-export const checkOTPRequestForSourced = async (
+export const checkRequsitionRequestForReleaseOrder = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpId: string;
+    requisitionId: string;
   }
 ) => {
-  const { otpId } = params;
+  const { requisitionId } = params;
 
   const { count, error } = await supabaseClient
     .from("request_table")
     .select("*", { count: "exact" })
-    .eq("request_id", otpId)
+    .eq("request_id", requisitionId)
     .eq("request_status", "PENDING")
     .eq("request_is_disabled", false);
 
@@ -1518,16 +1518,16 @@ export const getFormslyForwardLinkFormId = async (
   }[];
 
   const requestList = {
-    "Order to Purchase": [] as string[],
+    Requisition: [] as string[],
     Quotation: [] as string[],
-    "Receiving Inspecting Report (Purchased)": [] as string[],
-    "Receiving Inspecting Report (Sourced)": [] as string[],
+    "Receiving Inspecting Report": [] as string[],
+    "Release Order": [] as string[],
   };
 
   formattedData.forEach((request) => {
     switch (request.request_response_request.request_form.form_name) {
-      case "Order to Purchase":
-        requestList["Order to Purchase"].push(
+      case "Requisition":
+        requestList["Requisition"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1536,13 +1536,13 @@ export const getFormslyForwardLinkFormId = async (
           `"${request.request_response_request.request_id}"`
         );
         break;
-      case "Receiving Inspecting Report (Purchased)":
-        requestList["Receiving Inspecting Report (Purchased)"].push(
+      case "Receiving Inspecting Report":
+        requestList["Receiving Inspecting Report"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
-      case "Receiving Inspecting Report (Sourced)":
-        requestList["Receiving Inspecting Report (Sourced)"].push(
+      case "Release Order":
+        requestList["Release Order"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1552,7 +1552,7 @@ export const getFormslyForwardLinkFormId = async (
   return requestList;
 };
 
-// Get item response of an otp request
+// Get item response of an requisition request
 export const getItemResponseForQuotation = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
@@ -1625,7 +1625,7 @@ export const getItemResponseForQuotation = async (
 };
 
 // Get item response of a quotation request
-export const getItemResponseForRIRPurchased = async (
+export const getItemResponseForRIR = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1689,8 +1689,8 @@ export const getItemResponseForRIRPurchased = async (
   return options;
 };
 
-// Get item response of a otp request
-export const getItemResponseForRIRSourced = async (
+// Get item response of a requisition request
+export const getItemResponseForRO = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1762,11 +1762,11 @@ export const getItemResponseForRIRSourced = async (
   return options;
 };
 
-// Check if the approving or creating quotation item quantity are less than the otp quantity
+// Check if the approving or creating quotation item quantity are less than the requisition quantity
 export const checkQuotationItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpID: string;
+    requisitionID: string;
     itemFieldId: string;
     quantityFieldId: string;
     itemFieldList: RequestResponseTableRow[];
@@ -1782,8 +1782,8 @@ export const checkQuotationItemQuantity = async (
   return data as string[];
 };
 
-// Check if the approving or creating rir purchased item quantity are less than the quotation quantity
-export const checkRIRPurchasedItemQuantity = async (
+// Check if the approving or creating rir item quantity are less than the quotation quantity
+export const checkRIRItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     quotationId: string;
@@ -1794,7 +1794,7 @@ export const checkRIRPurchasedItemQuantity = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_rir_purchased_item_quantity", { input_data: params })
+    .rpc("check_rir_item_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;
@@ -1802,11 +1802,11 @@ export const checkRIRPurchasedItemQuantity = async (
   return data as string[];
 };
 
-// Check if the approving or creating rir sourced item quantity are less than the quotation quantity
-export const checkRIRSourcedItemQuantity = async (
+// Check if the approving or creating release order item quantity are less than the quotation quantity
+export const checkROItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpId: string;
+    requisitionId: string;
     itemFieldId: string;
     quantityFieldId: string;
     itemFieldList: RequestResponseTableRow[];
@@ -1814,7 +1814,7 @@ export const checkRIRSourcedItemQuantity = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_rir_sourced_item_quantity", { input_data: params })
+    .rpc("check_ro_item_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;
@@ -1962,8 +1962,8 @@ export const getSignerData = async (
   return data;
 };
 
-// Get all quotation request for the otp
-export const getOTPPendingQuotationRequestList = async (
+// Get all quotation request for the requisition
+export const getRequsitionPendingQuotationRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -2012,7 +2012,7 @@ export const getCanvassData = async (
       `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
   );
 
-  const canvassRequest = await getOTPPendingQuotationRequestList(
+  const canvassRequest = await getRequsitionPendingQuotationRequestList(
     supabaseClient,
     { requestId }
   );

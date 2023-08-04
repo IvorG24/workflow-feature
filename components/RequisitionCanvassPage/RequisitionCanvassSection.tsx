@@ -13,7 +13,7 @@ import RequestResponse from "../RequestPage/RequestResponse";
 
 type Props = { canvassRequest: string[] };
 
-const OrderToPurchaseCanvassSection = ({ canvassRequest }: Props) => {
+const RequisitionCanvassSection = ({ canvassRequest }: Props) => {
   const router = useRouter();
 
   const canvassSection = canvassRequest.map((request) => {
@@ -63,4 +63,4 @@ const OrderToPurchaseCanvassSection = ({ canvassRequest }: Props) => {
   );
 };
 
-export default OrderToPurchaseCanvassSection;
+export default RequisitionCanvassSection;

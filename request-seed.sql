@@ -7,10 +7,10 @@ CREATE TEMPORARY TABLE seed_variable_table (
 
 INSERT INTO seed_variable_table (var_key, var_value) VALUES
 ('ownerMemberId', gen_random_uuid()),
-('otpFormId', gen_random_uuid()),
+('requisitionFormId', gen_random_uuid()),
 ('quotationFormId', gen_random_uuid()),
-('rirPurchasedFormId', gen_random_uuid()),
-('rirSourcedFormId', gen_random_uuid()),
+('rirFormId', gen_random_uuid()),
+('roFormId', gen_random_uuid()),
 ('chequeReferenceFormId', gen_random_uuid()),
 ('auditFormId', gen_random_uuid()),
 ('allFieldsFormId', gen_random_uuid()),
@@ -25,10 +25,10 @@ DECLARE
 -- form ids
   allFieldsFormId UUID;
   duplicateFieldsFormId UUID;
-  otpFormId UUID;
+  requisitionFormId UUID;
   quotationFormId UUID;
-  rirPurchasedFormId UUID;
-  rirSourcedFormId UUID;
+  rirFormId UUID;
+  roFormId UUID;
   chequeReferenceFormId UUID;
   auditFormId UUID;
 -- section ids
@@ -63,21 +63,21 @@ SELECT var_value INTO duplicateFieldsFormId
   FROM seed_variable_table
   WHERE var_key = 'duplicateFieldsFormId';
 
-SELECT var_value INTO otpFormId
+SELECT var_value INTO requisitionFormId
   FROM seed_variable_table
-  WHERE var_key = 'otpFormId';
+  WHERE var_key = 'requisitionFormId';
 
 SELECT var_value INTO quotationFormId
   FROM seed_variable_table
   WHERE var_key = 'quotationFormId';
 
-SELECT var_value INTO rirPurchasedFormId
+SELECT var_value INTO rirFormId
   FROM seed_variable_table
-  WHERE var_key = 'rirPurchasedFormId';
+  WHERE var_key = 'rirFormId';
 
-SELECT var_value INTO rirSourcedFormId
+SELECT var_value INTO roFormId
   FROM seed_variable_table
-  WHERE var_key = 'rirSourcedFormId';
+  WHERE var_key = 'roFormId';
 
 SELECT var_value INTO chequeReferenceFormId
   FROM seed_variable_table
@@ -90,10 +90,10 @@ SELECT var_value INTO auditFormId
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member) VALUES
 (allFieldsFormId, 'All Fields', 'test all types of fields', 'REQUEST', ownerMemberId, false, false, true),
 (duplicateFieldsFormId, 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', ownerMemberId, false, false, true),
-(otpFormId, 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', ownerMemberId, true, false, false),
+(requisitionFormId, 'Requisition', 'formsly premade Requisition form', 'REQUEST', ownerMemberId, true, false, false),
 (quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false),
-(rirPurchasedFormId, 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
-(rirSourcedFormId, 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
+(rirFormId, 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
+(roFormId, 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
 (chequeReferenceFormId, 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', ownerMemberId, true, true, false),
 (auditFormId, 'Audit', 'formsly premade Audit form', 'REQUEST', ownerMemberId, true, false, false);
 
@@ -116,9 +116,9 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 (duplicateFieldsSection2, 'Normal Section 2', 2, false, duplicateFieldsFormId),
 (duplicateFieldsSection3, 'Duplicatable Section 3', 3, true, duplicateFieldsFormId),
 
--- OTP Form
-('bbb22159-13cd-4a91-8579-175aa6344663', 'Main', 1, false, otpFormId),
-('275782b4-4291-40f9-bb9f-dd5d658b1943', 'Item', 2, true, otpFormId),
+-- Requisition Form
+('bbb22159-13cd-4a91-8579-175aa6344663', 'Main', 1, false, requisitionFormId),
+('275782b4-4291-40f9-bb9f-dd5d658b1943', 'Item', 2, true, requisitionFormId),
 
 -- Quotation
 ('829bdb96-8049-472f-96cd-e3e5c0414817', 'ID', 1, false, quotationFormId),
@@ -126,9 +126,9 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('f622cb4e-f6dc-40d9-9188-9911773787c8', 'Item', 3, true, quotationFormId),
 
 -- Receiving Inspecting Report Form
-('e2f8594c-a7c4-40bb-9ac3-de4618a73681', 'ID', 1, false, rirPurchasedFormId),
-('1a9c5cd4-44a8-4505-b6c8-3130803fcca4', 'Quality Check', 2, false, rirPurchasedFormId),
-('aa0e7187-9e0e-4853-b536-fdaf484a26d8', 'Item', 2, true, rirPurchasedFormId);
+('e2f8594c-a7c4-40bb-9ac3-de4618a73681', 'ID', 1, false, rirFormId),
+('1a9c5cd4-44a8-4505-b6c8-3130803fcca4', 'Quality Check', 2, false, rirFormId),
+('aa0e7187-9e0e-4853-b536-fdaf484a26d8', 'Item', 2, true, rirFormId);
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
 -- All Fields Form
@@ -156,7 +156,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('816ce049-4556-4340-8ee5-065e759d4196', 'Date field', 'DATE', 9, duplicateFieldsSection3, false, false),
 ('57673976-7a46-4a8f-ae0b-67d9d1d24c95', 'Time field', 'TIME', 10, duplicateFieldsSection3, false, false),
 
--- OTP Form
+-- Requisition Form
 ('a4733172-53af-47b1-b460-6869105f6405', 'Project Name', 'DROPDOWN', 1, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 ('d644d57b-dc0c-4f44-9cef-403fd73a7cf2', 'Type', 'DROPDOWN', 2, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 ('3b09156e-40c8-47f5-a5a8-4073ddb474de', 'Date Needed', 'DATE', 3, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
@@ -175,7 +175,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('a6745b58-c88d-41dc-82f4-887c0062c03d', 'Size', 'DROPDOWN', 9, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
 
 -- Quotation Form fields
-('62f96be5-9e50-45a0-82d7-2b0d731eda91', 'Order to Purchase ID', 'LINK', 1, '829bdb96-8049-472f-96cd-e3e5c0414817', true, true),
+('62f96be5-9e50-45a0-82d7-2b0d731eda91', 'Requisition ID', 'LINK', 1, '829bdb96-8049-472f-96cd-e3e5c0414817', true, true),
 ('4aee0513-c746-409c-83e3-1ac169afacfe', 'Supplier', 'DROPDOWN', 2, '0ed3bd29-910c-4f6f-93e9-0f367cd37eab', true, false),
 ('97bfef27-660e-4533-add8-fc80cea23e40', 'Supplier Quotation', 'FILE', 3, '0ed3bd29-910c-4f6f-93e9-0f367cd37eab', true, false),
 ('587fbe8c-d0e4-4e92-865d-9a005e1ad04a', 'Request Send Method', 'DROPDOWN', 4, '0ed3bd29-910c-4f6f-93e9-0f367cd37eab', false, false),
@@ -185,7 +185,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('536d7cc3-a458-467b-a716-ff7c39d83d9a', 'Quantity', 'NUMBER', 8, 'f622cb4e-f6dc-40d9-9188-9911773787c8', true, false),
 
 -- Receiving Inspecting Report Form fields
-('fd24e66d-d7f4-4f7e-859a-8ee0fcd0ff7c', 'Order to Purchase ID', 'LINK', 1, 'e2f8594c-a7c4-40bb-9ac3-de4618a73681', true, true),
+('fd24e66d-d7f4-4f7e-859a-8ee0fcd0ff7c', 'Requisition ID', 'LINK', 1, 'e2f8594c-a7c4-40bb-9ac3-de4618a73681', true, true),
 ('d4bed2d2-1391-45af-96d9-38e0a92c23cf', 'Quotation ID', 'LINK', 2, 'e2f8594c-a7c4-40bb-9ac3-de4618a73681', true, true),
 ('1a7f1785-0c4b-419a-b2a1-b4a937077d64', 'Item', 'DROPDOWN', 3, 'aa0e7187-9e0e-4853-b536-fdaf484a26d8', true, false),
 ('3a44facc-d2a6-4346-b9b3-57731765555c', 'Quantity', 'NUMBER', 4, 'aa0e7187-9e0e-4853-b536-fdaf484a26d8', true, false),
@@ -210,7 +210,7 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 (gen_random_uuid(), 'Multiselect 3', 3, 'ec6831ee-ea45-468e-bd5c-fb29a7297a56'),
 ('a4c9cf29-c4cc-4b6f-af3d-6a50946af85e', 'Cash Purchase - Advance Payment', 1, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
 ('c22aa5ed-7dc8-45b1-8917-2d12290f8936', 'Cash Purchase - Local Purchase', 2, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
-('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Order to Purchase', 3, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2');
+('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Requisition', 3, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2');
 
 -- Add items
 INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
@@ -254,10 +254,10 @@ INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('a6be17fc-1298-411a-b158-abb3b16cdfb6', TRUE, 'Approved', 1, allFieldsFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
 ('a92fa55d-9972-4dc5-9369-1cec51635c4a', TRUE, 'Approved', 1, duplicateFieldsFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
-('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, otpFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
-('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, otpFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
+('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, requisitionFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
+('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, requisitionFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
 ('5d640270-11a2-43e2-9316-de0414b837c0', TRUE, 'Approved', 1, quotationFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
-('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirPurchasedFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744');
+('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744');
 
 END $$;
 
@@ -266,13 +266,13 @@ END $$;
 DO $$ 
 DECLARE
   ownerMemberId UUID;
-  otpFormId UUID;
+  requisitionFormId UUID;
   optRequestId UUID;
   quotationFormId UUID;
   quotationRequestId UUID;
   quotation_request_status TEXT;
-  rirPurchasedFormId UUID;
-  rirSourcedFormId UUID;
+  rirFormId UUID;
+  roFormId UUID;
   rirRequestId UUID;
   rirRequestStatus TEXT;
   allFieldsFormId UUID;
@@ -295,9 +295,9 @@ SELECT var_value INTO ownerMemberId
   FROM seed_variable_table
   WHERE var_key = 'ownerMemberId';
 
-SELECT var_value INTO otpFormId
+SELECT var_value INTO requisitionFormId
   FROM seed_variable_table
-  WHERE var_key = 'otpFormId';
+  WHERE var_key = 'requisitionFormId';
 
   WHILE counter <= 5000 LOOP
     -- Generate request_id
@@ -335,9 +335,9 @@ SELECT var_value INTO otpFormId
   request_date_created := date_trunc('year', current_date) + random() * (current_date - date_trunc('year', current_date));
 
 
-    -- Create OTP request
+    -- Create Requisition request
     INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
-      (optRequestId, ownerMemberId, otpFormId, request_status, request_date_created);
+      (optRequestId, ownerMemberId, requisitionFormId, request_status, request_date_created);
 
     -- Request signer table
     INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
@@ -413,7 +413,7 @@ SELECT var_value INTO otpFormId
     END INTO quotation_request_status;
 
 
-    -- Create Quotation Request if OTP Request is APPROVED
+    -- Create Quotation Request if Requisition Request is APPROVED
     IF request_status = 'APPROVED'
     THEN
 
@@ -429,7 +429,7 @@ SELECT var_value INTO otpFormId
     (gen_random_uuid(), quotation_request_status, quotationRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
 
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
-    -- OTP ID
+    -- Requisition ID
     (gen_random_uuid(), '"' || optRequestId || '"', NULL, '62f96be5-9e50-45a0-82d7-2b0d731eda91', quotationRequestId),
     -- Supplier
     (gen_random_uuid(), '"Begul Builders Corporation"', NULL, '4aee0513-c746-409c-83e3-1ac169afacfe', quotationRequestId),
@@ -463,9 +463,9 @@ SELECT var_value INTO otpFormId
     IF quotation_request_status = 'APPROVED' AND request_status = 'APPROVED'
     THEN
 
-    SELECT var_value INTO rirPurchasedFormId
+    SELECT var_value INTO rirFormId
     FROM seed_variable_table
-    WHERE var_key = 'rirPurchasedFormId';
+    WHERE var_key = 'rirFormId';
 
     rirRequestId := gen_random_uuid();
 
@@ -478,13 +478,13 @@ SELECT var_value INTO otpFormId
 
 
     INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
-    (rirRequestId, ownerMemberId, rirPurchasedFormId, rirRequestStatus, request_date_created);
+    (rirRequestId, ownerMemberId, rirFormId, rirRequestStatus, request_date_created);
 
     INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
     (gen_random_uuid(), rirRequestStatus, rirRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
     
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
-    -- OTP ID
+    -- Requisition ID
     (gen_random_uuid(), '"' || optRequestId || '"', NULL, 'fd24e66d-d7f4-4f7e-859a-8ee0fcd0ff7c', rirRequestId),
     -- Quotation ID
     (gen_random_uuid(), '"' || quotationRequestId || '"', NULL, 'd4bed2d2-1391-45af-96d9-38e0a92c23cf', rirRequestId),

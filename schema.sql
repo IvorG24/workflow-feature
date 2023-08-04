@@ -236,7 +236,7 @@ CREATE TABLE comment_table(
 );
 -- End: Comments
 
--- Start: Order to Purchase Form
+-- Start: Requisition Form
 CREATE TABLE item_table(
   item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -272,7 +272,7 @@ CREATE TABLE item_description_field_table(
   item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
 );
 
--- End: Order to Purchase Form
+-- End: Requisition Form
 
 -- Start: Quotation Form
 
@@ -322,7 +322,7 @@ RETURNS JSON as $$
       pageNumber,
       rowLimit,
       search,
-      otpCondition,
+      requisitionCondition,
       numberOfCondition
     } = input_data;
 
@@ -332,33 +332,33 @@ RETURNS JSON as $$
     const team_owner = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${activeTeam}' AND team_member_role='OWNER'`)[0];
 
     // Fetch team formsly forms
-    const otp_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Order to Purchase' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const requisition_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Requisition' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const rir_purchased_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report (Purchased)' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const rir_sourced_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report (Sourced)' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
-    let otp_requests;
+    let requisition_requests;
     let search_condition = '';
 
     if(search){
       search_condition = `AND (request_response_table.request_response = '"${search}"' OR request_table.request_id='${search}')`;
     }
-    if(otpCondition.length !== 0){
-      const condition = otpCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
-      otp_requests = plv8.execute(`SELECT * FROM (SELECT request_table.request_id, request_table.request_date_created, request_table.request_team_member_id, request_response_table.request_response, ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id WHERE request_table.request_status = 'APPROVED' AND request_table.request_form_id = '${otp_form.form_id}' AND (${condition}) ORDER BY request_table.request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY) AS a WHERE a.RowNumber = ${numberOfCondition}`);
+    if(requisitionCondition.length !== 0){
+      const condition = requisitionCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
+      requisition_requests = plv8.execute(`SELECT * FROM (SELECT request_table.request_id, request_table.request_date_created, request_table.request_team_member_id, request_response_table.request_response, ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id WHERE request_table.request_status = 'APPROVED' AND request_table.request_form_id = '${requisition_form.form_id}' AND (${condition}) ORDER BY request_table.request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY) AS a WHERE a.RowNumber = ${numberOfCondition}`);
     }else{
-      otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${otp_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+      requisition_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
     }
     
-    ssot_data = otp_requests.map((otp) => {
-      // OTP request response
-      const otp_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${otp.request_id}'`);
+    ssot_data = requisition_requests.map((requisition) => {
+      // Requisition request response
+      const requisition_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${requisition.request_id}'`);
       
-      if(!otp_response) return;
+      if(!requisition_response) return;
 
-      // OTP request response with fields
-      const otp_response_fields = otp_response.map(response => {
+      // Requisition request response with fields
+      const requisition_response_fields = requisition_response.map(response => {
         const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
         return {
           request_response: response.request_response,
@@ -368,10 +368,10 @@ RETURNS JSON as $$
         }
       });
 
-      // OTP team member
-      const otp_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${otp.request_team_member_id}'`)[0];
+      // Requisition team member
+      const requisition_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${requisition.request_team_member_id}'`)[0];
 
-      const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
+      const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
       let quotation_list = [];
 
       if(quotation_ids.length !== 0){
@@ -398,7 +398,7 @@ RETURNS JSON as $$
           // Quotation team member
           const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
-          const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_purchased_form.form_id}'`);
+          const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_form.form_id}'`);
           let rir_list = [];
           
           if(rir_ids.length !== 0){
@@ -444,7 +444,7 @@ RETURNS JSON as $$
         });
       }
 
-      const cheque_reference_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${cheque_reference_form.form_id}'`);
+      const cheque_reference_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${cheque_reference_form.form_id}'`);
       let cheque_reference_list = [];
 
       if(cheque_reference_ids.length !== 0){
@@ -480,7 +480,7 @@ RETURNS JSON as $$
         });
       }
 
-      const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_sourced_form.form_id}'`);
+      const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${ro_form.form_id}'`);
       let rir_list = [];
 
       if(rir_ids.length !== 0){
@@ -517,13 +517,13 @@ RETURNS JSON as $$
       }
 
       return {
-        otp_request_id: otp.request_id,
-        otp_request_date_created: otp.request_date_created,
-        otp_request_response: otp_response_fields,
-        otp_request_owner: otp_team_member,
-        otp_quotation_request: quotation_list,
-        otp_cheque_reference_request: cheque_reference_list,
-        otp_rir_request: rir_list,
+        requisition_request_id: requisition.request_id,
+        requisition_request_date_created: requisition.request_date_created,
+        requisition_request_response: requisition_response_fields,
+        requisition_request_owner: requisition_team_member,
+        requisition_quotation_request: quotation_list,
+        requisition_cheque_reference_request: cheque_reference_list,
+        requisition_rir_request: rir_list,
       }
     })
  });
@@ -804,18 +804,18 @@ $$ LANGUAGE plv8;
 
 -- End: Create team invitation
 
--- Start: Split OTP
+-- Start: Split Requisition
 
-CREATE FUNCTION split_otp(
+CREATE FUNCTION split_requisition(
     input_data JSON
 )
 RETURNS VOID AS $$
   plv8.subtransaction(function(){
     const {
-      otpForm,
+      requisitionForm,
       formattedSection,
       teamMemberId,
-      otpID,
+      requisitionID,
       remainingQuantityList,
       approvedQuantityList,
       formattedData,
@@ -824,42 +824,42 @@ RETURNS VOID AS $$
     } = input_data;
 
     // update parent top request status
-    plv8.execute(`UPDATE request_table SET request_status = 'PAUSED' WHERE request_id = '${otpID}'`);
+    plv8.execute(`UPDATE request_table SET request_status = 'PAUSED' WHERE request_id = '${requisitionID}'`);
     
-    // create new otp request
-    const newOTPRequest = plv8.execute(`
+    // create new requisition request
+    const newRequsitionRequest = plv8.execute(`
       INSERT INTO request_table 
       (request_form_id, request_team_member_id, request_additional_info, request_status)
       VALUES
-      ('${otpForm.form_id}', '${formattedData.request_team_member_id}', 'SOURCED_OTP', 'PENDING'),
-      ('${otpForm.form_id}', '${formattedData.request_team_member_id}', 'AVAILABLE_INTERNALLY', 'APPROVED')
+      ('${requisitionForm.form_id}', '${formattedData.request_team_member_id}', 'SOURCED_ITEM', 'PENDING'),
+      ('${requisitionForm.form_id}', '${formattedData.request_team_member_id}', 'AVAILABLE_INTERNALLY', 'APPROVED')
       RETURNING *;
     `);
 
     // request response data
-    const remainingOTPRequestResponseData = [];
-    const approvedOTPRequestResponseData = [];
+    const remainingRequsitionRequestResponseData = [];
+    const approvedRequsitionRequestResponseData = [];
 
     // input the ID and Main section
     formattedSection.slice(0, 2).map((section) => {
       section.section_field.map((field) => {
-        remainingOTPRequestResponseData.push({
+        remainingRequsitionRequestResponseData.push({
           request_response:
-            field.field_name === "Parent OTP ID"
-              ? JSON.stringify(otpID)
+            field.field_name === "Parent Requisition ID"
+              ? JSON.stringify(requisitionID)
               : `${field.field_response?.request_response}`,
           request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[0].request_id,
+          request_response_request_id: newRequsitionRequest[0].request_id,
           request_response_duplicatable_section_id:
             section.section_duplicatable_id ?? null,
         });
-        approvedOTPRequestResponseData.push({
+        approvedRequsitionRequestResponseData.push({
           request_response:
-            field.field_name === "Parent OTP ID"
-              ? JSON.stringify(otpID)
+            field.field_name === "Parent Requisition ID"
+              ? JSON.stringify(requisitionID)
               : `${field.field_response?.request_response}`,
           request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[1].request_id,
+          request_response_request_id: newRequsitionRequest[1].request_id,
           request_response_duplicatable_section_id:
             section.section_duplicatable_id ?? null,
         });
@@ -871,13 +871,13 @@ RETURNS VOID AS $$
       if (remainingQuantityList[sectionIndex] !== 0) {
         section.section_field.forEach((field) => {
           if (field.field_response?.request_response) {
-            remainingOTPRequestResponseData.push({
+            remainingRequsitionRequestResponseData.push({
               request_response:
                 field.field_name === "Quantity"
                   ? `${remainingQuantityList[sectionIndex]}`
                   : `${field.field_response.request_response}`,
               request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[0].request_id,
+              request_response_request_id: newRequsitionRequest[0].request_id,
               request_response_duplicatable_section_id:
                 field.field_response.request_response_duplicatable_section_id ??
                 null,
@@ -888,13 +888,13 @@ RETURNS VOID AS $$
       if (approvedQuantityList[sectionIndex] !== 0) {
         section.section_field.forEach((field) => {
           if (field.field_response?.request_response) {
-            approvedOTPRequestResponseData.push({
+            approvedRequsitionRequestResponseData.push({
               request_response:
                 field.field_name === "Quantity"
                   ? `${approvedQuantityList[sectionIndex]}`
                   : `${field.field_response.request_response}`,
               request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[1].request_id,
+              request_response_request_id: newRequsitionRequest[1].request_id,
               request_response_duplicatable_section_id:
                 field.field_response.request_response_duplicatable_section_id ??
                 null,
@@ -911,20 +911,20 @@ RETURNS VOID AS $$
     // request signer notification
     const signerNotificationInput = [];
 
-    const formattedOtpForm = otpForm;
-    formattedOtpForm.form_signer.forEach((signer) => {
+    const formattedRequisitionForm = requisitionForm;
+    formattedRequisitionForm.form_signer.forEach((signer) => {
       remainingRequestSignerInput.push({
         request_signer_signer_id: signer.signer_id,
-        request_signer_request_id: newOTPRequest[0].request_id,
+        request_signer_request_id: newRequsitionRequest[0].request_id,
         request_signer_status: "PENDING",
       });
 
-      // remaining otp request signer notification
+      // remaining requisition request signer notification
       signerNotificationInput.push({
         notification_app: "REQUEST",
         notification_type: "REQUEST",
-        notification_content: `${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Order to Purchase request`,
-        notification_redirect_url: `/team-requests/requests/${newOTPRequest[0].request_id}`,
+        notification_content: `${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Requisition request`,
+        notification_redirect_url: `/team-requests/requests/${newRequsitionRequest[0].request_id}`,
         notification_user_id:
           signer.signer_team_member.team_member_user.user_id,
         notification_team_id: teamId,
@@ -932,13 +932,13 @@ RETURNS VOID AS $$
       if (signer.signer_team_member.team_member_id === teamMemberId) {
         approvedRequestSignerInput.push({
           request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
+          request_signer_request_id: newRequsitionRequest[1].request_id,
           request_signer_status: "APPROVED",
         });
       } else {
         approvedRequestSignerInput.push({
           request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
+          request_signer_request_id: newRequsitionRequest[1].request_id,
           request_signer_status: "PENDING",
         });
       }
@@ -946,10 +946,10 @@ RETURNS VOID AS $$
 
     // create request responses
     let requestResponseInput = "";
-    remainingOTPRequestResponseData.forEach((response) => {
+    remainingRequsitionRequestResponseData.forEach((response) => {
       requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
     });
-    approvedOTPRequestResponseData.forEach((response) => {
+    approvedRequsitionRequestResponseData.forEach((response) => {
       requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
     });
     plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_request_id, request_response_duplicatable_section_id) VALUES ${requestResponseInput.slice(0, -2)};`);
@@ -970,17 +970,17 @@ RETURNS VOID AS $$
     plv8.execute(`
       INSERT INTO comment_table (comment_request_id, comment_team_member_id, comment_type, comment_content) 
       VALUES 
-      ('${otpID}', '${teamMemberId}', 'ACTION_PAUSED', '${signerFullName} paused this request'),
-      ('${newOTPRequest[1].request_id}', '${teamMemberId}', 'ACTION_APPROVED', '${signerFullName} approved this request');
+      ('${requisitionID}', '${teamMemberId}', 'ACTION_PAUSED', '${signerFullName} paused this request'),
+      ('${newRequsitionRequest[1].request_id}', '${teamMemberId}', 'ACTION_APPROVED', '${signerFullName} approved this request');
     `);
 
 
     let notificationInput = "";
     signerNotificationInput.forEach((notification) => {
-      notificationInput += `('REQUEST', 'REQUEST', '${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Order to Purchase request', '/team-requests/requests/${newOTPRequest[0].request_id}', '${notification.notification_user_id}', '${teamId}'), `;
+      notificationInput += `('REQUEST', 'REQUEST', '${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Requisition request', '/team-requests/requests/${newRequsitionRequest[0].request_id}', '${notification.notification_user_id}', '${teamId}'), `;
     });
-    notificationInput += `('REQUEST', 'PAUSE', '${signerFullName} paused your Order to Purchase request', '/team-requests/requests/${otpID}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
-    notificationInput += `('REQUEST', 'APPROVE', '${signerFullName} approved your Order to Purchase request', '/team-requests/requests/${newOTPRequest[1].request_id}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
+    notificationInput += `('REQUEST', 'PAUSE', '${signerFullName} paused your Requisition request', '/team-requests/requests/${requisitionID}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
+    notificationInput += `('REQUEST', 'APPROVE', '${signerFullName} approved your Requisition request', '/team-requests/requests/${newRequsitionRequest[1].request_id}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
 
     // create notification
      plv8.execute(`
@@ -990,7 +990,7 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
--- End: Split OTP
+-- End: Split Requisition
 
 -- End: Get get SSOT
 
@@ -1018,9 +1018,9 @@ $$ LANGUAGE plv8;
 
 -- End: Get user's active team id
 
--- Start: check if Order to Purchase form can be activated
+-- Start: check if Requisition form can be activated
 
-CREATE FUNCTION check_order_to_purchase_form_status(
+CREATE FUNCTION check_requisition_form_status(
     team_id TEXT,
     form_id TEXT
 )
@@ -1045,7 +1045,7 @@ RETURNS Text as $$
  return return_data;
 $$ LANGUAGE plv8;
 
--- End: check if Order to Purchase form can be activated
+-- End: check if Requisition form can be activated
 
 -- Start: Transfer ownership 
 
@@ -1258,7 +1258,7 @@ $$ LANGUAGE plv8;
 
 -- End: Update form signer
 
--- Start: Check if the approving or creating quotation item quantity are less than the otp quantity
+-- Start: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
 CREATE FUNCTION check_quotation_item_quantity(
     input_data JSON
@@ -1267,14 +1267,14 @@ RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        otpID,
+        requisitionID,
         itemFieldId,
         quantityFieldId,
         itemFieldList,
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${otpID}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Quotation';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionID}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Quotation';`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1350,25 +1350,25 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating quotation item quantity are less than the otp quantity
+-- End: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
--- Start: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+-- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
 
-CREATE FUNCTION check_rir_sourced_item_quantity(
+CREATE FUNCTION check_ro_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        otpId,
+        requisitionId,
         itemFieldId,
         quantityFieldId,
         itemFieldList,
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${otpId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report (Sourced)';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Order';`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1445,11 +1445,11 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 
--- End: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+-- End: Check if the approving or creating release order item quantity are less than the quotation quantity
 
--- Start: Check if the approving or creating rir purchased item quantity are less than the quotation quantity
+-- Start: Check if the approving or creating rir item quantity are less than the quotation quantity
 
-CREATE FUNCTION check_rir_purchased_item_quantity(
+CREATE FUNCTION check_rir_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1463,7 +1463,7 @@ RETURNS JSON AS $$
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${quotationId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report (Purchased)';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${quotationId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report';`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1539,7 +1539,7 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating rir purchased item quantity are less than the quotation quantity
+-- End: Check if the approving or creating rir item quantity are less than the quotation quantity
 
 -- Start: Fetch request list
 
