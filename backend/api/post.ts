@@ -269,7 +269,7 @@ export const sendResetPasswordEmail = async (
   email: string
 ) => {
   await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: "http://localhost:3000/reset-password",
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
   });
 };
 
@@ -278,9 +278,9 @@ export const resetPassword = async (
   supabaseClient: SupabaseClient<Database>,
   password: string
 ) => {
-  const { data, error } = await supabaseClient.auth.updateUser({ password });
+  const { error } = await supabaseClient.auth.updateUser({ password });
   if (error) throw error;
-  return data;
+  return { error: `${error}` };
 };
 
 // Create User
