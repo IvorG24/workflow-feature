@@ -335,7 +335,7 @@ RETURNS JSON as $$
     const requisition_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Requisition' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const rir_sourced_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report (Sourced)' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
     let requisition_requests;
@@ -480,7 +480,7 @@ RETURNS JSON as $$
         });
       }
 
-      const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_sourced_form.form_id}'`);
+      const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${ro_form.form_id}'`);
       let rir_list = [];
 
       if(rir_ids.length !== 0){
@@ -1352,9 +1352,9 @@ $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
--- Start: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+-- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
 
-CREATE FUNCTION check_rir_sourced_item_quantity(
+CREATE FUNCTION check_ro_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1368,7 +1368,7 @@ RETURNS JSON AS $$
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report (Sourced)';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Order';`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1445,7 +1445,7 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 
--- End: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+-- End: Check if the approving or creating release order item quantity are less than the quotation quantity
 
 -- Start: Check if the approving or creating rir item quantity are less than the quotation quantity
 

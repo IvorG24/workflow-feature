@@ -10,7 +10,7 @@ INSERT INTO seed_variable_table (var_key, var_value) VALUES
 ('requisitionFormId', gen_random_uuid()),
 ('quotationFormId', gen_random_uuid()),
 ('rirFormId', gen_random_uuid()),
-('rirSourcedFormId', gen_random_uuid()),
+('roFormId', gen_random_uuid()),
 ('chequeReferenceFormId', gen_random_uuid()),
 ('auditFormId', gen_random_uuid()),
 ('allFieldsFormId', gen_random_uuid()),
@@ -28,7 +28,7 @@ DECLARE
   requisitionFormId UUID;
   quotationFormId UUID;
   rirFormId UUID;
-  rirSourcedFormId UUID;
+  roFormId UUID;
   chequeReferenceFormId UUID;
   auditFormId UUID;
 -- section ids
@@ -75,9 +75,9 @@ SELECT var_value INTO rirFormId
   FROM seed_variable_table
   WHERE var_key = 'rirFormId';
 
-SELECT var_value INTO rirSourcedFormId
+SELECT var_value INTO roFormId
   FROM seed_variable_table
-  WHERE var_key = 'rirSourcedFormId';
+  WHERE var_key = 'roFormId';
 
 SELECT var_value INTO chequeReferenceFormId
   FROM seed_variable_table
@@ -93,7 +93,7 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 (requisitionFormId, 'Requisition', 'formsly premade Requisition form', 'REQUEST', ownerMemberId, true, false, false),
 (quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false),
 (rirFormId, 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
-(rirSourcedFormId, 'Receiving Inspecting Report (Sourced)', 'These items were available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
+(roFormId, 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
 (chequeReferenceFormId, 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', ownerMemberId, true, true, false),
 (auditFormId, 'Audit', 'formsly premade Audit form', 'REQUEST', ownerMemberId, true, false, false);
 
@@ -272,7 +272,7 @@ DECLARE
   quotationRequestId UUID;
   quotation_request_status TEXT;
   rirFormId UUID;
-  rirSourcedFormId UUID;
+  roFormId UUID;
   rirRequestId UUID;
   rirRequestStatus TEXT;
   allFieldsFormId UUID;

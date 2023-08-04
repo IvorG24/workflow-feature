@@ -243,7 +243,7 @@ const RequisitionRequestPage = ({
                 if (
                   (form.form_is_for_every_member || form.form_is_member) &&
                   request.request_additional_info === "AVAILABLE_INTERNALLY" &&
-                  form.form_name === "Receiving Inspecting Report (Sourced)"
+                  form.form_name === "Release Order"
                 ) {
                   return (
                     <Button
@@ -261,7 +261,7 @@ const RequisitionRequestPage = ({
                 } else if (
                   (form.form_is_for_every_member || form.form_is_member) &&
                   request.request_additional_info === "FOR_PURCHASED" &&
-                  form.form_name !== "Receiving Inspecting Report (Sourced)" &&
+                  form.form_name !== "Release Order" &&
                   form.form_name !== "ZZZ"
                 ) {
                   return (

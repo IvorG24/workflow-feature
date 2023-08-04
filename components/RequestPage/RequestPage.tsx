@@ -2,7 +2,7 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   checkQuotationItemQuantity,
   checkRIRItemQuantity,
-  checkRIRSourcedItemQuantity,
+  checkROItemQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -201,25 +201,19 @@ const RequestPage = ({
             });
             return;
           }
-        } else if (
-          request.request_form.form_name ===
-          "Receiving Inspecting Report (Sourced)"
-        ) {
+        } else if (request.request_form.form_name === "Release Order") {
           const requisitionId =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
-          const warningItemList = await checkRIRSourcedItemQuantity(
-            supabaseClient,
-            {
-              requisitionId,
-              itemFieldId: itemSection.section_field[0].field_id,
-              quantityFieldId: itemSection.section_field[1].field_id,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
-            }
-          );
+          const warningItemList = await checkROItemQuantity(supabaseClient, {
+            requisitionId,
+            itemFieldId: itemSection.section_field[0].field_id,
+            quantityFieldId: itemSection.section_field[1].field_id,
+            itemFieldList: itemSection.section_field[0].field_response,
+            quantityFieldList: itemSection.section_field[1].field_response,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -436,8 +430,7 @@ const RequestPage = ({
         ) : null}
 
         {(request.request_form.form_name === "Receiving Inspecting Report" ||
-          request.request_form.form_name ===
-            "Receiving Inspecting Report (Sourced)") &&
+          request.request_form.form_name === "Release Order") &&
         request.request_form.form_is_formsly_form ? (
           <ReceivingInspectingReportSummary
             summaryData={sectionWithDuplicateList

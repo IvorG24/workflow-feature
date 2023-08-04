@@ -1,19 +1,19 @@
 import {
   checkRequest,
-  checkRequsitionRequestForSourced,
+  checkRequsitionRequestForReleaseOrder,
   getAllItems,
   getAllTeamMemberProjects,
   getForm,
   getItemResponseForQuotation,
   getItemResponseForRIR,
-  getItemResponseForRIRSourced,
+  getItemResponseForRO,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
-import CreateReceivingInspectingReportSourcedPage from "@/components/CreateReceivingInspectingReportSourcedPage/CreateReceivingInspectingReportSourcedPage";
+import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
 import CreateRequestPage, {
   RequestFormValues,
 } from "@/components/CreateRequestPage/CreateRequestPage";
@@ -113,7 +113,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         }
         // ZZZ Form,
         else if (form.form_name === "ZZZ") {
-          const isRequestIdValid = await checkRequsitionRequestForSourced(
+          const isRequestIdValid = await checkRequsitionRequestForReleaseOrder(
             supabaseClient,
             {
               requisitionId: `${context.query.requisitionId}`,
@@ -230,7 +230,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           };
         }
         // Receiving Inspecting Report
-        else if (form.form_name === "Receiving Inspecting Report (Sourced)") {
+        else if (form.form_name === "Release Order") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.requisitionId}`],
           });
@@ -244,7 +244,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           }
 
-          const items = await getItemResponseForRIRSourced(supabaseClient, {
+          const items = await getItemResponseForRO(supabaseClient, {
             requestId: `${context.query.requisitionId}`,
           });
 
@@ -336,13 +336,8 @@ const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
             itemOptions={itemOptions}
           />
         );
-      case "Receiving Inspecting Report (Sourced)":
-        return (
-          <CreateReceivingInspectingReportSourcedPage
-            form={form}
-            itemOptions={itemOptions}
-          />
-        );
+      case "Release Order":
+        return <CreateReleaseOrderPage form={form} itemOptions={itemOptions} />;
       case "Cheque Reference":
         return <CreateChequeReferenceRequestPage form={form} />;
       case "Audit":

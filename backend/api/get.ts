@@ -1370,7 +1370,7 @@ export const getFormIDForRequsition = async (
       `
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%, form_name.eq.ZZZ"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Release Order%, form_name.eq.ZZZ"
     )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
@@ -1428,7 +1428,7 @@ export const checkRequest = async (
 };
 
 // Check if the request is pending
-export const checkRequsitionRequestForSourced = async (
+export const checkRequsitionRequestForReleaseOrder = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requisitionId: string;
@@ -1521,7 +1521,7 @@ export const getFormslyForwardLinkFormId = async (
     Requisition: [] as string[],
     Quotation: [] as string[],
     "Receiving Inspecting Report": [] as string[],
-    "Receiving Inspecting Report (Sourced)": [] as string[],
+    "Release Order": [] as string[],
   };
 
   formattedData.forEach((request) => {
@@ -1541,8 +1541,8 @@ export const getFormslyForwardLinkFormId = async (
           `"${request.request_response_request.request_id}"`
         );
         break;
-      case "Receiving Inspecting Report (Sourced)":
-        requestList["Receiving Inspecting Report (Sourced)"].push(
+      case "Release Order":
+        requestList["Release Order"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1690,7 +1690,7 @@ export const getItemResponseForRIR = async (
 };
 
 // Get item response of a requisition request
-export const getItemResponseForRIRSourced = async (
+export const getItemResponseForRO = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1802,8 +1802,8 @@ export const checkRIRItemQuantity = async (
   return data as string[];
 };
 
-// Check if the approving or creating rir sourced item quantity are less than the quotation quantity
-export const checkRIRSourcedItemQuantity = async (
+// Check if the approving or creating release order item quantity are less than the quotation quantity
+export const checkROItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requisitionId: string;
@@ -1814,7 +1814,7 @@ export const checkRIRSourcedItemQuantity = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_rir_sourced_item_quantity", { input_data: params })
+    .rpc("check_ro_item_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;

@@ -106,7 +106,7 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.orange[0],
     },
   },
-  rirSourcedTable: {
+  roTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -784,7 +784,7 @@ const SSOTSpreadsheetView = ({
                 withBorder
                 withColumnBorders
                 h="100%"
-                className={classes.rirSourcedTable}
+                className={classes.roTable}
               >
                 <thead>
                   <tr>
@@ -935,7 +935,7 @@ const SSOTSpreadsheetView = ({
                   <th className={classes.short}>Cost Code</th>
                   <th className={classes.short}>GL Account</th>
                   <th>Quotation</th>
-                  <th>Receiving Inspecting Report (Sourced)</th>
+                  <th>Release Order</th>
                   <th>Cheque Reference</th>
                 </tr>
               </thead>

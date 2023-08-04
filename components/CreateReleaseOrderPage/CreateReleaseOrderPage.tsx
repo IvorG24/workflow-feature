@@ -1,4 +1,4 @@
-import { checkRIRSourcedItemQuantity } from "@/backend/api/get";
+import { checkROItemQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -46,10 +46,7 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateReceivingInspectingReportSourcedPage = ({
-  form,
-  itemOptions,
-}: Props) => {
+const CreateReleaseOrderPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -171,16 +168,13 @@ const CreateReceivingInspectingReportSourcedPage = ({
         });
       });
 
-      const warningItemList = await checkRIRSourcedItemQuantity(
-        supabaseClient,
-        {
-          requisitionId,
-          itemFieldId: itemSection.section_field[0].field_id,
-          quantityFieldId: itemSection.section_field[1].field_id,
-          itemFieldList,
-          quantityFieldList,
-        }
-      );
+      const warningItemList = await checkROItemQuantity(supabaseClient, {
+        requisitionId,
+        itemFieldId: itemSection.section_field[0].field_id,
+        quantityFieldId: itemSection.section_field[1].field_id,
+        itemFieldList,
+        quantityFieldList,
+      });
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
@@ -477,4 +471,4 @@ const CreateReceivingInspectingReportSourcedPage = ({
   );
 };
 
-export default CreateReceivingInspectingReportSourcedPage;
+export default CreateReleaseOrderPage;

@@ -64,7 +64,7 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('e5062660-9026-4629-bc2c-633826fdaa24', 'ZZZ', 'formsly premade ZZZ form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, true),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
-('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Receiving Inspecting Report (Sourced)', 'These items were available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
+('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('913a09d8-88f9-4139-a039-a77394405b62', 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('d2e3e618-7f9b-4439-8f76-72a05a0bf305', 'Audit', 'formsly premade Audit form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false);
 
@@ -95,7 +95,7 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('39831fe4-00f3-4b5e-b840-aae8f1469841', 'Quality Check', 2, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
 ('00341355-1ece-47e6-88a2-060fbab8b11a', 'Item', 3, true, '5782d70a-5f6b-486c-a77f-401066afd005'),
 
--- Receiving Inspecting Report (Sourced)
+-- Release Order
 ('1416e947-3491-436f-9b20-f0cd705607d0', 'ID', 1, false, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
 ('dacb6338-8839-4f66-ae70-2f1d3175e169', 'Quality Check', 2, false, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
 ('0d630b15-3c88-49e0-b588-1e60dd839bcb', 'Item', 3, true, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
@@ -180,7 +180,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('3ca0dbf6-800f-44e5-ba30-149dd5c211fc', 'Quantity', 'NUMBER', 6, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
 ('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 7, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
 
--- Receiving Inspecting Report (Sourced) Form
+-- Release Order Form
 ('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Requisition ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('92cfe1b7-cce0-4632-83d6-8a03bd9a75f5', 'DR', 'FILE', 2, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
 ('a5bd44e8-1fcf-4df0-a836-37e33b1b534a', 'SI', 'FILE', 3, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),

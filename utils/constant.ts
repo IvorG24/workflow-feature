@@ -16,7 +16,7 @@ export const DEFAULT_NUMBER_SSOT_ROWS = 10;
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
   "Receiving Inspecting Report",
-  "Receiving Inspecting Report (Sourced)",
+  "Release Order",
   "Cheque Reference",
   "ZZZ",
 ];
@@ -58,7 +58,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const sourcedRequisitionFormId = uuidv4();
   const quotationFormId = uuidv4();
   const receivingInspectingReportPurchasedFormId = uuidv4();
-  const receivingInspectingReportSourcedFormId = uuidv4();
+  const releaseOrderFormId = uuidv4();
   const chequeReferenceFormId = uuidv4();
   const auditFormId = uuidv4();
 
@@ -74,9 +74,9 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const rirIdSectionId = uuidv4();
   const rirQualityCheckSectionId = uuidv4();
   const rirItemSectionId = uuidv4();
-  const rirSourcedIdSectionId = uuidv4();
-  const rirSourcedQualityCheckSectionId = uuidv4();
-  const rirSourcedItemSectionId = uuidv4();
+  const roIdSectionId = uuidv4();
+  const roQualityCheckSectionId = uuidv4();
+  const roItemSectionId = uuidv4();
   const chequeReferenceIdSectionId = uuidv4();
   const chequeReferenceTreasurySectionId = uuidv4();
   const chequeReferenceChequeSectionId = uuidv4();
@@ -520,12 +520,11 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
     },
-    receivingInspectingReportSourced: {
+    releaseOrder: {
       form: {
-        form_id: receivingInspectingReportSourcedFormId,
-        form_name: "Receiving Inspecting Report (Sourced)",
-        form_description:
-          "formsly premade Receiving Inspecting Report (Sourced) form",
+        form_id: releaseOrderFormId,
+        form_name: "Release Order",
+        form_description: "formsly premade Release Order form",
         form_app: "REQUEST",
         form_is_formsly_form: true,
         form_is_hidden: true,
@@ -534,25 +533,25 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       },
       section: [
         {
-          section_id: rirSourcedIdSectionId,
+          section_id: roIdSectionId,
           section_name: "ID",
           section_order: 1,
           section_is_duplicatable: false,
-          section_form_id: receivingInspectingReportSourcedFormId,
+          section_form_id: releaseOrderFormId,
         },
         {
-          section_id: rirSourcedQualityCheckSectionId,
+          section_id: roQualityCheckSectionId,
           section_name: "Quality Check",
           section_order: 2,
           section_is_duplicatable: false,
-          section_form_id: receivingInspectingReportSourcedFormId,
+          section_form_id: releaseOrderFormId,
         },
         {
-          section_id: rirSourcedItemSectionId,
+          section_id: roItemSectionId,
           section_name: "Item",
           section_order: 3,
           section_is_duplicatable: true,
-          section_form_id: receivingInspectingReportSourcedFormId,
+          section_form_id: releaseOrderFormId,
         },
       ],
       field: [
@@ -560,7 +559,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Requisition ID",
           field_type: "LINK",
           field_order: 1,
-          field_section_id: rirSourcedIdSectionId,
+          field_section_id: roIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -568,7 +567,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "DR",
           field_type: "FILE",
           field_order: 2,
-          field_section_id: rirSourcedQualityCheckSectionId,
+          field_section_id: roQualityCheckSectionId,
           field_is_required: false,
           field_is_read_only: false,
         },
@@ -576,7 +575,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "SI",
           field_type: "FILE",
           field_order: 3,
-          field_section_id: rirSourcedQualityCheckSectionId,
+          field_section_id: roQualityCheckSectionId,
           field_is_required: false,
           field_is_read_only: false,
         },
@@ -584,7 +583,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Item",
           field_type: "DROPDOWN",
           field_order: 4,
-          field_section_id: rirSourcedItemSectionId,
+          field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -592,7 +591,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Quantity",
           field_type: "NUMBER",
           field_order: 5,
-          field_section_id: rirSourcedItemSectionId,
+          field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -600,7 +599,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Receiving Status",
           field_type: "TEXT",
           field_order: 6,
-          field_section_id: rirSourcedItemSectionId,
+          field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -821,7 +820,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     sourcedRequisition,
     quotation,
     receivingInspectingReportPurchased,
-    receivingInspectingReportSourced,
+    releaseOrder,
     chequeReference,
     audit,
   } = formData;
@@ -832,7 +831,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       sourcedRequisition.form,
       quotation.form,
       receivingInspectingReportPurchased.form,
-      receivingInspectingReportSourced.form,
+      releaseOrder.form,
       chequeReference.form,
       audit.form,
     ],
@@ -841,7 +840,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...sourcedRequisition.section,
       ...quotation.section,
       ...receivingInspectingReportPurchased.section,
-      ...receivingInspectingReportSourced.section,
+      ...releaseOrder.section,
       ...chequeReference.section,
       ...audit.section,
     ],
@@ -850,7 +849,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...sourcedRequisition.field,
       ...quotation.field,
       ...receivingInspectingReportPurchased.field,
-      ...receivingInspectingReportSourced.field,
+      ...releaseOrder.field,
       ...chequeReference.field,
       ...audit.field,
     ],
