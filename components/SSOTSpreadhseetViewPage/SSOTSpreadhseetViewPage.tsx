@@ -2,6 +2,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   DEFAULT_NUMBER_SSOT_ROWS,
   REQUISITION_FIELDS_ORDER,
+  UUID_EXP,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
@@ -211,7 +212,7 @@ const SSOTSpreadsheetView = ({
           activeTeam: team.team_id,
           pageNumber: 1,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search,
+          search: UUID_EXP.test(search) ? search : "",
           requisitionFilter: [...projectNameList, ...itemNameList, search],
           requisitionFilterCount,
           quotationFilter: [...supplierList],
@@ -263,7 +264,7 @@ const SSOTSpreadsheetView = ({
           activeTeam: team.team_id,
           pageNumber: offset,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search,
+          search: UUID_EXP.test(search) ? search : "",
           requisitionFilter: [...projectNameList, ...itemNameList, search],
           requisitionFilterCount,
         },
