@@ -19,7 +19,6 @@ import {
   Paper,
   ScrollArea,
   Space,
-  Stack,
   Switch,
   Table,
   Text,
@@ -181,27 +180,9 @@ const SSOTSpreadsheetView = ({
   );
 
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
-  // const [showRequisitionTable, setShowRequisitionTable] = useState({
-  //   table_name: "Requisition",
-  //   is_hidden: false,
-  //   table_columns: [
-  //     { column_name: "Requisition ID", is_hidden: false },
-  //     { column_name: "Date Created", is_hidden: false },
-  //     { column_name: "Warehouse Processor", is_hidden: false },
-  //     { column_name: "Parent Requisition ID", is_hidden: false },
-  //     { column_name: "Project Name", is_hidden: false },
-  //     { column_name: "Type", is_hidden: false },
-  //     { column_name: "Date Needed", is_hidden: false },
-  //     { column_name: "Item Name", is_hidden: false },
-  //     { column_name: "Quantity", is_hidden: false },
-  //     { column_name: "Unit of Measurement", is_hidden: false },
-  //     { column_name: "Description", is_hidden: false },
-  //     { column_name: "Cost Code", is_hidden: false },
-  //     { column_name: "GL Account", is_hidden: false },
-  //   ],
-  // });
   const [showRequisitionTable, setShowRequisitionTable] = useState(true);
   const [showQuotationTable, setShowQuotationTable] = useState(true);
+  const [showRIRTable, setShowRIRTable] = useState(true);
   const [showReleaseOrderTable, setShowReleaseOrderTable] = useState(true);
   const [showChequeReferenceTable, setShowChequeReferenceTable] =
     useState(true);
@@ -604,7 +585,7 @@ const SSOTSpreadsheetView = ({
                 response.request_response_field_name.toLowerCase();
               const columnPropName = fieldName.replace(/\s+/g, "_");
               const showColumn = showQuotationColumnList[columnPropName];
-
+              console.log(request);
               return (
                 showColumn && (
                   <td key={index}>
@@ -710,8 +691,8 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showReleaseOrderTable &&
-            (request.quotation_rir_request.length !== 0 ? (
+          {showQuotationTable &&
+            (showRIRTable && request.quotation_rir_request.length !== 0 ? (
               <td style={{ padding: 0 }}>
                 <Table
                   withBorder
@@ -938,7 +919,7 @@ const SSOTSpreadsheetView = ({
                       {showQuotationColumnList["unit_of_measurement"] && (
                         <th className={classes.date}>Unit of Measurement</th>
                       )}
-                      {showReleaseOrderTable && (
+                      {showQuotationTable && showRIRTable && (
                         <th>Receiving Inspecting Report</th>
                       )}
                     </tr>
@@ -1070,12 +1051,12 @@ const SSOTSpreadsheetView = ({
               opened={showFilterColumnModal}
               onClose={() => setShowFilterColumnModal(false)}
               title="Show/Hide Table and Columns"
-              centered
+              size="auto"
             >
-              <Stack>
-                <Box p="sm" w="100%">
+              <Flex gap="md" align="flex-start" wrap="wrap">
+                <Box p="sm">
                   <Group mb="sm" position="apart">
-                    <Text weight={600}>Requisition Table</Text>
+                    <Text>Requisition Table</Text>
                     <Switch
                       checked={showRequisitionTable}
                       onChange={(e) =>
@@ -1085,7 +1066,7 @@ const SSOTSpreadsheetView = ({
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                     />
                   </Group>
-                  <Flex pl="md" gap="sm" direction="column">
+                  <Flex gap="sm" direction="column">
                     <Group position="apart">
                       <Text>Requisition ID</Text>
                       <Switch
@@ -1289,7 +1270,7 @@ const SSOTSpreadsheetView = ({
                     </Group>
                   </Flex>
                 </Box>
-                <Box p="sm" w="100%">
+                <Box p="sm">
                   <Group mb="sm" position="apart">
                     <Text weight={600}>Quotation Table</Text>
                     <Switch
@@ -1471,29 +1452,45 @@ const SSOTSpreadsheetView = ({
                     </Group>
                   </Flex>
                 </Box>
-                <Group position="apart">
-                  <Text weight={600}>Release Order Table</Text>
-                  <Switch
-                    checked={showReleaseOrderTable}
-                    onChange={(e) =>
-                      setShowReleaseOrderTable(e.currentTarget.checked)
-                    }
-                    onLabel={<IconEye size="1rem" stroke={2.5} />}
-                    offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                  />
-                </Group>
-                <Group position="apart">
-                  <Text weight={600}>Cheque Reference Table</Text>
-                  <Switch
-                    checked={showChequeReferenceTable}
-                    onChange={(e) =>
-                      setShowChequeReferenceTable(e.currentTarget.checked)
-                    }
-                    onLabel={<IconEye size="1rem" stroke={2.5} />}
-                    offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                  />
-                </Group>
-              </Stack>
+                <Box p="sm">
+                  <Group mb="sm" position="apart">
+                    <Text weight={600}>Receiving Inspecting Report Table</Text>
+                    <Switch
+                      checked={showRIRTable}
+                      onChange={(e) => setShowRIRTable(e.currentTarget.checked)}
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                    />
+                  </Group>
+                  <Flex pl="md" gap="sm" direction="column"></Flex>
+                </Box>
+                <Box p="sm">
+                  <Group position="apart">
+                    <Text weight={600}>Release Order Table</Text>
+                    <Switch
+                      checked={showReleaseOrderTable}
+                      onChange={(e) =>
+                        setShowReleaseOrderTable(e.currentTarget.checked)
+                      }
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                    />
+                  </Group>
+                </Box>
+                <Box p="sm">
+                  <Group position="apart">
+                    <Text weight={600}>Cheque Reference Table</Text>
+                    <Switch
+                      checked={showChequeReferenceTable}
+                      onChange={(e) =>
+                        setShowChequeReferenceTable(e.currentTarget.checked)
+                      }
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                    />
+                  </Group>
+                </Box>
+              </Flex>
             </Modal>
 
             <Group position="center">
@@ -1540,9 +1537,7 @@ const SSOTSpreadsheetView = ({
                 <tr>
                   {showRequisitionTable && (
                     <>
-                      {showRequisitionColumnList["requisition_id"] && (
-                        <th className={classes.long}>Requisition ID</th>
-                      )}
+                      <th className={classes.long}>Requisition ID</th>
                       {showRequisitionColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
