@@ -339,11 +339,13 @@ RETURNS JSON as $$
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
     let otp_requests;
+    let search_condition = '';
 
     if(search){
-      otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_id='${search}'`);
-    }else if(otpCondition.length !== 0){
-    const condition = otpCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
+      search_condition = `AND (request_response_table.request_response = '"${search}"' OR request_table.request_id='${search}')`;
+    }
+    if(otpCondition.length !== 0){
+      const condition = otpCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
       otp_requests = plv8.execute(`SELECT * FROM (SELECT request_table.request_id, request_table.request_date_created, request_table.request_team_member_id, request_response_table.request_response, ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id WHERE request_table.request_status = 'APPROVED' AND request_table.request_form_id = '${otp_form.form_id}' AND (${condition}) ORDER BY request_table.request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY) AS a WHERE a.RowNumber = ${numberOfCondition}`);
     }else{
       otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${otp_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);

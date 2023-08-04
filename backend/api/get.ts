@@ -2353,7 +2353,7 @@ export const checkIfTeamProjectExists = async (
 ) => {
   const { projectName, teamId } = params;
 
-  const { data, error } = await supabaseClient
+  const { count, error } = await supabaseClient
     .from("team_project_table")
     .select("*", { count: "exact", head: true })
     .eq("team_project_name", projectName)
@@ -2361,7 +2361,7 @@ export const checkIfTeamProjectExists = async (
     .eq("team_project_is_disabled", false);
   if (error) throw error;
 
-  return Boolean(data);
+  return Boolean(count);
 };
 
 // Get team group member list
