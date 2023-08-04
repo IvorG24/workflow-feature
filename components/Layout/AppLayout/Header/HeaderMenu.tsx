@@ -13,6 +13,7 @@ import {
   useUserAvatar,
   useUserIntials,
   useUserProfile,
+  useUserTeamMember,
 } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT, SIGN_IN_PAGE_PATH } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -49,6 +50,7 @@ const HeaderMenu = () => {
   const activeTeam = useActiveTeam();
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
+  const teamMember = useUserTeamMember();
   const unreadNotificationCount = useUnreadNotificationCount();
   const user = useUserProfile();
   const { setActiveApp } = useTeamActions();
@@ -70,6 +72,7 @@ const HeaderMenu = () => {
     const formList = await getFormList(supabaseClient, {
       teamId: activeTeam.team_id,
       app: newActiveApp,
+      memberId: `${teamMember?.team_member_id}`,
     });
 
     // set form list

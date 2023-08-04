@@ -208,7 +208,8 @@ const SSOTSpreadsheetView = ({
       setOtpList(formattedData);
       viewport.current &&
         viewport.current.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
+    } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

@@ -52,16 +52,17 @@ const TeamCard = ({ team }: TeamCardProps) => {
         // set notification
         setNotificationList([]);
         setUnreadNotification(0);
+
+        // fetch form list
+        const formList = await getFormList(supabaseClient, {
+          teamId: team.team_id,
+          app: activeApp,
+          memberId: teamMember.team_member_id,
+        });
+
+        // set form list
+        setFormList(formList);
       }
-
-      // fetch form list
-      const formList = await getFormList(supabaseClient, {
-        teamId: team.team_id,
-        app: activeApp,
-      });
-
-      // set form list
-      setFormList(formList);
 
       await router.push("/team-requests/requests");
       setIsLoading(false);

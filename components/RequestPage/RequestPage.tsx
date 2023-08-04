@@ -7,10 +7,7 @@ import {
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import {
-  checkIfTwoArrayHaveAtLeastOneEqualElement,
-  generateSectionWithDuplicateList,
-} from "@/utils/arrayFunctions/arrayFunctions";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   FormStatusType,
   FormslyFormType,
@@ -49,8 +46,8 @@ type Props = {
   isFormslyForm?: boolean;
   connectedFormIdAndGroup?: {
     formId: string;
-    formGroup: string[];
     formIsForEveryone: boolean;
+    formIsMember: boolean;
   };
   connectedRequestIDList?: FormslyFormType;
 };
@@ -66,15 +63,6 @@ const RequestPage = ({
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
-
-  const isGroupMember = connectedFormIdAndGroup
-    ? connectedFormIdAndGroup.formIsForEveryone ||
-      (teamMember &&
-        checkIfTwoArrayHaveAtLeastOneEqualElement(
-          teamMember?.team_member_group_list,
-          connectedFormIdAndGroup.formGroup
-        ))
-    : false;
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
@@ -386,8 +374,9 @@ const RequestPage = ({
           />
           {connectedFormIdAndGroup &&
           connectedFormIdAndGroup.formId &&
-          requestStatus === "APPROVED" &&
-          isGroupMember ? (
+          (connectedFormIdAndGroup.formIsForEveryone ||
+            connectedFormIdAndGroup.formIsMember) &&
+          requestStatus === "APPROVED" ? (
             <Button
               onClick={() => {
                 router.push(

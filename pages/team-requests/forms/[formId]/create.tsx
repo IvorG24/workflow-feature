@@ -2,11 +2,11 @@ import {
   checkOTPRequestForSourced,
   checkRequest,
   getAllItems,
+  getAllTeamMemberProjects,
   getForm,
   getItemResponseForQuotation,
   getItemResponseForRIRPurchased,
   getItemResponseForRIRSourced,
-  getMemberProjectList,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -20,7 +20,6 @@ import CreateRequestPage, {
 } from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateSourcedOrderToPurchaseRequestPage from "@/components/CreateSourcedOrderToPurchaseRequestPage/CreateSourcedOrderToPurchaseRequestPage";
 import Meta from "@/components/Meta/Meta";
-import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -44,21 +43,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (!teamMember) throw new Error("No team member found");
 
-      if (
-        !form.form_is_for_every_member &&
-        !checkIfTwoArrayHaveAtLeastOneEqualElement(
-          teamMember.team_member_group_list,
-          form.form_group
-        )
-      ) {
-        return {
-          redirect: {
-            destination: "/403",
-            permanent: false,
-          },
-        };
-      }
-
       if (form.form_is_formsly_form) {
         // Order to Purchase Form
         if (form.form_name === "Order to Purchase") {
@@ -78,17 +62,17 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           });
 
           // projects
-          const projects = await getMemberProjectList(supabaseClient, {
-            userId: user.id,
-            teamId: teamId,
+          const projects = await getAllTeamMemberProjects(supabaseClient, {
+            teamId,
+            memberId: teamMember.team_member_id,
           });
           const projectOptions = projects.map((project, index) => {
             return {
               option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: project,
+              option_id: project.team_project_id,
               option_order: index,
-              option_value: project,
+              option_value: project.team_project_name,
             };
           });
 

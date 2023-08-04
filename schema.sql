@@ -61,8 +61,6 @@ CREATE TABLE team_table (
   team_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
   team_logo VARCHAR(4000),
-  team_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
-  team_project_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
   
   team_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
@@ -71,13 +69,42 @@ CREATE TABLE team_member_table(
   team_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
   team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
-  team_member_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
-  team_member_project_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
 
   team_member_user_id UUID REFERENCES user_table(user_id) NOT NULL,
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   UNIQUE (team_member_team_id, team_member_user_id)
 );
+CREATE TABLE team_group_table(
+  team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_group_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_group_name VARCHAR(4000) NOT NULL,
+  team_group_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  team_group_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+CREATE TABLE team_project_table(
+  team_project_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_project_name VARCHAR(4000) NOT NULL,
+  team_project_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+CREATE TABLE team_group_member_table(
+  team_group_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+
+  UNIQUE(team_group_id, team_member_id) 
+);
+CREATE TABLE team_project_member_table(
+  team_project_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_project_id UUID REFERENCES team_project_table(team_project_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  
+  UNIQUE(team_project_id, team_member_id) 
+);
+
 -- End: User and Teams
 
 -- Start: Notification and Invitation
@@ -116,7 +143,6 @@ CREATE TABLE form_table(
   form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
   form_app VARCHAR(4000) NOT NULL,
   form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
-  form_group VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
 
   form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
@@ -157,6 +183,13 @@ CREATE TABLE option_table (
   option_order INT NOT NULL,
 
   option_field_id UUID REFERENCES field_table(field_id) NOT NULL
+);
+CREATE TABLE form_team_group_table(
+  form_team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  form_id UUID REFERENCES form_table(form_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+
+  UNIQUE(form_id, team_group_id) 
 );
 -- End: Form
 
@@ -306,11 +339,13 @@ RETURNS JSON as $$
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
     let otp_requests;
+    let search_condition = '';
 
     if(search){
-      otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_id='${search}'`);
-    }else if(otpCondition.length !== 0){
-    const condition = otpCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
+      search_condition = `AND (request_response_table.request_response = '"${search}"' OR request_table.request_id='${search}')`;
+    }
+    if(otpCondition.length !== 0){
+      const condition = otpCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
       otp_requests = plv8.execute(`SELECT * FROM (SELECT request_table.request_id, request_table.request_date_created, request_table.request_team_member_id, request_response_table.request_response, ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id WHERE request_table.request_status = 'APPROVED' AND request_table.request_form_id = '${otp_form.form_id}' AND (${condition}) ORDER BY request_table.request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY) AS a WHERE a.RowNumber = ${numberOfCondition}`);
     }else{
       otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${otp_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
@@ -1085,12 +1120,8 @@ RETURNS JSON AS $$
         signers
       },
     } = input_data;
-    
-    const formmattedGroup = `{${groupList
-      .map((group) => `"${group}"`)
-      .join(",")}}`;
 
-    form_data = plv8.execute(`INSERT INTO form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member,form_group) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}', '${formmattedGroup}') RETURNING *`)[0];
+    form_data = plv8.execute(`INSERT INTO form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}') RETURNING *`)[0];
 
     const sectionInput = [];
     const fieldInput = [];
@@ -1138,6 +1169,13 @@ RETURNS JSON AS $$
           `('${signer.signer_id}','${formId}','${signer.signer_team_member_id}','${signer.signer_action}','${signer.signer_is_primary_signer}','${signer.signer_order}')`
       )
       .join(",");
+
+    const groupValues = groupList
+      .map(
+        (group) =>
+          `('${formId}','${group}')`
+      )
+      .join(",");
     
     const section_query = `INSERT INTO section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
 
@@ -1147,7 +1185,9 @@ RETURNS JSON AS $$
 
     const signer_query = `INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
 
-    const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query};`
+    const form_group_query = `INSERT INTO form_team_group_table (form_id, team_group_id) VALUES ${groupValues}`;
+
+    const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query}; ${groupList.length>0?form_group_query:''};`
     
     plv8.execute(all_query);
  });
@@ -1217,290 +1257,6 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Update form signer
-
--- Start: Update team and team member group list
-
-CREATE FUNCTION update_team_and_team_member_group_list(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      teamGroupList,
-      upsertGroupName,
-      addedGroupMembers,
-      deletedGroupMembers,
-      previousName,
-      previousGroupMembers
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_group_list='{${teamGroupList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (addedGroupMembers.length !== 0) {
-      
-      const addTeamMemberCondition = addedGroupMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${addTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        const newGroupList = [...member.team_member_group_list, upsertGroupName];
-        return {
-          ...member,
-          team_member_group_list: newGroupList.filter((c, index) => {
-            return newGroupList.indexOf(c) === index;
-          }),
-        };
-      }); 
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if (deletedGroupMembers.length !== 0) {
-      const deleteTeamMemberCondition = deletedGroupMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_group_list: member.team_member_group_list.filter(
-            (group) => group !== upsertGroupName
-          ),
-        };
-      });
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if(previousName && (previousName !== upsertGroupName)){
-      const updateTeamMemberCondition = previousGroupMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${updateTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        const groupList = member.team_member_group_list;
-        const previousNameIndex = groupList.indexOf(previousName);
-        groupList.splice(previousNameIndex, 1);
-        return {
-          ...member,
-          team_member_group_list: groupList,
-        };
-      }); 
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
- });
-$$ LANGUAGE plv8;
-
--- End: Update team and team member group list
-
--- Start: Update team and team member project list
-
-CREATE FUNCTION update_team_and_team_member_project_list(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      teamProjectList,
-      upsertProjectName,
-      addedProjectMembers,
-      deletedProjectMembers,
-      previousName,
-      previousProjectMembers
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_project_list='{${teamProjectList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (addedProjectMembers.length !== 0) {
-      
-      const addTeamMemberCondition = addedProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${addTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        const newProjectList = [...member.team_member_project_list, upsertProjectName];
-
-        return {
-          ...member,
-          team_member_project_list: newProjectList.filter((c, index) => {
-            return newProjectList.indexOf(c) === index;
-          }),
-        };
-      });
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if (deletedProjectMembers.length !== 0) {
-      const deleteTeamMemberCondition = deletedProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_project_list: member.team_member_project_list.filter(
-            (project) => project !== upsertProjectName
-          ),
-        };
-      });
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if(previousName && (previousName !== upsertProjectName)){
-      const updateTeamMemberCondition = previousProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${updateTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        const projectList = member.team_member_project_list;
-        const previousNameIndex = projectList.indexOf(previousName);
-        projectList.splice(previousNameIndex, 1);
-        return {
-          ...member,
-          team_member_project_list: projectList,
-        };
-      }); 
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_group_list.join(',')}}','{${member.team_member_project_list.join(',')}}')`
-        )
-        .join(",");
-
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_group_list,team_member_project_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_group_list = excluded.team_member_group_list, team_member_project_list = excluded.team_member_project_list;`);
-    }
-    
- });
-$$ LANGUAGE plv8;
-
--- End: Update team and team member project list
-
--- Start: Delete team group
-CREATE FUNCTION delete_team_group(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      groupList,
-      groupMemberList,
-      deletedGroup
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_group_list='{${groupList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (groupMemberList.length !== 0) {
-      const deleteTeamMemberCondition = groupMemberList.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const deleteTeamMemberGroupData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_group_list: member.team_member_group_list.filter(
-            (group) => group !== deletedGroup
-          ),
-        };
-      });
-
-      const teamMemberValues = deleteTeamMemberGroupData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
- });
-$$ LANGUAGE plv8;
-
--- End: Delete team group
-
--- Start: Delete team project
-
-CREATE FUNCTION delete_team_project(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      projectList,
-      projectMemberList,
-      deletedProject
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_project_list='{${projectList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (projectMemberList.length !== 0) {
-      const deleteTeamMemberCondition = projectMemberList.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const deleteTeamMemberProjectData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_project_list: member.team_member_project_list.filter(
-            (project) => project !== deletedProject
-          ),
-        };
-      });
-
-      const teamMemberValues = deleteTeamMemberProjectData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
- });
-$$ LANGUAGE plv8;
-
--- End: Delete team project
 
 -- Start: Check if the approving or creating quotation item quantity are less than the otp quantity
 
