@@ -223,19 +223,20 @@ const SSOTSpreadsheetView = ({
       gl_account: true,
     });
 
-  const [showQuotationColumnList, setShowQuotationColumnList] = useState({
-    quotation_id: true,
-    date_created: true,
-    accounting_processor: true,
-    supplier: true,
-    supplier_quotation: true,
-    send_method: true,
-    proof_of_sending: true,
-    item: true,
-    price_per_unit: true,
-    quantity: true,
-    unit_of_measurement: true,
-  });
+  const [showQuotationColumnList, setShowQuotationColumnList] =
+    useState<ShowColumnList>({
+      quotation_id: true,
+      date_created: true,
+      accounting_processor: true,
+      supplier: true,
+      supplier_quotation: true,
+      send_method: true,
+      proof_of_sending: true,
+      item: true,
+      price_per_unit: true,
+      quantity: true,
+      unit_of_measurement: true,
+    });
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
     defaultValues: {
@@ -556,6 +557,7 @@ const SSOTSpreadsheetView = ({
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
           const quantityMatch = item.request_response.match(/(\d+)/);
+          console.log(quantityMatch);
           if (!quantityMatch) return;
           itemName.push(
             JSON.parse(
@@ -582,132 +584,158 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.quotation_request_id}</td>
-          <td>
-            {new Date(
-              request.quotation_request_date_created
-            ).toLocaleDateString()}
-          </td>
-          <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
+          {showQuotationColumnList["quotation_id"] && (
+            <td>{request.quotation_request_id}</td>
+          )}
+          {showQuotationColumnList["date_created"] && (
+            <td>
+              {new Date(
+                request.quotation_request_date_created
+              ).toLocaleDateString()}
+            </td>
+          )}
+          {showQuotationColumnList["accounting_processor"] && (
+            <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
+          )}
           {request.quotation_request_response
             .slice(1, 3)
             .map((response, index) => {
+              const fieldName =
+                response.request_response_field_name.toLowerCase();
+              const columnPropName = fieldName.replace(/\s+/g, "_");
+              const showColumn = showQuotationColumnList[columnPropName];
+
               return (
-                <td key={index}>
-                  {response.request_response_field_type === "DATE" ? (
-                    new Date(
+                showColumn && (
+                  <td key={index}>
+                    {response.request_response_field_type === "DATE" ? (
+                      new Date(
+                        JSON.parse(response.request_response)
+                      ).toLocaleDateString()
+                    ) : response.request_response_field_type === "FILE" ? (
+                      <ActionIcon
+                        w="100%"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            `${JSON.parse(response.request_response)}`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        <Flex align="center" justify="center" gap={2}>
+                          <Text size={14}>File</Text> <IconFile size={14} />
+                        </Flex>
+                      </ActionIcon>
+                    ) : (
                       JSON.parse(response.request_response)
-                    ).toLocaleDateString()
-                  ) : response.request_response_field_type === "FILE" ? (
-                    <ActionIcon
-                      w="100%"
-                      variant="outline"
-                      onClick={() =>
-                        window.open(
-                          `${JSON.parse(response.request_response)}`,
-                          "_blank"
-                        )
-                      }
-                    >
-                      <Flex align="center" justify="center" gap={2}>
-                        <Text size={14}>File</Text> <IconFile size={14} />
-                      </Flex>
-                    </ActionIcon>
-                  ) : (
-                    JSON.parse(response.request_response)
-                  )}
-                </td>
+                    )}
+                  </td>
+                )
               );
             })}
-          <td>
-            {request.quotation_request_response[3]
-              .request_response_field_name === "Request Send Method" &&
-              JSON.parse(
-                request.quotation_request_response[3].request_response
-              )}
-          </td>
-          <td>
-            {request.quotation_request_response[4]
-              .request_response_field_name === "Proof of Sending" && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() =>
-                  window.open(
-                    `${JSON.parse(
-                      request.quotation_request_response[4].request_response
-                    )}`,
-                    "_blank"
-                  )
-                }
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemName.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemPrice.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>₱ {addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemQuantity.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemUnit.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          {request.quotation_rir_request.length !== 0 ? (
-            <td style={{ padding: 0 }}>
-              <Table
-                withBorder
-                withColumnBorders
-                h="100%"
-                className={classes.rirTable}
-              >
-                <thead>
-                  <tr>
-                    <th className={classes.long}>RIR ID</th>
-                    <th className={classes.date}>Date Created</th>
-                    <th className={classes.processor}>Warehouse Receiver</th>
-                    <th className={classes.short}>DR</th>
-                    <th className={classes.short}>SI</th>
-                    <th className={classes.description}>Item</th>
-                    <th className={classes.normal}>Quantity</th>
-                    <th className={classes.date}>Unit of Measurement</th>
-                    <th className={classes.long}>Receiving Status</th>
-                  </tr>
-                </thead>
-                <tbody>{renderRir(request.quotation_rir_request)}</tbody>
-              </Table>
+          {showQuotationColumnList["send_method"] && (
+            <td>
+              {request.quotation_request_response[3]
+                .request_response_field_name === "Request Send Method" &&
+                JSON.parse(
+                  request.quotation_request_response[3].request_response
+                )}
             </td>
-          ) : null}
+          )}
+          {showQuotationColumnList["proof_of_sending"] && (
+            <td>
+              {request.quotation_request_response[4]
+                .request_response_field_name === "Proof of Sending" && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() =>
+                    window.open(
+                      `${JSON.parse(
+                        request.quotation_request_response[4].request_response
+                      )}`,
+                      "_blank"
+                    )
+                  }
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showQuotationColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showQuotationColumnList["price_per_unit"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemPrice.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>₱ {addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showQuotationColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showQuotationColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderTable &&
+            (request.quotation_rir_request.length !== 0 ? (
+              <td style={{ padding: 0 }}>
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.rirTable}
+                >
+                  <thead>
+                    <tr>
+                      <th className={classes.long}>RIR ID</th>
+                      <th className={classes.date}>Date Created</th>
+                      <th className={classes.processor}>Warehouse Receiver</th>
+                      <th className={classes.short}>DR</th>
+                      <th className={classes.short}>SI</th>
+                      <th className={classes.description}>Item</th>
+                      <th className={classes.normal}>Quantity</th>
+                      <th className={classes.date}>Unit of Measurement</th>
+                      <th className={classes.long}>Receiving Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>{renderRir(request.quotation_rir_request)}</tbody>
+                </Table>
+              </td>
+            ) : null)}
         </tr>
       );
     });
@@ -1070,6 +1098,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1084,6 +1113,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1100,6 +1130,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1116,6 +1147,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1130,6 +1162,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1144,6 +1177,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1158,6 +1192,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1172,6 +1207,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1186,6 +1222,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1202,6 +1239,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1216,6 +1254,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1230,6 +1269,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1244,12 +1284,13 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showRequisitionTable}
                       />
                     </Group>
                   </Flex>
                 </Box>
                 <Box p="sm" w="100%">
-                  <Group position="apart">
+                  <Group mb="sm" position="apart">
                     <Text weight={600}>Quotation Table</Text>
                     <Switch
                       checked={showQuotationTable}
@@ -1273,6 +1314,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1287,6 +1329,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1303,6 +1346,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1317,6 +1361,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1331,6 +1376,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1345,6 +1391,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1359,6 +1406,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1373,6 +1421,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1387,6 +1436,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1401,6 +1451,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                     <Group position="apart">
@@ -1415,6 +1466,7 @@ const SSOTSpreadsheetView = ({
                         }
                         onLabel={<IconEye size="1rem" stroke={2.5} />}
                         offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                        disabled={!showQuotationTable}
                       />
                     </Group>
                   </Flex>
