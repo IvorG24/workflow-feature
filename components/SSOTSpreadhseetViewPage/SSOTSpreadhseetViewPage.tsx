@@ -145,6 +145,7 @@ export type SSOTFilterFormValues = {
   search: string;
   projectNameList: string[];
   itemNameList: string[];
+  supplierList: string[];
 };
 
 type Props = {
@@ -237,7 +238,12 @@ const SSOTSpreadsheetView = ({
   });
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
-    defaultValues: { search: "", itemNameList: [], projectNameList: [] },
+    defaultValues: {
+      search: "",
+      itemNameList: [],
+      projectNameList: [],
+      supplierList: [],
+    },
     mode: "onChange",
   });
 
@@ -248,23 +254,35 @@ const SSOTSpreadsheetView = ({
       search,
       projectNameList,
       itemNameList,
+      supplierList,
     }: SSOTFilterFormValues = getValues()
   ) => {
     try {
       setIsLoading(true);
       setScrollBarType("never");
       setOffset(1);
+
+      let requisitionFilterCount = 0;
+      projectNameList.length !== 0 && requisitionFilterCount++;
+      itemNameList.length !== 0 && requisitionFilterCount++;
+      search.length !== 0 && requisitionFilterCount++;
+
+      let quotationFilterCount = 0;
+      supplierList.length !== 0 && quotationFilterCount++;
+
       const { data, error } = await supabaseClient.rpc("get_ssot", {
         input_data: {
           activeTeam: team.team_id,
           pageNumber: 1,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search,
-          requisitionCondition: [...projectNameList, ...itemNameList],
-          numberOfCondition:
-            projectNameList.length !== 0 && itemNameList.length !== 0 ? 2 : 1,
+          requisitionFilter: [...projectNameList, ...itemNameList, search],
+          requisitionFilterCount,
+          quotationFilter: [...supplierList],
+          quotationFilterCount,
         },
       });
+
       if (error) throw error;
       const formattedData = data as SSOTType[];
       if (formattedData.length === DEFAULT_NUMBER_SSOT_ROWS) {
@@ -298,15 +316,20 @@ const SSOTSpreadsheetView = ({
     try {
       setIsLoading(true);
       setScrollBarType("never");
+
+      let requisitionFilterCount = 0;
+      projectNameList.length !== 0 && requisitionFilterCount++;
+      itemNameList.length !== 0 && requisitionFilterCount++;
+      search.length !== 0 && requisitionFilterCount++;
+
       const { data, error } = await supabaseClient.rpc("get_ssot", {
         input_data: {
           activeTeam: team.team_id,
           pageNumber: offset,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search,
-          requisitionCondition: [...projectNameList, ...itemNameList],
-          numberOfCondition:
-            projectNameList.length !== 0 && itemNameList.length !== 0 ? 2 : 1,
+          requisitionFilter: [...projectNameList, ...itemNameList, search],
+          requisitionFilterCount,
         },
       });
       if (error) throw error;

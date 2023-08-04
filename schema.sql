@@ -322,8 +322,8 @@ RETURNS JSON as $$
       pageNumber,
       rowLimit,
       search,
-      requisitionCondition,
-      numberOfCondition
+      requisitionFilter,
+      requisitionFilterCount
     } = input_data;
 
     const rowStart = (pageNumber - 1) * rowLimit;
@@ -340,13 +340,33 @@ RETURNS JSON as $$
 
     let requisition_requests;
     let search_condition = '';
-
+    
     if(search){
-      search_condition = `AND (request_response_table.request_response = '"${search}"' OR request_table.request_id='${search}')`;
+      search_condition = `OR (request_table.request_id = '${search}')`;
     }
-    if(requisitionCondition.length !== 0){
-      const condition = requisitionCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
-      requisition_requests = plv8.execute(`SELECT * FROM (SELECT request_table.request_id, request_table.request_date_created, request_table.request_team_member_id, request_response_table.request_response, ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id WHERE request_table.request_status = 'APPROVED' AND request_table.request_form_id = '${requisition_form.form_id}' AND (${condition}) ORDER BY request_table.request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY) AS a WHERE a.RowNumber = ${numberOfCondition}`);
+    if(requisitionFilterCount){
+      const condition = requisitionFilter.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
+      requisition_requests = plv8.execute(
+        `
+          SELECT * FROM (
+            SELECT 
+              request_table.request_id, 
+              request_table.request_date_created, 
+              request_table.request_team_member_id, 
+              request_response_table.request_response, 
+              ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber 
+            FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id 
+            WHERE 
+              request_table.request_status = 'APPROVED' 
+              AND request_table.request_form_id = '${requisition_form.form_id}' 
+              AND (${condition}) ${search_condition} 
+            ORDER BY request_table.request_date_created DESC 
+            OFFSET ${rowStart} 
+            ROWS FETCH FIRST ${rowLimit} ROWS ONLY
+          ) AS a 
+          WHERE a.RowNumber = ${requisitionFilterCount}
+        `
+      );
     }else{
       requisition_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
     }
