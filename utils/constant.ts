@@ -55,7 +55,7 @@ export const defaultRequestFormBuilderSigners = (
 export const formslyPremadeFormsData = (teamMemberId: string) => {
   // form ids
   const requisitionFormId = uuidv4();
-  const sourcedOrderToPurchaseFormId = uuidv4();
+  const sourcedRequisitionFormId = uuidv4();
   const quotationFormId = uuidv4();
   const receivingInspectingReportPurchasedFormId = uuidv4();
   const receivingInspectingReportSourcedFormId = uuidv4();
@@ -207,9 +207,9 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
     },
-    sourcedOrderToPurchase: {
+    sourcedRequisition: {
       form: {
-        form_id: sourcedOrderToPurchaseFormId,
+        form_id: sourcedRequisitionFormId,
         form_name: "ZZZ",
         form_description: "formsly premade ZZZ form",
         form_app: "REQUEST",
@@ -224,7 +224,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           section_name: "Item",
           section_order: 1,
           section_is_duplicatable: true,
-          section_form_id: sourcedOrderToPurchaseFormId,
+          section_form_id: sourcedRequisitionFormId,
         },
       ],
       field: [
@@ -819,7 +819,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 
   const {
     requisition,
-    sourcedOrderToPurchase,
+    sourcedRequisition,
     quotation,
     receivingInspectingReportPurchased,
     receivingInspectingReportSourced,
@@ -830,7 +830,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   return {
     forms: [
       requisition.form,
-      sourcedOrderToPurchase.form,
+      sourcedRequisition.form,
       quotation.form,
       receivingInspectingReportPurchased.form,
       receivingInspectingReportSourced.form,
@@ -839,7 +839,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
     sections: [
       ...requisition.section,
-      ...sourcedOrderToPurchase.section,
+      ...sourcedRequisition.section,
       ...quotation.section,
       ...receivingInspectingReportPurchased.section,
       ...receivingInspectingReportSourced.section,
@@ -848,7 +848,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     ],
     fieldsWithoutId: [
       ...requisition.field,
-      ...sourcedOrderToPurchase.field,
+      ...sourcedRequisition.field,
       ...quotation.field,
       ...receivingInspectingReportPurchased.field,
       ...receivingInspectingReportSourced.field,
@@ -994,7 +994,7 @@ export const ITEM_UNIT_CHOICES = [
   "yard",
 ];
 
-export const OTP_FIELDS_ORDER = [
+export const REQUISITION_FIELDS_ORDER = [
   "Parent Requisition ID",
   "Project Name",
   "Type",

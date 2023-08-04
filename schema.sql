@@ -827,7 +827,7 @@ RETURNS VOID AS $$
     plv8.execute(`UPDATE request_table SET request_status = 'PAUSED' WHERE request_id = '${requisitionID}'`);
     
     // create new requisition request
-    const newOTPRequest = plv8.execute(`
+    const newRequsitionRequest = plv8.execute(`
       INSERT INTO request_table 
       (request_form_id, request_team_member_id, request_additional_info, request_status)
       VALUES
@@ -837,29 +837,29 @@ RETURNS VOID AS $$
     `);
 
     // request response data
-    const remainingOTPRequestResponseData = [];
-    const approvedOTPRequestResponseData = [];
+    const remainingRequsitionRequestResponseData = [];
+    const approvedRequsitionRequestResponseData = [];
 
     // input the ID and Main section
     formattedSection.slice(0, 2).map((section) => {
       section.section_field.map((field) => {
-        remainingOTPRequestResponseData.push({
+        remainingRequsitionRequestResponseData.push({
           request_response:
             field.field_name === "Parent Requisition ID"
               ? JSON.stringify(requisitionID)
               : `${field.field_response?.request_response}`,
           request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[0].request_id,
+          request_response_request_id: newRequsitionRequest[0].request_id,
           request_response_duplicatable_section_id:
             section.section_duplicatable_id ?? null,
         });
-        approvedOTPRequestResponseData.push({
+        approvedRequsitionRequestResponseData.push({
           request_response:
             field.field_name === "Parent Requisition ID"
               ? JSON.stringify(requisitionID)
               : `${field.field_response?.request_response}`,
           request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[1].request_id,
+          request_response_request_id: newRequsitionRequest[1].request_id,
           request_response_duplicatable_section_id:
             section.section_duplicatable_id ?? null,
         });
@@ -871,13 +871,13 @@ RETURNS VOID AS $$
       if (remainingQuantityList[sectionIndex] !== 0) {
         section.section_field.forEach((field) => {
           if (field.field_response?.request_response) {
-            remainingOTPRequestResponseData.push({
+            remainingRequsitionRequestResponseData.push({
               request_response:
                 field.field_name === "Quantity"
                   ? `${remainingQuantityList[sectionIndex]}`
                   : `${field.field_response.request_response}`,
               request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[0].request_id,
+              request_response_request_id: newRequsitionRequest[0].request_id,
               request_response_duplicatable_section_id:
                 field.field_response.request_response_duplicatable_section_id ??
                 null,
@@ -888,13 +888,13 @@ RETURNS VOID AS $$
       if (approvedQuantityList[sectionIndex] !== 0) {
         section.section_field.forEach((field) => {
           if (field.field_response?.request_response) {
-            approvedOTPRequestResponseData.push({
+            approvedRequsitionRequestResponseData.push({
               request_response:
                 field.field_name === "Quantity"
                   ? `${approvedQuantityList[sectionIndex]}`
                   : `${field.field_response.request_response}`,
               request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[1].request_id,
+              request_response_request_id: newRequsitionRequest[1].request_id,
               request_response_duplicatable_section_id:
                 field.field_response.request_response_duplicatable_section_id ??
                 null,
@@ -911,11 +911,11 @@ RETURNS VOID AS $$
     // request signer notification
     const signerNotificationInput = [];
 
-    const formattedOtpForm = requisitionForm;
-    formattedOtpForm.form_signer.forEach((signer) => {
+    const formattedRequisitionForm = requisitionForm;
+    formattedRequisitionForm.form_signer.forEach((signer) => {
       remainingRequestSignerInput.push({
         request_signer_signer_id: signer.signer_id,
-        request_signer_request_id: newOTPRequest[0].request_id,
+        request_signer_request_id: newRequsitionRequest[0].request_id,
         request_signer_status: "PENDING",
       });
 
@@ -924,7 +924,7 @@ RETURNS VOID AS $$
         notification_app: "REQUEST",
         notification_type: "REQUEST",
         notification_content: `${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Requisition request`,
-        notification_redirect_url: `/team-requests/requests/${newOTPRequest[0].request_id}`,
+        notification_redirect_url: `/team-requests/requests/${newRequsitionRequest[0].request_id}`,
         notification_user_id:
           signer.signer_team_member.team_member_user.user_id,
         notification_team_id: teamId,
@@ -932,13 +932,13 @@ RETURNS VOID AS $$
       if (signer.signer_team_member.team_member_id === teamMemberId) {
         approvedRequestSignerInput.push({
           request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
+          request_signer_request_id: newRequsitionRequest[1].request_id,
           request_signer_status: "APPROVED",
         });
       } else {
         approvedRequestSignerInput.push({
           request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
+          request_signer_request_id: newRequsitionRequest[1].request_id,
           request_signer_status: "PENDING",
         });
       }
@@ -946,10 +946,10 @@ RETURNS VOID AS $$
 
     // create request responses
     let requestResponseInput = "";
-    remainingOTPRequestResponseData.forEach((response) => {
+    remainingRequsitionRequestResponseData.forEach((response) => {
       requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
     });
-    approvedOTPRequestResponseData.forEach((response) => {
+    approvedRequsitionRequestResponseData.forEach((response) => {
       requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
     });
     plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_request_id, request_response_duplicatable_section_id) VALUES ${requestResponseInput.slice(0, -2)};`);
@@ -971,16 +971,16 @@ RETURNS VOID AS $$
       INSERT INTO comment_table (comment_request_id, comment_team_member_id, comment_type, comment_content) 
       VALUES 
       ('${requisitionID}', '${teamMemberId}', 'ACTION_PAUSED', '${signerFullName} paused this request'),
-      ('${newOTPRequest[1].request_id}', '${teamMemberId}', 'ACTION_APPROVED', '${signerFullName} approved this request');
+      ('${newRequsitionRequest[1].request_id}', '${teamMemberId}', 'ACTION_APPROVED', '${signerFullName} approved this request');
     `);
 
 
     let notificationInput = "";
     signerNotificationInput.forEach((notification) => {
-      notificationInput += `('REQUEST', 'REQUEST', '${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Requisition request', '/team-requests/requests/${newOTPRequest[0].request_id}', '${notification.notification_user_id}', '${teamId}'), `;
+      notificationInput += `('REQUEST', 'REQUEST', '${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Requisition request', '/team-requests/requests/${newRequsitionRequest[0].request_id}', '${notification.notification_user_id}', '${teamId}'), `;
     });
     notificationInput += `('REQUEST', 'PAUSE', '${signerFullName} paused your Requisition request', '/team-requests/requests/${requisitionID}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
-    notificationInput += `('REQUEST', 'APPROVE', '${signerFullName} approved your Requisition request', '/team-requests/requests/${newOTPRequest[1].request_id}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
+    notificationInput += `('REQUEST', 'APPROVE', '${signerFullName} approved your Requisition request', '/team-requests/requests/${newRequsitionRequest[1].request_id}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
 
     // create notification
      plv8.execute(`

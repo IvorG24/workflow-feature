@@ -37,7 +37,7 @@ type Props = {
   lowestAdditionalCharge: number;
 };
 
-const OrderToPurchaseCanvassPage = ({
+const RequisitionCanvassPage = ({
   canvassData,
   lowestPricePerItem,
   summaryData,
@@ -215,4 +215,4 @@ const OrderToPurchaseCanvassPage = ({
   );
 };
 
-export default OrderToPurchaseCanvassPage;
+export default RequisitionCanvassPage;

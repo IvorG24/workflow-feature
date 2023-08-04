@@ -14,7 +14,7 @@ type Props = {
     status: "APPROVED" | "REJECTED",
     additionalInfo?: string
   ) => void;
-  isOTP?: boolean;
+  isRequsition?: boolean;
   sourcedOtpForm?: {
     form_name: string;
     form_id: string;
@@ -32,7 +32,7 @@ const RequestActionSection = ({
   openPromptDeleteModal,
   isUserSigner,
   handleUpdateRequest,
-  isOTP = false,
+  isRequsition = false,
   sourcedOtpForm,
   requestId,
   isUserPrimarySigner,
@@ -82,7 +82,7 @@ const RequestActionSection = ({
           signer.request_signer_status === "PENDING" &&
           requestStatus === "PENDING" && (
             <>
-              {!isOTP && (
+              {!isRequsition && (
                 <Button
                   color="green"
                   fullWidth
@@ -91,7 +91,7 @@ const RequestActionSection = ({
                   Approve Request
                 </Button>
               )}
-              {isOTP && (
+              {isRequsition && (
                 <>
                   <Button
                     color="green"

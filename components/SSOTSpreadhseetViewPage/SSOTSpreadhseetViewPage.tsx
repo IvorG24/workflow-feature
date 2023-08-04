@@ -1,5 +1,8 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { DEFAULT_NUMBER_SSOT_ROWS, OTP_FIELDS_ORDER } from "@/utils/constant";
+import {
+  DEFAULT_NUMBER_SSOT_ROWS,
+  REQUISITION_FIELDS_ORDER,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
 import { SSOTResponseType, SSOTType } from "@/utils/types";
@@ -158,7 +161,7 @@ const SSOTSpreadsheetView = ({
   const team = useActiveTeam();
   const viewport = useRef<HTMLDivElement>(null);
 
-  const [requisitionList, setOtpList] = useState(data);
+  const [requisitionList, setRequisitionList] = useState(data);
   const [offset, setOffset] = useState(1);
   const [isInView, setIsInView] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -205,7 +208,7 @@ const SSOTSpreadsheetView = ({
       } else {
         setIsFetchable(false);
       }
-      setOtpList(formattedData);
+      setRequisitionList(formattedData);
       viewport.current &&
         viewport.current.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
@@ -249,7 +252,7 @@ const SSOTSpreadsheetView = ({
           setIsFetchable(false);
         } else {
           setIsFetchable(true);
-          setOtpList((prev) => [...prev, ...formattedData]);
+          setRequisitionList((prev) => [...prev, ...formattedData]);
         }
       }
     } catch (e) {
@@ -623,7 +626,7 @@ const SSOTSpreadsheetView = ({
     });
   };
 
-  const renderOtp = () => {
+  const renderRequisition = () => {
     return requisitionList.map((request) => {
       const itemName: string[] = [];
       const itemUnit: string[] = [];
@@ -635,13 +638,13 @@ const SSOTSpreadsheetView = ({
       const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
           return (
-            OTP_FIELDS_ORDER.indexOf(a.request_response_field_name) -
-            OTP_FIELDS_ORDER.indexOf(b.request_response_field_name)
+            REQUISITION_FIELDS_ORDER.indexOf(a.request_response_field_name) -
+            REQUISITION_FIELDS_ORDER.indexOf(b.request_response_field_name)
           );
         }
       );
 
-      const items = fields.slice(0, -OTP_FIELDS_ORDER.length);
+      const items = fields.slice(0, -REQUISITION_FIELDS_ORDER.length);
       const sortedAndGroupedItems = sortAndGroupItems(items);
       sortedAndGroupedItems.forEach((group, groupIndex) => {
         itemDescription[groupIndex] = "";
@@ -676,19 +679,21 @@ const SSOTSpreadsheetView = ({
             ).toLocaleDateString()}
           </td>
           <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
-          {fields.slice(-OTP_FIELDS_ORDER.length).map((response, index) => {
-            return (
-              <td key={index}>
-                {response.request_response_field_type === "DATE"
-                  ? new Date(
-                      JSON.parse(response.request_response)
-                    ).toLocaleDateString()
-                  : JSON.parse(response.request_response) !== "null"
-                  ? JSON.parse(response.request_response)
-                  : ""}
-              </td>
-            );
-          })}
+          {fields
+            .slice(-REQUISITION_FIELDS_ORDER.length)
+            .map((response, index) => {
+              return (
+                <td key={index}>
+                  {response.request_response_field_type === "DATE"
+                    ? new Date(
+                        JSON.parse(response.request_response)
+                      ).toLocaleDateString()
+                    : JSON.parse(response.request_response) !== "null"
+                    ? JSON.parse(response.request_response)
+                    : ""}
+                </td>
+              );
+            })}
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
@@ -934,7 +939,7 @@ const SSOTSpreadsheetView = ({
                   <th>Cheque Reference</th>
                 </tr>
               </thead>
-              <tbody>{renderOtp()}</tbody>
+              <tbody>{renderRequisition()}</tbody>
             </Table>
           </Box>
         </ScrollArea>

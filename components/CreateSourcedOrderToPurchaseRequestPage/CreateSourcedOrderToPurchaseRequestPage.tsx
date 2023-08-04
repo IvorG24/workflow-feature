@@ -1,5 +1,5 @@
 import { checkQuotationItemQuantity } from "@/backend/api/get";
-import { splitParentOtp } from "@/backend/api/update";
+import { splitParentRequisition } from "@/backend/api/update";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -45,10 +45,7 @@ type Props = {
   itemOptions: OptionTableRow[];
 };
 
-const CreateSourcedOrderToPurchaseRequestPage = ({
-  form,
-  itemOptions,
-}: Props) => {
+const CreateSourcedRequisitionRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -169,7 +166,7 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
           ),
         });
       } else {
-        const isSplitted = await splitParentOtp(supabaseClient, {
+        const isSplitted = await splitParentRequisition(supabaseClient, {
           requisitionID,
           teamMemberId: teamMember.team_member_id,
           data,
@@ -400,4 +397,4 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
   );
 };
 
-export default CreateSourcedOrderToPurchaseRequestPage;
+export default CreateSourcedRequisitionRequestPage;

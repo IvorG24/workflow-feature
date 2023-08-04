@@ -92,8 +92,8 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 (duplicateFieldsFormId, 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', ownerMemberId, false, false, true),
 (requisitionFormId, 'Requisition', 'formsly premade Requisition form', 'REQUEST', ownerMemberId, true, false, false),
 (quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false),
-(rirPurchasedFormId, 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
-(rirSourcedFormId, 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
+(rirPurchasedFormId, 'Receiving Inspecting Report (Purchased)', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
+(rirSourcedFormId, 'Receiving Inspecting Report (Sourced)', 'These items were available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
 (chequeReferenceFormId, 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', ownerMemberId, true, true, false),
 (auditFormId, 'Audit', 'formsly premade Audit form', 'REQUEST', ownerMemberId, true, false, false);
 

@@ -796,7 +796,7 @@ export const getItem = async (
 };
 
 // check if Requisition form can be activated
-export const checkOrderToPurchaseFormStatus = async (
+export const checkRequisitionFormStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; formId: string }
 ) => {
@@ -1342,7 +1342,7 @@ export const getFormslyForm = async (
 };
 
 // Get specific Requisition form id by name and team id
-export const getFormIDForOTP = async (
+export const getFormIDForRequsition = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
@@ -1428,7 +1428,7 @@ export const checkRequest = async (
 };
 
 // Check if the request is pending
-export const checkOTPRequestForSourced = async (
+export const checkRequsitionRequestForSourced = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requisitionId: string;
@@ -1963,7 +1963,7 @@ export const getSignerData = async (
 };
 
 // Get all quotation request for the requisition
-export const getOTPPendingQuotationRequestList = async (
+export const getRequsitionPendingQuotationRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -2012,7 +2012,7 @@ export const getCanvassData = async (
       `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
   );
 
-  const canvassRequest = await getOTPPendingQuotationRequestList(
+  const canvassRequest = await getRequsitionPendingQuotationRequestList(
     supabaseClient,
     { requestId }
   );

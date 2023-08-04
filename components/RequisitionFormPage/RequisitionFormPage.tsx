@@ -1,6 +1,6 @@
 import {
   checkIfTeamGroupMember,
-  checkOrderToPurchaseFormStatus,
+  checkRequisitionFormStatus,
 } from "@/backend/api/get";
 import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -51,7 +51,7 @@ type Props = {
   teamGroupList: TeamGroupTableRow[];
 };
 
-const OrderToPurchaseFormPage = ({
+const RequisitionFormPage = ({
   items,
   itemListCount,
   teamMemberList,
@@ -247,7 +247,7 @@ const OrderToPurchaseFormPage = ({
 
   const handleFormVisibilityRestriction = async () => {
     try {
-      const result = await checkOrderToPurchaseFormStatus(supabaseClient, {
+      const result = await checkRequisitionFormStatus(supabaseClient, {
         teamId: team.team_id,
         formId: `${formId}`,
       });
@@ -417,4 +417,4 @@ const OrderToPurchaseFormPage = ({
   );
 };
 
-export default OrderToPurchaseFormPage;
+export default RequisitionFormPage;

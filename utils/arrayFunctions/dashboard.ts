@@ -49,7 +49,7 @@ export const generateFormslyResponseData = (
 ) => {
   switch (formName) {
     case "Requisition":
-      return generateOTPFormData(sectionList);
+      return generateRequsitionFormData(sectionList);
 
     case "Quotation":
       return generateQuotationFormData(sectionList);
@@ -171,7 +171,7 @@ export const generateQuotationFormData = (
   return groupSectionByItemName;
 };
 
-export const generateOTPFormData = (
+export const generateRequsitionFormData = (
   sectionList: RequestByFormType["request_form"]["form_section"]
 ) => {
   const duplicateSectionList = generateSectionWithDuplicateList(sectionList);

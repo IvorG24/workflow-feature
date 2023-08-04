@@ -38,7 +38,7 @@ type Props = {
   requisitionIdSection?: RequestFormValues["sections"][0];
 };
 
-const CreateOrderToPurchaseRequestPage = ({
+const CreateRequisitionRequestPage = ({
   form,
   itemOptions,
   requisitionIdSection,
@@ -364,4 +364,4 @@ const CreateOrderToPurchaseRequestPage = ({
   );
 };
 
-export default CreateOrderToPurchaseRequestPage;
+export default CreateRequisitionRequestPage;

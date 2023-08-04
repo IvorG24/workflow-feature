@@ -1,6 +1,6 @@
 import {
-  checkOTPRequestForSourced,
   checkRequest,
+  checkRequsitionRequestForSourced,
   getAllItems,
   getAllTeamMemberProjects,
   getForm,
@@ -11,14 +11,15 @@ import {
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
-import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPurchasedPage from "@/components/CreateReceivingInspectingReportPurchasedPage/CreateReceivingInspectingReportPurchasedPage";
 import CreateReceivingInspectingReportSourcedPage from "@/components/CreateReceivingInspectingReportSourcedPage/CreateReceivingInspectingReportSourcedPage";
 import CreateRequestPage, {
   RequestFormValues,
 } from "@/components/CreateRequestPage/CreateRequestPage";
-import CreateSourcedOrderToPurchaseRequestPage from "@/components/CreateSourcedOrderToPurchaseRequestPage/CreateSourcedOrderToPurchaseRequestPage";
+import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
+import CreateSourcedRequisitionRequestPage from "@/components/CreateSourcedOrderToPurchaseRequestPage/CreateSourcedOrderToPurchaseRequestPage";
+
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -112,7 +113,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         }
         // ZZZ Form,
         else if (form.form_name === "ZZZ") {
-          const isRequestIdValid = await checkOTPRequestForSourced(
+          const isRequestIdValid = await checkRequsitionRequestForSourced(
             supabaseClient,
             {
               requisitionId: `${context.query.requisitionId}`,
@@ -298,7 +299,7 @@ const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
     switch (form.form_name) {
       case "Requisition":
         return (
-          <CreateOrderToPurchaseRequestPage
+          <CreateRequisitionRequestPage
             itemOptions={itemOptions}
             form={{
               ...form,
@@ -319,7 +320,7 @@ const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
         );
       case "ZZZ":
         return (
-          <CreateSourcedOrderToPurchaseRequestPage
+          <CreateSourcedRequisitionRequestPage
             form={form}
             itemOptions={itemOptions}
           />

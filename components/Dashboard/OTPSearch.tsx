@@ -36,7 +36,7 @@ type FormValues = {
   }[];
 };
 
-const OTPSearch = () => {
+const RequsitionSearch = () => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
 
@@ -284,4 +284,4 @@ const OTPSearch = () => {
   );
 };
 
-export default OTPSearch;
+export default RequsitionSearch;

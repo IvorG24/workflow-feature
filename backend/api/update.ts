@@ -332,7 +332,7 @@ export const updateFormDescription = async (
 };
 
 // Split parent requisition
-export const splitParentOtp = async (
+export const splitParentRequisition = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requisitionID: string;
@@ -393,14 +393,14 @@ export const splitParentOtp = async (
       .maybeSingle();
   if (requisitionRequestError) throw requisitionRequestError;
 
-  const formattedOTP = requisitionRequest as unknown as RequestWithResponseType;
+  const formattedRequsition = requisitionRequest as unknown as RequestWithResponseType;
   const formattedSection = generateSectionWithDuplicateList(
-    formattedOTP.request_form.form_section
+    formattedRequsition.request_form.form_section
   );
   const formattedData = {
-    ...formattedOTP,
+    ...formattedRequsition,
     request_form: {
-      ...formattedOTP.request_form,
+      ...formattedRequsition.request_form,
       form_section: formattedSection,
     },
   };
