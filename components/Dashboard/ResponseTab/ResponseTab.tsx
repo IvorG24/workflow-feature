@@ -1,8 +1,8 @@
 import { Box, Container, Paper } from "@mantine/core";
-import RequsitionSearch from "../RequsitionSearch";
 import RequisitionTab from "../RequisitionTab/RequisitionTab";
 import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchKeywordResponse from "./SearchKeywordResponse";
+import RequsitionSearch from "../RequisitionSearch";
 
 type ResponseTabProps = {
   selectedForm: string | null;
