@@ -92,7 +92,7 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.grape[0],
     },
   },
-  rirPurchasedTable: {
+  rirTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -602,7 +602,7 @@ const SSOTSpreadsheetView = ({
                 withBorder
                 withColumnBorders
                 h="100%"
-                className={classes.rirPurchasedTable}
+                className={classes.rirTable}
               >
                 <thead>
                   <tr>
@@ -769,7 +769,7 @@ const SSOTSpreadsheetView = ({
                     <th className={classes.normal}>Price per Unit</th>
                     <th className={classes.normal}>Quantity</th>
                     <th className={classes.date}>Unit of Measurement</th>
-                    <th>Receiving Inspecting Report (Purchased)</th>
+                    <th>Receiving Inspecting Report</th>
                   </tr>
                 </thead>
                 <tbody>

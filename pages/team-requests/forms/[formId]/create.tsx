@@ -5,14 +5,14 @@ import {
   getAllTeamMemberProjects,
   getForm,
   getItemResponseForQuotation,
-  getItemResponseForRIRPurchased,
+  getItemResponseForRIR,
   getItemResponseForRIRSourced,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
-import CreateReceivingInspectingReportPurchasedPage from "@/components/CreateReceivingInspectingReportPurchasedPage/CreateReceivingInspectingReportPurchasedPage";
+import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReceivingInspectingReportSourcedPage from "@/components/CreateReceivingInspectingReportSourcedPage/CreateReceivingInspectingReportSourcedPage";
 import CreateRequestPage, {
   RequestFormValues,
@@ -186,8 +186,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Receiving Inspecting Report (Purchased)
-        else if (form.form_name === "Receiving Inspecting Report (Purchased)") {
+        // Receiving Inspecting Report
+        else if (form.form_name === "Receiving Inspecting Report") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
               `${context.query.requisitionId}`,
@@ -204,7 +204,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           }
 
-          const items = await getItemResponseForRIRPurchased(supabaseClient, {
+          const items = await getItemResponseForRIR(supabaseClient, {
             requestId: `${context.query.quotationId}`,
           });
 
@@ -229,7 +229,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Receiving Inspecting Report (Purchased)
+        // Receiving Inspecting Report
         else if (form.form_name === "Receiving Inspecting Report (Sourced)") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.requisitionId}`],
@@ -329,9 +329,9 @@ const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
         return (
           <CreateQuotationRequestPage form={form} itemOptions={itemOptions} />
         );
-      case "Receiving Inspecting Report (Purchased)":
+      case "Receiving Inspecting Report":
         return (
-          <CreateReceivingInspectingReportPurchasedPage
+          <CreateReceivingInspectingReportPage
             form={form}
             itemOptions={itemOptions}
           />

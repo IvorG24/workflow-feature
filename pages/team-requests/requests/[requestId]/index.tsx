@@ -74,7 +74,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       } else if (request.request_form.form_name === "Quotation") {
         const connectedForm = await getFormslyForm(supabaseClient, {
-          formName: "Receiving Inspecting Report (Purchased)",
+          formName: "Receiving Inspecting Report",
           teamId,
           memberId: `${teamMember?.team_member_id}`,
         });

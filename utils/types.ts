@@ -590,13 +590,13 @@ export type RequestResponseDataType = {
 export type FormslyFormType = {
   Requisition: string[];
   Quotation: string[];
-  "Receiving Inspecting Report (Purchased)": string[];
+  "Receiving Inspecting Report": string[];
 };
 
 export type FormslyFormKeyType =
   | "Requisition"
   | "Quotation"
-  | "Receiving Inspecting Report (Purchased)";
+  | "Receiving Inspecting Report";
 
 export type RequestSignerListType =
   RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
@@ -608,7 +608,7 @@ export type RequestSignerListType =
 export type TeamGroupForFormType =
   | "Requisition"
   | "Quotation"
-  | "Receiving Inspecting Report (Purchased)"
+  | "Receiving Inspecting Report"
   | "Cheque Reference"
   | "Audit";
 

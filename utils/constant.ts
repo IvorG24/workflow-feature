@@ -15,7 +15,7 @@ export const DEFAULT_NUMBER_SSOT_ROWS = 10;
 
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
-  "Receiving Inspecting Report (Purchased)",
+  "Receiving Inspecting Report",
   "Receiving Inspecting Report (Sourced)",
   "Cheque Reference",
   "ZZZ",
@@ -71,9 +71,9 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const quotationMainSectionId = uuidv4();
   const quotationAdditionalChargeSectionId = uuidv4();
   const quotationItemSectionId = uuidv4();
-  const rirPurchasedIdSectionId = uuidv4();
-  const rirPurchasedQualityCheckSectionId = uuidv4();
-  const rirPurchasedItemSectionId = uuidv4();
+  const rirIdSectionId = uuidv4();
+  const rirQualityCheckSectionId = uuidv4();
+  const rirItemSectionId = uuidv4();
   const rirSourcedIdSectionId = uuidv4();
   const rirSourcedQualityCheckSectionId = uuidv4();
   const rirSourcedItemSectionId = uuidv4();
@@ -430,9 +430,8 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     receivingInspectingReportPurchased: {
       form: {
         form_id: receivingInspectingReportPurchasedFormId,
-        form_name: "Receiving Inspecting Report (Purchased)",
-        form_description:
-          "formsly premade Receiving Inspecting Report (Purchased) form",
+        form_name: "Receiving Inspecting Report",
+        form_description: "formsly premade Receiving Inspecting Report form",
         form_app: "REQUEST",
         form_is_formsly_form: true,
         form_is_hidden: true,
@@ -441,21 +440,21 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       },
       section: [
         {
-          section_id: rirPurchasedIdSectionId,
+          section_id: rirIdSectionId,
           section_name: "ID",
           section_order: 1,
           section_is_duplicatable: false,
           section_form_id: receivingInspectingReportPurchasedFormId,
         },
         {
-          section_id: rirPurchasedQualityCheckSectionId,
+          section_id: rirQualityCheckSectionId,
           section_name: "Quality Check",
           section_order: 2,
           section_is_duplicatable: false,
           section_form_id: receivingInspectingReportPurchasedFormId,
         },
         {
-          section_id: rirPurchasedItemSectionId,
+          section_id: rirItemSectionId,
           section_name: "Item",
           section_order: 3,
           section_is_duplicatable: true,
@@ -467,7 +466,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Requisition ID",
           field_type: "LINK",
           field_order: 1,
-          field_section_id: rirPurchasedIdSectionId,
+          field_section_id: rirIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -475,7 +474,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Quotation ID",
           field_type: "LINK",
           field_order: 2,
-          field_section_id: rirPurchasedIdSectionId,
+          field_section_id: rirIdSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },
@@ -483,7 +482,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "DR",
           field_type: "FILE",
           field_order: 3,
-          field_section_id: rirPurchasedQualityCheckSectionId,
+          field_section_id: rirQualityCheckSectionId,
           field_is_required: false,
           field_is_read_only: false,
         },
@@ -491,7 +490,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "SI",
           field_type: "FILE",
           field_order: 4,
-          field_section_id: rirPurchasedQualityCheckSectionId,
+          field_section_id: rirQualityCheckSectionId,
           field_is_required: false,
           field_is_read_only: false,
         },
@@ -499,7 +498,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Item",
           field_type: "DROPDOWN",
           field_order: 5,
-          field_section_id: rirPurchasedItemSectionId,
+          field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -507,7 +506,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Quantity",
           field_type: "NUMBER",
           field_order: 6,
-          field_section_id: rirPurchasedItemSectionId,
+          field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
         },
@@ -515,7 +514,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_name: "Receiving Status",
           field_type: "TEXT",
           field_order: 7,
-          field_section_id: rirPurchasedItemSectionId,
+          field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
         },

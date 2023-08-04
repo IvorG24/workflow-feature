@@ -1520,7 +1520,7 @@ export const getFormslyForwardLinkFormId = async (
   const requestList = {
     Requisition: [] as string[],
     Quotation: [] as string[],
-    "Receiving Inspecting Report (Purchased)": [] as string[],
+    "Receiving Inspecting Report": [] as string[],
     "Receiving Inspecting Report (Sourced)": [] as string[],
   };
 
@@ -1536,8 +1536,8 @@ export const getFormslyForwardLinkFormId = async (
           `"${request.request_response_request.request_id}"`
         );
         break;
-      case "Receiving Inspecting Report (Purchased)":
-        requestList["Receiving Inspecting Report (Purchased)"].push(
+      case "Receiving Inspecting Report":
+        requestList["Receiving Inspecting Report"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1625,7 +1625,7 @@ export const getItemResponseForQuotation = async (
 };
 
 // Get item response of a quotation request
-export const getItemResponseForRIRPurchased = async (
+export const getItemResponseForRIR = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1782,8 +1782,8 @@ export const checkQuotationItemQuantity = async (
   return data as string[];
 };
 
-// Check if the approving or creating rir purchased item quantity are less than the quotation quantity
-export const checkRIRPurchasedItemQuantity = async (
+// Check if the approving or creating rir item quantity are less than the quotation quantity
+export const checkRIRItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     quotationId: string;
@@ -1794,7 +1794,7 @@ export const checkRIRPurchasedItemQuantity = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_rir_purchased_item_quantity", { input_data: params })
+    .rpc("check_rir_item_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;

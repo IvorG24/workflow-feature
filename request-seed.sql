@@ -9,7 +9,7 @@ INSERT INTO seed_variable_table (var_key, var_value) VALUES
 ('ownerMemberId', gen_random_uuid()),
 ('requisitionFormId', gen_random_uuid()),
 ('quotationFormId', gen_random_uuid()),
-('rirPurchasedFormId', gen_random_uuid()),
+('rirFormId', gen_random_uuid()),
 ('rirSourcedFormId', gen_random_uuid()),
 ('chequeReferenceFormId', gen_random_uuid()),
 ('auditFormId', gen_random_uuid()),
@@ -27,7 +27,7 @@ DECLARE
   duplicateFieldsFormId UUID;
   requisitionFormId UUID;
   quotationFormId UUID;
-  rirPurchasedFormId UUID;
+  rirFormId UUID;
   rirSourcedFormId UUID;
   chequeReferenceFormId UUID;
   auditFormId UUID;
@@ -71,9 +71,9 @@ SELECT var_value INTO quotationFormId
   FROM seed_variable_table
   WHERE var_key = 'quotationFormId';
 
-SELECT var_value INTO rirPurchasedFormId
+SELECT var_value INTO rirFormId
   FROM seed_variable_table
-  WHERE var_key = 'rirPurchasedFormId';
+  WHERE var_key = 'rirFormId';
 
 SELECT var_value INTO rirSourcedFormId
   FROM seed_variable_table
@@ -92,7 +92,7 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 (duplicateFieldsFormId, 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', ownerMemberId, false, false, true),
 (requisitionFormId, 'Requisition', 'formsly premade Requisition form', 'REQUEST', ownerMemberId, true, false, false),
 (quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false),
-(rirPurchasedFormId, 'Receiving Inspecting Report (Purchased)', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
+(rirFormId, 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
 (rirSourcedFormId, 'Receiving Inspecting Report (Sourced)', 'These items were available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
 (chequeReferenceFormId, 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', ownerMemberId, true, true, false),
 (auditFormId, 'Audit', 'formsly premade Audit form', 'REQUEST', ownerMemberId, true, false, false);
@@ -126,9 +126,9 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('f622cb4e-f6dc-40d9-9188-9911773787c8', 'Item', 3, true, quotationFormId),
 
 -- Receiving Inspecting Report Form
-('e2f8594c-a7c4-40bb-9ac3-de4618a73681', 'ID', 1, false, rirPurchasedFormId),
-('1a9c5cd4-44a8-4505-b6c8-3130803fcca4', 'Quality Check', 2, false, rirPurchasedFormId),
-('aa0e7187-9e0e-4853-b536-fdaf484a26d8', 'Item', 2, true, rirPurchasedFormId);
+('e2f8594c-a7c4-40bb-9ac3-de4618a73681', 'ID', 1, false, rirFormId),
+('1a9c5cd4-44a8-4505-b6c8-3130803fcca4', 'Quality Check', 2, false, rirFormId),
+('aa0e7187-9e0e-4853-b536-fdaf484a26d8', 'Item', 2, true, rirFormId);
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
 -- All Fields Form
@@ -257,7 +257,7 @@ INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, si
 ('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, requisitionFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
 ('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, requisitionFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
 ('5d640270-11a2-43e2-9316-de0414b837c0', TRUE, 'Approved', 1, quotationFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
-('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirPurchasedFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744');
+('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744');
 
 END $$;
 
@@ -271,7 +271,7 @@ DECLARE
   quotationFormId UUID;
   quotationRequestId UUID;
   quotation_request_status TEXT;
-  rirPurchasedFormId UUID;
+  rirFormId UUID;
   rirSourcedFormId UUID;
   rirRequestId UUID;
   rirRequestStatus TEXT;
@@ -463,9 +463,9 @@ SELECT var_value INTO requisitionFormId
     IF quotation_request_status = 'APPROVED' AND request_status = 'APPROVED'
     THEN
 
-    SELECT var_value INTO rirPurchasedFormId
+    SELECT var_value INTO rirFormId
     FROM seed_variable_table
-    WHERE var_key = 'rirPurchasedFormId';
+    WHERE var_key = 'rirFormId';
 
     rirRequestId := gen_random_uuid();
 
@@ -478,7 +478,7 @@ SELECT var_value INTO requisitionFormId
 
 
     INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
-    (rirRequestId, ownerMemberId, rirPurchasedFormId, rirRequestStatus, request_date_created);
+    (rirRequestId, ownerMemberId, rirFormId, rirRequestStatus, request_date_created);
 
     INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
     (gen_random_uuid(), rirRequestStatus, rirRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');

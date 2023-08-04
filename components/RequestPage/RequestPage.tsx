@@ -1,7 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   checkQuotationItemQuantity,
-  checkRIRPurchasedItemQuantity,
+  checkRIRItemQuantity,
   checkRIRSourcedItemQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
@@ -163,24 +163,20 @@ const RequestPage = ({
             return;
           }
         } else if (
-          request.request_form.form_name ===
-          "Receiving Inspecting Report (Purchased)"
+          request.request_form.form_name === "Receiving Inspecting Report"
         ) {
           const quotationId =
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
-          const warningItemList = await checkRIRPurchasedItemQuantity(
-            supabaseClient,
-            {
-              quotationId,
-              itemFieldId: itemSection.section_field[0].field_id,
-              quantityFieldId: itemSection.section_field[1].field_id,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
-            }
-          );
+          const warningItemList = await checkRIRItemQuantity(supabaseClient, {
+            quotationId,
+            itemFieldId: itemSection.section_field[0].field_id,
+            quantityFieldId: itemSection.section_field[1].field_id,
+            itemFieldList: itemSection.section_field[0].field_response,
+            quantityFieldList: itemSection.section_field[1].field_response,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -439,8 +435,7 @@ const RequestPage = ({
           />
         ) : null}
 
-        {(request.request_form.form_name ===
-          "Receiving Inspecting Report (Purchased)" ||
+        {(request.request_form.form_name === "Receiving Inspecting Report" ||
           request.request_form.form_name ===
             "Receiving Inspecting Report (Sourced)") &&
         request.request_form.form_is_formsly_form ? (
