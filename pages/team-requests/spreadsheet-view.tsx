@@ -4,7 +4,7 @@ import {
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import SSOTSpreadsheetView from "@/components/SSOTSpreadhseetViewPage/SSOTSpreadsheetViewPage";
+import SSOTSpreadsheetView from "@/components/SSOTSpreadhseetViewPage/SSOTSpreadhseetViewPage";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { SSOTType } from "@/utils/types";

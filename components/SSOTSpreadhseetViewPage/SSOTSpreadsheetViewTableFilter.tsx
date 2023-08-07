@@ -2,7 +2,7 @@ import { Box, Button, Flex, Group, Modal, Switch, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { ShowColumnList } from "./SSOTSpreadsheetViewPage";
+import { ShowColumnList } from "./SSOTSpreadhseetViewPage";
 
 type Props = {
   requisitionTableColumnList: string[];
@@ -325,18 +325,14 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
             </Flex>
           </Box>
         </Flex>
-        <Group position="right">
+        <Group mt="lg" position="right">
           <Button
-            mt="md"
             variant="subtle"
             onClick={() => setShowFilterColumnModal(false)}
           >
             Close
           </Button>
-          <Button
-            mt="md"
-            onClick={() => handleSaveFilterSettingsToLocalStorage()}
-          >
+          <Button onClick={() => handleSaveFilterSettingsToLocalStorage()}>
             Save Settings
           </Button>
         </Group>

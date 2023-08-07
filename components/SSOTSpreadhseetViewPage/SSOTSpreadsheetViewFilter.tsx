@@ -14,7 +14,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconSearch } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { SSOTFilterFormValues } from "./SSOTSpreadsheetViewPage";
+import { SSOTFilterFormValues } from "./SSOTSpreadhseetViewPage";
 
 type RequestListFilterProps = {
   projectNameList: string[];
