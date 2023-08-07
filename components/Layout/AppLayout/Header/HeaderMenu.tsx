@@ -1,24 +1,22 @@
-import { getAllNotification, getFormList } from "@/backend/api/get";
-import { useFormActions } from "@/stores/useFormStore";
+// import { getAllNotification, getFormList } from "@/backend/api/get";
+// import { useFormActions } from "@/stores/useFormStore";
 import {
-  useNotificationActions,
+  // useNotificationActions,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
-import {
-  useActiveApp,
-  useActiveTeam,
-  useTeamActions,
-} from "@/stores/useTeamStore";
+import {} from "@/stores/useTeamStore";
 import {
   useUserAvatar,
   useUserIntials,
   useUserProfile,
-  useUserTeamMember,
 } from "@/stores/useUserStore";
-import { NOTIFICATION_LIST_LIMIT, SIGN_IN_PAGE_PATH } from "@/utils/constant";
+import {
+  // NOTIFICATION_LIST_LIMIT,
+  SIGN_IN_PAGE_PATH,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
-import { AppType } from "@/utils/types";
+// import { AppType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -34,7 +32,7 @@ import {
   IconLogout,
   IconMoonStars,
   IconSun,
-  IconSwitch2,
+  // IconSwitch2,
   IconUserCircle,
 } from "@tabler/icons-react";
 import { startCase } from "lodash";
@@ -46,54 +44,54 @@ const HeaderMenu = () => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  const activeApp = useActiveApp();
-  const activeTeam = useActiveTeam();
+  // const activeApp = useActiveApp();
+  // const activeTeam = useActiveTeam();
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
-  const teamMember = useUserTeamMember();
+  // const teamMember = useUserTeamMember();
   const unreadNotificationCount = useUnreadNotificationCount();
   const user = useUserProfile();
-  const { setActiveApp } = useTeamActions();
-  const { setFormList } = useFormActions();
-  const { setNotificationList, setUnreadNotification } =
-    useNotificationActions();
+  // const { setActiveApp } = useTeamActions();
+  // const { setFormList } = useFormActions();
+  // const { setNotificationList, setUnreadNotification } =
+  //   useNotificationActions();
 
-  const handleSwitchApp = async () => {
-    const newActiveApp = activeApp === "REQUEST" ? "REVIEW" : "REQUEST";
+  // const handleSwitchApp = async () => {
+  //   const newActiveApp = activeApp === "REQUEST" ? "REVIEW" : "REQUEST";
 
-    setActiveApp(newActiveApp);
-    router.push(
-      activeApp === "REQUEST"
-        ? "/team-reviews/reviews"
-        : "/team-requests/dashboard"
-    );
+  //   setActiveApp(newActiveApp);
+  //   router.push(
+  //     activeApp === "REQUEST"
+  //       ? "/team-reviews/reviews"
+  //       : "/team-requests/dashboard"
+  //   );
 
-    // fetch form list
-    const formList = await getFormList(supabaseClient, {
-      teamId: activeTeam.team_id,
-      app: newActiveApp,
-      memberId: `${teamMember?.team_member_id}`,
-    });
+  //   // fetch form list
+  //   const formList = await getFormList(supabaseClient, {
+  //     teamId: activeTeam.team_id,
+  //     app: newActiveApp,
+  //     memberId: `${teamMember?.team_member_id}`,
+  //   });
 
-    // set form list
-    setFormList(formList);
+  //   // set form list
+  //   setFormList(formList);
 
-    if (user) {
-      // fetch notification list
-      const { data: notificationList, count: unreadNotificationCount } =
-        await getAllNotification(supabaseClient, {
-          userId: user.user_id,
-          app: newActiveApp as AppType,
-          page: 1,
-          limit: NOTIFICATION_LIST_LIMIT,
-          teamId: activeTeam.team_id,
-        });
+  //   if (user) {
+  //     // fetch notification list
+  //     const { data: notificationList, count: unreadNotificationCount } =
+  //       await getAllNotification(supabaseClient, {
+  //         userId: user.user_id,
+  //         app: newActiveApp as AppType,
+  //         page: 1,
+  //         limit: NOTIFICATION_LIST_LIMIT,
+  //         teamId: activeTeam.team_id,
+  //       });
 
-      // set notification
-      setNotificationList(notificationList);
-      setUnreadNotification(unreadNotificationCount || 0);
-    }
-  };
+  //     // set notification
+  //     setNotificationList(notificationList);
+  //     setUnreadNotification(unreadNotificationCount || 0);
+  //   }
+  // };
 
   const handleLogout = async () => {
     await supabaseClient.auth.signOut();
@@ -162,10 +160,10 @@ const HeaderMenu = () => {
           >
             {`${startCase(colorScheme === "dark" ? "light" : "dark")} Mode`}
           </Menu.Item>
-          <Menu.Label>App</Menu.Label>
+          {/* <Menu.Label>App</Menu.Label>
           <Menu.Item onClick={handleSwitchApp} icon={<IconSwitch2 size={16} />}>
             Switch App
-          </Menu.Item>
+          </Menu.Item> */}
           <Divider mt="sm" />
           <Menu.Item
             icon={<IconLogout size={14} />}
