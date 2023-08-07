@@ -10,6 +10,7 @@ import {
   IconUserUp,
 } from "@tabler/icons-react";
 import { startCase } from "lodash";
+import { useRouter } from "next/router";
 
 type Props = {
   member: TeamMemberType;
@@ -29,6 +30,7 @@ const TeamMemberMenu = ({
   onTransferOwnership,
 }: Props) => {
   const defaultMenuIconProps = { size: 20 };
+  const router = useRouter();
 
   const canUserUpdateMember =
     authUser &&
@@ -45,7 +47,7 @@ const TeamMemberMenu = ({
     <Menu position="left-start" width={200} withArrow>
       <Menu.Target>
         <ActionIcon>
-          <IconDotsVertical />
+          <IconDotsVertical size={16} />
         </ActionIcon>
       </Menu.Target>
 
@@ -53,6 +55,7 @@ const TeamMemberMenu = ({
         <Menu.Item
           c="indigo"
           icon={<IconUserShare {...defaultMenuIconProps} />}
+          onClick={() => router.push(`/member/${member.team_member_id}`)}
         >
           View Profile
         </Menu.Item>
