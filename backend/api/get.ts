@@ -1580,6 +1580,7 @@ export const getItemResponseForQuotation = async (
       description: string;
       quantity: number;
       unit: string;
+      id: string | null;
     }
   > = {};
   const idForNullDuplicationId = uuidv4();
@@ -1597,6 +1598,7 @@ export const getItemResponseForQuotation = async (
             description: "",
             quantity: 0,
             unit: "",
+            id: null,
           };
         }
 
@@ -1604,6 +1606,8 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].name = JSON.parse(
             response.request_response
           );
+          options[duplicatableSectionId].id =
+            response.request_response_duplicatable_section_id;
         } else if (fieldName === "Unit of Measurement") {
           options[duplicatableSectionId].unit = JSON.parse(
             response.request_response
@@ -1717,6 +1721,7 @@ export const getItemResponseForRO = async (
       unit: string;
       quantity: number;
       description: string;
+      projectSite: string;
     }
   > = {};
   const idForNullDuplicationId = uuidv4();
@@ -1734,6 +1739,7 @@ export const getItemResponseForRO = async (
             unit: "",
             quantity: 0,
             description: "",
+            projectSite: "",
           };
         }
 
@@ -1747,6 +1753,10 @@ export const getItemResponseForRO = async (
           );
         } else if (fieldName === "Quantity") {
           options[duplicatableSectionId].quantity = JSON.parse(
+            response.request_response
+          );
+        } else if (fieldName === "Project Site") {
+          options[duplicatableSectionId].projectSite = JSON.parse(
             response.request_response
           );
         } else if (fieldName === "Cost Code" || fieldName === "GL Account") {

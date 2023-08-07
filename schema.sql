@@ -695,7 +695,7 @@ RETURNS VOID AS $$
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
 
-     plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}' WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
+    plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}' WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
     
@@ -782,7 +782,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description,
         field_type: "DROPDOWN",
-        field_order: 10,
+        field_order: 11,
         field_section_id: section_id,
         field_is_required: true,
       });
@@ -879,7 +879,6 @@ RETURNS JSON AS $$
   return invitation_data;
 $$ LANGUAGE plv8;
 
-
 -- End: Create team invitation
 
 -- Start: Split Requisition
@@ -898,7 +897,9 @@ RETURNS VOID AS $$
       approvedQuantityList,
       formattedData,
       teamId,
-      signerFullName
+      signerFullName,
+      responseData,
+      itemWithDupId
     } = input_data;
 
     // update parent top request status
@@ -1065,6 +1066,24 @@ RETURNS VOID AS $$
       INSERT INTO notification_table (notification_app, notification_type, notification_content, notification_redirect_url, notification_user_id, notification_team_id) 
       VALUES ${notificationInput.slice(0, -2)};
     `);
+
+    const form = plv8.execute(
+      `
+        SELECT field_table.field_id FROM form_table 
+        INNER JOIN team_member_table ON form_table.form_team_member_id = team_member_table.team_member_id
+        INNER JOIN section_table ON form_table.form_id = section_table.section_form_id
+        INNER JOIN field_table ON section_table.section_id = field_table.field_section_id
+        WHERE form_table.form_name='Requisition'
+        AND team_member_table.team_member_team_id='${teamId}'
+        AND section_table.section_name='Item'
+        AND field_table.field_name='Project Site'
+      `
+    )[0];
+
+    const parsedData = JSON.parse(responseData);
+
+    const inputData = parsedData.sections.map((section) => `('"${section.section_field[2].field_response}"', '${form.field_id}', ${itemWithDupId[`${section.section_field[0].field_response}`] ? `'${itemWithDupId[`${section.section_field[0].field_response}`]}'` : null}, '${newRequsitionRequest[1].request_id}')`).join(",");
+    plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_duplicatable_section_id, request_response_request_id) VALUES ${inputData}`);
  });
 $$ LANGUAGE plv8;
 
@@ -1760,6 +1779,59 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Fetch request list
+
+-- Start: Approve sourced requisition request
+
+CREATE FUNCTION approve_sourced_requisition_request(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      approveOrRejectParameters,
+      teamId,
+      responseData,
+      itemWithDupId,
+      requisitionID
+    } = input_data;
+
+    plv8.execute(`
+        select approve_or_reject_request('{
+            "requestAction": "${approveOrRejectParameters.requestAction}",
+            "requestId": "${approveOrRejectParameters.requestId}",
+            "isPrimarySigner": ${approveOrRejectParameters.isPrimarySigner},
+            "requestSignerId": "${approveOrRejectParameters.requestSignerId}",
+            "requestOwnerId": "${approveOrRejectParameters.requestOwnerId}",
+            "signerFullName": "${approveOrRejectParameters.signerFullName}",
+            "formName": "${approveOrRejectParameters.formName}",
+            "memberId": "${approveOrRejectParameters.memberId}",
+            "teamId": "${approveOrRejectParameters.teamId}",
+            "additionalInfo": "${approveOrRejectParameters.additionalInfo}"
+        }');
+    `);
+
+    const form = plv8.execute(
+      `
+        SELECT field_table.field_id FROM form_table 
+        INNER JOIN team_member_table ON form_table.form_team_member_id = team_member_table.team_member_id
+        INNER JOIN section_table ON form_table.form_id = section_table.section_form_id
+        INNER JOIN field_table ON section_table.section_id = field_table.field_section_id
+        WHERE form_table.form_name='Requisition'
+        AND team_member_table.team_member_team_id='${teamId}'
+        AND section_table.section_name='Item'
+        AND field_table.field_name='Project Site'
+      `
+    )[0];
+
+    const parsedData = JSON.parse(responseData);
+
+    const inputData = parsedData.sections.map((section) => `('"${section.section_field[2].field_response}"', '${form.field_id}', ${itemWithDupId[`${section.section_field[0].field_response}`] ? `'${itemWithDupId[`${section.section_field[0].field_response}`]}'` : null}, '${requisitionID}')`).join(",");
+    plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_duplicatable_section_id, request_response_request_id) VALUES ${inputData}`);
+
+  });
+$$ LANGUAGE plv8;
+
+-- End: Check if the approving or creating rir item quantity are less than the quotation quantity
 
 ---------- End: FUNCTIONS
 

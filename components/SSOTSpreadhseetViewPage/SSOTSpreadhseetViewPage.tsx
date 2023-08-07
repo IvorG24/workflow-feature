@@ -488,6 +488,135 @@ const SSOTSpreadsheetView = ({
     });
   };
 
+  const renderReleaseOrder = (
+    request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"]
+  ) => {
+    return request.map((request) => {
+      const itemName: string[] = [];
+      const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
+      const itemStatus: string[] = [];
+      const items = request.rir_request_response;
+      const itemProjectSite: string[] = [];
+      let dr = "";
+      let si = "";
+
+      items.forEach((item) => {
+        if (item.request_response_field_name === "Item") {
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
+        } else if (item.request_response_field_name === "Quantity") {
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
+        } else if (item.request_response_field_name === "Receiving Status") {
+          itemStatus.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Project Site") {
+          itemProjectSite.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "DR") {
+          dr = item.request_response;
+        } else if (item.request_response_field_name === "SI") {
+          si = item.request_response;
+        }
+      });
+
+      return (
+        <tr
+          key={request.rir_request_id}
+          className={classes.cell}
+          style={{ borderTop: "solid 1px #DEE2E6" }}
+        >
+          <td>{request.rir_request_id}</td>
+          <td>
+            {new Date(request.rir_request_date_created).toLocaleDateString()}
+          </td>
+          <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
+          <td>
+            {dr && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
+          <td>
+            {si && (
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            )}
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemName.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemUnit.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemStatus.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {itemProjectSite.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+        </tr>
+      );
+    });
+  };
+
   const renderQuotation = (
     request: SSOTType["requisition_quotation_request"]
   ) => {
@@ -669,6 +798,7 @@ const SSOTSpreadsheetView = ({
       const itemDescription: string[] = [];
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
+      const projectSite: string[] = [];
 
       const parentItemName: string[] = [];
       const parentItemQuantity: string[] = [];
@@ -702,6 +832,8 @@ const SSOTSpreadsheetView = ({
             itemCostCode[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "Project Site") {
+            projectSite[groupIndex] = JSON.parse(item.request_response);
           } else {
             itemDescription[groupIndex] += `${
               item.request_response_field_name
@@ -854,6 +986,15 @@ const SSOTSpreadsheetView = ({
               ))}
             </List>
           </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {projectSite.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
           <td style={{ padding: 0 }}>
             {request.requisition_quotation_request.length !== 0 ? (
               <Table
@@ -903,9 +1044,12 @@ const SSOTSpreadsheetView = ({
                     <th className={classes.normal}>Quantity</th>
                     <th className={classes.date}>Unit of Measurement</th>
                     <th className={classes.long}>Receiving Status</th>
+                    <th className={classes.long}>Project Site</th>
                   </tr>
                 </thead>
-                <tbody>{renderRir(request.requisition_rir_request)}</tbody>
+                <tbody>
+                  {renderReleaseOrder(request.requisition_rir_request)}
+                </tbody>
               </Table>
             ) : null}
           </td>
@@ -1041,6 +1185,7 @@ const SSOTSpreadsheetView = ({
                   <th className={classes.description}>Description</th>
                   <th className={classes.short}>Cost Code</th>
                   <th className={classes.short}>GL Account</th>
+                  <th className={classes.long}>Project Site</th>
                   <th>Quotation</th>
                   <th>Release Order</th>
                   <th>Cheque Reference</th>

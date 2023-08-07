@@ -43,9 +43,14 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  itemWithDupId: Record<string, string | null>;
 };
 
-const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
+const CreateSourcedItemRequestPage = ({
+  form,
+  itemOptions,
+  itemWithDupId,
+}: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -81,11 +86,15 @@ const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[0].section_field.map((field) => {
-      return {
-        ...field,
-        field_option: itemOptions,
-      };
+    const newFields = form.form_section[0].section_field.map((field, index) => {
+      if (index === 0) {
+        return {
+          ...field,
+          field_option: itemOptions,
+        };
+      } else {
+        return field;
+      }
     });
     replaceSection([
       {
@@ -172,6 +181,7 @@ const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
           data,
           signerFullName: `${user?.user_first_name} ${user?.user_last_name}`,
           teamId: team.team_id,
+          itemWithDupId,
         });
 
         notifications.show({
@@ -183,7 +193,6 @@ const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
         router.push(`/team-requests/requests/${requisitionID}`);
       }
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -214,13 +223,19 @@ const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
-        (field) => ({
-          ...field,
-          field_section_duplicatable_id: sectionDuplicatableId,
-          field_option: availableItems.sort((a, b) => {
-            return a.option_order - b.option_order;
-          }),
-        })
+        (field, index) => {
+          if (index === 0) {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: availableItems.sort((a, b) => {
+                return a.option_order - b.option_order;
+              }),
+            };
+          } else {
+            return field;
+          }
+        }
       );
       const newSection = {
         ...sectionMatch,

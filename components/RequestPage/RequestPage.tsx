@@ -34,6 +34,7 @@ import { useEffect, useRef, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
+import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -429,10 +430,26 @@ const RequestPage = ({
           />
         ) : null}
 
-        {(request.request_form.form_name === "Receiving Inspecting Report" ||
-          request.request_form.form_name === "Release Order") &&
+        {request.request_form.form_name === "Receiving Inspecting Report" &&
         request.request_form.form_is_formsly_form ? (
           <ReceivingInspectingReportSummary
+            summaryData={sectionWithDuplicateList
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
+
+        {request.request_form.form_name === "Release Order" &&
+        request.request_form.form_is_formsly_form ? (
+          <ReleaseOrderSummary
             summaryData={sectionWithDuplicateList
               .slice(2)
               .sort((a, b) =>

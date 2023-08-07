@@ -1243,7 +1243,7 @@ RETURNS VOID AS $$
           field_name: description,
           field_is_required: true,
           field_type: 'DROPDOWN',
-          field_order: 10,
+          field_order: 11,
           field_section_id: SECTION_ID,
         });
 

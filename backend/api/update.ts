@@ -340,9 +340,17 @@ export const splitParentRequisition = async (
     data: RequestFormValues;
     signerFullName: string;
     teamId: string;
+    itemWithDupId: Record<string, string | null>;
   }
 ) => {
-  const { requisitionID, teamMemberId, data, signerFullName, teamId } = params;
+  const {
+    requisitionID,
+    teamMemberId,
+    data,
+    signerFullName,
+    teamId,
+    itemWithDupId,
+  } = params;
 
   // fetch the parent requisition
   const { data: requisitionRequest, error: requisitionRequestError } =
@@ -393,7 +401,8 @@ export const splitParentRequisition = async (
       .maybeSingle();
   if (requisitionRequestError) throw requisitionRequestError;
 
-  const formattedRequsition = requisitionRequest as unknown as RequestWithResponseType;
+  const formattedRequsition =
+    requisitionRequest as unknown as RequestWithResponseType;
   const formattedSection = generateSectionWithDuplicateList(
     formattedRequsition.request_form.form_section
   );
@@ -515,13 +524,15 @@ export const splitParentRequisition = async (
         formattedData,
         teamId,
         signerFullName,
+        responseData: JSON.stringify(data),
+        itemWithDupId,
       },
     });
     if (error) throw error;
 
     return true;
   } else {
-    await approveOrRejectRequest(supabaseClient, {
+    const approveOrRejectParameters = {
       requestAction: "APPROVED",
       requestId: requisitionID,
       isPrimarySigner: true,
@@ -533,8 +544,21 @@ export const splitParentRequisition = async (
       memberId: teamMemberId,
       teamId: teamId,
       additionalInfo: "AVAILABLE_INTERNALLY",
-    });
-
+    };
+    const input_data = {
+      approveOrRejectParameters,
+      teamId,
+      responseData: JSON.stringify(data),
+      itemWithDupId,
+      requisitionID,
+    };
+    const { error } = await supabaseClient.rpc(
+      "approve_sourced_requisition_request",
+      {
+        input_data,
+      }
+    );
+    if (error) throw error;
     return false;
   }
 };
