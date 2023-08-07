@@ -2,6 +2,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   DEFAULT_NUMBER_SSOT_ROWS,
   REQUISITION_FIELDS_ORDER,
+  UUID_EXP,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { addCommaToNumber, regExp } from "@/utils/string";
@@ -198,24 +199,26 @@ const SSOTSpreadsheetView = ({
       setScrollBarType("never");
       setOffset(1);
 
+      const trimmedSearch = search.trim();
+
       let requisitionFilterCount = 0;
       projectNameList.length !== 0 && requisitionFilterCount++;
       itemNameList.length !== 0 && requisitionFilterCount++;
-      search.length !== 0 && requisitionFilterCount++;
-
-      let quotationFilterCount = 0;
-      supplierList.length !== 0 && quotationFilterCount++;
+      trimmedSearch.length !== 0 && requisitionFilterCount++;
 
       const { data, error } = await supabaseClient.rpc("get_ssot", {
         input_data: {
           activeTeam: team.team_id,
           pageNumber: 1,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search,
-          requisitionFilter: [...projectNameList, ...itemNameList, search],
+          search: UUID_EXP.test(trimmedSearch) ? trimmedSearch : "",
+          requisitionFilter: [
+            ...projectNameList,
+            ...itemNameList,
+            ...(trimmedSearch ? [`${trimmedSearch}`] : []),
+          ],
           requisitionFilterCount,
-          quotationFilter: [...supplierList],
-          quotationFilterCount,
+          supplierList,
         },
       });
 
@@ -230,7 +233,6 @@ const SSOTSpreadsheetView = ({
       viewport.current &&
         viewport.current.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -247,32 +249,42 @@ const SSOTSpreadsheetView = ({
       search,
       projectNameList,
       itemNameList,
+      supplierList,
     }: SSOTFilterFormValues = getValues()
   ) => {
     try {
       setIsLoading(true);
       setScrollBarType("never");
 
+      const trimmedSearch = search.trim();
+
       let requisitionFilterCount = 0;
       projectNameList.length !== 0 && requisitionFilterCount++;
       itemNameList.length !== 0 && requisitionFilterCount++;
-      search.length !== 0 && requisitionFilterCount++;
+      trimmedSearch.length !== 0 && requisitionFilterCount++;
 
       const { data, error } = await supabaseClient.rpc("get_ssot", {
         input_data: {
           activeTeam: team.team_id,
           pageNumber: offset,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search,
-          requisitionFilter: [...projectNameList, ...itemNameList, search],
+          search: UUID_EXP.test(trimmedSearch) ? trimmedSearch : "",
+          requisitionFilter: [
+            ...projectNameList,
+            ...itemNameList,
+            ...(trimmedSearch ? [`${trimmedSearch}`] : []),
+          ],
           requisitionFilterCount,
+          supplierList: supplierList,
         },
       });
+
       if (error) throw error;
       if (data) {
         const formattedData = data as SSOTType[];
         if (formattedData.length < DEFAULT_NUMBER_SSOT_ROWS) {
           setIsFetchable(false);
+          setRequisitionList((prev) => [...prev, ...formattedData]);
         } else {
           setIsFetchable(true);
           setRequisitionList((prev) => [...prev, ...formattedData]);
@@ -658,6 +670,12 @@ const SSOTSpreadsheetView = ({
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
 
+      const parentItemName: string[] = [];
+      const parentItemQuantity: string[] = [];
+      const parentItemDescription: string[] = [];
+
+      const parentQuantityList: string[] = [];
+
       const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
           return (
@@ -693,6 +711,62 @@ const SSOTSpreadsheetView = ({
         itemDescription[groupIndex] = itemDescription[groupIndex].slice(0, -2);
       });
 
+      if (request.requisition_parent_requisition_response_fields) {
+        const parentFields =
+          request.requisition_parent_requisition_response_fields.sort(
+            (a: SSOTResponseType, b: SSOTResponseType) => {
+              return (
+                REQUISITION_FIELDS_ORDER.indexOf(
+                  a.request_response_field_name
+                ) -
+                REQUISITION_FIELDS_ORDER.indexOf(b.request_response_field_name)
+              );
+            }
+          );
+
+        const parentItems = parentFields.slice(
+          0,
+          -REQUISITION_FIELDS_ORDER.length
+        );
+
+        const parentSortedAndGroupedItems = sortAndGroupItems(parentItems);
+        parentSortedAndGroupedItems.forEach((group, groupIndex) => {
+          parentItemDescription[groupIndex] = "";
+          group.forEach((item) => {
+            if (item.request_response_field_name === "General Name") {
+              parentItemName[groupIndex] = JSON.parse(item.request_response);
+            } else if (item.request_response_field_name === "Quantity") {
+              parentItemQuantity[groupIndex] = JSON.parse(
+                item.request_response
+              );
+            } else if (
+              ["Cost Code", "GL Account", "Unit of Measurement"].includes(
+                item.request_response_field_name
+              )
+            ) {
+            } else {
+              parentItemDescription[groupIndex] += `${
+                item.request_response_field_name
+              }: ${JSON.parse(item.request_response)}, `;
+            }
+          });
+          parentItemDescription[groupIndex] = parentItemDescription[
+            groupIndex
+          ].slice(0, -2);
+        });
+      }
+
+      itemName.forEach((name, nameIndex) => {
+        for (const [parentNameIndex, parentName] of parentItemName.entries()) {
+          if (
+            name === parentName &&
+            itemDescription[nameIndex] ===
+              parentItemDescription[parentNameIndex]
+          ) {
+            parentQuantityList[nameIndex] = parentItemQuantity[parentNameIndex];
+          }
+        }
+      });
       return (
         <tr key={request.requisition_request_id} className={classes.cell}>
           <td>{request.requisition_request_id}</td>
@@ -720,6 +794,15 @@ const SSOTSpreadsheetView = ({
           <td>
             <List sx={{ listStyle: "none" }} spacing="xs">
               {itemName.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{item}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {parentQuantityList.map((item, index) => (
                 <List.Item key={index}>
                   <Text size={14}>{item}</Text>
                 </List.Item>
@@ -952,6 +1035,7 @@ const SSOTSpreadsheetView = ({
                   <th className={classes.normal}>Type</th>
                   <th className={classes.date}>Date Needed</th>
                   <th className={classes.description}>Item Name</th>
+                  <th className={classes.normal}>Parent Quantity</th>
                   <th className={classes.normal}>Quantity</th>
                   <th className={classes.date}>Unit of Measurement</th>
                   <th className={classes.description}>Description</th>

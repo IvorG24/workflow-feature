@@ -25,6 +25,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             search: "",
             requisitionFilter: [],
             requisitionFilterCount: 0,
+            supplierList: [],
           },
         });
         if (error) throw error;
