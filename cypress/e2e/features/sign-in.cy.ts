@@ -1,4 +1,4 @@
-import { userA } from "@/cypress/mocks/user";
+import { userA, userE } from "@/cypress/mocks/user";
 
 describe("Sign In", () => {
   beforeEach(() => {
@@ -15,5 +15,17 @@ describe("Sign In", () => {
     cy.get("[data-cy='signin-input-email']").type(userA.email);
     cy.get("[data-cy='signin-input-password']").type("123{enter}");
     cy.contains("Invalid login credentials");
+  });
+
+  it("should onboard user E", () => {
+    cy.loginUser(userE);
+    cy.url().should("include", "/onboarding");
+
+    cy.get("[data-cy='onboarding-input-username']").type(userE.username);
+    cy.get("[data-cy='onboarding-input-first-name']").type(userE.firstName);
+    cy.get("[data-cy='onboarding-input-last-name']").type(
+      `${userE.lastName}{enter}`
+    );
+    cy.url().should("include", "/team/create");
   });
 });
