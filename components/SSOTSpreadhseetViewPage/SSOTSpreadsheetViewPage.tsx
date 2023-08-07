@@ -156,6 +156,37 @@ type Props = {
 
 type ShowColumnList = { [key: string]: boolean };
 
+// const requisitionTableColumnList = [
+//   "Requisition ID",
+//   "Date Created",
+//   "Warehouse Processor",
+//   "Parent Requisition ID",
+//   "Project Name",
+//   "Type",
+//   "Date Needed",
+//   "Item Name",
+//   "Parent Quantity",
+//   "Quantity",
+//   "Unit of Measurement",
+//   "Description",
+//   "Cost Code",
+//   "GL Account",
+// ];
+
+// const quotationTableColumnList = [
+//   "Quotation ID",
+//   "Date Created",
+//   "Accounting Processor",
+//   "Supplier",
+//   "Supplier Quotation",
+//   "Send Method",
+//   "Proof of Sending",
+//   "Item",
+//   "Price Per Unit",
+//   "Quantity",
+//   "Unit of Measurement",
+// ];
+
 const SSOTSpreadsheetView = ({
   data,
   projectNameList,
@@ -551,7 +582,6 @@ const SSOTSpreadsheetView = ({
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
           const quantityMatch = item.request_response.match(/(\d+)/);
-          console.log(quantityMatch);
           if (!quantityMatch) return;
           itemName.push(
             JSON.parse(
@@ -598,7 +628,7 @@ const SSOTSpreadsheetView = ({
                 response.request_response_field_name.toLowerCase();
               const columnPropName = fieldName.replace(/\s+/g, "_");
               const showColumn = showQuotationColumnList[columnPropName];
-              console.log(request);
+
               return (
                 showColumn && (
                   <td key={index}>
@@ -828,74 +858,72 @@ const SSOTSpreadsheetView = ({
             groupIndex
           ].slice(0, -2);
         });
+      }
 
-        itemName.forEach((name, nameIndex) => {
-          for (const [
-            parentNameIndex,
-            parentName,
-          ] of parentItemName.entries()) {
-            if (
-              name === parentName &&
-              itemDescription[nameIndex] ===
-                parentItemDescription[parentNameIndex]
-            ) {
-              parentQuantityList[nameIndex] =
-                parentItemQuantity[parentNameIndex];
-            }
+      itemName.forEach((name, nameIndex) => {
+        for (const [parentNameIndex, parentName] of parentItemName.entries()) {
+          if (
+            name === parentName &&
+            itemDescription[nameIndex] ===
+              parentItemDescription[parentNameIndex]
+          ) {
+            parentQuantityList[nameIndex] = parentItemQuantity[parentNameIndex];
           }
-        });
+        }
+      });
 
-        return (
-          <tr key={request.requisition_request_id} className={classes.cell}>
-            {showRequisitionTable && (
-              <>
-                {showRequisitionColumnList["requisition_id"] && (
-                  <td>{request.requisition_request_id}</td>
-                )}
-                {showRequisitionColumnList["date_created"] && (
-                  <td>
-                    {new Date(
-                      request.requisition_request_date_created
-                    ).toLocaleDateString()}
-                  </td>
-                )}
+      return (
+        <tr key={request.requisition_request_id} className={classes.cell}>
+          {showRequisitionTable && (
+            <>
+              {showRequisitionColumnList["requisition_id"] && (
+                <td>{request.requisition_request_id}</td>
+              )}
+              {showRequisitionColumnList["date_created"] && (
+                <td>
+                  {new Date(
+                    request.requisition_request_date_created
+                  ).toLocaleDateString()}
+                </td>
+              )}
 
-                {showRequisitionColumnList["warehouse_processor"] && (
-                  <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
-                )}
-                {fields
-                  .slice(-REQUISITION_FIELDS_ORDER.length)
-                  .map((response, index) => {
-                    const fieldName =
-                      response.request_response_field_name.toLowerCase();
-                    const columnPropName = fieldName.replace(/\s+/g, "_");
-                    const showColumn =
-                      showRequisitionColumnList[columnPropName];
-                    return (
-                      showColumn && (
-                        <td key={index}>
-                          {response.request_response_field_type === "DATE"
-                            ? new Date(
-                                JSON.parse(response.request_response)
-                              ).toLocaleDateString()
-                            : JSON.parse(response.request_response) !== "null"
-                            ? JSON.parse(response.request_response)
-                            : ""}
-                        </td>
-                      )
-                    );
-                  })}
-                {showRequisitionColumnList["item_name"] && (
-                  <td>
-                    <List sx={{ listStyle: "none" }} spacing="xs">
-                      {itemName.map((item, index) => (
-                        <List.Item key={index}>
-                          <Text size={14}>{item}</Text>
-                        </List.Item>
-                      ))}
-                    </List>
-                  </td>
-                )}
+              {showRequisitionColumnList["warehouse_processor"] && (
+                <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
+              )}
+              {fields
+                .slice(-REQUISITION_FIELDS_ORDER.length)
+                .map((response, index) => {
+                  const fieldName =
+                    response.request_response_field_name.toLowerCase();
+                  const columnPropName = fieldName.replace(/\s+/g, "_");
+                  const showColumn = showRequisitionColumnList[columnPropName];
+                  console.log(columnPropName, response.request_response);
+                  return (
+                    showColumn && (
+                      <td key={index}>
+                        {response.request_response_field_type === "DATE"
+                          ? new Date(
+                              JSON.parse(response.request_response)
+                            ).toLocaleDateString()
+                          : JSON.parse(response.request_response) !== "null"
+                          ? JSON.parse(response.request_response)
+                          : ""}
+                      </td>
+                    )
+                  );
+                })}
+              {showRequisitionColumnList["item_name"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemName.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["parent_quantity"] && (
                 <td>
                   <List sx={{ listStyle: "none" }} spacing="xs">
                     {parentQuantityList.map((item, index) => (
@@ -905,198 +933,190 @@ const SSOTSpreadsheetView = ({
                     ))}
                   </List>
                 </td>
-                {showRequisitionColumnList["quantity"] && (
-                  <td>
-                    <List sx={{ listStyle: "none" }} spacing="xs">
-                      {itemQuantity.map((item, index) => (
-                        <List.Item key={index}>
-                          <Text size={14}>
-                            {addCommaToNumber(Number(item))}
-                          </Text>
-                        </List.Item>
-                      ))}
-                    </List>
-                  </td>
-                )}
-                {showRequisitionColumnList["unit_of_measurement"] && (
-                  <td>
-                    <List sx={{ listStyle: "none" }} spacing="xs">
-                      {itemUnit.map((item, index) => (
-                        <List.Item key={index}>
-                          <Text size={14}>{item}</Text>
-                        </List.Item>
-                      ))}
-                    </List>
-                  </td>
-                )}
-                {showRequisitionColumnList["description"] && (
-                  <td>
-                    <List sx={{ listStyle: "none" }} spacing="xs">
-                      {itemDescription.map((item, index) => (
-                        <List.Item key={index}>
-                          <Text size={14}>{item}</Text>
-                        </List.Item>
-                      ))}
-                    </List>
-                  </td>
-                )}
-                {showRequisitionColumnList["cost_code"] && (
-                  <td>
-                    <List sx={{ listStyle: "none" }} spacing="xs">
-                      {itemCostCode.map((item, index) => (
-                        <List.Item key={index}>
-                          <Text size={14}>{item}</Text>
-                        </List.Item>
-                      ))}
-                    </List>
-                  </td>
-                )}
-                {showRequisitionColumnList["gl_account"] && (
-                  <td>
-                    <List sx={{ listStyle: "none" }} spacing="xs">
-                      {itemGlAccount.map((item, index) => (
-                        <List.Item key={index}>
-                          <Text size={14}>{item}</Text>
-                        </List.Item>
-                      ))}
-                    </List>
-                  </td>
-                )}
-              </>
-            )}
-            {showQuotationTable && (
-              <td style={{ padding: 0 }}>
-                {request.requisition_quotation_request.length !== 0 ? (
-                  <Table
-                    withBorder
-                    withColumnBorders
-                    h="100%"
-                    className={classes.quotationTable}
-                  >
-                    <thead>
-                      <tr>
-                        {showQuotationColumnList["quotation_id"] && (
-                          <th className={classes.long}>Quotation ID</th>
-                        )}
-                        {showQuotationColumnList["date_created"] && (
-                          <th className={classes.date}>Date Created</th>
-                        )}
-                        {showQuotationColumnList["accounting_processor"] && (
-                          <th className={classes.processor}>
-                            Accounting Processor
-                          </th>
-                        )}
-                        {showQuotationColumnList["supplier"] && (
-                          <th className={classes.long}>Supplier</th>
-                        )}
-                        {showQuotationColumnList["supplier_quotation"] && (
-                          <th className={classes.normal}>Supplier Quotation</th>
-                        )}
-                        {showQuotationColumnList["send_method"] && (
-                          <th className={classes.short}>Send Method</th>
-                        )}
-                        {showQuotationColumnList["proof_of_sending"] && (
-                          <th className={classes.normal}>Proof of Sending</th>
-                        )}
-                        {showQuotationColumnList["item"] && (
-                          <th className={classes.description}>Item</th>
-                        )}
-                        {showQuotationColumnList["price_per_unit"] && (
-                          <th className={classes.normal}>Price per Unit</th>
-                        )}
-                        {showQuotationColumnList["quantity"] && (
-                          <th className={classes.normal}>Quantity</th>
-                        )}
-                        {showQuotationColumnList["unit_of_measurement"] && (
-                          <th className={classes.date}>Unit of Measurement</th>
-                        )}
-                        {showQuotationTable && showRIRTable && (
-                          <th>Receiving Inspecting Report</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {renderQuotation(request.requisition_quotation_request)}
-                    </tbody>
-                  </Table>
-                ) : null}
-              </td>
-            )}
-            {showReleaseOrderTable && (
-              <td style={{ padding: 0 }}>
-                {request.requisition_rir_request.length !== 0 ? (
-                  <Table
-                    withBorder
-                    withColumnBorders
-                    h="100%"
-                    className={classes.roTable}
-                  >
-                    <thead>
-                      <tr>
-                        <th className={classes.long}>Release Order ID</th>
-                        <th className={classes.date}>Date Created</th>
-                        <th className={classes.processor}>
-                          Warehouse Receiver
-                        </th>
-                        <th className={classes.short}>DR</th>
-                        <th className={classes.short}>SI</th>
-                        <th className={classes.description}>Item</th>
-                        <th className={classes.normal}>Quantity</th>
-                        <th className={classes.date}>Unit of Measurement</th>
-                        <th className={classes.long}>Receiving Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>{renderRir(request.requisition_rir_request)}</tbody>
-                  </Table>
-                ) : null}
-              </td>
-            )}
-            {showChequeReferenceTable && (
-              <td style={{ padding: 0 }}>
-                {request.requisition_cheque_reference_request.length !== 0 ? (
-                  <Table
-                    withBorder
-                    withColumnBorders
-                    h="100%"
-                    className={classes.chequeReferenceTable}
-                  >
-                    <thead>
-                      <tr>
-                        <th className={classes.long}>Cheque Reference ID</th>
-                        <th className={classes.date}>Date Created</th>
-                        <th className={classes.processor}>
-                          Treasury Processor
-                        </th>
-                        <th className={classes.normal}>Treasury Status</th>
-                        <th className={classes.short}>Cheque Cancelled</th>
-                        <th className={classes.date}>Cheque Printed Date</th>
-                        <th className={classes.date}>Cheque Clearing Date</th>
-                        <th className={classes.processor}>
-                          Cheque First Signatory Name
-                        </th>
-                        <th className={classes.date}>
-                          Cheque First Date Signed
-                        </th>
-                        <th className={classes.processor}>
-                          Cheque Second Signatory Name
-                        </th>
-                        <th className={classes.date}>
-                          Cheque Second Date Signed
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {renderChequeReference(
-                        request.requisition_cheque_reference_request
+              )}
+              {showRequisitionColumnList["quantity"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemQuantity.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["unit_of_measurement"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemUnit.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["description"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemDescription.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["cost_code"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemCostCode.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["gl_account"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemGlAccount.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+            </>
+          )}
+          {showQuotationTable && (
+            <td style={{ padding: 0 }}>
+              {request.requisition_quotation_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.quotationTable}
+                >
+                  <thead>
+                    <tr>
+                      {showQuotationColumnList["quotation_id"] && (
+                        <th className={classes.long}>Quotation ID</th>
                       )}
-                    </tbody>
-                  </Table>
-                ) : null}
-              </td>
-            )}
-          </tr>
-        );
-      }
+                      {showQuotationColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showQuotationColumnList["accounting_processor"] && (
+                        <th className={classes.processor}>
+                          Accounting Processor
+                        </th>
+                      )}
+                      {showQuotationColumnList["supplier"] && (
+                        <th className={classes.long}>Supplier</th>
+                      )}
+                      {showQuotationColumnList["supplier_quotation"] && (
+                        <th className={classes.normal}>Supplier Quotation</th>
+                      )}
+                      {showQuotationColumnList["send_method"] && (
+                        <th className={classes.short}>Send Method</th>
+                      )}
+                      {showQuotationColumnList["proof_of_sending"] && (
+                        <th className={classes.normal}>Proof of Sending</th>
+                      )}
+                      {showQuotationColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showQuotationColumnList["price_per_unit"] && (
+                        <th className={classes.normal}>Price per Unit</th>
+                      )}
+                      {showQuotationColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showQuotationColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                      {showQuotationTable && showRIRTable && (
+                        <th>Receiving Inspecting Report</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderQuotation(request.requisition_quotation_request)}
+                  </tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
+          {showReleaseOrderTable && (
+            <td style={{ padding: 0 }}>
+              {request.requisition_rir_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.roTable}
+                >
+                  <thead>
+                    <tr>
+                      <th className={classes.long}>Release Order ID</th>
+                      <th className={classes.date}>Date Created</th>
+                      <th className={classes.processor}>Warehouse Receiver</th>
+                      <th className={classes.short}>DR</th>
+                      <th className={classes.short}>SI</th>
+                      <th className={classes.description}>Item</th>
+                      <th className={classes.normal}>Quantity</th>
+                      <th className={classes.date}>Unit of Measurement</th>
+                      <th className={classes.long}>Receiving Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>{renderRir(request.requisition_rir_request)}</tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
+          {showChequeReferenceTable && (
+            <td style={{ padding: 0 }}>
+              {request.requisition_cheque_reference_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.chequeReferenceTable}
+                >
+                  <thead>
+                    <tr>
+                      <th className={classes.long}>Cheque Reference ID</th>
+                      <th className={classes.date}>Date Created</th>
+                      <th className={classes.processor}>Treasury Processor</th>
+                      <th className={classes.normal}>Treasury Status</th>
+                      <th className={classes.short}>Cheque Cancelled</th>
+                      <th className={classes.date}>Cheque Printed Date</th>
+                      <th className={classes.date}>Cheque Clearing Date</th>
+                      <th className={classes.processor}>
+                        Cheque First Signatory Name
+                      </th>
+                      <th className={classes.date}>Cheque First Date Signed</th>
+                      <th className={classes.processor}>
+                        Cheque Second Signatory Name
+                      </th>
+                      <th className={classes.date}>
+                        Cheque Second Date Signed
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderChequeReference(
+                      request.requisition_cheque_reference_request
+                    )}
+                  </tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
+        </tr>
+      );
     });
   };
 
