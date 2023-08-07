@@ -14,7 +14,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconSearch } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { SSOTFilterFormValues } from "./SSOTSpreadhseetViewPage";
+import { SSOTFilterFormValues } from "./SSOTSpreadsheetViewPage";
 
 type RequestListFilterProps = {
   projectNameList: string[];
@@ -125,7 +125,6 @@ const SSOTSpreadsheetViewFilter = ({
       }
       setSupplierOptions(options);
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
