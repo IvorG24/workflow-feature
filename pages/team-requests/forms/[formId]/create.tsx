@@ -3,6 +3,7 @@ import {
   checkRequsitionRequestForReleaseOrder,
   getAllItems,
   getAllTeamMemberProjects,
+  getAllTeamProjects,
   getForm,
   getItemResponseForQuotation,
   getItemResponseForRIR,
@@ -111,7 +112,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Sourced Item Form,
+        // Sourced Item Form
         else if (form.form_name === "Sourced Item") {
           const isRequestIdValid = await checkRequsitionRequestForReleaseOrder(
             supabaseClient,
@@ -133,20 +134,55 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             requestId: `${context.query.requisitionId}`,
           });
 
+          const itemWithDupId: Record<string, string | null> = {};
+
           const itemOptions = Object.keys(items).map((item, index) => {
+            const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
+
+            itemWithDupId[value] = items[item].id;
+
             return {
               option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: item,
               option_order: index,
-              option_value: `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`,
+              option_value: value,
+            };
+          });
+
+          const teamProjects = await getAllTeamProjects(supabaseClient, {
+            teamId,
+          });
+
+          const projectOptions = teamProjects.map((project, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[2].field_id,
+              option_id: project.team_project_name,
+              option_order: index,
+              option_value: project.team_project_name,
             };
           });
 
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_section: [
+                  {
+                    ...form.form_section[0],
+                    section_field: [
+                      ...form.form_section[0].section_field.slice(0, 2),
+                      {
+                        ...form.form_section[0].section_field[2],
+                        field_option: projectOptions,
+                      },
+                    ],
+                  },
+                ],
+              },
               itemOptions,
+              itemWithDupId,
             },
           };
         }
@@ -229,7 +265,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Receiving Inspecting Report
+        // Release Order
         else if (form.form_name === "Release Order") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.requisitionId}`],
@@ -248,26 +284,33 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             requestId: `${context.query.requisitionId}`,
           });
 
+          const projectSiteList: Record<string, string> = {};
+
           const itemOptions = Object.keys(items).map((item, index) => {
             const generalName = items[item].generalName;
             const quantity = items[item].quantity;
             const unit = items[item].unit;
             const description = items[item].description;
+            const value = `${generalName} (${quantity} ${unit}) (${description.slice(
+              0,
+              -2
+            )})`;
+
+            projectSiteList[value] = items[item].projectSite;
+
             return {
               option_description: null,
               option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: item,
               option_order: index,
-              option_value: `${generalName} (${quantity} ${unit}) (${description.slice(
-                0,
-                -2
-              )})`,
+              option_value: value,
             };
           });
           return {
             props: {
               form,
               itemOptions,
+              projectSiteList,
             },
           };
         }
@@ -292,9 +335,17 @@ type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
   requisitionIdSection?: RequestFormValues["sections"][0];
+  itemWithDupId?: Record<string, string | null>;
+  projectSiteList?: Record<string, string>;
 };
 
-const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
+const Page = ({
+  form,
+  itemOptions,
+  requisitionIdSection,
+  itemWithDupId = {},
+  projectSiteList = {},
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
@@ -320,7 +371,11 @@ const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
         );
       case "Sourced Item":
         return (
-          <CreateSourcedItemRequestPage form={form} itemOptions={itemOptions} />
+          <CreateSourcedItemRequestPage
+            form={form}
+            itemOptions={itemOptions}
+            itemWithDupId={itemWithDupId}
+          />
         );
       case "Quotation":
         return (
@@ -334,7 +389,13 @@ const Page = ({ form, itemOptions, requisitionIdSection }: Props) => {
           />
         );
       case "Release Order":
-        return <CreateReleaseOrderPage form={form} itemOptions={itemOptions} />;
+        return (
+          <CreateReleaseOrderPage
+            form={form}
+            itemOptions={itemOptions}
+            projectSiteList={projectSiteList}
+          />
+        );
       case "Cheque Reference":
         return <CreateChequeReferenceRequestPage form={form} />;
       case "Audit":
