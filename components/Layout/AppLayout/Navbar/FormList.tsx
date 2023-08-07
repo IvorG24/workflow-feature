@@ -82,7 +82,7 @@ const FormList = () => {
       />
       <Navbar.Section grow component={ScrollArea} mx="-xs" px="xs" mt="sm">
         {formList.map((form) => {
-          const isGroupMember = Boolean(form.form_team_group.length);
+          const isGroupMember = Boolean(form.form_team_group?.length);
 
           return !form.form_is_hidden &&
             (form.form_is_for_every_member || isGroupMember) ? (
