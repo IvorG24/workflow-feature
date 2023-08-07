@@ -10,17 +10,14 @@ import { SSOTResponseType, SSOTType } from "@/utils/types";
 import {
   ActionIcon,
   Box,
-  Button,
   Flex,
   Group,
   List,
   Loader,
   LoadingOverlay,
-  Modal,
   Paper,
   ScrollArea,
   Space,
-  Switch,
   Table,
   Text,
   Title,
@@ -29,10 +26,11 @@ import {
 import { useElementSize, useViewportSize } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconEye, IconEyeOff, IconFile } from "@tabler/icons-react";
+import { IconFile } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
+import SSOTSpreadsheetViewTableFilter from "./SSOTSpreadsheetViewTableFilter";
 
 // TODO: Refactor
 const useStyles = createStyles((theme) => ({
@@ -154,38 +152,85 @@ type Props = {
   itemNameList: string[];
 };
 
-type ShowColumnList = { [key: string]: boolean };
+export type ShowColumnList = { [key: string]: boolean };
 
-// const requisitionTableColumnList = [
-//   "Requisition ID",
-//   "Date Created",
-//   "Warehouse Processor",
-//   "Parent Requisition ID",
-//   "Project Name",
-//   "Type",
-//   "Date Needed",
-//   "Item Name",
-//   "Parent Quantity",
-//   "Quantity",
-//   "Unit of Measurement",
-//   "Description",
-//   "Cost Code",
-//   "GL Account",
-// ];
+const requisitionTableColumnList = [
+  "Requisition ID",
+  "Date Created",
+  "Warehouse Processor",
+  "Parent Requisition ID",
+  "Project Name",
+  "Type",
+  "Date Needed",
+  "Item Name",
+  "Parent Quantity",
+  "Quantity",
+  "Unit of Measurement",
+  "Description",
+  "Cost Code",
+  "GL Account",
+];
 
-// const quotationTableColumnList = [
-//   "Quotation ID",
-//   "Date Created",
-//   "Accounting Processor",
-//   "Supplier",
-//   "Supplier Quotation",
-//   "Send Method",
-//   "Proof of Sending",
-//   "Item",
-//   "Price Per Unit",
-//   "Quantity",
-//   "Unit of Measurement",
-// ];
+const quotationTableColumnList = [
+  "Quotation ID",
+  "Date Created",
+  "Accounting Processor",
+  "Supplier",
+  "Supplier Quotation",
+  "Send Method",
+  "Proof of Sending",
+  "Item",
+  "Price Per Unit",
+  "Quantity",
+  "Unit of Measurement",
+];
+
+const rirTableColumnList = [
+  "RIR ID",
+  "Date Created",
+  "Warehouse Receiver",
+  "DR",
+  "SI",
+  "Item",
+  "Quantity",
+  "Unit of Measurement",
+  "Receiving Status",
+];
+
+const releaseOrderTableColumnList = [
+  "Release Order ID",
+  "Date Created",
+  "Warehouse Receiver",
+  "DR",
+  "SI",
+  "Item",
+  "Quantity",
+  "Unit of Measurement",
+  "Receiving Status",
+];
+
+const chequeReferenceTableColumnList = [
+  "Cheque Reference ID",
+  "Date Created",
+  "Treasury Processor",
+  "Treasury Status",
+  "Cheque Cancelled",
+  "Cheque Printed Date",
+  "Cheque Clearing Date",
+  "Cheque First Signatory Name",
+  "Cheque First Date Signed",
+  "Cheque Second Signatory Name",
+  "Cheque Second Date Signed",
+];
+
+const convertColumnListArrayToObject = (array: string[]) => {
+  const obj = array.reduce((obj, item) => {
+    obj[item.toLowerCase().replace(/\s+/g, "_")] = true;
+    return obj;
+  }, {} as ShowColumnList);
+
+  return obj;
+};
 
 const SSOTSpreadsheetView = ({
   data,
@@ -211,7 +256,6 @@ const SSOTSpreadsheetView = ({
     requisitionList.length === DEFAULT_NUMBER_SSOT_ROWS
   );
 
-  const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
   const [showRequisitionTable, setShowRequisitionTable] = useState(true);
   const [showQuotationTable, setShowQuotationTable] = useState(true);
   const [showRIRTable, setShowRIRTable] = useState(true);
@@ -220,37 +264,28 @@ const SSOTSpreadsheetView = ({
     useState(true);
 
   const [showRequisitionColumnList, setShowRequisitionColumnList] =
-    useState<ShowColumnList>({
-      requisition_id: true,
-      date_created: true,
-      warehouse_processor: true,
-      parent_requisition_id: true,
-      project_name: true,
-      type: true,
-      date_needed: true,
-      item_name: true,
-      parent_quantity: true,
-      quantity: true,
-      unit_of_measurement: true,
-      description: true,
-      cost_code: true,
-      gl_account: true,
-    });
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(requisitionTableColumnList)
+    );
 
   const [showQuotationColumnList, setShowQuotationColumnList] =
-    useState<ShowColumnList>({
-      quotation_id: true,
-      date_created: true,
-      accounting_processor: true,
-      supplier: true,
-      supplier_quotation: true,
-      send_method: true,
-      proof_of_sending: true,
-      item: true,
-      price_per_unit: true,
-      quantity: true,
-      unit_of_measurement: true,
-    });
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(quotationTableColumnList)
+    );
+
+  const [showRIRColumnList, setShowRIRColumnList] = useState<ShowColumnList>(
+    convertColumnListArrayToObject(rirTableColumnList)
+  );
+
+  const [showReleaseOrderColumnList, setShowReleaseOrderColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(releaseOrderTableColumnList)
+    );
+
+  const [showChequeReferenceColumnList, setShowChequeReferenceColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(chequeReferenceTableColumnList)
+    );
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
     defaultValues: {
@@ -401,47 +436,62 @@ const SSOTSpreadsheetView = ({
     request: SSOTType["requisition_cheque_reference_request"]
   ) => {
     return request.map((request) => {
+      console.log(request.cheque_reference_request_response.slice(1));
       return (
         <tr
           key={request.cheque_reference_request_id}
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.cheque_reference_request_id}</td>
-          <td>
-            {new Date(
-              request.cheque_reference_request_date_created
-            ).toLocaleDateString()}
-          </td>
-          <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
+          {showChequeReferenceColumnList["cheque_reference_id"] && (
+            <td>{request.cheque_reference_request_id}</td>
+          )}
+          {showChequeReferenceColumnList["date_created"] && (
+            <td>
+              {new Date(
+                request.cheque_reference_request_date_created
+              ).toLocaleDateString()}
+            </td>
+          )}
+          {showChequeReferenceColumnList["treasury_processor"] && (
+            <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
+          )}
+
           {request.cheque_reference_request_response
             .slice(1)
             .map((response, index) => {
+              const fieldName =
+                response.request_response_field_name.toLowerCase();
+              const columnPropName = fieldName.replace(/\s+/g, "_");
+              const showColumn = showChequeReferenceColumnList[columnPropName];
+              console.log(columnPropName, showColumn);
               return (
-                <td key={index}>
-                  {response.request_response_field_type === "DATE" ? (
-                    new Date(
-                      JSON.parse(response.request_response)
-                    ).toLocaleDateString()
-                  ) : response.request_response_field_type === "FILE" ? (
-                    <ActionIcon
-                      w="100%"
-                      variant="outline"
-                      onClick={() =>
-                        window.open(
-                          `${JSON.parse(response.request_response)}`,
-                          "_blank"
-                        )
-                      }
-                    >
-                      <Flex align="center" justify="center" gap={2}>
-                        <Text size={14}>File</Text> <IconFile size={14} />
-                      </Flex>
-                    </ActionIcon>
-                  ) : (
-                    `${JSON.parse(response.request_response)}`
-                  )}
-                </td>
+                showColumn && (
+                  <td key={index}>
+                    {response.request_response_field_type === "DATE" ? (
+                      new Date(
+                        JSON.parse(response.request_response)
+                      ).toLocaleDateString()
+                    ) : response.request_response_field_type === "FILE" ? (
+                      <ActionIcon
+                        w="100%"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            `${JSON.parse(response.request_response)}`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        <Flex align="center" justify="center" gap={2}>
+                          <Text size={14}>File</Text> <IconFile size={14} />
+                        </Flex>
+                      </ActionIcon>
+                    ) : (
+                      `${JSON.parse(response.request_response)}`
+                    )}
+                  </td>
+                )
               );
             })}
         </tr>
@@ -487,80 +537,96 @@ const SSOTSpreadsheetView = ({
           si = item.request_response;
         }
       });
-
+      console.log(si, dr);
       return (
         <tr
           key={request.rir_request_id}
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.rir_request_id}</td>
-          <td>
-            {new Date(request.rir_request_date_created).toLocaleDateString()}
-          </td>
-          <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
-          <td>
-            {dr && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            {si && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemName.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemQuantity.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemUnit.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemStatus.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
+          {showRIRColumnList["rir_id"] && <td>{request.rir_request_id}</td>}
+          {showRIRColumnList["date_created"] && (
+            <td>
+              {new Date(request.rir_request_date_created).toLocaleDateString()}
+            </td>
+          )}
+          {showRIRColumnList["warehouse receiver"] && (
+            <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
+          )}
+          {showRIRColumnList["dr"] && (
+            <td>
+              {dr && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showRIRColumnList["si"] && (
+            <td>
+              {si && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showRIRColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showRIRColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showRIRColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showRIRColumnList["receiving_status"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemStatus.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
         </tr>
       );
     });
@@ -745,15 +811,18 @@ const SSOTSpreadsheetView = ({
                 >
                   <thead>
                     <tr>
-                      <th className={classes.long}>RIR ID</th>
-                      <th className={classes.date}>Date Created</th>
-                      <th className={classes.processor}>Warehouse Receiver</th>
-                      <th className={classes.short}>DR</th>
-                      <th className={classes.short}>SI</th>
-                      <th className={classes.description}>Item</th>
-                      <th className={classes.normal}>Quantity</th>
-                      <th className={classes.date}>Unit of Measurement</th>
-                      <th className={classes.long}>Receiving Status</th>
+                      {rirTableColumnList.map((column, index) => {
+                        const propName = column
+                          .toLowerCase()
+                          .replace(/\s+/g, "_");
+                        return (
+                          showRIRColumnList[propName] && (
+                            <th key={index} className={classes.long}>
+                              {column}
+                            </th>
+                          )
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>{renderRir(request.quotation_rir_request)}</tbody>
@@ -897,7 +966,7 @@ const SSOTSpreadsheetView = ({
                     response.request_response_field_name.toLowerCase();
                   const columnPropName = fieldName.replace(/\s+/g, "_");
                   const showColumn = showRequisitionColumnList[columnPropName];
-                  console.log(columnPropName, response.request_response);
+
                   return (
                     showColumn && (
                       <td key={index}>
@@ -1060,15 +1129,35 @@ const SSOTSpreadsheetView = ({
                 >
                   <thead>
                     <tr>
-                      <th className={classes.long}>Release Order ID</th>
-                      <th className={classes.date}>Date Created</th>
-                      <th className={classes.processor}>Warehouse Receiver</th>
-                      <th className={classes.short}>DR</th>
-                      <th className={classes.short}>SI</th>
-                      <th className={classes.description}>Item</th>
-                      <th className={classes.normal}>Quantity</th>
-                      <th className={classes.date}>Unit of Measurement</th>
-                      <th className={classes.long}>Receiving Status</th>
+                      {showReleaseOrderColumnList["release_order_id"] && (
+                        <th className={classes.long}>Release Order ID</th>
+                      )}
+                      {showReleaseOrderColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showReleaseOrderColumnList["warehouse_receiver"] && (
+                        <th className={classes.processor}>
+                          Warehouse Receiver
+                        </th>
+                      )}
+                      {showReleaseOrderColumnList["dr"] && (
+                        <th className={classes.short}>DR</th>
+                      )}
+                      {showReleaseOrderColumnList["si"] && (
+                        <th className={classes.short}>SI</th>
+                      )}
+                      {showReleaseOrderColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showReleaseOrderColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showReleaseOrderColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                      {showReleaseOrderColumnList["receiving_status"] && (
+                        <th className={classes.long}>Receiving Status</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>{renderRir(request.requisition_rir_request)}</tbody>
@@ -1087,23 +1176,59 @@ const SSOTSpreadsheetView = ({
                 >
                   <thead>
                     <tr>
-                      <th className={classes.long}>Cheque Reference ID</th>
-                      <th className={classes.date}>Date Created</th>
-                      <th className={classes.processor}>Treasury Processor</th>
-                      <th className={classes.normal}>Treasury Status</th>
-                      <th className={classes.short}>Cheque Cancelled</th>
-                      <th className={classes.date}>Cheque Printed Date</th>
-                      <th className={classes.date}>Cheque Clearing Date</th>
-                      <th className={classes.processor}>
-                        Cheque First Signatory Name
-                      </th>
-                      <th className={classes.date}>Cheque First Date Signed</th>
-                      <th className={classes.processor}>
-                        Cheque Second Signatory Name
-                      </th>
-                      <th className={classes.date}>
-                        Cheque Second Date Signed
-                      </th>
+                      {showChequeReferenceColumnList["cheque_reference_id"] && (
+                        <th className={classes.long}>Cheque Reference ID</th>
+                      )}
+                      {showChequeReferenceColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showChequeReferenceColumnList["treasury_processor"] && (
+                        <th className={classes.processor}>
+                          Treasury Processor
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList["treasury_status"] && (
+                        <th className={classes.normal}>Treasury Status</th>
+                      )}
+                      {showChequeReferenceColumnList["cheque_cancelled"] && (
+                        <th className={classes.short}>Cheque Cancelled</th>
+                      )}
+                      {showChequeReferenceColumnList["cheque_printed_date"] && (
+                        <th className={classes.date}>Cheque Printed Date</th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_clearing_date"
+                      ] && (
+                        <th className={classes.date}>Cheque Clearing Date</th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_first_signatory_name"
+                      ] && (
+                        <th className={classes.processor}>
+                          Cheque First Signatory Name
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_first_date_signed"
+                      ] && (
+                        <th className={classes.date}>
+                          Cheque First Date Signed
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_second_signatory_name"
+                      ] && (
+                        <th className={classes.processor}>
+                          Cheque Second Signatory Name
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_second_date_signed"
+                      ] && (
+                        <th className={classes.date}>
+                          Cheque Second Date Signed
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -1164,459 +1289,36 @@ const SSOTSpreadsheetView = ({
               />
             </form>
           </FormProvider>
-          <>
-            <Modal
-              opened={showFilterColumnModal}
-              onClose={() => setShowFilterColumnModal(false)}
-              title="Show/Hide Table and Columns"
-              size="auto"
-            >
-              <Flex gap="md" align="flex-start" wrap="wrap">
-                <Box p="sm">
-                  <Group mb="sm" position="apart">
-                    <Text>Requisition Table</Text>
-                    <Switch
-                      checked={showRequisitionTable}
-                      onChange={(e) =>
-                        setShowRequisitionTable(e.currentTarget.checked)
-                      }
-                      onLabel={<IconEye size="1rem" stroke={2.5} />}
-                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                    />
-                  </Group>
-                  <Flex gap="sm" direction="column">
-                    <Group position="apart">
-                      <Text>Requisition ID</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["requisition_id"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            requisition_id: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Date Created</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["date_created"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            date_created: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Warehouse Processor</Text>
-                      <Switch
-                        checked={
-                          showRequisitionColumnList["warehouse_processor"]
-                        }
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            warehouse_processor: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Parent Requisition ID</Text>
-                      <Switch
-                        checked={
-                          showRequisitionColumnList["parent_requisition_id"]
-                        }
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            parent_requisition_id: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Project Name</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["project_name"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            project_name: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Type</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["type"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            type: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Date Needed</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["date_needed"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            date_needed: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Item Name</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["item_name"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            item_name: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Quantity</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["quantity"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            quantity: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Unit of Measurement</Text>
-                      <Switch
-                        checked={
-                          showRequisitionColumnList["unit_of_measurement"]
-                        }
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            unit_of_measurement: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Description</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["description"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            description: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Cost Code</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["cost_code"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            cost_code: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>GL Account</Text>
-                      <Switch
-                        checked={showRequisitionColumnList["gl_account"]}
-                        onChange={(e) =>
-                          setShowRequisitionColumnList((prev) => ({
-                            ...prev,
-                            gl_account: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showRequisitionTable}
-                      />
-                    </Group>
-                  </Flex>
-                </Box>
-                <Box p="sm">
-                  <Group mb="sm" position="apart">
-                    <Text weight={600}>Quotation Table</Text>
-                    <Switch
-                      checked={showQuotationTable}
-                      onChange={(e) =>
-                        setShowQuotationTable(e.currentTarget.checked)
-                      }
-                      onLabel={<IconEye size="1rem" stroke={2.5} />}
-                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                    />
-                  </Group>
-                  <Flex pl="md" gap="sm" direction="column">
-                    <Group position="apart">
-                      <Text>Quotation ID</Text>
-                      <Switch
-                        checked={showQuotationColumnList["quotation_id"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            quotation_id: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Date Created</Text>
-                      <Switch
-                        checked={showQuotationColumnList["date_created"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            date_created: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Accounting Processor</Text>
-                      <Switch
-                        checked={
-                          showQuotationColumnList["accounting_processor"]
-                        }
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            accounting_processor: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Supplier</Text>
-                      <Switch
-                        checked={showQuotationColumnList["supplier"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            supplier: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Supplier Quotation</Text>
-                      <Switch
-                        checked={showQuotationColumnList["supplier_quotation"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            supplier_quotation: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Send Method</Text>
-                      <Switch
-                        checked={showQuotationColumnList["send_method"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            send_method: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Proof of Sending</Text>
-                      <Switch
-                        checked={showQuotationColumnList["proof_of_sending"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            proof_of_sending: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Item</Text>
-                      <Switch
-                        checked={showQuotationColumnList["item"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            item: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Price Per Unit</Text>
-                      <Switch
-                        checked={showQuotationColumnList["price_per_unit"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            price_per_unit: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Quantity</Text>
-                      <Switch
-                        checked={showQuotationColumnList["quantity"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            quantity: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                    <Group position="apart">
-                      <Text>Unit of Measurement</Text>
-                      <Switch
-                        checked={showQuotationColumnList["unit_of_measurement"]}
-                        onChange={(e) =>
-                          setShowQuotationColumnList((prev) => ({
-                            ...prev,
-                            unit_of_measurement: e.currentTarget.checked,
-                          }))
-                        }
-                        onLabel={<IconEye size="1rem" stroke={2.5} />}
-                        offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                        disabled={!showQuotationTable}
-                      />
-                    </Group>
-                  </Flex>
-                </Box>
-                <Box p="sm">
-                  <Group mb="sm" position="apart">
-                    <Text weight={600}>Receiving Inspecting Report Table</Text>
-                    <Switch
-                      checked={showRIRTable}
-                      onChange={(e) => setShowRIRTable(e.currentTarget.checked)}
-                      onLabel={<IconEye size="1rem" stroke={2.5} />}
-                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                    />
-                  </Group>
-                  <Flex pl="md" gap="sm" direction="column"></Flex>
-                </Box>
-                <Box p="sm">
-                  <Group position="apart">
-                    <Text weight={600}>Release Order Table</Text>
-                    <Switch
-                      checked={showReleaseOrderTable}
-                      onChange={(e) =>
-                        setShowReleaseOrderTable(e.currentTarget.checked)
-                      }
-                      onLabel={<IconEye size="1rem" stroke={2.5} />}
-                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                    />
-                  </Group>
-                </Box>
-                <Box p="sm">
-                  <Group position="apart">
-                    <Text weight={600}>Cheque Reference Table</Text>
-                    <Switch
-                      checked={showChequeReferenceTable}
-                      onChange={(e) =>
-                        setShowChequeReferenceTable(e.currentTarget.checked)
-                      }
-                      onLabel={<IconEye size="1rem" stroke={2.5} />}
-                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                    />
-                  </Group>
-                </Box>
-              </Flex>
-            </Modal>
-
-            <Group position="center">
-              <Button onClick={() => setShowFilterColumnModal(true)}>
-                Show/Hide Tables and Columns
-              </Button>
-            </Group>
-          </>
+          <SSOTSpreadsheetViewTableFilter
+            // column list
+            requisitionTableColumnList={requisitionTableColumnList}
+            quotationTableColumnList={quotationTableColumnList}
+            rirTableColumnList={rirTableColumnList}
+            releaseOrderTableColumnList={releaseOrderTableColumnList}
+            chequeReferenceTableColumnList={chequeReferenceTableColumnList}
+            // table list state
+            showRequisitionTable={showRequisitionTable}
+            setShowRequisitionTable={setShowRequisitionTable}
+            showQuotationTable={showQuotationTable}
+            setShowQuotationTable={setShowQuotationTable}
+            showRIRTable={showRIRTable}
+            setShowRIRTable={setShowRIRTable}
+            showReleaseOrderTable={showReleaseOrderTable}
+            setShowReleaseOrderTable={setShowReleaseOrderTable}
+            showChequeReferenceTable={showChequeReferenceTable}
+            setShowChequeReferenceTable={setShowChequeReferenceTable}
+            // column list state
+            showRequisitionColumnList={showRequisitionColumnList}
+            setShowRequisitionColumnList={setShowRequisitionColumnList}
+            showQuotationColumnList={showQuotationColumnList}
+            setShowQuotationColumnList={setShowQuotationColumnList}
+            showRIRColumnList={showRIRColumnList}
+            setShowRIRColumnList={setShowRIRColumnList}
+            showReleaseOrderColumnList={showReleaseOrderColumnList}
+            setShowReleaseOrderColumnList={setShowReleaseOrderColumnList}
+            showChequeReferenceColumnList={showChequeReferenceColumnList}
+            setShowChequeReferenceColumnList={setShowChequeReferenceColumnList}
+          />
         </Group>
       </Box>
 
@@ -1655,7 +1357,9 @@ const SSOTSpreadsheetView = ({
                 <tr>
                   {showRequisitionTable && (
                     <>
-                      <th className={classes.long}>Requisition ID</th>
+                      {showRequisitionColumnList["requisition_id"] && (
+                        <th className={classes.long}>Requisition ID</th>
+                      )}
                       {showRequisitionColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
