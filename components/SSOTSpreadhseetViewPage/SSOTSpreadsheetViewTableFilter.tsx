@@ -1,6 +1,7 @@
 import { Box, Button, Flex, Group, Modal, Switch, Text } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { ShowColumnList } from "./SSOTSpreadsheetViewPage";
 
 type Props = {
@@ -59,20 +60,87 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     showChequeReferenceColumnList,
     setShowChequeReferenceColumnList,
   } = props;
+  const switchInputProps = { color: "green" };
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
+  const [localFilterSettings, setLocalFilterSettings] = useLocalStorage({
+    key: "ssot-table-filter",
+    defaultValue: {
+      showRequisitionTable,
+      showQuotationTable,
+      showRIRTable,
+      showChequeReferenceTable,
+      showReleaseOrderTable,
+      showRequisitionColumnList,
+      showQuotationColumnList,
+      showRIRColumnList,
+      showReleaseOrderColumnList,
+      showChequeReferenceColumnList,
+    },
+  });
+
+  const handleSaveFilterSettingsToLocalStorage = () => {
+    setLocalFilterSettings({
+      showRequisitionTable,
+      showQuotationTable,
+      showRIRTable,
+      showChequeReferenceTable,
+      showReleaseOrderTable,
+      showRequisitionColumnList,
+      showQuotationColumnList,
+      showRIRColumnList,
+      showReleaseOrderColumnList,
+      showChequeReferenceColumnList,
+    });
+    setShowFilterColumnModal(false);
+    return;
+  };
+
+  useEffect(() => {
+    const {
+      showRequisitionTable,
+      showQuotationTable,
+      showRIRTable,
+      showChequeReferenceTable,
+      showReleaseOrderTable,
+      showRequisitionColumnList,
+      showQuotationColumnList,
+      showRIRColumnList,
+      showReleaseOrderColumnList,
+      showChequeReferenceColumnList,
+    } = localFilterSettings;
+
+    setShowRequisitionTable(showRequisitionTable);
+    setShowQuotationTable(showQuotationTable);
+    setShowRIRTable(showRIRTable);
+    setShowReleaseOrderTable(showChequeReferenceTable);
+    setShowChequeReferenceTable(showReleaseOrderTable);
+    setShowRequisitionColumnList(showRequisitionColumnList);
+    setShowQuotationColumnList(showQuotationColumnList);
+    setShowRIRColumnList(showRIRColumnList);
+    setShowReleaseOrderColumnList(showReleaseOrderColumnList);
+    setShowChequeReferenceColumnList(showChequeReferenceColumnList);
+  }, [localFilterSettings]);
 
   return (
     <>
       <Modal
         opened={showFilterColumnModal}
         onClose={() => setShowFilterColumnModal(false)}
-        title="Show/Hide Table and Columns"
+        withCloseButton={false}
         size="auto"
       >
-        <Flex gap="md" align="flex-start" wrap="wrap">
+        <Group mb="md">
+          <Text weight={600}>Show/Hide Table and Columns</Text>
+        </Group>
+        <Flex
+          direction={{ base: "column", md: "row" }}
+          gap="md"
+          align="flex-start"
+          wrap="wrap"
+        >
           <Box p="sm">
             <Group mb="sm" position="apart">
-              <Text>Requisition Table</Text>
+              <Text weight={600}>Requisition Table</Text>
               <Switch
                 checked={showRequisitionTable}
                 onChange={(e) =>
@@ -80,6 +148,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 }
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                {...switchInputProps}
               />
             </Group>
             <Flex gap="sm" direction="column">
@@ -99,6 +168,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showRequisitionTable}
+                      {...switchInputProps}
                     />
                   </Group>
                 );
@@ -113,41 +183,48 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 onChange={(e) => setShowQuotationTable(e.currentTarget.checked)}
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                {...switchInputProps}
               />
             </Group>
-            {quotationTableColumnList.map((column, index) => {
-              const propName = column.toLowerCase().replace(/\s+/g, "_");
-              return (
-                <Group key={index} position="apart">
-                  <Text>{column}</Text>
-                  <Switch
-                    checked={showQuotationColumnList[propName]}
-                    onChange={(e) =>
-                      setShowQuotationColumnList((prev) => ({
-                        ...prev,
-                        [propName]: e.currentTarget.checked,
-                      }))
-                    }
-                    onLabel={<IconEye size="1rem" stroke={2.5} />}
-                    offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                    disabled={!showQuotationTable}
-                  />
-                </Group>
-              );
-            })}
+            <Flex gap="sm" direction="column">
+              {quotationTableColumnList.map((column, index) => {
+                const propName = column.toLowerCase().replace(/\s+/g, "_");
+                return (
+                  <Group key={index} position="apart">
+                    <Text>{column}</Text>
+                    <Switch
+                      checked={showQuotationColumnList[propName]}
+                      onChange={(e) =>
+                        setShowQuotationColumnList((prev) => ({
+                          ...prev,
+                          [propName]: e.currentTarget.checked,
+                        }))
+                      }
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                      disabled={!showQuotationTable}
+                      {...switchInputProps}
+                    />
+                  </Group>
+                );
+              })}
+            </Flex>
           </Box>
           <Box p="sm">
             <Group mb="sm" position="apart">
-              <Text weight={600}>Receiving Inspecting Report Table</Text>
+              <Flex maw={200} wrap="wrap">
+                <Text weight={600}>Receiving Inspecting Report Table</Text>
+              </Flex>
               <Switch
                 checked={showRIRTable}
                 onChange={(e) => setShowRIRTable(e.currentTarget.checked)}
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                 disabled={!showQuotationTable}
+                {...switchInputProps}
               />
             </Group>
-            <Flex pl="md" gap="sm" direction="column">
+            <Flex gap="sm" direction="column">
               {rirTableColumnList.map((column, index) => {
                 const propName = column.toLowerCase().replace(/\s+/g, "_");
                 return (
@@ -164,6 +241,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showRIRTable || !showQuotationTable}
+                      {...switchInputProps}
                     />
                   </Group>
                 );
@@ -180,9 +258,10 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 }
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                {...switchInputProps}
               />
             </Group>
-            <Flex pl="md" gap="sm" direction="column">
+            <Flex gap="sm" direction="column">
               {releaseOrderTableColumnList.map((column, index) => {
                 const propName = column.toLowerCase().replace(/\s+/g, "_");
                 return (
@@ -199,6 +278,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showReleaseOrderTable}
+                      {...switchInputProps}
                     />
                   </Group>
                 );
@@ -215,14 +295,17 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 }
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                {...switchInputProps}
               />
             </Group>
-            <Flex pl="md" gap="sm" direction="column">
+            <Flex gap="sm" direction="column">
               {chequeReferenceTableColumnList.map((column, index) => {
                 const propName = column.toLowerCase().replace(/\s+/g, "_");
                 return (
                   <Group key={index} position="apart">
-                    <Text>{column}</Text>
+                    <Flex maw={150} wrap="wrap">
+                      <Text>{column}</Text>
+                    </Flex>
                     <Switch
                       checked={showChequeReferenceColumnList[propName]}
                       onChange={(e) =>
@@ -234,6 +317,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showChequeReferenceTable}
+                      {...switchInputProps}
                     />
                   </Group>
                 );
@@ -241,6 +325,21 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
             </Flex>
           </Box>
         </Flex>
+        <Group position="right">
+          <Button
+            mt="md"
+            variant="subtle"
+            onClick={() => setShowFilterColumnModal(false)}
+          >
+            Close
+          </Button>
+          <Button
+            mt="md"
+            onClick={() => handleSaveFilterSettingsToLocalStorage()}
+          >
+            Save Settings
+          </Button>
+        </Group>
       </Modal>
 
       <Group position="center">

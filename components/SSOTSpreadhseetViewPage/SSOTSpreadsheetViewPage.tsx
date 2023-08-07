@@ -499,7 +499,9 @@ const SSOTSpreadsheetView = ({
   };
 
   const renderRir = (
-    request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"]
+    request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"],
+    showColumnList: ShowColumnList,
+    isRIR: boolean
   ) => {
     return request.map((request) => {
       const itemName: string[] = [];
@@ -509,6 +511,8 @@ const SSOTSpreadsheetView = ({
       const items = request.rir_request_response;
       let dr = "";
       let si = "";
+
+      const idColumnName = isRIR ? "rir_id" : "release_order_id";
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -543,16 +547,16 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          {showRIRColumnList["rir_id"] && <td>{request.rir_request_id}</td>}
-          {showRIRColumnList["date_created"] && (
+          {showColumnList[idColumnName] && <td>{request.rir_request_id}</td>}
+          {showColumnList["date_created"] && (
             <td>
               {new Date(request.rir_request_date_created).toLocaleDateString()}
             </td>
           )}
-          {showRIRColumnList["warehouse receiver"] && (
+          {showColumnList["warehouse_receiver"] && (
             <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
           )}
-          {showRIRColumnList["dr"] && (
+          {showColumnList["dr"] && (
             <td>
               {dr && (
                 <ActionIcon
@@ -567,7 +571,7 @@ const SSOTSpreadsheetView = ({
               )}
             </td>
           )}
-          {showRIRColumnList["si"] && (
+          {showColumnList["si"] && (
             <td>
               {si && (
                 <ActionIcon
@@ -582,7 +586,7 @@ const SSOTSpreadsheetView = ({
               )}
             </td>
           )}
-          {showRIRColumnList["item"] && (
+          {showColumnList["item"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemName.map((item, index) => (
@@ -593,7 +597,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showRIRColumnList["quantity"] && (
+          {showColumnList["quantity"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemQuantity.map((item, index) => (
@@ -604,7 +608,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showRIRColumnList["unit_of_measurement"] && (
+          {showColumnList["unit_of_measurement"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemUnit.map((item, index) => (
@@ -615,7 +619,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showRIRColumnList["receiving_status"] && (
+          {showColumnList["receiving_status"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemStatus.map((item, index) => (
@@ -824,7 +828,13 @@ const SSOTSpreadsheetView = ({
                       })}
                     </tr>
                   </thead>
-                  <tbody>{renderRir(request.quotation_rir_request)}</tbody>
+                  <tbody>
+                    {renderRir(
+                      request.quotation_rir_request,
+                      showRIRColumnList,
+                      true
+                    )}
+                  </tbody>
                 </Table>
               </td>
             ) : null)}
@@ -1159,7 +1169,13 @@ const SSOTSpreadsheetView = ({
                       )}
                     </tr>
                   </thead>
-                  <tbody>{renderRir(request.requisition_rir_request)}</tbody>
+                  <tbody>
+                    {renderRir(
+                      request.requisition_rir_request,
+                      showReleaseOrderColumnList,
+                      false
+                    )}
+                  </tbody>
                 </Table>
               ) : null}
             </td>
