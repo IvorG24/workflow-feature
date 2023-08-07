@@ -653,6 +653,7 @@ export type SSOTType = {
     rir_request_owner: SSOTRequestOwnerType;
     rir_request_response: SSOTResponseType[];
   }[];
+  requisition_parent_requisition_response_fields: SSOTResponseType[];
 };
 
 export type Section = SectionTableRow & {

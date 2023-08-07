@@ -323,7 +323,8 @@ RETURNS JSON as $$
       rowLimit,
       search,
       requisitionFilter,
-      requisitionFilterCount
+      requisitionFilterCount,
+      supplierList
     } = input_data;
 
     const rowStart = (pageNumber - 1) * rowLimit;
@@ -339,13 +340,39 @@ RETURNS JSON as $$
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
     let requisition_requests;
-    let search_condition = '';
+    let searchCondition = '';
+    let condition = '';
+    let supplierCondition = '';
     
-    if(search){
-      search_condition = `OR (request_table.request_id = '${search}')`;
+    if(search.length !== 0){
+      searchCondition = `request_table.request_id = '${search}'`;
     }
-    if(requisitionFilterCount){
-      const condition = requisitionFilter.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
+
+    if(requisitionFilterCount || supplierList.length !== 0){
+      if(requisitionFilterCount){
+        condition = requisitionFilter.map(value => `request_response_table.request_response = '"${value}"'`).join(' OR ');
+      }
+
+      if(supplierList.length !== 0){
+        const quotationCondition = supplierList.map(supplier => `request_response_table.request_response='"${supplier}"'`).join(" OR ");
+        const quotationRequestIdList = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}' AND (${quotationCondition})`);
+
+        if(quotationRequestIdList.length === 0){
+          ssot_data = [];
+          return;
+        }
+
+        const sectionId = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${quotation_form.form_id}' AND section_name='ID'`)[0];
+        const fieldId = plv8.execute(`SELECT field_id FROM field_table WHERE field_section_id='${sectionId.section_id}' AND field_name='Requisition ID'`)[0];
+
+        const requisitionCondition = quotationRequestIdList.map(requestId => `(request_response_request_id='${requestId.request_id}' AND request_response_field_id='${fieldId.field_id}')`).join(" OR ");
+        const requisitionIdList = plv8.execute(`SELECT request_response FROM request_response_table WHERE ${requisitionCondition}`);
+
+        supplierCondition = requisitionIdList.map(requestId => `request_table.request_id = '${JSON.parse(requestId.request_response)}'`).join(' OR ');
+      }
+
+      let orCondition = [...(condition ? [`${condition}`] : []), ...(searchCondition ? [`${searchCondition}`] : [])].join(' OR ');
+
       requisition_requests = plv8.execute(
         `
           SELECT * FROM (
@@ -357,19 +384,24 @@ RETURNS JSON as $$
               ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber 
             FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id 
             WHERE 
-              request_table.request_status = 'APPROVED' 
-              AND request_table.request_form_id = '${requisition_form.form_id}' 
-              AND (${condition}) ${search_condition} 
-            ORDER BY request_table.request_date_created DESC 
-            OFFSET ${rowStart} 
-            ROWS FETCH FIRST ${rowLimit} ROWS ONLY
+              request_table.request_status = 'APPROVED'
+              AND request_table.request_form_id = '${requisition_form.form_id}'
+              AND (
+                ${[...(orCondition ? [`${orCondition}`] : []), ...(supplierCondition ? [`${supplierCondition}`] : [])].join(' AND ')}
+              )
+            ORDER BY request_table.request_date_created DESC
           ) AS a 
-          WHERE a.RowNumber = ${requisitionFilterCount}
+          WHERE a.RowNumber = ${requisitionFilterCount ? requisitionFilterCount : 1}
+          OFFSET ${rowStart} 
+          ROWS FETCH FIRST ${rowLimit} ROWS ONLY
         `
       );
+          
     }else{
       requisition_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
     }
+
+    
     
     ssot_data = requisition_requests.map((requisition) => {
       // Requisition request response
@@ -377,9 +409,16 @@ RETURNS JSON as $$
       
       if(!requisition_response) return;
 
+      let parent_requisition_id = '';
+
       // Requisition request response with fields
       const requisition_response_fields = requisition_response.map(response => {
         const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+
+        if(field.field_name === 'Parent Requisition ID' && response.request_response !== '"null"'){
+          parent_requisition_id = JSON.parse(response.request_response);
+        }
+
         return {
           request_response: response.request_response,
           request_response_field_name: field.field_name,
@@ -536,6 +575,23 @@ RETURNS JSON as $$
         });
       }
 
+      let parent_requisition_response_fields;
+
+      if(parent_requisition_id.length !== 0){
+        const parent_requisition_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${parent_requisition_id}'`);
+          
+        // parent requisition request response with fields
+        parent_requisition_response_fields = parent_requisition_response.map(response => {
+          const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+          return {
+            request_response: response.request_response,
+            request_response_field_name: field.field_name,
+            request_response_field_type: field.field_type,
+            request_response_duplicatable_section_id: response.request_response_duplicatable_section_id
+          }
+        });
+      }
+
       return {
         requisition_request_id: requisition.request_id,
         requisition_request_date_created: requisition.request_date_created,
@@ -544,11 +600,13 @@ RETURNS JSON as $$
         requisition_quotation_request: quotation_list,
         requisition_cheque_reference_request: cheque_reference_list,
         requisition_rir_request: rir_list,
+        requisition_parent_requisition_response_fields: parent_requisition_response_fields
       }
     })
  });
  return ssot_data;
 $$ LANGUAGE plv8;
+
 
 -- End: Get SSOT
 
