@@ -20,7 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
@@ -52,6 +52,7 @@ type Props = {
   setSelectedGroup: Dispatch<SetStateAction<TeamGroupTableRow | null>>;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
   selectedGroup: TeamGroupTableRow | null;
+  isOwnerOrAdmin: boolean;
 };
 
 const GroupList = ({
@@ -63,6 +64,7 @@ const GroupList = ({
   setSelectedGroup,
   setIsFetchingMembers,
   selectedGroup,
+  isOwnerOrAdmin,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -165,6 +167,48 @@ const GroupList = ({
     setSelectedGroup(newSelectedGroup || null);
   };
 
+  const columnData: DataTableColumn<TeamGroupTableRow>[] = [
+    {
+      accessor: "checkbox",
+      title: (
+        <Checkbox
+          key={headerCheckboxKey}
+          className={classes.checkbox}
+          checked={
+            checkList.length > 0 && checkList.length === groupList.length
+          }
+          size="xs"
+          onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
+        />
+      ),
+      render: ({ team_group_id }) => (
+        <Checkbox
+          className={classes.checkbox}
+          size="xs"
+          checked={checkList.includes(team_group_id)}
+          onChange={() => {
+            handleCheckRow(team_group_id);
+          }}
+        />
+      ),
+      width: 40,
+    },
+    {
+      accessor: "group_general_name",
+      title: "Group Name",
+      render: ({ team_group_name, team_group_id }) => (
+        <Text
+          className={classes.clickableColumn}
+          onClick={() => {
+            handleColumnClick(team_group_id);
+          }}
+        >
+          {team_group_name}
+        </Text>
+      ),
+    },
+  ];
+
   return (
     <Box>
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
@@ -222,13 +266,15 @@ const GroupList = ({
               Delete
             </Button>
           ) : null}
-          <Button
-            rightIcon={<IconPlus size={16} />}
-            className={classes.flexGrow}
-            onClick={() => setIsCreatingGroup(true)}
-          >
-            Add
-          </Button>
+          {isOwnerOrAdmin && (
+            <Button
+              rightIcon={<IconPlus size={16} />}
+              className={classes.flexGrow}
+              onClick={() => setIsCreatingGroup(true)}
+            >
+              Add
+            </Button>
+          )}
         </Group>
       </Flex>
       <DataTable
@@ -240,47 +286,7 @@ const GroupList = ({
         minHeight={390}
         fetching={isLoading}
         records={groupList}
-        columns={[
-          {
-            accessor: "checkbox",
-            title: (
-              <Checkbox
-                key={headerCheckboxKey}
-                className={classes.checkbox}
-                checked={
-                  checkList.length > 0 && checkList.length === groupList.length
-                }
-                size="xs"
-                onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
-              />
-            ),
-            render: ({ team_group_id }) => (
-              <Checkbox
-                className={classes.checkbox}
-                size="xs"
-                checked={checkList.includes(team_group_id)}
-                onChange={() => {
-                  handleCheckRow(team_group_id);
-                }}
-              />
-            ),
-            width: 40,
-          },
-          {
-            accessor: "group_general_name",
-            title: "Group Name",
-            render: ({ team_group_name, team_group_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(team_group_id);
-                }}
-              >
-                {team_group_name}
-              </Text>
-            ),
-          },
-        ]}
+        columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={groupCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}

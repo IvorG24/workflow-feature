@@ -21,7 +21,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { toUpper, uniqueId } from "lodash";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 import { TeamMemberType } from "./GroupMembers";
 
@@ -49,6 +49,7 @@ type Props = {
   search: string;
   setSearch: Dispatch<SetStateAction<string>>;
   selectedGroup: TeamGroupTableRow;
+  isOwnerOrAdmin: boolean;
 };
 
 const MemberList = ({
@@ -64,6 +65,7 @@ const MemberList = ({
   search,
   setSearch,
   selectedGroup,
+  isOwnerOrAdmin,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
@@ -150,6 +152,64 @@ const MemberList = ({
     }
   };
 
+  const columnData: DataTableColumn<TeamMemberType>[] = [
+    {
+      accessor: "checkbox",
+      title: (
+        <Checkbox
+          key={headerCheckboxKey}
+          className={classes.checkbox}
+          checked={
+            checkList.length > 0 && checkList.length === groupMemberList.length
+          }
+          size="xs"
+          onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
+        />
+      ),
+      render: ({ team_group_member_id }) => (
+        <Checkbox
+          className={classes.checkbox}
+          size="xs"
+          checked={checkList.includes(team_group_member_id)}
+          onChange={() => {
+            handleCheckRow(team_group_member_id);
+          }}
+        />
+      ),
+      width: 40,
+    },
+    {
+      accessor: "team_member.team_member_user.user_id",
+      title: "Member Name",
+      render: ({ team_member }) => (
+        <Flex gap="xs">
+          <Avatar
+            size={24}
+            src={team_member.team_member_user.user_avatar}
+            color={getAvatarColor(
+              Number(`${team_member.team_member_user.user_id.charCodeAt(0)}`)
+            )}
+            radius="xl"
+          >
+            {toUpper(team_member.team_member_user.user_first_name[0])}
+            {toUpper(team_member.team_member_user.user_last_name[0])}
+          </Avatar>
+          <Text>
+            {team_member.team_member_user.user_first_name}{" "}
+            {team_member.team_member_user.user_last_name}
+          </Text>
+        </Flex>
+      ),
+    },
+    {
+      accessor: "team_member.team_member_user.user_email",
+      title: "Email",
+      render: ({ team_member }) => (
+        <Text>{team_member.team_member_user.user_email}</Text>
+      ),
+    },
+  ];
+
   return (
     <Box>
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
@@ -209,13 +269,15 @@ const MemberList = ({
               Remove
             </Button>
           ) : null}
-          <Button
-            rightIcon={<IconPlus size={16} />}
-            className={classes.flexGrow}
-            onClick={() => setIsAddingMember(true)}
-          >
-            Add
-          </Button>
+          {isOwnerOrAdmin && (
+            <Button
+              rightIcon={<IconPlus size={16} />}
+              className={classes.flexGrow}
+              onClick={() => setIsAddingMember(true)}
+            >
+              Add
+            </Button>
+          )}
         </Group>
       </Flex>
       <DataTable
@@ -227,66 +289,7 @@ const MemberList = ({
         minHeight={390}
         fetching={isLoading}
         records={groupMemberList}
-        columns={[
-          {
-            accessor: "checkbox",
-            title: (
-              <Checkbox
-                key={headerCheckboxKey}
-                className={classes.checkbox}
-                checked={
-                  checkList.length > 0 &&
-                  checkList.length === groupMemberList.length
-                }
-                size="xs"
-                onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
-              />
-            ),
-            render: ({ team_group_member_id }) => (
-              <Checkbox
-                className={classes.checkbox}
-                size="xs"
-                checked={checkList.includes(team_group_member_id)}
-                onChange={() => {
-                  handleCheckRow(team_group_member_id);
-                }}
-              />
-            ),
-            width: 40,
-          },
-          {
-            accessor: "team_member.team_member_user.user_id",
-            title: "Member Name",
-            render: ({ team_member }) => (
-              <Flex gap="xs">
-                <Avatar
-                  size={24}
-                  src={team_member.team_member_user.user_avatar}
-                  color={getAvatarColor(
-                    Number(
-                      `${team_member.team_member_user.user_id.charCodeAt(0)}`
-                    )
-                  )}
-                  radius="xl"
-                >
-                  {toUpper(team_member.team_member_user.user_first_name[0])}
-                  {toUpper(team_member.team_member_user.user_last_name[0])}
-                </Avatar>
-                <Text>
-                  {team_member.team_member_user.user_first_name}{" "}
-                  {team_member.team_member_user.user_last_name}
-                </Text>
-              </Flex>
-            ),
-          },
-          {
-            accessor: "team_member.team_member_user.user_email",
-            title: "Email",
-            render: ({ team_member }) => (
-              <Text>{team_member.team_member_user.user_email}</Text>
-            ),
-          },
-        ]}
+        columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={groupMemberListCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
