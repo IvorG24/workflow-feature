@@ -436,7 +436,6 @@ const SSOTSpreadsheetView = ({
     request: SSOTType["requisition_cheque_reference_request"]
   ) => {
     return request.map((request) => {
-      console.log(request.cheque_reference_request_response.slice(1));
       return (
         <tr
           key={request.cheque_reference_request_id}
@@ -464,7 +463,7 @@ const SSOTSpreadsheetView = ({
                 response.request_response_field_name.toLowerCase();
               const columnPropName = fieldName.replace(/\s+/g, "_");
               const showColumn = showChequeReferenceColumnList[columnPropName];
-              console.log(columnPropName, showColumn);
+
               return (
                 showColumn && (
                   <td key={index}>
@@ -537,7 +536,7 @@ const SSOTSpreadsheetView = ({
           si = item.request_response;
         }
       });
-      console.log(si, dr);
+
       return (
         <tr
           key={request.rir_request_id}
