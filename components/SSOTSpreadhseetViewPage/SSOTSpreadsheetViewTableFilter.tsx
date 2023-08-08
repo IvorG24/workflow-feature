@@ -125,13 +125,10 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     <>
       <Modal
         opened={showFilterColumnModal}
-        onClose={() => setShowFilterColumnModal(false)}
-        withCloseButton={false}
+        onClose={() => handleSaveFilterSettingsToLocalStorage()}
+        title={<Text weight={600}>Show/Hide Tables and Columns</Text>}
         size="auto"
       >
-        <Group mb="md">
-          <Text weight={600}>Show/Hide Table and Columns</Text>
-        </Group>
         <Flex
           direction={{ base: "column", md: "row" }}
           gap="md"
@@ -325,17 +322,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
             </Flex>
           </Box>
         </Flex>
-        <Group mt="lg" position="right">
-          <Button
-            variant="subtle"
-            onClick={() => setShowFilterColumnModal(false)}
-          >
-            Close
-          </Button>
-          <Button onClick={() => handleSaveFilterSettingsToLocalStorage()}>
-            Save Settings
-          </Button>
-        </Group>
       </Modal>
 
       <Group position="center">
