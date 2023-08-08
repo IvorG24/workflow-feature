@@ -962,18 +962,38 @@ const SSOTSpreadsheetView = ({
                 >
                   <thead>
                     <tr>
-                      {rirTableColumnList.map((column, index) => {
-                        const propName = column
-                          .toLowerCase()
-                          .replace(/\s+/g, "_");
-                        return (
-                          showRIRColumnList[propName] && (
-                            <th key={index} className={classes.long}>
-                              {column}
-                            </th>
-                          )
-                        );
-                      })}
+                      {showRIRColumnList["rir_id"] && (
+                        <th className={classes.long}>Release Order ID</th>
+                      )}
+                      {showRIRColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showRIRColumnList["warehouse_receiver"] && (
+                        <th className={classes.processor}>
+                          Warehouse Receiver
+                        </th>
+                      )}
+                      {showRIRColumnList["dr"] && (
+                        <th className={classes.short}>DR</th>
+                      )}
+                      {showRIRColumnList["si"] && (
+                        <th className={classes.short}>SI</th>
+                      )}
+                      {showRIRColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showRIRColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showRIRColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                      {showRIRColumnList["receiving_status"] && (
+                        <th className={classes.long}>Receiving Status</th>
+                      )}
+                      {showRIRColumnList["project_site"] && (
+                        <th className={classes.long}>Project Site</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>{renderRir(request.quotation_rir_request)}</tbody>
