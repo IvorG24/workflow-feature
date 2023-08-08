@@ -978,7 +978,7 @@ const SSOTSpreadsheetView = ({
                   <thead>
                     <tr>
                       {showRIRColumnList["rir_id"] && (
-                        <th className={classes.long}>Release Order ID</th>
+                        <th className={classes.long}>RIR ID</th>
                       )}
                       {showRIRColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
