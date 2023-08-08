@@ -11,6 +11,7 @@ import {
   ActionIcon,
   Box,
   Flex,
+  Group,
   List,
   Loader,
   LoadingOverlay,
@@ -29,6 +30,7 @@ import { IconFile } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
+import SSOTSpreadsheetViewTableFilter from "./SSOTSpreadsheetViewTableFilter";
 
 // TODO: Refactor
 const useStyles = createStyles((theme) => ({
@@ -150,6 +152,88 @@ type Props = {
   itemNameList: string[];
 };
 
+export type ShowColumnList = { [key: string]: boolean };
+
+const requisitionTableColumnList = [
+  "Requisition ID",
+  "Date Created",
+  "Warehouse Processor",
+  "Parent Requisition ID",
+  "Project Name",
+  "Type",
+  "Date Needed",
+  "Item Name",
+  "Parent Quantity",
+  "Quantity",
+  "Unit of Measurement",
+  "Description",
+  "Cost Code",
+  "GL Account",
+  "Project Site",
+];
+
+const quotationTableColumnList = [
+  "Quotation ID",
+  "Date Created",
+  "Accounting Processor",
+  "Supplier",
+  "Supplier Quotation",
+  "Send Method",
+  "Proof of Sending",
+  "Item",
+  "Price Per Unit",
+  "Quantity",
+  "Unit of Measurement",
+];
+
+const rirTableColumnList = [
+  "RIR ID",
+  "Date Created",
+  "Warehouse Receiver",
+  "DR",
+  "SI",
+  "Item",
+  "Quantity",
+  "Unit of Measurement",
+  "Receiving Status",
+];
+
+const releaseOrderTableColumnList = [
+  "Release Order ID",
+  "Date Created",
+  "Warehouse Receiver",
+  "DR",
+  "SI",
+  "Item",
+  "Quantity",
+  "Unit of Measurement",
+  "Receiving Status",
+  "Project Site",
+];
+
+const chequeReferenceTableColumnList = [
+  "Cheque Reference ID",
+  "Date Created",
+  "Treasury Processor",
+  "Treasury Status",
+  "Cheque Cancelled",
+  "Cheque Printed Date",
+  "Cheque Clearing Date",
+  "Cheque First Signatory Name",
+  "Cheque First Date Signed",
+  "Cheque Second Signatory Name",
+  "Cheque Second Date Signed",
+];
+
+const convertColumnListArrayToObject = (array: string[]) => {
+  const obj = array.reduce((obj, item) => {
+    obj[item.toLowerCase().replace(/\s+/g, "_")] = true;
+    return obj;
+  }, {} as ShowColumnList);
+
+  return obj;
+};
+
 const SSOTSpreadsheetView = ({
   data,
   projectNameList,
@@ -173,6 +257,37 @@ const SSOTSpreadsheetView = ({
   const [isFetchable, setIsFetchable] = useState(
     requisitionList.length === DEFAULT_NUMBER_SSOT_ROWS
   );
+
+  const [showRequisitionTable, setShowRequisitionTable] = useState(true);
+  const [showQuotationTable, setShowQuotationTable] = useState(true);
+  const [showRIRTable, setShowRIRTable] = useState(true);
+  const [showReleaseOrderTable, setShowReleaseOrderTable] = useState(true);
+  const [showChequeReferenceTable, setShowChequeReferenceTable] =
+    useState(true);
+
+  const [showRequisitionColumnList, setShowRequisitionColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(requisitionTableColumnList)
+    );
+
+  const [showQuotationColumnList, setShowQuotationColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(quotationTableColumnList)
+    );
+
+  const [showRIRColumnList, setShowRIRColumnList] = useState<ShowColumnList>(
+    convertColumnListArrayToObject(rirTableColumnList)
+  );
+
+  const [showReleaseOrderColumnList, setShowReleaseOrderColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(releaseOrderTableColumnList)
+    );
+
+  const [showChequeReferenceColumnList, setShowChequeReferenceColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(chequeReferenceTableColumnList)
+    );
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
     defaultValues: {
@@ -329,41 +444,55 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.cheque_reference_request_id}</td>
-          <td>
-            {new Date(
-              request.cheque_reference_request_date_created
-            ).toLocaleDateString()}
-          </td>
-          <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
+          {showChequeReferenceColumnList["cheque_reference_id"] && (
+            <td>{request.cheque_reference_request_id}</td>
+          )}
+          {showChequeReferenceColumnList["date_created"] && (
+            <td>
+              {new Date(
+                request.cheque_reference_request_date_created
+              ).toLocaleDateString()}
+            </td>
+          )}
+          {showChequeReferenceColumnList["treasury_processor"] && (
+            <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
+          )}
+
           {request.cheque_reference_request_response
             .slice(1)
             .map((response, index) => {
+              const fieldName =
+                response.request_response_field_name.toLowerCase();
+              const columnPropName = fieldName.replace(/\s+/g, "_");
+              const showColumn = showChequeReferenceColumnList[columnPropName];
+
               return (
-                <td key={index}>
-                  {response.request_response_field_type === "DATE" ? (
-                    new Date(
-                      JSON.parse(response.request_response)
-                    ).toLocaleDateString()
-                  ) : response.request_response_field_type === "FILE" ? (
-                    <ActionIcon
-                      w="100%"
-                      variant="outline"
-                      onClick={() =>
-                        window.open(
-                          `${JSON.parse(response.request_response)}`,
-                          "_blank"
-                        )
-                      }
-                    >
-                      <Flex align="center" justify="center" gap={2}>
-                        <Text size={14}>File</Text> <IconFile size={14} />
-                      </Flex>
-                    </ActionIcon>
-                  ) : (
-                    `${JSON.parse(response.request_response)}`
-                  )}
-                </td>
+                showColumn && (
+                  <td key={index}>
+                    {response.request_response_field_type === "DATE" ? (
+                      new Date(
+                        JSON.parse(response.request_response)
+                      ).toLocaleDateString()
+                    ) : response.request_response_field_type === "FILE" ? (
+                      <ActionIcon
+                        w="100%"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            `${JSON.parse(response.request_response)}`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        <Flex align="center" justify="center" gap={2}>
+                          <Text size={14}>File</Text> <IconFile size={14} />
+                        </Flex>
+                      </ActionIcon>
+                    ) : (
+                      `${JSON.parse(response.request_response)}`
+                    )}
+                  </td>
+                )
               );
             })}
         </tr>
@@ -416,73 +545,89 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.rir_request_id}</td>
-          <td>
-            {new Date(request.rir_request_date_created).toLocaleDateString()}
-          </td>
-          <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
-          <td>
-            {dr && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            {si && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemName.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemQuantity.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemUnit.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemStatus.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
+          {showRIRColumnList["rir_id"] && <td>{request.rir_request_id}</td>}
+          {showRIRColumnList["date_created"] && (
+            <td>
+              {new Date(request.rir_request_date_created).toLocaleDateString()}
+            </td>
+          )}
+          {showRIRColumnList["warehouse_receiver"] && (
+            <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
+          )}
+          {showRIRColumnList["dr"] && (
+            <td>
+              {dr && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showRIRColumnList["si"] && (
+            <td>
+              {si && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showRIRColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showRIRColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showRIRColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showRIRColumnList["receiving_status"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemStatus.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
         </tr>
       );
     });
@@ -536,82 +681,102 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.rir_request_id}</td>
-          <td>
-            {new Date(request.rir_request_date_created).toLocaleDateString()}
-          </td>
-          <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
-          <td>
-            {dr && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            {si && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemName.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemQuantity.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemUnit.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemStatus.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemProjectSite.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
+          {showReleaseOrderColumnList["release_order_id"] && (
+            <td>{request.rir_request_id}</td>
+          )}
+          {showReleaseOrderColumnList["date_created"] && (
+            <td>
+              {new Date(request.rir_request_date_created).toLocaleDateString()}
+            </td>
+          )}
+          {showReleaseOrderColumnList["warehouse_receiver"] && (
+            <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
+          )}
+          {showReleaseOrderColumnList["dr"] && (
+            <td>
+              {dr && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showReleaseOrderColumnList["si"] && (
+            <td>
+              {si && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showReleaseOrderColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["receiving_status"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemStatus.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["project_site"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemProjectSite.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
         </tr>
       );
     });
@@ -659,132 +824,161 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          <td>{request.quotation_request_id}</td>
-          <td>
-            {new Date(
-              request.quotation_request_date_created
-            ).toLocaleDateString()}
-          </td>
-          <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
+          {showQuotationColumnList["quotation_id"] && (
+            <td>{request.quotation_request_id}</td>
+          )}
+          {showQuotationColumnList["date_created"] && (
+            <td>
+              {new Date(
+                request.quotation_request_date_created
+              ).toLocaleDateString()}
+            </td>
+          )}
+          {showQuotationColumnList["accounting_processor"] && (
+            <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
+          )}
           {request.quotation_request_response
             .slice(1, 3)
             .map((response, index) => {
+              const fieldName =
+                response.request_response_field_name.toLowerCase();
+              const columnPropName = fieldName.replace(/\s+/g, "_");
+              const showColumn = showQuotationColumnList[columnPropName];
+
               return (
-                <td key={index}>
-                  {response.request_response_field_type === "DATE" ? (
-                    new Date(
+                showColumn && (
+                  <td key={index}>
+                    {response.request_response_field_type === "DATE" ? (
+                      new Date(
+                        JSON.parse(response.request_response)
+                      ).toLocaleDateString()
+                    ) : response.request_response_field_type === "FILE" ? (
+                      <ActionIcon
+                        w="100%"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            `${JSON.parse(response.request_response)}`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        <Flex align="center" justify="center" gap={2}>
+                          <Text size={14}>File</Text> <IconFile size={14} />
+                        </Flex>
+                      </ActionIcon>
+                    ) : (
                       JSON.parse(response.request_response)
-                    ).toLocaleDateString()
-                  ) : response.request_response_field_type === "FILE" ? (
-                    <ActionIcon
-                      w="100%"
-                      variant="outline"
-                      onClick={() =>
-                        window.open(
-                          `${JSON.parse(response.request_response)}`,
-                          "_blank"
-                        )
-                      }
-                    >
-                      <Flex align="center" justify="center" gap={2}>
-                        <Text size={14}>File</Text> <IconFile size={14} />
-                      </Flex>
-                    </ActionIcon>
-                  ) : (
-                    JSON.parse(response.request_response)
-                  )}
-                </td>
+                    )}
+                  </td>
+                )
               );
             })}
-          <td>
-            {request.quotation_request_response[3]
-              .request_response_field_name === "Request Send Method" &&
-              JSON.parse(
-                request.quotation_request_response[3].request_response
-              )}
-          </td>
-          <td>
-            {request.quotation_request_response[4]
-              .request_response_field_name === "Proof of Sending" && (
-              <ActionIcon
-                w="100%"
-                variant="outline"
-                onClick={() =>
-                  window.open(
-                    `${JSON.parse(
-                      request.quotation_request_response[4].request_response
-                    )}`,
-                    "_blank"
-                  )
-                }
-              >
-                <Flex align="center" justify="center" gap={2}>
-                  <Text size={14}>File</Text> <IconFile size={14} />
-                </Flex>
-              </ActionIcon>
-            )}
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemName.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemPrice.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>₱ {addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemQuantity.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemUnit.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          {request.quotation_rir_request.length !== 0 ? (
-            <td style={{ padding: 0 }}>
-              <Table
-                withBorder
-                withColumnBorders
-                h="100%"
-                className={classes.rirTable}
-              >
-                <thead>
-                  <tr>
-                    <th className={classes.long}>RIR ID</th>
-                    <th className={classes.date}>Date Created</th>
-                    <th className={classes.processor}>Warehouse Receiver</th>
-                    <th className={classes.short}>DR</th>
-                    <th className={classes.short}>SI</th>
-                    <th className={classes.description}>Item</th>
-                    <th className={classes.normal}>Quantity</th>
-                    <th className={classes.date}>Unit of Measurement</th>
-                    <th className={classes.long}>Receiving Status</th>
-                  </tr>
-                </thead>
-                <tbody>{renderRir(request.quotation_rir_request)}</tbody>
-              </Table>
+          {showQuotationColumnList["send_method"] && (
+            <td>
+              {request.quotation_request_response[3]
+                .request_response_field_name === "Request Send Method" &&
+                JSON.parse(
+                  request.quotation_request_response[3].request_response
+                )}
             </td>
-          ) : null}
+          )}
+          {showQuotationColumnList["proof_of_sending"] && (
+            <td>
+              {request.quotation_request_response[4]
+                .request_response_field_name === "Proof of Sending" && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() =>
+                    window.open(
+                      `${JSON.parse(
+                        request.quotation_request_response[4].request_response
+                      )}`,
+                      "_blank"
+                    )
+                  }
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showQuotationColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showQuotationColumnList["price_per_unit"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemPrice.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>₱ {addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showQuotationColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showQuotationColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showQuotationTable &&
+            (showRIRTable && request.quotation_rir_request.length !== 0 ? (
+              <td style={{ padding: 0 }}>
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.rirTable}
+                >
+                  <thead>
+                    <tr>
+                      {rirTableColumnList.map((column, index) => {
+                        const propName = column
+                          .toLowerCase()
+                          .replace(/\s+/g, "_");
+                        return (
+                          showRIRColumnList[propName] && (
+                            <th key={index} className={classes.long}>
+                              {column}
+                            </th>
+                          )
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>{renderRir(request.quotation_rir_request)}</tbody>
+                </Table>
+              </td>
+            ) : null)}
         </tr>
       );
     });
@@ -899,196 +1093,323 @@ const SSOTSpreadsheetView = ({
           }
         }
       });
+
       return (
         <tr key={request.requisition_request_id} className={classes.cell}>
-          <td>{request.requisition_request_id}</td>
-          <td>{request.requisition_request_row_number}</td>
-          <td>
-            {new Date(
-              request.requisition_request_date_created
-            ).toLocaleDateString()}
-          </td>
-          <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
-          {fields
-            .slice(-REQUISITION_FIELDS_ORDER.length)
-            .map((response, index) => {
-              return (
-                <td key={index}>
-                  {response.request_response_field_type === "DATE"
-                    ? new Date(
-                        JSON.parse(response.request_response)
-                      ).toLocaleDateString()
-                    : JSON.parse(response.request_response) !== "null"
-                    ? JSON.parse(response.request_response)
-                    : ""}
+          {showRequisitionTable && (
+            <>
+              {showRequisitionColumnList["requisition_id"] && (
+                <td>{request.requisition_request_id}</td>
+              )}
+              {showRequisitionColumnList["date_created"] && (
+                <td>
+                  {new Date(
+                    request.requisition_request_date_created
+                  ).toLocaleDateString()}
                 </td>
-              );
-            })}
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemName.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {parentQuantityList.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemQuantity.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemUnit.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemDescription.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemCostCode.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {itemGlAccount.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {projectSite.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{item}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
-          <td style={{ padding: 0 }}>
-            {request.requisition_quotation_request.length !== 0 ? (
-              <Table
-                withBorder
-                withColumnBorders
-                h="100%"
-                className={classes.quotationTable}
-              >
-                <thead>
-                  <tr>
-                    <th className={classes.long}>Quotation ID</th>
-                    <th className={classes.date}>Date Created</th>
-                    <th className={classes.processor}>Accounting Processor</th>
-                    <th className={classes.long}>Supplier</th>
-                    <th className={classes.normal}>Supplier Quotation</th>
-                    <th className={classes.short}> Send Method</th>
-                    <th className={classes.normal}>Proof of Sending</th>
-                    <th className={classes.description}>Item</th>
-                    <th className={classes.normal}>Price per Unit</th>
-                    <th className={classes.normal}>Quantity</th>
-                    <th className={classes.date}>Unit of Measurement</th>
-                    <th>Receiving Inspecting Report</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderQuotation(request.requisition_quotation_request)}
-                </tbody>
-              </Table>
-            ) : null}
-          </td>
-          <td style={{ padding: 0 }}>
-            {request.requisition_rir_request.length !== 0 ? (
-              <Table
-                withBorder
-                withColumnBorders
-                h="100%"
-                className={classes.roTable}
-              >
-                <thead>
-                  <tr>
-                    <th className={classes.long}>Release Order ID</th>
-                    <th className={classes.date}>Date Created</th>
-                    <th className={classes.processor}>Warehouse Receiver</th>
-                    <th className={classes.short}>DR</th>
-                    <th className={classes.short}>SI</th>
-                    <th className={classes.description}>Item</th>
-                    <th className={classes.normal}>Quantity</th>
-                    <th className={classes.date}>Unit of Measurement</th>
-                    <th className={classes.long}>Receiving Status</th>
-                    <th className={classes.long}>Project Site</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderReleaseOrder(request.requisition_rir_request)}
-                </tbody>
-              </Table>
-            ) : null}
-          </td>
-          <td style={{ padding: 0 }}>
-            {request.requisition_cheque_reference_request.length !== 0 ? (
-              <Table
-                withBorder
-                withColumnBorders
-                h="100%"
-                className={classes.chequeReferenceTable}
-              >
-                <thead>
-                  <tr>
-                    <th className={classes.long}>Cheque Reference ID</th>
-                    <th className={classes.date}>Date Created</th>
-                    <th className={classes.processor}>Treasury Processor</th>
-                    <th className={classes.normal}>Treasury Status</th>
-                    <th className={classes.short}>Cheque Cancelled</th>
-                    <th className={classes.date}>Cheque Printed Date</th>
-                    <th className={classes.date}>Cheque Clearing Date</th>
-                    <th className={classes.processor}>
-                      Cheque First Signatory Name
-                    </th>
-                    <th className={classes.date}>Cheque First Date Signed</th>
-                    <th className={classes.processor}>
-                      Cheque Second Signatory Name
-                    </th>
-                    <th className={classes.date}>Cheque Second Date Signed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderChequeReference(
-                    request.requisition_cheque_reference_request
-                  )}
-                </tbody>
-              </Table>
-            ) : null}
-          </td>
+              )}
+
+              {showRequisitionColumnList["warehouse_processor"] && (
+                <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
+              )}
+              {fields
+                .slice(-REQUISITION_FIELDS_ORDER.length)
+                .map((response, index) => {
+                  const fieldName =
+                    response.request_response_field_name.toLowerCase();
+                  const columnPropName = fieldName.replace(/\s+/g, "_");
+                  const showColumn = showRequisitionColumnList[columnPropName];
+
+                  return (
+                    showColumn && (
+                      <td key={index}>
+                        {response.request_response_field_type === "DATE"
+                          ? new Date(
+                              JSON.parse(response.request_response)
+                            ).toLocaleDateString()
+                          : JSON.parse(response.request_response) !== "null"
+                          ? JSON.parse(response.request_response)
+                          : ""}
+                      </td>
+                    )
+                  );
+                })}
+              {showRequisitionColumnList["item_name"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemName.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["parent_quantity"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {parentQuantityList.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["quantity"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemQuantity.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["unit_of_measurement"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemUnit.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["description"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemDescription.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["cost_code"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemCostCode.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["gl_account"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemGlAccount.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+
+              {showRequisitionColumnList["project_site"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {projectSite.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+            </>
+          )}
+          {showQuotationTable && (
+            <td style={{ padding: 0 }}>
+              {request.requisition_quotation_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.quotationTable}
+                >
+                  <thead>
+                    <tr>
+                      {showQuotationColumnList["quotation_id"] && (
+                        <th className={classes.long}>Quotation ID</th>
+                      )}
+                      {showQuotationColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showQuotationColumnList["accounting_processor"] && (
+                        <th className={classes.processor}>
+                          Accounting Processor
+                        </th>
+                      )}
+                      {showQuotationColumnList["supplier"] && (
+                        <th className={classes.long}>Supplier</th>
+                      )}
+                      {showQuotationColumnList["supplier_quotation"] && (
+                        <th className={classes.normal}>Supplier Quotation</th>
+                      )}
+                      {showQuotationColumnList["send_method"] && (
+                        <th className={classes.short}>Send Method</th>
+                      )}
+                      {showQuotationColumnList["proof_of_sending"] && (
+                        <th className={classes.normal}>Proof of Sending</th>
+                      )}
+                      {showQuotationColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showQuotationColumnList["price_per_unit"] && (
+                        <th className={classes.normal}>Price per Unit</th>
+                      )}
+                      {showQuotationColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showQuotationColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                      {showQuotationTable && showRIRTable && (
+                        <th>Receiving Inspecting Report</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderQuotation(request.requisition_quotation_request)}
+                  </tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
+          {showReleaseOrderTable && (
+            <td style={{ padding: 0 }}>
+              {request.requisition_rir_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.roTable}
+                >
+                  <thead>
+                    <tr>
+                      {showReleaseOrderColumnList["release_order_id"] && (
+                        <th className={classes.long}>Release Order ID</th>
+                      )}
+                      {showReleaseOrderColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showReleaseOrderColumnList["warehouse_receiver"] && (
+                        <th className={classes.processor}>
+                          Warehouse Receiver
+                        </th>
+                      )}
+                      {showReleaseOrderColumnList["dr"] && (
+                        <th className={classes.short}>DR</th>
+                      )}
+                      {showReleaseOrderColumnList["si"] && (
+                        <th className={classes.short}>SI</th>
+                      )}
+                      {showReleaseOrderColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showReleaseOrderColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showReleaseOrderColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                      {showReleaseOrderColumnList["receiving_status"] && (
+                        <th className={classes.long}>Receiving Status</th>
+                      )}
+                      {showReleaseOrderColumnList["project_site"] && (
+                        <th className={classes.long}>Project Site</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderReleaseOrder(request.requisition_rir_request)}
+                  </tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
+          {showChequeReferenceTable && (
+            <td style={{ padding: 0 }}>
+              {request.requisition_cheque_reference_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.chequeReferenceTable}
+                >
+                  <thead>
+                    <tr>
+                      {showChequeReferenceColumnList["cheque_reference_id"] && (
+                        <th className={classes.long}>Cheque Reference ID</th>
+                      )}
+                      {showChequeReferenceColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showChequeReferenceColumnList["treasury_processor"] && (
+                        <th className={classes.processor}>
+                          Treasury Processor
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList["treasury_status"] && (
+                        <th className={classes.normal}>Treasury Status</th>
+                      )}
+                      {showChequeReferenceColumnList["cheque_cancelled"] && (
+                        <th className={classes.short}>Cheque Cancelled</th>
+                      )}
+                      {showChequeReferenceColumnList["cheque_printed_date"] && (
+                        <th className={classes.date}>Cheque Printed Date</th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_clearing_date"
+                      ] && (
+                        <th className={classes.date}>Cheque Clearing Date</th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_first_signatory_name"
+                      ] && (
+                        <th className={classes.processor}>
+                          Cheque First Signatory Name
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_first_date_signed"
+                      ] && (
+                        <th className={classes.date}>
+                          Cheque First Date Signed
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_second_signatory_name"
+                      ] && (
+                        <th className={classes.processor}>
+                          Cheque Second Signatory Name
+                        </th>
+                      )}
+                      {showChequeReferenceColumnList[
+                        "cheque_second_date_signed"
+                      ] && (
+                        <th className={classes.date}>
+                          Cheque Second Date Signed
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderChequeReference(
+                      request.requisition_cheque_reference_request
+                    )}
+                  </tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
         </tr>
       );
     });
@@ -1128,15 +1449,47 @@ const SSOTSpreadsheetView = ({
         </Title>
 
         <Space h="sm" />
-        <FormProvider {...filterSSOTMethods}>
-          <form onSubmit={handleSubmit(handleFilterSSOT)}>
-            <SSOTSpreadsheetViewFilter
-              handleFilterSSOT={handleFilterSSOT}
-              projectNameList={projectNameList}
-              itemNameList={itemNameList}
-            />
-          </form>
-        </FormProvider>
+        <Group>
+          <FormProvider {...filterSSOTMethods}>
+            <form onSubmit={handleSubmit(handleFilterSSOT)}>
+              <SSOTSpreadsheetViewFilter
+                handleFilterSSOT={handleFilterSSOT}
+                projectNameList={projectNameList}
+                itemNameList={itemNameList}
+              />
+            </form>
+          </FormProvider>
+          <SSOTSpreadsheetViewTableFilter
+            // column list
+            requisitionTableColumnList={requisitionTableColumnList}
+            quotationTableColumnList={quotationTableColumnList}
+            rirTableColumnList={rirTableColumnList}
+            releaseOrderTableColumnList={releaseOrderTableColumnList}
+            chequeReferenceTableColumnList={chequeReferenceTableColumnList}
+            // table list state
+            showRequisitionTable={showRequisitionTable}
+            setShowRequisitionTable={setShowRequisitionTable}
+            showQuotationTable={showQuotationTable}
+            setShowQuotationTable={setShowQuotationTable}
+            showRIRTable={showRIRTable}
+            setShowRIRTable={setShowRIRTable}
+            showReleaseOrderTable={showReleaseOrderTable}
+            setShowReleaseOrderTable={setShowReleaseOrderTable}
+            showChequeReferenceTable={showChequeReferenceTable}
+            setShowChequeReferenceTable={setShowChequeReferenceTable}
+            // column list state
+            showRequisitionColumnList={showRequisitionColumnList}
+            setShowRequisitionColumnList={setShowRequisitionColumnList}
+            showQuotationColumnList={showQuotationColumnList}
+            setShowQuotationColumnList={setShowQuotationColumnList}
+            showRIRColumnList={showRIRColumnList}
+            setShowRIRColumnList={setShowRIRColumnList}
+            showReleaseOrderColumnList={showReleaseOrderColumnList}
+            setShowReleaseOrderColumnList={setShowReleaseOrderColumnList}
+            showChequeReferenceColumnList={showChequeReferenceColumnList}
+            setShowChequeReferenceColumnList={setShowChequeReferenceColumnList}
+          />
+        </Group>
       </Box>
 
       <Paper mt="xs" p="xs" shadow="sm">
@@ -1172,25 +1525,61 @@ const SSOTSpreadsheetView = ({
             >
               <thead>
                 <tr>
-                  <th className={classes.long}>Requisition ID</th>
-                  <th className={classes.normal}>Shorthand Requisition ID</th>
-                  <th className={classes.date}>Date Created</th>
-                  <th className={classes.processor}>Warehouse Processor</th>
-                  <th className={classes.long}>Parent Requisition ID</th>
-                  <th className={classes.long}>Project Name</th>
-                  <th className={classes.normal}>Type</th>
-                  <th className={classes.date}>Date Needed</th>
-                  <th className={classes.description}>Item Name</th>
-                  <th className={classes.normal}>Parent Quantity</th>
-                  <th className={classes.normal}>Quantity</th>
-                  <th className={classes.date}>Unit of Measurement</th>
-                  <th className={classes.description}>Description</th>
-                  <th className={classes.short}>Cost Code</th>
-                  <th className={classes.short}>GL Account</th>
-                  <th className={classes.long}>Project Site</th>
-                  <th>Quotation</th>
-                  <th>Release Order</th>
-                  <th>Cheque Reference</th>
+                  {showRequisitionTable && (
+                    <>
+                      {showRequisitionColumnList["requisition_id"] && (
+                        <th className={classes.long}>Requisition ID</th>
+                      )}
+                      {showRequisitionColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showRequisitionColumnList["warehouse_processor"] && (
+                        <th className={classes.processor}>
+                          Warehouse Processor
+                        </th>
+                      )}
+                      {showRequisitionColumnList["parent_requisition_id"] && (
+                        <th className={classes.long}>Parent Requisition ID</th>
+                      )}
+
+                      {showRequisitionColumnList["project_name"] && (
+                        <th className={classes.long}>Project Name</th>
+                      )}
+                      {showRequisitionColumnList["type"] && (
+                        <th className={classes.normal}>Type</th>
+                      )}
+                      {showRequisitionColumnList["type"] && (
+                        <th className={classes.normal}>Date Needed</th>
+                      )}
+                      {showRequisitionColumnList["item_name"] && (
+                        <th className={classes.description}>Item Name</th>
+                      )}
+                      {showRequisitionColumnList["parent_quantity"] && (
+                        <th className={classes.normal}>Parent Quantity</th>
+                      )}
+                      {showRequisitionColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showRequisitionColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                      {showRequisitionColumnList["description"] && (
+                        <th className={classes.description}>Description</th>
+                      )}
+                      {showRequisitionColumnList["cost_code"] && (
+                        <th className={classes.short}>Cost Code</th>
+                      )}
+                      {showRequisitionColumnList["gl_account"] && (
+                        <th className={classes.short}>GL Account</th>
+                      )}
+                      {showRequisitionColumnList["project_site"] && (
+                        <th className={classes.long}>Project Site</th>
+                      )}
+                    </>
+                  )}
+                  {showQuotationTable && <th>Quotation</th>}
+                  {showReleaseOrderTable && <th>Release Order</th>}
+                  {showChequeReferenceTable && <th>Cheque Reference</th>}
                 </tr>
               </thead>
               <tbody>{renderRequisition()}</tbody>
