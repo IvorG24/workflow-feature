@@ -381,6 +381,7 @@ RETURNS JSON as $$
               request_table.request_date_created, 
               request_table.request_team_member_id, 
               request_response_table.request_response, 
+              ROW_NUMBER() OVER() as request_row_number
               ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber 
             FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id 
             WHERE 
@@ -398,7 +399,7 @@ RETURNS JSON as $$
       );
           
     }else{
-      requisition_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+      requisition_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id, ROW_NUMBER() OVER() as request_row_number FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
     }
 
     
@@ -593,6 +594,7 @@ RETURNS JSON as $$
       }
 
       return {
+        requisition_request_row_number: `${requisition.request_row_number}`,
         requisition_request_id: requisition.request_id,
         requisition_request_date_created: requisition.request_date_created,
         requisition_request_response: requisition_response_fields,
@@ -606,7 +608,6 @@ RETURNS JSON as $$
  });
  return ssot_data;
 $$ LANGUAGE plv8;
-
 
 -- End: Get SSOT
 

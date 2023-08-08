@@ -902,6 +902,7 @@ const SSOTSpreadsheetView = ({
       return (
         <tr key={request.requisition_request_id} className={classes.cell}>
           <td>{request.requisition_request_id}</td>
+          <td>{request.requisition_request_row_number}</td>
           <td>
             {new Date(
               request.requisition_request_date_created
@@ -1172,6 +1173,7 @@ const SSOTSpreadsheetView = ({
               <thead>
                 <tr>
                   <th className={classes.long}>Requisition ID</th>
+                  <th className={classes.normal}>Shorthand Requisition ID</th>
                   <th className={classes.date}>Date Created</th>
                   <th className={classes.processor}>Warehouse Processor</th>
                   <th className={classes.long}>Parent Requisition ID</th>

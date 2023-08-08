@@ -625,6 +625,7 @@ export type SSOTResponseType = {
 };
 
 export type SSOTType = {
+  requisition_request_row_number: number;
   requisition_request_id: string;
   requisition_request_date_created: string;
   requisition_request_owner: SSOTRequestOwnerType;
