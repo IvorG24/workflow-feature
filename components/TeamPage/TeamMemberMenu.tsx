@@ -6,10 +6,11 @@ import {
   IconDotsVertical,
   IconTrash,
   IconUserDown,
+  IconUserShare,
   IconUserUp,
 } from "@tabler/icons-react";
 import { startCase } from "lodash";
-// import { useRouter } from "next/router";
+import { useRouter } from "next/router";
 
 type Props = {
   member: TeamMemberType;
@@ -29,7 +30,7 @@ const TeamMemberMenu = ({
   onTransferOwnership,
 }: Props) => {
   const defaultMenuIconProps = { size: 20 };
-  // const router = useRouter();
+  const router = useRouter();
 
   const canUserUpdateMember =
     authUser &&
@@ -44,22 +45,20 @@ const TeamMemberMenu = ({
 
   return (
     <Menu position="left-start" width={200} withArrow>
-      {canUserUpdateMember && (
-        <Menu.Target>
-          <ActionIcon>
-            <IconDotsVertical size={16} />
-          </ActionIcon>
-        </Menu.Target>
-      )}
+      <Menu.Target>
+        <ActionIcon>
+          <IconDotsVertical size={16} />
+        </ActionIcon>
+      </Menu.Target>
 
       <Menu.Dropdown>
-        {/* <Menu.Item
+        <Menu.Item
           c="indigo"
           icon={<IconUserShare {...defaultMenuIconProps} />}
           onClick={() => router.push(`/member/${member.team_member_id}`)}
         >
           View Profile
-        </Menu.Item> */}
+        </Menu.Item>
         {canUserUpdateMember && (
           <>
             {member.team_member_role !== "OWNER" && (
