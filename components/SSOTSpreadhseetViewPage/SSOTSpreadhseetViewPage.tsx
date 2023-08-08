@@ -1579,7 +1579,7 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList[
                         "shorthand_requisition_id"
                       ] && (
-                        <th className={classes.long}>
+                        <th className={classes.normal}>
                           Shorthand Requisition ID
                         </th>
                       )}
