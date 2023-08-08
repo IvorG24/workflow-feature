@@ -53,6 +53,7 @@ type Props = {
   setSelectedProject: Dispatch<SetStateAction<TeamProjectTableRow | null>>;
   isFetchingMembers: boolean;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
+  isOwnerOrAdmin: boolean;
 };
 
 const ProjectMembers = ({
@@ -61,6 +62,7 @@ const ProjectMembers = ({
   setSelectedProject,
   isFetchingMembers,
   setIsFetchingMembers,
+  isOwnerOrAdmin,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
@@ -161,6 +163,7 @@ const ProjectMembers = ({
               search={search}
               setSearch={setSearch}
               selectedProject={selectedProject}
+              isOwnerOrAdmin={isOwnerOrAdmin}
             />
           ) : null}
           {isAddingMember ? (

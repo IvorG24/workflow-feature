@@ -20,7 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
@@ -52,6 +52,7 @@ type Props = {
   setSelectedProject: Dispatch<SetStateAction<TeamProjectTableRow | null>>;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
   selectedProject: TeamProjectTableRow | null;
+  isOwnerOrAdmin: boolean;
 };
 
 const ProjectList = ({
@@ -63,6 +64,7 @@ const ProjectList = ({
   setSelectedProject,
   setIsFetchingMembers,
   selectedProject,
+  isOwnerOrAdmin,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -166,6 +168,47 @@ const ProjectList = ({
     );
     setSelectedProject(newSelectedProject || null);
   };
+  const columnData: DataTableColumn<TeamProjectTableRow>[] = [
+    {
+      accessor: "checkbox",
+      title: (
+        <Checkbox
+          key={headerCheckboxKey}
+          className={classes.checkbox}
+          checked={
+            checkList.length > 0 && checkList.length === projectList.length
+          }
+          size="xs"
+          onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
+        />
+      ),
+      render: ({ team_project_id }) => (
+        <Checkbox
+          className={classes.checkbox}
+          size="xs"
+          checked={checkList.includes(team_project_id)}
+          onChange={() => {
+            handleCheckRow(team_project_id);
+          }}
+        />
+      ),
+      width: 40,
+    },
+    {
+      accessor: "project_general_name",
+      title: "Project Name",
+      render: ({ team_project_name, team_project_id }) => (
+        <Text
+          className={classes.clickableColumn}
+          onClick={() => {
+            handleColumnClick(team_project_id);
+          }}
+        >
+          {team_project_name}
+        </Text>
+      ),
+    },
+  ];
 
   return (
     <Box>
@@ -226,13 +269,15 @@ const ProjectList = ({
               Delete
             </Button>
           ) : null}
-          <Button
-            rightIcon={<IconPlus size={16} />}
-            className={classes.flexGrow}
-            onClick={() => setIsCreatingProject(true)}
-          >
-            Add
-          </Button>
+          {isOwnerOrAdmin && (
+            <Button
+              rightIcon={<IconPlus size={16} />}
+              className={classes.flexGrow}
+              onClick={() => setIsCreatingProject(true)}
+            >
+              Add
+            </Button>
+          )}
         </Group>
       </Flex>
       <DataTable
@@ -244,48 +289,7 @@ const ProjectList = ({
         minHeight={390}
         fetching={isLoading}
         records={projectList}
-        columns={[
-          {
-            accessor: "checkbox",
-            title: (
-              <Checkbox
-                key={headerCheckboxKey}
-                className={classes.checkbox}
-                checked={
-                  checkList.length > 0 &&
-                  checkList.length === projectList.length
-                }
-                size="xs"
-                onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
-              />
-            ),
-            render: ({ team_project_id }) => (
-              <Checkbox
-                className={classes.checkbox}
-                size="xs"
-                checked={checkList.includes(team_project_id)}
-                onChange={() => {
-                  handleCheckRow(team_project_id);
-                }}
-              />
-            ),
-            width: 40,
-          },
-          {
-            accessor: "project_general_name",
-            title: "Project Name",
-            render: ({ team_project_name, team_project_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(team_project_id);
-                }}
-              >
-                {team_project_name}
-              </Text>
-            ),
-          },
-        ]}
+        columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={projectCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}

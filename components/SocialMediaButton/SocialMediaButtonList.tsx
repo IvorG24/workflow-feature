@@ -4,9 +4,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Provider } from "@supabase/supabase-js";
 import { AzureIcon } from "./AzureIcon";
-import { FacebookIcon } from "./FacebookIcon";
 import { GoogleIcon } from "./GoogleIcon";
-import { TwitterIcon } from "./TwitterIcon";
 
 type ButtonListProps = {
   flexprops?: FlexProps;
@@ -51,13 +49,13 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
 
   return (
     <Flex {...flexprops}>
-      <Button
+      {/* <Button
         leftIcon={<FacebookIcon color="#1877F2" />}
         {...buttonprops}
         onClick={() => handleSignin("facebook")}
       >
         Facebook
-      </Button>
+      </Button> */}
       <Button
         leftIcon={<GoogleIcon />}
         {...buttonprops}
@@ -65,13 +63,13 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
       >
         Google
       </Button>
-      <Button
+      {/* <Button
         leftIcon={<TwitterIcon color="#00acee" />}
         {...buttonprops}
         onClick={() => handleSignin("twitter")}
       >
         Twitter
-      </Button>
+      </Button> */}
       <Button
         leftIcon={<AzureIcon />}
         {...buttonprops}

@@ -378,6 +378,7 @@ const TeamPage = ({
               setSelectedGroup={setSelectedGroup}
               setIsFetchingMembers={setIsFetchingMembers}
               selectedGroup={selectedGroup}
+              isOwnerOrAdmin={isOwnerOrAdmin}
             />
           ) : null}
           {isCreatingGroup ? (
@@ -402,6 +403,7 @@ const TeamPage = ({
               setSelectedGroup={setSelectedGroup}
               isFetchingMembers={isFetchingMembers}
               setIsFetchingMembers={setIsFetchingMembers}
+              isOwnerOrAdmin={isOwnerOrAdmin}
             />
           ) : null}
         </Paper>
@@ -419,6 +421,7 @@ const TeamPage = ({
               setSelectedProject={setSelectedProject}
               setIsFetchingMembers={setIsFetchingMembers}
               selectedProject={selectedProject}
+              isOwnerOrAdmin={isOwnerOrAdmin}
             />
           ) : null}
           {isCreatingProject ? (
@@ -443,6 +446,7 @@ const TeamPage = ({
               setSelectedProject={setSelectedProject}
               isFetchingMembers={isFetchingMembers}
               setIsFetchingMembers={setIsFetchingMembers}
+              isOwnerOrAdmin={isOwnerOrAdmin}
             />
           ) : null}
         </Paper>
