@@ -1101,6 +1101,7 @@ const SSOTSpreadsheetView = ({
               {showRequisitionColumnList["requisition_id"] && (
                 <td>{request.requisition_request_id}</td>
               )}
+              <td>{request.requisition_request_row_number}</td>
               {showRequisitionColumnList["date_created"] && (
                 <td>
                   {new Date(
@@ -1530,6 +1531,7 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["requisition_id"] && (
                         <th className={classes.long}>Requisition ID</th>
                       )}
+                      <th className={classes.long}>Shorthand Requisition ID</th>
                       {showRequisitionColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
