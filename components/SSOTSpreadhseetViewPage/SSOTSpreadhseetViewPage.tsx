@@ -966,9 +966,9 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showQuotationTable &&
-            (showRIRTable && request.quotation_rir_request.length !== 0 ? (
-              <td style={{ padding: 0 }}>
+          {showQuotationTable && (
+            <td style={{ padding: 0 }}>
+              {showRIRTable && request.quotation_rir_request.length !== 0 ? (
                 <Table
                   withBorder
                   withColumnBorders
@@ -1013,8 +1013,9 @@ const SSOTSpreadsheetView = ({
                   </thead>
                   <tbody>{renderRir(request.quotation_rir_request)}</tbody>
                 </Table>
-              </td>
-            ) : null)}
+              ) : null}
+            </td>
+          )}
         </tr>
       );
     });
