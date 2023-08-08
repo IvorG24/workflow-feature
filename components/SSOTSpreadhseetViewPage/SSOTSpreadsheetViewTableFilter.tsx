@@ -61,6 +61,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowChequeReferenceColumnList,
   } = props;
   const switchInputProps = { color: "green" };
+  const switchInputStyles = { labelWrapper: { cursor: "pointer" } };
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
   const [localFilterSettings, setLocalFilterSettings] = useLocalStorage({
     key: "ssot-table-filter",
@@ -146,6 +147,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                 {...switchInputProps}
+                styles={switchInputStyles}
               />
             </Group>
             <Flex gap="sm" direction="column">
@@ -166,6 +168,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showRequisitionTable}
                       {...switchInputProps}
+                      styles={switchInputStyles}
                     />
                   </Group>
                 );
@@ -181,6 +184,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                 {...switchInputProps}
+                styles={switchInputStyles}
               />
             </Group>
             <Flex gap="sm" direction="column">
@@ -201,6 +205,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showQuotationTable}
                       {...switchInputProps}
+                      styles={switchInputStyles}
                     />
                   </Group>
                 );
@@ -219,6 +224,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                 disabled={!showQuotationTable}
                 {...switchInputProps}
+                styles={switchInputStyles}
               />
             </Group>
             <Flex gap="sm" direction="column">
@@ -239,6 +245,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showRIRTable || !showQuotationTable}
                       {...switchInputProps}
+                      styles={switchInputStyles}
                     />
                   </Group>
                 );
@@ -256,6 +263,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                 {...switchInputProps}
+                styles={switchInputStyles}
               />
             </Group>
             <Flex gap="sm" direction="column">
@@ -276,6 +284,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showReleaseOrderTable}
                       {...switchInputProps}
+                      styles={switchInputStyles}
                     />
                   </Group>
                 );
@@ -293,6 +302,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 onLabel={<IconEye size="1rem" stroke={2.5} />}
                 offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                 {...switchInputProps}
+                styles={switchInputStyles}
               />
             </Group>
             <Flex gap="sm" direction="column">
@@ -315,6 +325,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                       disabled={!showChequeReferenceTable}
                       {...switchInputProps}
+                      styles={switchInputStyles}
                     />
                   </Group>
                 );
