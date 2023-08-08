@@ -785,7 +785,8 @@ const SSOTSpreadsheetView = ({
   };
 
   const renderQuotation = (
-    request: SSOTType["requisition_quotation_request"]
+    request: SSOTType["requisition_quotation_request"],
+    requisitionItemQuantity: string[]
   ) => {
     return request.map((request) => {
       const itemName: string[] = [];
@@ -797,6 +798,7 @@ const SSOTSpreadsheetView = ({
         3,
         request.quotation_request_response.length
       );
+
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
           const quantityMatch = item.request_response.match(/(\d+)/);
@@ -930,6 +932,15 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
+          <td>
+            <List sx={{ listStyle: "none" }} spacing="xs">
+              {requisitionItemQuantity.map((item, index) => (
+                <List.Item key={index}>
+                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                </List.Item>
+              ))}
+            </List>
+          </td>
           {showQuotationColumnList["quantity"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
@@ -1269,6 +1280,7 @@ const SSOTSpreadsheetView = ({
                       {showQuotationColumnList["price_per_unit"] && (
                         <th className={classes.normal}>Price per Unit</th>
                       )}
+                      <th className={classes.normal}>Parent Quantity</th>
                       {showQuotationColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
@@ -1281,7 +1293,10 @@ const SSOTSpreadsheetView = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {renderQuotation(request.requisition_quotation_request)}
+                    {renderQuotation(
+                      request.requisition_quotation_request,
+                      itemQuantity
+                    )}
                   </tbody>
                 </Table>
               ) : null}
