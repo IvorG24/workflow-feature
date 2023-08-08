@@ -142,13 +142,14 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('c08820a5-592a-4bf9-9528-97b7ee7be94b', 'Purpose', 'TEXT', 5, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
-('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('9f55ca04-1b1d-4346-8acf-49e96c890026', 'Project Site', 'DROPDOWN', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, true),
+('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('9f55ca04-1b1d-4346-8acf-49e96c890026', 'Project Site', 'DROPDOWN', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, true),
 
 -- Sourced Item Form
 ('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 1, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),

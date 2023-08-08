@@ -163,6 +163,7 @@ const requisitionTableColumnList = [
   "Project Name",
   "Type",
   "Date Needed",
+  "Purpose",
   "Item Name",
   "Parent Quantity",
   "Quantity",
@@ -183,6 +184,7 @@ const quotationTableColumnList = [
   "Proof of Sending",
   "Item",
   "Price Per Unit",
+  "Parent Quantity",
   "Quantity",
   "Unit of Measurement",
 ];
@@ -784,7 +786,8 @@ const SSOTSpreadsheetView = ({
   };
 
   const renderQuotation = (
-    request: SSOTType["requisition_quotation_request"]
+    request: SSOTType["requisition_quotation_request"],
+    requisitionItemQuantity: string[]
   ) => {
     return request.map((request) => {
       const itemName: string[] = [];
@@ -796,6 +799,7 @@ const SSOTSpreadsheetView = ({
         3,
         request.quotation_request_response.length
       );
+
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
           const quantityMatch = item.request_response.match(/(\d+)/);
@@ -929,6 +933,17 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
+          {showQuotationColumnList["parent_quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {requisitionItemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
           {showQuotationColumnList["quantity"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
@@ -1031,6 +1046,7 @@ const SSOTSpreadsheetView = ({
       );
 
       const items = fields.slice(0, -REQUISITION_FIELDS_ORDER.length);
+
       const sortedAndGroupedItems = sortAndGroupItems(items);
       sortedAndGroupedItems.forEach((group, groupIndex) => {
         itemDescription[groupIndex] = "";
@@ -1289,6 +1305,9 @@ const SSOTSpreadsheetView = ({
                       {showQuotationColumnList["price_per_unit"] && (
                         <th className={classes.normal}>Price per Unit</th>
                       )}
+                      {showQuotationColumnList["parent_quantity"] && (
+                        <th className={classes.normal}>Parent Quantity</th>
+                      )}
                       {showQuotationColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
@@ -1301,7 +1320,10 @@ const SSOTSpreadsheetView = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {renderQuotation(request.requisition_quotation_request)}
+                    {renderQuotation(
+                      request.requisition_quotation_request,
+                      itemQuantity
+                    )}
                   </tbody>
                 </Table>
               ) : null}
@@ -1581,6 +1603,9 @@ const SSOTSpreadsheetView = ({
                       )}
                       {showRequisitionColumnList["type"] && (
                         <th className={classes.normal}>Date Needed</th>
+                      )}
+                      {showRequisitionColumnList["purpose"] && (
+                        <th className={classes.long}>Purpose</th>
                       )}
                       {showRequisitionColumnList["item_name"] && (
                         <th className={classes.description}>Item Name</th>

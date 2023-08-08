@@ -196,6 +196,7 @@ CREATE TABLE form_team_group_table(
 -- Start: Request
 CREATE TABLE request_table(
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  request_row_number INT GENERATED ALWAYS AS IDENTITY NOT NULL,
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
@@ -378,10 +379,10 @@ RETURNS JSON as $$
           SELECT * FROM (
             SELECT 
               request_table.request_id, 
+              request_table.request_row_number,
               request_table.request_date_created, 
               request_table.request_team_member_id, 
               request_response_table.request_response, 
-              ROW_NUMBER() OVER() as request_row_number
               ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber 
             FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id 
             WHERE 
@@ -399,7 +400,7 @@ RETURNS JSON as $$
       );
           
     }else{
-      requisition_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id, ROW_NUMBER() OVER() as request_row_number FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+      requisition_requests = plv8.execute(`SELECT request_id, request_row_number, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
     }
 
     
@@ -594,7 +595,7 @@ RETURNS JSON as $$
       }
 
       return {
-        requisition_request_row_number: `${requisition.request_row_number}`,
+        requisition_request_row_number: requisition.request_row_number,
         requisition_request_id: requisition.request_id,
         requisition_request_date_created: requisition.request_date_created,
         requisition_request_response: requisition_response_fields,
@@ -783,7 +784,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description,
         field_type: "DROPDOWN",
-        field_order: 11,
+        field_order: 12,
         field_section_id: section_id,
         field_is_required: true,
       });
