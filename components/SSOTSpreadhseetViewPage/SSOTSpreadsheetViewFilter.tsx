@@ -221,6 +221,9 @@ const SSOTSpreadsheetViewFilter = ({
             }}
             rightSection={isSearching ? <Loader size={16} /> : null}
             nothingFound="Nothing found. Try a different keyword"
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={{ base: 500, xs: 300 }}
           />
         )}
       />

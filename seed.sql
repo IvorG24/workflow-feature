@@ -148,10 +148,12 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
 ('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 ('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('9f55ca04-1b1d-4346-8acf-49e96c890026', 'Project Site', 'DROPDOWN', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, true),
 
 -- Sourced Item Form
 ('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 1, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 ('8c15e0f0-f360-4826-a684-5ab4ecb52009', 'Quantity', 'NUMBER', 2, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
+('4982e986-865c-4574-9767-4951b4f6c155', 'Project Site', 'DROPDOWN', 3, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 
 -- Quotation Form
 ('df0cb109-e34d-498f-ac51-af2139628ac0', 'Requisition ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
@@ -187,6 +189,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 4, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 5, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('d3d790fe-3d37-421c-91f3-e943ee5941b6', 'Receiving Status', 'TEXT', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
+('2ea7acb6-37a4-4ced-b5d2-b944c3a1de37', 'Project Site', 'TEXT', 8, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
 
 -- Cheque Reference Form
 ('618770e4-40d1-4d8d-b5a0-189eca838ac7', 'Requisition ID', 'LINK', 1, '5e9cf483-98dd-4b44-820d-4c020ae50279', true, true),

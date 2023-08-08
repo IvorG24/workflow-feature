@@ -44,9 +44,14 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  projectSiteList: Record<string, string>;
 };
 
-const CreateReleaseOrderPage = ({ form, itemOptions }: Props) => {
+const CreateReleaseOrderPage = ({
+  form,
+  itemOptions,
+  projectSiteList,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -351,10 +356,15 @@ const CreateReleaseOrderPage = ({ form, itemOptions }: Props) => {
             Number(section.section_field[1].field_response)
           );
           setValue(`sections.${index}.section_field.2.field_response`, status);
+          setValue(
+            `sections.${index}.section_field.3.field_response`,
+            projectSiteList[value]
+          );
         }
       });
     } else {
       setValue(`sections.${index}.section_field.2.field_response`, undefined);
+      setValue(`sections.${index}.section_field.3.field_response`, "");
     }
 
     const newOption = itemOptions.find(

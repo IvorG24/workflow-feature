@@ -169,6 +169,7 @@ const requisitionTableColumnList = [
   "Description",
   "Cost Code",
   "GL Account",
+  "Project Site",
 ];
 
 const quotationTableColumnList = [
@@ -207,6 +208,7 @@ const releaseOrderTableColumnList = [
   "Quantity",
   "Unit of Measurement",
   "Receiving Status",
+  "Project Site",
 ];
 
 const chequeReferenceTableColumnList = [
@@ -499,9 +501,7 @@ const SSOTSpreadsheetView = ({
   };
 
   const renderRir = (
-    request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"],
-    showColumnList: ShowColumnList,
-    isRIR: boolean
+    request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"]
   ) => {
     return request.map((request) => {
       const itemName: string[] = [];
@@ -511,8 +511,6 @@ const SSOTSpreadsheetView = ({
       const items = request.rir_request_response;
       let dr = "";
       let si = "";
-
-      const idColumnName = isRIR ? "rir_id" : "release_order_id";
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -547,16 +545,16 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          {showColumnList[idColumnName] && <td>{request.rir_request_id}</td>}
-          {showColumnList["date_created"] && (
+          {showRIRColumnList["rir_id"] && <td>{request.rir_request_id}</td>}
+          {showRIRColumnList["date_created"] && (
             <td>
               {new Date(request.rir_request_date_created).toLocaleDateString()}
             </td>
           )}
-          {showColumnList["warehouse_receiver"] && (
+          {showRIRColumnList["warehouse_receiver"] && (
             <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
           )}
-          {showColumnList["dr"] && (
+          {showRIRColumnList["dr"] && (
             <td>
               {dr && (
                 <ActionIcon
@@ -571,7 +569,7 @@ const SSOTSpreadsheetView = ({
               )}
             </td>
           )}
-          {showColumnList["si"] && (
+          {showRIRColumnList["si"] && (
             <td>
               {si && (
                 <ActionIcon
@@ -586,7 +584,7 @@ const SSOTSpreadsheetView = ({
               )}
             </td>
           )}
-          {showColumnList["item"] && (
+          {showRIRColumnList["item"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemName.map((item, index) => (
@@ -597,7 +595,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showColumnList["quantity"] && (
+          {showRIRColumnList["quantity"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemQuantity.map((item, index) => (
@@ -608,7 +606,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showColumnList["unit_of_measurement"] && (
+          {showRIRColumnList["unit_of_measurement"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemUnit.map((item, index) => (
@@ -619,10 +617,159 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showColumnList["receiving_status"] && (
+          {showRIRColumnList["receiving_status"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemStatus.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+        </tr>
+      );
+    });
+  };
+
+  const renderReleaseOrder = (
+    request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"]
+  ) => {
+    return request.map((request) => {
+      const itemName: string[] = [];
+      const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
+      const itemStatus: string[] = [];
+      const items = request.rir_request_response;
+      const itemProjectSite: string[] = [];
+      let dr = "";
+      let si = "";
+
+      items.forEach((item) => {
+        if (item.request_response_field_name === "Item") {
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
+        } else if (item.request_response_field_name === "Quantity") {
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
+        } else if (item.request_response_field_name === "Receiving Status") {
+          itemStatus.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Project Site") {
+          itemProjectSite.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "DR") {
+          dr = item.request_response;
+        } else if (item.request_response_field_name === "SI") {
+          si = item.request_response;
+        }
+      });
+
+      return (
+        <tr
+          key={request.rir_request_id}
+          className={classes.cell}
+          style={{ borderTop: "solid 1px #DEE2E6" }}
+        >
+          {showReleaseOrderColumnList["release_order_id"] && (
+            <td>{request.rir_request_id}</td>
+          )}
+          {showReleaseOrderColumnList["date_created"] && (
+            <td>
+              {new Date(request.rir_request_date_created).toLocaleDateString()}
+            </td>
+          )}
+          {showReleaseOrderColumnList["warehouse_receiver"] && (
+            <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
+          )}
+          {showReleaseOrderColumnList["dr"] && (
+            <td>
+              {dr && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showReleaseOrderColumnList["si"] && (
+            <td>
+              {si && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showReleaseOrderColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["receiving_status"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemStatus.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showReleaseOrderColumnList["project_site"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemProjectSite.map((item, index) => (
                   <List.Item key={index}>
                     <Text size={14}>{item}</Text>
                   </List.Item>
@@ -828,13 +975,7 @@ const SSOTSpreadsheetView = ({
                       })}
                     </tr>
                   </thead>
-                  <tbody>
-                    {renderRir(
-                      request.quotation_rir_request,
-                      showRIRColumnList,
-                      true
-                    )}
-                  </tbody>
+                  <tbody>{renderRir(request.quotation_rir_request)}</tbody>
                 </Table>
               </td>
             ) : null)}
@@ -851,6 +992,7 @@ const SSOTSpreadsheetView = ({
       const itemDescription: string[] = [];
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
+      const projectSite: string[] = [];
 
       const parentItemName: string[] = [];
       const parentItemQuantity: string[] = [];
@@ -884,6 +1026,8 @@ const SSOTSpreadsheetView = ({
             itemCostCode[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "Project Site") {
+            projectSite[groupIndex] = JSON.parse(item.request_response);
           } else {
             itemDescription[groupIndex] += `${
               item.request_response_field_name
@@ -1067,6 +1211,18 @@ const SSOTSpreadsheetView = ({
                   </List>
                 </td>
               )}
+
+              {showRequisitionColumnList["project_site"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {projectSite.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
             </>
           )}
           {showQuotationTable && (
@@ -1167,14 +1323,13 @@ const SSOTSpreadsheetView = ({
                       {showReleaseOrderColumnList["receiving_status"] && (
                         <th className={classes.long}>Receiving Status</th>
                       )}
+                      {showReleaseOrderColumnList["project_site"] && (
+                        <th className={classes.long}>Project Site</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
-                    {renderRir(
-                      request.requisition_rir_request,
-                      showReleaseOrderColumnList,
-                      false
-                    )}
+                    {renderReleaseOrder(request.requisition_rir_request)}
                   </tbody>
                 </Table>
               ) : null}
@@ -1416,6 +1571,9 @@ const SSOTSpreadsheetView = ({
                       )}
                       {showRequisitionColumnList["gl_account"] && (
                         <th className={classes.short}>GL Account</th>
+                      )}
+                      {showRequisitionColumnList["project_site"] && (
+                        <th className={classes.long}>Project Site</th>
                       )}
                     </>
                   )}
