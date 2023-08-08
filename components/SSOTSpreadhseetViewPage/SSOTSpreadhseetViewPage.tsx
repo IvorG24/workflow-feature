@@ -184,6 +184,7 @@ const quotationTableColumnList = [
   "Proof of Sending",
   "Item",
   "Price Per Unit",
+  "Parent Quantity",
   "Quantity",
   "Unit of Measurement",
 ];
@@ -932,15 +933,17 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          <td>
-            <List sx={{ listStyle: "none" }} spacing="xs">
-              {requisitionItemQuantity.map((item, index) => (
-                <List.Item key={index}>
-                  <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                </List.Item>
-              ))}
-            </List>
-          </td>
+          {showQuotationColumnList["parent_quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {requisitionItemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
           {showQuotationColumnList["quantity"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
@@ -974,18 +977,38 @@ const SSOTSpreadsheetView = ({
                 >
                   <thead>
                     <tr>
-                      {rirTableColumnList.map((column, index) => {
-                        const propName = column
-                          .toLowerCase()
-                          .replace(/\s+/g, "_");
-                        return (
-                          showRIRColumnList[propName] && (
-                            <th key={index} className={classes.long}>
-                              {column}
-                            </th>
-                          )
-                        );
-                      })}
+                      {showRIRColumnList["rir_id"] && (
+                        <th className={classes.long}>Release Order ID</th>
+                      )}
+                      {showRIRColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showRIRColumnList["warehouse_receiver"] && (
+                        <th className={classes.processor}>
+                          Warehouse Receiver
+                        </th>
+                      )}
+                      {showRIRColumnList["dr"] && (
+                        <th className={classes.short}>DR</th>
+                      )}
+                      {showRIRColumnList["si"] && (
+                        <th className={classes.short}>SI</th>
+                      )}
+                      {showRIRColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showRIRColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showRIRColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                      {showRIRColumnList["receiving_status"] && (
+                        <th className={classes.long}>Receiving Status</th>
+                      )}
+                      {showRIRColumnList["project_site"] && (
+                        <th className={classes.long}>Project Site</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>{renderRir(request.quotation_rir_request)}</tbody>
@@ -1115,7 +1138,9 @@ const SSOTSpreadsheetView = ({
               {showRequisitionColumnList["requisition_id"] && (
                 <td>{request.requisition_request_id}</td>
               )}
-              <td>{request.requisition_request_row_number}</td>
+              {showRequisitionColumnList["shorthand_requisition_id"] && (
+                <td>{request.requisition_request_row_number}</td>
+              )}
               {showRequisitionColumnList["date_created"] && (
                 <td>
                   {new Date(
@@ -1280,7 +1305,9 @@ const SSOTSpreadsheetView = ({
                       {showQuotationColumnList["price_per_unit"] && (
                         <th className={classes.normal}>Price per Unit</th>
                       )}
-                      <th className={classes.normal}>Parent Quantity</th>
+                      {showQuotationColumnList["parent_quantity"] && (
+                        <th className={classes.normal}>Parent Quantity</th>
+                      )}
                       {showQuotationColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
@@ -1549,9 +1576,13 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["requisition_id"] && (
                         <th className={classes.long}>Requisition ID</th>
                       )}
-                      <th className={classes.normal}>
-                        Shorthand Requisition ID
-                      </th>
+                      {showRequisitionColumnList[
+                        "shorthand_requisition_id"
+                      ] && (
+                        <th className={classes.long}>
+                          Shorthand Requisition ID
+                        </th>
+                      )}
                       {showRequisitionColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
@@ -1573,7 +1604,9 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["type"] && (
                         <th className={classes.normal}>Date Needed</th>
                       )}
-                      <th className={classes.long}>Purpose</th>
+                      {showRequisitionColumnList["purpose"] && (
+                        <th className={classes.long}>Purpose</th>
+                      )}
                       {showRequisitionColumnList["item_name"] && (
                         <th className={classes.description}>Item Name</th>
                       )}
