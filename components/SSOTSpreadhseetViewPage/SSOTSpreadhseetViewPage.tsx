@@ -156,12 +156,14 @@ export type ShowColumnList = { [key: string]: boolean };
 
 const requisitionTableColumnList = [
   "Requisition ID",
+  "Shorthand Requisition ID",
   "Date Created",
   "Warehouse Processor",
   "Parent Requisition ID",
   "Project Name",
   "Type",
   "Date Needed",
+  "Purpose",
   "Item Name",
   "Parent Quantity",
   "Quantity",
@@ -1010,6 +1012,7 @@ const SSOTSpreadsheetView = ({
       );
 
       const items = fields.slice(0, -REQUISITION_FIELDS_ORDER.length);
+
       const sortedAndGroupedItems = sortAndGroupItems(items);
       sortedAndGroupedItems.forEach((group, groupIndex) => {
         itemDescription[groupIndex] = "";
@@ -1531,7 +1534,9 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["requisition_id"] && (
                         <th className={classes.long}>Requisition ID</th>
                       )}
-                      <th className={classes.long}>Shorthand Requisition ID</th>
+                      <th className={classes.normal}>
+                        Shorthand Requisition ID
+                      </th>
                       {showRequisitionColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
@@ -1553,6 +1558,7 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["type"] && (
                         <th className={classes.normal}>Date Needed</th>
                       )}
+                      <th className={classes.long}>Purpose</th>
                       {showRequisitionColumnList["item_name"] && (
                         <th className={classes.description}>Item Name</th>
                       )}
