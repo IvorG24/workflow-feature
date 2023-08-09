@@ -1,5 +1,5 @@
 import { checkQuotationItemQuantity } from "@/backend/api/get";
-import { splitParentOtp } from "@/backend/api/update";
+import { splitParentRequisition } from "@/backend/api/update";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -43,11 +43,13 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  itemWithDupId: Record<string, string | null>;
 };
 
-const CreateSourcedOrderToPurchaseRequestPage = ({
+const CreateSourcedItemRequestPage = ({
   form,
   itemOptions,
+  itemWithDupId,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -84,11 +86,15 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[0].section_field.map((field) => {
-      return {
-        ...field,
-        field_option: itemOptions,
-      };
+    const newFields = form.form_section[0].section_field.map((field, index) => {
+      if (index === 0) {
+        return {
+          ...field,
+          field_option: itemOptions,
+        };
+      } else {
+        return field;
+      }
     });
     replaceSection([
       {
@@ -98,7 +104,7 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -106,8 +112,8 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
-      const otpID = router.query.otpId;
-      if (typeof otpID !== "string") return;
+      const requisitionID = router.query.requisitionId;
+      if (typeof requisitionID !== "string") return;
 
       setIsLoading(true);
 
@@ -140,7 +146,7 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
       });
 
       const warningItemList = await checkQuotationItemQuantity(supabaseClient, {
-        otpID,
+        requisitionID,
         itemFieldId: itemSection.section_field[0].field_id,
         quantityFieldId: itemSection.section_field[1].field_id,
         itemFieldList,
@@ -154,7 +160,8 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the OTP
+                There are items that will exceed the quantity limit of the
+                Requisition
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -168,24 +175,24 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
           ),
         });
       } else {
-        const isSplitted = await splitParentOtp(supabaseClient, {
-          otpID,
+        const isSplitted = await splitParentRequisition(supabaseClient, {
+          requisitionID,
           teamMemberId: teamMember.team_member_id,
           data,
           signerFullName: `${user?.user_first_name} ${user?.user_last_name}`,
           teamId: team.team_id,
+          itemWithDupId,
         });
 
         notifications.show({
-          message: `Order to Purchase request ${
+          message: `Requisition request ${
             isSplitted ? "splitted" : "approved"
           }.`,
           color: "green",
         });
-        router.push(`/team-requests/requests/${otpID}`);
+        router.push(`/team-requests/requests/${requisitionID}`);
       }
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -216,13 +223,19 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
-        (field) => ({
-          ...field,
-          field_section_duplicatable_id: sectionDuplicatableId,
-          field_option: availableItems.sort((a, b) => {
-            return a.option_order - b.option_order;
-          }),
-        })
+        (field, index) => {
+          if (index === 0) {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: availableItems.sort((a, b) => {
+                return a.option_order - b.option_order;
+              }),
+            };
+          } else {
+            return field;
+          }
+        }
       );
       const newSection = {
         ...sectionMatch,
@@ -399,4 +412,4 @@ const CreateSourcedOrderToPurchaseRequestPage = ({
   );
 };
 
-export default CreateSourcedOrderToPurchaseRequestPage;
+export default CreateSourcedItemRequestPage;

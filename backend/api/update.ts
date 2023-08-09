@@ -278,68 +278,40 @@ export const readAllNotification = async (
   if (error) throw error;
 };
 
-// Update team and team member group list
-export const updateTeamAndTeamMemberGroupList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    teamGroupList: string[];
-    upsertGroupName: string;
-    addedGroupMembers: string[];
-    deletedGroupMembers: string[];
-    previousName?: string;
-    previousGroupMembers?: string[];
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_team_and_team_member_group_list",
-    {
-      input_data: params,
-    }
-  );
-
-  if (error) throw error;
-};
-
-// Update team and team member project list
-export const updateTeamAndTeamMemberProjectList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    teamProjectList: string[];
-    upsertProjectName: string;
-    addedProjectMembers: string[];
-    deletedProjectMembers: string[];
-    previousName?: string;
-    previousProjectMembers?: string[];
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_team_and_team_member_project_list",
-    {
-      input_data: params,
-    }
-  );
-
-  if (error) throw error;
-};
-
 // Update form group
 export const updateFormGroup = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formId: string;
-    groupList: string[];
     isForEveryone: boolean;
+    groupList: string[];
   }
 ) => {
-  const { formId, groupList, isForEveryone } = params;
-  const { data, error } = await supabaseClient
+  const { formId, isForEveryone, groupList } = params;
+  const { error } = await supabaseClient
     .from("form_table")
-    .update({ form_group: groupList, form_is_for_every_member: isForEveryone })
+    .update({ form_is_for_every_member: isForEveryone })
     .eq("form_id", formId);
   if (error) throw error;
-  return data;
+
+  const { error: deleteError } = await supabaseClient
+    .from("form_team_group_table")
+    .delete()
+    .eq("form_id", formId);
+  if (deleteError) throw deleteError;
+
+  const newGroupInsert = groupList.map((groupId) => {
+    return {
+      form_id: formId,
+      team_group_id: groupId,
+    };
+  });
+
+  const { error: newGroupError } = await supabaseClient
+    .from("form_team_group_table")
+    .insert(newGroupInsert)
+    .select("*");
+  if (newGroupError) throw newGroupError;
 };
 
 // Update form description
@@ -359,24 +331,33 @@ export const updateFormDescription = async (
   if (error) throw error;
 };
 
-// Split parent otp
-export const splitParentOtp = async (
+// Split parent requisition
+export const splitParentRequisition = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpID: string;
+    requisitionID: string;
     teamMemberId: string;
     data: RequestFormValues;
     signerFullName: string;
     teamId: string;
+    itemWithDupId: Record<string, string | null>;
   }
 ) => {
-  const { otpID, teamMemberId, data, signerFullName, teamId } = params;
+  const {
+    requisitionID,
+    teamMemberId,
+    data,
+    signerFullName,
+    teamId,
+    itemWithDupId,
+  } = params;
 
-  // fetch the parent otp
-  const { data: otpRequest, error: otpRequestError } = await supabaseClient
-    .from("request_table")
-    .select(
-      `*, 
+  // fetch the parent requisition
+  const { data: requisitionRequest, error: requisitionRequestError } =
+    await supabaseClient
+      .from("request_table")
+      .select(
+        `*, 
       request_form: request_form_id!inner(
         form_id, 
         form_name, 
@@ -406,28 +387,29 @@ export const splitParentOtp = async (
           signer_team_member_id
         )
       )`
-    )
-    .eq("request_id", otpID)
-    .eq("request_is_disabled", false)
-    .eq(
-      "request_form.form_section.section_field.field_response.request_response_request_id",
-      otpID
-    )
-    .eq(
-      "request_signer.request_signer_signer.signer_team_member_id",
-      teamMemberId
-    )
-    .maybeSingle();
-  if (otpRequestError) throw otpRequestError;
+      )
+      .eq("request_id", requisitionID)
+      .eq("request_is_disabled", false)
+      .eq(
+        "request_form.form_section.section_field.field_response.request_response_request_id",
+        requisitionID
+      )
+      .eq(
+        "request_signer.request_signer_signer.signer_team_member_id",
+        teamMemberId
+      )
+      .maybeSingle();
+  if (requisitionRequestError) throw requisitionRequestError;
 
-  const formattedOTP = otpRequest as unknown as RequestWithResponseType;
+  const formattedRequsition =
+    requisitionRequest as unknown as RequestWithResponseType;
   const formattedSection = generateSectionWithDuplicateList(
-    formattedOTP.request_form.form_section
+    formattedRequsition.request_form.form_section
   );
   const formattedData = {
-    ...formattedOTP,
+    ...formattedRequsition,
     request_form: {
-      ...formattedOTP.request_form,
+      ...formattedRequsition.request_form,
       form_section: formattedSection,
     },
   };
@@ -438,7 +420,7 @@ export const splitParentOtp = async (
   // input the Item Section
   const matchedIndex: number[] = [];
 
-  // loop parent otp sections
+  // loop parent requisition sections
   formattedSection.slice(2).map((section, sectionIndex) => {
     // loop input sections
     for (let j = 0; j < data.sections.length; j++) {
@@ -501,11 +483,12 @@ export const splitParentOtp = async (
   }
 
   if (!isNoRemaining) {
-    // get OTP form
-    const { data: otpForm, error: otpFormError } = await supabaseClient
-      .from("form_table")
-      .select(
-        `*, 
+    // get Requisition form
+    const { data: requisitionForm, error: requisitionFormError } =
+      await supabaseClient
+        .from("form_table")
+        .select(
+          `*, 
         form_team_member: form_team_member_id!inner(*),
         form_signer: signer_table!inner(
           signer_id, 
@@ -523,44 +506,59 @@ export const splitParentOtp = async (
             )
           )
         )`
-      )
-      .eq("form_name", "Order to Purchase")
-      .eq("form_is_formsly_form", true)
-      .eq("form_team_member.team_member_team_id", teamId)
-      .single();
-    if (otpFormError) throw otpFormError;
+        )
+        .eq("form_name", "Requisition")
+        .eq("form_is_formsly_form", true)
+        .eq("form_team_member.team_member_team_id", teamId)
+        .single();
+    if (requisitionFormError) throw requisitionFormError;
 
-    const { error } = await supabaseClient.rpc("split_otp", {
+    const { error } = await supabaseClient.rpc("split_requisition", {
       input_data: {
-        otpForm,
+        requisitionForm,
         formattedSection,
         teamMemberId,
-        otpID,
+        requisitionID,
         remainingQuantityList,
         approvedQuantityList,
         formattedData,
         teamId,
         signerFullName,
+        responseData: JSON.stringify(data),
+        itemWithDupId,
       },
     });
     if (error) throw error;
 
     return true;
   } else {
-    await approveOrRejectRequest(supabaseClient, {
+    const approveOrRejectParameters = {
       requestAction: "APPROVED",
-      requestId: otpID,
+      requestId: requisitionID,
       isPrimarySigner: true,
       requestSignerId: formattedData.request_signer[0].request_signer_signer_id,
       requestOwnerId:
         formattedData.request_team_member.team_member_user.user_id,
       signerFullName: signerFullName,
-      formName: "Order to Purchase",
+      formName: "Requisition",
       memberId: teamMemberId,
       teamId: teamId,
       additionalInfo: "AVAILABLE_INTERNALLY",
-    });
-
+    };
+    const input_data = {
+      approveOrRejectParameters,
+      teamId,
+      responseData: JSON.stringify(data),
+      itemWithDupId,
+      requisitionID,
+    };
+    const { error } = await supabaseClient.rpc(
+      "approve_sourced_requisition_request",
+      {
+        input_data,
+      }
+    );
+    if (error) throw error;
     return false;
   }
 };

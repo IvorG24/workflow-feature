@@ -101,7 +101,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -111,7 +111,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       if (!teamMember) return;
       setIsLoading(true);
 
-      const otpID = JSON.stringify(
+      const requisitionID = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
       const itemSection = data.sections[3];
@@ -143,7 +143,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       });
 
       const warningItemList = await checkQuotationItemQuantity(supabaseClient, {
-        otpID,
+        requisitionID,
         itemFieldId: itemSection.section_field[0].field_id,
         quantityFieldId: itemSection.section_field[2].field_id,
         itemFieldList,
@@ -157,7 +157,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the OTP
+                There are items that will exceed the quantity limit of the
+                Requisition
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (

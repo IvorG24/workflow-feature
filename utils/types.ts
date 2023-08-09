@@ -129,6 +129,20 @@ export type SupplierTableInsert =
 export type SupplierTableUpdate =
   Database["public"]["Tables"]["supplier_table"]["Update"];
 
+export type TeamGroupTableRow =
+  Database["public"]["Tables"]["team_group_table"]["Row"];
+export type TeamGroupTableInsert =
+  Database["public"]["Tables"]["team_group_table"]["Insert"];
+export type TeamGroupTableUpdate =
+  Database["public"]["Tables"]["team_group_table"]["Update"];
+
+export type TeamProjectTableRow =
+  Database["public"]["Tables"]["team_project_table"]["Row"];
+export type TeamProjectTableInsert =
+  Database["public"]["Tables"]["team_project_table"]["Insert"];
+export type TeamProjectTableUpdate =
+  Database["public"]["Tables"]["team_project_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -287,8 +301,6 @@ export type RequestWithResponseType = RequestTableRow & {
 export type TeamMemberType = {
   team_member_id: string;
   team_member_role: MemberRoleType;
-  team_member_group_list: string[];
-  team_member_project_list: string[];
   team_member_user: {
     user_id: string;
     user_first_name: string;
@@ -327,7 +339,6 @@ export type FormType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
-  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -358,6 +369,13 @@ export type FormType = {
       field_option: OptionTableRow[];
     })[];
   })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
 };
 
 export type FormWithResponseType = {
@@ -368,7 +386,6 @@ export type FormWithResponseType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
-  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -402,6 +419,13 @@ export type FormWithResponseType = {
       field_response?: unknown;
     })[];
   })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
 };
 
 export type FormWithTeamMember = FormTableRow & {
@@ -516,7 +540,7 @@ export type RequestDashboardOverviewData = RequestTableRow & {
 };
 
 export type ConnectedFormsType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Invoice"
   | "Account Payable Voucher";
 
@@ -564,15 +588,15 @@ export type RequestResponseDataType = {
   responseData: FieldWithResponseType;
 };
 export type FormslyFormType = {
-  "Order to Purchase": string[];
+  Requisition: string[];
   Quotation: string[];
-  "Receiving Inspecting Report (Purchased)": string[];
+  "Receiving Inspecting Report": string[];
 };
 
 export type FormslyFormKeyType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Quotation"
-  | "Receiving Inspecting Report (Purchased)";
+  | "Receiving Inspecting Report";
 
 export type RequestSignerListType =
   RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
@@ -582,9 +606,9 @@ export type RequestSignerListType =
     };
   };
 export type TeamGroupForFormType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Quotation"
-  | "Receiving Inspecting Report (Purchased)"
+  | "Receiving Inspecting Report"
   | "Cheque Reference"
   | "Audit";
 
@@ -601,11 +625,12 @@ export type SSOTResponseType = {
 };
 
 export type SSOTType = {
-  otp_request_id: string;
-  otp_request_date_created: string;
-  otp_request_owner: SSOTRequestOwnerType;
-  otp_request_response: SSOTResponseType[];
-  otp_quotation_request: {
+  requisition_request_row_number: number;
+  requisition_request_id: string;
+  requisition_request_date_created: string;
+  requisition_request_owner: SSOTRequestOwnerType;
+  requisition_request_response: SSOTResponseType[];
+  requisition_quotation_request: {
     quotation_request_id: string;
     quotation_request_date_created: string;
     quotation_request_owner: SSOTRequestOwnerType;
@@ -617,18 +642,19 @@ export type SSOTType = {
       rir_request_response: SSOTResponseType[];
     }[];
   }[];
-  otp_cheque_reference_request: {
+  requisition_cheque_reference_request: {
     cheque_reference_request_id: string;
     cheque_reference_request_date_created: string;
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
-  otp_rir_request: {
+  requisition_rir_request: {
     rir_request_id: string;
     rir_request_date_created: string;
     rir_request_owner: SSOTRequestOwnerType;
     rir_request_response: SSOTResponseType[];
   }[];
+  requisition_parent_requisition_response_fields: SSOTResponseType[];
 };
 
 export type Section = SectionTableRow & {

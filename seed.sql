@@ -4,29 +4,69 @@ INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name,
 ('930de3a6-181d-449e-8890-0aa055947d80', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '9571523487', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('eaf09887-9686-4faf-8a13-d51fba94eb39', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
-INSERT INTO team_table (team_id, team_name, team_user_id, team_group_list, team_project_list) VALUES
-('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', 'beb2d52c-77d5-49a9-a175-637152c44424', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']),
-('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', 'beb2d52c-77d5-49a9-a175-637152c44424', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]),
-('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', 'beb2d52c-77d5-49a9-a175-637152c44424', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]);
+INSERT INTO team_table (team_id, team_name, team_user_id) VALUES
+('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', 'beb2d52c-77d5-49a9-a175-637152c44424'),
+('285cf257-07fb-40bb-befe-aecff5eb0ea6', 'Dodeca', 'beb2d52c-77d5-49a9-a175-637152c44424'),
+('7d653b33-d60f-4d39-a559-c56711eeb44c', 'Developers', 'beb2d52c-77d5-49a9-a175-637152c44424');
 
-INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id, team_member_group_list, team_member_project_list) VALUES
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'beb2d52c-77d5-49a9-a175-637152c44424', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']),
-('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'dd689b20-8293-4b8a-b9c6-9a5cc63f659c', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '930de3a6-181d-449e-8890-0aa055947d80', ARRAY['WAREHOUSE PROCESSOR', 'ACCOUNTING PROCESSOR','WAREHOUSE RECEIVER', 'TREASURY PROCESSOR', 'AUDIT PROCESSOR'], ARRAY['PHILIP MORRIS', 'SIGUIL HYDRO', 'LAKE MAINIT', 'MERALCO HDD']),
-('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'eaf09887-9686-4faf-8a13-d51fba94eb39', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]),
-('cb06905e-e64b-4bfe-9f03-ee36dba0c809', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', 'beb2d52c-77d5-49a9-a175-637152c44424', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]),
-('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', 'beb2d52c-77d5-49a9-a175-637152c44424', ARRAY[]::VARCHAR[], ARRAY[]::VARCHAR[]);
+INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id) VALUES
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'beb2d52c-77d5-49a9-a175-637152c44424'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'dd689b20-8293-4b8a-b9c6-9a5cc63f659c'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '930de3a6-181d-449e-8890-0aa055947d80'),
+('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'eaf09887-9686-4faf-8a13-d51fba94eb39'),
+('cb06905e-e64b-4bfe-9f03-ee36dba0c809', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', 'beb2d52c-77d5-49a9-a175-637152c44424'),
+('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', 'beb2d52c-77d5-49a9-a175-637152c44424');
 
-INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_group, form_is_disabled) VALUES
-('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[], false),
-('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, ARRAY[]::VARCHAR[], false),
-('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Order to Purchase', 'formsly premade Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['WAREHOUSE PROCESSOR'], false),
-('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Order to Purchase', 'formsly premade Sourced Order to Purchase form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['WAREHOUSE PROCESSOR'], true),
-('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['ACCOUNTING PROCESSOR'], false),
-('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report (Purchased)', 'These items were not available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['WAREHOUSE RECEIVER'], false),
-('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Receiving Inspecting Report (Sourced)', 'These items were available during this OTPs sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['WAREHOUSE RECEIVER'], false),
-('913a09d8-88f9-4139-a039-a77394405b62', 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, ARRAY['TREASURY PROCESSOR'], false),
-('d2e3e618-7f9b-4439-8f76-72a05a0bf305', 'Audit', 'formsly premade Audit form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, ARRAY['AUDIT PROCESSOR'], false);
+INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
+('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'WAREHOUSE PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('51277fb9-7f1f-4c80-a122-c3fea3cf3ed7', 'ACCOUNTING PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'WAREHOUSE RECEIVER', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('9300b7b6-a928-43a0-a3a1-bb6fcacaf987', 'TREASURY PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('7a91ae20-68b8-4f80-bcba-2a850b33b3d1', 'AUDIT PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+INSERT INTO team_project_table (team_project_id, team_project_name, team_project_team_id) VALUES
+('4b3a151a-a077-486c-9dfb-e996c2c9184c', 'PHILIP MORRIS', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('bf4dc226-a763-49da-be9f-606202d2c4c9', 'SIGUIL HYDRO', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('989dbcc2-fdfe-48c7-806a-98cf80e1bf42', 'LAKE MAINIT', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+INSERT INTO team_group_member_table (team_member_id, team_group_id) VALUES
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1');
+
+INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '4b3a151a-a077-486c-9dfb-e996c2c9184c'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'bf4dc226-a763-49da-be9f-606202d2c4c9'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '989dbcc2-fdfe-48c7-806a-98cf80e1bf42'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '4b3a151a-a077-486c-9dfb-e996c2c9184c'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', 'bf4dc226-a763-49da-be9f-606202d2c4c9'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '989dbcc2-fdfe-48c7-806a-98cf80e1bf42'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '4b3a151a-a077-486c-9dfb-e996c2c9184c'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'bf4dc226-a763-49da-be9f-606202d2c4c9'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '989dbcc2-fdfe-48c7-806a-98cf80e1bf42');
+
+INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_is_disabled) VALUES
+('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, false),
+('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, false),
+('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition', 'formsly premade Requisition form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
+('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, true),
+('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
+('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
+('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
+('913a09d8-88f9-4139-a039-a77394405b62', 'Cheque Reference', 'formsly premade Cheque Reference form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
+('d2e3e618-7f9b-4439-8f76-72a05a0bf305', 'Audit', 'formsly premade Audit form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
@@ -36,12 +76,12 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('8ef2c6a0-797d-4e36-8246-cfa0f783afb5', 'Normal Section 2', 2, false, '337658f1-0777-45f2-853f-b6f20551712e'),
 ('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, true, '337658f1-0777-45f2-853f-b6f20551712e'),
 
--- Order to Purchase
+-- Requisition
 ('333cd418-69d1-459b-82e4-cc67c34c2b8b', 'ID', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 2, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 3, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 
--- Sourced Order to Purchase
+-- Sourced Item
 ('2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', 'Item', 1, true, 'e5062660-9026-4629-bc2c-633826fdaa24'),
 
 -- Quotation
@@ -50,12 +90,12 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('cd7b6204-1e87-4c5b-9ce3-3d8ca5c201fb', 'Additional Charges', 3, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 ('ee8a3bc7-4253-44f7-bd7c-53b0e8871601', 'Item', 4, true, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
 
--- Receiving Inspecting Report (Purchased)
+-- Receiving Inspecting Report
 ('b79c9a66-f112-4bfa-8d5c-88267be24fd8', 'ID', 1, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
 ('39831fe4-00f3-4b5e-b840-aae8f1469841', 'Quality Check', 2, false, '5782d70a-5f6b-486c-a77f-401066afd005'),
 ('00341355-1ece-47e6-88a2-060fbab8b11a', 'Item', 3, true, '5782d70a-5f6b-486c-a77f-401066afd005'),
 
--- Receiving Inspecting Report (Sourced)
+-- Release Order
 ('1416e947-3491-436f-9b20-f0cd705607d0', 'ID', 1, false, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
 ('dacb6338-8839-4f66-ae70-2f1d3175e169', 'Quality Check', 2, false, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
 ('0d630b15-3c88-49e0-b588-1e60dd839bcb', 'Item', 3, true, '391c1b8c-db12-42ff-ad4a-4ea7680243d7'),
@@ -96,25 +136,28 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('0b4a3e53-629a-49d8-80e6-bfe1f31c0510', 'Time field', 'TIME', 10, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 -- ('5ed0f5c1-a97d-465b-ade4-758a5ae351a2', 'Slider field', 'SLIDER', 11, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 
--- Order to Purchase Form
-('eb04956c-4164-4ca6-90ee-5081783884a1', 'Parent OTP ID', 'LINK', 1, '333cd418-69d1-459b-82e4-cc67c34c2b8b', true, true),
+-- Requisition Form
+('eb04956c-4164-4ca6-90ee-5081783884a1', 'Parent Requisition ID', 'LINK', 1, '333cd418-69d1-459b-82e4-cc67c34c2b8b', true, true),
 
 ('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('c08820a5-592a-4bf9-9528-97b7ee7be94b', 'Purpose', 'TEXT', 5, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
-('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('9f55ca04-1b1d-4346-8acf-49e96c890026', 'Project Site', 'DROPDOWN', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, true),
 
--- Sourced Order to Purchase Form
+-- Sourced Item Form
 ('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 1, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 ('8c15e0f0-f360-4826-a684-5ab4ecb52009', 'Quantity', 'NUMBER', 2, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
+('4982e986-865c-4574-9767-4951b4f6c155', 'Project Site', 'DROPDOWN', 3, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 
 -- Quotation Form
-('df0cb109-e34d-498f-ac51-af2139628ac0', 'Order to Purchase ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
+('df0cb109-e34d-498f-ac51-af2139628ac0', 'Requisition ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
 ('2a43aedd-017c-4675-ad4c-00debbac7050', 'Supplier', 'DROPDOWN', 2, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Supplier Quotation', 'FILE', 3, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('039f5c31-6e9c-42ae-aa27-21c0cba12560', 'Request Send Method', 'DROPDOWN', 4, '991d9830-ae1b-4c14-bdba-6167b64f50f7', false, false),
@@ -131,8 +174,8 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('273a1161-2a86-4b96-a024-94cf4f6f4cdf', 'Price per Unit', 'NUMBER', 15, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 ('5dfbc04b-6f2d-4b55-818c-8f7031cdcdc2', 'Quantity', 'NUMBER', 16, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 
--- Receiving Inspecting Report (Purchased) Form
-('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Order to Purchase ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
+-- Receiving Inspecting Report Form
+('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Requisition ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Quotation ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('18975198-02d3-49b4-af40-232c2c915ba7', 'DR', 'FILE', 3, '39831fe4-00f3-4b5e-b840-aae8f1469841', false, false),
 ('6317b506-816f-4ce4-a083-b9a94c900446', 'SI', 'FILE', 4, '39831fe4-00f3-4b5e-b840-aae8f1469841', false, false),
@@ -140,16 +183,17 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('3ca0dbf6-800f-44e5-ba30-149dd5c211fc', 'Quantity', 'NUMBER', 6, '00341355-1ece-47e6-88a2-060fbab8b11a', true, false),
 ('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 7, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
 
--- Receiving Inspecting Report (Sourced) Form
-('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Order to Purchase ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
+-- Release Order Form
+('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Requisition ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('92cfe1b7-cce0-4632-83d6-8a03bd9a75f5', 'DR', 'FILE', 2, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
 ('a5bd44e8-1fcf-4df0-a836-37e33b1b534a', 'SI', 'FILE', 3, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
 ('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 4, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 5, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('d3d790fe-3d37-421c-91f3-e943ee5941b6', 'Receiving Status', 'TEXT', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
+('2ea7acb6-37a4-4ced-b5d2-b944c3a1de37', 'Project Site', 'TEXT', 8, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
 
 -- Cheque Reference Form
-('618770e4-40d1-4d8d-b5a0-189eca838ac7', 'Order to Purchase ID', 'LINK', 1, '5e9cf483-98dd-4b44-820d-4c020ae50279', true, true),
+('618770e4-40d1-4d8d-b5a0-189eca838ac7', 'Requisition ID', 'LINK', 1, '5e9cf483-98dd-4b44-820d-4c020ae50279', true, true),
 ('8d245864-66be-46b7-8944-cef61c86a1ce', 'Treasury Status', 'DROPDOWN', 2, '2217dcb5-0604-4455-b15a-6beb4ee4fa9f', true, false),
 ('80054b56-d390-45ed-a3c5-2ae63489721b', 'Cheque Cancelled', 'SWITCH', 3, '5ec2a535-7855-48dd-ab14-318a5344409d', false, false),
 ('6def6dcb-c1a9-4597-93ac-0287b4005618', 'Cheque Printed Date', 'DATE', 4, '5ec2a535-7855-48dd-ab14-318a5344409d', true, false),
@@ -183,7 +227,7 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('52da4c49-c855-4130-bb6f-c70f47bf21e4', 'Multiselect 3', 3, '5ef54cb5-f694-4f4e-aee5-ec228dec1da4'),
 -- ('bab0a354-4a06-4bb2-a8a2-dcdbb7f68fde', '[1,10]', 1, '5ed0f5c1-a97d-465b-ade4-758a5ae351a2');
 
--- Order to Purchase Form
+-- Requisition Form
 ('f97eb24f-53b2-452b-966e-9a2f1dfd812d', 'Cash Purchase - Advance Payment', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('6ce7fa3a-9e85-4ab1-9f3b-de931071fa26', 'Cash Purchase - Local Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 3, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
@@ -201,6 +245,14 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 -- Audit Form
 ('c252a774-c364-4a37-8563-42467ff17a9f', 'Pass', 1, '01ce24b8-780b-46af-8b15-864da9c20528'),
 ('762aace6-aa47-4ece-a6a3-dc251ded05fd', 'Fail', 2, '01ce24b8-780b-46af-8b15-864da9c20528');
+
+INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) VALUES
+('39aa91ef-7b4a-4f16-ba9c-7e78cefd90d3', 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('3be21f1a-ee76-4dce-9d94-f0c9f7224553', 'a732196f-9779-45e2-85fa-7320397e5b0a', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
+('8fa70223-807d-41eb-898b-31f16a34fb4f', '5782d70a-5f6b-486c-a77f-401066afd005', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
+('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
+('8df36e73-027a-4e04-ab51-d896e533dda5', '913a09d8-88f9-4139-a039-a77394405b62', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('2d30bb63-f28b-493b-bf06-cc31ff53eee2', 'd2e3e618-7f9b-4439-8f76-72a05a0bf305', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),

@@ -31,7 +31,7 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
-  orderToPurchaseFormMethods?: {
+  requisitionFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
   quotationFormMethods?: {
@@ -53,7 +53,7 @@ const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
-  orderToPurchaseFormMethods,
+  requisitionFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
@@ -187,7 +187,7 @@ const RequestFormFields = ({
               ...fieldRules,
               validate: {
                 checkIfZero: (value) =>
-                  (orderToPurchaseFormMethods || quotationFormMethods) &&
+                  (requisitionFormMethods || quotationFormMethods) &&
                   field.field_name === "Quantity" &&
                   value === 0
                     ? "Quantity value is required"
@@ -256,7 +256,7 @@ const RequestFormFields = ({
                   onChange(value);
 
                   if (field.field_name === "General Name")
-                    orderToPurchaseFormMethods?.onGeneralNameChange(
+                    requisitionFormMethods?.onGeneralNameChange(
                       sectionIndex,
                       value
                     );

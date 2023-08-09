@@ -1,26 +1,27 @@
 import {
-  checkOTPRequestForSourced,
   checkRequest,
+  checkRequsitionRequestForReleaseOrder,
   getAllItems,
+  getAllTeamMemberProjects,
+  getAllTeamProjects,
   getForm,
   getItemResponseForQuotation,
-  getItemResponseForRIRPurchased,
-  getItemResponseForRIRSourced,
-  getMemberProjectList,
+  getItemResponseForRIR,
+  getItemResponseForRO,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import CreateChequeReferenceRequestPage from "@/components/CreateChequeReferenceRequestPage/CreateChequeReferenceRequestPage";
-import CreateOrderToPurchaseRequestPage from "@/components/CreateOrderToPurchaseRequestPage/CreateOrderToPurchaseRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
-import CreateReceivingInspectingReportPurchasedPage from "@/components/CreateReceivingInspectingReportPurchasedPage/CreateReceivingInspectingReportPurchasedPage";
-import CreateReceivingInspectingReportSourcedPage from "@/components/CreateReceivingInspectingReportSourcedPage/CreateReceivingInspectingReportSourcedPage";
+import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
+import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
 import CreateRequestPage, {
   RequestFormValues,
 } from "@/components/CreateRequestPage/CreateRequestPage";
-import CreateSourcedOrderToPurchaseRequestPage from "@/components/CreateSourcedOrderToPurchaseRequestPage/CreateSourcedOrderToPurchaseRequestPage";
+import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
+import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
+
 import Meta from "@/components/Meta/Meta";
-import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -44,24 +45,9 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (!teamMember) throw new Error("No team member found");
 
-      if (
-        !form.form_is_for_every_member &&
-        !checkIfTwoArrayHaveAtLeastOneEqualElement(
-          teamMember.team_member_group_list,
-          form.form_group
-        )
-      ) {
-        return {
-          redirect: {
-            destination: "/403",
-            permanent: false,
-          },
-        };
-      }
-
       if (form.form_is_formsly_form) {
-        // Order to Purchase Form
-        if (form.form_name === "Order to Purchase") {
+        // Requisition Form
+        if (form.form_name === "Requisition") {
           // items
           const items = await getAllItems(supabaseClient, {
             teamId: teamId,
@@ -78,17 +64,17 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           });
 
           // projects
-          const projects = await getMemberProjectList(supabaseClient, {
-            userId: user.id,
-            teamId: teamId,
+          const projects = await getAllTeamMemberProjects(supabaseClient, {
+            teamId,
+            memberId: teamMember.team_member_id,
           });
           const projectOptions = projects.map((project, index) => {
             return {
               option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: project,
+              option_id: project.team_project_id,
               option_order: index,
-              option_value: project,
+              option_value: project.team_project_name,
             };
           });
 
@@ -114,7 +100,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ],
               },
               itemOptions,
-              otpIdSection: {
+              requisitionIdSection: {
                 ...form.form_section[0],
                 section_field: [
                   {
@@ -126,12 +112,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Sourced Order to Purchase Form,
-        else if (form.form_name === "Sourced Order to Purchase") {
-          const isRequestIdValid = await checkOTPRequestForSourced(
+        // Sourced Item Form
+        else if (form.form_name === "Sourced Item") {
+          const isRequestIdValid = await checkRequsitionRequestForReleaseOrder(
             supabaseClient,
             {
-              otpId: `${context.query.otpId}`,
+              requisitionId: `${context.query.requisitionId}`,
             }
           );
 
@@ -145,30 +131,65 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForQuotation(supabaseClient, {
-            requestId: `${context.query.otpId}`,
+            requestId: `${context.query.requisitionId}`,
           });
 
+          const itemWithDupId: Record<string, string | null> = {};
+
           const itemOptions = Object.keys(items).map((item, index) => {
+            const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
+
+            itemWithDupId[value] = items[item].id;
+
             return {
               option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: item,
               option_order: index,
-              option_value: `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`,
+              option_value: value,
+            };
+          });
+
+          const teamProjects = await getAllTeamProjects(supabaseClient, {
+            teamId,
+          });
+
+          const projectOptions = teamProjects.map((project, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[2].field_id,
+              option_id: project.team_project_name,
+              option_order: index,
+              option_value: project.team_project_name,
             };
           });
 
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_section: [
+                  {
+                    ...form.form_section[0],
+                    section_field: [
+                      ...form.form_section[0].section_field.slice(0, 2),
+                      {
+                        ...form.form_section[0].section_field[2],
+                        field_option: projectOptions,
+                      },
+                    ],
+                  },
+                ],
+              },
               itemOptions,
+              itemWithDupId,
             },
           };
         }
         // Quotation
         else if (form.form_name === "Quotation") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.otpId}`],
+            requestId: [`${context.query.requisitionId}`],
           });
 
           if (!isRequestIdValid) {
@@ -181,7 +202,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForQuotation(supabaseClient, {
-            requestId: `${context.query.otpId}`,
+            requestId: `${context.query.requisitionId}`,
           });
 
           const itemOptions = Object.keys(items).map((item, index) => {
@@ -201,11 +222,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Receiving Inspecting Report (Purchased)
-        else if (form.form_name === "Receiving Inspecting Report (Purchased)") {
+        // Receiving Inspecting Report
+        else if (form.form_name === "Receiving Inspecting Report") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
-              `${context.query.otpId}`,
+              `${context.query.requisitionId}`,
               `${context.query.quotationId}`,
             ],
           });
@@ -219,7 +240,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           }
 
-          const items = await getItemResponseForRIRPurchased(supabaseClient, {
+          const items = await getItemResponseForRIR(supabaseClient, {
             requestId: `${context.query.quotationId}`,
           });
 
@@ -244,10 +265,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Receiving Inspecting Report (Purchased)
-        else if (form.form_name === "Receiving Inspecting Report (Sourced)") {
+        // Release Order
+        else if (form.form_name === "Release Order") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.otpId}`],
+            requestId: [`${context.query.requisitionId}`],
           });
 
           if (!isRequestIdValid) {
@@ -259,30 +280,37 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           }
 
-          const items = await getItemResponseForRIRSourced(supabaseClient, {
-            requestId: `${context.query.otpId}`,
+          const items = await getItemResponseForRO(supabaseClient, {
+            requestId: `${context.query.requisitionId}`,
           });
+
+          const projectSiteList: Record<string, string> = {};
 
           const itemOptions = Object.keys(items).map((item, index) => {
             const generalName = items[item].generalName;
             const quantity = items[item].quantity;
             const unit = items[item].unit;
             const description = items[item].description;
+            const value = `${generalName} (${quantity} ${unit}) (${description.slice(
+              0,
+              -2
+            )})`;
+
+            projectSiteList[value] = items[item].projectSite;
+
             return {
               option_description: null,
               option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: item,
               option_order: index,
-              option_value: `${generalName} (${quantity} ${unit}) (${description.slice(
-                0,
-                -2
-              )})`,
+              option_value: value,
             };
           });
           return {
             props: {
               form,
               itemOptions,
+              projectSiteList,
             },
           };
         }
@@ -306,15 +334,23 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
-  otpIdSection?: RequestFormValues["sections"][0];
+  requisitionIdSection?: RequestFormValues["sections"][0];
+  itemWithDupId?: Record<string, string | null>;
+  projectSiteList?: Record<string, string>;
 };
 
-const Page = ({ form, itemOptions, otpIdSection }: Props) => {
+const Page = ({
+  form,
+  itemOptions,
+  requisitionIdSection,
+  itemWithDupId = {},
+  projectSiteList = {},
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Order to Purchase":
+      case "Requisition":
         return (
-          <CreateOrderToPurchaseRequestPage
+          <CreateRequisitionRequestPage
             itemOptions={itemOptions}
             form={{
               ...form,
@@ -330,32 +366,34 @@ const Page = ({ form, itemOptions, otpIdSection }: Props) => {
                 },
               ],
             }}
-            otpIdSection={otpIdSection}
+            requisitionIdSection={requisitionIdSection}
           />
         );
-      case "Sourced Order to Purchase":
+      case "Sourced Item":
         return (
-          <CreateSourcedOrderToPurchaseRequestPage
+          <CreateSourcedItemRequestPage
             form={form}
             itemOptions={itemOptions}
+            itemWithDupId={itemWithDupId}
           />
         );
       case "Quotation":
         return (
           <CreateQuotationRequestPage form={form} itemOptions={itemOptions} />
         );
-      case "Receiving Inspecting Report (Purchased)":
+      case "Receiving Inspecting Report":
         return (
-          <CreateReceivingInspectingReportPurchasedPage
+          <CreateReceivingInspectingReportPage
             form={form}
             itemOptions={itemOptions}
           />
         );
-      case "Receiving Inspecting Report (Sourced)":
+      case "Release Order":
         return (
-          <CreateReceivingInspectingReportSourcedPage
+          <CreateReleaseOrderPage
             form={form}
             itemOptions={itemOptions}
+            projectSiteList={projectSiteList}
           />
         );
       case "Cheque Reference":

@@ -1,16 +1,13 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   checkQuotationItemQuantity,
-  checkRIRPurchasedItemQuantity,
-  checkRIRSourcedItemQuantity,
+  checkRIRItemQuantity,
+  checkROItemQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import {
-  checkIfTwoArrayHaveAtLeastOneEqualElement,
-  generateSectionWithDuplicateList,
-} from "@/utils/arrayFunctions/arrayFunctions";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   FormStatusType,
   FormslyFormType,
@@ -37,6 +34,7 @@ import { useEffect, useRef, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
+import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -49,8 +47,8 @@ type Props = {
   isFormslyForm?: boolean;
   connectedFormIdAndGroup?: {
     formId: string;
-    formGroup: string[];
     formIsForEveryone: boolean;
+    formIsMember: boolean;
   };
   connectedRequestIDList?: FormslyFormType;
 };
@@ -66,15 +64,6 @@ const RequestPage = ({
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
-
-  const isGroupMember = connectedFormIdAndGroup
-    ? connectedFormIdAndGroup.formIsForEveryone ||
-      (teamMember &&
-        checkIfTwoArrayHaveAtLeastOneEqualElement(
-          teamMember?.team_member_group_list,
-          connectedFormIdAndGroup.formGroup
-        ))
-    : false;
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
@@ -135,7 +124,7 @@ const RequestPage = ({
 
       if (request.request_form.form_is_formsly_form && status === "APPROVED") {
         if (request.request_form.form_name === "Quotation") {
-          const otpID =
+          const requisitionID =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
@@ -143,7 +132,7 @@ const RequestPage = ({
           const warningItemList = await checkQuotationItemQuantity(
             supabaseClient,
             {
-              otpID,
+              requisitionID,
               itemFieldId: itemSection.section_field[0].field_id,
               quantityFieldId: itemSection.section_field[2].field_id,
               itemFieldList: itemSection.section_field[0].field_response,
@@ -159,7 +148,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    OTP
+                    Requisition
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -175,24 +164,20 @@ const RequestPage = ({
             return;
           }
         } else if (
-          request.request_form.form_name ===
-          "Receiving Inspecting Report (Purchased)"
+          request.request_form.form_name === "Receiving Inspecting Report"
         ) {
           const quotationId =
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
-          const warningItemList = await checkRIRPurchasedItemQuantity(
-            supabaseClient,
-            {
-              quotationId,
-              itemFieldId: itemSection.section_field[0].field_id,
-              quantityFieldId: itemSection.section_field[1].field_id,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
-            }
-          );
+          const warningItemList = await checkRIRItemQuantity(supabaseClient, {
+            quotationId,
+            itemFieldId: itemSection.section_field[0].field_id,
+            quantityFieldId: itemSection.section_field[1].field_id,
+            itemFieldList: itemSection.section_field[0].field_response,
+            quantityFieldList: itemSection.section_field[1].field_response,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -217,25 +202,19 @@ const RequestPage = ({
             });
             return;
           }
-        } else if (
-          request.request_form.form_name ===
-          "Receiving Inspecting Report (Sourced)"
-        ) {
-          const otpId =
+        } else if (request.request_form.form_name === "Release Order") {
+          const requisitionId =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
-          const warningItemList = await checkRIRSourcedItemQuantity(
-            supabaseClient,
-            {
-              otpId,
-              itemFieldId: itemSection.section_field[0].field_id,
-              quantityFieldId: itemSection.section_field[1].field_id,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
-            }
-          );
+          const warningItemList = await checkROItemQuantity(supabaseClient, {
+            requisitionId,
+            itemFieldId: itemSection.section_field[0].field_id,
+            quantityFieldId: itemSection.section_field[1].field_id,
+            itemFieldList: itemSection.section_field[0].field_response,
+            quantityFieldList: itemSection.section_field[1].field_response,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -245,7 +224,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    OTP
+                    Requisition
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -386,14 +365,15 @@ const RequestPage = ({
           />
           {connectedFormIdAndGroup &&
           connectedFormIdAndGroup.formId &&
-          requestStatus === "APPROVED" &&
-          isGroupMember ? (
+          (connectedFormIdAndGroup.formIsForEveryone ||
+            connectedFormIdAndGroup.formIsMember) &&
+          requestStatus === "APPROVED" ? (
             <Button
               onClick={() => {
                 router.push(
                   `/team-requests/forms/${
                     connectedFormIdAndGroup.formId
-                  }/create?otpId=${JSON.parse(
+                  }/create?requisitionId=${JSON.parse(
                     request.request_form.form_section[0].section_field[0]
                       .field_response[0].request_response
                   )}&quotationId=${request.request_id}`
@@ -450,12 +430,26 @@ const RequestPage = ({
           />
         ) : null}
 
-        {(request.request_form.form_name ===
-          "Receiving Inspecting Report (Purchased)" ||
-          request.request_form.form_name ===
-            "Receiving Inspecting Report (Sourced)") &&
+        {request.request_form.form_name === "Receiving Inspecting Report" &&
         request.request_form.form_is_formsly_form ? (
           <ReceivingInspectingReportSummary
+            summaryData={sectionWithDuplicateList
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
+
+        {request.request_form.form_name === "Release Order" &&
+        request.request_form.form_is_formsly_form ? (
+          <ReleaseOrderSummary
             summaryData={sectionWithDuplicateList
               .slice(2)
               .sort((a, b) =>

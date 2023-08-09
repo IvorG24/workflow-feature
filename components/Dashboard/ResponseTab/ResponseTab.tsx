@@ -1,20 +1,20 @@
 import { Box, Container, Paper } from "@mantine/core";
-import OTPSearch from "../OTPSearch";
 import RequisitionTab from "../RequisitionTab/RequisitionTab";
 import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchKeywordResponse from "./SearchKeywordResponse";
+import RequsitionSearch from "../RequisitionSearch";
 
 type ResponseTabProps = {
   selectedForm: string | null;
   selectedFormName: string | null;
-  isOTPForm: boolean;
+  isRequsitionForm: boolean;
   activeTeamId: string;
 };
 
 const ResponseTab = ({
   selectedForm,
   // selectedFormName,
-  isOTPForm,
+  isRequsitionForm,
 }: // activeTeamId,
 ResponseTabProps) => {
   // const supabaseClient = useSupabaseClient();
@@ -35,7 +35,7 @@ ResponseTabProps) => {
   //   (request) => request.request_form.form_section
   // );
 
-  // const fieldResponseData = isOTPForm
+  // const fieldResponseData = isRequsitionForm
   //   ? generateFormslyResponseData(sectionList, `${selectedFormName}`)
   //   : getRequestFormData(sectionList);
 
@@ -44,15 +44,15 @@ ResponseTabProps) => {
       {/* <LoadingOverlay visible={isLoading} overlayBlur={2} /> */}
 
       <Paper p="md" pos="relative">
-        {isOTPForm ? (
-          <OTPSearch />
+        {isRequsitionForm ? (
+          <RequsitionSearch />
         ) : (
           <SearchKeywordResponse selectedForm={selectedForm} />
         )}
       </Paper>
 
       <Box>
-        {isOTPForm ? (
+        {isRequsitionForm ? (
           <Box mt="md">
             <RequisitionTab fieldResponseData={[]} />
           </Box>
@@ -63,7 +63,7 @@ ResponseTabProps) => {
 
       {/* {fieldResponseData && fieldResponseData.length > 0 ? (
         <Box>
-          {isOTPForm ? (
+          {isRequsitionForm ? (
             <Box mt="md">
               <RequisitionTab fieldResponseData={fieldResponseData} />
             </Box>

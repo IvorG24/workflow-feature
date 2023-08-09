@@ -14,11 +14,10 @@ type Props = {
     status: "APPROVED" | "REJECTED",
     additionalInfo?: string
   ) => void;
-  isOTP?: boolean;
-  sourcedOtpForm?: {
+  isRequsition?: boolean;
+  sourcedItemForm?: {
     form_name: string;
     form_id: string;
-    form_group: string[];
     form_is_for_every_member: boolean;
   };
   requestId: string;
@@ -33,8 +32,8 @@ const RequestActionSection = ({
   openPromptDeleteModal,
   isUserSigner,
   handleUpdateRequest,
-  isOTP = false,
-  sourcedOtpForm,
+  isRequsition = false,
+  sourcedItemForm,
   requestId,
   isUserPrimarySigner,
   signer,
@@ -83,7 +82,7 @@ const RequestActionSection = ({
           signer.request_signer_status === "PENDING" &&
           requestStatus === "PENDING" && (
             <>
-              {!isOTP && (
+              {!isRequsition && (
                 <Button
                   color="green"
                   fullWidth
@@ -92,7 +91,7 @@ const RequestActionSection = ({
                   Approve Request
                 </Button>
               )}
-              {isOTP && (
+              {isRequsition && (
                 <>
                   <Button
                     color="green"
@@ -103,13 +102,13 @@ const RequestActionSection = ({
                   >
                     For Purchased
                   </Button>
-                  {sourcedOtpForm && isUserPrimarySigner && (
+                  {sourcedItemForm && isUserPrimarySigner && (
                     <Button
                       color="orange"
                       fullWidth
                       onClick={() => {
                         router.push(
-                          `/team-requests/forms/${sourcedOtpForm.form_id}/create?otpId=${requestId}`
+                          `/team-requests/forms/${sourcedItemForm.form_id}/create?requisitionId=${requestId}`
                         );
                       }}
                     >

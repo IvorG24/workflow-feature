@@ -1,4 +1,4 @@
-import { checkRIRPurchasedItemQuantity } from "@/backend/api/get";
+import { checkROItemQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -44,11 +44,13 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  projectSiteList: Record<string, string>;
 };
 
-const CreateReceivingInspectingReportPurchasedPage = ({
+const CreateReleaseOrderPage = ({
   form,
   itemOptions,
+  projectSiteList,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -103,11 +105,7 @@ const CreateReceivingInspectingReportPurchasedPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
-    );
-    setValue(
-      `sections.${0}.section_field.${1}.field_response`,
-      router.query.quotationId
+      router.query.requisitionId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -144,8 +142,8 @@ const CreateReceivingInspectingReportPurchasedPage = ({
         return;
       }
 
-      const quotationId = JSON.stringify(
-        data.sections[0].section_field[1].field_response
+      const requisitionId = JSON.stringify(
+        data.sections[0].section_field[0].field_response
       );
       const itemSection = data.sections[2];
       const tempRequestId = uuidv4();
@@ -175,16 +173,13 @@ const CreateReceivingInspectingReportPurchasedPage = ({
         });
       });
 
-      const warningItemList = await checkRIRPurchasedItemQuantity(
-        supabaseClient,
-        {
-          quotationId,
-          itemFieldId: itemSection.section_field[0].field_id,
-          quantityFieldId: itemSection.section_field[1].field_id,
-          itemFieldList,
-          quantityFieldList,
-        }
-      );
+      const warningItemList = await checkROItemQuantity(supabaseClient, {
+        requisitionId,
+        itemFieldId: itemSection.section_field[0].field_id,
+        quantityFieldId: itemSection.section_field[1].field_id,
+        itemFieldList,
+        quantityFieldList,
+      });
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
@@ -361,10 +356,15 @@ const CreateReceivingInspectingReportPurchasedPage = ({
             Number(section.section_field[1].field_response)
           );
           setValue(`sections.${index}.section_field.2.field_response`, status);
+          setValue(
+            `sections.${index}.section_field.3.field_response`,
+            projectSiteList[value]
+          );
         }
       });
     } else {
       setValue(`sections.${index}.section_field.2.field_response`, undefined);
+      setValue(`sections.${index}.section_field.3.field_response`, "");
     }
 
     const newOption = itemOptions.find(
@@ -481,4 +481,4 @@ const CreateReceivingInspectingReportPurchasedPage = ({
   );
 };
 
-export default CreateReceivingInspectingReportPurchasedPage;
+export default CreateReleaseOrderPage;

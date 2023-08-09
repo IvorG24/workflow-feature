@@ -17,7 +17,9 @@ import {
   RequestSignerTableInsert,
   RequestTableRow,
   SupplierTableInsert,
+  TeamGroupTableInsert,
   TeamMemberTableInsert,
+  TeamProjectTableInsert,
   TeamTableInsert,
   UserTableInsert,
   UserTableRow,
@@ -267,7 +269,7 @@ export const sendResetPasswordEmail = async (
   email: string
 ) => {
   await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: "http://localhost:3000/reset-password",
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
   });
 };
 
@@ -276,9 +278,9 @@ export const resetPassword = async (
   supabaseClient: SupabaseClient<Database>,
   password: string
 ) => {
-  const { data, error } = await supabaseClient.auth.updateUser({ password });
+  const { error } = await supabaseClient.auth.updateUser({ password });
   if (error) throw error;
-  return data;
+  return { error: `${error}` };
 };
 
 // Create User
@@ -641,4 +643,148 @@ export const createSupplier = async (
     .single();
   if (error) throw error;
   return data;
+};
+
+// Create Team Group
+export const createTeamGroup = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TeamGroupTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_group_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data;
+};
+
+// Create Team Project
+export const createTeamProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TeamProjectTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_project_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data;
+};
+
+// Insert team member to group
+export const insertGroupMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    groupId: string;
+    teamMemberIdList: string[];
+  }
+) => {
+  const { groupId, teamMemberIdList } = params;
+  const { data: alreadyMemberData, error: alreadyMemberError } =
+    await supabaseClient
+      .from("team_group_member_table")
+      .select("team_member_id")
+      .eq("team_group_id", groupId)
+      .in("team_member_id", [...teamMemberIdList]);
+  if (alreadyMemberError) throw alreadyMemberError;
+  const alreadyMemberId = alreadyMemberData.map(
+    (member) => member.team_member_id
+  );
+
+  const insertData: { team_member_id: string; team_group_id: string }[] = [];
+  teamMemberIdList.forEach((memberId) => {
+    if (!alreadyMemberId.includes(memberId)) {
+      insertData.push({
+        team_group_id: groupId,
+        team_member_id: memberId,
+      });
+    }
+  });
+
+  const { data, error } = await supabaseClient
+    .from("team_group_member_table")
+    .insert(insertData)
+    .select(
+      `
+        team_group_member_id,
+        team_member: team_member_id (
+          team_member_id,
+          team_member_date_created, 
+          team_member_user: team_member_user_id(
+            user_id, 
+            user_first_name, 
+            user_last_name,
+            user_avatar, 
+            user_email
+          )
+        )
+      `
+    );
+  if (error) throw error;
+
+  return {
+    data,
+    count: insertData.length,
+  };
+};
+
+// Insert team member to project
+export const insertProjectMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    teamMemberIdList: string[];
+  }
+) => {
+  const { projectId, teamMemberIdList } = params;
+  const { data: alreadyMemberData, error: alreadyMemberError } =
+    await supabaseClient
+      .from("team_project_member_table")
+      .select("team_member_id")
+      .eq("team_project_id", projectId)
+      .in("team_member_id", [...teamMemberIdList]);
+  if (alreadyMemberError) throw alreadyMemberError;
+  const alreadyMemberId = alreadyMemberData.map(
+    (member) => member.team_member_id
+  );
+
+  const insertData: { team_member_id: string; team_project_id: string }[] = [];
+  teamMemberIdList.forEach((memberId) => {
+    if (!alreadyMemberId.includes(memberId)) {
+      insertData.push({
+        team_project_id: projectId,
+        team_member_id: memberId,
+      });
+    }
+  });
+
+  const { data, error } = await supabaseClient
+    .from("team_project_member_table")
+    .insert(insertData)
+    .select(
+      `
+        team_project_member_id,
+        team_member: team_member_id (
+          team_member_id,
+          team_member_date_created, 
+          team_member_user: team_member_user_id(
+            user_id, 
+            user_first_name, 
+            user_last_name,
+            user_avatar, 
+            user_email
+          )
+        )
+      `
+    );
+  if (error) throw error;
+
+  return {
+    data,
+    count: insertData.length,
+  };
 };

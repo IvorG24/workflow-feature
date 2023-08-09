@@ -35,13 +35,13 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
-  otpIdSection?: RequestFormValues["sections"][0];
+  requisitionIdSection?: RequestFormValues["sections"][0];
 };
 
-const CreateOrderToPurchaseRequestPage = ({
+const CreateRequisitionRequestPage = ({
   form,
   itemOptions,
-  otpIdSection,
+  requisitionIdSection,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -125,7 +125,7 @@ const CreateOrderToPurchaseRequestPage = ({
 
       const newData = {
         sections: [
-          otpIdSection as RequestFormValues["sections"][0],
+          requisitionIdSection as RequestFormValues["sections"][0],
           data.sections[0],
           ...newSections,
         ],
@@ -147,6 +147,7 @@ const CreateOrderToPurchaseRequestPage = ({
       });
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
+    
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -334,10 +335,10 @@ const CreateOrderToPurchaseRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    orderToPurchaseFormMethods={{
+                    requisitionFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                     }}
-                    formslyFormName="Order to Purchase"
+                    formslyFormName="Requisition"
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -364,4 +365,4 @@ const CreateOrderToPurchaseRequestPage = ({
   );
 };
 
-export default CreateOrderToPurchaseRequestPage;
+export default CreateRequisitionRequestPage;

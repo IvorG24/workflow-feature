@@ -1,10 +1,11 @@
-import { checkOrderToPurchaseFormStatus } from "@/backend/api/get";
+import { checkRequisitionFormStatus } from "@/backend/api/get";
 import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
   SupplierTableRow,
+  TeamGroupTableRow,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
@@ -39,7 +40,7 @@ type Props = {
   form: FormType;
   suppliers: SupplierTableRow[];
   supplierListCount: number;
-  teamGroupList: string[];
+  teamGroupList: TeamGroupTableRow[];
 };
 
 const QuotationFormPage = ({
@@ -78,7 +79,9 @@ const QuotationFormPage = ({
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [switchValue, setSwitchValue] = useState(false);
 
-  const [initialRequester, setInitialRequester] = useState(form.form_group);
+  const [initialRequester, setInitialRequester] = useState(
+    form.form_team_group.map((group) => group.team_group.team_group_id)
+  );
   const [initialGroupBoolean, setInitialGroupBoolean] = useState(
     form.form_is_for_every_member
   );
@@ -94,7 +97,9 @@ const QuotationFormPage = ({
     isForEveryone: boolean;
   }>({
     defaultValues: {
-      groupList: form.form_group,
+      groupList: form.form_team_group.map(
+        (group) => group.team_group.team_group_id
+      ),
       isForEveryone: form.form_is_for_every_member,
     },
   });
@@ -195,7 +200,7 @@ const QuotationFormPage = ({
 
   const handleFormVisibilityRestriction = async () => {
     try {
-      const result = await checkOrderToPurchaseFormStatus(supabaseClient, {
+      const result = await checkRequisitionFormStatus(supabaseClient, {
         teamId: team.team_id,
         formId: `${formId}`,
       });
@@ -284,8 +289,16 @@ const QuotationFormPage = ({
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>
         <Space h="xl" />
+
         <FormProvider {...requesterMethods}>
-          <GroupSection teamGroupList={teamGroupList} />
+          <GroupSection
+            teamGroupList={teamGroupList.map((group) => {
+              return {
+                label: group.team_group_name,
+                value: group.team_group_id,
+              };
+            })}
+          />
         </FormProvider>
 
         {!isEqual(initialRequester, watchGroup) ||
