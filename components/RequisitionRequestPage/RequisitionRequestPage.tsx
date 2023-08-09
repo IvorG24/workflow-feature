@@ -292,7 +292,7 @@ const RequisitionRequestPage = ({
 
         <RequisitionSummary
           summaryData={sectionWithDuplicateList
-            .slice(2)
+            .slice(1)
             .sort((a, b) =>
               `${a.section_field[0].field_response?.request_response}` >
               `${b.section_field[0].field_response?.request_response}`

@@ -191,14 +191,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_required: true,
           field_is_read_only: true,
         },
-        {
-          field_name: "Project Site",
-          field_type: "DROPDOWN",
-          field_order: 11,
-          field_section_id: requisitionItemSectionId,
-          field_is_required: false,
-          field_is_read_only: true,
-        },
       ],
       option: [
         {

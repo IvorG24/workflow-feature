@@ -14,9 +14,7 @@ import CreateChequeReferenceRequestPage from "@/components/CreateChequeReference
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
-import CreateRequestPage, {
-  RequestFormValues,
-} from "@/components/CreateRequestPage/CreateRequestPage";
+import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
 
@@ -83,31 +81,24 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ...form,
                 form_section: [
                   {
-                    ...form.form_section[1],
+                    ...form.form_section[0],
                     section_field: [
                       {
-                        ...form.form_section[1].section_field[0],
+                        ...form.form_section[0].section_field[0],
                         field_option: projectOptions,
                       },
-                      {
-                        ...form.form_section[1].section_field[1],
-                      },
-                      ...form.form_section[1].section_field.slice(2),
+                      ...form.form_section[0].section_field.slice(1),
                     ],
                   },
-                  form.form_section[2],
+                  {
+                    ...form.form_section[1],
+                    section_field: [
+                      ...form.form_section[1].section_field.slice(0, 5),
+                    ],
+                  },
                 ],
               },
               itemOptions,
-              requisitionIdSection: {
-                ...form.form_section[0],
-                section_field: [
-                  {
-                    ...form.form_section[0].section_field[0],
-                    field_response: "null",
-                  },
-                ],
-              },
             },
           };
         }
@@ -334,38 +325,15 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
-  requisitionIdSection?: RequestFormValues["sections"][0];
   projectSiteList?: Record<string, string>;
 };
 
-const Page = ({
-  form,
-  itemOptions,
-  requisitionIdSection,
-  projectSiteList = {},
-}: Props) => {
+const Page = ({ form, itemOptions, projectSiteList = {} }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
         return (
-          <CreateRequisitionRequestPage
-            itemOptions={itemOptions}
-            form={{
-              ...form,
-              form_section: [
-                {
-                  ...form.form_section[0],
-                },
-                {
-                  ...form.form_section[1],
-                  section_field: [
-                    ...form.form_section[1].section_field.slice(0, 5),
-                  ],
-                },
-              ],
-            }}
-            requisitionIdSection={requisitionIdSection}
-          />
+          <CreateRequisitionRequestPage form={form} itemOptions={itemOptions} />
         );
       case "Sourced Item":
         return (

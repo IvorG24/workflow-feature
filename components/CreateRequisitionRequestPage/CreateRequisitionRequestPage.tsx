@@ -35,14 +35,9 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
-  requisitionIdSection?: RequestFormValues["sections"][0];
 };
 
-const CreateRequisitionRequestPage = ({
-  form,
-  itemOptions,
-  requisitionIdSection,
-}: Props) => {
+const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -124,11 +119,7 @@ const CreateRequisitionRequestPage = ({
       });
 
       const newData = {
-        sections: [
-          requisitionIdSection as RequestFormValues["sections"][0],
-          data.sections[0],
-          ...newSections,
-        ],
+        sections: [data.sections[0], ...newSections],
       };
 
       const request = await createRequest(supabaseClient, {
@@ -147,7 +138,6 @@ const CreateRequisitionRequestPage = ({
       });
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
-    
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -202,9 +192,7 @@ const CreateRequisitionRequestPage = ({
       };
     });
     replaceSection([
-      {
-        ...form.form_section[0],
-      },
+      form.form_section[0],
       {
         ...form.form_section[1],
         section_field: newFields,

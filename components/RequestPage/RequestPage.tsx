@@ -35,6 +35,7 @@ import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
+import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -427,6 +428,23 @@ const RequestPage = ({
             additionalChargeData={request.request_form.form_section[2].section_field.filter(
               (field) => field.field_response.length !== 0
             )}
+          />
+        ) : null}
+
+        {request.request_form.form_name === "Sourced Item" &&
+        request.request_form.form_is_formsly_form ? (
+          <SourcedItemSummary
+            summaryData={sectionWithDuplicateList
+              .slice(1)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
           />
         ) : null}
 

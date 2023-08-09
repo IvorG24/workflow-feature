@@ -1591,7 +1591,7 @@ export const getItemResponseForQuotation = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 5) {
+      if (response.request_response_field.field_order > 4) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
             name: "",
