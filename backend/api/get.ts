@@ -1370,11 +1370,12 @@ export const getFormIDForRequsition = async (
       `
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Release Order, form_name.eq.Sourced Item"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Sourced Item"
     )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
     .eq("form_is_formsly_form", true);
+
   if (error) throw error;
 
   const formattedData = data as unknown as {
@@ -1580,7 +1581,6 @@ export const getItemResponseForQuotation = async (
       description: string;
       quantity: number;
       unit: string;
-      id: string | null;
     }
   > = {};
   const idForNullDuplicationId = uuidv4();
@@ -1598,7 +1598,6 @@ export const getItemResponseForQuotation = async (
             description: "",
             quantity: 0,
             unit: "",
-            id: null,
           };
         }
 
@@ -1606,8 +1605,6 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].name = JSON.parse(
             response.request_response
           );
-          options[duplicatableSectionId].id =
-            response.request_response_duplicatable_section_id;
         } else if (fieldName === "Unit of Measurement") {
           options[duplicatableSectionId].unit = JSON.parse(
             response.request_response
@@ -1717,10 +1714,8 @@ export const getItemResponseForRO = async (
   const options: Record<
     string,
     {
-      generalName: string;
-      unit: string;
+      item: string;
       quantity: number;
-      description: string;
       projectSite: string;
     }
   > = {};
@@ -1732,23 +1727,17 @@ export const getItemResponseForRO = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 5) {
+      if (response.request_response_field.field_order > 1) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
-            generalName: "",
-            unit: "",
+            item: "",
             quantity: 0,
-            description: "",
             projectSite: "",
           };
         }
 
-        if (fieldName === "General Name") {
-          options[duplicatableSectionId].generalName = JSON.parse(
-            response.request_response
-          );
-        } else if (fieldName === "Unit of Measurement") {
-          options[duplicatableSectionId].unit = JSON.parse(
+        if (fieldName === "Item") {
+          options[duplicatableSectionId].item = JSON.parse(
             response.request_response
           );
         } else if (fieldName === "Quantity") {
@@ -1759,11 +1748,6 @@ export const getItemResponseForRO = async (
           options[duplicatableSectionId].projectSite = JSON.parse(
             response.request_response
           );
-        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
-        } else {
-          options[duplicatableSectionId].description += `${
-            response.request_response_field.field_name
-          }: ${JSON.parse(response.request_response)}, `;
         }
       }
     }

@@ -107,6 +107,10 @@ const CreateReleaseOrderPage = ({
       `sections.${0}.section_field.${0}.field_response`,
       router.query.requisitionId
     );
+    setValue(
+      `sections.${0}.section_field.${1}.field_response`,
+      router.query.sourcedItemId
+    );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {

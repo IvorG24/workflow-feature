@@ -14,6 +14,8 @@ type Props = {
   setShowRequisitionTable: Dispatch<SetStateAction<boolean>>;
   showQuotationTable: boolean;
   setShowQuotationTable: Dispatch<SetStateAction<boolean>>;
+  showSourcedItemTable: boolean;
+  setShowSourcedItemTable: Dispatch<SetStateAction<boolean>>;
   showRIRTable: boolean;
   setShowRIRTable: Dispatch<SetStateAction<boolean>>;
   showReleaseOrderTable: boolean;
@@ -24,6 +26,8 @@ type Props = {
   setShowRequisitionColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showQuotationColumnList: ShowColumnList;
   setShowQuotationColumnList: Dispatch<SetStateAction<ShowColumnList>>;
+  showSourcedItemColumnList: ShowColumnList;
+  setShowSourcedItemColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showRIRColumnList: ShowColumnList;
   setShowRIRColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showReleaseOrderColumnList: ShowColumnList;
@@ -45,6 +49,8 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowRequisitionColumnList,
     showQuotationTable,
     setShowQuotationTable,
+    showSourcedItemTable,
+    setShowSourcedItemTable,
     showQuotationColumnList,
     setShowQuotationColumnList,
     showRIRTable,
@@ -67,6 +73,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     defaultValue: {
       showRequisitionTable,
       showQuotationTable,
+      showSourcedItemTable,
       showRIRTable,
       showChequeReferenceTable,
       showReleaseOrderTable,
@@ -82,6 +89,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setLocalFilterSettings({
       showRequisitionTable,
       showQuotationTable,
+      showSourcedItemTable,
       showRIRTable,
       showChequeReferenceTable,
       showReleaseOrderTable,
@@ -99,6 +107,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     const {
       showRequisitionTable,
       showQuotationTable,
+      showSourcedItemTable,
       showRIRTable,
       showChequeReferenceTable,
       showReleaseOrderTable,
@@ -111,6 +120,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
 
     setShowRequisitionTable(showRequisitionTable);
     setShowQuotationTable(showQuotationTable);
+    setShowSourcedItemTable(showSourcedItemTable);
     setShowRIRTable(showRIRTable);
     setShowReleaseOrderTable(showReleaseOrderTable);
     setShowChequeReferenceTable(showChequeReferenceTable);

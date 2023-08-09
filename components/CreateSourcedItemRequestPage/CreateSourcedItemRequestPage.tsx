@@ -1,9 +1,9 @@
 import { checkQuotationItemQuantity } from "@/backend/api/get";
-import { splitParentRequisition } from "@/backend/api/update";
+import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
+import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
@@ -25,7 +25,7 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -43,26 +43,17 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
-  itemWithDupId: Record<string, string | null>;
 };
 
-const CreateSourcedItemRequestPage = ({
-  form,
-  itemOptions,
-  itemWithDupId,
-}: Props) => {
+const CreateSourcedItemRequestPage = ({ form, itemOptions }: Props) => {
   const router = useRouter();
+  const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
-  const team = useActiveTeam();
-  const user = useUserProfile();
 
   const requestorProfile = useUserProfile();
 
   const { setIsLoading } = useLoadingActions();
-
-  const [availableItems, setAvailableItems] =
-    useState<OptionTableRow[]>(itemOptions);
 
   const formDetails = {
     form_name: form.form_name,
@@ -70,6 +61,10 @@ const CreateSourcedItemRequestPage = ({
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
+  const signerList = form.form_signer.map((signer) => ({
+    ...signer,
+    signer_action: signer.signer_action.toUpperCase(),
+  }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, setValue, control, getValues } = requestFormMethods;
@@ -78,7 +73,6 @@ const CreateSourcedItemRequestPage = ({
     insert: addSection,
     remove: removeSection,
     replace: replaceSection,
-    update: updateSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -86,8 +80,9 @@ const CreateSourcedItemRequestPage = ({
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[0].section_field.map((field, index) => {
-      if (index === 0) {
+
+    const newFields = form.form_section[1].section_field.map((field) => {
+      if (field.field_name === "Item") {
         return {
           ...field,
           field_option: itemOptions,
@@ -97,8 +92,9 @@ const CreateSourcedItemRequestPage = ({
       }
     });
     replaceSection([
+      form.form_section[0],
       {
-        ...form.form_section[0],
+        ...form.form_section[1],
         section_field: newFields,
       },
     ]);
@@ -112,18 +108,37 @@ const CreateSourcedItemRequestPage = ({
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
-      const requisitionID = router.query.requisitionId;
-      if (typeof requisitionID !== "string") return;
-
       setIsLoading(true);
 
-      const itemSection = data.sections[0];
+      const requisitionID = JSON.stringify(
+        data.sections[0].section_field[0].field_response
+      );
+
+      const itemSection = data.sections[1];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.forEach((section) => {
+      const mergedSection: Section[] = [];
+      const itemNameList: string[] = [];
+
+      data.sections.slice(1).forEach((section) => {
+        const itemIndex = itemNameList.indexOf(
+          `${section.section_field[0].field_response}`
+        );
+        if (itemIndex === -1) {
+          mergedSection.push(section);
+          itemNameList.push(`${section.section_field[0].field_response}`);
+        } else {
+          const sum =
+            Number(mergedSection[itemIndex].section_field[1].field_response) +
+            Number(section.section_field[1].field_response);
+          mergedSection[itemIndex].section_field[1].field_response = sum;
+        }
+      });
+
+      mergedSection.forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({
@@ -175,22 +190,48 @@ const CreateSourcedItemRequestPage = ({
           ),
         });
       } else {
-        const isSplitted = await splitParentRequisition(supabaseClient, {
-          requisitionID,
+        const mergedSectionInput: Section[] = [];
+        const itemNameListInput: string[] = [];
+
+        const sectionData = getValues("sections");
+
+        sectionData.slice(1).forEach((section) => {
+          const inputIndex = itemNameListInput.indexOf(
+            `${section.section_field[0].field_response}+${section.section_field[2].field_response}`
+          );
+
+          if (inputIndex === -1) {
+            mergedSectionInput.push(section);
+            itemNameListInput.push(
+              `${section.section_field[0].field_response}+${section.section_field[2].field_response}`
+            );
+          } else {
+            const sum =
+              Number(
+                mergedSectionInput[inputIndex].section_field[1].field_response
+              ) + Number(section.section_field[1].field_response);
+            mergedSectionInput[inputIndex].section_field[1].field_response =
+              sum;
+          }
+        });
+
+        const request = await createRequest(supabaseClient, {
+          requestFormValues: {
+            sections: [data.sections[0], ...mergedSectionInput],
+          },
+          formId,
           teamMemberId: teamMember.team_member_id,
-          data,
-          signerFullName: `${user?.user_first_name} ${user?.user_last_name}`,
-          teamId: team.team_id,
-          itemWithDupId,
+          signers: form.form_signer,
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
         });
 
         notifications.show({
-          message: `Requisition request ${
-            isSplitted ? "splitted" : "approved"
-          }.`,
+          message: "Request created.",
           color: "green",
         });
-        router.push(`/team-requests/requests/${requisitionID}`);
+        router.push(`/team-requests/requests/${request.request_id}`);
       }
     } catch (e) {
       notifications.show({
@@ -203,17 +244,6 @@ const CreateSourcedItemRequestPage = ({
   };
 
   const handleDuplicateSection = (sectionId: string) => {
-    if (
-      availableItems.length === 0 ||
-      formSections.length === itemOptions.length
-    ) {
-      notifications.show({
-        message: "No available item.",
-        color: "orange",
-      });
-      return;
-    }
-
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
@@ -223,17 +253,18 @@ const CreateSourcedItemRequestPage = ({
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
-        (field, index) => {
-          if (index === 0) {
+        (field) => {
+          if (field.field_name === "Item") {
+            return {
+              ...field,
+              field_option: itemOptions,
+              field_section_duplicatable_id: sectionDuplicatableId,
+            };
+          } else {
             return {
               ...field,
               field_section_duplicatable_id: sectionDuplicatableId,
-              field_option: availableItems.sort((a, b) => {
-                return a.option_order - b.option_order;
-              }),
             };
-          } else {
-            return field;
           }
         }
       );
@@ -254,110 +285,8 @@ const CreateSourcedItemRequestPage = ({
     );
 
     if (sectionMatchIndex) {
-      if (formSections[sectionMatchIndex].section_field[0].field_response) {
-        const option = formSections[
-          sectionMatchIndex
-        ].section_field[0].field_option.find(
-          (fieldOption) =>
-            fieldOption.option_value ===
-            formSections[sectionMatchIndex].section_field[0].field_response
-        ) as OptionTableRow;
-
-        if (option) {
-          setAvailableItems((prev) => {
-            return [...prev, option];
-          });
-
-          const sectionList = getValues(`sections`);
-          const itemSectionList = sectionList;
-
-          itemSectionList.forEach((section, sectionIndex) => {
-            if (sectionIndex !== sectionMatchIndex) {
-              updateSection(sectionIndex, {
-                ...section,
-                section_field: [
-                  {
-                    ...section.section_field[0],
-                    field_option: [
-                      ...section.section_field[0].field_option,
-                      option,
-                    ].sort((a, b) => {
-                      return a.option_order - b.option_order;
-                    }),
-                  },
-                  ...section.section_field.slice(1),
-                ],
-              });
-            }
-          });
-        }
-      }
-
       removeSection(sectionMatchIndex);
       return;
-    }
-  };
-
-  const handleItemChange = async (
-    index: number,
-    value: string | null,
-    prevValue: string | null
-  ) => {
-    const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList;
-
-    if (value) {
-      setAvailableItems((prev) =>
-        prev.filter((item) => item.option_value !== value)
-      );
-      itemSectionList.forEach((section, sectionIndex) => {
-        if (sectionIndex !== index) {
-          updateSection(sectionIndex, {
-            ...section,
-            section_field: [
-              {
-                ...section.section_field[0],
-                field_option: [
-                  ...section.section_field[0].field_option.filter(
-                    (option) => option.option_value !== value
-                  ),
-                ],
-              },
-              ...section.section_field.slice(1),
-            ],
-          });
-        }
-      });
-    }
-
-    const newOption = itemOptions.find(
-      (option) => option.option_value === prevValue
-    );
-    if (newOption) {
-      setAvailableItems((prev) => {
-        return [...prev, newOption];
-      });
-      itemSectionList.forEach((section, sectionIndex) => {
-        if (sectionIndex !== index) {
-          updateSection(sectionIndex, {
-            ...section,
-            section_field: [
-              {
-                ...section.section_field[0],
-                field_option: [
-                  ...section.section_field[0].field_option.filter(
-                    (option) => option.option_value !== value
-                  ),
-                  newOption,
-                ].sort((a, b) => {
-                  return a.option_order - b.option_order;
-                }),
-              },
-              ...section.section_field.slice(1),
-            ],
-          });
-        }
-      });
     }
   };
 
@@ -383,9 +312,8 @@ const CreateSourcedItemRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Quotation"
+                    formslyFormName="Sourced Item"
                     onRemoveSection={handleRemoveSection}
-                    quotationFormMethods={{ onItemChange: handleItemChange }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -403,7 +331,7 @@ const CreateSourcedItemRequestPage = ({
                 </Box>
               );
             })}
-
+            <RequestFormSigner signerList={signerList} />
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

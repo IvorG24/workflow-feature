@@ -60,9 +60,6 @@ const RequisitionRequestPage = ({
   const user = useUserProfile();
 
   const [requestStatus, setRequestStatus] = useState(request.request_status);
-  const [requestAdditionalInfo, setRequestAdditionalInfo] = useState(
-    request.request_additional_info
-  );
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -103,10 +100,7 @@ const RequisitionRequestPage = ({
     setRequestStatus(request.request_status);
   }, [request.request_status]);
 
-  const handleUpdateRequest = async (
-    status: "APPROVED" | "REJECTED",
-    additionalInfo?: string
-  ) => {
+  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       setIsLoading(true);
       const signer = isUserSigner;
@@ -130,15 +124,10 @@ const RequisitionRequestPage = ({
         formName: request.request_form.form_name,
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
-        additionalInfo: additionalInfo,
       });
 
       if (signer.signer_is_primary_signer) {
         setRequestStatus(status);
-      }
-
-      if (additionalInfo) {
-        setRequestAdditionalInfo(additionalInfo);
       }
 
       setSignerList((prev) =>
@@ -247,30 +236,7 @@ const RequisitionRequestPage = ({
           {requestStatus === "APPROVED" ? (
             <Group>
               {connectedForm.map((form) => {
-                if (
-                  (form.form_is_for_every_member || form.form_is_member) &&
-                  requestAdditionalInfo === "AVAILABLE_INTERNALLY" &&
-                  form.form_name === "Release Order"
-                ) {
-                  return (
-                    <Button
-                      key={form.form_id}
-                      onClick={() =>
-                        router.push(
-                          `/team-requests/forms/${form.form_id}/create?requisitionId=${request.request_id}`
-                        )
-                      }
-                      sx={{ flex: 1 }}
-                    >
-                      Create Release Order
-                    </Button>
-                  );
-                } else if (
-                  (form.form_is_for_every_member || form.form_is_member) &&
-                  requestAdditionalInfo === "FOR_PURCHASED" &&
-                  form.form_name !== "Release Order" &&
-                  form.form_name !== "Sourced Item"
-                ) {
+                if (form.form_is_for_every_member || form.form_is_member) {
                   return (
                     <Button
                       key={form.form_id}
@@ -348,12 +314,6 @@ const RequisitionRequestPage = ({
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
-            isRequsition
-            sourcedItemForm={connectedForm.find(
-              (form) => form.form_name === "Sourced Item"
-            )}
-            requestId={request.request_id}
-            isUserPrimarySigner={Boolean(isUserPrimarySigner)}
             signer={
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }

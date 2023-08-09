@@ -49,6 +49,7 @@ type Props = {
     formId: string;
     formIsForEveryone: boolean;
     formIsMember: boolean;
+    formName: string;
   };
   connectedRequestIDList?: FormslyFormType;
 };
@@ -93,11 +94,6 @@ const RequestPage = ({
   const isUserSigner = signerList.find(
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
-  );
-  const isUserPrimarySigner = signerList.find(
-    (signer) =>
-      signer.signer_team_member.team_member_id === teamMember?.team_member_id &&
-      signer.signer_is_primary_signer
   );
 
   const originalSectionList = request.request_form.form_section;
@@ -376,12 +372,16 @@ const RequestPage = ({
                   }/create?requisitionId=${JSON.parse(
                     request.request_form.form_section[0].section_field[0]
                       .field_response[0].request_response
-                  )}&quotationId=${request.request_id}`
+                  )}&${
+                    connectedFormIdAndGroup.formName === "Release Order"
+                      ? "sourcedItem"
+                      : "quotation"
+                  }Id=${request.request_id}`
                 );
               }}
               sx={{ flex: 1 }}
             >
-              Create Receiving Inspecting Report
+              Create {connectedFormIdAndGroup.formName}
             </Button>
           ) : null}
         </Group>
@@ -474,8 +474,6 @@ const RequestPage = ({
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
-            requestId={request.request_id}
-            isUserPrimarySigner={Boolean(isUserPrimarySigner)}
             signer={
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }

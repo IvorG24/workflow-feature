@@ -1,6 +1,5 @@
 import {
   checkRequest,
-  checkRequsitionRequestForReleaseOrder,
   getAllItems,
   getAllTeamMemberProjects,
   getAllTeamProjects,
@@ -114,12 +113,9 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         }
         // Sourced Item Form
         else if (form.form_name === "Sourced Item") {
-          const isRequestIdValid = await checkRequsitionRequestForReleaseOrder(
-            supabaseClient,
-            {
-              requisitionId: `${context.query.requisitionId}`,
-            }
-          );
+          const isRequestIdValid = await checkRequest(supabaseClient, {
+            requestId: [`${context.query.requisitionId}`],
+          });
 
           if (!isRequestIdValid) {
             return {
@@ -134,12 +130,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             requestId: `${context.query.requisitionId}`,
           });
 
-          const itemWithDupId: Record<string, string | null> = {};
-
           const itemOptions = Object.keys(items).map((item, index) => {
             const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
-
-            itemWithDupId[value] = items[item].id;
 
             return {
               option_description: null,
@@ -157,7 +149,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           const projectOptions = teamProjects.map((project, index) => {
             return {
               option_description: null,
-              option_field_id: form.form_section[0].section_field[2].field_id,
+              option_field_id: form.form_section[1].section_field[2].field_id,
               option_id: project.team_project_name,
               option_order: index,
               option_value: project.team_project_name,
@@ -169,12 +161,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               form: {
                 ...form,
                 form_section: [
+                  form.form_section[0],
                   {
-                    ...form.form_section[0],
+                    ...form.form_section[1],
                     section_field: [
-                      ...form.form_section[0].section_field.slice(0, 2),
+                      ...form.form_section[1].section_field.slice(0, 2),
                       {
-                        ...form.form_section[0].section_field[2],
+                        ...form.form_section[1].section_field[2],
                         field_option: projectOptions,
                       },
                     ],
@@ -182,11 +175,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ],
               },
               itemOptions,
-              itemWithDupId,
             },
           };
         }
-        // Quotation
+        // Quotation Form
         else if (form.form_name === "Quotation") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.requisitionId}`],
@@ -222,7 +214,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Receiving Inspecting Report
+        // Receiving Inspecting Report Form
         else if (form.form_name === "Receiving Inspecting Report") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [
@@ -247,6 +239,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           const regex = /\(([^()]+)\)/g;
           const itemOptions = Object.keys(items).map((item, index) => {
             const result = items[item].item.match(regex);
+
             const value =
               result &&
               items[item].item.replace(result[0], `(${items[item].quantity})`);
@@ -265,7 +258,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Release Order
+        // Release Order Form
         else if (form.form_name === "Release Order") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.requisitionId}`],
@@ -281,20 +274,27 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForRO(supabaseClient, {
-            requestId: `${context.query.requisitionId}`,
+            requestId: `${context.query.sourcedItemId}`,
           });
 
           const projectSiteList: Record<string, string> = {};
 
+          const regex = /\(([^()]+)\)/g;
           const itemOptions = Object.keys(items).map((item, index) => {
-            const generalName = items[item].generalName;
+            const itemName = items[item].item;
             const quantity = items[item].quantity;
-            const unit = items[item].unit;
-            const description = items[item].description;
-            const value = `${generalName} (${quantity} ${unit}) (${description.slice(
-              0,
-              -2
-            )})`;
+            const projectSite = items[item].projectSite;
+
+            const matches = regex.exec(itemName);
+            const unit = matches && matches[1].replace(/\d+/g, "").trim();
+
+            const replace = items[item].item.match(regex);
+            if (!replace) return;
+
+            const value = `${itemName.replace(
+              replace[0],
+              `(${quantity} ${unit}) (${projectSite})`
+            )} `;
 
             projectSiteList[value] = items[item].projectSite;
 
@@ -335,7 +335,6 @@ type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
   requisitionIdSection?: RequestFormValues["sections"][0];
-  itemWithDupId?: Record<string, string | null>;
   projectSiteList?: Record<string, string>;
 };
 
@@ -343,7 +342,6 @@ const Page = ({
   form,
   itemOptions,
   requisitionIdSection,
-  itemWithDupId = {},
   projectSiteList = {},
 }: Props) => {
   const formslyForm = () => {
@@ -371,11 +369,7 @@ const Page = ({
         );
       case "Sourced Item":
         return (
-          <CreateSourcedItemRequestPage
-            form={form}
-            itemOptions={itemOptions}
-            itemWithDupId={itemWithDupId}
-          />
+          <CreateSourcedItemRequestPage form={form} itemOptions={itemOptions} />
         );
       case "Quotation":
         return (

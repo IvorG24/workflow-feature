@@ -128,14 +128,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ],
       field: [
         {
-          field_name: "Parent Requisition ID",
-          field_type: "LINK",
-          field_order: 1,
-          field_section_id: requisitionIdSectionId,
-          field_is_required: true,
-          field_is_read_only: true,
-        },
-        {
           field_name: "Project Name",
           field_type: "DROPDOWN",
           field_order: 2,
@@ -899,9 +891,11 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
 };
 
 export const FORMSLY_GROUP = [
-  "WAREHOUSE PROCESSOR",
-  "ACCOUNTING PROCESSOR",
-  "WAREHOUSE RECEIVER",
+  "OPERATIONS/ENGINEERING",
+  "PURCHASER",
+  "SITE WAREHOUSE",
+  "LEAD INVENTORY CONTROLLER",
+  "WAREHOUSE CORPORATE SUPPORT LEAD",
   "TREASURY PROCESSOR",
   "AUDIT PROCESSOR",
 ];
@@ -1026,7 +1020,6 @@ export const ITEM_UNIT_CHOICES = [
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
-  "Parent Requisition ID",
   "Project Name",
   "Type",
   "Date Needed",
