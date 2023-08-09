@@ -27,6 +27,7 @@
     "@types/react": "18.2.6",
     "@types/react-dom": "18.2.4",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
+    "axios": "^1.4.0",
     "chart.js": "^4.3.0",
     "compressorjs": "^1.2.1",
     "cookies-next": "^2.1.1",
@@ -36,6 +37,7 @@
     "mantine-datatable": "^2.5.2",
     "moment": "^2.29.4",
     "next": "13.4.2",
+    "nodemailer": "^6.9.4",
     "react": "18.2.0",
     "react-beforeunload": "^2.5.3",
     "react-chartjs-2": "^5.2.0",
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.14.194",
+    "@types/nodemailer": "^6.4.9",
     "@types/react-beforeunload": "^2.1.1",
     "@types/react-signature-canvas": "^1.0.2",
     "@types/validator": "^13.7.17",
