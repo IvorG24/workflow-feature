@@ -1756,19 +1756,17 @@ export const getItemResponseForRO = async (
   return options;
 };
 
-// Check if the approving or creating quotation item quantity are less than the requisition quantity
-export const checkQuotationItemQuantity = async (
+// Check if the approving or creating quotation or sourced item quantity are less than the requisition quantity
+export const checkRequisitionQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requisitionID: string;
-    itemFieldId: string;
-    quantityFieldId: string;
     itemFieldList: RequestResponseTableRow[];
     quantityFieldList: RequestResponseTableRow[];
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_quotation_item_quantity", { input_data: params })
+    .rpc("check_requisition_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;
@@ -1800,7 +1798,7 @@ export const checkRIRItemQuantity = async (
 export const checkROItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    requisitionId: string;
+    sourcedItemId: string;
     itemFieldId: string;
     quantityFieldId: string;
     itemFieldList: RequestResponseTableRow[];

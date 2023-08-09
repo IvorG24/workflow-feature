@@ -1158,7 +1158,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
-CREATE FUNCTION check_quotation_item_quantity(
+CREATE FUNCTION check_requisition_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1166,13 +1166,11 @@ RETURNS JSON AS $$
     plv8.subtransaction(function(){
         const {
         requisitionID,
-        itemFieldId,
-        quantityFieldId,
         itemFieldList,
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionID}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Quotation';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionID}' AND form_table.form_is_formsly_form = true AND (form_table.form_name = 'Quotation' OR form_table.form_name = 'Sourced Item')`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1181,16 +1179,16 @@ RETURNS JSON AS $$
                 (response) => `'${response.request_response_request_id}'`
             ).join(",");
 
-            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+            requestResponse = plv8.execute(`SELECT request_response_table.*, field_name FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE (field_name = 'Quantity' OR field_name = 'Item') AND request_response_request_id IN (${requestIdList});`);
         }
 
         const requestResponseItem = [];
         const requestResponseQuantity = [];
 
         requestResponse.forEach((response) => {
-            if (response.request_response_field_id === itemFieldId) {
+            if (response.field_name === "Item") {
             requestResponseItem.push(response);
-            } else if (response.request_response_field_id === quantityFieldId) {
+            } else if (response.field_name === "Quantity") {
             requestResponseQuantity.push(response);
             }
         });
@@ -1259,14 +1257,14 @@ RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        requisitionId,
+        sourcedItemId,
         itemFieldId,
         quantityFieldId,
         itemFieldList,
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Order';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${sourcedItemId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Order';`);
         
         let requestResponse = []
         if(request.length>0) {

@@ -1,6 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  checkQuotationItemQuantity,
+  checkRequisitionQuantity,
   checkRIRItemQuantity,
   checkROItemQuantity,
 } from "@/backend/api/get";
@@ -9,8 +9,8 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-  FormStatusType,
   FormslyFormType,
+  FormStatusType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -126,14 +126,50 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
 
-          const warningItemList = await checkQuotationItemQuantity(
+          const warningItemList = await checkRequisitionQuantity(
             supabaseClient,
             {
               requisitionID,
-              itemFieldId: itemSection.section_field[0].field_id,
-              quantityFieldId: itemSection.section_field[2].field_id,
               itemFieldList: itemSection.section_field[0].field_response,
               quantityFieldList: itemSection.section_field[2].field_response,
+            }
+          );
+
+          if (warningItemList && warningItemList.length !== 0) {
+            modals.open({
+              title: "You cannot approve create this request.",
+              centered: true,
+              children: (
+                <Box maw={390}>
+                  <Title order={5}>
+                    There are items that will exceed the quantity limit of the
+                    Requisition
+                  </Title>
+                  <List size="sm" mt="md" spacing="xs">
+                    {warningItemList.map((item) => (
+                      <List.Item key={item}>{item}</List.Item>
+                    ))}
+                  </List>
+                  <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                    Close
+                  </Button>
+                </Box>
+              ),
+            });
+            return;
+          }
+        } else if (request.request_form.form_name === "Sourced Item") {
+          const requisitionID =
+            request.request_form.form_section[0].section_field[0]
+              .field_response[0].request_response;
+          const itemSection = request.request_form.form_section[1];
+
+          const warningItemList = await checkRequisitionQuantity(
+            supabaseClient,
+            {
+              requisitionID,
+              itemFieldList: itemSection.section_field[0].field_response,
+              quantityFieldList: itemSection.section_field[1].field_response,
             }
           );
 
@@ -200,13 +236,13 @@ const RequestPage = ({
             return;
           }
         } else if (request.request_form.form_name === "Release Order") {
-          const requisitionId =
-            request.request_form.form_section[0].section_field[0]
+          const sourcedItemId =
+            request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
           const warningItemList = await checkROItemQuantity(supabaseClient, {
-            requisitionId,
+            sourcedItemId,
             itemFieldId: itemSection.section_field[0].field_id,
             quantityFieldId: itemSection.section_field[1].field_id,
             itemFieldList: itemSection.section_field[0].field_response,
