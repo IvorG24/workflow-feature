@@ -1,5 +1,5 @@
 import { getTeamInvitation } from "@/backend/api/get";
-import { checkIfEmailExists, createTeamInvitation } from "@/backend/api/post";
+import { cancelTeamInvitation, createTeamInvitation } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
@@ -15,15 +15,18 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconMailPlus, IconUsersPlus } from "@tabler/icons-react";
 import axios from "axios";
+import moment from "moment";
 import { useEffect, useState } from "react";
 import validator from "validator";
 
 type Props = {
   memberEmailList: string[];
+  isOwnerOrAdmin: boolean;
 };
 
 type EmailListData = { value: string; label: string }[];
@@ -35,10 +38,14 @@ type PendingInvite = {
   team_member: {
     team_member_team_id: string;
   };
-  is_resend_disabled?: boolean;
 };
 
-const InviteMember = ({ memberEmailList }: Props) => {
+type ResendInviteTimeout = {
+  invitation_email: string;
+  invitation_resend_date_created: Date;
+}[];
+
+const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const supabaseClient = useSupabaseClient();
@@ -49,6 +56,11 @@ const InviteMember = ({ memberEmailList }: Props) => {
     []
   );
   const [isResendingInvite, setIsResendingInvite] = useState(false);
+  const [resendInviteTimeout, setResendInviteTimeout] =
+    useLocalStorage<ResendInviteTimeout>({
+      key: "formsly-resend-invite-timeout",
+      defaultValue: [],
+    });
 
   const handleInvite = async () => {
     try {
@@ -61,8 +73,8 @@ const InviteMember = ({ memberEmailList }: Props) => {
         teamName: team.team_name,
       });
 
-      sendEmailInvite(emailList);
-
+      await sendEmailInvite(emailList);
+      await fetchPendingInviteList();
       setEmailList([]);
       notifications.show({
         message: "Team member/s invited.",
@@ -78,32 +90,27 @@ const InviteMember = ({ memberEmailList }: Props) => {
     }
   };
 
-  // send email invite to unregistered users
+  // send email invite notification
   const sendEmailInvite = async (emailList: string[]) => {
     const subject = `You have been invited to join ${team.team_name} on Formsly.`;
     const html = `<p>Hi,</p>
     <p>Please click the link below to accept the invitation.</p>
     &nbsp;
-    <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/sign-up">${process.env.NEXT_PUBLIC_SITE_URL}/sign-up</a></p>
+    <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/sign-in">${process.env.NEXT_PUBLIC_SITE_URL}/sign-in</a></p>
     &nbsp;
     <p>Thank you,</p>
     <p>Formsly Team</p>`;
 
     for (const email of emailList) {
-      const isEmailExists = await checkIfEmailExists(supabaseClient, {
-        email: email,
-      });
-      if (!isEmailExists) {
-        try {
-          const response = await axios.post("/api/send-email", {
-            to: email,
-            subject,
-            html,
-          });
-          return response.data;
-        } catch (error) {
-          console.log(error);
-        }
+      try {
+        const response = await axios.post("/api/send-email", {
+          to: email,
+          subject,
+          html,
+        });
+        return response.data;
+      } catch (error) {
+        console.log(error);
       }
     }
   };
@@ -112,20 +119,22 @@ const InviteMember = ({ memberEmailList }: Props) => {
     try {
       setIsResendingInvite(true);
       await sendEmailInvite([email]);
-      setPendingInviteList((prev) =>
-        prev.map((pendingInvite) => {
-          if (pendingInvite.invitation_to_email === email) {
-            return {
-              ...pendingInvite,
-              is_resend_disabled: true,
-            };
-          } else {
-            return pendingInvite;
-          }
-        })
-      );
+      const dateNow = new Date();
+      const resendInviteWithDateCreated = {
+        invitation_email: email,
+        invitation_resend_date_created: dateNow,
+      };
+      setResendInviteTimeout((prev) => {
+        const isExisting = prev.find(
+          (invite) => invite.invitation_email === email
+        );
+        if (!isExisting) {
+          prev.push(resendInviteWithDateCreated);
+        }
+        return prev;
+      });
       notifications.show({
-        message: "Invitation sent",
+        message: "Invitation resent",
         color: "green",
       });
     } catch (error) {
@@ -135,16 +144,33 @@ const InviteMember = ({ memberEmailList }: Props) => {
     }
   };
 
-  useEffect(() => {
-    const fetchPendingTeamInvite = async () => {
-      const { data } = await getTeamInvitation(supabaseClient, {
-        teamId: team.team_id,
-        status: "PENDING",
+  const handleCancelInvite = async (invitationId: string) => {
+    try {
+      await cancelTeamInvitation(supabaseClient, {
+        invitation_id: invitationId,
       });
-      setPendingInviteList(data as PendingInvite[]);
-    };
+      setPendingInviteList((prev) =>
+        prev.filter((invite) => invite.invitation_id !== invitationId)
+      );
+      notifications.show({
+        message: "Invitation canceled",
+        color: "green",
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-    fetchPendingTeamInvite();
+  const fetchPendingInviteList = async () => {
+    const { data } = await getTeamInvitation(supabaseClient, {
+      teamId: team.team_id,
+      status: "PENDING",
+    });
+    setPendingInviteList(data as PendingInvite[]);
+  };
+
+  useEffect(() => {
+    fetchPendingInviteList();
   }, []);
 
   return (
@@ -191,6 +217,14 @@ const InviteMember = ({ memberEmailList }: Props) => {
               onCreate={(query) => {
                 let valid = true;
                 const isMemberAlready = memberEmailList.includes(query);
+                if (emailListData.length > 60) {
+                  notifications.show({
+                    message: "You have exceeded the invite limit of 60.",
+                    color: "orange",
+                  });
+                  valid = false;
+                }
+
                 if (isMemberAlready) {
                   notifications.show({
                     message: "A member with this email already exists.",
@@ -222,34 +256,62 @@ const InviteMember = ({ memberEmailList }: Props) => {
         </Stack>
 
         <Box mt="lg">
-          <Text weight={600}>Pending Invites</Text>
-          <Stack mt="sm" fz={14} spacing="xs" pos="relative">
-            <LoadingOverlay visible={isResendingInvite} />
-            {pendingInviteList.map((invite) => {
-              const isResendDisabled = invite.is_resend_disabled;
-              return (
-                <Box key={invite.invitation_id}>
-                  <Divider />
-                  <Flex px="sm" mt="sm" justify="space-between" align="center">
-                    <Text>{invite.invitation_to_email}</Text>
+          <Text
+            weight={600}
+          >{`Pending Invites (${pendingInviteList.length})`}</Text>
+          {pendingInviteList.length > 0 && (
+            <Stack mt="sm" fz={14} spacing="xs" pos="relative">
+              <LoadingOverlay visible={isResendingInvite} />
+              {pendingInviteList.map((invite) => {
+                const resendDateCreated =
+                  resendInviteTimeout.find(
+                    (resendInvite) =>
+                      resendInvite.invitation_email ===
+                      invite.invitation_to_email
+                  )?.invitation_resend_date_created || null;
+                const dateNow = new Date();
+                const isResendDisabled = resendDateCreated
+                  ? !(moment(dateNow).diff(resendDateCreated, "minutes") > 1)
+                  : false;
 
-                    <Group position="right">
-                      <Button variant="subtle">Cancel</Button>
-                      <Button
-                        miw={84}
-                        onClick={() =>
-                          handleResendInvite(invite.invitation_to_email)
-                        }
-                        disabled={isResendDisabled}
-                      >
-                        {isResendDisabled ? "Sent" : "Resend"}
-                      </Button>
-                    </Group>
-                  </Flex>
-                </Box>
-              );
-            })}
-          </Stack>
+                return (
+                  <Box key={invite.invitation_id}>
+                    <Divider />
+                    <Flex
+                      px="sm"
+                      mt="sm"
+                      justify="space-between"
+                      align="center"
+                    >
+                      <Text>{invite.invitation_to_email}</Text>
+
+                      {isOwnerOrAdmin && (
+                        <Group position="right">
+                          <Button
+                            variant="subtle"
+                            onClick={() =>
+                              handleCancelInvite(invite.invitation_id)
+                            }
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            miw={84}
+                            onClick={() =>
+                              handleResendInvite(invite.invitation_to_email)
+                            }
+                            disabled={isResendDisabled}
+                          >
+                            {isResendDisabled ? "Sent" : "Resend"}
+                          </Button>
+                        </Group>
+                      )}
+                    </Flex>
+                  </Box>
+                );
+              })}
+            </Stack>
+          )}
         </Box>
       </Paper>
     </Container>

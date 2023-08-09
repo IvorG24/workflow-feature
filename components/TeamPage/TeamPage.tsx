@@ -424,7 +424,12 @@ const TeamPage = ({
         </Paper>
       </Box>
 
-      {isOwnerOrAdmin && <InviteMember memberEmailList={memberEmailList} />}
+      {isOwnerOrAdmin && (
+        <InviteMember
+          isOwnerOrAdmin={isOwnerOrAdmin}
+          memberEmailList={memberEmailList}
+        />
+      )}
 
       <Space mt={32} />
     </Container>

@@ -2717,7 +2717,7 @@ export const getTeamInvitation = async (
   const { data, error } = await supabaseClient
     .from("invitation_table")
     .select(
-      "invitation_id, invitation_to_email, invitation_date_created, team_member: invitation_from_team_member_id(team_member_team_id)"
+      "invitation_id, invitation_to_email, invitation_date_created, team_member: invitation_from_team_member_id!inner(team_member_team_id)"
     )
     .eq("team_member.team_member_team_id", teamId)
     .eq("invitation_status", status)

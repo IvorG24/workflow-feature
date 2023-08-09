@@ -23,6 +23,7 @@ import {
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
+import axios from "axios";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import validator from "validator";
@@ -72,6 +73,8 @@ const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
         teamName: teamName,
       });
 
+      await sendEmailInvite(emailList);
+
       if (invitationData.length > 0) {
         setInvitationList((prev) => [...prev, ...invitationData]);
         replace([{ email: "" }]);
@@ -87,6 +90,31 @@ const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
       });
     } finally {
       setIsSendingInvites(false);
+    }
+  };
+
+  // send email invite to unregistered users
+  const sendEmailInvite = async (emailList: string[]) => {
+    const subject = `You have been invited to join ${teamName} on Formsly.`;
+    const html = `<p>Hi,</p>
+      <p>Please click the link below to accept the invitation.</p>
+      &nbsp;
+      <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/sign-in">${process.env.NEXT_PUBLIC_SITE_URL}/sign-in</a></p>
+      &nbsp;
+      <p>Thank you,</p>
+      <p>Formsly Team</p>`;
+
+    for (const email of emailList) {
+      try {
+        const response = await axios.post("/api/send-email", {
+          to: email,
+          subject,
+          html,
+        });
+        return response.data;
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 
