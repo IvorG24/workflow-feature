@@ -207,7 +207,6 @@ const sourcedItemTableColumnList = [
   "Quantity",
   "Unit of Measurement",
   "Project Site",
-  "Release Order",
 ];
 
 const rirTableColumnList = [
@@ -223,7 +222,7 @@ const rirTableColumnList = [
 ];
 
 const releaseOrderTableColumnList = [
-  "Release Order ID",
+  "RO ID",
   "Date Created",
   "Warehouse Corporate Support Lead",
   "DR",
@@ -238,7 +237,7 @@ const releaseOrderTableColumnList = [
 const chequeReferenceTableColumnList = [
   "Cheque Reference ID",
   "Date Created",
-  "Treasury Processor",
+  "Treasury",
   "Treasury Status",
   "Cheque Cancelled",
   "Cheque Printed Date",
@@ -484,7 +483,7 @@ const SSOTSpreadsheetView = ({
               ).toLocaleDateString()}
             </td>
           )}
-          {showChequeReferenceColumnList["treasury_processor"] && (
+          {showChequeReferenceColumnList["treasury"] && (
             <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
           )}
 
@@ -711,7 +710,7 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          {showReleaseOrderColumnList["release_order_id"] && (
+          {showReleaseOrderColumnList["ro_id"] && (
             <td>{request.ro_request_id}</td>
           )}
           {showReleaseOrderColumnList["date_created"] && (
@@ -1074,107 +1073,128 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          {showSourcedItemColumnList["sourced_item_id"] && (
-            <td>{request.sourced_item_request_id}</td>
-          )}
-          {showSourcedItemColumnList["date_created"] && (
-            <td>
-              {new Date(
-                request.sourced_item_request_date_created
-              ).toLocaleDateString()}
-            </td>
-          )}
-          {showSourcedItemColumnList["lead_inventory_controller"] && (
-            <td>{`${request.sourced_item_request_owner.user_first_name} ${request.sourced_item_request_owner.user_last_name}`}</td>
-          )}
+          {showSourcedItemTable && (
+            <>
+              {showSourcedItemColumnList["sourced_item_id"] && (
+                <td>{request.sourced_item_request_id}</td>
+              )}
+              {showSourcedItemColumnList["date_created"] && (
+                <td>
+                  {new Date(
+                    request.sourced_item_request_date_created
+                  ).toLocaleDateString()}
+                </td>
+              )}
+              {showSourcedItemColumnList["lead_inventory_controller"] && (
+                <td>{`${request.sourced_item_request_owner.user_first_name} ${request.sourced_item_request_owner.user_last_name}`}</td>
+              )}
 
-          {showSourcedItemColumnList["item"] && (
-            <td>
-              <List sx={{ listStyle: "none" }} spacing="xs">
-                {itemName.map((item, index) => (
-                  <List.Item key={index}>
-                    <Text size={14}>{item}</Text>
-                  </List.Item>
-                ))}
-              </List>
-            </td>
-          )}
-          {showSourcedItemColumnList["price_per_unit"] && (
-            <td>
-              <List sx={{ listStyle: "none" }} spacing="xs">
-                {itemQuantity.map((quantity, index) => (
-                  <List.Item key={index}>
-                    <Text size={14}>{addCommaToNumber(Number(quantity))}</Text>
-                  </List.Item>
-                ))}
-              </List>
-            </td>
-          )}
-          {showSourcedItemColumnList["project_site"] && (
-            <td>
-              <List sx={{ listStyle: "none" }} spacing="xs">
-                {itemProjectSite.map((projectSite, index) => (
-                  <List.Item key={index}>
-                    <Text size={14}>{projectSite}</Text>
-                  </List.Item>
-                ))}
-              </List>
-            </td>
-          )}
-          {showReleaseOrderTable && (
-            <td style={{ padding: 0 }}>
-              {showReleaseOrderTable &&
-              request.sourced_item_ro_request.length !== 0 ? (
-                <Table
-                  withBorder
-                  withColumnBorders
-                  h="100%"
-                  className={classes.rirTable}
-                >
-                  <thead>
-                    <tr>
-                      {showReleaseOrderColumnList["release_order_id"] && (
-                        <th className={classes.long}>Release Order ID</th>
-                      )}
-                      {showReleaseOrderColumnList["date_created"] && (
-                        <th className={classes.date}>Date Created</th>
-                      )}
-                      {showReleaseOrderColumnList[
-                        "warehouse_corporate_support_lead"
-                      ] && (
-                        <th className={classes.processor}>
-                          Warehouse Corporate Support Lead
-                        </th>
-                      )}
-                      {showReleaseOrderColumnList["dr"] && (
-                        <th className={classes.short}>DR</th>
-                      )}
-                      {showReleaseOrderColumnList["si"] && (
-                        <th className={classes.short}>SI</th>
-                      )}
-                      {showReleaseOrderColumnList["item"] && (
-                        <th className={classes.description}>Item</th>
-                      )}
-                      {showReleaseOrderColumnList["quantity"] && (
-                        <th className={classes.normal}>Quantity</th>
-                      )}
-                      {showReleaseOrderColumnList["unit_of_measurement"] && (
-                        <th className={classes.date}>Unit of Measurement</th>
-                      )}
-                      {showReleaseOrderColumnList["receiving_status"] && (
-                        <th className={classes.long}>Receiving Status</th>
-                      )}
-                      {showReleaseOrderColumnList["project_site"] && (
-                        <th className={classes.long}>Project Site</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderReleaseOrder(request.sourced_item_ro_request)}
-                  </tbody>
-                </Table>
-              ) : null}
-            </td>
+              {showSourcedItemColumnList["item"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemName.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showSourcedItemColumnList["quantity"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemQuantity.map((quantity, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>
+                          {addCommaToNumber(Number(quantity))}
+                        </Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showSourcedItemColumnList["unit_of_measurement"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemUnit.map((unit, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{unit}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showSourcedItemColumnList["project_site"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemProjectSite.map((projectSite, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{projectSite}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showReleaseOrderTable && (
+                <td style={{ padding: 0 }}>
+                  {showReleaseOrderTable &&
+                  request.sourced_item_ro_request.length !== 0 ? (
+                    <Table
+                      withBorder
+                      withColumnBorders
+                      h="100%"
+                      className={classes.rirTable}
+                    >
+                      <thead>
+                        <tr>
+                          {showReleaseOrderColumnList["ro_id"] && (
+                            <th className={classes.long}>Release Order ID</th>
+                          )}
+                          {showReleaseOrderColumnList["date_created"] && (
+                            <th className={classes.date}>Date Created</th>
+                          )}
+                          {showReleaseOrderColumnList[
+                            "warehouse_corporate_support_lead"
+                          ] && (
+                            <th className={classes.processor}>
+                              Warehouse Corporate Support Lead
+                            </th>
+                          )}
+                          {showReleaseOrderColumnList["dr"] && (
+                            <th className={classes.short}>DR</th>
+                          )}
+                          {showReleaseOrderColumnList["si"] && (
+                            <th className={classes.short}>SI</th>
+                          )}
+                          {showReleaseOrderColumnList["item"] && (
+                            <th className={classes.description}>Item</th>
+                          )}
+                          {showReleaseOrderColumnList["quantity"] && (
+                            <th className={classes.normal}>Quantity</th>
+                          )}
+                          {showReleaseOrderColumnList[
+                            "unit_of_measurement"
+                          ] && (
+                            <th className={classes.long}>
+                              Unit of Measurement
+                            </th>
+                          )}
+                          {showReleaseOrderColumnList["receiving_status"] && (
+                            <th className={classes.long}>Receiving Status</th>
+                          )}
+                          {showReleaseOrderColumnList["project_site"] && (
+                            <th className={classes.long}>Project Site</th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {renderReleaseOrder(request.sourced_item_ro_request)}
+                      </tbody>
+                    </Table>
+                  ) : null}
+                </td>
+              )}
+            </>
           )}
         </tr>
       );
@@ -1244,7 +1264,7 @@ const SSOTSpreadsheetView = ({
                 </td>
               )}
 
-              {showRequisitionColumnList["operations_/_engineering"] && (
+              {showRequisitionColumnList["operations/engineering"] && (
                 <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
               )}
               {fields
@@ -1424,7 +1444,7 @@ const SSOTSpreadsheetView = ({
                         <th className={classes.normal}>Quantity</th>
                       )}
                       {showSourcedItemColumnList["unit_of_measurement"] && (
-                        <th className={classes.normal}>Unit of Measurement</th>
+                        <th className={classes.date}>Unit of Measurement</th>
                       )}
                       {showSourcedItemColumnList["project_site"] && (
                         <th className={classes.normal}>Project Site</th>
@@ -1460,10 +1480,8 @@ const SSOTSpreadsheetView = ({
                       {showChequeReferenceColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
-                      {showChequeReferenceColumnList["treasury_processor"] && (
-                        <th className={classes.processor}>
-                          Treasury Processor
-                        </th>
+                      {showChequeReferenceColumnList["treasury"] && (
+                        <th className={classes.processor}>Treasury</th>
                       )}
                       {showChequeReferenceColumnList["treasury_status"] && (
                         <th className={classes.normal}>Treasury Status</th>
@@ -1572,6 +1590,7 @@ const SSOTSpreadsheetView = ({
             requisitionTableColumnList={requisitionTableColumnList}
             quotationTableColumnList={quotationTableColumnList}
             rirTableColumnList={rirTableColumnList}
+            sourcedItemTableColumnList={sourcedItemTableColumnList}
             releaseOrderTableColumnList={releaseOrderTableColumnList}
             chequeReferenceTableColumnList={chequeReferenceTableColumnList}
             // table list state
@@ -1652,9 +1671,7 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
-                      {showRequisitionColumnList[
-                        "operations_/_engineering"
-                      ] && (
+                      {showRequisitionColumnList["operations/engineering"] && (
                         <th className={classes.processor}>
                           Operations / Engineering
                         </th>
@@ -1665,7 +1682,7 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["type"] && (
                         <th className={classes.normal}>Type</th>
                       )}
-                      {showRequisitionColumnList["type"] && (
+                      {showRequisitionColumnList["date_needed"] && (
                         <th className={classes.normal}>Date Needed</th>
                       )}
                       {showRequisitionColumnList["purpose"] && (
