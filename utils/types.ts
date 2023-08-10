@@ -154,7 +154,7 @@ export type AttachmentBucketType =
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS";
-export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED" | "PAUSED";
+export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type FieldType =
   | "TEXT"
@@ -642,19 +642,24 @@ export type SSOTType = {
       rir_request_response: SSOTResponseType[];
     }[];
   }[];
+  requisition_sourced_item_request: {
+    sourced_item_request_id: string;
+    sourced_item_request_date_created: string;
+    sourced_item_request_owner: SSOTRequestOwnerType;
+    sourced_item_request_response: SSOTResponseType[];
+    sourced_item_ro_request: {
+      ro_request_id: string;
+      ro_request_date_created: string;
+      ro_request_owner: SSOTRequestOwnerType;
+      ro_request_response: SSOTResponseType[];
+    }[];
+  }[];
   requisition_cheque_reference_request: {
     cheque_reference_request_id: string;
     cheque_reference_request_date_created: string;
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
-  requisition_rir_request: {
-    rir_request_id: string;
-    rir_request_date_created: string;
-    rir_request_owner: SSOTRequestOwnerType;
-    rir_request_response: SSOTResponseType[];
-  }[];
-  requisition_parent_requisition_response_fields: SSOTResponseType[];
 };
 
 export type Section = SectionTableRow & {

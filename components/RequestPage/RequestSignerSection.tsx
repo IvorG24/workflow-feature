@@ -11,7 +11,6 @@ import {
 import {
   IconCircleCheck,
   IconCircleDashed,
-  IconCircleDotted,
   IconCircleX,
 } from "@tabler/icons-react";
 
@@ -42,12 +41,6 @@ const RequestSignerSection = ({ signerList }: Props) => {
             <IconCircleX />
           </ThemeIcon>
         );
-      case "PAUSED":
-        return (
-          <ThemeIcon color="orange" size="xs" radius="xl">
-            <IconCircleDotted />
-          </ThemeIcon>
-        );
     }
   };
 
@@ -63,8 +56,6 @@ const RequestSignerSection = ({ signerList }: Props) => {
         return `Will be signed as ${action} by ${fullname}`;
       case "REJECTED":
         return `Rejected to signed as ${action} by ${fullname}`;
-      case "PAUSED":
-        return `${fullname} paused this request`;
     }
   };
 
