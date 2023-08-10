@@ -99,20 +99,6 @@ const useStyles = createStyles((theme) => ({
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.grape[6]
-          : theme.colors.grape[3],
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.grape[9]
-          : theme.colors.grape[0],
-    },
-  },
-  rirTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
           ? theme.colors.orange[6]
           : theme.colors.orange[3],
     },
@@ -121,6 +107,20 @@ const useStyles = createStyles((theme) => ({
         theme.colorScheme === "dark"
           ? theme.colors.orange[9]
           : theme.colors.orange[0],
+    },
+  },
+  rirTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.cyan[6]
+          : theme.colors.cyan[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.cyan[9]
+          : theme.colors.cyan[0],
     },
   },
   roTable: {
@@ -1143,7 +1143,7 @@ const SSOTSpreadsheetView = ({
                       withBorder
                       withColumnBorders
                       h="100%"
-                      className={classes.rirTable}
+                      className={classes.roTable}
                     >
                       <thead>
                         <tr>
@@ -1447,7 +1447,7 @@ const SSOTSpreadsheetView = ({
                         <th className={classes.date}>Unit of Measurement</th>
                       )}
                       {showSourcedItemColumnList["project_site"] && (
-                        <th className={classes.normal}>Project Site</th>
+                        <th className={classes.long}>Project Site</th>
                       )}
                       {showSourcedItemTable && showReleaseOrderTable && (
                         <th className={classes.description}>Release Order</th>
