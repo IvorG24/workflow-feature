@@ -788,3 +788,19 @@ export const insertProjectMember = async (
     count: insertData.length,
   };
 };
+
+export const cancelTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    invitation_id: string;
+  }
+) => {
+  const { invitation_id } = params;
+  const { error } = await supabaseClient
+    .from("invitation_table")
+    .update({ invitation_is_disabled: true })
+    .eq("invitation_id", invitation_id)
+    .select();
+
+  if (error) throw Error;
+};

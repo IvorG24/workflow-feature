@@ -1,5 +1,5 @@
 import { deleteRow } from "@/backend/api/delete";
-import { createTeamInvitation, uploadImage } from "@/backend/api/post";
+import { uploadImage } from "@/backend/api/post";
 import {
   updateTeam,
   updateTeamMemberRole,
@@ -75,11 +75,9 @@ const TeamPage = ({
 
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
-  const [isInvitingMember, setIsInvitingMember] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
   const [teamMemberPage, setTeamMemberPage] = useState(1);
 
-  const [emailList, setEmailList] = useState<string[]>([]);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -194,32 +192,6 @@ const TeamPage = ({
     );
     setTeamMemberList(newMemberList);
     setIsUpdatingTeamMembers(false);
-  };
-
-  const handleInvite = async () => {
-    try {
-      if (!teamMember) return;
-      setIsInvitingMember(true);
-
-      await createTeamInvitation(supabaseClient, {
-        emailList,
-        teamMemberId: teamMember.team_member_id,
-        teamName: team.team_name,
-      });
-
-      setEmailList([]);
-      notifications.show({
-        message: "Team member/s invited.",
-        color: "green",
-      });
-    } catch {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsInvitingMember(false);
-    }
   };
 
   const handleUpdateMemberRole = async (
@@ -454,11 +426,8 @@ const TeamPage = ({
 
       {isOwnerOrAdmin && (
         <InviteMember
-          isInvitingMember={isInvitingMember}
-          onInviteMember={handleInvite}
-          onSetEmailList={setEmailList}
+          isOwnerOrAdmin={isOwnerOrAdmin}
           memberEmailList={memberEmailList}
-          emailList={emailList}
         />
       )}
 

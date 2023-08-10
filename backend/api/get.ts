@@ -2698,3 +2698,26 @@ export const getAllTeamProjects = async (
 
   return data;
 };
+
+// Get all invitations sent by a team
+export const getTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    status: string;
+  }
+) => {
+  const { teamId, status } = params;
+  const { data, error } = await supabaseClient
+    .from("invitation_table")
+    .select(
+      "invitation_id, invitation_to_email, invitation_date_created, team_member: invitation_from_team_member_id!inner(team_member_team_id)"
+    )
+    .eq("team_member.team_member_team_id", teamId)
+    .eq("invitation_status", status)
+    .eq("invitation_is_disabled", false);
+
+  if (error) throw error;
+
+  return { data, error: null };
+};
