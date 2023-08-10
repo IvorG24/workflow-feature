@@ -86,6 +86,26 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               formId: connectedForm?.form_id,
               formIsForEveryone: connectedForm?.form_is_for_every_member,
               formIsMember: connectedForm?.form_is_member,
+              formName: "Receiving Inspecting Report",
+            },
+            connectedRequestIDList,
+          },
+        };
+      } else if (request.request_form.form_name === "Sourced Item") {
+        const connectedForm = await getFormslyForm(supabaseClient, {
+          formName: "Release Order",
+          teamId,
+          memberId: `${teamMember?.team_member_id}`,
+        });
+
+        return {
+          props: {
+            request,
+            connectedFormIdAndGroup: {
+              formId: connectedForm?.form_id,
+              formIsForEveryone: connectedForm?.form_is_for_every_member,
+              formIsMember: connectedForm?.form_is_member,
+              formName: "Release Order",
             },
             connectedRequestIDList,
           },
@@ -116,6 +136,7 @@ type Props = {
     formId: string;
     formIsForEveryone: boolean;
     formIsMember: boolean;
+    formName: string;
   };
   connectedRequestIDList: FormslyFormType;
   connectedForm: {

@@ -18,11 +18,13 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', 'beb2d52c-77d5-49a9-a175-637152c44424');
 
 INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
-('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'WAREHOUSE PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('51277fb9-7f1f-4c80-a122-c3fea3cf3ed7', 'ACCOUNTING PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'WAREHOUSE RECEIVER', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('9300b7b6-a928-43a0-a3a1-bb6fcacaf987', 'TREASURY PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('7a91ae20-68b8-4f80-bcba-2a850b33b3d1', 'AUDIT PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e');
+('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'OPERATIONS/ENGINEERING', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition
+('51277fb9-7f1f-4c80-a122-c3fea3cf3ed7', 'PURCHASER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Quotation
+('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'SITE WAREHOUSE', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Receiving Inspecting Report
+('9300b7b6-a928-43a0-a3a1-bb6fcacaf987', 'LEAD INVENTORY CONTROLLER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Sourced Item
+('f2c96f9c-3bf7-437f-aa9c-f81c1fadc298', 'WAREHOUSE CORPORATE SUPPORT LEAD', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Release Order
+('13a506c2-a93e-44e1-b1bd-6742dbbf6f84', 'TREASURY PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Cheque Reference
+('7a91ae20-68b8-4f80-bcba-2a850b33b3d1', 'AUDIT PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Audit
 
 INSERT INTO team_project_table (team_project_id, team_project_name, team_project_team_id) VALUES
 ('4b3a151a-a077-486c-9dfb-e996c2c9184c', 'PHILIP MORRIS', 'a5a28977-6956-45c1-a624-b9e90911502e'),
@@ -34,16 +36,22 @@ INSERT INTO team_group_member_table (team_member_id, team_group_id) VALUES
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '13a506c2-a93e-44e1-b1bd-6742dbbf6f84'),
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
+('d9c6c738-8a60-43de-965f-f1f666da1639', '13a506c2-a93e-44e1-b1bd-6742dbbf6f84'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '13a506c2-a93e-44e1-b1bd-6742dbbf6f84'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1');
 
 INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
@@ -61,7 +69,7 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, false),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, false),
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition', 'formsly premade Requisition form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
-('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, true),
+('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
@@ -77,12 +85,12 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, true, '337658f1-0777-45f2-853f-b6f20551712e'),
 
 -- Requisition
-('333cd418-69d1-459b-82e4-cc67c34c2b8b', 'ID', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
-('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 2, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
-('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 3, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 
 -- Sourced Item
-('2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', 'Item', 1, true, 'e5062660-9026-4629-bc2c-633826fdaa24'),
+('65d2d36a-7e69-4044-9f74-157bc753bd59', 'ID', 1, false, 'e5062660-9026-4629-bc2c-633826fdaa24'),
+('2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', 'Item', 2, true, 'e5062660-9026-4629-bc2c-633826fdaa24'),
 
 -- Quotation
 ('7d6649c2-316b-4895-86eb-120def2e2f33', 'ID', 1, false, 'a732196f-9779-45e2-85fa-7320397e5b0a'),
@@ -137,24 +145,23 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 -- ('5ed0f5c1-a97d-465b-ade4-758a5ae351a2', 'Slider field', 'SLIDER', 11, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 
 -- Requisition Form
-('eb04956c-4164-4ca6-90ee-5081783884a1', 'Parent Requisition ID', 'LINK', 1, '333cd418-69d1-459b-82e4-cc67c34c2b8b', true, true),
+('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 1, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
+('c08820a5-592a-4bf9-9528-97b7ee7be94b', 'Purpose', 'TEXT', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
-('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Project Name', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('c08820a5-592a-4bf9-9528-97b7ee7be94b', 'Purpose', 'TEXT', 5, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-
-('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('9f55ca04-1b1d-4346-8acf-49e96c890026', 'Project Site', 'DROPDOWN', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, true),
+('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('d00f3562-d778-469d-b058-15e29e68b1ea', 'Cost Code', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 
 -- Sourced Item Form
-('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 1, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
-('8c15e0f0-f360-4826-a684-5ab4ecb52009', 'Quantity', 'NUMBER', 2, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
-('4982e986-865c-4574-9767-4951b4f6c155', 'Project Site', 'DROPDOWN', 3, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
+('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
+
+('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 2, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
+('8c15e0f0-f360-4826-a684-5ab4ecb52009', 'Quantity', 'NUMBER', 3, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
+('4982e986-865c-4574-9767-4951b4f6c155', 'Project Site', 'DROPDOWN', 4, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 
 -- Quotation Form
 ('df0cb109-e34d-498f-ac51-af2139628ac0', 'Requisition ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
@@ -185,11 +192,12 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 
 -- Release Order Form
 ('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Requisition ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
-('92cfe1b7-cce0-4632-83d6-8a03bd9a75f5', 'DR', 'FILE', 2, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
-('a5bd44e8-1fcf-4df0-a836-37e33b1b534a', 'SI', 'FILE', 3, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
-('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 4, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
-('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 5, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
-('d3d790fe-3d37-421c-91f3-e943ee5941b6', 'Receiving Status', 'TEXT', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
+('9fe04f40-a250-4a16-9e6a-b6c8a0b5a4c1', 'Sourced Item ID', 'LINK', 2, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
+('92cfe1b7-cce0-4632-83d6-8a03bd9a75f5', 'DR', 'FILE', 3, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
+('a5bd44e8-1fcf-4df0-a836-37e33b1b534a', 'SI', 'FILE', 4, 'dacb6338-8839-4f66-ae70-2f1d3175e169', false, false),
+('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 5, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
+('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
+('d3d790fe-3d37-421c-91f3-e943ee5941b6', 'Receiving Status', 'TEXT', 7, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
 ('2ea7acb6-37a4-4ced-b5d2-b944c3a1de37', 'Project Site', 'TEXT', 8, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
 
 -- Cheque Reference Form
@@ -248,10 +256,11 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 
 INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) VALUES
 ('39aa91ef-7b4a-4f16-ba9c-7e78cefd90d3', 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('169ba447-3b92-4510-9b2a-b9021a1b8774', 'e5062660-9026-4629-bc2c-633826fdaa24', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
 ('3be21f1a-ee76-4dce-9d94-f0c9f7224553', 'a732196f-9779-45e2-85fa-7320397e5b0a', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('8fa70223-807d-41eb-898b-31f16a34fb4f', '5782d70a-5f6b-486c-a77f-401066afd005', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('8df36e73-027a-4e04-ab51-d896e533dda5', '913a09d8-88f9-4139-a039-a77394405b62', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
+('8df36e73-027a-4e04-ab51-d896e533dda5', '913a09d8-88f9-4139-a039-a77394405b62', '13a506c2-a93e-44e1-b1bd-6742dbbf6f84'), 
 ('2d30bb63-f28b-493b-bf06-cc31ff53eee2', 'd2e3e618-7f9b-4439-8f76-72a05a0bf305', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES

@@ -1,4 +1,4 @@
-import { checkQuotationItemQuantity, getSupplier } from "@/backend/api/get";
+import { checkRequisitionQuantity, getSupplier } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -114,7 +114,6 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       const requisitionID = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
-      const itemSection = data.sections[3];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
@@ -142,10 +141,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
         });
       });
 
-      const warningItemList = await checkQuotationItemQuantity(supabaseClient, {
+      const warningItemList = await checkRequisitionQuantity(supabaseClient, {
         requisitionID,
-        itemFieldId: itemSection.section_field[0].field_id,
-        quantityFieldId: itemSection.section_field[2].field_id,
         itemFieldList,
         quantityFieldList,
       });

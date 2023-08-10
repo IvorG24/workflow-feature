@@ -1,6 +1,5 @@
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import { Button, Paper, Space, Stack, Text, Title } from "@mantine/core";
-import { useRouter } from "next/router";
 // import { useRouter } from "next/router";
 import { openConfirmModal } from "@mantine/modals";
 
@@ -10,18 +9,7 @@ type Props = {
   handleCancelRequest: () => void;
   openPromptDeleteModal: () => void;
   isUserSigner: boolean;
-  handleUpdateRequest: (
-    status: "APPROVED" | "REJECTED",
-    additionalInfo?: string
-  ) => void;
-  isRequsition?: boolean;
-  sourcedItemForm?: {
-    form_name: string;
-    form_id: string;
-    form_is_for_every_member: boolean;
-  };
-  requestId: string;
-  isUserPrimarySigner: boolean;
+  handleUpdateRequest: (status: "APPROVED" | "REJECTED") => void;
   signer?: RequestWithResponseType["request_signer"][0];
 };
 
@@ -32,19 +20,9 @@ const RequestActionSection = ({
   openPromptDeleteModal,
   isUserSigner,
   handleUpdateRequest,
-  isRequsition = false,
-  sourcedItemForm,
-  requestId,
-  isUserPrimarySigner,
   signer,
 }: Props) => {
-  const router = useRouter();
-
-  const handleAction = (
-    action: string,
-    color: string,
-    additionalInfo?: string
-  ) => {
+  const handleAction = (action: string, color: string) => {
     openConfirmModal({
       title: <Text>Please confirm your action.</Text>,
       children: (
@@ -57,7 +35,7 @@ const RequestActionSection = ({
       onConfirm: () => {
         switch (action) {
           case "approve":
-            handleUpdateRequest("APPROVED", additionalInfo);
+            handleUpdateRequest("APPROVED");
             break;
           case "reject":
             handleUpdateRequest("REJECTED");
@@ -82,41 +60,13 @@ const RequestActionSection = ({
           signer.request_signer_status === "PENDING" &&
           requestStatus === "PENDING" && (
             <>
-              {!isRequsition && (
-                <Button
-                  color="green"
-                  fullWidth
-                  onClick={() => handleAction("approve", "green")}
-                >
-                  Approve Request
-                </Button>
-              )}
-              {isRequsition && (
-                <>
-                  <Button
-                    color="green"
-                    fullWidth
-                    onClick={() =>
-                      handleAction("approve", "green", "FOR_PURCHASED")
-                    }
-                  >
-                    For Purchased
-                  </Button>
-                  {sourcedItemForm && isUserPrimarySigner && (
-                    <Button
-                      color="orange"
-                      fullWidth
-                      onClick={() => {
-                        router.push(
-                          `/team-requests/forms/${sourcedItemForm.form_id}/create?requisitionId=${requestId}`
-                        );
-                      }}
-                    >
-                      Available Internally
-                    </Button>
-                  )}
-                </>
-              )}
+              <Button
+                color="green"
+                fullWidth
+                onClick={() => handleAction("approve", "green")}
+              >
+                Approve Request
+              </Button>
               <Button
                 color="red"
                 fullWidth

@@ -107,6 +107,10 @@ const CreateReleaseOrderPage = ({
       `sections.${0}.section_field.${0}.field_response`,
       router.query.requisitionId
     );
+    setValue(
+      `sections.${0}.section_field.${1}.field_response`,
+      router.query.sourcedItemId
+    );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
@@ -142,8 +146,8 @@ const CreateReleaseOrderPage = ({
         return;
       }
 
-      const requisitionId = JSON.stringify(
-        data.sections[0].section_field[0].field_response
+      const sourcedItemId = JSON.stringify(
+        data.sections[0].section_field[1].field_response
       );
       const itemSection = data.sections[2];
       const tempRequestId = uuidv4();
@@ -174,7 +178,7 @@ const CreateReleaseOrderPage = ({
       });
 
       const warningItemList = await checkROItemQuantity(supabaseClient, {
-        requisitionId,
+        sourcedItemId,
         itemFieldId: itemSection.section_field[0].field_id,
         quantityFieldId: itemSection.section_field[1].field_id,
         itemFieldList,

@@ -1,6 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  checkQuotationItemQuantity,
+  checkRequisitionQuantity,
   checkRIRItemQuantity,
   checkROItemQuantity,
 } from "@/backend/api/get";
@@ -9,8 +9,8 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-  FormStatusType,
   FormslyFormType,
+  FormStatusType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -35,6 +35,7 @@ import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
+import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
@@ -49,6 +50,7 @@ type Props = {
     formId: string;
     formIsForEveryone: boolean;
     formIsMember: boolean;
+    formName: string;
   };
   connectedRequestIDList?: FormslyFormType;
 };
@@ -94,11 +96,6 @@ const RequestPage = ({
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
-  const isUserPrimarySigner = signerList.find(
-    (signer) =>
-      signer.signer_team_member.team_member_id === teamMember?.team_member_id &&
-      signer.signer_is_primary_signer
-  );
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
@@ -129,14 +126,50 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
 
-          const warningItemList = await checkQuotationItemQuantity(
+          const warningItemList = await checkRequisitionQuantity(
             supabaseClient,
             {
               requisitionID,
-              itemFieldId: itemSection.section_field[0].field_id,
-              quantityFieldId: itemSection.section_field[2].field_id,
               itemFieldList: itemSection.section_field[0].field_response,
               quantityFieldList: itemSection.section_field[2].field_response,
+            }
+          );
+
+          if (warningItemList && warningItemList.length !== 0) {
+            modals.open({
+              title: "You cannot approve create this request.",
+              centered: true,
+              children: (
+                <Box maw={390}>
+                  <Title order={5}>
+                    There are items that will exceed the quantity limit of the
+                    Requisition
+                  </Title>
+                  <List size="sm" mt="md" spacing="xs">
+                    {warningItemList.map((item) => (
+                      <List.Item key={item}>{item}</List.Item>
+                    ))}
+                  </List>
+                  <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                    Close
+                  </Button>
+                </Box>
+              ),
+            });
+            return;
+          }
+        } else if (request.request_form.form_name === "Sourced Item") {
+          const requisitionID =
+            request.request_form.form_section[0].section_field[0]
+              .field_response[0].request_response;
+          const itemSection = request.request_form.form_section[1];
+
+          const warningItemList = await checkRequisitionQuantity(
+            supabaseClient,
+            {
+              requisitionID,
+              itemFieldList: itemSection.section_field[0].field_response,
+              quantityFieldList: itemSection.section_field[1].field_response,
             }
           );
 
@@ -203,13 +236,13 @@ const RequestPage = ({
             return;
           }
         } else if (request.request_form.form_name === "Release Order") {
-          const requisitionId =
-            request.request_form.form_section[0].section_field[0]
+          const sourcedItemId =
+            request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
           const warningItemList = await checkROItemQuantity(supabaseClient, {
-            requisitionId,
+            sourcedItemId,
             itemFieldId: itemSection.section_field[0].field_id,
             quantityFieldId: itemSection.section_field[1].field_id,
             itemFieldList: itemSection.section_field[0].field_response,
@@ -376,12 +409,16 @@ const RequestPage = ({
                   }/create?requisitionId=${JSON.parse(
                     request.request_form.form_section[0].section_field[0]
                       .field_response[0].request_response
-                  )}&quotationId=${request.request_id}`
+                  )}&${
+                    connectedFormIdAndGroup.formName === "Release Order"
+                      ? "sourcedItem"
+                      : "quotation"
+                  }Id=${request.request_id}`
                 );
               }}
               sx={{ flex: 1 }}
             >
-              Create Receiving Inspecting Report
+              Create {connectedFormIdAndGroup.formName}
             </Button>
           ) : null}
         </Group>
@@ -430,6 +467,23 @@ const RequestPage = ({
           />
         ) : null}
 
+        {request.request_form.form_name === "Sourced Item" &&
+        request.request_form.form_is_formsly_form ? (
+          <SourcedItemSummary
+            summaryData={sectionWithDuplicateList
+              .slice(1)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
+
         {request.request_form.form_name === "Receiving Inspecting Report" &&
         request.request_form.form_is_formsly_form ? (
           <ReceivingInspectingReportSummary
@@ -474,8 +528,6 @@ const RequestPage = ({
             openPromptDeleteModal={openPromptDeleteModal}
             isUserSigner={Boolean(isUserSigner)}
             handleUpdateRequest={handleUpdateRequest}
-            requestId={request.request_id}
-            isUserPrimarySigner={Boolean(isUserPrimarySigner)}
             signer={
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }

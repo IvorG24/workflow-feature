@@ -97,6 +97,7 @@ const SignInPage = () => {
                     validator.isEmail(value) ||
                     "Email is invalid. Please enter a valid email address.",
                 })}
+                data-cy="signin-input-email"
               />
               <Box>
                 <PasswordInput
@@ -107,6 +108,7 @@ const SignInPage = () => {
                     required:
                       "Password field cannot be empty. Please enter your password.",
                   })}
+                  data-cy="signin-input-password"
                 />
                 <Anchor
                   component="button"
@@ -118,7 +120,9 @@ const SignInPage = () => {
                   Forgot Password?
                 </Anchor>
               </Box>
-              <Button type="submit">Sign in</Button>
+              <Button type="submit" data-cy="signin-button-submit">
+                Sign in
+              </Button>
             </Stack>
           </form>
           <Anchor
