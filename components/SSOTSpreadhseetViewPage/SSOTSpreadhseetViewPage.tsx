@@ -17,7 +17,6 @@ import {
   LoadingOverlay,
   Paper,
   ScrollArea,
-  Space,
   Table,
   Text,
   Title,
@@ -329,7 +328,6 @@ const SSOTSpreadsheetView = ({
   });
 
   const { handleSubmit, getValues } = filterSSOTMethods;
-
   const handleFilterSSOT = async (
     {
       search,
@@ -1570,12 +1568,11 @@ const SSOTSpreadsheetView = ({
   return (
     <Flex direction="column" p="0">
       <Box ref={topElementRef}>
-        <Title order={2} color="dimmed">
-          SSOT Spreadsheet View
-        </Title>
-
-        <Space h="sm" />
         <Group>
+          <Title order={2} color="dimmed">
+            SSOT Spreadsheet View
+          </Title>
+
           <FormProvider {...filterSSOTMethods}>
             <form onSubmit={handleSubmit(handleFilterSSOT)}>
               <SSOTSpreadsheetViewFilter
