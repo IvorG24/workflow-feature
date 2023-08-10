@@ -82,22 +82,27 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
   const switchInputProps = { color: "green" };
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
   const [accordionValue, setAccordionValue] = useState("requisition-table");
-  const [localFilterSettings, setLocalFilterSettings] = useLocalStorage({
+  const defaultFilterSettings = {
+    showRequisitionTable,
+    showQuotationTable,
+    showRIRTable,
+    showSourcedItemTable,
+    showReleaseOrderTable,
+    showChequeReferenceTable,
+    showRequisitionColumnList,
+    showQuotationColumnList,
+    showRIRColumnList,
+    showSourcedItemColumnList,
+    showReleaseOrderColumnList,
+    showChequeReferenceColumnList,
+  };
+  const [
+    localFilterSettings,
+    setLocalFilterSettings,
+    resetLocalFilterSettings,
+  ] = useLocalStorage({
     key: "ssot-table-filter",
-    defaultValue: {
-      showRequisitionTable,
-      showQuotationTable,
-      showRIRTable,
-      showSourcedItemTable,
-      showReleaseOrderTable,
-      showChequeReferenceTable,
-      showRequisitionColumnList,
-      showQuotationColumnList,
-      showRIRColumnList,
-      showSourcedItemColumnList,
-      showReleaseOrderColumnList,
-      showChequeReferenceColumnList,
-    },
+    defaultValue: defaultFilterSettings,
   });
 
   const handleSaveFilterSettingsToLocalStorage = () => {
@@ -119,6 +124,26 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     return;
   };
 
+  const checkIfDefaultAndLocalHasSameProps = (
+    defaultSettings: typeof defaultFilterSettings,
+    localSettings: typeof localFilterSettings
+  ) => {
+    const keys1 = Object.keys(defaultSettings);
+    const keys2 = Object.keys(localSettings);
+
+    if (keys1.length !== keys2.length) {
+      return false;
+    }
+
+    for (const key of keys1) {
+      if (!keys2.includes(key)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   useEffect(() => {
     const {
       showRequisitionTable,
@@ -134,6 +159,16 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       showReleaseOrderColumnList,
       showChequeReferenceColumnList,
     } = localFilterSettings;
+
+    if (
+      !checkIfDefaultAndLocalHasSameProps(
+        defaultFilterSettings,
+        localFilterSettings
+      )
+    ) {
+      resetLocalFilterSettings();
+      return;
+    }
 
     setShowRequisitionTable(showRequisitionTable);
     setShowQuotationTable(showQuotationTable);
