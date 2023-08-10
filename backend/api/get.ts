@@ -1520,15 +1520,22 @@ export const getFormslyForwardLinkFormId = async (
 
   const requestList = {
     Requisition: [] as string[],
+    "Sourced Item": [] as string[],
     Quotation: [] as string[],
     "Receiving Inspecting Report": [] as string[],
     "Release Order": [] as string[],
+    "Cheque Reference": [] as string[],
   };
 
   formattedData.forEach((request) => {
     switch (request.request_response_request.request_form.form_name) {
       case "Requisition":
         requestList["Requisition"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Sourced Item":
+        requestList["Sourced Item"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
@@ -1544,6 +1551,11 @@ export const getFormslyForwardLinkFormId = async (
         break;
       case "Release Order":
         requestList["Release Order"].push(
+          `"${request.request_response_request.request_id}"`
+        );
+        break;
+      case "Cheque Reference":
+        requestList["Cheque Reference"].push(
           `"${request.request_response_request.request_id}"`
         );
         break;
