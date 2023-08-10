@@ -167,7 +167,7 @@ const HeaderMenu = () => {
           <Divider mt="sm" />
           <Menu.Item
             icon={<IconLogout size={14} />}
-            data-cy="header-authentication-button-logout"
+            data-cy="header-button-logout"
             onClick={handleLogout}
           >
             Logout
