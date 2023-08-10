@@ -9,7 +9,7 @@ import {
   Text,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconColumns3, IconEye, IconEyeOff } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { ShowColumnList } from "./SSOTSpreadhseetViewPage";
 
@@ -495,8 +495,12 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       </Drawer>
 
       <Group position="center">
-        <Button onClick={() => setShowFilterColumnModal(true)}>
-          Show/Hide Tables and Columns
+        <Button
+          variant="outline"
+          onClick={() => setShowFilterColumnModal(true)}
+          leftIcon={<IconColumns3 size={14} />}
+        >
+          Toggle Tables & Columns
         </Button>
       </Group>
     </Box>
