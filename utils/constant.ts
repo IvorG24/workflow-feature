@@ -60,15 +60,15 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const requisitionFormId = uuidv4();
   const sourcedItemFormId = uuidv4();
   const quotationFormId = uuidv4();
-  const receivingInspectingReportPurchasedFormId = uuidv4();
+  const receivingInspectingReportFormId = uuidv4();
   const releaseOrderFormId = uuidv4();
   const chequeReferenceFormId = uuidv4();
   const auditFormId = uuidv4();
 
   // section ids
-  const requisitionIdSectionId = uuidv4();
   const requisitionMainSectionId = uuidv4();
   const requisitionItemSectionId = uuidv4();
+  const sourcedItemIdSectionId = uuidv4();
   const sourcedItemItemSectionId = uuidv4();
   const quotationIdSectionId = uuidv4();
   const quotationMainSectionId = uuidv4();
@@ -105,23 +105,16 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       },
       section: [
         {
-          section_id: requisitionIdSectionId,
-          section_name: "ID",
-          section_order: 1,
-          section_is_duplicatable: false,
-          section_form_id: requisitionFormId,
-        },
-        {
           section_id: requisitionMainSectionId,
           section_name: "Main",
-          section_order: 2,
+          section_order: 1,
           section_is_duplicatable: false,
           section_form_id: requisitionFormId,
         },
         {
           section_id: requisitionItemSectionId,
           section_name: "Item",
-          section_order: 3,
+          section_order: 2,
           section_is_duplicatable: true,
           section_form_id: requisitionFormId,
         },
@@ -130,7 +123,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Project Name",
           field_type: "DROPDOWN",
-          field_order: 2,
+          field_order: 1,
           field_section_id: requisitionMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -138,7 +131,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Date Needed",
           field_type: "DATE",
-          field_order: 4,
+          field_order: 3,
           field_section_id: requisitionMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -146,7 +139,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Purpose",
           field_type: "TEXT",
-          field_order: 5,
+          field_order: 4,
           field_section_id: requisitionMainSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -154,7 +147,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "General Name",
           field_type: "DROPDOWN",
-          field_order: 6,
+          field_order: 5,
           field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -162,7 +155,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Unit of Measurement",
           field_type: "TEXT",
-          field_order: 7,
+          field_order: 6,
           field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -170,7 +163,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 8,
+          field_order: 7,
           field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -178,7 +171,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Cost Code",
           field_type: "TEXT",
-          field_order: 9,
+          field_order: 8,
           field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -186,7 +179,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "GL Account",
           field_type: "TEXT",
-          field_order: 10,
+          field_order: 9,
           field_section_id: requisitionItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -219,22 +212,37 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         form_is_formsly_form: true,
         form_is_hidden: true,
         form_team_member_id: teamMemberId,
-        form_is_disabled: true,
+        form_is_disabled: false,
       },
       section: [
         {
+          section_id: sourcedItemIdSectionId,
+          section_name: "ID",
+          section_order: 1,
+          section_is_duplicatable: false,
+          section_form_id: sourcedItemFormId,
+        },
+        {
           section_id: sourcedItemItemSectionId,
           section_name: "Item",
-          section_order: 1,
+          section_order: 2,
           section_is_duplicatable: true,
           section_form_id: sourcedItemFormId,
         },
       ],
       field: [
         {
+          field_name: "Requisition ID",
+          field_type: "LINK",
+          field_order: 1,
+          field_section_id: sourcedItemIdSectionId,
+          field_is_required: true,
+          field_is_read_only: true,
+        },
+        {
           field_name: "Item",
           field_type: "DROPDOWN",
-          field_order: 1,
+          field_order: 2,
           field_section_id: sourcedItemItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -242,7 +250,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 2,
+          field_order: 3,
           field_section_id: sourcedItemItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -250,7 +258,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Project Site",
           field_type: "DROPDOWN",
-          field_order: 3,
+          field_order: 4,
           field_section_id: sourcedItemItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -438,9 +446,9 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
     },
-    receivingInspectingReportPurchased: {
+    receivingInspectingReport: {
       form: {
-        form_id: receivingInspectingReportPurchasedFormId,
+        form_id: receivingInspectingReportFormId,
         form_name: "Receiving Inspecting Report",
         form_description: "formsly premade Receiving Inspecting Report form",
         form_app: "REQUEST",
@@ -455,21 +463,21 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           section_name: "ID",
           section_order: 1,
           section_is_duplicatable: false,
-          section_form_id: receivingInspectingReportPurchasedFormId,
+          section_form_id: receivingInspectingReportFormId,
         },
         {
           section_id: rirQualityCheckSectionId,
           section_name: "Quality Check",
           section_order: 2,
           section_is_duplicatable: false,
-          section_form_id: receivingInspectingReportPurchasedFormId,
+          section_form_id: receivingInspectingReportFormId,
         },
         {
           section_id: rirItemSectionId,
           section_name: "Item",
           section_order: 3,
           section_is_duplicatable: true,
-          section_form_id: receivingInspectingReportPurchasedFormId,
+          section_form_id: receivingInspectingReportFormId,
         },
       ],
       field: [
@@ -575,15 +583,15 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: true,
         },
         {
-          field_name: "DR",
-          field_type: "FILE",
+          field_name: "Sourced Item ID",
+          field_type: "LINK",
           field_order: 2,
-          field_section_id: roQualityCheckSectionId,
-          field_is_required: false,
-          field_is_read_only: false,
+          field_section_id: roIdSectionId,
+          field_is_required: true,
+          field_is_read_only: true,
         },
         {
-          field_name: "SI",
+          field_name: "DR",
           field_type: "FILE",
           field_order: 3,
           field_section_id: roQualityCheckSectionId,
@@ -591,9 +599,17 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
+          field_name: "SI",
+          field_type: "FILE",
+          field_order: 4,
+          field_section_id: roQualityCheckSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
           field_name: "Item",
           field_type: "DROPDOWN",
-          field_order: 4,
+          field_order: 5,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -601,7 +617,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 5,
+          field_order: 6,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -609,7 +625,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Receiving Status",
           field_type: "TEXT",
-          field_order: 6,
+          field_order: 7,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -617,7 +633,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Project Site",
           field_type: "TEXT",
-          field_order: 7,
+          field_order: 8,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -800,7 +816,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field_id: requisitionTypeFieldId,
       field_name: "Type",
       field_type: "DROPDOWN",
-      field_order: 3,
+      field_order: 2,
       field_section_id: requisitionMainSectionId,
       field_is_required: true,
       field_is_read_only: false,
@@ -838,7 +854,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     requisition,
     sourcedItem,
     quotation,
-    receivingInspectingReportPurchased,
+    receivingInspectingReport,
     releaseOrder,
     chequeReference,
     audit,
@@ -849,7 +865,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       requisition.form,
       sourcedItem.form,
       quotation.form,
-      receivingInspectingReportPurchased.form,
+      receivingInspectingReport.form,
       releaseOrder.form,
       chequeReference.form,
       audit.form,
@@ -858,7 +874,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...requisition.section,
       ...sourcedItem.section,
       ...quotation.section,
-      ...receivingInspectingReportPurchased.section,
+      ...receivingInspectingReport.section,
       ...releaseOrder.section,
       ...chequeReference.section,
       ...audit.section,
@@ -867,7 +883,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...requisition.field,
       ...sourcedItem.field,
       ...quotation.field,
-      ...receivingInspectingReportPurchased.field,
+      ...receivingInspectingReport.field,
       ...releaseOrder.field,
       ...chequeReference.field,
       ...audit.field,
