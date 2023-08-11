@@ -1633,6 +1633,31 @@ $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating rir item quantity are less than the quotation quantity
 
+
+-- Start: Create Team Project
+CREATE FUNCTION create_team_project( input_data JSON ) 
+RETURN VOID AS $$
+  let team_project_data;
+  plv8.subtransaction(function() {
+    const {
+    team_project_name,
+    team_project_initials,
+    team_project_team_id,
+    } = input_data;
+
+    const project_initial_count = plv8.execute(`
+    SELECT COUNT(*) FROM team_project_table 
+    WHERE team_project_team_id='${team_project_team_id}' 
+    AND team_project_code ILIKE '%${team_project_initials}%'
+    `)[0] + 1;
+
+    const team_project_code = team_project_initials || lpad(project_initial_count::text, 2, '0');
+
+    team_project_data = plv8.execute(`INSERT INTO team_project_table (team_project_name, team_project_code, team_project_team_id) VALUES ('${team_project_name}', '${team_project_code}', 'team_project_team_id')`);
+  });
+  return team_project_data;
+$$ LANGUAGE plv8;
+
 ---------- End: FUNCTIONS
 
 

@@ -19,7 +19,6 @@ import {
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
-  TeamProjectTableInsert,
   TeamTableInsert,
   UserTableInsert,
   UserTableRow,
@@ -663,7 +662,11 @@ export const createTeamGroup = async (
 // Create Team Project
 export const createTeamProject = async (
   supabaseClient: SupabaseClient<Database>,
-  params: TeamProjectTableInsert
+  params: {
+    team_project_name: string;
+    team_project_initials: string;
+    team_project_team_id: string;
+  }
 ) => {
   const { data, error } = await supabaseClient
     .from("team_project_table")
