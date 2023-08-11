@@ -204,7 +204,7 @@ CREATE TABLE request_table(
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
-  request_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL
+  request_project_id UUID REFERENCES team_project_table(team_project_id)
 );
 CREATE TABLE request_response_table(
   request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -1635,28 +1635,33 @@ $$ LANGUAGE plv8;
 
 
 -- Start: Create Team Project
-CREATE FUNCTION create_team_project( input_data JSON ) 
-RETURN VOID AS $$
+CREATE FUNCTION create_team_project(
+    input_data JSON
+)
+RETURNS JSON AS $$
   let team_project_data;
-  plv8.subtransaction(function() {
+  plv8.subtransaction(function(){
     const {
-    team_project_name,
-    team_project_initials,
-    team_project_team_id,
+    teamProjectName,
+    teamProjectInitials,
+    teamProjectTeamId,
     } = input_data;
 
-    const project_initial_count = plv8.execute(`
-    SELECT COUNT(*) FROM team_project_table 
-    WHERE team_project_team_id='${team_project_team_id}' 
-    AND team_project_code ILIKE '%${team_project_initials}%'
-    `)[0] + 1;
+    
+   const projectInitialCount = plv8.execute(`
+      SELECT COUNT(*) FROM team_project_table 
+      WHERE team_project_team_id = $1 
+      AND team_project_code ILIKE '%' || $2 || '%';
+    `, [teamProjectTeamId, teamProjectInitials])[0].count + 1n;
 
-    const team_project_code = team_project_initials || lpad(project_initial_count::text, 2, '0');
+    const teamProjectCode = teamProjectInitials + projectInitialCount.toString().padStart(2, '0');
 
-    team_project_data = plv8.execute(`INSERT INTO team_project_table (team_project_name, team_project_code, team_project_team_id) VALUES ('${team_project_name}', '${team_project_code}', 'team_project_team_id')`);
-  });
-  return team_project_data;
+    team_project_data = plv8.execute(`INSERT INTO team_project_table (team_project_name, team_project_code, team_project_team_id) VALUES ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}') RETURNING *;`)[0];
+
+ });
+ return team_project_data;
 $$ LANGUAGE plv8;
+-- End: Create Team Project
 
 ---------- End: FUNCTIONS
 
