@@ -45,12 +45,14 @@ type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
   projectSiteList: Record<string, string>;
+  requestProjectId: string;
 };
 
 const CreateReleaseOrderPage = ({
   form,
   itemOptions,
   projectSiteList,
+  requestProjectId,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -215,6 +217,8 @@ const CreateReleaseOrderPage = ({
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
+          isFormslyForm: true,
+          projectId: requestProjectId,
         });
 
         notifications.show({

@@ -34,9 +34,14 @@ export type FieldWithResponseArray =
 type Props = {
   form: FormType;
   formslyFormName?: string;
+  requestProjectId?: string;
 };
 
-const CreateRequestPage = ({ form, formslyFormName = "" }: Props) => {
+const CreateRequestPage = ({
+  form,
+  formslyFormName = "",
+  requestProjectId,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -89,6 +94,8 @@ const CreateRequestPage = ({ form, formslyFormName = "" }: Props) => {
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
+        isFormslyForm: false,
+        projectId: requestProjectId || "",
       });
       removeLocalFormState();
       notifications.show({

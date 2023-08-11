@@ -657,7 +657,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create request
 
-CREATE FUNCTION create_request(
+CREATE OR REPLACE FUNCTION create_request(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -670,10 +670,38 @@ RETURNS JSON AS $$
       responseValues,
       signerValues,
       notificationValues,
+      formName,
+      isFormslyForm,
+      projectId
     } = input_data;
-
     
-    request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
+    let request_formsly_id = 'NULL';
+    if(isFormslyForm===true) {
+      const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      const newCount = (Number(requestCount) + 1).toString();
+      const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
+      
+      let endId = '';
+      if(formName==='Quotation') {
+        endId = `Q-${newCount.padStart(5,'0')}`;
+      } else if(formName==='Sourced Item') {
+        endId = `SI-${newCount.padStart(6,'0')}`;
+      } else if(formName==='Receiving Inspecting Report') {
+        endId = `RIR-${newCount.padStart(6,'0')}`;
+      } else if(formName==='Release Order') {
+        endId = `RO-${newCount.padStart(3,'0')}`;
+      } else if(formName==='Cheque Reference') {
+        endId = `C-${newCount.padStart(4,'0')}`;
+      } else if(formName==='Audit') {
+        endId = `A-${newCount.padStart(4,'0')}`;
+      } else {
+        endId = `-${newCount.padStart(5,'0')}`;
+      }
+
+      request_formsly_id = `${project.team_project_code}${endId}`;
+    }
+    
+    request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id,request_formsly_id,request_project_id) VALUES ('${requestId}','${formId}','${teamMemberId}','${request_formsly_id}','${projectId}') RETURNING *;`)[0];
 
     plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
 
