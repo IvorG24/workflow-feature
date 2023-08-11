@@ -657,7 +657,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create request
 
-CREATE FUNCTION create_request(
+CREATE OR REPLACE FUNCTION create_request(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -677,24 +677,25 @@ RETURNS JSON AS $$
     
     let request_formsly_id = 'NULL';
     if(isFormslyForm===true) {
-      const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count.toString();
+      const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      const newCount = (Number(requestCount) + 1).toString();
       const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
       
       let endId = '';
       if(formName==='Quotation') {
-        endId = `Q-${requestCount.padStart(5,'0')}`;
+        endId = `Q-${newCount.padStart(5,'0')}`;
       } else if(formName==='Sourced Item') {
-        endId = `SI-${requestCount.padStart(6,'0')}`;
+        endId = `SI-${newCount.padStart(6,'0')}`;
       } else if(formName==='Receiving Inspecting Report') {
-        endId = `RIR-${requestCount.padStart(6,'0')}`;
+        endId = `RIR-${newCount.padStart(6,'0')}`;
       } else if(formName==='Release Order') {
-        endId = `RO-${requestCount.padStart(3,'0')}`;
+        endId = `RO-${newCount.padStart(3,'0')}`;
       } else if(formName==='Cheque Reference') {
-        endId = `C-${requestCount.padStart(4,'0')}`;
+        endId = `C-${newCount.padStart(4,'0')}`;
       } else if(formName==='Audit') {
-        endId = `A-${requestCount.padStart(4,'0')}`;
+        endId = `A-${newCount.padStart(4,'0')}`;
       } else {
-        endId = `-${requestCount.padStart(5,'0')}`;
+        endId = `-${newCount.padStart(5,'0')}`;
       }
 
       request_formsly_id = `${project.team_project_code}${endId}`;
