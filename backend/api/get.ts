@@ -173,7 +173,7 @@ export const getRequestList = async (
   const searchCondition =
     search && validator.isUUID(search)
       ? `request_table.request_id = '${search}'`
-      : `request_table.request_formsly_id = '${search}'`;
+      : `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
   const { data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {

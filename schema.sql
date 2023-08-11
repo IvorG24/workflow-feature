@@ -348,7 +348,7 @@ RETURNS JSON as $$
     let supplierCondition = '';
     
     if(search.length !== 0){
-      searchCondition = `request_table.request_formsly_id = '${search}'`;
+      searchCondition = `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
     }
 
     if(requisitionFilterCount || supplierList.length !== 0){
@@ -567,6 +567,7 @@ RETURNS JSON as $$
 
           return {
             sourced_item_request_id: sourced_item.request_id,
+            sourced_item_request_formsly_id: sourced_item.request_formsly_id,
             sourced_item_request_date_created: sourced_item.request_date_created,
             sourced_item_request_response: sourced_item_response_fields,
             sourced_item_request_owner: sourced_item_team_member,
