@@ -19,7 +19,7 @@ import {
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
-  TeamProjectTableInsert,
+  TeamProjectTableRow,
   TeamTableInsert,
   UserTableInsert,
   UserTableRow,
@@ -675,16 +675,23 @@ export const createTeamGroup = async (
 // Create Team Project
 export const createTeamProject = async (
   supabaseClient: SupabaseClient<Database>,
-  params: TeamProjectTableInsert
+  params: {
+    teamProjectName: string;
+    teamProjectInitials: string;
+    teamProjectTeamId: string;
+  }
 ) => {
   const { data, error } = await supabaseClient
-    .from("team_project_table")
-    .insert(params)
-    .select("*")
+    .rpc("create_team_project", {
+      input_data: {
+        ...params,
+      },
+    })
+    .select()
     .single();
   if (error) throw error;
 
-  return data;
+  return data as TeamProjectTableRow;
 };
 
 // Insert team member to group
