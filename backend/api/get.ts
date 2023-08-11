@@ -1967,7 +1967,7 @@ export const getSignerData = async (
 };
 
 // Get all quotation request for the requisition
-export const getRequsitionPendingQuotationRequestList = async (
+export const getRequisitionPendingQuotationRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -1980,6 +1980,7 @@ export const getRequsitionPendingQuotationRequestList = async (
     .select(
       `request_response_request: request_response_request_id!inner(
         request_id, 
+        request_formsly_id,
         request_status, 
         request_form: request_form_id!inner(
           form_name
@@ -1992,11 +1993,12 @@ export const getRequsitionPendingQuotationRequestList = async (
 
   if (error) throw error;
   const formattedData = data as unknown as {
-    request_response_request: { request_id: string };
+    request_response_request: {
+      request_id: string;
+      request_formsly_id: string;
+    };
   }[];
-  return formattedData.map(
-    (request) => request.request_response_request.request_id
-  );
+  return formattedData.map((request) => request.request_response_request);
 };
 
 // Get canvass data
@@ -2016,7 +2018,7 @@ export const getCanvassData = async (
       `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
   );
 
-  const canvassRequest = await getRequsitionPendingQuotationRequestList(
+  const canvassRequest = await getRequisitionPendingQuotationRequestList(
     supabaseClient,
     { requestId }
   );
@@ -2034,14 +2036,14 @@ export const getCanvassData = async (
 
   const summaryData: CanvassLowestPriceType = {};
   const quotationRequestList = await Promise.all(
-    canvassRequest.map(async (canvassRequestId) => {
+    canvassRequest.map(async ({ request_id, request_formsly_id }) => {
       const { data: quotationResponseList, error: quotationResponseListError } =
         await supabaseClient
           .from("request_response_table")
           .select(
-            "*, request_response_field: request_response_field_id!inner(field_name)"
+            "*, request_response_field: request_response_field_id!inner(field_name), request_response_request: request_response_request_id!inner(request_id,request_formsly_id)"
           )
-          .eq("request_response_request_id", canvassRequestId)
+          .eq("request_response_request_id", request_id)
           .in("request_response_field.field_name", [
             "Item",
             "Price per Unit",
@@ -2049,13 +2051,18 @@ export const getCanvassData = async (
             ...additionalChargeFields,
           ]);
       if (quotationResponseListError) throw quotationResponseListError;
-      summaryData[canvassRequestId] = 0;
+      summaryData[request_formsly_id] = 0;
       return quotationResponseList;
     })
   );
+
   const formattedQuotationRequestList =
     quotationRequestList as unknown as (RequestResponseTableRow & {
       request_response_field: { field_name: string };
+      request_response_request: {
+        request_id: string;
+        request_formsly_id: string;
+      };
     })[][];
 
   const canvassData: CanvassType = {};
@@ -2076,7 +2083,7 @@ export const getCanvassData = async (
       if (response.request_response_field.field_name === "Item") {
         currentItem = JSON.parse(response.request_response);
         canvassData[currentItem].push({
-          quotationId: response.request_response_request_id,
+          quotationId: response.request_response_request.request_formsly_id,
           price: 0,
           quantity: 0,
         });
@@ -2089,7 +2096,8 @@ export const getCanvassData = async (
         if (price < lowestPricePerItem[currentItem]) {
           lowestPricePerItem[currentItem] = price;
         }
-        summaryData[response.request_response_request_id] += price;
+        summaryData[response.request_response_request.request_formsly_id] +=
+          price;
       } else if (response.request_response_field.field_name === "Quantity") {
         canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
           Number(response.request_response);
@@ -2099,13 +2107,15 @@ export const getCanvassData = async (
         )
       ) {
         const price = Number(response.request_response);
-        summaryData[response.request_response_request_id] += price;
+        summaryData[response.request_response_request.request_formsly_id] +=
+          price;
         tempAdditionalCharge += price;
       }
     });
 
-    requestAdditionalCharge[request[0].request_response_request_id] =
-      tempAdditionalCharge;
+    requestAdditionalCharge[
+      request[0].request_response_request.request_formsly_id
+    ] = tempAdditionalCharge;
     if (tempAdditionalCharge < lowestAdditionalCharge) {
       lowestAdditionalCharge = tempAdditionalCharge;
     }
@@ -2115,13 +2125,16 @@ export const getCanvassData = async (
     .sort(([, a], [, b]) => a - b)
     .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
   const recommendedQuotationId = Object.keys(sortedQuotation)[0];
-
+  const request_id = canvassRequest.find(
+    (request) => request.request_formsly_id === recommendedQuotationId
+  )?.request_id;
   return {
     canvassData,
     lowestPricePerItem,
     summaryData,
     lowestQuotation: {
       id: recommendedQuotationId,
+      request_id: request_id,
       value: sortedQuotation[recommendedQuotationId],
     },
     requestAdditionalCharge,

@@ -3,7 +3,7 @@ import {
   getFormslyForm,
   getFormslyForwardLinkFormId,
   getRequest,
-  getRequsitionPendingQuotationRequestList,
+  getRequisitionPendingQuotationRequestList,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -59,9 +59,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           memberId: `${teamMember?.team_member_id}`,
         });
 
-        const canvassRequest = await getRequsitionPendingQuotationRequestList(
-          supabaseClient,
-          { requestId: request.request_id }
+        const canvassRequestList =
+          await getRequisitionPendingQuotationRequestList(supabaseClient, {
+            requestId: request.request_id,
+          });
+
+        const canvassRequest = canvassRequestList.map(
+          (request) => request.request_id
         );
 
         return {
