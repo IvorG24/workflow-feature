@@ -203,8 +203,8 @@ CREATE TABLE request_table(
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
-  request_form_id UUID REFERENCES form_table(form_id) NOT NULL
-  request_project_id UUID REFERENCES team_project_table(project_id) NOT NULL
+  request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  request_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL
 );
 CREATE TABLE request_response_table(
   request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
