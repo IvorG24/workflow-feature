@@ -30,9 +30,13 @@ export type FieldWithResponseArray = Field & {
 
 type Props = {
   form: FormType;
+  requestProjectId: string;
 };
 
-const CreateChequeReferenceRequestPage = ({ form }: Props) => {
+const CreateChequeReferenceRequestPage = ({
+  form,
+  requestProjectId,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -82,6 +86,8 @@ const CreateChequeReferenceRequestPage = ({ form }: Props) => {
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
+        isFormslyForm: true,
+        projectId: requestProjectId,
       });
 
       notifications.show({

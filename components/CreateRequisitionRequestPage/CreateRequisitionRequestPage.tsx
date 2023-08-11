@@ -122,6 +122,13 @@ const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
         sections: [data.sections[0], ...newSections],
       };
 
+      const projectNameResponse = data.sections[0].section_field[0]
+        .field_response as string;
+
+      const projectId = data.sections[0].section_field[0].field_option.find(
+        (option) => option.option_value === projectNameResponse
+      )?.option_id as string;
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: newData,
         formId,
@@ -130,12 +137,15 @@ const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
+        isFormslyForm: true,
+        projectId,
       });
 
       notifications.show({
         message: "Request created.",
         color: "green",
       });
+
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({

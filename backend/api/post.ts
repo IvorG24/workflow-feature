@@ -407,10 +407,19 @@ export const createRequest = async (
     teamId: string;
     requesterName: string;
     formName: string;
+    isFormslyForm: boolean;
+    projectId: string;
   }
 ) => {
-  const { requestFormValues, signers, teamId, requesterName, formName } =
-    params;
+  const {
+    requestFormValues,
+    signers,
+    teamId,
+    requesterName,
+    formName,
+    isFormslyForm,
+    projectId,
+  } = params;
 
   const requestId = uuidv4();
 
@@ -518,6 +527,9 @@ export const createRequest = async (
         responseValues,
         signerValues,
         notificationValues,
+        formName,
+        isFormslyForm,
+        projectId,
       },
     })
     .select()

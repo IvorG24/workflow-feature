@@ -43,9 +43,14 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  requestProjectId: string;
 };
 
-const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
+const CreateQuotationRequestPage = ({
+  form,
+  itemOptions,
+  requestProjectId,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -177,6 +182,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
+          isFormslyForm: true,
+          projectId: requestProjectId,
         });
 
         notifications.show({
