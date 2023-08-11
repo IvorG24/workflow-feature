@@ -115,7 +115,9 @@ const RequestFormFields = ({
       }
     };
 
-    fetchLinkToDisplay();
+    if (field.field_type === "LINK") {
+      fetchLinkToDisplay();
+    }
   }, []);
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
