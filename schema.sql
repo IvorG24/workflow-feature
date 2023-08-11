@@ -1496,6 +1496,7 @@ RETURNS JSON AS $$
         `
           SELECT 
             request_table.request_id, 
+            request_table.request_formsly_id,
             request_date_created, 
             request_status,
             request_team_member_id,
@@ -1582,6 +1583,7 @@ RETURNS JSON AS $$
 
         return {
           request_id: request.request_id, 
+          request_formsly_id: request.request_formsly_id,
           request_date_created: request.request_date_created, 
           request_status: request.request_status, 
           request_team_member: {

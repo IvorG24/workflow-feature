@@ -42,10 +42,10 @@ const RequestItemRow = ({ request }: Props) => {
     <Grid m={0} px="sm" py={0} justify="space-between">
       <Grid.Col span={2}>
         <Group spacing={0}>
-          <Text truncate w={100}>
+          <Text truncate maw={150}>
             {requestId}
           </Text>
-          <CopyButton value={request.request_id}>
+          <CopyButton value={requestId}>
             {({ copied, copy }) => (
               <Tooltip label={copied ? "Copied" : "Copy"} onClick={copy}>
                 <ActionIcon>
