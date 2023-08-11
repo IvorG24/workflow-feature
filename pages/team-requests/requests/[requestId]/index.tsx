@@ -11,7 +11,7 @@ import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormslyFormType, RequestWithResponseType } from "@/utils/types";
+import { ConnectedRequestIdList, RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -138,7 +138,7 @@ type Props = {
     formIsMember: boolean;
     formName: string;
   };
-  connectedRequestIDList: FormslyFormType;
+  connectedRequestIDList: ConnectedRequestIdList;
   connectedForm: {
     form_name: string;
     form_id: string;

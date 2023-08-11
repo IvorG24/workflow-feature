@@ -9,8 +9,8 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
+  ConnectedRequestIdList,
   FormStatusType,
-  FormslyFormType,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -42,7 +42,7 @@ type Props = {
     form_is_for_every_member: boolean;
     form_is_member: boolean;
   }[];
-  connectedRequestIDList: FormslyFormType;
+  connectedRequestIDList: ConnectedRequestIdList;
   canvassRequest: string[];
 };
 
@@ -93,6 +93,7 @@ const RequisitionRequestPage = ({
   );
 
   const originalSectionList = request.request_form.form_section;
+  console.log(originalSectionList);
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 
