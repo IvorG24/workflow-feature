@@ -21,6 +21,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { lowerCase, startCase } from "lodash";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
+import validator from "validator";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
@@ -168,6 +169,11 @@ export const getRequestList = async (
     ?.map((value) => `request_table.request_form_id = '${value}'`)
     .join(" OR ");
 
+  const searchCondition =
+    search && validator.isUUID(search)
+      ? `request_table.request_id = '${search}'`
+      : `request_table.request_formsly_id = '${search}'`;
+
   const { data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {
       teamId: teamId,
@@ -176,7 +182,7 @@ export const getRequestList = async (
       requestor: requestorCondition ? `AND (${requestorCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
-      search: search ? `AND request_table.request_id = '${search}'` : "",
+      search: search ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
     },
   });

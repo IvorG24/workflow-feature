@@ -169,7 +169,6 @@ export type ShowColumnList = { [key: string]: boolean };
 
 const requisitionTableColumnList = [
   "Requisition ID",
-  "Shorthand Requisition ID",
   "Date Created",
   "Operations/Engineering",
   "Project Name",
@@ -1249,10 +1248,10 @@ const SSOTSpreadsheetView = ({
           {showRequisitionTable && (
             <>
               {showRequisitionColumnList["requisition_id"] && (
-                <td>{request.requisition_request_id}</td>
-              )}
-              {showRequisitionColumnList["shorthand_requisition_id"] && (
-                <td>{request.requisition_request_row_number}</td>
+                <td>
+                  {request.requisition_request_formsly_id ||
+                    request.requisition_request_id}
+                </td>
               )}
               {showRequisitionColumnList["date_created"] && (
                 <td>
@@ -1657,13 +1656,6 @@ const SSOTSpreadsheetView = ({
                     <>
                       {showRequisitionColumnList["requisition_id"] && (
                         <th className={classes.long}>Requisition ID</th>
-                      )}
-                      {showRequisitionColumnList[
-                        "shorthand_requisition_id"
-                      ] && (
-                        <th className={classes.long}>
-                          Shorthand Requisition ID
-                        </th>
                       )}
                       {showRequisitionColumnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>

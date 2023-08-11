@@ -625,7 +625,7 @@ export type SSOTResponseType = {
 };
 
 export type SSOTType = {
-  requisition_request_row_number: number;
+  requisition_request_formsly_id: string;
   requisition_request_id: string;
   requisition_request_date_created: string;
   requisition_request_owner: SSOTRequestOwnerType;
@@ -693,6 +693,7 @@ export type CanvassLowestPriceType = Record<string, number>;
 
 export type RequestListItemType = {
   request_id: string;
+  request_formsly_id: string;
   request_date_created: string;
   request_status: string;
   request_team_member: {
