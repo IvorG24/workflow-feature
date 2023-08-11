@@ -5,6 +5,7 @@ import {
   AttachmentBucketType,
   CanvassLowestPriceType,
   CanvassType,
+  ConnectedRequestItemType,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -1510,7 +1511,7 @@ export const getFormslyForwardLinkFormId = async (
   const { data, error } = await supabaseClient
     .from("request_response_table")
     .select(
-      "request_response_request: request_response_request_id!inner(request_id, request_status, request_form: request_form_id(form_name))"
+      "request_response_request: request_response_request_id!inner(request_id, request_formsly_id, request_status, request_form: request_form_id(form_name))"
     )
     .eq("request_response", `"${requestId}"`)
     .eq("request_response_request.request_status", "APPROVED");
@@ -1518,6 +1519,7 @@ export const getFormslyForwardLinkFormId = async (
   const formattedData = data as unknown as {
     request_response_request: {
       request_id: string;
+      request_formsly_id: string;
       request_form: {
         form_name: string;
       };
@@ -1525,45 +1527,37 @@ export const getFormslyForwardLinkFormId = async (
   }[];
 
   const requestList = {
-    Requisition: [] as string[],
-    "Sourced Item": [] as string[],
-    Quotation: [] as string[],
-    "Receiving Inspecting Report": [] as string[],
-    "Release Order": [] as string[],
-    "Cheque Reference": [] as string[],
+    Requisition: [] as ConnectedRequestItemType[],
+    "Sourced Item": [] as ConnectedRequestItemType[],
+    Quotation: [] as ConnectedRequestItemType[],
+    "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
+    "Release Order": [] as ConnectedRequestItemType[],
+    "Cheque Reference": [] as ConnectedRequestItemType[],
   };
 
   formattedData.forEach((request) => {
+    const newFormattedData = {
+      request_id: request.request_response_request.request_id,
+      request_formsly_id: request.request_response_request.request_formsly_id,
+    };
     switch (request.request_response_request.request_form.form_name) {
       case "Requisition":
-        requestList["Requisition"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Requisition"].push(newFormattedData);
         break;
       case "Sourced Item":
-        requestList["Sourced Item"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Sourced Item"].push(newFormattedData);
         break;
       case "Quotation":
-        requestList["Quotation"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Quotation"].push(newFormattedData);
         break;
       case "Receiving Inspecting Report":
-        requestList["Receiving Inspecting Report"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Receiving Inspecting Report"].push(newFormattedData);
         break;
       case "Release Order":
-        requestList["Release Order"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Release Order"].push(newFormattedData);
         break;
       case "Cheque Reference":
-        requestList["Cheque Reference"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Cheque Reference"].push(newFormattedData);
         break;
     }
   });

@@ -731,3 +731,8 @@ export type RequestListItemType = {
     };
   }[];
 };
+
+export type ConnectedRequestItemType = {
+  request_id: string;
+  request_formsly_id: string;
+};
