@@ -86,6 +86,7 @@ CREATE TABLE team_project_table(
   team_project_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   team_project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   team_project_name VARCHAR(4000) NOT NULL,
+  team_project_code VARCHAR(4000) NOT NULL,
   team_project_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL
@@ -196,13 +197,14 @@ CREATE TABLE form_team_group_table(
 -- Start: Request
 CREATE TABLE request_table(
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  request_row_number INT GENERATED ALWAYS AS IDENTITY NOT NULL,
+  request_formsly_id VARCHAR(4000) UNIQUE,
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL
+  request_project_id UUID REFERENCES team_project_table(project_id) NOT NULL
 );
 CREATE TABLE request_response_table(
   request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
