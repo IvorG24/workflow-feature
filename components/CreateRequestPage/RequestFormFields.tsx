@@ -113,7 +113,6 @@ const RequestFormFields = ({
           setLinkToDisplay(fetchedValue);
         }
       }
-      console.log(requestId);
     };
 
     fetchLinkToDisplay();
