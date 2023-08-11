@@ -348,7 +348,7 @@ RETURNS JSON as $$
     let supplierCondition = '';
     
     if(search.length !== 0){
-      searchCondition = `request_table.request_id = '${search}'`;
+      searchCondition = `request_table.request_formsly_id = '${search}'`;
     }
 
     if(requisitionFilterCount || supplierList.length !== 0){
@@ -381,7 +381,7 @@ RETURNS JSON as $$
           SELECT * FROM (
             SELECT 
               request_table.request_id, 
-              request_table.request_row_number,
+              request_table.request_formsly_id,
               request_table.request_date_created, 
               request_table.request_team_member_id, 
               request_response_table.request_response, 
@@ -402,7 +402,7 @@ RETURNS JSON as $$
       );
           
     }else{
-      requisition_requests = plv8.execute(`SELECT request_id, request_row_number, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+      requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
     }
 
     
@@ -436,7 +436,7 @@ RETURNS JSON as $$
           quotation_condition += `request_id='${quotation.request_id}' OR `;
         });
 
-        const quotation_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
         quotation_list = quotation_requests.map(quotation => {
           // Quotation request response
           const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
@@ -463,7 +463,7 @@ RETURNS JSON as $$
               rir_condition += `request_id='${rir.request_id}' OR `;
             });
 
-            const rir_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+            const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
             rir_list = rir_requests.map(rir => {
               // rir request response
               const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
@@ -483,6 +483,7 @@ RETURNS JSON as $$
 
               return {
                 rir_request_id: rir.request_id,
+                rir_request_formsly_id: rir.request_formsly_id,
                 rir_request_date_created: rir.request_date_created,
                 rir_request_response: rir_response_fields,
                 rir_request_owner: rir_team_member,
@@ -492,6 +493,7 @@ RETURNS JSON as $$
 
           return {
             quotation_request_id: quotation.request_id,
+            quotation_request_formsly_id: quotation.request_formsly_id,
             quotation_request_date_created: quotation.request_date_created,
             quotation_request_response: quotation_response_fields,
             quotation_request_owner: quotation_team_member,
@@ -508,7 +510,7 @@ RETURNS JSON as $$
           sourced_item_condition += `request_id='${sourced_item.request_id}' OR `;
         });
 
-        const sourced_item_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
         sourced_item_list = sourced_item_requests.map(sourced_item => {
           // Sourced Item request response
           const sourced_item_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${sourced_item.request_id}'`);
@@ -535,7 +537,7 @@ RETURNS JSON as $$
               ro_condition += `request_id='${ro.request_id}' OR `;
             });
 
-            const ro_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+            const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
             ro_list = ro_requests.map(ro => {
               // ro request response
               const ro_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${ro.request_id}'`);
@@ -555,6 +557,7 @@ RETURNS JSON as $$
 
               return {
                 ro_request_id: ro.request_id,
+                ro_request_formsly_id: ro.request_formsly_id,
                 ro_request_date_created: ro.request_date_created,
                 ro_request_response: ro_response_fields,
                 ro_request_owner: ro_team_member,
@@ -580,7 +583,7 @@ RETURNS JSON as $$
           cheque_reference_condition += `request_id='${cheque_reference.request_id}' OR `;
         });
 
-        const cheque_reference_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${cheque_reference_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        const cheque_reference_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${cheque_reference_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
         cheque_reference_list = cheque_reference_requests.map(cheque_reference => {
           // cheque_reference request response
           const cheque_reference_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${cheque_reference.request_id}'`);
@@ -600,6 +603,7 @@ RETURNS JSON as $$
 
           return {
             cheque_reference_request_id: cheque_reference.request_id,
+            cheque_reference_request_formsly_id: cheque_reference.request_formsly_id,
             cheque_reference_request_date_created: cheque_reference.request_date_created,
             cheque_reference_request_response: cheque_reference_response_fields,
             cheque_reference_request_owner: cheque_reference_team_member,
@@ -608,8 +612,8 @@ RETURNS JSON as $$
       }
   
       return {
-        requisition_request_row_number: requisition.request_row_number,
         requisition_request_id: requisition.request_id,
+        requisition_request_formsly_id: requisition.request_formsly_id,
         requisition_request_date_created: requisition.request_date_created,
         requisition_request_response: requisition_response_fields,
         requisition_request_owner: requisition_team_member,

@@ -122,7 +122,7 @@ const SSOTSpreadsheetViewFilter = ({
       >
         <Stack>
           <TextInput
-            placeholder="Search by Requisition ID"
+            placeholder="Search by Project ID"
             {...register("search")}
           />
 

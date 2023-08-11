@@ -471,7 +471,7 @@ const SSOTSpreadsheetView = ({
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
           {showChequeReferenceColumnList["cheque_reference_id"] && (
-            <td>{request.cheque_reference_request_id}</td>
+            <td>{request.cheque_reference_request_formsly_id}</td>
           )}
           {showChequeReferenceColumnList["date_created"] && (
             <td>
@@ -571,7 +571,9 @@ const SSOTSpreadsheetView = ({
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          {showRIRColumnList["rir_id"] && <td>{request.rir_request_id}</td>}
+          {showRIRColumnList["rir_id"] && (
+            <td>{request.rir_request_formsly_id}</td>
+          )}
           {showRIRColumnList["date_created"] && (
             <td>
               {new Date(request.rir_request_date_created).toLocaleDateString()}
@@ -708,7 +710,7 @@ const SSOTSpreadsheetView = ({
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
           {showReleaseOrderColumnList["ro_id"] && (
-            <td>{request.ro_request_id}</td>
+            <td>{request.ro_request_formsly_id}</td>
           )}
           {showReleaseOrderColumnList["date_created"] && (
             <td>
@@ -852,7 +854,7 @@ const SSOTSpreadsheetView = ({
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
           {showQuotationColumnList["quotation_id"] && (
-            <td>{request.quotation_request_id}</td>
+            <td>{request.quotation_request_formsly_id}</td>
           )}
           {showQuotationColumnList["date_created"] && (
             <td>
@@ -1073,7 +1075,7 @@ const SSOTSpreadsheetView = ({
           {showSourcedItemTable && (
             <>
               {showSourcedItemColumnList["sourced_item_id"] && (
-                <td>{request.sourced_item_request_id}</td>
+                <td>{request.sourced_item_request_formsly_id}</td>
               )}
               {showSourcedItemColumnList["date_created"] && (
                 <td>
