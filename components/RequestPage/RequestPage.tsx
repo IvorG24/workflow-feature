@@ -98,7 +98,7 @@ const RequestPage = ({
   );
 
   const originalSectionList = request.request_form.form_section;
-  console.log(originalSectionList);
+
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 

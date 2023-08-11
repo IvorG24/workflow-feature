@@ -2721,3 +2721,20 @@ export const getTeamInvitation = async (
 
   return { data, error: null };
 };
+
+export const getRequestFormslyId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select("request_formsly_id")
+    .eq("request_id", requestId);
+  if (error) throw error;
+  const requestFormslyId = data[0].request_formsly_id;
+
+  return requestFormslyId;
+};
