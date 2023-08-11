@@ -1,3 +1,4 @@
+import { getRequestFormslyId } from "@/backend/api/get";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { addCommaToNumber, regExp, requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
@@ -14,6 +15,7 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconCalendar,
   IconClock,
@@ -21,7 +23,7 @@ import {
   IconFile,
   IconLink,
 } from "@tabler/icons-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { RequestFormValues } from "./CreateRequestPage";
 
@@ -65,8 +67,10 @@ const RequestFormFields = ({
     getValues,
   } = useFormContext<RequestFormValues>();
 
+  const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -96,6 +100,24 @@ const RequestFormFields = ({
     },
   };
 
+  useEffect(() => {
+    const fetchLinkToDisplay = async () => {
+      const requestId = getValues(
+        `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`
+      );
+      if (requestId) {
+        const fetchedValue = await getRequestFormslyId(supabaseClient, {
+          requestId: requestId as string,
+        });
+        if (fetchedValue) {
+          setLinkToDisplay(fetchedValue);
+        }
+      }
+    };
+
+    fetchLinkToDisplay();
+  }, []);
+
   const renderField = (field: RequestFormFieldsProps["field"]) => {
     switch (field.field_type) {
       case "LINK":
@@ -110,7 +132,7 @@ const RequestFormFields = ({
                     {...inputProps}
                     error={fieldError}
                     withAsterisk={field.field_is_required}
-                    value={`${value}`}
+                    value={`${linkToDisplay || value}`}
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
                   />
