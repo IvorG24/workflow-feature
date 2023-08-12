@@ -3,7 +3,7 @@ import {
   getFormslyForm,
   getFormslyForwardLinkFormId,
   getRequest,
-  getRequsitionPendingQuotationRequestList,
+  getRequisitionPendingQuotationRequestList,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -11,7 +11,7 @@ import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormslyFormType, RequestWithResponseType } from "@/utils/types";
+import { ConnectedRequestIdList, RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -59,9 +59,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           memberId: `${teamMember?.team_member_id}`,
         });
 
-        const canvassRequest = await getRequsitionPendingQuotationRequestList(
-          supabaseClient,
-          { requestId: request.request_id }
+        const canvassRequestList =
+          await getRequisitionPendingQuotationRequestList(supabaseClient, {
+            requestId: request.request_id,
+          });
+
+        const canvassRequest = canvassRequestList.map(
+          (request) => request.request_id
         );
 
         return {
@@ -138,7 +142,7 @@ type Props = {
     formIsMember: boolean;
     formName: string;
   };
-  connectedRequestIDList: FormslyFormType;
+  connectedRequestIDList: ConnectedRequestIdList;
   connectedForm: {
     form_name: string;
     form_id: string;

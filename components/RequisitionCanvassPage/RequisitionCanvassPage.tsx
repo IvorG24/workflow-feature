@@ -32,7 +32,7 @@ type Props = {
   canvassData: CanvassType;
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
-  lowestQuotation: { id: string; value: number };
+  lowestQuotation: { id: string; request_id: string; value: number };
   requestAdditionalCharge: CanvassLowestPriceType;
   lowestAdditionalCharge: number;
 };
@@ -84,7 +84,7 @@ const RequisitionCanvassPage = ({
             <Button
               variant="light"
               onClick={() =>
-                window.open(requestPath(lowestQuotation.id), "_blank")
+                window.open(requestPath(lowestQuotation.request_id), "_blank")
               }
             >
               View Quotation

@@ -7,6 +7,7 @@ import {
   getItemResponseForQuotation,
   getItemResponseForRIR,
   getItemResponseForRO,
+  getRequest,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -41,6 +42,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         teamId: teamId,
       });
       if (!teamMember) throw new Error("No team member found");
+
+      let requestProjectId = "";
+      if (context.query.requisitionId) {
+        const request = await getRequest(supabaseClient, {
+          requestId: `${context.query.requisitionId}`,
+        });
+        requestProjectId = `${request.request_project_id}`;
+      }
 
       if (form.form_is_formsly_form) {
         // Requisition Form
@@ -166,6 +175,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ],
               },
               itemOptions,
+              requestProjectId,
             },
           };
         }
@@ -202,6 +212,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             props: {
               form,
               itemOptions,
+              requestProjectId,
             },
           };
         }
@@ -246,6 +257,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             props: {
               form,
               itemOptions,
+              requestProjectId,
             },
           };
         }
@@ -302,13 +314,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               form,
               itemOptions,
               projectSiteList,
+              requestProjectId,
             },
           };
         }
       }
 
       return {
-        props: { form },
+        props: { form, requestProjectId },
       };
     } catch (error) {
       console.error(error);
@@ -326,9 +339,15 @@ type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
   projectSiteList?: Record<string, string>;
+  requestProjectId: string;
 };
 
-const Page = ({ form, itemOptions, projectSiteList = {} }: Props) => {
+const Page = ({
+  form,
+  itemOptions,
+  projectSiteList = {},
+  requestProjectId = "",
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
@@ -337,17 +356,26 @@ const Page = ({ form, itemOptions, projectSiteList = {} }: Props) => {
         );
       case "Sourced Item":
         return (
-          <CreateSourcedItemRequestPage form={form} itemOptions={itemOptions} />
+          <CreateSourcedItemRequestPage
+            form={form}
+            itemOptions={itemOptions}
+            requestProjectId={requestProjectId}
+          />
         );
       case "Quotation":
         return (
-          <CreateQuotationRequestPage form={form} itemOptions={itemOptions} />
+          <CreateQuotationRequestPage
+            form={form}
+            itemOptions={itemOptions}
+            requestProjectId={requestProjectId}
+          />
         );
       case "Receiving Inspecting Report":
         return (
           <CreateReceivingInspectingReportPage
             form={form}
             itemOptions={itemOptions}
+            requestProjectId={requestProjectId}
           />
         );
       case "Release Order":
@@ -356,12 +384,24 @@ const Page = ({ form, itemOptions, projectSiteList = {} }: Props) => {
             form={form}
             itemOptions={itemOptions}
             projectSiteList={projectSiteList}
+            requestProjectId={requestProjectId}
           />
         );
       case "Cheque Reference":
-        return <CreateChequeReferenceRequestPage form={form} />;
+        return (
+          <CreateChequeReferenceRequestPage
+            form={form}
+            requestProjectId={requestProjectId}
+          />
+        );
       case "Audit":
-        return <CreateRequestPage form={form} formslyFormName="Audit" />;
+        return (
+          <CreateRequestPage
+            form={form}
+            formslyFormName="Audit"
+            requestProjectId={requestProjectId}
+          />
+        );
     }
   };
   return (

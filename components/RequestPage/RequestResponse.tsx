@@ -1,3 +1,4 @@
+import { getRequestFormslyId } from "@/backend/api/get";
 import { requestPath } from "@/utils/string";
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
@@ -11,12 +12,15 @@ import {
   Textarea,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconCalendar,
   IconClock,
   IconExternalLink,
   IconFile,
 } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import validator from "validator";
 
 type RequestReponseProps = {
   response: {
@@ -37,6 +41,24 @@ const RequestResponse = ({
     variant: "filled",
     readOnly: true,
   };
+  const supabaseClient = useSupabaseClient();
+  const [linkDisplayValue, setLinkDisplayValue] = useState(
+    response.value === "" ? "" : JSON.parse(response.value)
+  );
+
+  useEffect(() => {
+    const fetchRequestFormslyId = async () => {
+      if (validator.isUUID(linkDisplayValue.toString())) {
+        const requestFormslyId = await getRequestFormslyId(supabaseClient, {
+          requestId: linkDisplayValue,
+        });
+        if (requestFormslyId) {
+          setLinkDisplayValue(requestFormslyId);
+        }
+      }
+    };
+    fetchRequestFormslyId();
+  }, []);
 
   const renderResponse = (response: RequestReponseProps["response"]) => {
     const parsedValue = response.value === "" ? "" : JSON.parse(response.value);
@@ -47,7 +69,7 @@ const RequestResponse = ({
           <Flex w="100%" align="flex-end" gap="xs">
             <TextInput
               label={response.label}
-              value={parsedValue}
+              value={linkDisplayValue}
               {...inputProps}
               style={{ flex: 1 }}
             />

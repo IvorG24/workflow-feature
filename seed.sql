@@ -26,10 +26,10 @@ INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id
 ('13a506c2-a93e-44e1-b1bd-6742dbbf6f84', 'TREASURY PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Cheque Reference
 ('7a91ae20-68b8-4f80-bcba-2a850b33b3d1', 'AUDIT PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Audit
 
-INSERT INTO team_project_table (team_project_id, team_project_name, team_project_team_id) VALUES
-('4b3a151a-a077-486c-9dfb-e996c2c9184c', 'PHILIP MORRIS', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('bf4dc226-a763-49da-be9f-606202d2c4c9', 'SIGUIL HYDRO', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('989dbcc2-fdfe-48c7-806a-98cf80e1bf42', 'LAKE MAINIT', 'a5a28977-6956-45c1-a624-b9e90911502e');
+INSERT INTO team_project_table (team_project_id, team_project_name, team_project_team_id, team_project_code) VALUES
+('4b3a151a-a077-486c-9dfb-e996c2c9184c', 'PHILIP MORRIS', 'a5a28977-6956-45c1-a624-b9e90911502e', 'PM01'),
+('bf4dc226-a763-49da-be9f-606202d2c4c9', 'SIGUIL HYDRO', 'a5a28977-6956-45c1-a624-b9e90911502e','SH01'),
+('989dbcc2-fdfe-48c7-806a-98cf80e1bf42', 'LAKE MAINIT', 'a5a28977-6956-45c1-a624-b9e90911502e', 'LM01');
 
 INSERT INTO team_group_member_table (team_member_id, team_group_id) VALUES
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),

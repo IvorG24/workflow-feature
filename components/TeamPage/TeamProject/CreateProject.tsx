@@ -44,9 +44,31 @@ const CreateProject = ({
     },
   });
 
+  const generateProjectInitials = (projectName: string) => {
+    const words = projectName.split(" ");
+    let initials = "";
+
+    if (words.length === 1) {
+      const firstTwoLetters = words[0].slice(0, 2);
+      initials = firstTwoLetters.toUpperCase();
+    } else {
+      for (const word of words) {
+        if (word.length > 0) {
+          initials += word[0].toUpperCase();
+          if (initials.length >= 2) {
+            break;
+          }
+        }
+      }
+    }
+
+    return initials;
+  };
+
   const onSubmit = async (data: ProjectForm) => {
     try {
       const projectName = toUpper(data.projectName.trim());
+      const projectInitials = generateProjectInitials(projectName);
       if (
         await checkIfTeamProjectExists(supabaseClient, {
           teamId: activeTeam.team_id,
@@ -61,8 +83,9 @@ const CreateProject = ({
       }
 
       const newProject = await createTeamProject(supabaseClient, {
-        team_project_name: projectName,
-        team_project_team_id: activeTeam.team_id,
+        teamProjectName: projectName,
+        teamProjectInitials: projectInitials,
+        teamProjectTeamId: activeTeam.team_id,
       });
       setProjectList((prev) => {
         prev.unshift(newProject);

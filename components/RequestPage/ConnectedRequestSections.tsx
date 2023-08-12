@@ -1,31 +1,58 @@
-import { FormslyFormKeyType, FormslyFormType } from "@/utils/types";
-import { Accordion, Box, Paper, Stack, Title } from "@mantine/core";
+import { requestPath } from "@/utils/string";
+import { ConnectedRequestItemType } from "@/utils/types";
+import {
+  Accordion,
+  ActionIcon,
+  Box,
+  Flex,
+  Paper,
+  Stack,
+  TextInput,
+  Title,
+} from "@mantine/core";
+import { IconExternalLink } from "@tabler/icons-react";
 import { isEmpty } from "lodash";
-import RequestResponse from "./RequestResponse";
 
 type Props = {
-  connectedRequestIDList: FormslyFormType;
+  connectedRequestIDList: { [key: string]: ConnectedRequestItemType[] };
+};
+
+const renderLink = (request: ConnectedRequestItemType) => {
+  const inputProps = {
+    variant: "filled",
+    readOnly: true,
+  };
+
+  return (
+    <Flex w="100%" align="flex-end" gap="xs">
+      <TextInput
+        value={request.request_formsly_id}
+        {...inputProps}
+        style={{ flex: 1 }}
+      />
+      <ActionIcon
+        mb={4}
+        p={4}
+        variant="light"
+        color="blue"
+        onClick={() => window.open(requestPath(request.request_id), "_blank")}
+      >
+        <IconExternalLink />
+      </ActionIcon>
+    </Flex>
+  );
 };
 
 const ConnectedRequestSection = ({ connectedRequestIDList }: Props) => {
   const formTypeList = Object.keys(connectedRequestIDList);
 
   const connectedRequestSection = formTypeList.map((key) => {
-    return connectedRequestIDList[key as FormslyFormKeyType].length !== 0 ? (
+    return connectedRequestIDList[key].length !== 0 ? (
       <Box key={key} mt="xs">
         <Title order={5}>{key}</Title>
-        {connectedRequestIDList[key as FormslyFormKeyType].map((request) => (
-          <Box key={request} mt={5}>
-            <RequestResponse
-              response={{
-                id: request,
-                type: "LINK",
-                label: "",
-                value: request,
-                options: [],
-              }}
-              isFormslyForm={true}
-            />
+        {connectedRequestIDList[key].map((request) => (
+          <Box key={request.request_id} mt={5}>
+            {renderLink(request)}
           </Box>
         ))}
       </Box>

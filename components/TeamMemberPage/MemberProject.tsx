@@ -101,6 +101,13 @@ const MemberProject = ({ memberId, projectList, projectCount }: Props) => {
                   <Text>{team_project.team_project_name}</Text>
                 ),
               },
+              {
+                accessor: "project_initials",
+                title: "Project Initials",
+                render: ({ team_project }) => (
+                  <Text>{team_project.team_project_code}</Text>
+                ),
+              },
             ]}
             totalRecords={count}
             recordsPerPage={ROW_PER_PAGE}

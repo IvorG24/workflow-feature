@@ -625,18 +625,20 @@ export type SSOTResponseType = {
 };
 
 export type SSOTType = {
-  requisition_request_row_number: number;
+  requisition_request_formsly_id: string;
   requisition_request_id: string;
   requisition_request_date_created: string;
   requisition_request_owner: SSOTRequestOwnerType;
   requisition_request_response: SSOTResponseType[];
   requisition_quotation_request: {
     quotation_request_id: string;
+    quotation_request_formsly_id: string;
     quotation_request_date_created: string;
     quotation_request_owner: SSOTRequestOwnerType;
     quotation_request_response: SSOTResponseType[];
     quotation_rir_request: {
       rir_request_id: string;
+      rir_request_formsly_id: string;
       rir_request_date_created: string;
       rir_request_owner: SSOTRequestOwnerType;
       rir_request_response: SSOTResponseType[];
@@ -644,11 +646,13 @@ export type SSOTType = {
   }[];
   requisition_sourced_item_request: {
     sourced_item_request_id: string;
+    sourced_item_request_formsly_id: string;
     sourced_item_request_date_created: string;
     sourced_item_request_owner: SSOTRequestOwnerType;
     sourced_item_request_response: SSOTResponseType[];
     sourced_item_ro_request: {
       ro_request_id: string;
+      ro_request_formsly_id: string;
       ro_request_date_created: string;
       ro_request_owner: SSOTRequestOwnerType;
       ro_request_response: SSOTResponseType[];
@@ -656,6 +660,7 @@ export type SSOTType = {
   }[];
   requisition_cheque_reference_request: {
     cheque_reference_request_id: string;
+    cheque_reference_request_formsly_id: string;
     cheque_reference_request_date_created: string;
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
@@ -693,6 +698,7 @@ export type CanvassLowestPriceType = Record<string, number>;
 
 export type RequestListItemType = {
   request_id: string;
+  request_formsly_id: string;
   request_date_created: string;
   request_status: string;
   request_team_member: {
@@ -724,4 +730,13 @@ export type RequestListItemType = {
       };
     };
   }[];
+};
+
+export type ConnectedRequestItemType = {
+  request_id: string;
+  request_formsly_id: string;
+};
+
+export type ConnectedRequestIdList = {
+  [key: string]: ConnectedRequestItemType[];
 };

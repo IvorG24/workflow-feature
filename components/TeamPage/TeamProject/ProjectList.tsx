@@ -208,6 +208,20 @@ const ProjectList = ({
         </Text>
       ),
     },
+    {
+      accessor: "project_initials",
+      title: "Project Initials",
+      render: ({ team_project_code, team_project_id }) => (
+        <Text
+          className={classes.clickableColumn}
+          onClick={() => {
+            handleColumnClick(team_project_id);
+          }}
+        >
+          {team_project_code}
+        </Text>
+      ),
+    },
   ];
 
   return (

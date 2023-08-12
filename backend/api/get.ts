@@ -5,6 +5,7 @@ import {
   AttachmentBucketType,
   CanvassLowestPriceType,
   CanvassType,
+  ConnectedRequestItemType,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -21,6 +22,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { lowerCase, startCase } from "lodash";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
+import validator from "validator";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
@@ -168,6 +170,11 @@ export const getRequestList = async (
     ?.map((value) => `request_table.request_form_id = '${value}'`)
     .join(" OR ");
 
+  const searchCondition =
+    search && validator.isUUID(search)
+      ? `request_table.request_id = '${search}'`
+      : `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+
   const { data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {
       teamId: teamId,
@@ -176,7 +183,7 @@ export const getRequestList = async (
       requestor: requestorCondition ? `AND (${requestorCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
-      search: search ? `AND request_table.request_id = '${search}'` : "",
+      search: search ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
     },
   });
@@ -1504,7 +1511,7 @@ export const getFormslyForwardLinkFormId = async (
   const { data, error } = await supabaseClient
     .from("request_response_table")
     .select(
-      "request_response_request: request_response_request_id!inner(request_id, request_status, request_form: request_form_id(form_name))"
+      "request_response_request: request_response_request_id!inner(request_id, request_formsly_id, request_status, request_form: request_form_id(form_name))"
     )
     .eq("request_response", `"${requestId}"`)
     .eq("request_response_request.request_status", "APPROVED");
@@ -1512,6 +1519,7 @@ export const getFormslyForwardLinkFormId = async (
   const formattedData = data as unknown as {
     request_response_request: {
       request_id: string;
+      request_formsly_id: string;
       request_form: {
         form_name: string;
       };
@@ -1519,45 +1527,37 @@ export const getFormslyForwardLinkFormId = async (
   }[];
 
   const requestList = {
-    Requisition: [] as string[],
-    "Sourced Item": [] as string[],
-    Quotation: [] as string[],
-    "Receiving Inspecting Report": [] as string[],
-    "Release Order": [] as string[],
-    "Cheque Reference": [] as string[],
+    Requisition: [] as ConnectedRequestItemType[],
+    "Sourced Item": [] as ConnectedRequestItemType[],
+    Quotation: [] as ConnectedRequestItemType[],
+    "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
+    "Release Order": [] as ConnectedRequestItemType[],
+    "Cheque Reference": [] as ConnectedRequestItemType[],
   };
 
   formattedData.forEach((request) => {
+    const newFormattedData = {
+      request_id: request.request_response_request.request_id,
+      request_formsly_id: request.request_response_request.request_formsly_id,
+    };
     switch (request.request_response_request.request_form.form_name) {
       case "Requisition":
-        requestList["Requisition"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Requisition"].push(newFormattedData);
         break;
       case "Sourced Item":
-        requestList["Sourced Item"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Sourced Item"].push(newFormattedData);
         break;
       case "Quotation":
-        requestList["Quotation"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Quotation"].push(newFormattedData);
         break;
       case "Receiving Inspecting Report":
-        requestList["Receiving Inspecting Report"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Receiving Inspecting Report"].push(newFormattedData);
         break;
       case "Release Order":
-        requestList["Release Order"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Release Order"].push(newFormattedData);
         break;
       case "Cheque Reference":
-        requestList["Cheque Reference"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Cheque Reference"].push(newFormattedData);
         break;
     }
   });
@@ -1967,7 +1967,7 @@ export const getSignerData = async (
 };
 
 // Get all quotation request for the requisition
-export const getRequsitionPendingQuotationRequestList = async (
+export const getRequisitionPendingQuotationRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -1980,6 +1980,7 @@ export const getRequsitionPendingQuotationRequestList = async (
     .select(
       `request_response_request: request_response_request_id!inner(
         request_id, 
+        request_formsly_id,
         request_status, 
         request_form: request_form_id!inner(
           form_name
@@ -1992,11 +1993,12 @@ export const getRequsitionPendingQuotationRequestList = async (
 
   if (error) throw error;
   const formattedData = data as unknown as {
-    request_response_request: { request_id: string };
+    request_response_request: {
+      request_id: string;
+      request_formsly_id: string;
+    };
   }[];
-  return formattedData.map(
-    (request) => request.request_response_request.request_id
-  );
+  return formattedData.map((request) => request.request_response_request);
 };
 
 // Get canvass data
@@ -2016,7 +2018,7 @@ export const getCanvassData = async (
       `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
   );
 
-  const canvassRequest = await getRequsitionPendingQuotationRequestList(
+  const canvassRequest = await getRequisitionPendingQuotationRequestList(
     supabaseClient,
     { requestId }
   );
@@ -2034,14 +2036,14 @@ export const getCanvassData = async (
 
   const summaryData: CanvassLowestPriceType = {};
   const quotationRequestList = await Promise.all(
-    canvassRequest.map(async (canvassRequestId) => {
+    canvassRequest.map(async ({ request_id, request_formsly_id }) => {
       const { data: quotationResponseList, error: quotationResponseListError } =
         await supabaseClient
           .from("request_response_table")
           .select(
-            "*, request_response_field: request_response_field_id!inner(field_name)"
+            "*, request_response_field: request_response_field_id!inner(field_name), request_response_request: request_response_request_id!inner(request_id,request_formsly_id)"
           )
-          .eq("request_response_request_id", canvassRequestId)
+          .eq("request_response_request_id", request_id)
           .in("request_response_field.field_name", [
             "Item",
             "Price per Unit",
@@ -2049,13 +2051,18 @@ export const getCanvassData = async (
             ...additionalChargeFields,
           ]);
       if (quotationResponseListError) throw quotationResponseListError;
-      summaryData[canvassRequestId] = 0;
+      summaryData[request_formsly_id] = 0;
       return quotationResponseList;
     })
   );
+
   const formattedQuotationRequestList =
     quotationRequestList as unknown as (RequestResponseTableRow & {
       request_response_field: { field_name: string };
+      request_response_request: {
+        request_id: string;
+        request_formsly_id: string;
+      };
     })[][];
 
   const canvassData: CanvassType = {};
@@ -2076,7 +2083,7 @@ export const getCanvassData = async (
       if (response.request_response_field.field_name === "Item") {
         currentItem = JSON.parse(response.request_response);
         canvassData[currentItem].push({
-          quotationId: response.request_response_request_id,
+          quotationId: response.request_response_request.request_formsly_id,
           price: 0,
           quantity: 0,
         });
@@ -2089,7 +2096,8 @@ export const getCanvassData = async (
         if (price < lowestPricePerItem[currentItem]) {
           lowestPricePerItem[currentItem] = price;
         }
-        summaryData[response.request_response_request_id] += price;
+        summaryData[response.request_response_request.request_formsly_id] +=
+          price;
       } else if (response.request_response_field.field_name === "Quantity") {
         canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
           Number(response.request_response);
@@ -2099,13 +2107,15 @@ export const getCanvassData = async (
         )
       ) {
         const price = Number(response.request_response);
-        summaryData[response.request_response_request_id] += price;
+        summaryData[response.request_response_request.request_formsly_id] +=
+          price;
         tempAdditionalCharge += price;
       }
     });
 
-    requestAdditionalCharge[request[0].request_response_request_id] =
-      tempAdditionalCharge;
+    requestAdditionalCharge[
+      request[0].request_response_request.request_formsly_id
+    ] = tempAdditionalCharge;
     if (tempAdditionalCharge < lowestAdditionalCharge) {
       lowestAdditionalCharge = tempAdditionalCharge;
     }
@@ -2115,13 +2125,16 @@ export const getCanvassData = async (
     .sort(([, a], [, b]) => a - b)
     .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
   const recommendedQuotationId = Object.keys(sortedQuotation)[0];
-
+  const request_id = canvassRequest.find(
+    (request) => request.request_formsly_id === recommendedQuotationId
+  )?.request_id;
   return {
     canvassData,
     lowestPricePerItem,
     summaryData,
     lowestQuotation: {
       id: recommendedQuotationId,
+      request_id: request_id,
       value: sortedQuotation[recommendedQuotationId],
     },
     requestAdditionalCharge,
@@ -2720,4 +2733,21 @@ export const getTeamInvitation = async (
   if (error) throw error;
 
   return { data, error: null };
+};
+
+export const getRequestFormslyId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select("request_formsly_id")
+    .eq("request_id", requestId);
+  if (error) throw error;
+  const requestFormslyId = data[0].request_formsly_id;
+
+  return requestFormslyId;
 };
