@@ -17,10 +17,8 @@ import {
   Button,
   Container,
   List,
-  Paper,
   Space,
   Stack,
-  Text,
   Title,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
@@ -307,7 +305,10 @@ const CreateSourcedItemRequestPage = ({
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} projectName={projectName}/>
+            <RequestFormDetails
+              formDetails={formDetails}
+              projectName={projectName}
+            />
             {formSections.map((section, idx) => {
               const sectionIdToFind = section.section_id;
               const sectionLastIndex = getValues("sections")

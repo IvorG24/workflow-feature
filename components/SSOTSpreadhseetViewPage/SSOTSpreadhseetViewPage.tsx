@@ -222,8 +222,6 @@ const releaseOrderTableColumnList = [
   "RO ID",
   "Date Created",
   "Warehouse Corporate Support Lead",
-  "DR",
-  "SI",
   "Item",
   "Quantity",
   "Unit of Measurement",
@@ -670,8 +668,6 @@ const SSOTSpreadsheetView = ({
       const itemStatus: string[] = [];
       const items = request.ro_request_response;
       const itemProjectSite: string[] = [];
-      let dr = "";
-      let si = "";
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -695,10 +691,6 @@ const SSOTSpreadsheetView = ({
           itemStatus.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Project Site") {
           itemProjectSite.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "DR") {
-          dr = item.request_response;
-        } else if (item.request_response_field_name === "SI") {
-          si = item.request_response;
         }
       });
 
@@ -718,36 +710,6 @@ const SSOTSpreadsheetView = ({
           )}
           {showReleaseOrderColumnList["warehouse_corporate_support_lead"] && (
             <td>{`${request.ro_request_owner.user_first_name} ${request.ro_request_owner.user_last_name}`}</td>
-          )}
-          {showReleaseOrderColumnList["dr"] && (
-            <td>
-              {dr && (
-                <ActionIcon
-                  w="100%"
-                  variant="outline"
-                  onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
-                >
-                  <Flex align="center" justify="center" gap={2}>
-                    <Text size={14}>File</Text> <IconFile size={14} />
-                  </Flex>
-                </ActionIcon>
-              )}
-            </td>
-          )}
-          {showReleaseOrderColumnList["si"] && (
-            <td>
-              {si && (
-                <ActionIcon
-                  w="100%"
-                  variant="outline"
-                  onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
-                >
-                  <Flex align="center" justify="center" gap={2}>
-                    <Text size={14}>File</Text> <IconFile size={14} />
-                  </Flex>
-                </ActionIcon>
-              )}
-            </td>
           )}
           {showReleaseOrderColumnList["item"] && (
             <td>
@@ -1157,12 +1119,6 @@ const SSOTSpreadsheetView = ({
                             <th className={classes.processor}>
                               Warehouse Corporate Support Lead
                             </th>
-                          )}
-                          {showReleaseOrderColumnList["dr"] && (
-                            <th className={classes.short}>DR</th>
-                          )}
-                          {showReleaseOrderColumnList["si"] && (
-                            <th className={classes.short}>SI</th>
                           )}
                           {showReleaseOrderColumnList["item"] && (
                             <th className={classes.description}>Item</th>

@@ -54,23 +54,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       }
 
       if (form.form_is_formsly_form) {
-        const project = await getRequestProjectIdAndName(supabaseClient, {
-          requestId: `${context.query.requisitionId}`,
-        });
-        if (!project) throw new Error();
-        const formattedProject = project as unknown as {
-          team_project_id: string;
-          team_project_name: string;
-        };
-
-        const projectSigner = await getProjectSignerWithTeamMember(
-          supabaseClient,
-          {
-            formId: form.form_id,
-            projectId: `${formattedProject.team_project_id}`,
-          }
-        );
-
         // Requisition Form
         if (form.form_name === "Requisition") {
           // items
@@ -131,8 +114,25 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
+
+        const project = await getRequestProjectIdAndName(supabaseClient, {
+          requestId: `${context.query.requisitionId}`,
+        });
+        if (!project) throw new Error();
+        const formattedProject = project as unknown as {
+          team_project_id: string;
+          team_project_name: string;
+        };
+
+        const projectSigner = await getProjectSignerWithTeamMember(
+          supabaseClient,
+          {
+            formId: form.form_id,
+            projectId: `${formattedProject.team_project_id}`,
+          }
+        );
         // Sourced Item Form
-        else if (form.form_name === "Sourced Item") {
+        if (form.form_name === "Sourced Item") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.requisitionId}`],
           });
