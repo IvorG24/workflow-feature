@@ -113,7 +113,10 @@ const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
         });
         return response.data;
       } catch (error) {
-        console.log(error);
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
       }
     }
   };

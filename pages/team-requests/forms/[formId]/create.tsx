@@ -108,6 +108,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ],
               },
               itemOptions,
+              projectOptions,
             },
           };
         }
@@ -338,6 +339,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
+  projectOptions?: OptionTableRow[];
   projectSiteList?: Record<string, string>;
   requestProjectId: string;
 };
@@ -347,12 +349,17 @@ const Page = ({
   itemOptions,
   projectSiteList = {},
   requestProjectId = "",
+  projectOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
         return (
-          <CreateRequisitionRequestPage form={form} itemOptions={itemOptions} />
+          <CreateRequisitionRequestPage
+            form={form}
+            itemOptions={itemOptions}
+            projectOptions={projectOptions}
+          />
         );
       case "Sourced Item":
         return (

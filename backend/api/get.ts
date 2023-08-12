@@ -547,12 +547,13 @@ export const getForm = async (
           user_username
         )
       ), 
-      form_signer: signer_table(
+      form_signer: signer_table!inner(
         signer_id, 
         signer_is_primary_signer, 
         signer_action, 
         signer_order,
         signer_is_disabled, 
+        signer_team_project_id,
         signer_team_member: signer_team_member_id(
           team_member_id, 
           team_member_user: team_member_user_id(
@@ -583,6 +584,7 @@ export const getForm = async (
     // .eq("form_is_disabled", false)
     .eq("form_team_group.team_group.team_group_is_disabled", false)
     .eq("form_signer.signer_is_disabled", false)
+    .is("form_signer.signer_team_project_id", null)
     .single();
   if (error) throw error;
 
@@ -2750,4 +2752,62 @@ export const getRequestFormslyId = async (
   const requestFormslyId = data[0].request_formsly_id;
 
   return requestFormslyId;
+};
+
+// Fetch request signer based on project site
+export const getProjectSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    formId: string;
+  }
+) => {
+  const { projectId, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select("*")
+    .eq("signer_team_project_id", projectId)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false);
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch request signer with team member based on project site
+export const getProjectSignerWithTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    formId: string;
+  }
+) => {
+  const { projectId, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select(
+      `signer_id, 
+      signer_is_primary_signer, 
+      signer_action, 
+      signer_order,
+      signer_is_disabled, 
+      signer_team_project_id,
+      signer_team_member: signer_team_member_id(
+        team_member_id, 
+        team_member_user: team_member_user_id(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar
+        )
+      )`
+    )
+    .eq("signer_team_project_id", projectId)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false);
+
+  if (error) throw error;
+
+  return data;
 };

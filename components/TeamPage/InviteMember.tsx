@@ -110,7 +110,10 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
         });
         return response.data;
       } catch (error) {
-        console.log(error);
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
       }
     }
   };
@@ -138,7 +141,10 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
         color: "green",
       });
     } catch (error) {
-      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
     } finally {
       setIsResendingInvite(false);
     }
@@ -157,7 +163,10 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
         color: "green",
       });
     } catch (error) {
-      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
     }
   };
 

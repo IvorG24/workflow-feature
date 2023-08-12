@@ -155,7 +155,8 @@ CREATE TABLE signer_table (
   signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
-  signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+  signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  signer_team_project_id UUID REFERENCES team_project_table(team_project_id)
 );
 CREATE TABLE section_table (
   section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -1171,19 +1172,20 @@ RETURNS JSON AS $$
   plv8.subtransaction(function(){
     const {
      formId,
-     signers
+     signers,
+     selectedProjectId
     } = input_data;
 
-    plv8.execute(`UPDATE signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}';`);
+    plv8.execute(`UPDATE signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"}`);
 
     const signerValues = signers
       .map(
         (signer) =>
-          `('${signer.signer_id}','${formId}','${signer.signer_team_member_id}','${signer.signer_action}','${signer.signer_is_primary_signer}','${signer.signer_order}','${signer.signer_is_disabled}')`
+          `('${signer.signer_id}','${formId}','${signer.signer_team_member_id}','${signer.signer_action}','${signer.signer_is_primary_signer}','${signer.signer_order}','${signer.signer_is_disabled}','${selectedProjectId}')`
       )
       .join(",");
 
-    signer_data = plv8.execute(`INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled RETURNING *;`);
+    signer_data = plv8.execute(`INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled,signer_team_project_id) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled, signer_team_project_id = excluded.signer_team_project_id RETURNING *;`);
 
  });
  return signer_data;
