@@ -7,7 +7,9 @@ import {
   getItemResponseForQuotation,
   getItemResponseForRIR,
   getItemResponseForRO,
+  getProjectSignerWithTeamMember,
   getRequest,
+  getRequestProjectId,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -52,6 +54,18 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       }
 
       if (form.form_is_formsly_form) {
+        const projectId = await getRequestProjectId(supabaseClient, {
+          requestId: `${context.query.requisitionId}`,
+        });
+
+        const projectSigner = await getProjectSignerWithTeamMember(
+          supabaseClient,
+          {
+            formId: form.form_id,
+            projectId: `${projectId}`,
+          }
+        );
+
         // Requisition Form
         if (form.form_name === "Requisition") {
           // items
@@ -174,6 +188,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                     ],
                   },
                 ],
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
               },
               itemOptions,
               requestProjectId,
@@ -211,7 +227,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
               itemOptions,
               requestProjectId,
             },
@@ -256,7 +276,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           });
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
               itemOptions,
               requestProjectId,
             },
@@ -312,9 +336,29 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           });
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
               itemOptions,
               projectSiteList,
+              requestProjectId,
+            },
+          };
+        }
+        // Cheque Reference or Audit
+        else if (
+          form.form_name === "Cheque Reference" ||
+          form.form_name === "Audit"
+        ) {
+          return {
+            props: {
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
               requestProjectId,
             },
           };

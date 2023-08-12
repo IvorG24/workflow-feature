@@ -335,14 +335,14 @@ const CreateReleaseOrderPage = ({
     prevValue: string | null
   ) => {
     const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(1);
+    const itemSectionList = sectionList.slice(2);
 
     if (value) {
       setAvailableItems((prev) =>
         prev.filter((item) => item.option_value !== value)
       );
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -383,7 +383,7 @@ const CreateReleaseOrderPage = ({
         return [...prev, newOption];
       });
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
