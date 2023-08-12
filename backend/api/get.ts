@@ -2813,7 +2813,7 @@ export const getProjectSignerWithTeamMember = async (
 };
 
 // Fetch request project id
-export const getRequestProjectId = async (
+export const getRequestProjectIdAndName = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -2822,10 +2822,12 @@ export const getRequestProjectId = async (
   const { requestId } = params;
   const { data, error } = await supabaseClient
     .from("request_table")
-    .select("request_project_id")
+    .select(
+      "request_project: request_project_id(team_project_id, team_project_name)"
+    )
     .eq("request_id", requestId)
     .single();
   if (error) throw error;
 
-  return data.request_project_id;
+  return data.request_project;
 };
