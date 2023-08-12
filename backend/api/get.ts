@@ -318,7 +318,8 @@ export const getRequest = async (
             field_response: request_response_table(*)
           )
         )
-      )`
+      ),
+      request_project: request_project_id(team_project_name)`
     )
     .eq("request_id", requestId)
     .eq("request_is_disabled", false)
