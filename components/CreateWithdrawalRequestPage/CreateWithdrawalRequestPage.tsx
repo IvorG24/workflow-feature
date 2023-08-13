@@ -1,4 +1,3 @@
-import { checkRequisitionQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -6,6 +5,7 @@ import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { regExp } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -119,41 +119,24 @@ const CreateWithdrawalRequestPage = ({
       if (!teamMember) return;
       setIsLoading(true);
 
-      const requisitionID = JSON.stringify(
-        data.sections[0].section_field[0].field_response
-      );
+      const warningItemList: string[] = [];
 
-      const tempRequestId = uuidv4();
+      const itemSection = data.sections.slice(1);
+      itemSection.forEach((item) => {
+        const matches = regExp.exec(`${item.section_field[0].field_response}`);
+        const quantityMatch = matches && matches[1].match(/(\d+)/);
+        const quantity = quantityMatch && quantityMatch[0];
 
-      const itemFieldList: RequestResponseTableRow[] = [];
-      const quantityFieldList: RequestResponseTableRow[] = [];
+        const difference =
+          Number(quantity) - Number(item.section_field[1].field_response);
 
-      data.sections.forEach((section) => {
-        section.section_field.forEach((field) => {
-          if (field.field_name === "Item") {
-            itemFieldList.push({
-              request_response_id: uuidv4(),
-              request_response: JSON.stringify(field.field_response),
-              request_response_duplicatable_section_id: null,
-              request_response_field_id: field.field_id,
-              request_response_request_id: tempRequestId,
-            });
-          } else if (field.field_name === "Quantity") {
-            quantityFieldList.push({
-              request_response_id: uuidv4(),
-              request_response: JSON.stringify(field.field_response),
-              request_response_duplicatable_section_id: null,
-              request_response_field_id: field.field_id,
-              request_response_request_id: tempRequestId,
-            });
-          }
-        });
-      });
-
-      const warningItemList = await checkRequisitionQuantity(supabaseClient, {
-        requisitionID,
-        itemFieldList,
-        quantityFieldList,
+        if (difference < 0) {
+          warningItemList.push(
+            `${
+              item.section_field[0].field_response
+            } exceeds quantity limit by ${Math.abs(difference)}`
+          );
+        }
       });
 
       if (warningItemList && warningItemList.length !== 0) {
