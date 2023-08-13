@@ -342,6 +342,7 @@ RETURNS JSON as $$
     const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const withdrawal_slip_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Withdrawal Slip' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
     let requisition_requests;
     let searchCondition = '';
@@ -612,6 +613,42 @@ RETURNS JSON as $$
           }
         });
       }
+
+      const withdrawal_slip_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${withdrawal_slip_form.form_id}'`);
+      let withdrawal_slip_list = [];
+      if(withdrawal_slip_ids.length !== 0){
+        let withdrawal_slip_condition = "";
+        withdrawal_slip_ids.forEach(withdrawal_slip => {
+          withdrawal_slip_condition += `request_id='${withdrawal_slip.request_id}' OR `;
+        });
+
+        const withdrawal_slip_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${withdrawal_slip_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        withdrawal_slip_list = withdrawal_slip_requests.map(withdrawal_slip => {
+          // withdrawal_slip request response
+          const withdrawal_slip_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${withdrawal_slip.request_id}'`);
+          
+          // withdrawal_slip request response with fields
+          const withdrawal_slip_response_fields = withdrawal_slip_response.map(response => {
+            const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+            return {
+              request_response: response.request_response,
+              request_response_field_name: field.field_name,
+              request_response_field_type: field.field_type,
+            }
+          });
+
+          // withdrawal_slip team member
+          const withdrawal_slip_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${withdrawal_slip.request_team_member_id}'`)[0];
+
+          return {
+            withdrawal_slip_request_id: withdrawal_slip.request_id,
+            withdrawal_slip_request_formsly_id: withdrawal_slip.request_formsly_id,
+            withdrawal_slip_request_date_created: withdrawal_slip.request_date_created,
+            withdrawal_slip_request_response: withdrawal_slip_response_fields,
+            withdrawal_slip_request_owner: withdrawal_slip_team_member,
+          }
+        });
+      }
   
       return {
         requisition_request_id: requisition.request_id,
@@ -621,6 +658,7 @@ RETURNS JSON as $$
         requisition_request_owner: requisition_team_member,
         requisition_quotation_request: quotation_list,
         requisition_sourced_item_request: sourced_item_list,
+        requisition_withdrawal_slip_request: withdrawal_slip_list,
         requisition_cheque_reference_request: cheque_reference_list,
       }
     })
@@ -700,6 +738,8 @@ RETURNS JSON AS $$
         endId = `C-${newCount.padStart(4,'0')}`;
       } else if(formName==='Audit') {
         endId = `A-${newCount.padStart(4,'0')}`;
+      } else if(formName==='Withdrawal Slip') {
+        endId = `WS-${newCount.padStart(6,'0')}`;
       } else {
         endId = `-${newCount.padStart(5,'0')}`;
       }
