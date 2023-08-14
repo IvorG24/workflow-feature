@@ -35,12 +35,14 @@ type Props = {
   form: FormType;
   formslyFormName?: string;
   requestProjectId?: string;
+  projectName: string;
 };
 
 const CreateRequestPage = ({
   form,
   formslyFormName = "",
   requestProjectId,
+  projectName,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -174,7 +176,10 @@ const CreateRequestPage = ({
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} />
+            <RequestFormDetails
+              formDetails={formDetails}
+              projectName={projectName}
+            />
             {formSections.map((section, idx) => {
               // used to render add duplicate button
               // find the last index of current section, and render add duplicate button if match

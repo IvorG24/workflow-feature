@@ -1,4 +1,4 @@
-import { getItem } from "@/backend/api/get";
+import { getItem, getProjectSignerWithTeamMember } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -13,11 +13,19 @@ import {
   OptionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  LoadingOverlay,
+  Space,
+  Stack,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -35,17 +43,29 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  projectOptions: OptionTableRow[];
 };
 
-const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
+const CreateRequisitionRequestPage = ({
+  form,
+  itemOptions,
+  projectOptions,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
 
-  const requestorProfile = useUserProfile();
+  const [signerList, setSignerList] = useState(
+    form.form_signer.map((signer) => ({
+      ...signer,
+      signer_action: signer.signer_action.toUpperCase(),
+    }))
+  );
+  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
 
+  const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
@@ -54,10 +74,6 @@ const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  const signerList = form.form_signer.map((signer) => ({
-    ...signer,
-    signer_action: signer.signer_action.toUpperCase(),
-  }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, control, getValues } = requestFormMethods;
@@ -133,7 +149,7 @@ const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
         requestFormValues: newData,
         formId,
         teamMemberId: teamMember.team_member_id,
-        signers: form.form_signer,
+        signers: signerList,
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
@@ -310,6 +326,46 @@ const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
     }
   };
 
+  const resetSigner = () => {
+    setSignerList(
+      form.form_signer.map((signer) => ({
+        ...signer,
+        signer_action: signer.signer_action.toUpperCase(),
+      }))
+    );
+  };
+
+  const handleProjectNameChange = async (value: string | null) => {
+    try {
+      setIsFetchingSigner(true);
+      if (value) {
+        const projectId = projectOptions.find(
+          (option) => option.option_value === value
+        )?.option_id;
+        if (projectId) {
+          const data = await getProjectSignerWithTeamMember(supabaseClient, {
+            projectId,
+            formId,
+          });
+          if (data.length !== 0) {
+            setSignerList(data as unknown as FormType["form_signer"]);
+          } else {
+            resetSigner();
+          }
+        }
+      } else {
+        resetSigner();
+      }
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingSigner(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -335,6 +391,7 @@ const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
                     onRemoveSection={handleRemoveSection}
                     requisitionFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
+                      onProjectNameChange: handleProjectNameChange,
                     }}
                     formslyFormName="Requisition"
                   />
@@ -354,7 +411,10 @@ const CreateRequisitionRequestPage = ({ form, itemOptions }: Props) => {
                 </Box>
               );
             })}
-            <RequestFormSigner signerList={signerList} />
+            <Box pos="relative">
+              <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
+              <RequestFormSigner signerList={signerList} />
+            </Box>
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

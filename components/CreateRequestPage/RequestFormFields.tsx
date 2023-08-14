@@ -35,6 +35,7 @@ type RequestFormFieldsProps = {
   fieldIndex: number;
   requisitionFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
+    onProjectNameChange: (value: string | null) => void;
   };
   quotationFormMethods?: {
     onItemChange: (
@@ -279,17 +280,20 @@ const RequestFormFields = ({
                   );
                   onChange(value);
 
-                  if (field.field_name === "General Name")
+                  if (field.field_name === "General Name") {
                     requisitionFormMethods?.onGeneralNameChange(
                       sectionIndex,
                       value
                     );
-                  if (field.field_name === "Item")
+                  } else if (field.field_name === "Item") {
                     quotationFormMethods?.onItemChange(
                       sectionIndex,
                       value,
                       prevValue === null ? null : `${prevValue}`
                     );
+                  } else if (field.field_name === "Project Name") {
+                    requisitionFormMethods?.onProjectNameChange(value);
+                  }
                 }}
                 data={dropdownOption}
                 withAsterisk={field.field_is_required}

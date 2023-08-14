@@ -240,7 +240,7 @@ const RequestPage = ({
           const sourcedItemId =
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
-          const itemSection = request.request_form.form_section[2];
+          const itemSection = request.request_form.form_section[1];
 
           const warningItemList = await checkROItemQuantity(supabaseClient, {
             sourcedItemId,
@@ -506,7 +506,7 @@ const RequestPage = ({
         request.request_form.form_is_formsly_form ? (
           <ReleaseOrderSummary
             summaryData={sectionWithDuplicateList
-              .slice(2)
+              .slice(1)
               .sort((a, b) =>
                 `${a.section_field[0].field_response?.request_response}` >
                 `${b.section_field[0].field_response?.request_response}`

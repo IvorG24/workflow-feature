@@ -1,11 +1,8 @@
-import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
-import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
 import {
   AppType,
   MemberRoleType,
-  RequestWithResponseType,
   SignerTableRow,
   TeamTableUpdate,
   UserTableUpdate,
@@ -200,7 +197,10 @@ export const toggleStatus = async (
 export const updateFormSigner = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    signers: (RequestSigner & { signer_is_disabled: boolean })[];
+    signers: (RequestSigner & {
+      signer_is_disabled: boolean;
+    })[];
+    selectedProjectId: string | null;
     formId: string;
   }
 ) => {
@@ -329,4 +329,3 @@ export const updateFormDescription = async (
     .eq("form_id", formId);
   if (error) throw error;
 };
-

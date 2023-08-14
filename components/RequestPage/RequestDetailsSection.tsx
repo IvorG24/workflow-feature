@@ -64,6 +64,12 @@ const RequestDetailsSection = ({
           {requestStatus}
         </Badge>
       </Group>
+      {request.request_project && (
+        <Group spacing="md" mt="xl">
+          <Title order={5}>Project Name:</Title>
+          <Text>{request.request_project.team_project_name}</Text>
+        </Group>
+      )}
     </Paper>
   );
 };

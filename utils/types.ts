@@ -296,6 +296,10 @@ export type RequestWithResponseType = RequestTableRow & {
       };
     };
   }[];
+} & {
+  request_project: {
+    team_project_name: string;
+  };
 };
 
 export type TeamMemberType = {

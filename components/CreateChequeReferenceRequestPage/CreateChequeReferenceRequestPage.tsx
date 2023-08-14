@@ -31,11 +31,13 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   requestProjectId: string;
+  projectName: string;
 };
 
 const CreateChequeReferenceRequestPage = ({
   form,
   requestProjectId,
+  projectName,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -114,7 +116,10 @@ const CreateChequeReferenceRequestPage = ({
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} />
+            <RequestFormDetails
+              formDetails={formDetails}
+              projectName={projectName}
+            />
             {formSections.map((section, idx) => {
               return (
                 <Box key={section.section_id}>

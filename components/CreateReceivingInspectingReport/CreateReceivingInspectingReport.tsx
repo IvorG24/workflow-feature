@@ -45,12 +45,14 @@ type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
   requestProjectId: string;
+  projectName: string;
 };
 
 const CreateReceivingInspectingReportPage = ({
   form,
   itemOptions,
   requestProjectId,
+  projectName,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -439,7 +441,10 @@ const CreateReceivingInspectingReportPage = ({
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} />
+            <RequestFormDetails
+              formDetails={formDetails}
+              projectName={projectName}
+            />
             {formSections.map((section, idx) => {
               const sectionIdToFind = section.section_id;
               const sectionLastIndex = getValues("sections")

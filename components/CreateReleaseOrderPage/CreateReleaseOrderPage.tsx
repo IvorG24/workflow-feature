@@ -46,6 +46,7 @@ type Props = {
   itemOptions: OptionTableRow[];
   projectSiteList: Record<string, string>;
   requestProjectId: string;
+  projectName: string;
 };
 
 const CreateReleaseOrderPage = ({
@@ -53,6 +54,7 @@ const CreateReleaseOrderPage = ({
   itemOptions,
   projectSiteList,
   requestProjectId,
+  projectName,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -92,16 +94,16 @@ const CreateReleaseOrderPage = ({
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[2].section_field.map((field) => {
+    const newFields = form.form_section[1].section_field.map((field) => {
       return {
         ...field,
         field_option: itemOptions,
       };
     });
     replaceSection([
-      ...form.form_section.slice(0, 2),
+      form.form_section[0],
       {
-        ...form.form_section[2],
+        ...form.form_section[1],
         section_field: newFields,
       },
     ]);
@@ -121,7 +123,7 @@ const CreateReleaseOrderPage = ({
       if (!teamMember) return;
       setIsLoading(true);
       let isValid = true;
-      for (const section of data.sections.slice(2)) {
+      for (const section of data.sections.slice(1)) {
         if (section.section_field[2].field_response === "Invalid") {
           isValid = false;
           break;
@@ -136,28 +138,16 @@ const CreateReleaseOrderPage = ({
         return;
       }
 
-      if (
-        !data.sections[1].section_field[0].field_response &&
-        !data.sections[1].section_field[1].field_response
-      ) {
-        setIsLoading(false);
-        notifications.show({
-          message: "There must be a DR or SI for Quality Check",
-          color: "orange",
-        });
-        return;
-      }
-
       const sourcedItemId = JSON.stringify(
         data.sections[0].section_field[1].field_response
       );
-      const itemSection = data.sections[2];
+      const itemSection = data.sections[1];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.slice(2).forEach((section) => {
+      data.sections.slice(1).forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({
@@ -241,7 +231,7 @@ const CreateReleaseOrderPage = ({
   const handleDuplicateSection = (sectionId: string) => {
     if (
       availableItems.length === 0 ||
-      formSections.length === itemOptions.length + 2
+      formSections.length === itemOptions.length + 1
     ) {
       notifications.show({
         message: "No available item.",
@@ -446,7 +436,10 @@ const CreateReleaseOrderPage = ({
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} />
+            <RequestFormDetails
+              formDetails={formDetails}
+              projectName={projectName}
+            />
             {formSections.map((section, idx) => {
               const sectionIdToFind = section.section_id;
               const sectionLastIndex = getValues("sections")

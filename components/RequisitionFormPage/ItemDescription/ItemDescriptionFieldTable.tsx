@@ -198,7 +198,7 @@ const ItemDescriptionFieldTable = ({
                 handleSearch(true);
               }
             }}
-            onKeyPress={(e) => {
+            onKeyUp={(e) => {
               if (e.key === "Enter") {
                 if (search) {
                   handleSearch();

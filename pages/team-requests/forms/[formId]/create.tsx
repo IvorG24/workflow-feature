@@ -7,7 +7,9 @@ import {
   getItemResponseForQuotation,
   getItemResponseForRIR,
   getItemResponseForRO,
+  getProjectSignerWithTeamMember,
   getRequest,
+  getRequestProjectIdAndName,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -108,11 +110,29 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 ],
               },
               itemOptions,
+              projectOptions,
             },
           };
         }
+
+        const project = await getRequestProjectIdAndName(supabaseClient, {
+          requestId: `${context.query.requisitionId}`,
+        });
+        if (!project) throw new Error();
+        const formattedProject = project as unknown as {
+          team_project_id: string;
+          team_project_name: string;
+        };
+
+        const projectSigner = await getProjectSignerWithTeamMember(
+          supabaseClient,
+          {
+            formId: form.form_id,
+            projectId: `${formattedProject.team_project_id}`,
+          }
+        );
         // Sourced Item Form
-        else if (form.form_name === "Sourced Item") {
+        if (form.form_name === "Sourced Item") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
             requestId: [`${context.query.requisitionId}`],
           });
@@ -173,9 +193,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                     ],
                   },
                 ],
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
               },
               itemOptions,
               requestProjectId,
+              projectName: formattedProject.team_project_name,
             },
           };
         }
@@ -210,9 +233,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
               itemOptions,
               requestProjectId,
+              projectName: formattedProject.team_project_name,
             },
           };
         }
@@ -255,9 +283,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           });
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
               itemOptions,
               requestProjectId,
+              projectName: formattedProject.team_project_name,
             },
           };
         }
@@ -311,10 +344,32 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           });
           return {
             props: {
-              form,
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
               itemOptions,
               projectSiteList,
               requestProjectId,
+              projectName: formattedProject.team_project_name,
+            },
+          };
+        }
+        // Cheque Reference or Audit
+        else if (
+          form.form_name === "Cheque Reference" ||
+          form.form_name === "Audit"
+        ) {
+          return {
+            props: {
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
+              requestProjectId,
+              projectName: formattedProject.team_project_name,
             },
           };
         }
@@ -338,8 +393,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
+  projectOptions?: OptionTableRow[];
   projectSiteList?: Record<string, string>;
   requestProjectId: string;
+  projectName?: string;
 };
 
 const Page = ({
@@ -347,12 +404,18 @@ const Page = ({
   itemOptions,
   projectSiteList = {},
   requestProjectId = "",
+  projectOptions = [],
+  projectName = "",
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
         return (
-          <CreateRequisitionRequestPage form={form} itemOptions={itemOptions} />
+          <CreateRequisitionRequestPage
+            form={form}
+            itemOptions={itemOptions}
+            projectOptions={projectOptions}
+          />
         );
       case "Sourced Item":
         return (
@@ -360,6 +423,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}
+            projectName={projectName}
           />
         );
       case "Quotation":
@@ -368,6 +432,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}
+            projectName={projectName}
           />
         );
       case "Receiving Inspecting Report":
@@ -376,6 +441,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}
+            projectName={projectName}
           />
         );
       case "Release Order":
@@ -385,6 +451,7 @@ const Page = ({
             itemOptions={itemOptions}
             projectSiteList={projectSiteList}
             requestProjectId={requestProjectId}
+            projectName={projectName}
           />
         );
       case "Cheque Reference":
@@ -392,6 +459,7 @@ const Page = ({
           <CreateChequeReferenceRequestPage
             form={form}
             requestProjectId={requestProjectId}
+            projectName={projectName}
           />
         );
       case "Audit":
@@ -400,6 +468,7 @@ const Page = ({
             form={form}
             formslyFormName="Audit"
             requestProjectId={requestProjectId}
+            projectName={projectName}
           />
         );
     }
@@ -411,7 +480,9 @@ const Page = ({
         url="/team-requests/forms/[formId]/create"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <CreateRequestPage form={form} /> : null}
+      {!form.form_is_formsly_form ? (
+        <CreateRequestPage form={form} projectName={projectName} />
+      ) : null}
     </>
   );
 };
