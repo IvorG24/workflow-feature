@@ -1536,6 +1536,7 @@ export const getFormslyForwardLinkFormId = async (
     "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
     "Release Order": [] as ConnectedRequestItemType[],
     "Cheque Reference": [] as ConnectedRequestItemType[],
+    "Withdrawal Slip": [] as ConnectedRequestItemType[],
   };
 
   formattedData.forEach((request) => {
@@ -1561,6 +1562,9 @@ export const getFormslyForwardLinkFormId = async (
         break;
       case "Cheque Reference":
         requestList["Cheque Reference"].push(newFormattedData);
+        break;
+      case "Withdrawal Slip":
+        requestList["Withdrawal Slip"].push(newFormattedData);
         break;
     }
   });
