@@ -356,7 +356,9 @@ const RequestFormPage = ({
         </Paper>
 
         <Paper p="xl" shadow="xs">
-          <Title order={3}>Signer Details</Title>
+          <Title order={3}>
+            {form.form_is_formsly_form ? "Default Signer" : "Signer Details"}
+          </Title>
           <Space h="xl" />
           <FormProvider {...signerMethods}>
             <SignerSection
