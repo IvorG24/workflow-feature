@@ -20,6 +20,7 @@ import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateRe
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
+import CreateWithdrawalRequestPage from "@/components/CreateWithdrawalRequestPage/CreateWithdrawalRequestPage";
 
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
@@ -372,6 +373,48 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               projectName: formattedProject.team_project_name,
             },
           };
+        } else if (form.form_name === "Withdrawal Slip") {
+          const isRequestIdValid = await checkRequest(supabaseClient, {
+            requestId: [`${context.query.requisitionId}`],
+          });
+
+          if (!isRequestIdValid) {
+            return {
+              redirect: {
+                destination: "/404",
+                permanent: false,
+              },
+            };
+          }
+
+          const items = await getItemResponseForQuotation(supabaseClient, {
+            requestId: `${context.query.requisitionId}`,
+          });
+
+          const itemOptions = Object.keys(items).map((item, index) => {
+            const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
+
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: item,
+              option_order: index,
+              option_value: value,
+            };
+          });
+
+          return {
+            props: {
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
+              itemOptions,
+              requestProjectId,
+              projectName: formattedProject.team_project_name,
+            },
+          };
         }
       }
 
@@ -467,6 +510,15 @@ const Page = ({
           <CreateRequestPage
             form={form}
             formslyFormName="Audit"
+            requestProjectId={requestProjectId}
+            projectName={projectName}
+          />
+        );
+      case "Withdrawal Slip":
+        return (
+          <CreateWithdrawalRequestPage
+            form={form}
+            itemOptions={itemOptions}
             requestProjectId={requestProjectId}
             projectName={projectName}
           />

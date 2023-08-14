@@ -149,6 +149,20 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.green[0],
     },
   },
+  withdrawalSlipTable: {
+    "& th": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.yellow[6]
+          : theme.colors.yellow[3],
+    },
+    "& tbody": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.yellow[9]
+          : theme.colors.yellow[0],
+    },
+  },
 }));
 
 export type SSOTFilterFormValues = {
@@ -243,6 +257,15 @@ const chequeReferenceTableColumnList = [
   "Cheque Second Date Signed",
 ];
 
+const withdrawalSlipTableColumnList = [
+  "Withdrawal Slip ID",
+  "Date Created",
+  "Operations/Engineering",
+  "Item",
+  "Quantity",
+  "Unit of Measurement",
+];
+
 const convertColumnListArrayToObject = (array: string[]) => {
   const obj = array.reduce((obj, item) => {
     obj[item.toLowerCase().replace(/\s+/g, "_")] = true;
@@ -283,6 +306,7 @@ const SSOTSpreadsheetView = ({
   const [showReleaseOrderTable, setShowReleaseOrderTable] = useState(true);
   const [showChequeReferenceTable, setShowChequeReferenceTable] =
     useState(true);
+  const [showWithdrawalSlipTable, setShowWithdrawalSlipTable] = useState(true);
 
   const [showRequisitionColumnList, setShowRequisitionColumnList] =
     useState<ShowColumnList>(
@@ -311,6 +335,11 @@ const SSOTSpreadsheetView = ({
   const [showChequeReferenceColumnList, setShowChequeReferenceColumnList] =
     useState<ShowColumnList>(
       convertColumnListArrayToObject(chequeReferenceTableColumnList)
+    );
+
+  const [showWithdrawalSlipColumnList, setShowWithdrawalSlipColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(withdrawalSlipTableColumnList)
     );
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
@@ -456,6 +485,97 @@ const SSOTSpreadsheetView = ({
       setOffset((prev) => (prev += 1));
     }
   }, [isInView]);
+
+  const renderWithdrawalSlip = (
+    request: SSOTType["requisition_withdrawal_slip_request"]
+  ) => {
+    return request.map((request) => {
+      const itemName: string[] = [];
+      const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
+
+      const items = request.withdrawal_slip_request_response.slice(
+        1,
+        request.withdrawal_slip_request_response.length
+      );
+
+      items.forEach((item) => {
+        if (item.request_response_field_name === "Item") {
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
+        } else if (item.request_response_field_name === "Quantity") {
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
+        }
+      });
+
+      return (
+        <tr
+          key={request.withdrawal_slip_request_id}
+          className={classes.cell}
+          style={{ borderTop: "solid 1px #DEE2E6" }}
+        >
+          {showWithdrawalSlipColumnList["withdrawal_slip_id"] && (
+            <td>{request.withdrawal_slip_request_formsly_id}</td>
+          )}
+          {showWithdrawalSlipColumnList["date_created"] && (
+            <td>
+              {new Date(
+                request.withdrawal_slip_request_date_created
+              ).toLocaleDateString()}
+            </td>
+          )}
+          {showWithdrawalSlipColumnList["operations/engineering"] && (
+            <td>{`${request.withdrawal_slip_request_owner.user_first_name} ${request.withdrawal_slip_request_owner.user_last_name}`}</td>
+          )}
+          {showWithdrawalSlipColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showWithdrawalSlipColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showWithdrawalSlipColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+        </tr>
+      );
+    });
+  };
 
   const renderChequeReference = (
     request: SSOTType["requisition_cheque_reference_request"]
@@ -1417,6 +1537,50 @@ const SSOTSpreadsheetView = ({
               ) : null}
             </td>
           )}
+          {showWithdrawalSlipTable && (
+            <td style={{ padding: 0 }}>
+              {request.requisition_withdrawal_slip_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.withdrawalSlipTable}
+                >
+                  <thead>
+                    <tr>
+                      {showWithdrawalSlipColumnList["withdrawal_slip_id"] && (
+                        <th className={classes.long}>Withdrawal Slip ID</th>
+                      )}
+                      {showWithdrawalSlipColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showWithdrawalSlipColumnList[
+                        "operations/engineering"
+                      ] && (
+                        <th className={classes.processor}>
+                          Operations / Engineering
+                        </th>
+                      )}
+                      {showWithdrawalSlipColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showWithdrawalSlipColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showWithdrawalSlipColumnList["unit_of_measurement"] && (
+                        <th className={classes.date}>Unit of Measurement</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderWithdrawalSlip(
+                      request.requisition_withdrawal_slip_request
+                    )}
+                  </tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
           {showChequeReferenceTable && (
             <td style={{ padding: 0 }}>
               {request.requisition_cheque_reference_request.length !== 0 ? (
@@ -1542,6 +1706,7 @@ const SSOTSpreadsheetView = ({
             // column list
             requisitionTableColumnList={requisitionTableColumnList}
             quotationTableColumnList={quotationTableColumnList}
+            withdrawalSlipTableColumnList={withdrawalSlipTableColumnList}
             rirTableColumnList={rirTableColumnList}
             sourcedItemTableColumnList={sourcedItemTableColumnList}
             releaseOrderTableColumnList={releaseOrderTableColumnList}
@@ -1553,6 +1718,8 @@ const SSOTSpreadsheetView = ({
             setShowQuotationTable={setShowQuotationTable}
             showSourcedItemTable={showSourcedItemTable}
             setShowSourcedItemTable={setShowSourcedItemTable}
+            showWithdrawalSlipTable={showWithdrawalSlipTable}
+            setShowWithdrawalSlipTable={setShowWithdrawalSlipTable}
             showRIRTable={showRIRTable}
             setShowRIRTable={setShowRIRTable}
             showReleaseOrderTable={showReleaseOrderTable}
@@ -1566,6 +1733,8 @@ const SSOTSpreadsheetView = ({
             setShowQuotationColumnList={setShowQuotationColumnList}
             showSourcedItemColumnList={showSourcedItemColumnList}
             setShowSourcedItemColumnList={setShowSourcedItemColumnList}
+            showWithdrawalSlipColumnList={showWithdrawalSlipColumnList}
+            setShowWithdrawalSlipColumnList={setShowWithdrawalSlipColumnList}
             showRIRColumnList={showRIRColumnList}
             setShowRIRColumnList={setShowRIRColumnList}
             showReleaseOrderColumnList={showReleaseOrderColumnList}
@@ -1656,6 +1825,7 @@ const SSOTSpreadsheetView = ({
                   )}
                   {showQuotationTable && <th>Quotation</th>}
                   {showSourcedItemTable && <th>Sourced Item</th>}
+                  {showWithdrawalSlipTable && <th>Withdrawal Slip</th>}
                   {showChequeReferenceTable && <th>Cheque Reference</th>}
                 </tr>
               </thead>

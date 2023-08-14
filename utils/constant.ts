@@ -19,6 +19,7 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Release Order",
   "Cheque Reference",
   "Sourced Item",
+  "Withdrawal Slip"
 ];
 
 export const UUID_EXP =
@@ -78,7 +79,6 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const rirQualityCheckSectionId = uuidv4();
   const rirItemSectionId = uuidv4();
   const roIdSectionId = uuidv4();
-  const roQualityCheckSectionId = uuidv4();
   const roItemSectionId = uuidv4();
   const chequeReferenceIdSectionId = uuidv4();
   const chequeReferenceTreasurySectionId = uuidv4();

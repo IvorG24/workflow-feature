@@ -669,6 +669,13 @@ export type SSOTType = {
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
   }[];
+  requisition_withdrawal_slip_request: {
+    withdrawal_slip_request_id: string;
+    withdrawal_slip_request_formsly_id: string;
+    withdrawal_slip_request_date_created: string;
+    withdrawal_slip_request_response: SSOTResponseType[];
+    withdrawal_slip_request_owner: SSOTRequestOwnerType;
+  }[];
 };
 
 export type Section = SectionTableRow & {

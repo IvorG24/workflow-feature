@@ -16,6 +16,7 @@ import { ShowColumnList } from "./SSOTSpreadhseetViewPage";
 type Props = {
   requisitionTableColumnList: string[];
   quotationTableColumnList: string[];
+  withdrawalSlipTableColumnList: string[];
   rirTableColumnList: string[];
   sourcedItemTableColumnList: string[];
   releaseOrderTableColumnList: string[];
@@ -26,6 +27,8 @@ type Props = {
   setShowQuotationTable: Dispatch<SetStateAction<boolean>>;
   showSourcedItemTable: boolean;
   setShowSourcedItemTable: Dispatch<SetStateAction<boolean>>;
+  showWithdrawalSlipTable: boolean;
+  setShowWithdrawalSlipTable: Dispatch<SetStateAction<boolean>>;
   showRIRTable: boolean;
   setShowRIRTable: Dispatch<SetStateAction<boolean>>;
   showReleaseOrderTable: boolean;
@@ -38,6 +41,8 @@ type Props = {
   setShowQuotationColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showSourcedItemColumnList: ShowColumnList;
   setShowSourcedItemColumnList: Dispatch<SetStateAction<ShowColumnList>>;
+  showWithdrawalSlipColumnList: ShowColumnList;
+  setShowWithdrawalSlipColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showRIRColumnList: ShowColumnList;
   setShowRIRColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showReleaseOrderColumnList: ShowColumnList;
@@ -50,6 +55,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
   const {
     requisitionTableColumnList,
     quotationTableColumnList,
+    withdrawalSlipTableColumnList,
     rirTableColumnList,
     sourcedItemTableColumnList,
     releaseOrderTableColumnList,
@@ -60,10 +66,14 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowRequisitionColumnList,
     showQuotationTable,
     setShowQuotationTable,
+    showWithdrawalSlipTable,
+    setShowWithdrawalSlipTable,
     showSourcedItemTable,
     setShowSourcedItemTable,
     showQuotationColumnList,
     setShowQuotationColumnList,
+    showWithdrawalSlipColumnList,
+    setShowWithdrawalSlipColumnList,
     showRIRTable,
     setShowRIRTable,
     showReleaseOrderTable,
@@ -85,12 +95,14 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
   const defaultFilterSettings = {
     showRequisitionTable,
     showQuotationTable,
+    showWithdrawalSlipTable,
     showRIRTable,
     showSourcedItemTable,
     showReleaseOrderTable,
     showChequeReferenceTable,
     showRequisitionColumnList,
     showQuotationColumnList,
+    showWithdrawalSlipColumnList,
     showRIRColumnList,
     showSourcedItemColumnList,
     showReleaseOrderColumnList,
@@ -109,12 +121,14 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setLocalFilterSettings({
       showRequisitionTable,
       showQuotationTable,
+      showWithdrawalSlipTable,
       showRIRTable,
       showSourcedItemTable,
       showReleaseOrderTable,
       showChequeReferenceTable,
       showRequisitionColumnList,
       showQuotationColumnList,
+      showWithdrawalSlipColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
@@ -148,12 +162,14 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     const {
       showRequisitionTable,
       showQuotationTable,
+      showWithdrawalSlipTable,
       showRIRTable,
       showSourcedItemTable,
       showReleaseOrderTable,
       showChequeReferenceTable,
       showRequisitionColumnList,
       showQuotationColumnList,
+      showWithdrawalSlipColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
@@ -172,12 +188,14 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
 
     setShowRequisitionTable(showRequisitionTable);
     setShowQuotationTable(showQuotationTable);
+    setShowWithdrawalSlipTable(showWithdrawalSlipTable);
     setShowSourcedItemTable(showSourcedItemTable);
     setShowRIRTable(showRIRTable);
     setShowReleaseOrderTable(showReleaseOrderTable);
     setShowChequeReferenceTable(showChequeReferenceTable);
     setShowRequisitionColumnList(showRequisitionColumnList);
     setShowQuotationColumnList(showQuotationColumnList);
+    setShowWithdrawalSlipColumnList(showWithdrawalSlipColumnList);
     setShowRIRColumnList(showRIRColumnList);
     setShowSourcedItemColumnList(showSourcedItemColumnList);
     setShowReleaseOrderColumnList(showReleaseOrderColumnList);
@@ -432,6 +450,52 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                             disabled={
                               !showSourcedItemTable || !showReleaseOrderTable
                             }
+                            {...switchInputProps}
+                            styles={{ track: { cursor: "pointer" } }}
+                          />
+                        </Group>
+                      );
+                    })}
+                  </Flex>
+                </Box>
+              </Accordion.Panel>
+            </Accordion.Item>
+            <Accordion.Item value="withdrawal-slip-table">
+              <Accordion.Control>Withdrawal Slip Table</Accordion.Control>
+              <Accordion.Panel>
+                <Box w="100%" p="sm">
+                  <Group mb="sm" position="apart">
+                    <Text weight={600}>Withdrawal Slip Table</Text>
+                    <Switch
+                      checked={showWithdrawalSlipTable}
+                      onChange={(e) =>
+                        setShowWithdrawalSlipTable(e.currentTarget.checked)
+                      }
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                      {...switchInputProps}
+                      styles={{ track: { cursor: "pointer" } }}
+                    />
+                  </Group>
+                  <Flex gap="sm" direction="column">
+                    {withdrawalSlipTableColumnList.map((column, index) => {
+                      const propName = column
+                        .toLowerCase()
+                        .replace(/\s+/g, "_");
+                      return (
+                        <Group key={index} position="apart">
+                          <Text>{column}</Text>
+                          <Switch
+                            checked={showWithdrawalSlipColumnList[propName]}
+                            onChange={(e) =>
+                              setShowWithdrawalSlipColumnList((prev) => ({
+                                ...prev,
+                                [propName]: e.currentTarget.checked,
+                              }))
+                            }
+                            onLabel={<IconEye size="1rem" stroke={2.5} />}
+                            offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                            disabled={!showWithdrawalSlipTable}
                             {...switchInputProps}
                             styles={{ track: { cursor: "pointer" } }}
                           />
