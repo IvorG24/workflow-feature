@@ -19,7 +19,7 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Release Order",
   "Cheque Reference",
   "Sourced Item",
-  "Withdrawal Slip"
+  "Withdrawal Slip",
 ];
 
 export const UUID_EXP =
@@ -65,6 +65,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const releaseOrderFormId = uuidv4();
   const chequeReferenceFormId = uuidv4();
   const auditFormId = uuidv4();
+  const withdrawalSlipFormId = uuidv4();
 
   // section ids
   const requisitionMainSectionId = uuidv4();
@@ -84,6 +85,8 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const chequeReferenceTreasurySectionId = uuidv4();
   const chequeReferenceChequeSectionId = uuidv4();
   const auditMainSectionId = uuidv4();
+  const withdrawalSlipIdSectionId = uuidv4();
+  const withdrawalSlipItemSectionId = uuidv4();
 
   // field ids
   const requisitionTypeFieldId = uuidv4();
@@ -786,6 +789,60 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
     },
+    withdrawalSlip: {
+      form: {
+        form_id: withdrawalSlipFormId,
+        form_name: "Withdrawal Slip",
+        form_description: "formsly premade Withdrawal Slip form",
+        form_app: "REQUEST",
+        form_is_formsly_form: true,
+        form_is_hidden: true,
+        form_team_member_id: teamMemberId,
+        form_is_disabled: false,
+      },
+      section: [
+        {
+          section_id: withdrawalSlipIdSectionId,
+          section_name: "ID",
+          section_order: 1,
+          section_is_duplicatable: false,
+          section_form_id: withdrawalSlipFormId,
+        },
+        {
+          section_id: withdrawalSlipItemSectionId,
+          section_name: "Item",
+          section_order: 2,
+          section_is_duplicatable: true,
+          section_form_id: withdrawalSlipFormId,
+        },
+      ],
+      field: [
+        {
+          field_name: "Requisition ID",
+          field_type: "LINK",
+          field_order: 1,
+          field_section_id: withdrawalSlipIdSectionId,
+          field_is_required: true,
+          field_is_read_only: true,
+        },
+        {
+          field_name: "Item",
+          field_type: "DROPDOWN",
+          field_order: 2,
+          field_section_id: withdrawalSlipItemSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Quantity",
+          field_type: "NUMBER",
+          field_order: 3,
+          field_section_id: withdrawalSlipItemSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+      ],
+    },
   };
 
   const fieldsWithId = [
@@ -835,6 +892,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     releaseOrder,
     chequeReference,
     audit,
+    withdrawalSlip,
   } = formData;
 
   return {
@@ -846,6 +904,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       releaseOrder.form,
       chequeReference.form,
       audit.form,
+      withdrawalSlip.form,
     ],
     sections: [
       ...requisition.section,
@@ -855,6 +914,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...releaseOrder.section,
       ...chequeReference.section,
       ...audit.section,
+      ...withdrawalSlip.section,
     ],
     fieldsWithoutId: [
       ...requisition.field,
@@ -864,6 +924,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...releaseOrder.field,
       ...chequeReference.field,
       ...audit.field,
+      ...withdrawalSlip.field,
     ],
     fieldWithId: fieldsWithId,
     options: [

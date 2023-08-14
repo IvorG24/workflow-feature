@@ -548,7 +548,7 @@ export const getForm = async (
           user_username
         )
       ), 
-      form_signer: signer_table!inner(
+      form_signer: signer_table(
         signer_id, 
         signer_is_primary_signer, 
         signer_action, 
@@ -2337,6 +2337,7 @@ export const getTeamProjectList = async (
   query.range(start, start + limit - 1);
 
   const { data, count, error } = await query;
+
   if (error) throw error;
 
   return { data, count };
