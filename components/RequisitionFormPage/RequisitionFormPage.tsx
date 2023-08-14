@@ -226,6 +226,7 @@ const RequisitionFormPage = ({
         color: "green",
       });
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
