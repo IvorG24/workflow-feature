@@ -78,8 +78,7 @@ INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
 ('a84c1d02-5d9f-4387-a0c0-a9438cc22fcd', '989dbcc2-fdfe-48c7-806a-98cf80e1bf42'),
 ('2824efad-505d-44f5-8ad6-26fb27c57788', '4b3a151a-a077-486c-9dfb-e996c2c9184c'),
 ('8a4dc14d-d11b-4335-ae7f-5d758ea95463', 'bf4dc226-a763-49da-be9f-606202d2c4c9'),
-('819d049f-7302-4c19-b104-11226b5023f0', '989dbcc2-fdfe-48c7-806a-98cf80e1bf42'),
-
+('819d049f-7302-4c19-b104-11226b5023f0', '989dbcc2-fdfe-48c7-806a-98cf80e1bf42');
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_is_disabled) VALUES
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition', 'formsly premade Requisition form', 'REQUEST', '60874c99-8bd4-4e6c-bc2e-7b90a00878da', true, false, false, false),
