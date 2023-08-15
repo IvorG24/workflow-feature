@@ -119,6 +119,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         const project = await getRequestProjectIdAndName(supabaseClient, {
           requestId: `${context.query.requisitionId}`,
         });
+
         if (!project) throw new Error();
         const formattedProject = project as unknown as {
           team_project_id: string;
@@ -199,7 +200,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               },
               itemOptions,
               requestProjectId,
-              projectName: formattedProject.team_project_name,
+              requestingProject: formattedProject.team_project_name,
             },
           };
         }
@@ -241,7 +242,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               },
               itemOptions,
               requestProjectId,
-              projectName: formattedProject.team_project_name,
+              requestingProject: formattedProject.team_project_name,
             },
           };
         }
@@ -291,7 +292,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               },
               itemOptions,
               requestProjectId,
-              projectName: formattedProject.team_project_name,
+              requestingProject: formattedProject.team_project_name,
             },
           };
         }
@@ -314,13 +315,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             requestId: `${context.query.sourcedItemId}`,
           });
 
-          const projectSiteList: Record<string, string> = {};
+          const sourceProjectList: Record<string, string> = {};
 
           const regex = /\(([^()]+)\)/g;
           const itemOptions = Object.keys(items).map((item, index) => {
             const itemName = items[item].item;
             const quantity = items[item].quantity;
-            const projectSite = items[item].projectSite;
+            const sourceProject = items[item].sourceProject;
 
             const matches = regex.exec(itemName);
             const unit = matches && matches[1].replace(/\d+/g, "").trim();
@@ -330,10 +331,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
             const value = `${itemName.replace(
               replace[0],
-              `(${quantity} ${unit}) (${projectSite})`
+              `(${quantity} ${unit}) (${sourceProject})`
             )} `;
 
-            projectSiteList[value] = items[item].projectSite;
+            sourceProjectList[value] = items[item].sourceProject;
 
             return {
               option_description: null,
@@ -351,9 +352,9 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   projectSigner.length !== 0 ? projectSigner : form.form_signer,
               },
               itemOptions,
-              projectSiteList,
+              sourceProjectList,
               requestProjectId,
-              projectName: formattedProject.team_project_name,
+              requestingProject: formattedProject.team_project_name,
             },
           };
         }
@@ -370,7 +371,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   projectSigner.length !== 0 ? projectSigner : form.form_signer,
               },
               requestProjectId,
-              projectName: formattedProject.team_project_name,
+              requestingProject: formattedProject.team_project_name,
             },
           };
         } else if (form.form_name === "Withdrawal Slip") {
@@ -412,7 +413,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               },
               itemOptions,
               requestProjectId,
-              projectName: formattedProject.team_project_name,
+              requestingProject: formattedProject.team_project_name,
             },
           };
         }
@@ -437,18 +438,18 @@ type Props = {
   form: FormWithResponseType;
   itemOptions: OptionTableRow[];
   projectOptions?: OptionTableRow[];
-  projectSiteList?: Record<string, string>;
+  sourceProjectList?: Record<string, string>;
   requestProjectId: string;
-  projectName?: string;
+  requestingProject?: string;
 };
 
 const Page = ({
   form,
   itemOptions,
-  projectSiteList = {},
+  sourceProjectList = {},
   requestProjectId = "",
   projectOptions = [],
-  projectName = "",
+  requestingProject = "",
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -466,7 +467,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}
-            projectName={projectName}
+            requestingProject={requestingProject}
           />
         );
       case "Quotation":
@@ -475,7 +476,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}
-            projectName={projectName}
+            requestingProject={requestingProject}
           />
         );
       case "Receiving Inspecting Report":
@@ -484,7 +485,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}
-            projectName={projectName}
+            requestingProject={requestingProject}
           />
         );
       case "Release Order":
@@ -492,9 +493,9 @@ const Page = ({
           <CreateReleaseOrderPage
             form={form}
             itemOptions={itemOptions}
-            projectSiteList={projectSiteList}
+            sourceProjectList={sourceProjectList}
             requestProjectId={requestProjectId}
-            projectName={projectName}
+            requestingProject={requestingProject}
           />
         );
       case "Cheque Reference":
@@ -502,7 +503,7 @@ const Page = ({
           <CreateChequeReferenceRequestPage
             form={form}
             requestProjectId={requestProjectId}
-            projectName={projectName}
+            requestingProject={requestingProject}
           />
         );
       case "Audit":
@@ -511,7 +512,7 @@ const Page = ({
             form={form}
             formslyFormName="Audit"
             requestProjectId={requestProjectId}
-            projectName={projectName}
+            requestingProject={requestingProject}
           />
         );
       case "Withdrawal Slip":
@@ -520,7 +521,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}
-            projectName={projectName}
+            requestingProject={requestingProject}
           />
         );
     }
@@ -533,7 +534,7 @@ const Page = ({
       />
       {form.form_is_formsly_form ? formslyForm() : null}
       {!form.form_is_formsly_form ? (
-        <CreateRequestPage form={form} projectName={projectName} />
+        <CreateRequestPage form={form} requestingProject={requestingProject} />
       ) : null}
     </>
   );

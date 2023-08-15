@@ -35,7 +35,7 @@ const ReleaseOrderSummary = ({ summaryData }: Props) => {
               <th>Quantity</th>
               <th>Unit</th>
               <th>Receiving Status</th>
-              <th>Project Site</th>
+              <th>Source Project</th>
             </tr>
           </thead>
           <tbody>
@@ -62,7 +62,7 @@ const ReleaseOrderSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[2].field_response?.request_response}`
               );
 
-              const projectSite = JSON.parse(
+              const sourceProject = JSON.parse(
                 `${summary.section_field[3].field_response?.request_response}`
               );
 
@@ -72,7 +72,7 @@ const ReleaseOrderSummary = ({ summaryData }: Props) => {
                   <td>{addCommaToNumber(parsedQuantity)}</td>
                   <td>{unit}</td>
                   <td>{status}</td>
-                  <td>{projectSite}</td>
+                  <td>{sourceProject}</td>
                 </tr>
               );
             })}

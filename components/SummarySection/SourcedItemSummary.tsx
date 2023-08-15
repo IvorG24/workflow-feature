@@ -34,7 +34,7 @@ const SourcedItemSummary = ({ summaryData }: Props) => {
               <th>Item</th>
               <th>Quantity</th>
               <th>Unit</th>
-              <th>Project Site</th>
+              <th>Source Project</th>
             </tr>
           </thead>
           <tbody>
@@ -57,7 +57,7 @@ const SourcedItemSummary = ({ summaryData }: Props) => {
               );
               const matches = regExp.exec(item);
               const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
-              const projectSite = JSON.parse(
+              const sourceProject = JSON.parse(
                 `${summary.section_field[2].field_response?.request_response}`
               );
 
@@ -66,7 +66,7 @@ const SourcedItemSummary = ({ summaryData }: Props) => {
                   <td>{JSON.parse(item)}</td>
                   <td>{addCommaToNumber(parsedQuantity)}</td>
                   <td>{unit}</td>
-                  <td>{projectSite}</td>
+                  <td>{sourceProject}</td>
                 </tr>
               );
             })}
