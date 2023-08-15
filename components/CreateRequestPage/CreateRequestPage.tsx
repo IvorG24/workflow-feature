@@ -35,14 +35,14 @@ type Props = {
   form: FormType;
   formslyFormName?: string;
   requestProjectId?: string;
-  projectName: string;
+  requestingProject: string;
 };
 
 const CreateRequestPage = ({
   form,
   formslyFormName = "",
   requestProjectId,
-  projectName,
+  requestingProject,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -178,7 +178,7 @@ const CreateRequestPage = ({
           <Stack spacing="xl">
             <RequestFormDetails
               formDetails={formDetails}
-              projectName={projectName}
+              requestingProject={requestingProject}
             />
             {formSections.map((section, idx) => {
               // used to render add duplicate button

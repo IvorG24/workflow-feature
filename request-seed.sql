@@ -157,7 +157,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('57673976-7a46-4a8f-ae0b-67d9d1d24c95', 'Time field', 'TIME', 10, duplicateFieldsSection3, false, false),
 
 -- Requisition Form
-('a4733172-53af-47b1-b460-6869105f6405', 'Project Name', 'DROPDOWN', 1, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
+('a4733172-53af-47b1-b460-6869105f6405', 'Requesting Project', 'DROPDOWN', 1, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 ('d644d57b-dc0c-4f44-9cef-403fd73a7cf2', 'Type', 'DROPDOWN', 2, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 ('3b09156e-40c8-47f5-a5a8-4073ddb474de', 'Date Needed', 'DATE', 3, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 
@@ -346,7 +346,7 @@ SELECT var_value INTO requisitionFormId
 
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
       -- Main Section
-      -- Project Name
+      -- Requesting Project
       (gen_random_uuid(), '"LAKE MAINIT"', NULL, 'a4733172-53af-47b1-b460-6869105f6405', optRequestId),
       -- Type
       (gen_random_uuid(), '"Cash Purchase - Local Purchase"', NULL, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2', optRequestId),

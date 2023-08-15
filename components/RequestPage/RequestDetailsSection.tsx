@@ -66,7 +66,7 @@ const RequestDetailsSection = ({
       </Group>
       {request.request_project && (
         <Group spacing="md" mt="xl">
-          <Title order={5}>Project Name:</Title>
+          <Title order={5}>Requesting Project:</Title>
           <Text>{request.request_project.team_project_name}</Text>
         </Group>
       )}

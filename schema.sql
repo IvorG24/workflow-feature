@@ -1696,7 +1696,7 @@ RETURNS VOID AS $$
         WHERE form_table.form_name='Requisition'
         AND team_member_table.team_member_team_id='${teamId}'
         AND section_table.section_name='Item'
-        AND field_table.field_name='Project Site'
+        AND field_table.field_name='Source Project'
       `
     )[0];
 
