@@ -136,18 +136,6 @@ const CreateReceivingInspectingReportPage = ({
         return;
       }
 
-      if (
-        !data.sections[1].section_field[0].field_response &&
-        !data.sections[1].section_field[1].field_response
-      ) {
-        setIsLoading(false);
-        notifications.show({
-          message: "There must be a DR or SI for Quality Check",
-          color: "orange",
-        });
-        return;
-      }
-
       const quotationId = JSON.stringify(
         data.sections[0].section_field[1].field_response
       );
