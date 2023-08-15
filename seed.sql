@@ -206,7 +206,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Requisition ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('9fe04f40-a250-4a16-9e6a-b6c8a0b5a4c1', 'Sourced Item ID', 'LINK', 2, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('a64e0f2e-7c01-4639-8eeb-17dcdabe4ad7', 'Transfer Shipment', 'FILE', 3, '84511ae2-f62a-448d-8df3-4baeb856c9c5', true, false),
-('34f611c7-1ecb-466e-83a8-29d52dd66430', 'Transfer Receipt ', 'FILE', 4, '84511ae2-f62a-448d-8df3-4baeb856c9c5', true, false),
+('34f611c7-1ecb-466e-83a8-29d52dd66430', 'Transfer Receipt', 'FILE', 4, '84511ae2-f62a-448d-8df3-4baeb856c9c5', true, false),
 ('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 5, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('d3d790fe-3d37-421c-91f3-e943ee5941b6', 'Receiving Status', 'TEXT', 7, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
