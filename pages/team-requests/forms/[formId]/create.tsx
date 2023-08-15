@@ -157,7 +157,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
             return {
               option_description: null,
-              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: item,
               option_order: index,
               option_value: value,
@@ -226,7 +226,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           const itemOptions = Object.keys(items).map((item, index) => {
             return {
               option_description: null,
-              option_field_id: form.form_section[2].section_field[0].field_id,
+              option_field_id: form.form_section[3].section_field[0].field_id,
               option_id: item,
               option_order: index,
               option_value: `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`,
@@ -277,7 +277,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               items[item].item.replace(result[0], `(${items[item].quantity})`);
             return {
               option_description: null,
-              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_field_id: form.form_section[2].section_field[0].field_id,
               option_id: item,
               option_order: index,
               option_value: value,
@@ -338,7 +338,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
             return {
               option_description: null,
-              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_field_id: form.form_section[2].section_field[0].field_id,
               option_id: item,
               option_order: index,
               option_value: value,
@@ -397,7 +397,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
             return {
               option_description: null,
-              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: item,
               option_order: index,
               option_value: value,

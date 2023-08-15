@@ -80,6 +80,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const rirQualityCheckSectionId = uuidv4();
   const rirItemSectionId = uuidv4();
   const roIdSectionId = uuidv4();
+  const roQuantityCheckSectionId = uuidv4();
   const roItemSectionId = uuidv4();
   const chequeReferenceIdSectionId = uuidv4();
   const chequeReferenceTreasurySectionId = uuidv4();
@@ -93,6 +94,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const quotationRequestSendMethodId = uuidv4();
   const chequeReferenceTreasuryStatusFieldId = uuidv4();
   const auditRowCheckFieldId = uuidv4();
+  const quotationPaymentTermsId = uuidv4();
 
   const formData = {
     requisition: {
@@ -343,31 +345,23 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Delivery Fee",
-          field_type: "NUMBER",
-          field_order: 6,
-          field_section_id: quotationAdditionalChargeSectionId,
-          field_is_required: false,
-          field_is_read_only: false,
-        },
-        {
-          field_name: "Bank Charge",
+          field_name: "Lead Time",
           field_type: "NUMBER",
           field_order: 7,
-          field_section_id: quotationAdditionalChargeSectionId,
-          field_is_required: false,
+          field_section_id: quotationMainSectionId,
+          field_is_required: true,
           field_is_read_only: false,
         },
         {
-          field_name: "Mobilization Charge",
+          field_name: "Required Down Payment",
           field_type: "NUMBER",
           field_order: 8,
-          field_section_id: quotationAdditionalChargeSectionId,
-          field_is_required: false,
+          field_section_id: quotationMainSectionId,
+          field_is_required: true,
           field_is_read_only: false,
         },
         {
-          field_name: "Demobilization Charge",
+          field_name: "Delivery Fee",
           field_type: "NUMBER",
           field_order: 9,
           field_section_id: quotationAdditionalChargeSectionId,
@@ -375,7 +369,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Freight Charge",
+          field_name: "Bank Charge",
           field_type: "NUMBER",
           field_order: 10,
           field_section_id: quotationAdditionalChargeSectionId,
@@ -383,7 +377,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Hauling Charge",
+          field_name: "Mobilization Charge",
           field_type: "NUMBER",
           field_order: 11,
           field_section_id: quotationAdditionalChargeSectionId,
@@ -391,7 +385,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Handling Charge",
+          field_name: "Demobilization Charge",
           field_type: "NUMBER",
           field_order: 12,
           field_section_id: quotationAdditionalChargeSectionId,
@@ -399,7 +393,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
-          field_name: "Packing Charge",
+          field_name: "Freight Charge",
           field_type: "NUMBER",
           field_order: 13,
           field_section_id: quotationAdditionalChargeSectionId,
@@ -407,9 +401,33 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
+          field_name: "Hauling Charge",
+          field_type: "NUMBER",
+          field_order: 14,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Handling Charge",
+          field_type: "NUMBER",
+          field_order: 15,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Packing Charge",
+          field_type: "NUMBER",
+          field_order: 16,
+          field_section_id: quotationAdditionalChargeSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
           field_name: "Item",
           field_type: "DROPDOWN",
-          field_order: 14,
+          field_order: 17,
           field_section_id: quotationItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -417,7 +435,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Price per Unit",
           field_type: "NUMBER",
-          field_order: 15,
+          field_order: 18,
           field_section_id: quotationItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -425,7 +443,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 16,
+          field_order: 19,
           field_section_id: quotationItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -446,6 +464,121 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           option_value: "Other",
           option_order: 3,
           option_field_id: quotationRequestSendMethodId,
+        },
+        {
+          option_value: "7 PDC",
+          option_order: 1,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "15 PDC",
+          option_order: 2,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "30 PDC",
+          option_order: 3,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "45 PDC",
+          option_order: 4,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "60 PDC",
+          option_order: 5,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "70 PDC",
+          option_order: 6,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "90 PDC",
+          option_order: 7,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "120 PDC",
+          option_order: 8,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "7 UPI",
+          option_order: 9,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "15 UPI",
+          option_order: 10,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "30 UPI",
+          option_order: 11,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "35 UPI",
+          option_order: 12,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "45 UPI",
+          option_order: 13,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "60 UPI",
+          option_order: 14,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "90 UPI",
+          option_order: 15,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "120 UPI",
+          option_order: 16,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "7 DAYS",
+          option_order: 17,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "COD",
+          option_order: 18,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "DATED",
+          option_order: 19,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "FO3",
+          option_order: 20,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "LC",
+          option_order: 21,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "PB",
+          option_order: 22,
+          option_field_id: quotationPaymentTermsId,
+        },
+        {
+          option_value: "TT",
+          option_order: 23,
+          option_field_id: quotationPaymentTermsId,
         },
       ],
     },
@@ -505,7 +638,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_type: "FILE",
           field_order: 3,
           field_section_id: rirQualityCheckSectionId,
-          field_is_required: false,
+          field_is_required: true,
           field_is_read_only: false,
         },
         {
@@ -517,9 +650,17 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: false,
         },
         {
+          field_name: "QCIR",
+          field_type: "FILE",
+          field_order: 5,
+          field_section_id: rirQualityCheckSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
           field_name: "Item",
           field_type: "DROPDOWN",
-          field_order: 5,
+          field_order: 6,
           field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -527,7 +668,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 6,
+          field_order: 7,
           field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -535,7 +676,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Receiving Status",
           field_type: "TEXT",
-          field_order: 7,
+          field_order: 8,
           field_section_id: rirItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -562,9 +703,16 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           section_form_id: releaseOrderFormId,
         },
         {
+          section_id: roQuantityCheckSectionId,
+          section_name: "Quantity Check",
+          section_order: 2,
+          section_is_duplicatable: false,
+          section_form_id: releaseOrderFormId,
+        },
+        {
           section_id: roItemSectionId,
           section_name: "Item",
-          section_order: 2,
+          section_order: 3,
           section_is_duplicatable: true,
           section_form_id: releaseOrderFormId,
         },
@@ -587,9 +735,25 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
           field_is_read_only: true,
         },
         {
+          field_name: "Transfer Shipment",
+          field_type: "FILE",
+          field_order: 3,
+          field_section_id: roQuantityCheckSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Transfer Receipt",
+          field_type: "FILE",
+          field_order: 4,
+          field_section_id: roQuantityCheckSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
           field_name: "Item",
           field_type: "DROPDOWN",
-          field_order: 3,
+          field_order: 5,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -597,7 +761,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Quantity",
           field_type: "NUMBER",
-          field_order: 4,
+          field_order: 6,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: false,
@@ -605,7 +769,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Receiving Status",
           field_type: "TEXT",
-          field_order: 5,
+          field_order: 7,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -613,7 +777,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         {
           field_name: "Project Site",
           field_type: "TEXT",
-          field_order: 6,
+          field_order: 8,
           field_section_id: roItemSectionId,
           field_is_required: true,
           field_is_read_only: true,
@@ -879,6 +1043,15 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field_type: "DROPDOWN",
       field_order: 1,
       field_section_id: auditMainSectionId,
+      field_is_required: true,
+      field_is_read_only: false,
+    },
+    {
+      field_id: quotationPaymentTermsId,
+      field_name: "Payment Terms",
+      field_type: "DROPDOWN",
+      field_order: 6,
+      field_section_id: quotationMainSectionId,
       field_is_required: true,
       field_is_read_only: false,
     },

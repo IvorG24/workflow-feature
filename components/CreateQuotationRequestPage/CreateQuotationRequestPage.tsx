@@ -126,7 +126,9 @@ const CreateQuotationRequestPage = ({
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.forEach((section) => {
+      const itemSection = data.sections.slice(3);
+
+      itemSection.forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({

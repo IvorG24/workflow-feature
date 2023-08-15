@@ -94,16 +94,16 @@ const CreateReleaseOrderPage = ({
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[1].section_field.map((field) => {
+    const newFields = form.form_section[2].section_field.map((field) => {
       return {
         ...field,
         field_option: itemOptions,
       };
     });
     replaceSection([
-      form.form_section[0],
+      ...form.form_section.slice(0, 2),
       {
-        ...form.form_section[1],
+        ...form.form_section[2],
         section_field: newFields,
       },
     ]);
@@ -123,7 +123,7 @@ const CreateReleaseOrderPage = ({
       if (!teamMember) return;
       setIsLoading(true);
       let isValid = true;
-      for (const section of data.sections.slice(1)) {
+      for (const section of data.sections.slice(2)) {
         if (section.section_field[2].field_response === "Invalid") {
           isValid = false;
           break;
@@ -141,13 +141,13 @@ const CreateReleaseOrderPage = ({
       const sourcedItemId = JSON.stringify(
         data.sections[0].section_field[1].field_response
       );
-      const itemSection = data.sections[1];
+      const itemSection = data.sections[2];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.slice(1).forEach((section) => {
+      data.sections.slice(2).forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({
@@ -231,7 +231,7 @@ const CreateReleaseOrderPage = ({
   const handleDuplicateSection = (sectionId: string) => {
     if (
       availableItems.length === 0 ||
-      formSections.length === itemOptions.length + 1
+      formSections.length === itemOptions.length + 2
     ) {
       notifications.show({
         message: "No available item.",
@@ -289,10 +289,10 @@ const CreateReleaseOrderPage = ({
           });
 
           const sectionList = getValues(`sections`);
-          const itemSectionList = sectionList.slice(1);
+          const itemSectionList = sectionList.slice(2);
 
           itemSectionList.forEach((section, sectionIndex) => {
-            sectionIndex += 1;
+            sectionIndex += 2;
             if (sectionIndex !== sectionMatchIndex) {
               updateSection(sectionIndex, {
                 ...section,
@@ -325,14 +325,14 @@ const CreateReleaseOrderPage = ({
     prevValue: string | null
   ) => {
     const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(1);
+    const itemSectionList = sectionList.slice(2);
 
     if (value) {
       setAvailableItems((prev) =>
         prev.filter((item) => item.option_value !== value)
       );
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -373,7 +373,7 @@ const CreateReleaseOrderPage = ({
         return [...prev, newOption];
       });
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -389,7 +389,7 @@ const CreateReleaseOrderPage = ({
                   return a.option_order - b.option_order;
                 }),
               },
-              ...section.section_field.slice(1),
+              ...section.section_field.slice(2),
             ],
           });
         }
