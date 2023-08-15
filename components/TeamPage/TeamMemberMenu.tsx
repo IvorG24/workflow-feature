@@ -1,6 +1,8 @@
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { MemberRoleType, TeamMemberType } from "@/utils/types";
 import { ActionIcon, Menu, Text } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
+import { useUser } from "@supabase/auth-helpers-react";
 import {
   IconArrowsLeftRight,
   IconDotsVertical,
@@ -14,7 +16,6 @@ import { useRouter } from "next/router";
 
 type Props = {
   member: TeamMemberType;
-  authUser: TeamMemberType;
   onUpdateMemberRole: (memberId: string, role: MemberRoleType) => void;
   onRemoveFromTeam: (memberId: string) => void;
   onTransferOwnership: (ownerId: string, memberId: string) => void;
@@ -24,24 +25,26 @@ const rolesOrder = { OWNER: 1, ADMIN: 2, MEMBER: 3 };
 
 const TeamMemberMenu = ({
   member,
-  authUser,
   onRemoveFromTeam,
   onUpdateMemberRole,
   onTransferOwnership,
 }: Props) => {
   const defaultMenuIconProps = { size: 20 };
   const router = useRouter();
+  const authUser = useUser();
+  const authTeamMember = useUserTeamMember();
 
   const canUserUpdateMember =
-    authUser &&
-    authUser.team_member_role !== "MEMBER" &&
-    authUser.team_member_user.user_id !== member.team_member_user.user_id &&
-    rolesOrder[authUser.team_member_role] < rolesOrder[member.team_member_role];
+    authTeamMember &&
+    authTeamMember.team_member_role !== "MEMBER" &&
+    authUser?.id !== member.team_member_user.user_id &&
+    rolesOrder[authTeamMember.team_member_role as MemberRoleType] <
+      rolesOrder[member.team_member_role];
 
   const canUserAccessDangerZone =
-    authUser &&
-    (authUser.team_member_role === "OWNER" ||
-      authUser.team_member_role === "ADMIN");
+    authTeamMember &&
+    (authTeamMember.team_member_role === "OWNER" ||
+      authTeamMember.team_member_role === "ADMIN");
 
   return (
     <Menu position="left-start" width={200} withArrow>
@@ -130,7 +133,7 @@ const TeamMemberMenu = ({
                 <Menu.Divider />
                 <Menu.Label>Danger zone</Menu.Label>
 
-                {authUser.team_member_role === "OWNER" && (
+                {authTeamMember.team_member_role === "OWNER" && (
                   <Menu.Item
                     icon={<IconArrowsLeftRight {...defaultMenuIconProps} />}
                     onClick={() =>
@@ -153,7 +156,7 @@ const TeamMemberMenu = ({
                         centered: true,
                         onConfirm: () =>
                           onTransferOwnership(
-                            authUser.team_member_id,
+                            authTeamMember.team_member_id,
                             member.team_member_id
                           ),
 
