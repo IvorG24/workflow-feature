@@ -170,7 +170,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
           const projectOptions = teamProjects.map((project, index) => {
             return {
-              option_description: null,
+              option_description: project.team_project_id,
               option_field_id: form.form_section[1].section_field[2].field_id,
               option_id: project.team_project_name,
               option_order: index,
@@ -190,7 +190,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       ...form.form_section[1].section_field.slice(0, 2),
                       {
                         ...form.form_section[1].section_field[2],
-                        field_option: projectOptions,
+                        field_option: projectOptions.filter(
+                          (project) =>
+                            project.option_description !== requestProjectId
+                        ),
                       },
                     ],
                   },
