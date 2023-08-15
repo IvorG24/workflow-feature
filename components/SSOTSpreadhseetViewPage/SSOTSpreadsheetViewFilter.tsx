@@ -20,13 +20,13 @@ import { Controller, useFormContext } from "react-hook-form";
 import { SSOTFilterFormValues } from "./SSOTSpreadhseetViewPage";
 
 type RequestListFilterProps = {
-  projectNameList: string[];
+  requestingProjectList: string[];
   itemNameList: string[];
   handleFilterSSOT: () => void;
 };
 
 const SSOTSpreadsheetViewFilter = ({
-  projectNameList,
+  requestingProjectList,
   itemNameList,
   handleFilterSSOT,
 }: RequestListFilterProps) => {
@@ -63,7 +63,7 @@ const SSOTSpreadsheetViewFilter = ({
     };
   }, []);
 
-  const projectNameListData = projectNameList.map((project) => ({
+  const requestingProjectListData = requestingProjectList.map((project) => ({
     label: project,
     value: project,
   }));
@@ -128,11 +128,11 @@ const SSOTSpreadsheetViewFilter = ({
 
           <Controller
             control={control}
-            name="projectNameList"
+            name="requestingProjectList"
             render={({ field: { value, onChange } }) => (
               <MultiSelect
-                data={projectNameListData}
-                placeholder="Project Name"
+                data={requestingProjectListData}
+                placeholder="Requesting Project"
                 value={value}
                 onChange={onChange}
                 {...inputFilterProps}

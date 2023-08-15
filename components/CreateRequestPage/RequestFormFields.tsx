@@ -291,7 +291,7 @@ const RequestFormFields = ({
                       value,
                       prevValue === null ? null : `${prevValue}`
                     );
-                  } else if (field.field_name === "Project Name") {
+                  } else if (field.field_name === "Source Project") {
                     requisitionFormMethods?.onProjectNameChange(value);
                   }
                 }}

@@ -1,4 +1,3 @@
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_TEAM_MEMBER_LIST_LIMIT } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { MemberRoleType, TeamMemberType } from "@/utils/types";
@@ -46,12 +45,6 @@ const TeamMemberList = ({
   const totalPage = Math.ceil(
     teamMemberList.length / DEFAULT_TEAM_MEMBER_LIST_LIMIT
   );
-
-  const teamMember = useUserTeamMember();
-  const authUser = teamMemberList.find(
-    (member) => member.team_member_id === teamMember?.team_member_id
-  ) as TeamMemberType;
-
   const { register, handleSubmit } = useFormContext<SearchForm>();
 
   const sortByRole = (members: TeamMemberType[]): TeamMemberType[] => {
@@ -105,7 +98,6 @@ const TeamMemberList = ({
           <td>
             <TeamMemberMenu
               member={member}
-              authUser={authUser}
               onUpdateMemberRole={onUpdateMemberRole}
               onRemoveFromTeam={onRemoveFromTeam}
               onTransferOwnership={onTransferOwnership}

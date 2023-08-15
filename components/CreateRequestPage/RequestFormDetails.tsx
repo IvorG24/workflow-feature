@@ -12,10 +12,10 @@ type Props = {
     form_date_created: string;
     form_team_member: FormType["form_team_member"];
   };
-  projectName?: string;
+  requestingProject?: string;
 };
 
-const RequestFormDetails = ({ formDetails, projectName }: Props) => {
+const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
   const userProfile = useUserProfile();
   const userInitials = useUserIntials();
 
@@ -55,10 +55,10 @@ const RequestFormDetails = ({ formDetails, projectName }: Props) => {
         <IconCalendar />
         <Text weight={600}>{formDateCreated}</Text>
       </Group>
-      {projectName && (
+      {requestingProject && (
         <Group spacing="md" mt="xl">
-          <Title order={5}>Project Name:</Title>
-          <Text>{projectName}</Text>
+          <Title order={5}>Requesting Project:</Title>
+          <Text>{requestingProject}</Text>
         </Group>
       )}
     </Paper>

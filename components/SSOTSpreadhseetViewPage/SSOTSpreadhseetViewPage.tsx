@@ -167,14 +167,14 @@ const useStyles = createStyles((theme) => ({
 
 export type SSOTFilterFormValues = {
   search: string;
-  projectNameList: string[];
+  requestingProjectList: string[];
   itemNameList: string[];
   supplierList: string[];
 };
 
 type Props = {
   data: SSOTType[];
-  projectNameList: string[];
+  requestingProjectList: string[];
   itemNameList: string[];
 };
 
@@ -184,7 +184,7 @@ const requisitionTableColumnList = [
   "Requisition ID",
   "Date Created",
   "Operations/Engineering",
-  "Project Name",
+  "Requesting Project",
   "Type",
   "Date Needed",
   "Purpose",
@@ -220,7 +220,7 @@ const sourcedItemTableColumnList = [
   "Item",
   "Quantity",
   "Unit of Measurement",
-  "Project Site",
+  "Source Project",
 ];
 
 const rirTableColumnList = [
@@ -246,7 +246,7 @@ const releaseOrderTableColumnList = [
   "Quantity",
   "Unit of Measurement",
   "Receiving Status",
-  "Project Site",
+  "Source Project",
 ];
 
 const chequeReferenceTableColumnList = [
@@ -283,7 +283,7 @@ const convertColumnListArrayToObject = (array: string[]) => {
 
 const SSOTSpreadsheetView = ({
   data,
-  projectNameList,
+  requestingProjectList,
   itemNameList,
 }: Props) => {
   const { classes } = useStyles();
@@ -352,7 +352,7 @@ const SSOTSpreadsheetView = ({
     defaultValues: {
       search: "",
       itemNameList: [],
-      projectNameList: [],
+      requestingProjectList: [],
       supplierList: [],
     },
     mode: "onChange",
@@ -362,7 +362,7 @@ const SSOTSpreadsheetView = ({
   const handleFilterSSOT = async (
     {
       search,
-      projectNameList,
+      requestingProjectList,
       itemNameList,
       supplierList,
     }: SSOTFilterFormValues = getValues()
@@ -375,7 +375,7 @@ const SSOTSpreadsheetView = ({
       const trimmedSearch = search.trim();
 
       let requisitionFilterCount = 0;
-      projectNameList.length !== 0 && requisitionFilterCount++;
+      requestingProjectList.length !== 0 && requisitionFilterCount++;
       itemNameList.length !== 0 && requisitionFilterCount++;
       trimmedSearch.length !== 0 && requisitionFilterCount++;
 
@@ -386,7 +386,7 @@ const SSOTSpreadsheetView = ({
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search: trimmedSearch,
           requisitionFilter: [
-            ...projectNameList,
+            ...requestingProjectList,
             ...itemNameList,
             ...(trimmedSearch ? [`${trimmedSearch}`] : []),
           ],
@@ -420,7 +420,7 @@ const SSOTSpreadsheetView = ({
     offset: number,
     {
       search,
-      projectNameList,
+      requestingProjectList,
       itemNameList,
       supplierList,
     }: SSOTFilterFormValues = getValues()
@@ -432,7 +432,7 @@ const SSOTSpreadsheetView = ({
       const trimmedSearch = search.trim();
 
       let requisitionFilterCount = 0;
-      projectNameList.length !== 0 && requisitionFilterCount++;
+      requestingProjectList.length !== 0 && requisitionFilterCount++;
       itemNameList.length !== 0 && requisitionFilterCount++;
       trimmedSearch.length !== 0 && requisitionFilterCount++;
 
@@ -443,7 +443,7 @@ const SSOTSpreadsheetView = ({
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search: trimmedSearch,
           requisitionFilter: [
-            ...projectNameList,
+            ...requestingProjectList,
             ...itemNameList,
             ...(trimmedSearch ? [`${trimmedSearch}`] : []),
           ],
@@ -811,7 +811,7 @@ const SSOTSpreadsheetView = ({
       const itemUnit: string[] = [];
       const itemStatus: string[] = [];
       const items = request.ro_request_response;
-      const itemProjectSite: string[] = [];
+      const itemSourceProject: string[] = [];
       let transferShipment = "";
       let transferReceipt = "";
 
@@ -835,12 +835,12 @@ const SSOTSpreadsheetView = ({
           itemUnit.push(`${unit}`);
         } else if (item.request_response_field_name === "Receiving Status") {
           itemStatus.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "Project Site") {
-          itemProjectSite.push(JSON.parse(item.request_response));
         } else if (item.request_response_field_name === "Transfer Shipment") {
           transferShipment = item.request_response;
         } else if (item.request_response_field_name === "Transfer Receipt") {
           transferReceipt = item.request_response;
+        } else if (item.request_response_field_name === "Source Project") {
+          itemSourceProject.push(JSON.parse(item.request_response));
         }
       });
 
@@ -942,10 +942,10 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showReleaseOrderColumnList["project_site"] && (
+          {showReleaseOrderColumnList["source_project"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
-                {itemProjectSite.map((item, index) => (
+                {itemSourceProject.map((item, index) => (
                   <List.Item key={index}>
                     <Text size={14}>{item}</Text>
                   </List.Item>
@@ -1168,8 +1168,8 @@ const SSOTSpreadsheetView = ({
                       {showRIRColumnList["receiving_status"] && (
                         <th className={classes.long}>Receiving Status</th>
                       )}
-                      {showRIRColumnList["project_site"] && (
-                        <th className={classes.long}>Project Site</th>
+                      {showRIRColumnList["source_project"] && (
+                        <th className={classes.long}>Source Project</th>
                       )}
                     </tr>
                   </thead>
@@ -1188,7 +1188,7 @@ const SSOTSpreadsheetView = ({
   ) => {
     return request.map((request) => {
       const itemName: string[] = [];
-      const itemProjectSite: string[] = [];
+      const itemSourceProject: string[] = [];
       const itemQuantity: string[] = [];
       const itemUnit: string[] = [];
 
@@ -1212,8 +1212,8 @@ const SSOTSpreadsheetView = ({
 
           itemQuantity.push(JSON.parse(item.request_response));
           itemUnit.push(`${unit}`);
-        } else if (item.request_response_field_name === "Project Site") {
-          itemProjectSite.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Source Project") {
+          itemSourceProject.push(JSON.parse(item.request_response));
         }
       });
 
@@ -1274,12 +1274,12 @@ const SSOTSpreadsheetView = ({
                   </List>
                 </td>
               )}
-              {showSourcedItemColumnList["project_site"] && (
+              {showSourcedItemColumnList["source_project"] && (
                 <td>
                   <List sx={{ listStyle: "none" }} spacing="xs">
-                    {itemProjectSite.map((projectSite, index) => (
+                    {itemSourceProject.map((sourceProject, index) => (
                       <List.Item key={index}>
-                        <Text size={14}>{projectSite}</Text>
+                        <Text size={14}>{sourceProject}</Text>
                       </List.Item>
                     ))}
                   </List>
@@ -1334,8 +1334,8 @@ const SSOTSpreadsheetView = ({
                           {showReleaseOrderColumnList["receiving_status"] && (
                             <th className={classes.long}>Receiving Status</th>
                           )}
-                          {showReleaseOrderColumnList["project_site"] && (
-                            <th className={classes.long}>Project Site</th>
+                          {showReleaseOrderColumnList["source_project"] && (
+                            <th className={classes.long}>Source Project</th>
                           )}
                         </tr>
                       </thead>
@@ -1361,6 +1361,7 @@ const SSOTSpreadsheetView = ({
       const itemDescription: string[] = [];
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
+      let requestingProject = "";
 
       const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
@@ -1389,6 +1390,10 @@ const SSOTSpreadsheetView = ({
             itemCostCode[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
+          } else if (
+            item.request_response_field_name === "Requesting Project"
+          ) {
+            requestingProject = item.request_response;
           } else {
             itemDescription[groupIndex] += `${
               item.request_response_field_name
@@ -1397,7 +1402,7 @@ const SSOTSpreadsheetView = ({
         });
         itemDescription[groupIndex] = itemDescription[groupIndex].slice(0, -2);
       });
-
+      console.log(request.requisition_request_response);
       return (
         <tr key={request.requisition_request_id} className={classes.cell}>
           {showRequisitionTable && (
@@ -1418,6 +1423,9 @@ const SSOTSpreadsheetView = ({
 
               {showRequisitionColumnList["operations/engineering"] && (
                 <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
+              )}
+              {showRequisitionColumnList["requesting_project"] && (
+                <td>{`${requestingProject}`}</td>
               )}
               {fields
                 .slice(-REQUISITION_FIELDS_ORDER.length)
@@ -1607,8 +1615,8 @@ const SSOTSpreadsheetView = ({
                       {showSourcedItemColumnList["unit_of_measurement"] && (
                         <th className={classes.date}>Unit of Measurement</th>
                       )}
-                      {showSourcedItemColumnList["project_site"] && (
-                        <th className={classes.long}>Project Site</th>
+                      {showSourcedItemColumnList["source_project"] && (
+                        <th className={classes.long}>Source Project</th>
                       )}
                       {showSourcedItemTable && showReleaseOrderTable && (
                         <th className={classes.description}>Release Order</th>
@@ -1784,7 +1792,7 @@ const SSOTSpreadsheetView = ({
             <form onSubmit={handleSubmit(handleFilterSSOT)}>
               <SSOTSpreadsheetViewFilter
                 handleFilterSSOT={handleFilterSSOT}
-                projectNameList={projectNameList}
+                requestingProjectList={requestingProjectList}
                 itemNameList={itemNameList}
               />
             </form>
@@ -1878,8 +1886,8 @@ const SSOTSpreadsheetView = ({
                           Operations / Engineering
                         </th>
                       )}
-                      {showRequisitionColumnList["project_name"] && (
-                        <th className={classes.long}>Project Name</th>
+                      {showRequisitionColumnList["requesting_project"] && (
+                        <th className={classes.long}>Requesting Project</th>
                       )}
                       {showRequisitionColumnList["type"] && (
                         <th className={classes.normal}>Type</th>

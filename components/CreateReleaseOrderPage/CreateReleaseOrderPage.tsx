@@ -44,17 +44,17 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
-  projectSiteList: Record<string, string>;
+  sourceProjectList: Record<string, string>;
   requestProjectId: string;
-  projectName: string;
+  requestingProject: string;
 };
 
 const CreateReleaseOrderPage = ({
   form,
   itemOptions,
-  projectSiteList,
+  sourceProjectList,
   requestProjectId,
-  projectName,
+  requestingProject,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -356,7 +356,7 @@ const CreateReleaseOrderPage = ({
           setValue(`sections.${index}.section_field.2.field_response`, status);
           setValue(
             `sections.${index}.section_field.3.field_response`,
-            projectSiteList[value]
+            sourceProjectList[value]
           );
         }
       });
@@ -438,7 +438,7 @@ const CreateReleaseOrderPage = ({
           <Stack spacing="xl">
             <RequestFormDetails
               formDetails={formDetails}
-              projectName={projectName}
+              requestingProject={requestingProject}
             />
             {formSections.map((section, idx) => {
               const sectionIdToFind = section.section_id;
