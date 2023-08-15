@@ -269,10 +269,10 @@ INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) V
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('37067546-44b2-4bfa-a952-b0332e98298c', TRUE, 'Approved', 1, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '05078711-7d04-4364-b7d8-2962575ff43f'),
-('b96ad041-2ad5-41be-9358-06d0a8524401', TRUE, 'Approved', 1, 'e5062660-9026-4629-bc2c-633826fdaa24', '16aeb09a-2bcc-445a-bf89-ad0e935b9ea2'),
-('8321f613-6362-4d17-b9f2-f439ddd9a8a8', TRUE, 'Approved', 1, 'a732196f-9779-45e2-85fa-7320397e5b0a', '75481c37-3e40-49ad-bcbc-aae02e345b5c'),
-('37f8b92c-9e9e-4e97-a6f4-f2f55a7f1a87', TRUE, 'Approved', 1, '5782d70a-5f6b-486c-a77f-401066afd005', '16aeb09a-2bcc-445a-bf89-ad0e935b9ea2'),
-('2c4504a3-6b38-42bb-af23-d489967205e3', TRUE, 'Approved', 1, '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '16aeb09a-2bcc-445a-bf89-ad0e935b9ea2'),
+('b96ad041-2ad5-41be-9358-06d0a8524401', TRUE, 'Approved', 1, 'e5062660-9026-4629-bc2c-633826fdaa24', '8d4df42b-a861-4b4d-8870-14aaf9f6b668'),
+('8321f613-6362-4d17-b9f2-f439ddd9a8a8', TRUE, 'Approved', 1, 'a732196f-9779-45e2-85fa-7320397e5b0a', 'a84c1d02-5d9f-4387-a0c0-a9438cc22fcd'),
+('37f8b92c-9e9e-4e97-a6f4-f2f55a7f1a87', TRUE, 'Approved', 1, '5782d70a-5f6b-486c-a77f-401066afd005', '8d4df42b-a861-4b4d-8870-14aaf9f6b668'),
+('2c4504a3-6b38-42bb-af23-d489967205e3', TRUE, 'Approved', 1, '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '8d4df42b-a861-4b4d-8870-14aaf9f6b668'),
 ('72eb38d7-2933-4bda-99ad-a51e1ba62b71', TRUE, 'Approved', 1, '913a09d8-88f9-4139-a039-a77394405b62', '05078711-7d04-4364-b7d8-2962575ff43f'),
 ('a8a254ee-7294-48b1-9c14-252875d08330', TRUE, 'Approved', 1, 'd2e3e618-7f9b-4439-8f76-72a05a0bf305', '05078711-7d04-4364-b7d8-2962575ff43f'),
-('9698be61-f8ad-4d2e-89c4-6e085f218ae4', TRUE, 'Approved', 1, 'a60028e0-5fb6-4757-a5d8-e5ce34bc5fd2', '16aeb09a-2bcc-445a-bf89-ad0e935b9ea2');
+('9698be61-f8ad-4d2e-89c4-6e085f218ae4', TRUE, 'Approved', 1, 'a60028e0-5fb6-4757-a5d8-e5ce34bc5fd2', '8d4df42b-a861-4b4d-8870-14aaf9f6b668');
