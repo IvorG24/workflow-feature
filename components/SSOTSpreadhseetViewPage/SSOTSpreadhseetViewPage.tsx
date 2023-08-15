@@ -202,8 +202,11 @@ const quotationTableColumnList = [
   "Purchaser",
   "Supplier",
   "Supplier Quotation",
-  "Send Method",
+  "Request Send Method",
   "Proof of Sending",
+  "Payment Terms",
+  "Lead Time",
+  "Required Down Payment",
   "Item",
   "Price Per Unit",
   "Quantity",
@@ -226,6 +229,7 @@ const rirTableColumnList = [
   "Site Warehouse",
   "DR",
   "SI",
+  "QCIR",
   "Item",
   "Quantity",
   "Unit of Measurement",
@@ -236,6 +240,8 @@ const releaseOrderTableColumnList = [
   "RO ID",
   "Date Created",
   "Warehouse Corporate Support Lead",
+  "Transfer Shipment",
+  "Transfer Receipt",
   "Item",
   "Quantity",
   "Unit of Measurement",
@@ -654,6 +660,7 @@ const SSOTSpreadsheetView = ({
       const items = request.rir_request_response;
       let dr = "";
       let si = "";
+      let qcir = "";
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -679,6 +686,8 @@ const SSOTSpreadsheetView = ({
           dr = item.request_response;
         } else if (item.request_response_field_name === "SI") {
           si = item.request_response;
+        } else if (item.request_response_field_name === "QCIR") {
+          qcir = item.request_response;
         }
       });
 
@@ -721,6 +730,21 @@ const SSOTSpreadsheetView = ({
                   w="100%"
                   variant="outline"
                   onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+          {showRIRColumnList["qcir"] && (
+            <td>
+              {qcir && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() => window.open(`${JSON.parse(qcir)}`, "_blank")}
                 >
                   <Flex align="center" justify="center" gap={2}>
                     <Text size={14}>File</Text> <IconFile size={14} />
@@ -788,6 +812,8 @@ const SSOTSpreadsheetView = ({
       const itemStatus: string[] = [];
       const items = request.ro_request_response;
       const itemSourceProject: string[] = [];
+      let transferShipment = "";
+      let transferReceipt = "";
 
       items.forEach((item) => {
         if (item.request_response_field_name === "Item") {
@@ -809,6 +835,10 @@ const SSOTSpreadsheetView = ({
           itemUnit.push(`${unit}`);
         } else if (item.request_response_field_name === "Receiving Status") {
           itemStatus.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Transfer Shipment") {
+          transferShipment = item.request_response;
+        } else if (item.request_response_field_name === "Transfer Receipt") {
+          transferReceipt = item.request_response;
         } else if (item.request_response_field_name === "Source Project") {
           itemSourceProject.push(JSON.parse(item.request_response));
         }
@@ -831,6 +861,43 @@ const SSOTSpreadsheetView = ({
           {showReleaseOrderColumnList["warehouse_corporate_support_lead"] && (
             <td>{`${request.ro_request_owner.user_first_name} ${request.ro_request_owner.user_last_name}`}</td>
           )}
+
+          {showReleaseOrderColumnList["transfer_shipment"] && (
+            <td>
+              {transferShipment && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() =>
+                    window.open(`${JSON.parse(transferShipment)}`, "_blank")
+                  }
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+
+          {showReleaseOrderColumnList["transfer_receipt"] && (
+            <td>
+              {transferReceipt && (
+                <ActionIcon
+                  w="100%"
+                  variant="outline"
+                  onClick={() =>
+                    window.open(`${JSON.parse(transferReceipt)}`, "_blank")
+                  }
+                >
+                  <Flex align="center" justify="center" gap={2}>
+                    <Text size={14}>File</Text> <IconFile size={14} />
+                  </Flex>
+                </ActionIcon>
+              )}
+            </td>
+          )}
+
           {showReleaseOrderColumnList["item"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
@@ -984,6 +1051,7 @@ const SSOTSpreadsheetView = ({
                 )
               );
             })}
+
           {showQuotationColumnList["send_method"] && (
             <td>
               {request.quotation_request_response[3]
@@ -1016,6 +1084,27 @@ const SSOTSpreadsheetView = ({
               )}
             </td>
           )}
+
+          {showQuotationColumnList["payment_terms"] && (
+            <td>
+              {items[0].request_response_field_name === "Payment Terms" &&
+                JSON.parse(items[0].request_response)}
+            </td>
+          )}
+          {showQuotationColumnList["lead_time"] && (
+            <td>
+              {items[1].request_response_field_name === "Lead Time" &&
+                JSON.parse(items[1].request_response)}
+            </td>
+          )}
+          {showQuotationColumnList["required_down_payment"] && (
+            <td>
+              {items[2].request_response_field_name ===
+                "Required Down Payment" &&
+                JSON.parse(items[2].request_response)}
+            </td>
+          )}
+
           {showQuotationColumnList["item"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
@@ -1085,6 +1174,9 @@ const SSOTSpreadsheetView = ({
                       )}
                       {showRIRColumnList["si"] && (
                         <th className={classes.short}>SI</th>
+                      )}
+                      {showRIRColumnList["qcir"] && (
+                        <th className={classes.short}>QCIR</th>
                       )}
                       {showRIRColumnList["item"] && (
                         <th className={classes.description}>Item</th>
@@ -1239,6 +1331,14 @@ const SSOTSpreadsheetView = ({
                             <th className={classes.processor}>
                               Warehouse Corporate Support Lead
                             </th>
+                          )}
+                          {showReleaseOrderColumnList["transfer_shipment"] && (
+                            <th className={classes.normal}>
+                              Transfer Shipment
+                            </th>
+                          )}
+                          {showReleaseOrderColumnList["transfer_receipt"] && (
+                            <th className={classes.normal}>Transfer Receipt</th>
                           )}
                           {showReleaseOrderColumnList["item"] && (
                             <th className={classes.description}>Item</th>
@@ -1457,11 +1557,20 @@ const SSOTSpreadsheetView = ({
                       {showQuotationColumnList["supplier_quotation"] && (
                         <th className={classes.normal}>Supplier Quotation</th>
                       )}
-                      {showQuotationColumnList["send_method"] && (
+                      {showQuotationColumnList["request_send_method"] && (
                         <th className={classes.short}>Send Method</th>
                       )}
                       {showQuotationColumnList["proof_of_sending"] && (
                         <th className={classes.normal}>Proof of Sending</th>
+                      )}
+                      {showQuotationColumnList["payment_terms"] && (
+                        <th className={classes.long}>Payment Terms</th>
+                      )}
+                      {showQuotationColumnList["lead_time"] && (
+                        <th className={classes.normal}>Lead Time</th>
+                      )}
+                      {showQuotationColumnList["required_down_payment"] && (
+                        <th className={classes.long}>Required Down Payment</th>
                       )}
                       {showQuotationColumnList["item"] && (
                         <th className={classes.description}>Item</th>

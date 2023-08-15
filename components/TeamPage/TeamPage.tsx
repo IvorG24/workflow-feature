@@ -27,6 +27,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { lowerCase } from "lodash";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import InviteMember from "./InviteMember";
@@ -186,9 +187,15 @@ const TeamPage = ({
     const { keyword } = data;
     const newMemberList = teamMembers.filter(
       (member) =>
-        member.team_member_user.user_first_name.includes(keyword) ||
-        member.team_member_user.user_last_name.includes(keyword) ||
-        member.team_member_user.user_email.includes(keyword)
+        lowerCase(member.team_member_user.user_first_name).includes(
+          lowerCase(keyword)
+        ) ||
+        lowerCase(member.team_member_user.user_last_name).includes(
+          lowerCase(keyword)
+        ) ||
+        lowerCase(member.team_member_user.user_email).includes(
+          lowerCase(keyword)
+        )
     );
     setTeamMemberList(newMemberList);
     setIsUpdatingTeamMembers(false);
