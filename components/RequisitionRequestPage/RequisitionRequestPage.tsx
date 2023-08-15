@@ -306,7 +306,7 @@ const RequisitionRequestPage = ({
 
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
-        (isUserSigner && requestStatus === "PENDING") ? (
+        isUserSigner ? (
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}

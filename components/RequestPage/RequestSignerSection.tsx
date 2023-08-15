@@ -13,6 +13,7 @@ import {
   IconCircleDashed,
   IconCircleX,
 } from "@tabler/icons-react";
+import { toUpper } from "lodash";
 
 type Props = {
   signerList: (RequestWithResponseType["request_signer"][0]["request_signer_signer"] & {
@@ -72,7 +73,7 @@ const RequestSignerSection = ({ signerList }: Props) => {
               <Text size="sm">
                 {signerStatusMessage(
                   signer.request_signer_status,
-                  signer.signer_action,
+                  toUpper(signer.signer_action),
                   `${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name}`
                 )}
               </Text>

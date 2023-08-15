@@ -13,6 +13,7 @@ import {
   IconCircleDashed,
   IconCircleX,
 } from "@tabler/icons-react";
+import { toUpper } from "lodash";
 
 type Props = {
   signerList: FormType["form_signer"];
@@ -70,7 +71,7 @@ const FormSignerSection = ({ signerList }: Props) => {
               <Text size="sm">
                 {signerStatusMessage(
                   "PENDING",
-                  signer.signer_action,
+                  toUpper(signer.signer_action),
                   `${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name}`
                 )}
               </Text>
