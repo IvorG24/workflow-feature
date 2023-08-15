@@ -430,11 +430,10 @@ const RequisitionFormPage = ({
       {switchValue ? (
         <Stack spacing="xl">
           <FormSection section={form.form_section[0]} />
-          <FormSection section={form.form_section[1]} />
           <FormSection
             section={{
-              ...form.form_section[2],
-              section_field: form.form_section[2].section_field.slice(0, 5),
+              ...form.form_section[1],
+              section_field: form.form_section[1].section_field.slice(0, 5),
             }}
           />
         </Stack>
