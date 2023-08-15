@@ -132,7 +132,7 @@ const SSOTSpreadsheetViewFilter = ({
             render={({ field: { value, onChange } }) => (
               <MultiSelect
                 data={projectNameListData}
-                placeholder="Project Name"
+                placeholder="Requesting Project"
                 value={value}
                 onChange={onChange}
                 {...inputFilterProps}

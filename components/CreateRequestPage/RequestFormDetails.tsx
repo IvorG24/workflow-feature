@@ -57,7 +57,7 @@ const RequestFormDetails = ({ formDetails, projectName }: Props) => {
       </Group>
       {projectName && (
         <Group spacing="md" mt="xl">
-          <Title order={5}>Project Name:</Title>
+          <Title order={5}>Requesting Project:</Title>
           <Text>{projectName}</Text>
         </Group>
       )}

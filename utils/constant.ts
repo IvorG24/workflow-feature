@@ -124,7 +124,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ],
       field: [
         {
-          field_name: "Project Name",
+          field_name: "Requesting Project",
           field_type: "DROPDOWN",
           field_order: 1,
           field_section_id: requisitionMainSectionId,
@@ -1066,7 +1066,7 @@ export const ITEM_UNIT_CHOICES = [
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
-  "Project Name",
+  "Requesting Project",
   "Type",
   "Date Needed",
   "Purpose",

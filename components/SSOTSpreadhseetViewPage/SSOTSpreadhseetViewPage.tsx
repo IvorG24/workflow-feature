@@ -184,7 +184,7 @@ const requisitionTableColumnList = [
   "Requisition ID",
   "Date Created",
   "Operations/Engineering",
-  "Project Name",
+  "Requesting Project",
   "Type",
   "Date Needed",
   "Purpose",
@@ -1792,7 +1792,7 @@ const SSOTSpreadsheetView = ({
                         </th>
                       )}
                       {showRequisitionColumnList["project_name"] && (
-                        <th className={classes.long}>Project Name</th>
+                        <th className={classes.long}>Requesting Project</th>
                       )}
                       {showRequisitionColumnList["type"] && (
                         <th className={classes.normal}>Type</th>
