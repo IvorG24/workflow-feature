@@ -1,3 +1,5 @@
+import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
+import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { regExp } from "@/utils/string";
 import {
@@ -467,15 +469,23 @@ export const getFormListWithFilter = async (
     query = query.ilike("form_name", `%${search}%`);
   }
 
-  query = query.order("form_date_created", {
-    ascending: sort === "ascending",
-  });
+  query = query
+    .order("form_is_formsly_form", {
+      ascending: false,
+    })
+    .order("form_date_created", {
+      ascending: sort === "ascending",
+    });
+
   query.limit(limit);
   query.range(start, start + limit - 1);
 
-  const { data, count, error } = await query;
+  const { data: formList, count, error } = await query;
   if (error) throw error;
-  return { data, count };
+
+  const sortedFormList = sortFormList(formList, FORMSLY_FORM_ORDER);
+
+  return { data: sortedFormList, count };
 };
 
 // Get all team members
