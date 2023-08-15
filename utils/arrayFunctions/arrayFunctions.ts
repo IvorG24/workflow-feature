@@ -118,4 +118,4 @@ export const sortFormList = (
     // If neither form name is in the reference array, keep their original order
     return 0;
   });
-
+};
