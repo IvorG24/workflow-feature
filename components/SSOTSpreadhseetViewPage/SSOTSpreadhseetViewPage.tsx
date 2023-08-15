@@ -966,7 +966,9 @@ const SSOTSpreadsheetView = ({
       const itemPrice: string[] = [];
       const itemQuantity: string[] = [];
       const itemUnit: string[] = [];
-
+      let paymentTerms = "";
+      let leadTime = "";
+      let downPayment = "";
       const items = request.quotation_request_response.slice(
         3,
         request.quotation_request_response.length
@@ -992,6 +994,14 @@ const SSOTSpreadsheetView = ({
 
           itemQuantity.push(JSON.parse(item.request_response));
           itemUnit.push(`${unit}`);
+        } else if (item.request_response_field_name === "Payment Terms") {
+          paymentTerms = item.request_response;
+        } else if (item.request_response_field_name === "Lead Time") {
+          leadTime = item.request_response;
+        } else if (
+          item.request_response_field_name === "Required Down Payment"
+        ) {
+          downPayment = item.request_response;
         }
       });
 
@@ -1015,7 +1025,7 @@ const SSOTSpreadsheetView = ({
             <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
           )}
           {request.quotation_request_response
-            .slice(1, 8)
+            .slice(1, 3)
             .map((response, index) => {
               const fieldName =
                 response.request_response_field_name.toLowerCase();
@@ -1051,7 +1061,8 @@ const SSOTSpreadsheetView = ({
                 )
               );
             })}
-          {/* {showQuotationColumnList["send_method"] && (
+
+          {showQuotationColumnList["send_method"] && (
             <td>
               {request.quotation_request_response[3]
                 .request_response_field_name === "Request Send Method" &&
@@ -1082,7 +1093,20 @@ const SSOTSpreadsheetView = ({
                 </ActionIcon>
               )}
             </td>
-          )} */}
+          )}
+
+          {showQuotationColumnList["payment_terms"] && (
+            <td>{paymentTerms && JSON.parse(paymentTerms)}</td>
+          )}
+
+          {showQuotationColumnList["lead_time"] && (
+            <td>{leadTime && JSON.parse(leadTime)}</td>
+          )}
+
+          {showQuotationColumnList["down_payment"] && (
+            <td>{downPayment && JSON.parse(downPayment)}</td>
+          )}
+
           {showQuotationColumnList["item"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
@@ -1361,7 +1385,6 @@ const SSOTSpreadsheetView = ({
       const itemDescription: string[] = [];
       const itemCostCode: string[] = [];
       const itemGlAccount: string[] = [];
-      let requestingProject = "";
 
       const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
@@ -1390,10 +1413,6 @@ const SSOTSpreadsheetView = ({
             itemCostCode[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
-          } else if (
-            item.request_response_field_name === "Requesting Project"
-          ) {
-            requestingProject = item.request_response;
           } else {
             itemDescription[groupIndex] += `${
               item.request_response_field_name
@@ -1402,7 +1421,7 @@ const SSOTSpreadsheetView = ({
         });
         itemDescription[groupIndex] = itemDescription[groupIndex].slice(0, -2);
       });
-      console.log(request.requisition_request_response);
+
       return (
         <tr key={request.requisition_request_id} className={classes.cell}>
           {showRequisitionTable && (
@@ -1423,9 +1442,6 @@ const SSOTSpreadsheetView = ({
 
               {showRequisitionColumnList["operations/engineering"] && (
                 <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
-              )}
-              {showRequisitionColumnList["requesting_project"] && (
-                <td>{`${requestingProject}`}</td>
               )}
               {fields
                 .slice(-REQUISITION_FIELDS_ORDER.length)
