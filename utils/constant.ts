@@ -1244,3 +1244,14 @@ export const REQUISITION_FIELDS_ORDER = [
   "Date Needed",
   "Purpose",
 ];
+
+export const FORMSLY_FORM_ORDER = [
+  "Requisition",
+  "Sourced Item",
+  "Release Order",
+  "Quotation",
+  "Receiving Inspecting Report",
+  "Withdrawal Slip",
+  "Cheque Reference",
+  "Audit",
+];
