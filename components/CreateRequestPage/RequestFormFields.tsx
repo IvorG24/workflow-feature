@@ -50,6 +50,9 @@ type RequestFormFieldsProps = {
     onQuantityChange: (index: number, value: number) => void;
   };
   formslyFormName?: string;
+  sourcedItemFormMethods?: {
+    onProjectSiteChange: () => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -60,6 +63,7 @@ const RequestFormFields = ({
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
+  sourcedItemFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -293,6 +297,7 @@ const RequestFormFields = ({
                     );
                   } else if (field.field_name === "Source Project") {
                     requisitionFormMethods?.onProjectNameChange(value);
+                    sourcedItemFormMethods?.onProjectSiteChange();
                   }
                 }}
                 data={dropdownOption}

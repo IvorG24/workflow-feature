@@ -1,5 +1,6 @@
 import {
   getFormIDForRequsition,
+  getFormSigner,
   getFormslyForm,
   getFormslyForwardLinkFormId,
   getRequest,
@@ -102,9 +103,35 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           memberId: `${teamMember?.team_member_id}`,
         });
 
+        const data = await getFormSigner(supabaseClient, {
+          formId: request.request_form.form_id,
+          projectId: `${request.request_project_id}`,
+        });
+
+        const mainSignerIdList = data.map((signer) => signer.signer_id);
+
         return {
           props: {
-            request,
+            request: {
+              ...request,
+              request_signer: request.request_signer.map((requestSigner) => {
+                if (
+                  !mainSignerIdList.includes(
+                    requestSigner.request_signer_signer.signer_id
+                  )
+                ) {
+                  return {
+                    ...requestSigner,
+                    request_signer_signer: {
+                      ...requestSigner.request_signer_signer,
+                      signer_is_primary_signer: false,
+                    },
+                  };
+                } else {
+                  return requestSigner;
+                }
+              }),
+            },
             connectedFormIdAndGroup: {
               formId: connectedForm?.form_id,
               formIsForEveryone: connectedForm?.form_is_for_every_member,

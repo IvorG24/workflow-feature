@@ -57,8 +57,7 @@ const RequestActionSection = ({
       <Stack>
         {isUserSigner &&
           signer &&
-          signer.request_signer_status === "PENDING" &&
-          requestStatus === "PENDING" && (
+          signer.request_signer_status === "PENDING" && (
             <>
               <Button
                 color="green"

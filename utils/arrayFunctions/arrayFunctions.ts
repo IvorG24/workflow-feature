@@ -74,3 +74,15 @@ export const generateSectionWithDuplicateList = (
 
   return sectionWithDuplicateList;
 };
+
+export const areEqual = (array1: string[], array2: string[]) => {
+  if (array1.length === array2.length) {
+    return array1.every((element) => {
+      if (array2.includes(element)) {
+        return true;
+      }
+      return false;
+    });
+  }
+  return false;
+};

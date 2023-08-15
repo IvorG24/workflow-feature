@@ -278,6 +278,7 @@ export const getRequest = async (
           signer_is_primary_signer, 
           signer_action, 
           signer_order, 
+          signer_form_id,
           signer_team_member: signer_team_member_id!inner(
             team_member_id, 
             team_member_user: team_member_user_id!inner(
@@ -2836,4 +2837,65 @@ export const getRequestProjectIdAndName = async (
   if (error) throw error;
 
   return data.request_project;
+};
+
+// Fetch multiple request signer with team member based on project site
+export const getMultipleProjectSignerWithTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectName: string[];
+    formId: string;
+  }
+) => {
+  const { projectName, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select(
+      `signer_id, 
+      signer_is_primary_signer, 
+      signer_action, 
+      signer_order,
+      signer_is_disabled, 
+      signer_team_project: signer_team_project_id!inner(
+        team_project_name
+      ),
+      signer_team_member: signer_team_member_id(
+        team_member_id, 
+        team_member_user: team_member_user_id(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar
+        )
+      )`
+    )
+    .in("signer_team_project.team_project_name", projectName)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false);
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch request signer based on formId and projectId
+export const getFormSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    formId: string;
+  }
+) => {
+  const { projectId, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select("signer_id")
+    .eq("signer_form_id", formId)
+    .or(
+      `signer_team_project_id.eq.${projectId}, signer_team_project_id.is.null`
+    )
+    .eq("signer_is_disabled", false);
+  if (error) throw error;
+
+  return data;
 };
