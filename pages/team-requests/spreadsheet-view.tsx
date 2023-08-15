@@ -84,7 +84,7 @@ const Page = ({ data, projectNameList, itemNameList }: Props) => {
       />
       <SSOTSpreadsheetView
         data={data}
-        projectNameList={projectNameList}
+        requestingProjectList={projectNameList}
         itemNameList={itemNameList}
       />
     </>

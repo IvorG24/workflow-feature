@@ -1735,7 +1735,7 @@ export const getItemResponseForRO = async (
     {
       item: string;
       quantity: number;
-      projectSite: string;
+      sourceProject: string;
     }
   > = {};
   const idForNullDuplicationId = uuidv4();
@@ -1751,7 +1751,7 @@ export const getItemResponseForRO = async (
           options[duplicatableSectionId] = {
             item: "",
             quantity: 0,
-            projectSite: "",
+            sourceProject: "",
           };
         }
 
@@ -1763,8 +1763,8 @@ export const getItemResponseForRO = async (
           options[duplicatableSectionId].quantity = JSON.parse(
             response.request_response
           );
-        } else if (fieldName === "Project Site") {
-          options[duplicatableSectionId].projectSite = JSON.parse(
+        } else if (fieldName === "Source Project") {
+          options[duplicatableSectionId].sourceProject = JSON.parse(
             response.request_response
           );
         }
@@ -2760,7 +2760,7 @@ export const getRequestFormslyId = async (
   return requestFormslyId;
 };
 
-// Fetch request signer based on project site
+// Fetch request signer based on Source Project
 export const getProjectSigner = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2781,7 +2781,7 @@ export const getProjectSigner = async (
   return data;
 };
 
-// Fetch request signer with team member based on project site
+// Fetch request signer with team member based on Source Project
 export const getProjectSignerWithTeamMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

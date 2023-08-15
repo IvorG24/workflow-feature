@@ -138,11 +138,11 @@ const CreateRequisitionRequestPage = ({
         sections: [data.sections[0], ...newSections],
       };
 
-      const projectNameResponse = data.sections[0].section_field[0]
+      const Response = data.sections[0].section_field[0]
         .field_response as string;
 
       const projectId = data.sections[0].section_field[0].field_option.find(
-        (option) => option.option_value === projectNameResponse
+        (option) => option.option_value === Response
       )?.option_id as string;
 
       const request = await createRequest(supabaseClient, {

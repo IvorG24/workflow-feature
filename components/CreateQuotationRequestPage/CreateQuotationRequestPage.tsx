@@ -44,14 +44,14 @@ type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
   requestProjectId: string;
-  projectName: string;
+  requestingProject: string;
 };
 
 const CreateQuotationRequestPage = ({
   form,
   itemOptions,
   requestProjectId,
-  projectName,
+  requestingProject,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -396,7 +396,7 @@ const CreateQuotationRequestPage = ({
           <Stack spacing="xl">
             <RequestFormDetails
               formDetails={formDetails}
-              projectName={projectName}
+              requestingProject={requestingProject}
             />
             {formSections.map((section, idx) => {
               const sectionIdToFind = section.section_id;
