@@ -740,7 +740,7 @@ const SSOTSpreadsheetView = ({
           )}
           {showRIRColumnList["qcir"] && (
             <td>
-              {si && (
+              {qcir && (
                 <ActionIcon
                   w="100%"
                   variant="outline"
@@ -966,9 +966,7 @@ const SSOTSpreadsheetView = ({
       const itemPrice: string[] = [];
       const itemQuantity: string[] = [];
       const itemUnit: string[] = [];
-      let paymentTerms = "";
-      let leadTime = "";
-      let downPayment = "";
+
       const items = request.quotation_request_response.slice(
         3,
         request.quotation_request_response.length
@@ -994,14 +992,6 @@ const SSOTSpreadsheetView = ({
 
           itemQuantity.push(JSON.parse(item.request_response));
           itemUnit.push(`${unit}`);
-        } else if (item.request_response_field_name === "Payment Terms") {
-          paymentTerms = item.request_response;
-        } else if (item.request_response_field_name === "Lead Time") {
-          leadTime = item.request_response;
-        } else if (
-          item.request_response_field_name === "Required Down Payment"
-        ) {
-          downPayment = item.request_response;
         }
       });
 
@@ -1096,15 +1086,23 @@ const SSOTSpreadsheetView = ({
           )}
 
           {showQuotationColumnList["payment_terms"] && (
-            <td>{paymentTerms && JSON.parse(paymentTerms)}</td>
+            <td>
+              {items[0].request_response_field_name === "Payment Terms" &&
+                JSON.parse(items[0].request_response)}
+            </td>
           )}
-
           {showQuotationColumnList["lead_time"] && (
-            <td>{leadTime && JSON.parse(leadTime)}</td>
+            <td>
+              {items[1].request_response_field_name === "Lead Time" &&
+                JSON.parse(items[1].request_response)}
+            </td>
           )}
-
-          {showQuotationColumnList["down_payment"] && (
-            <td>{downPayment && JSON.parse(downPayment)}</td>
+          {showQuotationColumnList["required_down_payment"] && (
+            <td>
+              {items[2].request_response_field_name ===
+                "Required Down Payment" &&
+                JSON.parse(items[2].request_response)}
+            </td>
           )}
 
           {showQuotationColumnList["item"] && (
@@ -1566,13 +1564,13 @@ const SSOTSpreadsheetView = ({
                         <th className={classes.normal}>Proof of Sending</th>
                       )}
                       {showQuotationColumnList["payment_terms"] && (
-                        <th className={classes.normal}>Payment Terms</th>
+                        <th className={classes.long}>Payment Terms</th>
                       )}
                       {showQuotationColumnList["lead_time"] && (
                         <th className={classes.normal}>Lead Time</th>
                       )}
                       {showQuotationColumnList["required_down_payment"] && (
-                        <th className={classes.normal}>Down Payment</th>
+                        <th className={classes.long}>Required Down Payment</th>
                       )}
                       {showQuotationColumnList["item"] && (
                         <th className={classes.description}>Item</th>
