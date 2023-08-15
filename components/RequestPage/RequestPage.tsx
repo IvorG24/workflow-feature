@@ -120,7 +120,11 @@ const RequestPage = ({
       const signer = isUserSigner;
       const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
 
-      if (request.request_form.form_is_formsly_form && status === "APPROVED") {
+      if (
+        request.request_form.form_is_formsly_form &&
+        status === "APPROVED" &&
+        request.request_status === "PENDING"
+      ) {
         if (request.request_form.form_name === "Quotation") {
           const requisitionID =
             request.request_form.form_section[0].section_field[0]
@@ -521,7 +525,7 @@ const RequestPage = ({
 
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
-        (isUserSigner && requestStatus === "PENDING") ? (
+        (isUserSigner && isUserSigner.request_signer_status === "PENDING") ? (
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}

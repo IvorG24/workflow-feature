@@ -1,11 +1,17 @@
 import { getAvatarColor } from "@/utils/styling";
-import { RequestListItemType } from "@/utils/types";
+import { ReceiverStatusType, RequestListItemType } from "@/utils/types";
 import { Avatar, Tooltip, createStyles } from "@mantine/core";
-import { capitalize } from "lodash";
+import { capitalize, toUpper } from "lodash";
 
 const useStyles = createStyles(() => ({
-  primarySigner: {
+  PENDING: {
     border: "solid 2px #4DABF7",
+  },
+  APPROVED: {
+    border: "solid 2px #69DB7C",
+  },
+  REJECTED: {
+    border: "solid 2px #FF8787",
   },
 }));
 
@@ -39,8 +45,12 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
                   )}
                   src={user.user_avatar}
                   className={
-                    signer.request_signer.signer_is_primary_signer
-                      ? classes.primarySigner
+                    signer.request_signer_status
+                      ? classes[
+                          toUpper(
+                            signer.request_signer_status
+                          ) as ReceiverStatusType
+                        ]
                       : ""
                   }
                 >{`${capitalize(user.user_first_name[0])}${capitalize(

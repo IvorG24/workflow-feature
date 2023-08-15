@@ -32,6 +32,9 @@ type RequestFormSectionProps = {
     onQuantityChange: (index: number, value: number) => void;
   };
   formslyFormName?: string;
+  sourcedItemFormMethods?: {
+    onProjectSiteChange: () => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -42,6 +45,7 @@ const RequestFormSection = ({
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
+  sourcedItemFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -80,6 +84,7 @@ const RequestFormSection = ({
             quotationFormMethods={quotationFormMethods}
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
+            sourcedItemFormMethods={sourcedItemFormMethods}
           />
         ))}
       </Stack>

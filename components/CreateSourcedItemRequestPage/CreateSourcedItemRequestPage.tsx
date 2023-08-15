@@ -1,10 +1,14 @@
-import { checkRequisitionQuantity } from "@/backend/api/get";
+import {
+  checkRequisitionQuantity,
+  getMultipleProjectSignerWithTeamMember,
+} from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { areEqual } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
 import {
   FormType,
@@ -17,6 +21,7 @@ import {
   Button,
   Container,
   List,
+  LoadingOverlay,
   Space,
   Stack,
   Title,
@@ -24,8 +29,9 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { toUpper } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -57,10 +63,19 @@ const CreateSourcedItemRequestPage = ({
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
-
   const requestorProfile = useUserProfile();
-
   const { setIsLoading } = useLoadingActions();
+
+  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [previousProjectSite, setPreviousProjetcSite] = useState<string[]>([]);
+
+  const initialSignerList = form.form_signer.map((signer) => ({
+    ...signer,
+    signer_action: signer.signer_action.toUpperCase(),
+  }));
+
+  const [signerList, setSignerList] =
+    useState<FormType["form_signer"]>(initialSignerList);
 
   const formDetails = {
     form_name: form.form_name,
@@ -68,10 +83,6 @@ const CreateSourcedItemRequestPage = ({
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  const signerList = form.form_signer.map((signer) => ({
-    ...signer,
-    signer_action: signer.signer_action.toUpperCase(),
-  }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, setValue, control, getValues } = requestFormMethods;
@@ -225,7 +236,7 @@ const CreateSourcedItemRequestPage = ({
           },
           formId,
           teamMemberId: teamMember.team_member_id,
-          signers: form.form_signer,
+          signers: signerList,
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
@@ -292,7 +303,71 @@ const CreateSourcedItemRequestPage = ({
 
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
+    }
+    handleProjectSiteChange();
+  };
+
+  const handleProjectSiteChange = async () => {
+    const sectionList = getValues(`sections`);
+    const itemSectionList = sectionList.slice(1);
+
+    const currentProjectSiteList = [
+      ...new Set(
+        itemSectionList.map(
+          (section) => section.section_field[2].field_response
+        )
+      ),
+    ].filter((project) => project !== null);
+    const previousProjectSiteList = [...new Set(previousProjectSite)].filter(
+      (project) => project !== null
+    );
+
+    if (
+      areEqual(
+        currentProjectSiteList as string[],
+        previousProjectSiteList as string[]
+      )
+    )
       return;
+
+    setIsFetchingSigner(true);
+    const newSignerList = currentProjectSiteList as string[];
+    setPreviousProjetcSite(newSignerList);
+    const data = await getMultipleProjectSignerWithTeamMember(supabaseClient, {
+      formId: form.form_id,
+      projectName: newSignerList,
+    });
+    const formattedData = data as unknown as FormType["form_signer"];
+
+    const teamMemberIdList = [
+      ...initialSignerList.map(
+        (signer) => signer.signer_team_member.team_member_id
+      ),
+    ];
+    const finalSigners = [...initialSignerList];
+
+    formattedData.forEach((signer) => {
+      if (
+        !teamMemberIdList.includes(signer.signer_team_member.team_member_id)
+      ) {
+        teamMemberIdList.push(signer.signer_team_member.team_member_id);
+        finalSigners.push({
+          ...signer,
+          signer_is_primary_signer: false,
+          signer_action: toUpper(signer.signer_action),
+        } as FormType["form_signer"][0]);
+      }
+    });
+    setSignerList(finalSigners);
+
+    try {
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingSigner(false);
     }
   };
 
@@ -323,6 +398,9 @@ const CreateSourcedItemRequestPage = ({
                     sectionIndex={idx}
                     formslyFormName="Sourced Item"
                     onRemoveSection={handleRemoveSection}
+                    sourcedItemFormMethods={{
+                      onProjectSiteChange: handleProjectSiteChange,
+                    }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -340,8 +418,13 @@ const CreateSourcedItemRequestPage = ({
                 </Box>
               );
             })}
-            <RequestFormSigner signerList={signerList} />
-            <Button type="submit">Submit</Button>
+            <Box pos="relative">
+              <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
+              <RequestFormSigner signerList={signerList} />
+            </Box>
+            <Button type="submit" disabled={isFetchingSigner}>
+              Submit
+            </Button>
           </Stack>
         </form>
       </FormProvider>
