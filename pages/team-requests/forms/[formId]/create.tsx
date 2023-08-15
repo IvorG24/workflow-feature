@@ -53,7 +53,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         });
         requestProjectId = `${request.request_project_id}`;
       }
-
       if (form.form_is_formsly_form) {
         // Requisition Form
         if (form.form_name === "Requisition") {
@@ -112,6 +111,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               },
               itemOptions,
               projectOptions,
+            },
+          };
+        } else if (form.form_name === "Audit") {
+          return {
+            props: {
+              form,
             },
           };
         }
@@ -362,10 +367,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           };
         }
         // Cheque Reference or Audit
-        else if (
-          form.form_name === "Cheque Reference" ||
-          form.form_name === "Audit"
-        ) {
+        else if (form.form_name === "Cheque Reference") {
           return {
             props: {
               form: {
@@ -510,14 +512,7 @@ const Page = ({
           />
         );
       case "Audit":
-        return (
-          <CreateRequestPage
-            form={form}
-            formslyFormName="Audit"
-            requestProjectId={requestProjectId}
-            requestingProject={requestingProject}
-          />
-        );
+        return <CreateRequestPage form={form} formslyFormName="Audit" />;
       case "Withdrawal Slip":
         return (
           <CreateWithdrawalRequestPage
@@ -536,9 +531,7 @@ const Page = ({
         url="/team-requests/forms/[formId]/create"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? (
-        <CreateRequestPage form={form} requestingProject={requestingProject} />
-      ) : null}
+      {!form.form_is_formsly_form ? <CreateRequestPage form={form} /> : null}
     </>
   );
 };

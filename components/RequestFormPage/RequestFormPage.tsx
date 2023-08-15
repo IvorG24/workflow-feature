@@ -380,7 +380,7 @@ const RequestFormPage = ({
           ) : null}
         </Paper>
 
-        {isFormslyForm && (
+        {isFormslyForm && form.form_name !== "Audit" && (
           <>
             <Paper p="xl" shadow="xs">
               <Title order={3}>Signer Per Project</Title>
