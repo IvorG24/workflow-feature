@@ -506,7 +506,7 @@ const RequestPage = ({
         request.request_form.form_is_formsly_form ? (
           <ReleaseOrderSummary
             summaryData={sectionWithDuplicateList
-              .slice(1)
+              .slice(2)
               .sort((a, b) =>
                 `${a.section_field[0].field_response?.request_response}` >
                 `${b.section_field[0].field_response?.request_response}`
