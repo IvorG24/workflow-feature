@@ -5,8 +5,8 @@ import { regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
+  CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
-  CanvassQuotationIdType,
   CanvassType,
   ConnectedRequestItemType,
   FormStatusType,
@@ -2054,7 +2054,7 @@ export const getCanvassData = async (
   ];
 
   const summaryData: CanvassLowestPriceType = {};
-  const quotationIds: CanvassQuotationIdType = {};
+  let summaryAdditionalDetails: CanvassAdditionalDetailsType = [];
   const quotationRequestList = await Promise.all(
     canvassRequest.map(async ({ request_id, request_formsly_id }) => {
       const { data: quotationResponseList, error: quotationResponseListError } =
@@ -2068,11 +2068,18 @@ export const getCanvassData = async (
             "Item",
             "Price per Unit",
             "Quantity",
+            "Lead Time",
+            "Payment Terms",
             ...additionalChargeFields,
           ]);
       if (quotationResponseListError) throw quotationResponseListError;
       summaryData[request_formsly_id] = 0;
-      quotationIds[request_formsly_id] = request_id;
+      summaryAdditionalDetails.push({
+        quotation_id: request_id,
+        formsly_id: request_formsly_id,
+        lead_time: 0,
+        payment_terms: "",
+      });
       return quotationResponseList;
     })
   );
@@ -2119,6 +2126,23 @@ export const getCanvassData = async (
         }
         summaryData[response.request_response_request.request_formsly_id] +=
           price;
+      } else if (
+        response.request_response_field.field_name === "Payment Terms"
+      ) {
+        summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
+          if (request.quotation_id === response.request_response_request_id)
+            return {
+              ...request,
+              payment_terms: JSON.parse(response.request_response) as string,
+            };
+          else return request;
+        });
+      } else if (response.request_response_field.field_name === "Lead Time") {
+        summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
+          if (request.quotation_id === response.request_response_request_id)
+            return { ...request, lead_time: Number(response.request_response) };
+          else return request;
+        });
       } else if (response.request_response_field.field_name === "Quantity") {
         canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
           Number(response.request_response);
@@ -2151,9 +2175,9 @@ export const getCanvassData = async (
   )?.request_id;
   return {
     canvassData,
-    quotationIds,
     lowestPricePerItem,
     summaryData,
+    summaryAdditionalDetails,
     lowestQuotation: {
       id: recommendedQuotationId,
       request_id: request_id,

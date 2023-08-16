@@ -3,8 +3,8 @@ import Meta from "@/components/Meta/Meta";
 import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
+  CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
-  CanvassQuotationIdType,
   CanvassType,
 } from "@/utils/types";
 import { isEmpty } from "lodash";
@@ -17,7 +17,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         canvassData,
         lowestPricePerItem,
         summaryData,
-        quotationIds,
+        summaryAdditionalDetails,
         lowestQuotation,
         requestAdditionalCharge,
         lowestAdditionalCharge,
@@ -38,7 +38,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           canvassData,
           lowestPricePerItem,
           summaryData,
-          quotationIds,
+          summaryAdditionalDetails,
           lowestQuotation,
           requestAdditionalCharge,
           lowestAdditionalCharge,
@@ -60,7 +60,7 @@ type Props = {
   canvassData: CanvassType;
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
-  quotationIds: CanvassQuotationIdType;
+  summaryAdditionalDetails: CanvassAdditionalDetailsType;
   lowestQuotation: { id: string; request_id: string; value: number };
   requestAdditionalCharge: CanvassLowestPriceType;
   lowestAdditionalCharge: number;
@@ -70,7 +70,7 @@ const Page = ({
   canvassData,
   lowestPricePerItem,
   summaryData,
-  quotationIds,
+  summaryAdditionalDetails,
   lowestQuotation,
   requestAdditionalCharge,
   lowestAdditionalCharge,
@@ -85,7 +85,7 @@ const Page = ({
         canvassData={canvassData}
         lowestPricePerItem={lowestPricePerItem}
         summaryData={summaryData}
-        quotationIds={quotationIds}
+        summaryAdditionalDetails={summaryAdditionalDetails}
         lowestQuotation={lowestQuotation}
         requestAdditionalCharge={requestAdditionalCharge}
         lowestAdditionalCharge={lowestAdditionalCharge}

@@ -706,7 +706,12 @@ export type CanvassType = Record<
   }[]
 >;
 export type CanvassLowestPriceType = Record<string, number>;
-export type CanvassQuotationIdType = Record<string, string>;
+export type CanvassAdditionalDetailsType = {
+  quotation_id: string;
+  formsly_id: string;
+  lead_time: number;
+  payment_terms: string;
+}[];
 
 export type RequestListItemType = {
   request_id: string;
