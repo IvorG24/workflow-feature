@@ -6,6 +6,7 @@ import {
   AppType,
   AttachmentBucketType,
   CanvassLowestPriceType,
+  CanvassQuotationIdType,
   CanvassType,
   ConnectedRequestItemType,
   FormStatusType,
@@ -2053,6 +2054,7 @@ export const getCanvassData = async (
   ];
 
   const summaryData: CanvassLowestPriceType = {};
+  const quotationIds: CanvassQuotationIdType = {};
   const quotationRequestList = await Promise.all(
     canvassRequest.map(async ({ request_id, request_formsly_id }) => {
       const { data: quotationResponseList, error: quotationResponseListError } =
@@ -2070,6 +2072,7 @@ export const getCanvassData = async (
           ]);
       if (quotationResponseListError) throw quotationResponseListError;
       summaryData[request_formsly_id] = 0;
+      quotationIds[request_formsly_id] = request_id;
       return quotationResponseList;
     })
   );
@@ -2148,6 +2151,7 @@ export const getCanvassData = async (
   )?.request_id;
   return {
     canvassData,
+    quotationIds,
     lowestPricePerItem,
     summaryData,
     lowestQuotation: {

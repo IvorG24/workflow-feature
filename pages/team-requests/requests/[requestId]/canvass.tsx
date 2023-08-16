@@ -2,7 +2,11 @@ import { getCanvassData } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { CanvassLowestPriceType, CanvassType } from "@/utils/types";
+import {
+  CanvassLowestPriceType,
+  CanvassQuotationIdType,
+  CanvassType,
+} from "@/utils/types";
 import { isEmpty } from "lodash";
 import { GetServerSideProps } from "next";
 
@@ -13,6 +17,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         canvassData,
         lowestPricePerItem,
         summaryData,
+        quotationIds,
         lowestQuotation,
         requestAdditionalCharge,
         lowestAdditionalCharge,
@@ -33,6 +38,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           canvassData,
           lowestPricePerItem,
           summaryData,
+          quotationIds,
           lowestQuotation,
           requestAdditionalCharge,
           lowestAdditionalCharge,
@@ -54,6 +60,7 @@ type Props = {
   canvassData: CanvassType;
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
+  quotationIds: CanvassQuotationIdType;
   lowestQuotation: { id: string; request_id: string; value: number };
   requestAdditionalCharge: CanvassLowestPriceType;
   lowestAdditionalCharge: number;
@@ -63,6 +70,7 @@ const Page = ({
   canvassData,
   lowestPricePerItem,
   summaryData,
+  quotationIds,
   lowestQuotation,
   requestAdditionalCharge,
   lowestAdditionalCharge,
@@ -77,6 +85,7 @@ const Page = ({
         canvassData={canvassData}
         lowestPricePerItem={lowestPricePerItem}
         summaryData={summaryData}
+        quotationIds={quotationIds}
         lowestQuotation={lowestQuotation}
         requestAdditionalCharge={requestAdditionalCharge}
         lowestAdditionalCharge={lowestAdditionalCharge}

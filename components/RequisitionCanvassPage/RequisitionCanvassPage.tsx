@@ -1,5 +1,9 @@
 import { addCommaToNumber, requestPath } from "@/utils/string";
-import { CanvassLowestPriceType, CanvassType } from "@/utils/types";
+import {
+  CanvassLowestPriceType,
+  CanvassQuotationIdType,
+  CanvassType,
+} from "@/utils/types";
 import {
   ActionIcon,
   Alert,
@@ -32,6 +36,7 @@ type Props = {
   canvassData: CanvassType;
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
+  quotationIds: CanvassQuotationIdType;
   lowestQuotation: { id: string; request_id: string; value: number };
   requestAdditionalCharge: CanvassLowestPriceType;
   lowestAdditionalCharge: number;
@@ -41,6 +46,7 @@ const RequisitionCanvassPage = ({
   canvassData,
   lowestPricePerItem,
   summaryData,
+  quotationIds,
   lowestQuotation,
   requestAdditionalCharge,
   lowestAdditionalCharge,
@@ -107,6 +113,8 @@ const RequisitionCanvassPage = ({
           </thead>
           <tbody>
             {Object.keys(summaryData).map((quotationID) => {
+              const idIndex = Object.keys(quotationIds).indexOf(quotationID);
+
               return (
                 <tr key={quotationID}>
                   <td>{quotationID}</td>
@@ -119,7 +127,10 @@ const RequisitionCanvassPage = ({
                         variant="light"
                         color="blue"
                         onClick={() =>
-                          window.open(requestPath(quotationID), "_blank")
+                          window.open(
+                            requestPath(Object.values(quotationIds)[idIndex]),
+                            "_blank"
+                          )
                         }
                       >
                         <IconExternalLink />
