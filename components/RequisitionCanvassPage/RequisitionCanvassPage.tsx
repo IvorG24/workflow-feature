@@ -1,5 +1,9 @@
 import { addCommaToNumber, requestPath } from "@/utils/string";
-import { CanvassLowestPriceType, CanvassType } from "@/utils/types";
+import {
+  CanvassAdditionalDetailsType,
+  CanvassLowestPriceType,
+  CanvassType,
+} from "@/utils/types";
 import {
   ActionIcon,
   Alert,
@@ -32,6 +36,7 @@ type Props = {
   canvassData: CanvassType;
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
+  summaryAdditionalDetails: CanvassAdditionalDetailsType;
   lowestQuotation: { id: string; request_id: string; value: number };
   requestAdditionalCharge: CanvassLowestPriceType;
   lowestAdditionalCharge: number;
@@ -41,13 +46,13 @@ const RequisitionCanvassPage = ({
   canvassData,
   lowestPricePerItem,
   summaryData,
+  summaryAdditionalDetails,
   lowestQuotation,
   requestAdditionalCharge,
   lowestAdditionalCharge,
 }: Props) => {
   const router = useRouter();
   const { classes } = useStyles();
-
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -101,15 +106,22 @@ const RequisitionCanvassPage = ({
           <thead>
             <tr>
               <th>Quotation ID</th>
+              <th>Payment Terms</th>
+              <th>Lead Time</th>
               <th>Total Price</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {Object.keys(summaryData).map((quotationID) => {
+              const quotation = summaryAdditionalDetails.find(
+                (quotation) => quotation.formsly_id === quotationID
+              );
               return (
                 <tr key={quotationID}>
                   <td>{quotationID}</td>
+                  <td>{quotation?.payment_terms}</td>
+                  <td>{quotation?.lead_time}</td>
                   <td>₱{addCommaToNumber(summaryData[quotationID])}</td>
                   <td>
                     <Center>
@@ -119,7 +131,10 @@ const RequisitionCanvassPage = ({
                         variant="light"
                         color="blue"
                         onClick={() =>
-                          window.open(requestPath(quotationID), "_blank")
+                          window.open(
+                            requestPath(`${quotation?.quotation_id}`),
+                            "_blank"
+                          )
                         }
                       >
                         <IconExternalLink />
