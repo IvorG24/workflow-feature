@@ -337,14 +337,20 @@ const CreateSourcedItemRequestPage = ({
       formId: form.form_id,
       projectName: newSignerList,
     });
+    const formattedData = data as unknown as FormType["form_signer"];
 
-    const signerIdList = [
-      ...initialSignerList.map((signer) => signer.signer_id),
+    const teamMemberIdList = [
+      ...initialSignerList.map(
+        (signer) => signer.signer_team_member.team_member_id
+      ),
     ];
     const finalSigners = [...initialSignerList];
 
-    data.forEach((signer) => {
-      if (!signerIdList.includes(signer.signer_id)) {
+    formattedData.forEach((signer) => {
+      if (
+        !teamMemberIdList.includes(signer.signer_team_member.team_member_id)
+      ) {
+        teamMemberIdList.push(signer.signer_team_member.team_member_id);
         finalSigners.push({
           ...signer,
           signer_is_primary_signer: false,
