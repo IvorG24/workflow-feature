@@ -1,12 +1,68 @@
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { addCommaToNumber, regExp } from "@/utils/string";
-import { DuplicateSectionType } from "@/utils/types";
-import { Paper, ScrollArea, Table, Title } from "@mantine/core";
+import {
+  DuplicateSectionType,
+  ReceiverStatusType,
+  RequestProjectSignerStatusType,
+} from "@/utils/types";
+import {
+  Indicator,
+  Paper,
+  ScrollArea,
+  Table,
+  Text,
+  ThemeIcon,
+  Title,
+  Tooltip,
+  useMantineTheme,
+} from "@mantine/core";
+import {
+  IconCircleCheck,
+  IconCircleDashed,
+  IconCircleX,
+} from "@tabler/icons-react";
 
 type Props = {
   summaryData: DuplicateSectionType[];
+  projectSignerStatus?: RequestProjectSignerStatusType;
 };
 
-const SourcedItemSummary = ({ summaryData }: Props) => {
+const SourcedItemSummary = ({ summaryData, projectSignerStatus }: Props) => {
+  const teamMember = useUserTeamMember();
+  const { colors, colorScheme } = useMantineTheme();
+  const userProjectList = projectSignerStatus?.filter(
+    (project) => project.signer_team_member_id === teamMember?.team_member_id
+  );
+
+  const signerStatusIcon = (status: ReceiverStatusType) => {
+    switch (status) {
+      case "APPROVED":
+        return (
+          <Tooltip label="Approved">
+            <ThemeIcon color="green" size="xs" radius="xl">
+              <IconCircleCheck />
+            </ThemeIcon>
+          </Tooltip>
+        );
+      case "PENDING":
+        return (
+          <Tooltip label="Pending">
+            <ThemeIcon color="blue" size="xs" radius="xl">
+              <IconCircleDashed />
+            </ThemeIcon>
+          </Tooltip>
+        );
+      case "REJECTED":
+        return (
+          <Tooltip label="Rejected">
+            <ThemeIcon color="red" size="xs" radius="xl">
+              <IconCircleX />
+            </ThemeIcon>
+          </Tooltip>
+        );
+    }
+  };
+
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -61,9 +117,45 @@ const SourcedItemSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[2].field_response?.request_response}`
               );
 
+              let isUserInProject = false;
+              if (userProjectList) {
+                isUserInProject =
+                  userProjectList.filter(
+                    (project) => project.signer_project_name === sourceProject
+                  ).length > 0;
+              }
+
+              const projectStatus =
+                projectSignerStatus?.find(
+                  (signer) => signer?.signer_project_name === sourceProject
+                )?.signer_status || "PENDING";
+
+              let rowColor = "transparent";
+              const isDarkTheme = colorScheme === "dark";
+
+              if (isUserInProject)
+                rowColor = isDarkTheme
+                  ? `${colors.yellow[5]}88`
+                  : colors.yellow[0];
+
               return (
-                <tr key={index}>
-                  <td>{JSON.parse(item)}</td>
+                <tr
+                  key={index}
+                  style={{
+                    backgroundColor: rowColor,
+                  }}
+                >
+                  <td>
+                    <Indicator
+                      position="middle-start"
+                      label={signerStatusIcon(projectStatus)}
+                      size={25}
+                      color="transparent"
+                      offset={10}
+                    >
+                      <Text pl={32}>{JSON.parse(item)}</Text>
+                    </Indicator>
+                  </td>
                   <td>{addCommaToNumber(parsedQuantity)}</td>
                   <td>{unit}</td>
                   <td>{sourceProject}</td>

@@ -12,6 +12,7 @@ import {
   ConnectedRequestIdList,
   FormStatusType,
   ReceiverStatusType,
+  RequestProjectSignerStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -53,6 +54,7 @@ type Props = {
     formName: string;
   };
   connectedRequestIDList?: ConnectedRequestIdList;
+  projectSignerStatus?: RequestProjectSignerStatusType;
 };
 
 const RequestPage = ({
@@ -60,6 +62,7 @@ const RequestPage = ({
   isFormslyForm = false,
   connectedFormIdAndGroup,
   connectedRequestIDList,
+  projectSignerStatus,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
@@ -486,6 +489,7 @@ const RequestPage = ({
                   ? -1
                   : 0
               )}
+            projectSignerStatus={projectSignerStatus}
           />
         ) : null}
 
