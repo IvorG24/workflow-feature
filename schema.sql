@@ -2678,6 +2678,18 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 
 -------- End: INDEXES
 
+-------- Start: SUBSCRIPTION
+
+DROP PUBLICATION if exists supabase_realtime;
+
+CREATE PUBLICATION supabase_realtime;
+COMMIT;
+
+ALTER
+  PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table;
+
+-------- END: SUBSCRIPTION
+
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
 
