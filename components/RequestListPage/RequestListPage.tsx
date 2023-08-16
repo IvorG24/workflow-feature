@@ -149,6 +149,112 @@ const RequestListPage = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleRequestListInsert = async (data: { [key: string]: any }) => {
+    const formId = data.request_form_id;
+    const requestorId = data.request_team_member_id;
+    const requestId = data.request_id;
+
+    const { data: request_team_member, error: getTeamMemberError } =
+      await supabaseClient
+        .from("team_member_table")
+        .select(
+          "team_member_team_id, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar)"
+        )
+        .eq("team_member_id", requestorId)
+        .single();
+
+    const { data: request_form, error: getFormError } = await supabaseClient
+      .from("form_table")
+      .select("form_id, form_name, form_description")
+      .eq("form_id", formId)
+      .single();
+
+    const { data: request_signer, error: getSignerError } = await supabaseClient
+      .from("request_signer_table")
+      .select(
+        "request_signer_id, request_signer_status, request_signer: request_signer_signer_id!inner(signer_is_primary_signer, signer_team_member: signer_team_member_id!inner(team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar)))"
+      )
+      .eq("request_signer_request_id", requestId);
+
+    const newRequest = {
+      request_id: requestId,
+      request_formsly_id: data.request_formsly_id,
+      request_date_created: data.request_date_created,
+      request_status: data.request_status,
+      request_team_member,
+      request_form,
+      request_signer,
+    };
+    if (
+      [getTeamMemberError, getFormError, getSignerError].every(
+        (error) => !error
+      )
+    ) {
+      return newRequest;
+    }
+  };
+
+  supabaseClient
+    .channel("schema-db-changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "request_table" },
+      async (payload) => {
+        if (payload.eventType === "INSERT") {
+          handleRequestListInsert(payload.new);
+        }
+        if (payload.eventType === "UPDATE") {
+          setRequestList((prev) =>
+            prev.map((request) => {
+              if (request.request_id === payload.old.request_id) {
+                return {
+                  ...request,
+                  request_status: payload.new.request_status,
+                };
+              }
+              return request;
+            })
+          );
+        }
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "request_signer_table" },
+      async (payload) => {
+        if (payload) {
+          setRequestList((prev) =>
+            prev.map((request) => {
+              if (
+                request.request_id === payload.new.request_signer_request_id
+              ) {
+                const updatedSigner = request.request_signer.map((signer) => {
+                  if (
+                    signer.request_signer_id === payload.new.request_signer_id
+                  ) {
+                    return {
+                      ...signer,
+                      request_signer_status: payload.new.request_signer_status,
+                    };
+                  }
+
+                  return signer;
+                });
+
+                return {
+                  ...request,
+                  request_signer: updatedSigner,
+                };
+              }
+              return request;
+            })
+          );
+        }
+      }
+    )
+    .subscribe();
+
   useEffect(() => {
     handlePagination();
   }, [activePage]);
