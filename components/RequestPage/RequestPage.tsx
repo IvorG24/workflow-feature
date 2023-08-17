@@ -12,6 +12,7 @@ import {
   ConnectedRequestIdList,
   FormStatusType,
   ReceiverStatusType,
+  RequestProjectSignerStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -53,6 +54,7 @@ type Props = {
     formName: string;
   };
   connectedRequestIDList?: ConnectedRequestIdList;
+  projectSignerStatus?: RequestProjectSignerStatusType;
 };
 
 const RequestPage = ({
@@ -60,6 +62,7 @@ const RequestPage = ({
   isFormslyForm = false,
   connectedFormIdAndGroup,
   connectedRequestIDList,
+  projectSignerStatus: initialProjectSignerStatus,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
@@ -79,6 +82,9 @@ const RequestPage = ({
           signer.request_signer_status as ReceiverStatusType,
       };
     })
+  );
+  const [projectSignerStatus, setProjectSignerStatus] = useState(
+    initialProjectSignerStatus || []
   );
 
   const requestor = request.request_team_member.team_member_user;
@@ -314,6 +320,22 @@ const RequestPage = ({
         })
       );
 
+      if (
+        request.request_form.form_name === "Sourced Item" &&
+        request.request_form.form_is_formsly_form
+      ) {
+        setProjectSignerStatus((signers) => {
+          return signers.map((signer) => {
+            if (signer.signer_team_member_id === teamMember.team_member_id) {
+              return {
+                ...signer,
+                signer_status: status,
+              };
+            } else return signer;
+          });
+        });
+      }
+
       notifications.show({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
@@ -486,6 +508,7 @@ const RequestPage = ({
                   ? -1
                   : 0
               )}
+            projectSignerStatus={projectSignerStatus}
           />
         ) : null}
 

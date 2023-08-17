@@ -713,6 +713,30 @@ export type CanvassAdditionalDetailsType = {
   payment_terms: string;
 }[];
 
+export type RequestProjectSignerStatusType = {
+  signer_project_name: string;
+  signer_status: ReceiverStatusType;
+  signer_team_member_id: string;
+}[];
+
+export type RequestProjectSignerType = {
+  request_signer_id: string;
+  request_signer_status: string;
+  request_signer_request_id: string;
+  request_signer_signer_id: string;
+  request_signer: {
+    signer_id: string;
+    signer_is_primary_signer: boolean;
+    signer_action: string;
+    signer_order: number;
+    signer_is_disabled: boolean;
+    signer_form_id: string;
+    signer_team_member_id: string;
+    signer_team_project_id: string;
+    signer_team_project: { team_project_name: string };
+  };
+}[];
+
 export type RequestListItemType = {
   request_id: string;
   request_formsly_id: string;
