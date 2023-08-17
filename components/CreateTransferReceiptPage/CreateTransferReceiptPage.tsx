@@ -1,3 +1,4 @@
+import { checkTransferReceiptItemQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -43,13 +44,15 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  sourceProjectList: Record<string, string>;
   requestProjectId: string;
   requestingProject: string;
 };
 
-const CreateWithdrawalRequestPage = ({
+const CreateTransferReceiptPage = ({
   form,
   itemOptions,
+  sourceProjectList,
   requestProjectId,
   requestingProject,
 }: Props) => {
@@ -57,11 +60,13 @@ const CreateWithdrawalRequestPage = ({
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+
   const requestorProfile = useUserProfile();
-  const { setIsLoading } = useLoadingActions();
 
   const [availableItems, setAvailableItems] =
     useState<OptionTableRow[]>(itemOptions);
+
+  const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
     form_name: form.form_name,
@@ -89,27 +94,30 @@ const CreateWithdrawalRequestPage = ({
 
   useEffect(() => {
     replaceSection(form.form_section);
-
-    const newFields = form.form_section[1].section_field.map((field) => {
-      if (field.field_name === "Item") {
-        return {
-          ...field,
-          field_option: itemOptions,
-        };
-      } else {
-        return field;
-      }
+    const newFields = form.form_section[2].section_field.map((field) => {
+      return {
+        ...field,
+        field_option: itemOptions,
+      };
     });
     replaceSection([
-      form.form_section[0],
+      ...form.form_section.slice(0, 2),
       {
-        ...form.form_section[1],
+        ...form.form_section[2],
         section_field: newFields,
       },
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
       router.query.requisitionId
+    );
+    setValue(
+      `sections.${0}.section_field.${1}.field_response`,
+      router.query.sourcedItemId
+    );
+    setValue(
+      `sections.${0}.section_field.${2}.field_response`,
+      router.query.releaseOrderId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -118,26 +126,63 @@ const CreateWithdrawalRequestPage = ({
       if (!requestorProfile) return;
       if (!teamMember) return;
       setIsLoading(true);
-
-      const warningItemList: string[] = [];
-
-      const itemSection = data.sections.slice(1);
-      itemSection.forEach((item) => {
-        const matches = regExp.exec(`${item.section_field[0].field_response}`);
-        const quantityMatch = matches && matches[1].match(/(\d+)/);
-        const quantity = quantityMatch && quantityMatch[0];
-
-        const difference =
-          Number(quantity) - Number(item.section_field[1].field_response);
-
-        if (difference < 0) {
-          warningItemList.push(
-            `${
-              item.section_field[0].field_response
-            } exceeds quantity limit by ${Math.abs(difference)}`
-          );
+      let isValid = true;
+      for (const section of data.sections.slice(2)) {
+        if (section.section_field[2].field_response === "Invalid") {
+          isValid = false;
+          break;
         }
+      }
+      if (!isValid) {
+        setIsLoading(false);
+        notifications.show({
+          message: "There are invalid quantities.",
+          color: "orange",
+        });
+        return;
+      }
+
+      const releaseOrderItemId = JSON.stringify(
+        data.sections[0].section_field[2].field_response
+      );
+      const itemSection = data.sections[2];
+      const tempRequestId = uuidv4();
+
+      const itemFieldList: RequestResponseTableRow[] = [];
+      const quantityFieldList: RequestResponseTableRow[] = [];
+
+      data.sections.slice(2).forEach((section) => {
+        section.section_field.forEach((field) => {
+          if (field.field_name === "Item") {
+            itemFieldList.push({
+              request_response_id: uuidv4(),
+              request_response: JSON.stringify(field.field_response),
+              request_response_duplicatable_section_id: null,
+              request_response_field_id: field.field_id,
+              request_response_request_id: tempRequestId,
+            });
+          } else if (field.field_name === "Quantity") {
+            quantityFieldList.push({
+              request_response_id: uuidv4(),
+              request_response: JSON.stringify(field.field_response),
+              request_response_duplicatable_section_id: null,
+              request_response_field_id: field.field_id,
+              request_response_request_id: tempRequestId,
+            });
+          }
+        });
       });
+
+      const warningItemList = await checkTransferReceiptItemQuantity(
+        supabaseClient,
+        {
+          releaseOrderItemId,
+          itemFieldId: itemSection.section_field[0].field_id,
+          quantityFieldId: itemSection.section_field[1].field_id,
+          itemFieldList,
+          quantityFieldList,
+        }
+      );
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
@@ -147,7 +192,7 @@ const CreateWithdrawalRequestPage = ({
             <Box maw={390}>
               <Title order={5}>
                 There are items that will exceed the quantity limit of the
-                Requisition
+                Release Order
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -192,7 +237,7 @@ const CreateWithdrawalRequestPage = ({
   const handleDuplicateSection = (sectionId: string) => {
     if (
       availableItems.length === 0 ||
-      formSections.length === itemOptions.length + 1
+      formSections.length === itemOptions.length + 2
     ) {
       notifications.show({
         message: "No available item.",
@@ -250,10 +295,10 @@ const CreateWithdrawalRequestPage = ({
           });
 
           const sectionList = getValues(`sections`);
-          const itemSectionList = sectionList.slice(1);
+          const itemSectionList = sectionList.slice(2);
 
           itemSectionList.forEach((section, sectionIndex) => {
-            sectionIndex += 1;
+            sectionIndex += 2;
             if (sectionIndex !== sectionMatchIndex) {
               updateSection(sectionIndex, {
                 ...section,
@@ -286,14 +331,14 @@ const CreateWithdrawalRequestPage = ({
     prevValue: string | null
   ) => {
     const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(1);
+    const itemSectionList = sectionList.slice(2);
 
     if (value) {
       setAvailableItems((prev) =>
         prev.filter((item) => item.option_value !== value)
       );
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -309,8 +354,21 @@ const CreateWithdrawalRequestPage = ({
               ...section.section_field.slice(1),
             ],
           });
+        } else {
+          const status = checkQuantity(
+            value,
+            Number(section.section_field[1].field_response)
+          );
+          setValue(`sections.${index}.section_field.2.field_response`, status);
+          setValue(
+            `sections.${index}.section_field.3.field_response`,
+            sourceProjectList[value]
+          );
         }
       });
+    } else {
+      setValue(`sections.${index}.section_field.2.field_response`, undefined);
+      setValue(`sections.${index}.section_field.3.field_response`, "");
     }
 
     const newOption = itemOptions.find(
@@ -321,7 +379,7 @@ const CreateWithdrawalRequestPage = ({
         return [...prev, newOption];
       });
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -337,11 +395,41 @@ const CreateWithdrawalRequestPage = ({
                   return a.option_order - b.option_order;
                 }),
               },
-              ...section.section_field.slice(1),
+              ...section.section_field.slice(2),
             ],
           });
         }
       });
+    }
+  };
+
+  const handleQuantityChange = async (index: number, value: number) => {
+    const section = getValues(`sections.${index}`);
+    const status = checkQuantity(
+      `${section.section_field[0].field_response}`,
+      value
+    );
+    setValue(`sections.${index}.section_field.2.field_response`, status);
+  };
+
+  const checkQuantity = (item: string, quantity: number) => {
+    if (isNaN(quantity)) return;
+
+    const matches = regExp.exec(item);
+    if (!matches) return;
+    const quantityMatch = matches[1].match(/(\d+)/);
+    if (!quantityMatch) return;
+
+    const maximumQuantity = Number(quantityMatch[1]);
+
+    if (maximumQuantity) {
+      if (quantity <= 0 || quantity > maximumQuantity) {
+        return "Invalid";
+      } else if (quantity < maximumQuantity) {
+        return "Partially Received";
+      } else {
+        return "Fully Received";
+      }
     }
   };
 
@@ -370,11 +458,10 @@ const CreateWithdrawalRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Sourced Item"
+                    formslyFormName="Quotation"
                     onRemoveSection={handleRemoveSection}
-                    quotationFormMethods={{
-                      onItemChange: handleItemChange,
-                    }}
+                    quotationFormMethods={{ onItemChange: handleItemChange }}
+                    rirFormMethods={{ onQuantityChange: handleQuantityChange }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -401,4 +488,4 @@ const CreateWithdrawalRequestPage = ({
   );
 };
 
-export default CreateWithdrawalRequestPage;
+export default CreateTransferReceiptPage;

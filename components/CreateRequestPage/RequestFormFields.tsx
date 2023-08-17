@@ -296,8 +296,9 @@ const RequestFormFields = ({
                       prevValue === null ? null : `${prevValue}`
                     );
                   } else if (field.field_name === "Source Project") {
-                    requisitionFormMethods?.onProjectNameChange(value);
                     sourcedItemFormMethods?.onProjectSiteChange();
+                  } else if (field.field_name === "Requesting Project") {
+                    requisitionFormMethods?.onProjectNameChange(value);
                   }
                 }}
                 data={dropdownOption}

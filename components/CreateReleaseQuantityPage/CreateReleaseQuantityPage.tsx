@@ -1,4 +1,4 @@
-import { checkROItemQuantity } from "@/backend/api/get";
+import { checkWithdrawalSlipQuantity } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -6,7 +6,6 @@ import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { regExp } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -44,15 +43,13 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
-  sourceProjectList: Record<string, string>;
   requestProjectId: string;
   requestingProject: string;
 };
 
-const CreateReleaseOrderPage = ({
+const CreateReleaseQuantityPage = ({
   form,
   itemOptions,
-  sourceProjectList,
   requestProjectId,
   requestingProject,
 }: Props) => {
@@ -60,13 +57,11 @@ const CreateReleaseOrderPage = ({
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
-
   const requestorProfile = useUserProfile();
+  const { setIsLoading } = useLoadingActions();
 
   const [availableItems, setAvailableItems] =
     useState<OptionTableRow[]>(itemOptions);
-
-  const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
     form_name: form.form_name,
@@ -74,10 +69,6 @@ const CreateReleaseOrderPage = ({
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  const signerList = form.form_signer.map((signer) => ({
-    ...signer,
-    signer_action: signer.signer_action.toUpperCase(),
-  }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, setValue, control, getValues } = requestFormMethods;
@@ -94,26 +85,27 @@ const CreateReleaseOrderPage = ({
 
   useEffect(() => {
     replaceSection(form.form_section);
-    const newFields = form.form_section[1].section_field.map((field) => {
-      return {
-        ...field,
-        field_option: itemOptions,
-      };
+
+    const newFields = form.form_section[2].section_field.map((field) => {
+      if (field.field_name === "Item") {
+        return {
+          ...field,
+          field_option: itemOptions,
+        };
+      } else {
+        return field;
+      }
     });
     replaceSection([
-      form.form_section[0],
+      ...form.form_section.slice(0, 2),
       {
-        ...form.form_section[1],
+        ...form.form_section[2],
         section_field: newFields,
       },
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.requisitionId
-    );
-    setValue(
-      `sections.${0}.section_field.${1}.field_response`,
-      router.query.sourcedItemId
+      router.query.withdrawalSlipId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -122,32 +114,18 @@ const CreateReleaseOrderPage = ({
       if (!requestorProfile) return;
       if (!teamMember) return;
       setIsLoading(true);
-      let isValid = true;
-      for (const section of data.sections.slice(1)) {
-        if (section.section_field[2].field_response === "Invalid") {
-          isValid = false;
-          break;
-        }
-      }
-      if (!isValid) {
-        setIsLoading(false);
-        notifications.show({
-          message: "There are invalid quantities.",
-          color: "orange",
-        });
-        return;
-      }
 
-      const sourcedItemId = JSON.stringify(
-        data.sections[0].section_field[1].field_response
+      const withdrawalSlipId = JSON.stringify(
+        data.sections[0].section_field[0].field_response
       );
-      const itemSection = data.sections[1];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.slice(1).forEach((section) => {
+      const itemSection = data.sections.slice(2);
+
+      itemSection.forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({
@@ -169,13 +147,14 @@ const CreateReleaseOrderPage = ({
         });
       });
 
-      const warningItemList = await checkROItemQuantity(supabaseClient, {
-        sourcedItemId,
-        itemFieldId: itemSection.section_field[0].field_id,
-        quantityFieldId: itemSection.section_field[1].field_id,
-        itemFieldList,
-        quantityFieldList,
-      });
+      const warningItemList = await checkWithdrawalSlipQuantity(
+        supabaseClient,
+        {
+          withdrawalSlipId,
+          itemFieldList,
+          quantityFieldList,
+        }
+      );
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
@@ -185,7 +164,7 @@ const CreateReleaseOrderPage = ({
             <Box maw={390}>
               <Title order={5}>
                 There are items that will exceed the quantity limit of the
-                Sourced Item
+                Withdrawal Slip
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -217,7 +196,7 @@ const CreateReleaseOrderPage = ({
         });
         router.push(`/team-requests/requests/${request.request_id}`);
       }
-    } catch (e) {
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -230,7 +209,7 @@ const CreateReleaseOrderPage = ({
   const handleDuplicateSection = (sectionId: string) => {
     if (
       availableItems.length === 0 ||
-      formSections.length === itemOptions.length + 1
+      formSections.length === itemOptions.length + 2
     ) {
       notifications.show({
         message: "No available item.",
@@ -288,10 +267,10 @@ const CreateReleaseOrderPage = ({
           });
 
           const sectionList = getValues(`sections`);
-          const itemSectionList = sectionList.slice(1);
+          const itemSectionList = sectionList.slice(2);
 
           itemSectionList.forEach((section, sectionIndex) => {
-            sectionIndex += 1;
+            sectionIndex += 2;
             if (sectionIndex !== sectionMatchIndex) {
               updateSection(sectionIndex, {
                 ...section,
@@ -324,14 +303,14 @@ const CreateReleaseOrderPage = ({
     prevValue: string | null
   ) => {
     const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(1);
+    const itemSectionList = sectionList.slice(2);
 
     if (value) {
       setAvailableItems((prev) =>
         prev.filter((item) => item.option_value !== value)
       );
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -347,21 +326,8 @@ const CreateReleaseOrderPage = ({
               ...section.section_field.slice(1),
             ],
           });
-        } else {
-          const status = checkQuantity(
-            value,
-            Number(section.section_field[1].field_response)
-          );
-          setValue(`sections.${index}.section_field.2.field_response`, status);
-          setValue(
-            `sections.${index}.section_field.3.field_response`,
-            sourceProjectList[value]
-          );
         }
       });
-    } else {
-      setValue(`sections.${index}.section_field.2.field_response`, undefined);
-      setValue(`sections.${index}.section_field.3.field_response`, "");
     }
 
     const newOption = itemOptions.find(
@@ -372,7 +338,7 @@ const CreateReleaseOrderPage = ({
         return [...prev, newOption];
       });
       itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 1;
+        sectionIndex += 2;
         if (sectionIndex !== index) {
           updateSection(sectionIndex, {
             ...section,
@@ -388,41 +354,11 @@ const CreateReleaseOrderPage = ({
                   return a.option_order - b.option_order;
                 }),
               },
-              ...section.section_field.slice(2),
+              ...section.section_field.slice(1),
             ],
           });
         }
       });
-    }
-  };
-
-  const handleQuantityChange = async (index: number, value: number) => {
-    const section = getValues(`sections.${index}`);
-    const status = checkQuantity(
-      `${section.section_field[0].field_response}`,
-      value
-    );
-    setValue(`sections.${index}.section_field.2.field_response`, status);
-  };
-
-  const checkQuantity = (item: string, quantity: number) => {
-    if (isNaN(quantity)) return;
-
-    const matches = regExp.exec(item);
-    if (!matches) return;
-    const quantityMatch = matches[1].match(/(\d+)/);
-    if (!quantityMatch) return;
-
-    const maximumQuantity = Number(quantityMatch[1]);
-
-    if (maximumQuantity) {
-      if (quantity <= 0 || quantity > maximumQuantity) {
-        return "Invalid";
-      } else if (quantity < maximumQuantity) {
-        return "Partially Received";
-      } else {
-        return "Fully Received";
-      }
     }
   };
 
@@ -451,10 +387,11 @@ const CreateReleaseOrderPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Quotation"
+                    formslyFormName="Sourced Item"
                     onRemoveSection={handleRemoveSection}
-                    quotationFormMethods={{ onItemChange: handleItemChange }}
-                    rirFormMethods={{ onQuantityChange: handleQuantityChange }}
+                    quotationFormMethods={{
+                      onItemChange: handleItemChange,
+                    }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -472,7 +409,9 @@ const CreateReleaseOrderPage = ({
                 </Box>
               );
             })}
-            <RequestFormSigner signerList={signerList} />
+
+            <RequestFormSigner signerList={form.form_signer} />
+
             <Button type="submit">Submit</Button>
           </Stack>
         </form>
@@ -481,4 +420,4 @@ const CreateReleaseOrderPage = ({
   );
 };
 
-export default CreateReleaseOrderPage;
+export default CreateReleaseQuantityPage;

@@ -19,6 +19,7 @@ import {
   RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
+  RequisitionFieldsType,
   TeamMemberType,
   TeamTableRow,
 } from "@/utils/types";
@@ -1393,7 +1394,7 @@ export const getFormIDForRequsition = async (
       `
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Sourced Item, form_name.eq.Withdrawal Slip"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Sourced Item"
     )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
@@ -1548,8 +1549,9 @@ export const getFormslyForwardLinkFormId = async (
     Quotation: [] as ConnectedRequestItemType[],
     "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
     "Release Order": [] as ConnectedRequestItemType[],
+    "Transfer Receipt": [] as ConnectedRequestItemType[],
     "Cheque Reference": [] as ConnectedRequestItemType[],
-    "Withdrawal Slip": [] as ConnectedRequestItemType[],
+    "Release Quantity": [] as ConnectedRequestItemType[],
   };
 
   formattedData.forEach((request) => {
@@ -1573,11 +1575,14 @@ export const getFormslyForwardLinkFormId = async (
       case "Release Order":
         requestList["Release Order"].push(newFormattedData);
         break;
+      case "Transfer Receipt":
+        requestList["Transfer Receipt"].push(newFormattedData);
+        break;
       case "Cheque Reference":
         requestList["Cheque Reference"].push(newFormattedData);
         break;
-      case "Withdrawal Slip":
-        requestList["Withdrawal Slip"].push(newFormattedData);
+      case "Release Quantity":
+        requestList["Release Quantity"].push(newFormattedData);
         break;
     }
   });
@@ -1806,6 +1811,24 @@ export const checkRequisitionQuantity = async (
   return data as string[];
 };
 
+// Check if the approving or creating release quantity are less than the withdrawal slip quantity
+export const checkWithdrawalSlipQuantity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    withdrawalSlipId: string;
+    itemFieldList: RequestResponseTableRow[];
+    quantityFieldList: RequestResponseTableRow[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_withdrawal_slip_quantity", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as string[];
+};
+
 // Check if the approving or creating rir item quantity are less than the quotation quantity
 export const checkRIRItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1839,6 +1862,26 @@ export const checkROItemQuantity = async (
 ) => {
   const { data, error } = await supabaseClient
     .rpc("check_ro_item_quantity", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as string[];
+};
+
+// Check if the approving or creating transfer receipt item quantity are less than the release order quantity
+export const checkTransferReceiptItemQuantity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    releaseOrderItemId: string;
+    itemFieldId: string;
+    quantityFieldId: string;
+    itemFieldList: RequestResponseTableRow[];
+    quantityFieldList: RequestResponseTableRow[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_tranfer_receipt_item_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;
@@ -2937,6 +2980,47 @@ export const getFormSigner = async (
   if (error) throw error;
 
   return data;
+};
+
+// Fetch withdrawal slip item descriptions
+export const getWithdrawalSlipItemDescriptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    teamId: string;
+  }
+) => {
+  const { requestId, teamId } = params;
+
+  const { data: form, error: formError } = await supabaseClient
+    .from("form_table")
+    .select(
+      "form_id, form_team_member: form_team_member_id(team_member_team_id)"
+    )
+    .eq("form_name", "Requisition")
+    .eq("form_team_member.team_member_team_id", teamId)
+    .single();
+  if (formError) throw formError;
+
+  const { data, error } = await supabaseClient
+    .from("section_table")
+    .select(
+      `
+      section_name,
+      section_field: field_table!inner(
+        *, 
+        field_option: option_table(*), 
+        field_response: request_response_table!inner(*)
+      )
+    `
+    )
+    .eq("section_form_id", form.form_id)
+    .eq("section_name", "Item")
+    .eq("section_field.field_response.request_response_request_id", requestId)
+    .single();
+  if (error) throw error;
+
+  return data.section_field as unknown as RequisitionFieldsType;
 };
 
 // Fetch request project signer

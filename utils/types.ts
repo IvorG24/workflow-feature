@@ -660,6 +660,13 @@ export type SSOTType = {
       ro_request_date_created: string;
       ro_request_owner: SSOTRequestOwnerType;
       ro_request_response: SSOTResponseType[];
+      ro_transfer_receipt_request: {
+        transfer_receipt_request_id: string;
+        transfer_receipt_request_formsly_id: string;
+        transfer_receipt_request_date_created: string;
+        transfer_receipt_request_owner: SSOTRequestOwnerType;
+        transfer_receipt_request_response: SSOTResponseType[];
+      }[];
     }[];
   }[];
   requisition_cheque_reference_request: {
@@ -668,13 +675,6 @@ export type SSOTType = {
     cheque_reference_request_date_created: string;
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
-  }[];
-  requisition_withdrawal_slip_request: {
-    withdrawal_slip_request_id: string;
-    withdrawal_slip_request_formsly_id: string;
-    withdrawal_slip_request_date_created: string;
-    withdrawal_slip_request_response: SSOTResponseType[];
-    withdrawal_slip_request_owner: SSOTRequestOwnerType;
   }[];
 };
 
@@ -781,3 +781,7 @@ export type ConnectedRequestItemType = {
 export type ConnectedRequestIdList = {
   [key: string]: ConnectedRequestItemType[];
 };
+
+export type RequisitionFieldsType = FieldTableRow & {
+  field_option: OptionTableRow[];
+} & { field_response: RequestResponseTableRow[] }[];
