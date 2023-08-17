@@ -2954,7 +2954,6 @@ export const getRequestProjectSigner = async (
     )
     .eq("request_signer_request_id", requestId)
     .eq("request_signer.signer_is_disabled", false);
-  console.log(error);
   if (error) throw error;
 
   return data as unknown as RequestProjectSignerType;
