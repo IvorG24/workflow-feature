@@ -17,10 +17,12 @@ import CreateChequeReferenceRequestPage from "@/components/CreateChequeReference
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
+import CreateReleaseQuantityPage from "@/components/CreateReleaseQuantityPage/CreateReleaseQuantityPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
-import CreateWithdrawalRequestPage from "@/components/CreateWithdrawalRequestPage/CreateWithdrawalRequestPage";
+import CreateTransferReceiptPage from "@/components/CreateTransferReceiptPage/CreateTransferReceiptPage";
+import CreateWithdrawalSlipRequestPage from "@/components/CreateWithdrawalSlipRequestPage/CreateWithdrawalSlipRequestPage";
 
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
@@ -52,7 +54,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           requestId: `${context.query.requisitionId}`,
         });
         requestProjectId = `${request.request_project_id}`;
+      } else if (context.query.withdrawalSlipId) {
+        const request = await getRequest(supabaseClient, {
+          requestId: `${context.query.withdrawalSlipId}`,
+        });
+        requestProjectId = `${request.request_project_id}`;
       }
+
       if (form.form_is_formsly_form) {
         // Requisition Form
         if (form.form_name === "Requisition") {
@@ -113,16 +121,77 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               projectOptions,
             },
           };
-        } else if (form.form_name === "Audit") {
+        }
+        // Audit
+        else if (form.form_name === "Audit") {
           return {
             props: {
               form,
             },
           };
         }
+        // Withdrawal Slip
+        else if (form.form_name === "Withdrawal Slip") {
+          // items
+          const items = await getAllItems(supabaseClient, {
+            teamId: teamId,
+          });
+
+          const itemOptions = items.map((item, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item.item_id,
+              option_order: index,
+              option_value: item.item_general_name,
+            };
+          });
+
+          // projects
+          const projects = await getAllTeamMemberProjects(supabaseClient, {
+            teamId,
+            memberId: teamMember.team_member_id,
+          });
+          const projectOptions = projects.map((project, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: project.team_project_id,
+              option_order: index,
+              option_value: project.team_project_name,
+            };
+          });
+
+          return {
+            props: {
+              form: {
+                ...form,
+                form_section: [
+                  {
+                    ...form.form_section[0],
+                    section_field: [
+                      {
+                        ...form.form_section[0].section_field[0],
+                        field_option: projectOptions,
+                      },
+                      ...form.form_section[0].section_field.slice(1),
+                    ],
+                  },
+                  form.form_section[1],
+                ],
+              },
+              itemOptions,
+              projectOptions,
+            },
+          };
+        }
 
         const project = await getRequestProjectIdAndName(supabaseClient, {
-          requestId: `${context.query.requisitionId}`,
+          requestId: `${
+            context.query.requisitionId
+              ? context.query.requisitionId
+              : context.query.withdrawalSlipId
+          }`,
         });
 
         if (!project) throw new Error();
@@ -346,7 +415,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
             return {
               option_description: null,
-              option_field_id: form.form_section[2].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: item,
               option_order: index,
               option_value: value,
@@ -366,7 +435,72 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           };
         }
-        // Cheque Reference or Audit
+        // Transfer Receipt Form
+        else if (form.form_name === "Transfer Receipt") {
+          const isRequestIdValid = await checkRequest(supabaseClient, {
+            requestId: [
+              `${context.query.requisitionId}`,
+              `${context.query.sourcedItemId}`,
+            ],
+          });
+
+          if (!isRequestIdValid) {
+            return {
+              redirect: {
+                destination: "/404",
+                permanent: false,
+              },
+            };
+          }
+
+          const items = await getItemResponseForRO(supabaseClient, {
+            requestId: `${context.query.sourcedItemId}`,
+          });
+
+          const sourceProjectList: Record<string, string> = {};
+
+          const regex = /\(([^()]+)\)/g;
+          const itemOptions = Object.keys(items).map((item, index) => {
+            const itemName = items[item].item;
+            const quantity = items[item].quantity;
+            const sourceProject = items[item].sourceProject;
+
+            const matches = regex.exec(itemName);
+            const unit = matches && matches[1].replace(/\d+/g, "").trim();
+
+            const replace = items[item].item.match(regex);
+            if (!replace) return;
+
+            const value = `${itemName.replace(
+              replace[0],
+              `(${quantity} ${unit}) (${sourceProject})`
+            )} `;
+
+            sourceProjectList[value] = items[item].sourceProject;
+
+            return {
+              option_description: null,
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item,
+              option_order: index,
+              option_value: value,
+            };
+          });
+          return {
+            props: {
+              form: {
+                ...form,
+                form_signer:
+                  projectSigner.length !== 0 ? projectSigner : form.form_signer,
+              },
+              itemOptions,
+              sourceProjectList,
+              requestProjectId,
+              requestingProject: formattedProject.team_project_name,
+            },
+          };
+        }
+        // Cheque Reference
         else if (form.form_name === "Cheque Reference") {
           return {
             props: {
@@ -379,9 +513,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               requestingProject: formattedProject.team_project_name,
             },
           };
-        } else if (form.form_name === "Withdrawal Slip") {
+        }
+        // Release Quantity
+        else if (form.form_name === "Release Quantity") {
           const isRequestIdValid = await checkRequest(supabaseClient, {
-            requestId: [`${context.query.requisitionId}`],
+            requestId: [`${context.query.withdrawalSlipId}`],
           });
 
           if (!isRequestIdValid) {
@@ -394,7 +530,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForQuotation(supabaseClient, {
-            requestId: `${context.query.requisitionId}`,
+            requestId: `${context.query.withdrawalSlipId}`,
           });
 
           const itemOptions = Object.keys(items).map((item, index) => {
@@ -503,6 +639,16 @@ const Page = ({
             requestingProject={requestingProject}
           />
         );
+      case "Transfer Receipt":
+        return (
+          <CreateTransferReceiptPage
+            form={form}
+            itemOptions={itemOptions}
+            sourceProjectList={sourceProjectList}
+            requestProjectId={requestProjectId}
+            requestingProject={requestingProject}
+          />
+        );
       case "Cheque Reference":
         return (
           <CreateChequeReferenceRequestPage
@@ -515,7 +661,15 @@ const Page = ({
         return <CreateRequestPage form={form} formslyFormName="Audit" />;
       case "Withdrawal Slip":
         return (
-          <CreateWithdrawalRequestPage
+          <CreateWithdrawalSlipRequestPage
+            form={form}
+            itemOptions={itemOptions}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Release Quantity":
+        return (
+          <CreateReleaseQuantityPage
             form={form}
             itemOptions={itemOptions}
             requestProjectId={requestProjectId}

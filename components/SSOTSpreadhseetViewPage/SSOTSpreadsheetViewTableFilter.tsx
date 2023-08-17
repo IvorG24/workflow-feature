@@ -16,10 +16,10 @@ import { ShowColumnList } from "./SSOTSpreadhseetViewPage";
 type Props = {
   requisitionTableColumnList: string[];
   quotationTableColumnList: string[];
-  withdrawalSlipTableColumnList: string[];
   rirTableColumnList: string[];
   sourcedItemTableColumnList: string[];
   releaseOrderTableColumnList: string[];
+  transferReceiptTableColumnList: string[];
   chequeReferenceTableColumnList: string[];
   showRequisitionTable: boolean;
   setShowRequisitionTable: Dispatch<SetStateAction<boolean>>;
@@ -27,12 +27,12 @@ type Props = {
   setShowQuotationTable: Dispatch<SetStateAction<boolean>>;
   showSourcedItemTable: boolean;
   setShowSourcedItemTable: Dispatch<SetStateAction<boolean>>;
-  showWithdrawalSlipTable: boolean;
-  setShowWithdrawalSlipTable: Dispatch<SetStateAction<boolean>>;
   showRIRTable: boolean;
   setShowRIRTable: Dispatch<SetStateAction<boolean>>;
   showReleaseOrderTable: boolean;
   setShowReleaseOrderTable: Dispatch<SetStateAction<boolean>>;
+  showTransferReceiptTable: boolean;
+  setShowTransferReceiptTable: Dispatch<SetStateAction<boolean>>;
   showChequeReferenceTable: boolean;
   setShowChequeReferenceTable: Dispatch<SetStateAction<boolean>>;
   showRequisitionColumnList: ShowColumnList;
@@ -41,12 +41,12 @@ type Props = {
   setShowQuotationColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showSourcedItemColumnList: ShowColumnList;
   setShowSourcedItemColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showWithdrawalSlipColumnList: ShowColumnList;
-  setShowWithdrawalSlipColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showRIRColumnList: ShowColumnList;
   setShowRIRColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showReleaseOrderColumnList: ShowColumnList;
   setShowReleaseOrderColumnList: Dispatch<SetStateAction<ShowColumnList>>;
+  showTransferReceiptColumnList: ShowColumnList;
+  setShowTransferReceiptColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showChequeReferenceColumnList: ShowColumnList;
   setShowChequeReferenceColumnList: Dispatch<SetStateAction<ShowColumnList>>;
 };
@@ -55,10 +55,10 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
   const {
     requisitionTableColumnList,
     quotationTableColumnList,
-    withdrawalSlipTableColumnList,
     rirTableColumnList,
     sourcedItemTableColumnList,
     releaseOrderTableColumnList,
+    transferReceiptTableColumnList,
     chequeReferenceTableColumnList,
     showRequisitionTable,
     setShowRequisitionTable,
@@ -66,18 +66,16 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowRequisitionColumnList,
     showQuotationTable,
     setShowQuotationTable,
-    showWithdrawalSlipTable,
-    setShowWithdrawalSlipTable,
     showSourcedItemTable,
     setShowSourcedItemTable,
     showQuotationColumnList,
     setShowQuotationColumnList,
-    showWithdrawalSlipColumnList,
-    setShowWithdrawalSlipColumnList,
     showRIRTable,
     setShowRIRTable,
     showReleaseOrderTable,
     setShowReleaseOrderTable,
+    showTransferReceiptTable,
+    setShowTransferReceiptTable,
     showChequeReferenceTable,
     setShowChequeReferenceTable,
     showRIRColumnList,
@@ -86,6 +84,8 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowSourcedItemColumnList,
     showReleaseOrderColumnList,
     setShowReleaseOrderColumnList,
+    showTransferReceiptColumnList,
+    setShowTransferReceiptColumnList,
     showChequeReferenceColumnList,
     setShowChequeReferenceColumnList,
   } = props;
@@ -95,17 +95,17 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
   const defaultFilterSettings = {
     showRequisitionTable,
     showQuotationTable,
-    showWithdrawalSlipTable,
     showRIRTable,
     showSourcedItemTable,
     showReleaseOrderTable,
+    showTransferReceiptTable,
     showChequeReferenceTable,
     showRequisitionColumnList,
     showQuotationColumnList,
-    showWithdrawalSlipColumnList,
     showRIRColumnList,
     showSourcedItemColumnList,
     showReleaseOrderColumnList,
+    showTransferReceiptColumnList,
     showChequeReferenceColumnList,
   };
   const [
@@ -121,17 +121,17 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setLocalFilterSettings({
       showRequisitionTable,
       showQuotationTable,
-      showWithdrawalSlipTable,
       showRIRTable,
       showSourcedItemTable,
       showReleaseOrderTable,
+      showTransferReceiptTable,
       showChequeReferenceTable,
       showRequisitionColumnList,
       showQuotationColumnList,
-      showWithdrawalSlipColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
+      showTransferReceiptColumnList,
       showChequeReferenceColumnList,
     });
     setShowFilterColumnModal(false);
@@ -162,17 +162,17 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     const {
       showRequisitionTable,
       showQuotationTable,
-      showWithdrawalSlipTable,
       showRIRTable,
       showSourcedItemTable,
       showReleaseOrderTable,
+      showTransferReceiptTable,
       showChequeReferenceTable,
       showRequisitionColumnList,
       showQuotationColumnList,
-      showWithdrawalSlipColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
+      showTransferReceiptColumnList,
       showChequeReferenceColumnList,
     } = localFilterSettings;
 
@@ -188,17 +188,17 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
 
     setShowRequisitionTable(showRequisitionTable);
     setShowQuotationTable(showQuotationTable);
-    setShowWithdrawalSlipTable(showWithdrawalSlipTable);
     setShowSourcedItemTable(showSourcedItemTable);
     setShowRIRTable(showRIRTable);
     setShowReleaseOrderTable(showReleaseOrderTable);
+    setShowTransferReceiptTable(showTransferReceiptTable);
     setShowChequeReferenceTable(showChequeReferenceTable);
     setShowRequisitionColumnList(showRequisitionColumnList);
     setShowQuotationColumnList(showQuotationColumnList);
-    setShowWithdrawalSlipColumnList(showWithdrawalSlipColumnList);
     setShowRIRColumnList(showRIRColumnList);
     setShowSourcedItemColumnList(showSourcedItemColumnList);
     setShowReleaseOrderColumnList(showReleaseOrderColumnList);
+    setShowTransferReceiptColumnList(showTransferReceiptColumnList);
     setShowChequeReferenceColumnList(showChequeReferenceColumnList);
   }, [localFilterSettings]);
 
@@ -460,25 +460,26 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 </Box>
               </Accordion.Panel>
             </Accordion.Item>
-            <Accordion.Item value="withdrawal-slip-table">
-              <Accordion.Control>Withdrawal Slip Table</Accordion.Control>
+            <Accordion.Item value="transfer-receipt-table">
+              <Accordion.Control>Transfer Receipt Table</Accordion.Control>
               <Accordion.Panel>
                 <Box w="100%" p="sm">
                   <Group mb="sm" position="apart">
-                    <Text weight={600}>Withdrawal Slip Table</Text>
+                    <Text weight={600}>Transfer Receipt Table</Text>
                     <Switch
-                      checked={showWithdrawalSlipTable}
+                      checked={showTransferReceiptTable}
                       onChange={(e) =>
-                        setShowWithdrawalSlipTable(e.currentTarget.checked)
+                        setShowTransferReceiptTable(e.currentTarget.checked)
                       }
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                      disabled={!showSourcedItemTable}
                       {...switchInputProps}
                       styles={{ track: { cursor: "pointer" } }}
                     />
                   </Group>
                   <Flex gap="sm" direction="column">
-                    {withdrawalSlipTableColumnList.map((column, index) => {
+                    {transferReceiptTableColumnList.map((column, index) => {
                       const propName = column
                         .toLowerCase()
                         .replace(/\s+/g, "_");
@@ -486,16 +487,18 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                         <Group key={index} position="apart">
                           <Text>{column}</Text>
                           <Switch
-                            checked={showWithdrawalSlipColumnList[propName]}
+                            checked={showTransferReceiptColumnList[propName]}
                             onChange={(e) =>
-                              setShowWithdrawalSlipColumnList((prev) => ({
+                              setShowTransferReceiptColumnList((prev) => ({
                                 ...prev,
                                 [propName]: e.currentTarget.checked,
                               }))
                             }
                             onLabel={<IconEye size="1rem" stroke={2.5} />}
                             offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                            disabled={!showWithdrawalSlipTable}
+                            disabled={
+                              !showSourcedItemTable || !showTransferReceiptTable
+                            }
                             {...switchInputProps}
                             styles={{ track: { cursor: "pointer" } }}
                           />

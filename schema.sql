@@ -341,8 +341,8 @@ RETURNS JSON as $$
     const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const transfer_receipt_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const withdrawal_slip_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Withdrawal Slip' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
     let requisition_requests;
     let searchCondition = '';
@@ -557,12 +557,50 @@ RETURNS JSON as $$
               // ro team member
               const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
 
+              const transfer_receipt_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${transfer_receipt_form.form_id}'`);
+              let transfer_receipt_list = [];
+              
+              if(transfer_receipt_ids.length !== 0){
+                let transfer_receipt_condition = "";
+                transfer_receipt_ids.forEach(transfer_receipt => {
+                  transfer_receipt_condition += `request_id='${transfer_receipt.request_id}' OR `;
+                });
+
+                const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+                transfer_receipt_list = transfer_receipt_requests.map(transfer_receipt => {
+                  // transfer_receipt request response
+                  const transfer_receipt_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${transfer_receipt.request_id}'`);
+                  
+                  // transfer_receipt request response with fields
+                  const transfer_receipt_response_fields = transfer_receipt_response.map(response => {
+                    const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+                    return {
+                      request_response: response.request_response,
+                      request_response_field_name: field.field_name,
+                      request_response_field_type: field.field_type,
+                    }
+                  });
+
+                  // transfer_receipt team member
+                  const transfer_receipt_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${transfer_receipt.request_team_member_id}'`)[0];
+
+                  return {
+                    transfer_receipt_request_id: transfer_receipt.request_id,
+                    transfer_receipt_request_formsly_id: transfer_receipt.request_formsly_id,
+                    transfer_receipt_request_date_created: transfer_receipt.request_date_created,
+                    transfer_receipt_request_response: transfer_receipt_response_fields,
+                    transfer_receipt_request_owner: transfer_receipt_team_member,
+                  }
+                });
+              }
+
               return {
                 ro_request_id: ro.request_id,
                 ro_request_formsly_id: ro.request_formsly_id,
                 ro_request_date_created: ro.request_date_created,
                 ro_request_response: ro_response_fields,
                 ro_request_owner: ro_team_member,
+                ro_transfer_receipt_request: transfer_receipt_list
               }
             });
           }
@@ -614,42 +652,6 @@ RETURNS JSON as $$
         });
       }
 
-      const withdrawal_slip_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${withdrawal_slip_form.form_id}'`);
-      let withdrawal_slip_list = [];
-      if(withdrawal_slip_ids.length !== 0){
-        let withdrawal_slip_condition = "";
-        withdrawal_slip_ids.forEach(withdrawal_slip => {
-          withdrawal_slip_condition += `request_id='${withdrawal_slip.request_id}' OR `;
-        });
-
-        const withdrawal_slip_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${withdrawal_slip_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
-        withdrawal_slip_list = withdrawal_slip_requests.map(withdrawal_slip => {
-          // withdrawal_slip request response
-          const withdrawal_slip_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${withdrawal_slip.request_id}'`);
-          
-          // withdrawal_slip request response with fields
-          const withdrawal_slip_response_fields = withdrawal_slip_response.map(response => {
-            const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
-            return {
-              request_response: response.request_response,
-              request_response_field_name: field.field_name,
-              request_response_field_type: field.field_type,
-            }
-          });
-
-          // withdrawal_slip team member
-          const withdrawal_slip_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${withdrawal_slip.request_team_member_id}'`)[0];
-
-          return {
-            withdrawal_slip_request_id: withdrawal_slip.request_id,
-            withdrawal_slip_request_formsly_id: withdrawal_slip.request_formsly_id,
-            withdrawal_slip_request_date_created: withdrawal_slip.request_date_created,
-            withdrawal_slip_request_response: withdrawal_slip_response_fields,
-            withdrawal_slip_request_owner: withdrawal_slip_team_member,
-          }
-        });
-      }
-  
       return {
         requisition_request_id: requisition.request_id,
         requisition_request_formsly_id: requisition.request_formsly_id,
@@ -658,7 +660,6 @@ RETURNS JSON as $$
         requisition_request_owner: requisition_team_member,
         requisition_quotation_request: quotation_list,
         requisition_sourced_item_request: sourced_item_list,
-        requisition_withdrawal_slip_request: withdrawal_slip_list,
         requisition_cheque_reference_request: cheque_reference_list,
       }
     })
@@ -740,6 +741,10 @@ RETURNS JSON AS $$
         endId = `A-${newCount.padStart(4,'0')}`;
       } else if(formName==='Withdrawal Slip') {
         endId = `WS-${newCount.padStart(6,'0')}`;
+      } else if(formName==='Transfer Receipt') {
+        endId = `TR-${newCount.padStart(6,'0')}`;
+      } else if(formName==='Release Quantity') {
+        endId = `RQ-${newCount.padStart(6,'0')}`;
       } else {
         endId = `-${newCount.padStart(5,'0')}`;
       }
@@ -1329,6 +1334,98 @@ $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
+-- Start: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
+
+CREATE FUNCTION check_withdrawal_slip_quantity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let item_data
+    plv8.subtransaction(function(){
+        const {
+        withdrawalSlipId,
+        itemFieldList,
+        quantityFieldList
+        } = input_data;
+
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${withdrawalSlipId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Quantity'`);
+        
+        let requestResponse = []
+        if(request.length>0) {
+
+            const requestIdList = request.map(
+                (response) => `'${response.request_response_request_id}'`
+            ).join(",");
+
+            requestResponse = plv8.execute(`SELECT request_response_table.*, field_name FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE (field_name = 'Quantity' OR field_name = 'Item') AND request_response_request_id IN (${requestIdList});`);
+        }
+
+        const requestResponseItem = [];
+        const requestResponseQuantity = [];
+
+        requestResponse.forEach((response) => {
+            if (response.field_name === "Item") {
+            requestResponseItem.push(response);
+            } else if (response.field_name === "Quantity") {
+            requestResponseQuantity.push(response);
+            }
+        });
+
+        requestResponseItem.push(...itemFieldList);
+        requestResponseQuantity.push(...quantityFieldList);
+
+        const itemList = [];
+        const quantityList = [];
+
+        for (let i = 0; i < requestResponseItem.length; i++) {
+            if (itemList.includes(requestResponseItem[i].request_response)) {
+            const quantityIndex = itemList.indexOf(
+                requestResponseItem[i].request_response
+            );
+            quantityList[quantityIndex] += Number(
+                requestResponseQuantity[i].request_response
+            );
+            } else {
+            itemList.push(requestResponseItem[i].request_response);
+            quantityList.push(Number(requestResponseQuantity[i].request_response));
+            }
+        }
+
+        const returnData = [];
+        const regExp = /\(([^)]+)\)/;
+        for (let i = 0; i < itemList.length; i++) {
+            const matches = regExp.exec(itemList[i]);
+            if (!matches) continue;
+
+            const quantityMatch = matches[1].match(/(\d+)/);
+            if (!quantityMatch) continue;
+
+            const expectedQuantity = Number(quantityMatch[1]);
+            const unit = matches[1].replace(/\d+/g, "").trim();
+
+            if (quantityList[i] > expectedQuantity) {
+            const quantityMatch = itemList[i].match(/(\d+)/);
+            if (!quantityMatch) return;
+
+            returnData.push(
+                `${JSON.parse(
+                itemList[i].replace(
+                    quantityMatch[1],
+                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                )
+                )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+            );
+            }
+        }
+        item_data = returnData;
+    });
+    return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
+
 -- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
 
 CREATE FUNCTION check_ro_item_quantity(
@@ -1420,7 +1517,6 @@ RETURNS JSON AS $$
     });
     return item_data;
 $$ LANGUAGE plv8;
-
 
 -- End: Check if the approving or creating release order item quantity are less than the quotation quantity
 
@@ -1516,7 +1612,99 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating rir item quantity are less than the quotation quantity
+-- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
+
+CREATE FUNCTION check_tranfer_receipt_item_quantity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let item_data
+    plv8.subtransaction(function(){
+        const {
+        releaseOrderItemId,
+        itemFieldId,
+        quantityFieldId,
+        itemFieldList,
+        quantityFieldList
+        } = input_data;
+
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${releaseOrderItemId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Transfer Receipt';`);
+        
+        let requestResponse = []
+        if(request.length>0) {
+
+            const requestIdList = request.map(
+                (response) => `'${response.request_response_request_id}'`
+            ).join(",");
+
+            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+        }
+
+        const requestResponseItem = [];
+        const requestResponseQuantity = [];
+
+        requestResponse.forEach((response) => {
+            if (response.request_response_field_id === itemFieldId) {
+            requestResponseItem.push(response);
+            } else if (response.request_response_field_id === quantityFieldId) {
+            requestResponseQuantity.push(response);
+            }
+        });
+
+        requestResponseItem.push(...itemFieldList);
+        requestResponseQuantity.push(...quantityFieldList);
+
+        const itemList = [];
+        const quantityList = [];
+
+        for (let i = 0; i < requestResponseItem.length; i++) {
+            if (itemList.includes(requestResponseItem[i].request_response)) {
+            const quantityIndex = itemList.indexOf(
+                requestResponseItem[i].request_response
+            );
+            quantityList[quantityIndex] += Number(
+                requestResponseQuantity[i].request_response
+            );
+            } else {
+            itemList.push(requestResponseItem[i].request_response);
+            quantityList.push(Number(requestResponseQuantity[i].request_response));
+            }
+        }
+
+        const returnData = [];
+        const regExp = /\(([^)]+)\)/;
+        for (let i = 0; i < itemList.length; i++) {
+            const matches = regExp.exec(itemList[i]);
+            if (!matches) continue;
+
+            const quantityMatch = matches[1].match(/(\d+)/);
+            if (!quantityMatch) continue;
+
+            const expectedQuantity = Number(quantityMatch[1]);
+            const unit = matches[1].replace(/\d+/g, "").trim();
+
+            if (quantityList[i] > expectedQuantity) {
+            const quantityMatch = itemList[i].match(/(\d+)/);
+            if (!quantityMatch) return;
+
+            returnData.push(
+                `${JSON.parse(
+                itemList[i].replace(
+                    quantityMatch[1],
+                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                )
+                )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+            );
+            }
+        }
+        item_data = returnData
+    });
+    return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
 
 -- Start: Fetch request list
 
