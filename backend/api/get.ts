@@ -16,6 +16,7 @@ import {
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
+  RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
   RequisitionFieldsType,
@@ -3020,4 +3021,24 @@ export const getWithdrawalSlipItemDescriptions = async (
   if (error) throw error;
 
   return data.section_field as unknown as RequisitionFieldsType;
+};
+
+// Fetch request project signer
+export const getRequestProjectSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      "*, request_signer: request_signer_signer_id!inner(*, signer_team_project: signer_team_project_id!inner(team_project_name))"
+    )
+    .eq("request_signer_request_id", requestId)
+    .eq("request_signer.signer_is_disabled", false);
+  if (error) throw error;
+
+  return data as unknown as RequestProjectSignerType;
 };

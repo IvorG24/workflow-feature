@@ -4,6 +4,7 @@ import {
   getFormslyForm,
   getFormslyForwardLinkFormId,
   getRequest,
+  getRequestProjectSigner,
   getRequisitionPendingQuotationRequestList,
   getUserActiveTeamId,
   getUserTeamMemberData,
@@ -13,7 +14,11 @@ import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { ConnectedRequestIdList, RequestWithResponseType } from "@/utils/types";
+import {
+  ConnectedRequestIdList,
+  RequestProjectSignerStatusType,
+  RequestWithResponseType,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -109,6 +114,20 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           projectId: `${request.request_project_id}`,
         });
 
+        const requestProjectSigner = await getRequestProjectSigner(
+          supabaseClient,
+          {
+            requestId: request.request_id,
+          }
+        );
+
+        const projectSignerStatus = requestProjectSigner.map((signer) => ({
+          signer_project_name:
+            signer.request_signer.signer_team_project.team_project_name,
+          signer_status: signer.request_signer_status,
+          signer_team_member_id: signer.request_signer.signer_team_member_id,
+        }));
+
         const mainSignerIdList = data.map((signer) => signer.signer_id);
 
         return {
@@ -140,6 +159,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               formName: "Release Order",
             },
             connectedRequestIDList,
+            projectSignerStatus,
           },
         };
       } else if (request.request_form.form_name === "Release Order") {
@@ -236,6 +256,7 @@ type Props = {
     form_is_member: boolean;
   }[];
   canvassRequest?: string[];
+  projectSignerStatus?: RequestProjectSignerStatusType;
 };
 
 const Page = ({
@@ -244,6 +265,7 @@ const Page = ({
   connectedRequestIDList,
   connectedForm,
   canvassRequest = [],
+  projectSignerStatus,
 }: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Requisition") {
@@ -262,6 +284,7 @@ const Page = ({
           isFormslyForm
           connectedFormIdAndGroup={connectedFormIdAndGroup}
           connectedRequestIDList={connectedRequestIDList}
+          projectSignerStatus={projectSignerStatus}
         />
       );
     }
