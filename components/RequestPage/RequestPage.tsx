@@ -3,6 +3,7 @@ import {
   checkRequisitionQuantity,
   checkRIRItemQuantity,
   checkROItemQuantity,
+  getMemberUserData,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -80,6 +81,9 @@ const RequestPage = ({
       };
     })
   );
+  const [requestCommentList, setRequestCommentList] = useState(
+    request.request_comment
+  );
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -101,10 +105,6 @@ const RequestPage = ({
 
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
-
-  useEffect(() => {
-    setRequestStatus(request.request_status);
-  }, [request.request_status]);
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
@@ -294,8 +294,6 @@ const RequestPage = ({
 
       if (signer.signer_is_primary_signer) {
         setRequestStatus(status);
-      } else {
-        router.reload();
       }
 
       setSignerList((prev) =>
@@ -389,6 +387,118 @@ const RequestPage = ({
       confirmProps: { color: "red" },
       onConfirm: async () => await handleDeleteRequest(),
     });
+
+  useEffect(() => {
+    setRequestStatus(request.request_status);
+  }, [request.request_status]);
+
+  useEffect(() => {
+    const channel = supabaseClient
+      .channel("realtime request")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "request_table",
+          filter: `request_id=eq.${request.request_id}`,
+        },
+        (payload) => {
+          setRequestStatus(payload.new.request_status);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "request_signer_table",
+          filter: `request_signer_request_id=eq.${request.request_id}`,
+        },
+        (payload) => {
+          setSignerList((prev) =>
+            prev.map((signer) => {
+              if (signer.signer_id === payload.new.request_signer_signer_id) {
+                return {
+                  ...signer,
+                  request_signer_status: payload.new.request_signer_status,
+                };
+              }
+              return signer;
+            })
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "comment_table",
+          filter: `comment_request_id=eq.${request.request_id}`,
+        },
+        async (payload) => {
+          // INSERT comment event
+          if (payload.eventType === "INSERT") {
+            const teamMemberId = payload.new.comment_team_member_id;
+            const comment = payload.new;
+            const isUserExisting = requestCommentList.find(
+              (comment) => comment.comment_team_member_id === teamMemberId
+            );
+            if (isUserExisting) {
+              const { comment_team_member } = isUserExisting;
+              const newComment = { ...comment, comment_team_member };
+              setRequestCommentList((prev) => [
+                newComment as RequestWithResponseType["request_comment"][0],
+                ...prev,
+              ]);
+            } else {
+              const comment_team_member = await getMemberUserData(
+                supabaseClient,
+                { teamMemberId: comment.comment_team_member_id }
+              );
+
+              if (comment_team_member) {
+                const newComment = { ...comment, comment_team_member };
+                setRequestCommentList((prev) => [
+                  newComment as RequestWithResponseType["request_comment"][0],
+                  ...prev,
+                ]);
+              }
+            }
+          }
+          // UPDATE comment event
+          if (payload.eventType === "UPDATE") {
+            // if UPDATE event is user deleting a comment
+            if (payload.new.comment_is_disabled) {
+              setRequestCommentList((prev) =>
+                prev.filter(
+                  (comment) => comment.comment_id !== payload.new.comment_id
+                )
+              );
+            } else {
+              // if UPDATE is editing comment content
+              const updatedCommentList = requestCommentList.map((comment) => {
+                if (comment.comment_id === payload.old.comment_id) {
+                  return {
+                    ...comment,
+                    comment_content: payload.new.comment_content,
+                    comment_is_edited: payload.new.comment_is_edited,
+                  };
+                }
+                return comment;
+              });
+              setRequestCommentList(updatedCommentList);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeChannel(channel);
+    };
+  }, [supabaseClient, request, requestCommentList]);
 
   return (
     <Container>
@@ -547,7 +657,7 @@ const RequestPage = ({
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
         }}
-        requestCommentList={request.request_comment}
+        requestCommentList={requestCommentList}
       />
     </Container>
   );

@@ -46,6 +46,17 @@ const RequestResponse = ({
     response.value === "" ? "" : JSON.parse(response.value)
   );
 
+  const formatTime = (timeString: string) => {
+    const [hoursStr, minutesStr] = timeString.split(":");
+    const hours = parseInt(hoursStr);
+    const minutes = parseInt(minutesStr);
+
+    const formattedHours = hours < 10 ? `0${hours}` : hours;
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+    return `${formattedHours}:${formattedMinutes}`;
+  };
+
   useEffect(() => {
     const fetchRequestFormslyId = async () => {
       if (validator.isUUID(linkDisplayValue.toString())) {
@@ -166,7 +177,7 @@ const RequestResponse = ({
         return (
           <TimeInput
             label={response.label}
-            value={parsedValue ? parsedValue : undefined}
+            value={parsedValue ? formatTime(parsedValue) : undefined}
             icon={<IconClock size={16} />}
             {...inputProps}
           />
