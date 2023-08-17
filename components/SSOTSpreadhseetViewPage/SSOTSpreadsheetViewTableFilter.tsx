@@ -473,7 +473,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                       }
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                      disabled={!showSourcedItemTable}
+                      disabled={!showReleaseOrderTable}
                       {...switchInputProps}
                       styles={{ track: { cursor: "pointer" } }}
                     />
@@ -497,7 +497,8 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                             onLabel={<IconEye size="1rem" stroke={2.5} />}
                             offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                             disabled={
-                              !showSourcedItemTable || !showTransferReceiptTable
+                              !showReleaseOrderTable ||
+                              !showTransferReceiptTable
                             }
                             {...switchInputProps}
                             styles={{ track: { cursor: "pointer" } }}
