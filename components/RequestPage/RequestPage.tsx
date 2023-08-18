@@ -11,6 +11,7 @@ import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { Database } from "@/utils/database";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -31,7 +32,7 @@ import {
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
@@ -71,7 +72,7 @@ const RequestPage = ({
   projectSignerStatus: initialProjectSignerStatus,
 }: Props) => {
   const router = useRouter();
-  const supabaseClient = useSupabaseClient();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
