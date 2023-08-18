@@ -2036,7 +2036,30 @@ $$ LANGUAGE plv8;
 
 -- End: Insert Project Member
 
+-- Start: Update Form Group
 
+CREATE FUNCTION update_form_group(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+     formId,
+     isForEveryone,
+     groupList
+    } = input_data;
+
+    plv8.execute(`UPDATE form_table SET form_is_for_every_member='${isForEveryone?"TRUE":"FALSE"}' WHERE form_id='${formId}';`);
+
+    plv8.execute(`DELETE FROM form_team_group_table WHERE form_id='${formId}';`);
+
+    const newGroupInsertValues = groupList.map((group) =>`('${group}','${formId}')`).join(",");
+    
+    plv8.execute(`INSERT INTO form_team_group_table (team_group_id,form_id) VALUES ${newGroupInsertValues} RETURNING *;`);
+  });
+$$ LANGUAGE plv8;
+
+-- End: Update Form Group
 
 ---------- End: FUNCTIONS
 
