@@ -149,18 +149,18 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.green[0],
     },
   },
-  withdrawalSlipTable: {
+  transferReceiptTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.yellow[6]
-          : theme.colors.yellow[3],
+          ? theme.colors.lime[6]
+          : theme.colors.lime[3],
     },
     "& tbody": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.yellow[9]
-          : theme.colors.yellow[0],
+          ? theme.colors.lime[9]
+          : theme.colors.lime[0],
     },
   },
 }));
@@ -240,6 +240,17 @@ const releaseOrderTableColumnList = [
   "RO ID",
   "Date Created",
   "Warehouse Corporate Support Lead",
+  "Item",
+  "Quantity",
+  "Unit of Measurement",
+  "Receiving Status",
+  "Source Project",
+];
+
+const transferReceiptTableColumnList = [
+  "Transfer Receipt ID",
+  "Date Created",
+  "Site Warehouse",
   "Transfer Shipment",
   "Transfer Receipt",
   "Item",
@@ -261,15 +272,6 @@ const chequeReferenceTableColumnList = [
   "Cheque First Date Signed",
   "Cheque Second Signatory Name",
   "Cheque Second Date Signed",
-];
-
-const withdrawalSlipTableColumnList = [
-  "Withdrawal Slip ID",
-  "Date Created",
-  "Operations/Engineering",
-  "Item",
-  "Quantity",
-  "Unit of Measurement",
 ];
 
 const convertColumnListArrayToObject = (array: string[]) => {
@@ -310,9 +312,10 @@ const SSOTSpreadsheetView = ({
   const [showSourcedItemTable, setShowSourcedItemTable] = useState(true);
   const [showRIRTable, setShowRIRTable] = useState(true);
   const [showReleaseOrderTable, setShowReleaseOrderTable] = useState(true);
+  const [showTransferReceiptTable, setShowTransferReceiptTable] =
+    useState(true);
   const [showChequeReferenceTable, setShowChequeReferenceTable] =
     useState(true);
-  const [showWithdrawalSlipTable, setShowWithdrawalSlipTable] = useState(true);
 
   const [showRequisitionColumnList, setShowRequisitionColumnList] =
     useState<ShowColumnList>(
@@ -338,14 +341,14 @@ const SSOTSpreadsheetView = ({
       convertColumnListArrayToObject(releaseOrderTableColumnList)
     );
 
+  const [showTransferReceiptColumnList, setShowTransferReceiptColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(transferReceiptTableColumnList)
+    );
+
   const [showChequeReferenceColumnList, setShowChequeReferenceColumnList] =
     useState<ShowColumnList>(
       convertColumnListArrayToObject(chequeReferenceTableColumnList)
-    );
-
-  const [showWithdrawalSlipColumnList, setShowWithdrawalSlipColumnList] =
-    useState<ShowColumnList>(
-      convertColumnListArrayToObject(withdrawalSlipTableColumnList)
     );
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
@@ -491,97 +494,6 @@ const SSOTSpreadsheetView = ({
       setOffset((prev) => (prev += 1));
     }
   }, [isInView]);
-
-  const renderWithdrawalSlip = (
-    request: SSOTType["requisition_withdrawal_slip_request"]
-  ) => {
-    return request.map((request) => {
-      const itemName: string[] = [];
-      const itemQuantity: string[] = [];
-      const itemUnit: string[] = [];
-
-      const items = request.withdrawal_slip_request_response.slice(
-        1,
-        request.withdrawal_slip_request_response.length
-      );
-
-      items.forEach((item) => {
-        if (item.request_response_field_name === "Item") {
-          const quantityMatch = item.request_response.match(/(\d+)/);
-          if (!quantityMatch) return;
-          itemName.push(
-            JSON.parse(
-              item.request_response.replace(
-                quantityMatch[1],
-                addCommaToNumber(Number(quantityMatch[1]))
-              )
-            )
-          );
-        } else if (item.request_response_field_name === "Quantity") {
-          const matches = regExp.exec(itemName[itemQuantity.length]);
-          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
-
-          itemQuantity.push(JSON.parse(item.request_response));
-          itemUnit.push(`${unit}`);
-        }
-      });
-
-      return (
-        <tr
-          key={request.withdrawal_slip_request_id}
-          className={classes.cell}
-          style={{ borderTop: "solid 1px #DEE2E6" }}
-        >
-          {showWithdrawalSlipColumnList["withdrawal_slip_id"] && (
-            <td>{request.withdrawal_slip_request_formsly_id}</td>
-          )}
-          {showWithdrawalSlipColumnList["date_created"] && (
-            <td>
-              {new Date(
-                request.withdrawal_slip_request_date_created
-              ).toLocaleDateString()}
-            </td>
-          )}
-          {showWithdrawalSlipColumnList["operations/engineering"] && (
-            <td>{`${request.withdrawal_slip_request_owner.user_first_name} ${request.withdrawal_slip_request_owner.user_last_name}`}</td>
-          )}
-          {showWithdrawalSlipColumnList["item"] && (
-            <td>
-              <List sx={{ listStyle: "none" }} spacing="xs">
-                {itemName.map((item, index) => (
-                  <List.Item key={index}>
-                    <Text size={14}>{item}</Text>
-                  </List.Item>
-                ))}
-              </List>
-            </td>
-          )}
-          {showWithdrawalSlipColumnList["quantity"] && (
-            <td>
-              <List sx={{ listStyle: "none" }} spacing="xs">
-                {itemQuantity.map((item, index) => (
-                  <List.Item key={index}>
-                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
-                  </List.Item>
-                ))}
-              </List>
-            </td>
-          )}
-          {showWithdrawalSlipColumnList["unit_of_measurement"] && (
-            <td>
-              <List sx={{ listStyle: "none" }} spacing="xs">
-                {itemUnit.map((item, index) => (
-                  <List.Item key={index}>
-                    <Text size={14}>{item}</Text>
-                  </List.Item>
-                ))}
-              </List>
-            </td>
-          )}
-        </tr>
-      );
-    });
-  };
 
   const renderChequeReference = (
     request: SSOTType["requisition_cheque_reference_request"]
@@ -802,15 +714,15 @@ const SSOTSpreadsheetView = ({
     });
   };
 
-  const renderReleaseOrder = (
-    request: SSOTType["requisition_sourced_item_request"][0]["sourced_item_ro_request"]
+  const renderTransferReceipt = (
+    request: SSOTType["requisition_sourced_item_request"][0]["sourced_item_ro_request"][0]["ro_transfer_receipt_request"]
   ) => {
     return request.map((request) => {
       const itemName: string[] = [];
       const itemQuantity: string[] = [];
       const itemUnit: string[] = [];
       const itemStatus: string[] = [];
-      const items = request.ro_request_response;
+      const items = request.transfer_receipt_request_response;
       const itemSourceProject: string[] = [];
       let transferShipment = "";
       let transferReceipt = "";
@@ -846,23 +758,24 @@ const SSOTSpreadsheetView = ({
 
       return (
         <tr
-          key={request.ro_request_id}
+          key={request.transfer_receipt_request_id}
           className={classes.cell}
           style={{ borderTop: "solid 1px #DEE2E6" }}
         >
-          {showReleaseOrderColumnList["ro_id"] && (
-            <td>{request.ro_request_formsly_id}</td>
+          {showTransferReceiptColumnList["transfer_receipt_id"] && (
+            <td>{request.transfer_receipt_request_formsly_id}</td>
           )}
-          {showReleaseOrderColumnList["date_created"] && (
+          {showTransferReceiptColumnList["date_created"] && (
             <td>
-              {new Date(request.ro_request_date_created).toLocaleDateString()}
+              {new Date(
+                request.transfer_receipt_request_date_created
+              ).toLocaleDateString()}
             </td>
           )}
-          {showReleaseOrderColumnList["warehouse_corporate_support_lead"] && (
-            <td>{`${request.ro_request_owner.user_first_name} ${request.ro_request_owner.user_last_name}`}</td>
+          {showTransferReceiptColumnList["site_warehouse"] && (
+            <td>{`${request.transfer_receipt_request_owner.user_first_name} ${request.transfer_receipt_request_owner.user_last_name}`}</td>
           )}
-
-          {showReleaseOrderColumnList["transfer_shipment"] && (
+          {showTransferReceiptColumnList["transfer_shipment"] && (
             <td>
               {transferShipment && (
                 <ActionIcon
@@ -879,8 +792,7 @@ const SSOTSpreadsheetView = ({
               )}
             </td>
           )}
-
-          {showReleaseOrderColumnList["transfer_receipt"] && (
+          {showTransferReceiptColumnList["transfer_receipt"] && (
             <td>
               {transferReceipt && (
                 <ActionIcon
@@ -896,6 +808,120 @@ const SSOTSpreadsheetView = ({
                 </ActionIcon>
               )}
             </td>
+          )}
+
+          {showTransferReceiptColumnList["item"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemName.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showTransferReceiptColumnList["quantity"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemQuantity.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{addCommaToNumber(Number(item))}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showTransferReceiptColumnList["unit_of_measurement"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemUnit.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showTransferReceiptColumnList["receiving_status"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemStatus.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+          {showTransferReceiptColumnList["source_project"] && (
+            <td>
+              <List sx={{ listStyle: "none" }} spacing="xs">
+                {itemSourceProject.map((item, index) => (
+                  <List.Item key={index}>
+                    <Text size={14}>{item}</Text>
+                  </List.Item>
+                ))}
+              </List>
+            </td>
+          )}
+        </tr>
+      );
+    });
+  };
+
+  const renderReleaseOrder = (
+    request: SSOTType["requisition_sourced_item_request"][0]["sourced_item_ro_request"]
+  ) => {
+    return request.map((request) => {
+      const itemName: string[] = [];
+      const itemQuantity: string[] = [];
+      const itemUnit: string[] = [];
+      const itemStatus: string[] = [];
+      const items = request.ro_request_response;
+      const itemSourceProject: string[] = [];
+
+      items.forEach((item) => {
+        if (item.request_response_field_name === "Item") {
+          const quantityMatch = item.request_response.match(/(\d+)/);
+          if (!quantityMatch) return;
+          itemName.push(
+            JSON.parse(
+              item.request_response.replace(
+                quantityMatch[1],
+                addCommaToNumber(Number(quantityMatch[1]))
+              )
+            )
+          );
+        } else if (item.request_response_field_name === "Quantity") {
+          const matches = regExp.exec(itemName[itemQuantity.length]);
+          const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
+
+          itemQuantity.push(JSON.parse(item.request_response));
+          itemUnit.push(`${unit}`);
+        } else if (item.request_response_field_name === "Receiving Status") {
+          itemStatus.push(JSON.parse(item.request_response));
+        } else if (item.request_response_field_name === "Source Project") {
+          itemSourceProject.push(JSON.parse(item.request_response));
+        }
+      });
+
+      return (
+        <tr
+          key={request.ro_request_id}
+          className={classes.cell}
+          style={{ borderTop: "solid 1px #DEE2E6" }}
+        >
+          {showReleaseOrderColumnList["ro_id"] && (
+            <td>{request.ro_request_formsly_id}</td>
+          )}
+          {showReleaseOrderColumnList["date_created"] && (
+            <td>
+              {new Date(request.ro_request_date_created).toLocaleDateString()}
+            </td>
+          )}
+          {showReleaseOrderColumnList["warehouse_corporate_support_lead"] && (
+            <td>{`${request.ro_request_owner.user_first_name} ${request.ro_request_owner.user_last_name}`}</td>
           )}
 
           {showReleaseOrderColumnList["item"] && (
@@ -953,6 +979,57 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
+          {showTransferReceiptTable && (
+            <td style={{ padding: 0 }}>
+              {showTransferReceiptTable &&
+              request.ro_transfer_receipt_request.length !== 0 ? (
+                <Table
+                  withBorder
+                  withColumnBorders
+                  h="100%"
+                  className={classes.transferReceiptTable}
+                >
+                  <thead>
+                    <tr>
+                      {showTransferReceiptColumnList["transfer_receipt_id"] && (
+                        <th className={classes.long}>Transfer Receipt ID</th>
+                      )}
+                      {showTransferReceiptColumnList["date_created"] && (
+                        <th className={classes.date}>Date Created</th>
+                      )}
+                      {showTransferReceiptColumnList["site_warehouse"] && (
+                        <th className={classes.processor}>Site Warehouse</th>
+                      )}
+                      {showTransferReceiptColumnList["transfer_shipment"] && (
+                        <th className={classes.short}>Transfer Shipment</th>
+                      )}
+                      {showTransferReceiptColumnList["transfer_receipt"] && (
+                        <th className={classes.short}>Transfer Receipt</th>
+                      )}
+                      {showTransferReceiptColumnList["item"] && (
+                        <th className={classes.description}>Item</th>
+                      )}
+                      {showTransferReceiptColumnList["quantity"] && (
+                        <th className={classes.normal}>Quantity</th>
+                      )}
+                      {showTransferReceiptColumnList["unit_of_measurement"] && (
+                        <th className={classes.long}>Unit of Measurement</th>
+                      )}
+                      {showTransferReceiptColumnList["receiving_status"] && (
+                        <th className={classes.long}>Receiving Status</th>
+                      )}
+                      {showTransferReceiptColumnList["source_project"] && (
+                        <th className={classes.long}>Source Project</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderTransferReceipt(request.ro_transfer_receipt_request)}
+                  </tbody>
+                </Table>
+              ) : null}
+            </td>
+          )}
         </tr>
       );
     });
@@ -967,31 +1044,60 @@ const SSOTSpreadsheetView = ({
       const itemQuantity: string[] = [];
       const itemUnit: string[] = [];
 
-      const items = request.quotation_request_response.slice(
-        3,
-        request.quotation_request_response.length
-      );
+      let supplier,
+        supplierQuotation: string,
+        requestSendMethod,
+        proofOfSending,
+        paymentTerms,
+        leadTime,
+        requiredDownPayment = "";
 
-      items.forEach((item) => {
-        if (item.request_response_field_name === "Item") {
-          const quantityMatch = item.request_response.match(/(\d+)/);
+      const requestReponse = request.quotation_request_response;
+
+      requestReponse.forEach((response) => {
+        if (response.request_response_field_name === "Item") {
+          const quantityMatch = response.request_response.match(/(\d+)/);
           if (!quantityMatch) return;
           itemName.push(
             JSON.parse(
-              item.request_response.replace(
+              response.request_response.replace(
                 quantityMatch[1],
                 addCommaToNumber(Number(quantityMatch[1]))
               )
             )
           );
-        } else if (item.request_response_field_name === "Price per Unit") {
-          itemPrice.push(JSON.parse(item.request_response));
-        } else if (item.request_response_field_name === "Quantity") {
+        } else if (response.request_response_field_name === "Price per Unit") {
+          itemPrice.push(JSON.parse(response.request_response));
+        } else if (response.request_response_field_name === "Quantity") {
           const matches = regExp.exec(itemName[itemQuantity.length]);
           const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
 
-          itemQuantity.push(JSON.parse(item.request_response));
+          itemQuantity.push(JSON.parse(response.request_response));
           itemUnit.push(`${unit}`);
+        } else if (response.request_response_field_name === "Supplier") {
+          supplier = JSON.parse(response.request_response);
+        } else if (
+          response.request_response_field_name === "Supplier Quotation"
+        ) {
+          supplierQuotation = JSON.parse(response.request_response);
+        } else if (
+          response.request_response_field_name === "Request Send Method"
+        ) {
+          requestSendMethod = JSON.parse(response.request_response);
+        } else if (
+          response.request_response_field_name === "Proof of Sending"
+        ) {
+          proofOfSending = JSON.parse(response.request_response);
+        } else if (response.request_response_field_name === "Payment Terms") {
+          paymentTerms = JSON.parse(response.request_response);
+        } else if (response.request_response_field_name === "Lead Time") {
+          leadTime = addCommaToNumber(JSON.parse(response.request_response));
+        } else if (
+          response.request_response_field_name === "Required Down Payment"
+        ) {
+          requiredDownPayment = addCommaToNumber(
+            JSON.parse(response.request_response)
+          );
         }
       });
 
@@ -1014,97 +1120,31 @@ const SSOTSpreadsheetView = ({
           {showQuotationColumnList["purchaser"] && (
             <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
           )}
-          {request.quotation_request_response
-            .slice(1, 3)
-            .map((response, index) => {
-              const fieldName =
-                response.request_response_field_name.toLowerCase();
-              const columnPropName = fieldName.replace(/\s+/g, "_");
-              const showColumn = showQuotationColumnList[columnPropName];
-
-              return (
-                showColumn && (
-                  <td key={index}>
-                    {response.request_response_field_type === "DATE" ? (
-                      new Date(
-                        JSON.parse(response.request_response)
-                      ).toLocaleDateString()
-                    ) : response.request_response_field_type === "FILE" ? (
-                      <ActionIcon
-                        w="100%"
-                        variant="outline"
-                        onClick={() =>
-                          window.open(
-                            `${JSON.parse(response.request_response)}`,
-                            "_blank"
-                          )
-                        }
-                      >
-                        <Flex align="center" justify="center" gap={2}>
-                          <Text size={14}>File</Text> <IconFile size={14} />
-                        </Flex>
-                      </ActionIcon>
-                    ) : (
-                      JSON.parse(response.request_response)
-                    )}
-                  </td>
-                )
-              );
-            })}
-
-          {showQuotationColumnList["send_method"] && (
+          {showQuotationColumnList["supplier"] && <td>{supplier}</td>}
+          {showQuotationColumnList["supplier_quotation"] && (
             <td>
-              {request.quotation_request_response[3]
-                .request_response_field_name === "Request Send Method" &&
-                JSON.parse(
-                  request.quotation_request_response[3].request_response
-                )}
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(supplierQuotation, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
             </td>
+          )}
+          {showQuotationColumnList["request_send_method"] && (
+            <td>{requestSendMethod}</td>
           )}
           {showQuotationColumnList["proof_of_sending"] && (
-            <td>
-              {request.quotation_request_response[4]
-                .request_response_field_name === "Proof of Sending" && (
-                <ActionIcon
-                  w="100%"
-                  variant="outline"
-                  onClick={() =>
-                    window.open(
-                      `${JSON.parse(
-                        request.quotation_request_response[4].request_response
-                      )}`,
-                      "_blank"
-                    )
-                  }
-                >
-                  <Flex align="center" justify="center" gap={2}>
-                    <Text size={14}>File</Text> <IconFile size={14} />
-                  </Flex>
-                </ActionIcon>
-              )}
-            </td>
+            <td>{proofOfSending}</td>
           )}
-
-          {showQuotationColumnList["payment_terms"] && (
-            <td>
-              {items[0].request_response_field_name === "Payment Terms" &&
-                JSON.parse(items[0].request_response)}
-            </td>
-          )}
-          {showQuotationColumnList["lead_time"] && (
-            <td>
-              {items[1].request_response_field_name === "Lead Time" &&
-                JSON.parse(items[1].request_response)}
-            </td>
-          )}
+          {showQuotationColumnList["payment_terms"] && <td>{paymentTerms}</td>}
+          {showQuotationColumnList["lead_time"] && <td>{leadTime}</td>}
           {showQuotationColumnList["required_down_payment"] && (
-            <td>
-              {items[2].request_response_field_name ===
-                "Required Down Payment" &&
-                JSON.parse(items[2].request_response)}
-            </td>
+            <td>{requiredDownPayment}</td>
           )}
-
           {showQuotationColumnList["item"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
@@ -1332,14 +1372,6 @@ const SSOTSpreadsheetView = ({
                               Warehouse Corporate Support Lead
                             </th>
                           )}
-                          {showReleaseOrderColumnList["transfer_shipment"] && (
-                            <th className={classes.normal}>
-                              Transfer Shipment
-                            </th>
-                          )}
-                          {showReleaseOrderColumnList["transfer_receipt"] && (
-                            <th className={classes.normal}>Transfer Receipt</th>
-                          )}
                           {showReleaseOrderColumnList["item"] && (
                             <th className={classes.description}>Item</th>
                           )}
@@ -1359,6 +1391,10 @@ const SSOTSpreadsheetView = ({
                           {showReleaseOrderColumnList["source_project"] && (
                             <th className={classes.long}>Source Project</th>
                           )}
+                          {showReleaseOrderTable &&
+                            showTransferReceiptTable && (
+                              <th>Transfer Receipt</th>
+                            )}
                         </tr>
                       </thead>
                       <tbody>
@@ -1633,7 +1669,7 @@ const SSOTSpreadsheetView = ({
                         <th className={classes.long}>Source Project</th>
                       )}
                       {showSourcedItemTable && showReleaseOrderTable && (
-                        <th className={classes.description}>Release Order</th>
+                        <th>Release Order</th>
                       )}
                     </tr>
                   </thead>
@@ -1646,50 +1682,7 @@ const SSOTSpreadsheetView = ({
               ) : null}
             </td>
           )}
-          {showWithdrawalSlipTable && (
-            <td style={{ padding: 0 }}>
-              {request.requisition_withdrawal_slip_request.length !== 0 ? (
-                <Table
-                  withBorder
-                  withColumnBorders
-                  h="100%"
-                  className={classes.withdrawalSlipTable}
-                >
-                  <thead>
-                    <tr>
-                      {showWithdrawalSlipColumnList["withdrawal_slip_id"] && (
-                        <th className={classes.long}>Withdrawal Slip ID</th>
-                      )}
-                      {showWithdrawalSlipColumnList["date_created"] && (
-                        <th className={classes.date}>Date Created</th>
-                      )}
-                      {showWithdrawalSlipColumnList[
-                        "operations/engineering"
-                      ] && (
-                        <th className={classes.processor}>
-                          Operations / Engineering
-                        </th>
-                      )}
-                      {showWithdrawalSlipColumnList["item"] && (
-                        <th className={classes.description}>Item</th>
-                      )}
-                      {showWithdrawalSlipColumnList["quantity"] && (
-                        <th className={classes.normal}>Quantity</th>
-                      )}
-                      {showWithdrawalSlipColumnList["unit_of_measurement"] && (
-                        <th className={classes.date}>Unit of Measurement</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderWithdrawalSlip(
-                      request.requisition_withdrawal_slip_request
-                    )}
-                  </tbody>
-                </Table>
-              ) : null}
-            </td>
-          )}
+
           {showChequeReferenceTable && (
             <td style={{ padding: 0 }}>
               {request.requisition_cheque_reference_request.length !== 0 ? (
@@ -1815,10 +1808,10 @@ const SSOTSpreadsheetView = ({
             // column list
             requisitionTableColumnList={requisitionTableColumnList}
             quotationTableColumnList={quotationTableColumnList}
-            withdrawalSlipTableColumnList={withdrawalSlipTableColumnList}
             rirTableColumnList={rirTableColumnList}
             sourcedItemTableColumnList={sourcedItemTableColumnList}
             releaseOrderTableColumnList={releaseOrderTableColumnList}
+            transferReceiptTableColumnList={transferReceiptTableColumnList}
             chequeReferenceTableColumnList={chequeReferenceTableColumnList}
             // table list state
             showRequisitionTable={showRequisitionTable}
@@ -1827,12 +1820,12 @@ const SSOTSpreadsheetView = ({
             setShowQuotationTable={setShowQuotationTable}
             showSourcedItemTable={showSourcedItemTable}
             setShowSourcedItemTable={setShowSourcedItemTable}
-            showWithdrawalSlipTable={showWithdrawalSlipTable}
-            setShowWithdrawalSlipTable={setShowWithdrawalSlipTable}
             showRIRTable={showRIRTable}
             setShowRIRTable={setShowRIRTable}
             showReleaseOrderTable={showReleaseOrderTable}
             setShowReleaseOrderTable={setShowReleaseOrderTable}
+            showTransferReceiptTable={showTransferReceiptTable}
+            setShowTransferReceiptTable={setShowTransferReceiptTable}
             showChequeReferenceTable={showChequeReferenceTable}
             setShowChequeReferenceTable={setShowChequeReferenceTable}
             // column list state
@@ -1842,12 +1835,12 @@ const SSOTSpreadsheetView = ({
             setShowQuotationColumnList={setShowQuotationColumnList}
             showSourcedItemColumnList={showSourcedItemColumnList}
             setShowSourcedItemColumnList={setShowSourcedItemColumnList}
-            showWithdrawalSlipColumnList={showWithdrawalSlipColumnList}
-            setShowWithdrawalSlipColumnList={setShowWithdrawalSlipColumnList}
             showRIRColumnList={showRIRColumnList}
             setShowRIRColumnList={setShowRIRColumnList}
             showReleaseOrderColumnList={showReleaseOrderColumnList}
             setShowReleaseOrderColumnList={setShowReleaseOrderColumnList}
+            showTransferReceiptColumnList={showTransferReceiptColumnList}
+            setShowTransferReceiptColumnList={setShowTransferReceiptColumnList}
             showChequeReferenceColumnList={showChequeReferenceColumnList}
             setShowChequeReferenceColumnList={setShowChequeReferenceColumnList}
           />
@@ -1934,7 +1927,6 @@ const SSOTSpreadsheetView = ({
                   )}
                   {showQuotationTable && <th>Quotation</th>}
                   {showSourcedItemTable && <th>Sourced Item</th>}
-                  {showWithdrawalSlipTable && <th>Withdrawal Slip</th>}
                   {showChequeReferenceTable && <th>Cheque Reference</th>}
                 </tr>
               </thead>

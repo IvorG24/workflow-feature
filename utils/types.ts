@@ -660,6 +660,13 @@ export type SSOTType = {
       ro_request_date_created: string;
       ro_request_owner: SSOTRequestOwnerType;
       ro_request_response: SSOTResponseType[];
+      ro_transfer_receipt_request: {
+        transfer_receipt_request_id: string;
+        transfer_receipt_request_formsly_id: string;
+        transfer_receipt_request_date_created: string;
+        transfer_receipt_request_owner: SSOTRequestOwnerType;
+        transfer_receipt_request_response: SSOTResponseType[];
+      }[];
     }[];
   }[];
   requisition_cheque_reference_request: {
@@ -668,13 +675,6 @@ export type SSOTType = {
     cheque_reference_request_date_created: string;
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
-  }[];
-  requisition_withdrawal_slip_request: {
-    withdrawal_slip_request_id: string;
-    withdrawal_slip_request_formsly_id: string;
-    withdrawal_slip_request_date_created: string;
-    withdrawal_slip_request_response: SSOTResponseType[];
-    withdrawal_slip_request_owner: SSOTRequestOwnerType;
   }[];
 };
 
@@ -711,6 +711,30 @@ export type CanvassAdditionalDetailsType = {
   formsly_id: string;
   lead_time: number;
   payment_terms: string;
+}[];
+
+export type RequestProjectSignerStatusType = {
+  signer_project_name: string;
+  signer_status: ReceiverStatusType;
+  signer_team_member_id: string;
+}[];
+
+export type RequestProjectSignerType = {
+  request_signer_id: string;
+  request_signer_status: string;
+  request_signer_request_id: string;
+  request_signer_signer_id: string;
+  request_signer: {
+    signer_id: string;
+    signer_is_primary_signer: boolean;
+    signer_action: string;
+    signer_order: number;
+    signer_is_disabled: boolean;
+    signer_form_id: string;
+    signer_team_member_id: string;
+    signer_team_project_id: string;
+    signer_team_project: { team_project_name: string };
+  };
 }[];
 
 export type RequestListItemType = {
@@ -757,3 +781,7 @@ export type ConnectedRequestItemType = {
 export type ConnectedRequestIdList = {
   [key: string]: ConnectedRequestItemType[];
 };
+
+export type RequisitionFieldsType = FieldTableRow & {
+  field_option: OptionTableRow[];
+} & { field_response: RequestResponseTableRow[] }[];
