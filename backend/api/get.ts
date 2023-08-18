@@ -531,7 +531,25 @@ export const getTeamAdminList = async (
     .or("team_member_role.eq.ADMIN, team_member_role.eq.OWNER");
   if (error) throw error;
 
-  return data;
+  const formattedData = data as unknown as {
+    team_member_id: string;
+    team_member_role: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+    };
+  }[];
+
+  return formattedData.sort((a, b) =>
+    `${a.team_member_user.user_first_name}` >
+    `${b.team_member_user.user_first_name}`
+      ? 1
+      : `${b.team_member_user.user_first_name}` >
+        `${a.team_member_user.user_first_name}`
+      ? -1
+      : 0
+  );
 };
 
 // Get specific form
