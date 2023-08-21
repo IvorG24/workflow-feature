@@ -112,7 +112,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   {
                     ...form.form_section[1],
                     section_field: [
-                      ...form.form_section[1].section_field.slice(0, 5),
+                      ...form.form_section[1].section_field.slice(0, 4),
                     ],
                   },
                 ],
