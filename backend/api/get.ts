@@ -21,6 +21,7 @@ import {
   RequestWithResponseType,
   RequisitionFieldsType,
   TeamMemberType,
+  TeamMemberWithUserDetails,
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -2537,32 +2538,13 @@ export const getAllTeamMembersWithoutGroupMembers = async (
     groupId: string;
   }
 ) => {
-  const { teamId, groupId } = params;
-  const { data: teamGroupMemberData, error: teamGroupMemberError } =
-    await supabaseClient
-      .from("team_group_member_table")
-      .select("team_member_id")
-      .eq("team_group_id", groupId);
-  if (teamGroupMemberError) throw teamGroupMemberError;
+  const { data, error } = await supabaseClient
+    .rpc("get_all_team_members_without_group_members", { input_data: params })
+    .select("*");
 
-  const condition = teamGroupMemberData.map((member) => member.team_member_id);
+  if (error) throw error;
 
-  const query = supabaseClient
-    .from("team_member_table")
-    .select(
-      "team_member_id, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
-    )
-    .eq("team_member_team_id", teamId)
-    .not("team_member_id", "in", `(${condition})`)
-    .order("user_first_name", {
-      ascending: false,
-      foreignTable: "team_member_user",
-    });
-
-  const { data: teamMemberData, error: teamMemberError } = await query;
-  if (teamMemberError) throw teamMemberError;
-
-  return teamMemberData;
+  return data as TeamMemberWithUserDetails;
 };
 
 // Get team project member list
@@ -2630,34 +2612,13 @@ export const getAllTeamMembersWithoutProjectMembers = async (
     projectId: string;
   }
 ) => {
-  const { teamId, projectId } = params;
-  const { data: teamProjectMemberData, error: teamProjectMemberError } =
-    await supabaseClient
-      .from("team_project_member_table")
-      .select("team_member_id")
-      .eq("team_project_id", projectId);
-  if (teamProjectMemberError) throw teamProjectMemberError;
+  const { data, error } = await supabaseClient
+    .rpc("get_all_team_members_without_project_members", { input_data: params })
+    .select("*");
 
-  const condition = teamProjectMemberData.map(
-    (member) => member.team_member_id
-  );
+  if (error) throw error;
 
-  const query = supabaseClient
-    .from("team_member_table")
-    .select(
-      "team_member_id, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
-    )
-    .eq("team_member_team_id", teamId)
-    .not("team_member_id", "in", `(${condition})`)
-    .order("user_first_name", {
-      ascending: false,
-      foreignTable: "team_member_user",
-    });
-
-  const { data: teamMemberData, error: teamMemberError } = await query;
-  if (teamMemberError) throw teamMemberError;
-
-  return teamMemberData;
+  return data as TeamMemberWithUserDetails;
 };
 
 // Get team member project list

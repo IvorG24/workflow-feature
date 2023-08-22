@@ -785,3 +785,14 @@ export type ConnectedRequestIdList = {
 export type RequisitionFieldsType = FieldTableRow & {
   field_option: OptionTableRow[];
 } & { field_response: RequestResponseTableRow[] }[];
+
+export type TeamMemberWithUserDetails = {
+  team_member_id: string;
+  team_member_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+}[];
