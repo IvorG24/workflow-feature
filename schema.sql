@@ -1951,6 +1951,12 @@ ALTER TABLE section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signer_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE supplier_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_response_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_team_group_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_group_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
+
 
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users only" ON attachment_table;
 
@@ -2044,7 +2050,30 @@ DROP POLICY IF EXISTS "Allow READ for authenticated users" ON user_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_table;
 
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_team_group_table;
 
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_member_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_member_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_project_tablee;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for authenticated users only" ON "public"."attachment_table"
@@ -2856,6 +2885,316 @@ CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "public
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (auth.uid() = user_id);
+
+--- FORM_TEAM_GROUP_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+--- TEAM_GROUP_MEMBER_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+   EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+--- TEAM_GROUP_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  team_group_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_group_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  team_group_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+   team_group_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  team_group_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  team_group_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+--- TEAM_PROJECT_MEMBER_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+--- TEAM_PROJECT_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  team_project_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_project_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  team_project_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  team_project_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  team_project_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  team_project_team_id IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 -------- End: POLICIES
 
