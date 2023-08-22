@@ -1928,6 +1928,192 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 -- End: Create Team Project
 
+-- Start: Insert Group Member
+
+CREATE FUNCTION insert_group_member(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let group_data;
+  plv8.subtransaction(function(){
+    const {
+     groupId,
+     teamMemberIdList
+    } = input_data;
+
+    const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",");
+
+    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_group_member_table WHERE team_group_id='${groupId}' AND team_member_id IN (${teamMemberIdListValues});`);
+
+    const alreadyMemberId = alreadyMemberData.map(
+      (member) => member.team_member_id
+    );
+
+    const insertData = [];
+    teamMemberIdList.forEach((memberId) => {
+      if (!alreadyMemberId.includes(memberId)) {
+        insertData.push({
+          team_group_id: groupId,
+          team_member_id: memberId,
+        });
+      }
+    });
+
+    const groupMemberValues = insertData
+      .map(
+        (member) =>
+          `('${member.team_member_id}','${member.team_group_id}')`
+      )
+      .join(",");
+
+    const groupInsertData = plv8.execute(`INSERT INTO team_group_member_table (team_member_id,team_group_id) VALUES ${groupMemberValues} RETURNING *;`);
+
+    const groupInsertValues = groupInsertData.map(group=>`('${group.team_group_member_id}','${group.team_member_id}','${group.team_group_id}')`).join(",");
+
+    const groupJoin = plv8.execute(`SELECT tgm.team_group_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_group_member_table tgm LEFT JOIN team_member_table tmemt ON tgm.team_member_id = tmemt.team_member_id WHERE (tgm.team_group_member_id,tgm.team_member_id,tgm.team_group_id) IN (${groupInsertValues}) GROUP BY tgm.team_group_member_id ,tmemt.team_member_id;`);
+
+    group_data = {data: groupJoin, count: groupJoin.length};
+
+ });
+ return group_data;
+$$ LANGUAGE plv8;
+
+-- End: Insert Group Member
+
+-- Start: Insert Project Member
+
+CREATE FUNCTION insert_project_member(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let project_data;
+  plv8.subtransaction(function(){
+    const {
+     projectId,
+     teamMemberIdList
+    } = input_data;
+
+    const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",")
+
+    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_project_member_table WHERE team_project_id='${projectId}' AND team_member_id IN (${teamMemberIdListValues});`);
+
+    const alreadyMemberId = alreadyMemberData.map(
+      (member) => member.team_member_id
+    );
+
+    const insertData = [];
+    teamMemberIdList.forEach((memberId) => {
+      if (!alreadyMemberId.includes(memberId)) {
+        insertData.push({
+          team_project_id: projectId,
+          team_member_id: memberId,
+        });
+      }
+    });
+
+    const projectMemberValues = insertData
+      .map(
+        (member) =>
+          `('${member.team_member_id}','${member.team_project_id}')`
+      )
+      .join(",");
+
+    const projectInsertData = plv8.execute(`INSERT INTO team_project_member_table (team_member_id,team_project_id) VALUES ${projectMemberValues} RETURNING *;`);
+
+    const projectInsertValues = projectInsertData.map(project=>`('${project.team_project_member_id}','${project.team_member_id}','${project.team_project_id}')`).join(",")
+
+    const projectJoin = plv8.execute(`SELECT tpm.team_project_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_project_member_table tpm LEFT JOIN team_member_table tmemt ON tpm.team_member_id = tmemt.team_member_id WHERE (tpm.team_project_member_id,tpm.team_member_id,tpm.team_project_id) IN (${projectInsertValues}) GROUP BY tpm.team_project_member_id ,tmemt.team_member_id;`) 
+
+    project_data = {data: projectJoin, count: projectJoin.length};
+
+ });
+ return project_data;
+$$ LANGUAGE plv8;
+
+-- End: Insert Project Member
+
+-- Start: Update Form Group
+
+CREATE FUNCTION update_form_group(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+     formId,
+     isForEveryone,
+     groupList
+    } = input_data;
+
+    plv8.execute(`UPDATE form_table SET form_is_for_every_member='${isForEveryone?"TRUE":"FALSE"}' WHERE form_id='${formId}';`);
+
+    plv8.execute(`DELETE FROM form_team_group_table WHERE form_id='${formId}';`);
+
+    const newGroupInsertValues = groupList.map((group) =>`('${group}','${formId}')`).join(",");
+    
+    plv8.execute(`INSERT INTO form_team_group_table (team_group_id,form_id) VALUES ${newGroupInsertValues} RETURNING *;`);
+  });
+$$ LANGUAGE plv8;
+
+-- End: Update Form Group
+
+-- Start: Get all team members without existing member of the group
+
+CREATE FUNCTION get_all_team_members_without_group_members(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let member_data;
+  plv8.subtransaction(function(){
+    const {
+     teamId,
+     groupId
+    } = input_data;
+
+    const teamGroupMemberData = plv8.execute(`SELECT team_member_id FROM team_group_member_table where team_group_id='${groupId}';`);
+
+    const condition = teamGroupMemberData.map((member) => `'${member.team_member_id}'`).join(",");
+
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
+
+    member_data = teamMemberList.sort((a, b) =>
+      a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
+    )
+ });
+ return member_data;
+$$ LANGUAGE plv8;
+
+-- End: Get all team members without existing member of the group
+
+-- End: Get all team members without existing member of the project
+
+CREATE FUNCTION get_all_team_members_without_project_members(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let member_data;
+  plv8.subtransaction(function(){
+    const {
+     teamId,
+     projectId
+    } = input_data;
+
+    const teamProjectMemberData = plv8.execute(`SELECT team_member_id FROM team_project_member_table where team_project_id='${projectId}';`);
+
+    const condition = teamProjectMemberData.map((member) => `'${member.team_member_id}'`).join(",");
+
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
+
+    member_data = teamMemberList.sort((a, b) =>
+      a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
+    )
+
+ });
+ return member_data;
+$$ LANGUAGE plv8;
+
+-- End: Get all team members without existing member of the project
+
 ---------- End: FUNCTIONS
 
 

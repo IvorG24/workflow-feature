@@ -286,31 +286,11 @@ export const updateFormGroup = async (
     groupList: string[];
   }
 ) => {
-  const { formId, isForEveryone, groupList } = params;
-  const { error } = await supabaseClient
-    .from("form_table")
-    .update({ form_is_for_every_member: isForEveryone })
-    .eq("form_id", formId);
-  if (error) throw error;
-
-  const { error: deleteError } = await supabaseClient
-    .from("form_team_group_table")
-    .delete()
-    .eq("form_id", formId);
-  if (deleteError) throw deleteError;
-
-  const newGroupInsert = groupList.map((groupId) => {
-    return {
-      form_id: formId,
-      team_group_id: groupId,
-    };
+  const { error } = await supabaseClient.rpc("update_form_group", {
+    input_data: params,
   });
 
-  const { error: newGroupError } = await supabaseClient
-    .from("form_team_group_table")
-    .insert(newGroupInsert)
-    .select("*");
-  if (newGroupError) throw newGroupError;
+  if (error) throw error;
 };
 
 // Update form description
