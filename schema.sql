@@ -245,10 +245,8 @@ CREATE TABLE item_table(
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_general_name VARCHAR(4000) NOT NULL,
   item_unit VARCHAR(4000) NOT NULL,
-  item_purpose VARCHAR(4000) NOT NULL,
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  item_cost_code VARCHAR(4000) NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL
@@ -850,8 +848,6 @@ RETURNS JSON AS $$
         item_general_name,
         item_is_available,
         item_unit,
-        item_purpose,
-        item_cost_code,
         item_gl_account,
         item_team_id
       },
@@ -859,7 +855,7 @@ RETURNS JSON AS $$
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_purpose,item_cost_code,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_purpose}','${item_cost_code}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
 
@@ -878,7 +874,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description,
         field_type: "DROPDOWN",
-        field_order: 10,
+        field_order: 9,
         field_section_id: section_id,
         field_is_required: true,
       });

@@ -213,10 +213,10 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Requisition', 3, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2');
 
 -- Add items
-INSERT INTO item_table (item_id, item_general_name, item_unit, item_purpose, item_team_id, item_cost_code, item_gl_account) VALUES 
-('5dc0a81e-fe9d-4da0-bafc-f498d575ef39', 'Wood', 'piece', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '22773', 'rX7VU'),
-('245aa3d4-0d76-4124-9398-ab177b55c553', 'Gasoline', 'litre', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '87943', 'dpRHk'),
-('5b4652ae-4460-4fc3-9a8a-923b30132d03', 'Nail', 'bag', 'Major Material', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '48749', 'QAMFi');
+INSERT INTO item_table (item_id, item_general_name, item_unit, item_team_id, item_gl_account) VALUES 
+('5dc0a81e-fe9d-4da0-bafc-f498d575ef39', 'Wood', 'piece', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'rX7VU'),
+('245aa3d4-0d76-4124-9398-ab177b55c553', 'Gasoline', 'litre', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'dpRHk'),
+('5b4652ae-4460-4fc3-9a8a-923b30132d03', 'Nail', 'bag', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'QAMFi');
 
 INSERT INTO item_description_table(item_description_id, item_description_label, item_description_item_id, item_description_field_id) VALUES 
 ('994a07a2-e968-4ce8-8246-45aac0bfdde4', 'Length', '5dc0a81e-fe9d-4da0-bafc-f498d575ef39', 'bef47113-a186-4755-9764-263b5c246a41'),
