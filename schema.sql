@@ -2076,7 +2076,7 @@ RETURNS JSON AS $$
 
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
 
-    member_data = teamMemberList.slice().sort((a, b) =>
+    member_data = teamMemberList.sort((a, b) =>
       a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
     )
  });
@@ -2104,7 +2104,7 @@ RETURNS JSON AS $$
 
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
 
-    member_data = teamMemberList.slice().sort((a, b) =>
+    member_data = teamMemberList.sort((a, b) =>
       a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
     )
 
