@@ -251,10 +251,6 @@ const CreateWithdrawalSlipRequestPage = ({
         },
         {
           ...newSection.section_field[3],
-          field_response: item.item_cost_code,
-        },
-        {
-          ...newSection.section_field[4],
           field_response: item.item_gl_account,
         },
       ];

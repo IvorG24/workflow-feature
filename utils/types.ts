@@ -445,8 +445,7 @@ export type ItemForm = {
   descriptions: { description: string }[];
   unit: string;
   isAvailable: boolean;
-  purpose: string;
-  costCode: string;
+
   glAccount: string;
 };
 
