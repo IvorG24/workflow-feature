@@ -1,7 +1,7 @@
-import { checkItemCode, checkItemName } from "@/backend/api/get";
+import { checkItemName } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ITEM_PURPOSE_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
+import { ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -47,7 +47,7 @@ const CreateItem = ({
         descriptions: [{ description: "" }],
         generalName: "",
         unit: "",
-        purpose: "",
+
         isAvailable: true,
       },
     });
@@ -70,8 +70,6 @@ const CreateItem = ({
           item_general_name: toUpper(data.generalName),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
-          item_purpose: data.purpose,
-          item_cost_code: toUpper(data.costCode),
           item_gl_account: toUpper(data.glAccount),
           item_team_id: activeTeam.team_id,
         },
@@ -121,7 +119,7 @@ const CreateItem = ({
                 validate: {
                   duplicate: async (value) => {
                     const isExisting = await checkItemName(supabaseClient, {
-                      itemName: value,
+                      itemName: toUpper(value),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? "Item already exists" : true;
@@ -164,59 +162,6 @@ const CreateItem = ({
                 },
               }}
             />
-            <Controller
-              control={control}
-              name="purpose"
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  value={value as string}
-                  onChange={onChange}
-                  data={ITEM_PURPOSE_CHOICES}
-                  withAsterisk
-                  error={formState.errors.purpose?.message}
-                  searchable
-                  clearable
-                  label="Purpose"
-                />
-              )}
-              rules={{
-                required: {
-                  value: true,
-                  message: "Purpose is required",
-                },
-              }}
-            />
-            <TextInput
-              {...register("costCode", {
-                required: { message: "Cost Code is required", value: true },
-                minLength: {
-                  message: "Cost Code must have atleast 3 characters",
-                  value: 3,
-                },
-                maxLength: {
-                  message: "Cost Code must be shorter than 500 characters",
-                  value: 500,
-                },
-                validate: {
-                  duplicate: async (value) => {
-                    const isExisting = await checkItemCode(supabaseClient, {
-                      itemCode: value,
-                      teamId: activeTeam.team_id,
-                    });
-                    return isExisting ? "Cost Code already exists" : true;
-                  },
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Cost Code"
-              error={formState.errors.costCode?.message}
-              sx={{
-                input: {
-                  textTransform: "uppercase",
-                },
-              }}
-            />
             <TextInput
               {...register("glAccount", {
                 required: { message: "GL Account is required", value: true },
@@ -227,15 +172,6 @@ const CreateItem = ({
                 maxLength: {
                   message: "GL Account must be shorter than 500 characters",
                   value: 500,
-                },
-                validate: {
-                  duplicate: async (value) => {
-                    const isExisting = await checkItemCode(supabaseClient, {
-                      itemCode: value,
-                      teamId: activeTeam.team_id,
-                    });
-                    return isExisting ? "GL Account already exists" : true;
-                  },
                 },
               })}
               withAsterisk

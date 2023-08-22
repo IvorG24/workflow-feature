@@ -532,7 +532,25 @@ export const getTeamAdminList = async (
     .or("team_member_role.eq.ADMIN, team_member_role.eq.OWNER");
   if (error) throw error;
 
-  return data;
+  const formattedData = data as unknown as {
+    team_member_id: string;
+    team_member_role: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+    };
+  }[];
+
+  return formattedData.sort((a, b) =>
+    `${a.team_member_user.user_first_name}` >
+    `${b.team_member_user.user_first_name}`
+      ? 1
+      : `${b.team_member_user.user_first_name}` >
+        `${a.team_member_user.user_first_name}`
+      ? -1
+      : 0
+  );
 };
 
 // Get specific form
@@ -850,24 +868,6 @@ export const checkItemName = async (
     .from("item_table")
     .select("*", { count: "exact", head: true })
     .eq("item_general_name", itemName)
-    .eq("item_is_disabled", false)
-    .eq("item_team_id", teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// check if item's code already exists
-export const checkItemCode = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { itemCode: string; teamId: string }
-) => {
-  const { itemCode, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from("item_table")
-    .select("*", { count: "exact", head: true })
-    .or(`item_cost_code.eq.${itemCode}, item_gl_account.eq.${itemCode}`)
     .eq("item_is_disabled", false)
     .eq("item_team_id", teamId);
   if (error) throw error;
@@ -1651,7 +1651,7 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].quantity = Number(
             response.request_response
           );
-        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
+        } else if (fieldName === "GL Account") {
         } else {
           options[duplicatableSectionId].description += `${
             options[duplicatableSectionId].description ? ", " : ""
