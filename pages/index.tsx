@@ -5,7 +5,6 @@ const Page = () => {
   return (
     <>
       <Meta description="Home Page" url="/" />
-
       <HomePage />
     </>
   );
