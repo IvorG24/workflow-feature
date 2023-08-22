@@ -2061,6 +2061,63 @@ $$ LANGUAGE plv8;
 
 -- End: Update Form Group
 
+-- Start: Get all team members without existing member of the group
+
+CREATE FUNCTION get_all_team_members_without_group_members(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let member_data;
+  plv8.subtransaction(function(){
+    const {
+     teamId,
+     groupId
+    } = input_data;
+
+    const teamGroupMemberData = plv8.execute(`SELECT team_member_id FROM team_group_member_table where team_group_id='${groupId}';`);
+
+    const condition = teamGroupMemberData.map((member) => `'${member.team_member_id}'`).join(",");
+
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
+
+    member_data = teamMemberList.slice().sort((a, b) =>
+      a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
+    )
+ });
+ return member_data;
+$$ LANGUAGE plv8;
+
+-- End: Get all team members without existing member of the group
+
+-- End: Get all team members without existing member of the project
+
+CREATE FUNCTION get_all_team_members_without_project_members(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let member_data;
+  plv8.subtransaction(function(){
+    const {
+     teamId,
+     projectId
+    } = input_data;
+
+    const teamProjectMemberData = plv8.execute(`SELECT team_member_id FROM team_project_member_table where team_project_id='${projectId}';`);
+
+    const condition = teamProjectMemberData.map((member) => `'${member.team_member_id}'`).join(",");
+
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
+
+    member_data = teamMemberList.slice().sort((a, b) =>
+      a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
+    )
+
+ });
+ return member_data;
+$$ LANGUAGE plv8;
+
+-- End: Get all team members without existing member of the project
+
 ---------- End: FUNCTIONS
 
 
