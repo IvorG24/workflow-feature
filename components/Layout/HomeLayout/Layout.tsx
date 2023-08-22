@@ -1,5 +1,6 @@
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { useState } from "react";
+import Footer from "./Footer";
 import Header from "./Header/Header";
 import Navbar from "./Navbar/Navbar";
 
@@ -36,6 +37,8 @@ const Layout = ({ children }: LayoutProps) => {
           setOpenNavbar={() => setOpenNavbar((o) => !o)}
         />
       }
+      padding={0}
+      footer={<Footer />}
     >
       {children}
     </AppShell>
