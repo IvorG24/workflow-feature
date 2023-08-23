@@ -1351,6 +1351,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...quotation.option,
       ...chequeReference.option,
       ...audit.option,
+      ...withdrawalSlip.option,
     ],
   };
 };
