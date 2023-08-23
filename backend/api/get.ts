@@ -2945,6 +2945,33 @@ export const getFormSigner = async (
   return data;
 };
 
+export const getMemberUserData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `team_member_user: team_member_user_id!inner(
+        user_id, 
+        user_first_name, 
+        user_last_name, 
+        user_username, 
+        user_avatar
+      )`
+    )
+    .eq("team_member_id", params.teamMemberId)
+    .limit(1);
+
+  if (data) {
+    const commentTeamMember = data[0];
+    return commentTeamMember as RequestWithResponseType["request_comment"][0]["comment_team_member"];
+  } else {
+    return null;
+  }
+};
 // Fetch withdrawal slip item descriptions
 export const getWithdrawalSlipItemDescriptions = async (
   supabaseClient: SupabaseClient<Database>,

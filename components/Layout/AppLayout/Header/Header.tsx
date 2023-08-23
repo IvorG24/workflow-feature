@@ -1,4 +1,11 @@
+import {
+  useNotificationActions,
+  useNotificationList,
+} from "@/stores/useNotificationStore";
 import { useActiveApp } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
+import { Database } from "@/utils/database";
+import { NotificationTableRow } from "@/utils/types";
 import {
   Box,
   Burger,
@@ -8,10 +15,11 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { lowerCase } from "lodash";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { MouseEventHandler } from "react";
+import { MouseEventHandler, useEffect } from "react";
 import HeaderMenu from "./HeaderMenu";
 
 type HeaderProps = {
@@ -23,6 +31,43 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   const theme = useMantineTheme();
   const activeApp = useActiveApp();
   const router = useRouter();
+  const user = useUserTeamMember();
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const { setNotificationList, setUnreadNotification } =
+    useNotificationActions();
+  const notificationList = useNotificationList();
+
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabaseClient
+      .channel("realtime notification")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notification_table",
+          filter: `notification_user_id=eq.${user.team_member_user_id}`,
+        },
+        (payload) => {
+          const updatedNotificationList = [
+            payload.new as NotificationTableRow,
+            ...notificationList,
+          ];
+          const unreadNotificationCount = updatedNotificationList.filter(
+            (notification) => !notification.notification_is_read
+          ).length;
+
+          setNotificationList(updatedNotificationList);
+          setUnreadNotification(unreadNotificationCount);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeChannel(channel);
+    };
+  }, [supabaseClient, user, notificationList]);
 
   return (
     <MantineHeader height={{ base: 50, md: 70 }} p="md">
