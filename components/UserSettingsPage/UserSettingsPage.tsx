@@ -10,6 +10,7 @@ import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -54,6 +55,13 @@ const UserSettingsPage = ({ user }: Props) => {
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [signatureUrl, setSignatureUrl] = useState("");
   const [isUpdatingSignature, setIsUpdatingSignature] = useState(false);
+
+  const userData = useUser();
+  const userMetadata = userData?.app_metadata;
+  const isUserEmailProviderOnly =
+    userMetadata?.provider === "email" &&
+    userMetadata.providers.includes("email") &&
+    userMetadata.providers.length === 1;
 
   useEffect(() => {
     const getUserSignatureUrl = async () => {
@@ -139,11 +147,30 @@ const UserSettingsPage = ({ user }: Props) => {
   const handleChangePassword = async (data: ChangePasswordForm) => {
     try {
       setIsUpdatingPassword(true);
+      let passwordCheckError = false;
+
+      if (isUserEmailProviderOnly) {
+        const { error } = await supabaseClient.auth.signInWithPassword({
+          email: user.user_email,
+          password: data.old_password,
+        });
+
+        if (error) {
+          passwordCheckError = true;
+          notifications.show({
+            message: error?.message,
+            color: "red",
+          });
+        }
+      }
+      if (passwordCheckError) return;
+
       await resetPassword(supabaseClient, data.password);
       notifications.show({
         message: "Password updated.",
         color: "green",
       });
+
       changePasswordFormMethods.reset();
     } catch (error) {
       notifications.show({
@@ -212,6 +239,7 @@ const UserSettingsPage = ({ user }: Props) => {
         <ChangePassword
           onChangePassword={handleChangePassword}
           isUpdatingPassword={isUpdatingPassword}
+          isUserEmailProviderOnly={isUserEmailProviderOnly}
         />
       </FormProvider>
 

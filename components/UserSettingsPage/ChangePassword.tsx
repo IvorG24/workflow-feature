@@ -15,16 +15,20 @@ import { ChangePasswordForm } from "./UserSettingsPage";
 type Props = {
   onChangePassword: (data: ChangePasswordForm) => void;
   isUpdatingPassword: boolean;
+  isUserEmailProviderOnly: boolean;
 };
 
-const ChangePassword = ({ onChangePassword, isUpdatingPassword }: Props) => {
+const ChangePassword = ({
+  onChangePassword,
+  isUpdatingPassword,
+  isUserEmailProviderOnly,
+}: Props) => {
   const {
     register,
     handleSubmit,
     getValues,
     formState: { errors, isDirty },
   } = useFormContext<ChangePasswordForm>();
-
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
       <LoadingOverlay
@@ -38,19 +42,20 @@ const ChangePassword = ({ onChangePassword, isUpdatingPassword }: Props) => {
             <Text weight={600}>Change Password</Text>
 
             <Divider mt={-12} />
-
-            <PasswordInput
-              {...register("old_password", {
-                required: "Old password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must have atleast 6 characters.",
-                },
-              })}
-              error={errors.old_password?.message}
-              placeholder="Old Password"
-              label="Old Password"
-            />
+            {isUserEmailProviderOnly && (
+              <PasswordInput
+                {...register("old_password", {
+                  required: "Old password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Password must have atleast 6 characters.",
+                  },
+                })}
+                error={errors.old_password?.message}
+                placeholder="Old Password"
+                label="Old Password"
+              />
+            )}
 
             <PasswordInputWithStrengthMeter label="New Password" />
 
