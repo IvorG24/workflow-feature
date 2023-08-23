@@ -1351,6 +1351,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...quotation.option,
       ...chequeReference.option,
       ...audit.option,
+      ...withdrawalSlip.option,
     ],
   };
 };
@@ -1502,4 +1503,15 @@ export const FORMSLY_FORM_ORDER = [
   "Withdrawal Slip",
   "Release Quantity",
   "Audit",
+];
+
+export const CHEQUE_REFERENCE_FIELDS_ORDER = [
+  "Treasury Status",
+  "Cheque Cancelled",
+  "Cheque Printed Date",
+  "Cheque Clearing Date",
+  "Cheque First Signatory Name",
+  "Cheque First Date Signed",
+  "Cheque Second Signatory Name",
+  "Cheque Second Date Signed",
 ];
