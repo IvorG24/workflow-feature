@@ -1100,6 +1100,8 @@ const SSOTSpreadsheetView = ({
         }
       });
 
+      
+
       return (
         <tr
           key={request.quotation_request_id}
@@ -1119,7 +1121,9 @@ const SSOTSpreadsheetView = ({
           {showQuotationColumnList["purchaser"] && (
             <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
           )}
-          {showQuotationColumnList["supplier"] && <td>{supplier}</td>}
+          {showQuotationColumnList["supplier"] && (
+            <td style={{ wordBreak: "break-all" }}>{supplier}</td>
+          )}
           {showQuotationColumnList["supplier_quotation"] && (
             <td>
               <ActionIcon

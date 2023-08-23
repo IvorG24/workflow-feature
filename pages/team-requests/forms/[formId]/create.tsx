@@ -454,7 +454,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           }
 
           const items = await getItemResponseForRO(supabaseClient, {
-            requestId: `${context.query.sourcedItemId}`,
+            requestId: `${context.query.releaseOrderId}`,
           });
 
           const sourceProjectList: Record<string, string> = {};
