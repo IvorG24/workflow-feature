@@ -295,7 +295,7 @@ CREATE TABLE supplier_table(
 
 -- Start: Get current date
 
-CREATE FUNCTION get_current_date()
+CREATE OR REPLACE FUNCTION get_current_date()
 RETURNS TIMESTAMPTZ
 AS $$
 BEGIN
@@ -312,7 +312,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 
 -- Start: Get SSOT
 
-CREATE FUNCTION get_ssot(
+CREATE OR REPLACE FUNCTION get_ssot(
     input_data JSON
 )
 RETURNS JSON as $$
@@ -669,7 +669,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create user
 
-CREATE FUNCTION create_user(
+CREATE OR REPLACE FUNCTION create_user(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -770,7 +770,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Approve or reject request
     
-CREATE FUNCTION approve_or_reject_request(
+CREATE OR REPLACE FUNCTION approve_or_reject_request(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -806,7 +806,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create formsly premade forms
 
-CREATE FUNCTION create_formsly_premade_forms(
+CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -836,7 +836,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create item
 
-CREATE FUNCTION create_item(
+CREATE OR REPLACE FUNCTION create_item(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -907,7 +907,7 @@ $$ LANGUAGE plv8;
 -- Start: Create team invitation
 
 
-CREATE FUNCTION create_team_invitation(
+CREATE OR REPLACE FUNCTION create_team_invitation(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -975,7 +975,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get user's active team id
 
-CREATE FUNCTION get_user_active_team_id(
+CREATE OR REPLACE FUNCTION get_user_active_team_id(
     user_id TEXT
 )
 RETURNS TEXT as $$
@@ -999,7 +999,7 @@ $$ LANGUAGE plv8;
 
 -- Start: check if Requisition form can be activated
 
-CREATE FUNCTION check_requisition_form_status(
+CREATE OR REPLACE FUNCTION check_requisition_form_status(
     team_id TEXT,
     form_id TEXT
 )
@@ -1028,7 +1028,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Transfer ownership 
 
-CREATE FUNCTION transfer_ownership(
+CREATE OR REPLACE FUNCTION transfer_ownership(
     owner_id TEXT,
     member_id TEXT
 )
@@ -1044,7 +1044,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Accept team invitation
 
-CREATE FUNCTION accept_team_invitation(
+CREATE OR REPLACE FUNCTION accept_team_invitation(
     invitation_id TEXT,
     team_id TEXT,
     user_id TEXT
@@ -1068,7 +1068,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Update request status to canceled
 
-CREATE FUNCTION cancel_request(
+CREATE OR REPLACE FUNCTION cancel_request(
     request_id TEXT,
     member_id TEXT,
     comment_type TEXT,
@@ -1086,7 +1086,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create request form
 
-CREATE FUNCTION create_request_form(
+CREATE OR REPLACE FUNCTION create_request_form(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1184,7 +1184,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get all notification
 
-CREATE FUNCTION get_all_notification(
+CREATE OR REPLACE FUNCTION get_all_notification(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1216,7 +1216,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Update form signer
 
-CREATE FUNCTION update_form_signer(
+CREATE OR REPLACE FUNCTION update_form_signer(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1247,7 +1247,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
-CREATE FUNCTION check_requisition_quantity(
+CREATE OR REPLACE FUNCTION check_requisition_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1339,7 +1339,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
 
-CREATE FUNCTION check_withdrawal_slip_quantity(
+CREATE OR REPLACE FUNCTION check_withdrawal_slip_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1431,7 +1431,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
 
-CREATE FUNCTION check_ro_item_quantity(
+CREATE OR REPLACE FUNCTION check_ro_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1525,7 +1525,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating rir item quantity are less than the quotation quantity
 
-CREATE FUNCTION check_rir_item_quantity(
+CREATE OR REPLACE FUNCTION check_rir_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1617,7 +1617,7 @@ $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
 
-CREATE FUNCTION check_tranfer_receipt_item_quantity(
+CREATE OR REPLACE FUNCTION check_tranfer_receipt_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1711,7 +1711,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Fetch request list
 
-CREATE FUNCTION fetch_request_list(
+CREATE OR REPLACE FUNCTION fetch_request_list(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1855,7 +1855,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Approve sourced requisition request
 
-CREATE FUNCTION approve_sourced_requisition_request(
+CREATE OR REPLACE FUNCTION approve_sourced_requisition_request(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -1907,7 +1907,7 @@ $$ LANGUAGE plv8;
 
 
 -- Start: Create Team Project
-CREATE FUNCTION create_team_project(
+CREATE OR REPLACE FUNCTION create_team_project(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1937,7 +1937,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Insert Group Member
 
-CREATE FUNCTION insert_group_member(
+CREATE OR REPLACE FUNCTION insert_group_member(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1989,7 +1989,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Insert Project Member
 
-CREATE FUNCTION insert_project_member(
+CREATE OR REPLACE FUNCTION insert_project_member(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -2041,7 +2041,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Update Form Group
 
-CREATE FUNCTION update_form_group(
+CREATE OR REPLACE FUNCTION update_form_group(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -2066,7 +2066,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get all team members without existing member of the group
 
-CREATE FUNCTION get_all_team_members_without_group_members(
+CREATE OR REPLACE FUNCTION get_all_team_members_without_group_members(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -2084,9 +2084,9 @@ RETURNS JSON AS $$
     let teamMemberList = [];
     
     if(condition.length !== 0){
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition})`);
     }else{
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}'`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
     }
 
     member_data = teamMemberList.sort((a, b) =>
@@ -2100,7 +2100,7 @@ $$ LANGUAGE plv8;
 
 -- End: Get all team members without existing member of the project
 
-CREATE FUNCTION get_all_team_members_without_project_members(
+CREATE OR REPLACE FUNCTION get_all_team_members_without_project_members(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -2117,10 +2117,10 @@ RETURNS JSON AS $$
 
     let teamMemberList = []
     
-    if(teamMemberList.length !== 0){
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_id NOT IN (${condition});`);
+    if(condition.length !== 0){
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition});`);
     }else{
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}'`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
     }
 
     member_data = teamMemberList.sort((a, b) =>

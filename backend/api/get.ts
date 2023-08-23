@@ -2505,7 +2505,8 @@ export const getTeamGroupMemberList = async (
       `,
       { count: "exact" }
     )
-    .eq("team_group_id", groupId);
+    .eq("team_group_id", groupId)
+    .eq("team_member.team_member_is_disabled", false);
 
   if (search) {
     query = query.or(
@@ -2579,7 +2580,8 @@ export const getTeamProjectMemberList = async (
       `,
       { count: "exact" }
     )
-    .eq("team_project_id", projectId);
+    .eq("team_project_id", projectId)
+    .eq("team_member.team_member_is_disabled", false);
 
   if (search) {
     query = query.or(
