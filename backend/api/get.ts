@@ -2958,7 +2958,7 @@ export const getWithdrawalSlipItemDescriptions = async (
   const { data: form, error: formError } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_team_member: form_team_member_id(team_member_team_id)"
+      "form_id, form_team_member: form_team_member_id!inner(team_member_team_id)"
     )
     .eq("form_name", "Requisition")
     .eq("form_is_formsly_form", true)
