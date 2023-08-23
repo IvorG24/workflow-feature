@@ -3,11 +3,6 @@ import {
   readAllNotification,
   updateNotificationStatus,
 } from "@/backend/api/update";
-import {
-  useNotificationActions,
-  useNotificationList,
-  useUnreadNotificationCount,
-} from "@/stores/useNotificationStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { DEFAULT_NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -24,7 +19,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { capitalize, toLower } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import NotificationList from "./NotificationList";
 
 type Props = {
@@ -53,12 +48,6 @@ const NotificationPage = ({
   const [totalNotificationCount, setTotalNotificationCount] = useState(
     initialTotalNotificationCount
   );
-  const storeNotificationList = useNotificationList();
-  const unreadNotificationCount = useUnreadNotificationCount();
-  const {
-    setUnreadNotification,
-    setNotificationList: setStoreNotificationList,
-  } = useNotificationActions();
   const [activePage, setActivePage] = useState(Number(initialPage));
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,22 +58,14 @@ const NotificationPage = ({
         userId: userId,
         appType: app,
       });
-
-      setNotificationList((prev) =>
-        prev.map((notification) => ({
-          ...notification,
-          notification_is_read: true,
-        }))
-      );
-
-      const updatedStoreNotificationList = storeNotificationList.map(
-        (notification) => ({
-          ...notification,
-          notification_is_read: true,
+      setNotificationList((notificationList) =>
+        notificationList.map((notification) => {
+          return {
+            ...notification,
+            notification_is_read: true,
+          };
         })
       );
-      setStoreNotificationList(updatedStoreNotificationList);
-      setUnreadNotification(0);
       notifications.show({
         message: "All notifications read.",
         color: "green",
@@ -101,19 +82,6 @@ const NotificationPage = ({
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await updateNotificationStatus(supabaseClient, { notificationId });
-      const updatedStoreNotificationList = storeNotificationList.map(
-        (notification) => {
-          if (notification.notification_id === notificationId) {
-            return {
-              ...notification,
-              notification_is_read: true,
-            };
-          }
-          return notification;
-        }
-      );
-      setStoreNotificationList(updatedStoreNotificationList);
-      setUnreadNotification(unreadNotificationCount - 1);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -147,14 +115,6 @@ const NotificationPage = ({
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (router.query.page === "1" || !router.query.page) {
-      setNotificationList(
-        storeNotificationList.slice(0, DEFAULT_NOTIFICATION_LIST_LIMIT)
-      );
-    }
-  }, [storeNotificationList, router.query]);
 
   return (
     <Container p={0}>

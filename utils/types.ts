@@ -283,7 +283,6 @@ export type RequestWithResponseType = RequestTableRow & {
     comment_date_created: string;
     comment_content: string;
     comment_is_edited: boolean;
-    comment_is_disabled: boolean;
     comment_last_updated: string;
     comment_type: CommentType;
     comment_team_member_id: string;
@@ -293,7 +292,7 @@ export type RequestWithResponseType = RequestTableRow & {
         user_first_name: string;
         user_last_name: string;
         user_username: string;
-        user_avatar: string | null;
+        user_avatar: string;
       };
     };
   }[];
