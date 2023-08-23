@@ -147,7 +147,6 @@ const UserSettingsPage = ({ user }: Props) => {
   const handleChangePassword = async (data: ChangePasswordForm) => {
     try {
       setIsUpdatingPassword(true);
-      let passwordCheckError = false;
 
       if (isUserEmailProviderOnly) {
         const { error } = await supabaseClient.auth.signInWithPassword({
@@ -155,17 +154,12 @@ const UserSettingsPage = ({ user }: Props) => {
           password: data.old_password,
         });
 
-        if (error) {
-          passwordCheckError = true;
-          notifications.show({
-            message: error?.message,
-            color: "red",
-          });
-        }
+        if (error) throw error.message;
       }
-      if (passwordCheckError) return;
 
-      await resetPassword(supabaseClient, data.password);
+      const { error } = await resetPassword(supabaseClient, data.password);
+      if (error) throw error.message;
+
       notifications.show({
         message: "Password updated.",
         color: "green",
@@ -173,8 +167,12 @@ const UserSettingsPage = ({ user }: Props) => {
 
       changePasswordFormMethods.reset();
     } catch (error) {
+      let errorMessage = "";
+      errorMessage = error as unknown as string;
+      if (errorMessage === "Invalid login credentials")
+        errorMessage = "Wrong old password.";
       notifications.show({
-        message: "Something went wrong. Please try again later.",
+        message: errorMessage,
         color: "red",
       });
     } finally {
