@@ -48,11 +48,6 @@ const RequestActionSection = ({
     });
   };
 
-  const canSignerTakeAction =
-    isUserSigner &&
-    requestStatus === "PENDING" &&
-    signer?.request_signer_status === "PENDING";
-
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -60,24 +55,26 @@ const RequestActionSection = ({
       </Title>
       <Space h="xl" />
       <Stack>
-        {canSignerTakeAction && (
-          <>
-            <Button
-              color="green"
-              fullWidth
-              onClick={() => handleAction("approve", "green")}
-            >
-              Approve Request
-            </Button>
-            <Button
-              color="red"
-              fullWidth
-              onClick={() => handleAction("reject", "red")}
-            >
-              Reject Request
-            </Button>
-          </>
-        )}
+        {isUserSigner &&
+          signer &&
+          signer.request_signer_status === "PENDING" && (
+            <>
+              <Button
+                color="green"
+                fullWidth
+                onClick={() => handleAction("approve", "green")}
+              >
+                Approve Request
+              </Button>
+              <Button
+                color="red"
+                fullWidth
+                onClick={() => handleAction("reject", "red")}
+              >
+                Reject Request
+              </Button>
+            </>
+          )}
         {isUserOwner && requestStatus === "PENDING" && (
           <>
             {/* <Button

@@ -28,7 +28,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { lowerCase } from "lodash";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import InviteMember from "./InviteMember";
 import CreateGroup from "./TeamGroup/CreateGroup";
@@ -74,7 +74,6 @@ const TeamPage = ({
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
 
-  const [initialMemberList, setInitialMemberList] = useState(teamMembers);
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
@@ -186,8 +185,7 @@ const TeamPage = ({
     setIsUpdatingTeamMembers(true);
     setTeamMemberPage(1);
     const { keyword } = data;
-    console.log(initialMemberList);
-    const newMemberList = initialMemberList.filter(
+    const newMemberList = teamMembers.filter(
       (member) =>
         lowerCase(member.team_member_user.user_first_name).includes(
           lowerCase(keyword)
@@ -215,17 +213,15 @@ const TeamPage = ({
         role,
       });
 
-      const updatedMemberList = initialMemberList.map((member) => {
-        if (member.team_member_id === memberId) {
+      setTeamMemberList((prev) => {
+        return prev.map((member) => {
+          if (member.team_member_id !== memberId) return member;
           return {
             ...member,
             team_member_role: role,
           };
-        }
-
-        return member;
+        });
       });
-      setInitialMemberList(updatedMemberList);
 
       notifications.show({
         message: "Team member role updated.",
@@ -320,63 +316,6 @@ const TeamPage = ({
     setTeamMemberList(newMemberList);
     setIsUpdatingTeamMembers(false);
   };
-
-  useEffect(() => {
-    const channel = supabaseClient
-      .channel("realtime teamMembers")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "team_member_table",
-          filter: `team_member_team_id=eq.${team.team_id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "UPDATE") {
-            console.log(payload);
-            if (payload.new.team_member_is_disabled) {
-              const removeMemberFromList = teamMemberList.filter(
-                (member) => member.team_member_id !== payload.new.team_member_id
-              );
-
-              setTeamMemberList(removeMemberFromList);
-              return;
-            }
-            const updatedMemberList = teamMemberList.map((member) => {
-              if (member.team_member_id === payload.new.team_member_id) {
-                return {
-                  ...member,
-                  team_member_role: payload.new.team_member_role,
-                };
-              }
-
-              return member;
-            });
-            setTeamMemberList(updatedMemberList);
-            setInitialMemberList((prev) =>
-              prev.map((member) => {
-                if (member.team_member_id === payload.new.team_member_id) {
-                  return {
-                    ...member,
-                    team_member_role: payload.new.team_member_role,
-                  };
-                }
-
-                return member;
-              })
-            );
-          } else if (payload.eventType === "INSERT") {
-            console.log(payload);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabaseClient.removeChannel(channel);
-    };
-  }, [supabaseClient, team.team_id, teamMemberList]);
 
   return (
     <Container>

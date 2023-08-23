@@ -182,6 +182,7 @@ const RequestListPage = ({
         </form>
       </FormProvider>
       <Space h="sm" />
+
       <Box h="fit-content" pos="relative">
         <LoadingOverlay
           visible={isFetchingRequestList}
@@ -244,6 +245,7 @@ const RequestListPage = ({
           </Text>
         )}
       </Box>
+
       <Flex justify="flex-end">
         <Pagination
           value={activePage}
