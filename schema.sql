@@ -295,7 +295,7 @@ CREATE TABLE supplier_table(
 
 -- Start: Get current date
 
-CREATE OR REPLACE get_current_date()
+CREATE OR REPLACE FUNCTION get_current_date()
 RETURNS TIMESTAMPTZ
 AS $$
 BEGIN
@@ -312,7 +312,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 
 -- Start: Get SSOT
 
-CREATE OR REPLACE get_ssot(
+CREATE OR REPLACE FUNCTION get_ssot(
     input_data JSON
 )
 RETURNS JSON as $$
@@ -669,7 +669,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create user
 
-CREATE OR REPLACE create_user(
+CREATE OR REPLACE FUNCTION create_user(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -770,7 +770,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Approve or reject request
     
-CREATE OR REPLACE approve_or_reject_request(
+CREATE OR REPLACE FUNCTION approve_or_reject_request(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -806,7 +806,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create formsly premade forms
 
-CREATE OR REPLACE create_formsly_premade_forms(
+CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -836,7 +836,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create item
 
-CREATE OR REPLACE create_item(
+CREATE OR REPLACE FUNCTION create_item(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -907,7 +907,7 @@ $$ LANGUAGE plv8;
 -- Start: Create team invitation
 
 
-CREATE OR REPLACE create_team_invitation(
+CREATE OR REPLACE FUNCTION create_team_invitation(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -975,7 +975,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get user's active team id
 
-CREATE OR REPLACE get_user_active_team_id(
+CREATE OR REPLACE FUNCTION get_user_active_team_id(
     user_id TEXT
 )
 RETURNS TEXT as $$
@@ -999,7 +999,7 @@ $$ LANGUAGE plv8;
 
 -- Start: check if Requisition form can be activated
 
-CREATE OR REPLACE check_requisition_form_status(
+CREATE OR REPLACE FUNCTION check_requisition_form_status(
     team_id TEXT,
     form_id TEXT
 )
@@ -1028,7 +1028,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Transfer ownership 
 
-CREATE OR REPLACE transfer_ownership(
+CREATE OR REPLACE FUNCTION transfer_ownership(
     owner_id TEXT,
     member_id TEXT
 )
@@ -1044,7 +1044,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Accept team invitation
 
-CREATE OR REPLACE accept_team_invitation(
+CREATE OR REPLACE FUNCTION accept_team_invitation(
     invitation_id TEXT,
     team_id TEXT,
     user_id TEXT
@@ -1061,7 +1061,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Update request status to canceled
 
-CREATE OR REPLACE cancel_request(
+CREATE OR REPLACE FUNCTION cancel_request(
     request_id TEXT,
     member_id TEXT,
     comment_type TEXT,
@@ -1079,7 +1079,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create request form
 
-CREATE OR REPLACE create_request_form(
+CREATE OR REPLACE FUNCTION create_request_form(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1177,7 +1177,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get all notification
 
-CREATE OR REPLACE get_all_notification(
+CREATE OR REPLACE FUNCTION get_all_notification(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1209,7 +1209,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Update form signer
 
-CREATE OR REPLACE update_form_signer(
+CREATE OR REPLACE FUNCTION update_form_signer(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1240,7 +1240,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
-CREATE OR REPLACE check_requisition_quantity(
+CREATE OR REPLACE FUNCTION check_requisition_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1332,7 +1332,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
 
-CREATE OR REPLACE check_withdrawal_slip_quantity(
+CREATE OR REPLACE FUNCTION check_withdrawal_slip_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1424,7 +1424,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
 
-CREATE OR REPLACE check_ro_item_quantity(
+CREATE OR REPLACE FUNCTION check_ro_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1518,7 +1518,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Check if the approving or creating rir item quantity are less than the quotation quantity
 
-CREATE OR REPLACE check_rir_item_quantity(
+CREATE OR REPLACE FUNCTION check_rir_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1610,7 +1610,7 @@ $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
 
-CREATE OR REPLACE check_tranfer_receipt_item_quantity(
+CREATE OR REPLACE FUNCTION check_tranfer_receipt_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1704,7 +1704,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Fetch request list
 
-CREATE OR REPLACE fetch_request_list(
+CREATE OR REPLACE FUNCTION fetch_request_list(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1848,7 +1848,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Approve sourced requisition request
 
-CREATE OR REPLACE approve_sourced_requisition_request(
+CREATE OR REPLACE FUNCTION approve_sourced_requisition_request(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -1900,7 +1900,7 @@ $$ LANGUAGE plv8;
 
 
 -- Start: Create Team Project
-CREATE OR REPLACE create_team_project(
+CREATE OR REPLACE FUNCTION create_team_project(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1930,7 +1930,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Insert Group Member
 
-CREATE OR REPLACE insert_group_member(
+CREATE OR REPLACE FUNCTION insert_group_member(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1982,7 +1982,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Insert Project Member
 
-CREATE OR REPLACE insert_project_member(
+CREATE OR REPLACE FUNCTION insert_project_member(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -2034,7 +2034,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Update Form Group
 
-CREATE OR REPLACE update_form_group(
+CREATE OR REPLACE FUNCTION update_form_group(
     input_data JSON
 )
 RETURNS VOID AS $$
