@@ -1052,8 +1052,15 @@ CREATE OR REPLACE FUNCTION accept_team_invitation(
 RETURNS VOID as $$
   plv8.subtransaction(function(){
 
+    const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
+
+    if (isUserPreviousMember[0].count > 0) {
+      plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=FALSE WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}'`);
+    } else {
+      plv8.execute(`INSERT INTO team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
+    }
+
     plv8.execute(`UPDATE invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
-    plv8.execute(`INSERT INTO team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
  });
 $$ LANGUAGE plv8;
 
@@ -2828,7 +2835,7 @@ USING (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
-  )
+  ) OR team_member_user_id = auth.uid()
 );
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
