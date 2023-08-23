@@ -187,12 +187,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           teamId,
           memberId: `${teamMember?.team_member_id}`,
         });
-
         const itemDescriptionFields = await getWithdrawalSlipItemDescriptions(
           supabaseClient,
           { requestId: request.request_id, teamId: teamId }
         );
-
         return {
           props: {
             request: {
