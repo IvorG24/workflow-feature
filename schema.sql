@@ -1049,7 +1049,8 @@ CREATE OR REPLACE FUNCTION accept_team_invitation(
     team_id TEXT,
     user_id TEXT
 )
-RETURNS VOID as $$
+RETURNS JSON as $$
+  let user_team_list
   plv8.subtransaction(function(){
 
     const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
@@ -1066,7 +1067,16 @@ RETURNS VOID as $$
     }
 
     plv8.execute(`UPDATE invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
+
+    user_team_list = plv8.execute(`SELECT tt.* 
+      FROM team_member_table as tm
+      JOIN team_table as tt ON tt.team_id = tm.team_member_team_id
+      WHERE team_member_is_disabled=FALSE 
+      AND team_member_user_id='${user_id}'
+      ORDER BY tt.team_date_created DESC`)
+
  });
+ return user_team_list;
 $$ LANGUAGE plv8;
 
 -- End: Accept team invitation
