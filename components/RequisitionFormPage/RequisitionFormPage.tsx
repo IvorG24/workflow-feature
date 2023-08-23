@@ -454,11 +454,14 @@ const RequisitionFormPage = ({
           />
         </FormProvider>
 
-        {!isEqual(initialRequester, watchGroup) ||
-        !isEqual(
-          initialGroupBoolean,
-          requesterMethods.getValues("isForEveryone")
-        ) ? (
+        {(!isEqual(initialRequester, watchGroup) ||
+          !isEqual(
+            initialGroupBoolean,
+            requesterMethods.getValues("isForEveryone")
+          )) &&
+        (requesterMethods.getValues("isForEveryone") ||
+          (!requesterMethods.getValues("isForEveryone") &&
+            requesterMethods.getValues("groupList").length !== 0)) ? (
           <Center mt="xl">
             <Button loading={isSavingRequester} onClick={handleSaveRequesters}>
               Save Changes
