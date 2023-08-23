@@ -1,5 +1,6 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
+  CHEQUE_REFERENCE_FIELDS_ORDER,
   DEFAULT_NUMBER_SSOT_ROWS,
   REQUISITION_FIELDS_ORDER,
 } from "@/utils/constant";
@@ -498,6 +499,17 @@ const SSOTSpreadsheetView = ({
     request: SSOTType["requisition_cheque_reference_request"]
   ) => {
     return request.map((request) => {
+      const fields = request.cheque_reference_request_response.sort(
+        (a: SSOTResponseType, b: SSOTResponseType) => {
+          return (
+            CHEQUE_REFERENCE_FIELDS_ORDER.indexOf(
+              a.request_response_field_name
+            ) -
+            CHEQUE_REFERENCE_FIELDS_ORDER.indexOf(b.request_response_field_name)
+          );
+        }
+      );
+
       return (
         <tr
           key={request.cheque_reference_request_id}
@@ -518,43 +530,42 @@ const SSOTSpreadsheetView = ({
             <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
           )}
 
-          {request.cheque_reference_request_response
-            .slice(1)
-            .map((response, index) => {
-              const fieldName =
-                response.request_response_field_name.toLowerCase();
-              const columnPropName = fieldName.replace(/\s+/g, "_");
-              const showColumn = showChequeReferenceColumnList[columnPropName];
+          {fields.map((response, index) => {
+            const fieldName =
+              response.request_response_field_name.toLowerCase();
 
-              return (
-                showColumn && (
-                  <td key={index}>
-                    {response.request_response_field_type === "DATE" ? (
-                      new Date(
-                        JSON.parse(response.request_response)
-                      ).toLocaleDateString()
-                    ) : response.request_response_field_type === "FILE" ? (
-                      <ActionIcon
-                        w="100%"
-                        variant="outline"
-                        onClick={() =>
-                          window.open(
-                            `${JSON.parse(response.request_response)}`,
-                            "_blank"
-                          )
-                        }
-                      >
-                        <Flex align="center" justify="center" gap={2}>
-                          <Text size={14}>File</Text> <IconFile size={14} />
-                        </Flex>
-                      </ActionIcon>
-                    ) : (
-                      `${JSON.parse(response.request_response)}`
-                    )}
-                  </td>
-                )
-              );
-            })}
+            const columnPropName = fieldName.replace(/\s+/g, "_");
+            const showColumn = showChequeReferenceColumnList[columnPropName];
+
+            return (
+              showColumn && (
+                <td key={index}>
+                  {response.request_response_field_type === "DATE" ? (
+                    new Date(
+                      JSON.parse(response.request_response)
+                    ).toLocaleDateString()
+                  ) : response.request_response_field_type === "FILE" ? (
+                    <ActionIcon
+                      w="100%"
+                      variant="outline"
+                      onClick={() =>
+                        window.open(
+                          `${JSON.parse(response.request_response)}`,
+                          "_blank"
+                        )
+                      }
+                    >
+                      <Flex align="center" justify="center" gap={2}>
+                        <Text size={14}>File</Text> <IconFile size={14} />
+                      </Flex>
+                    </ActionIcon>
+                  ) : (
+                    `${JSON.parse(response.request_response)}`
+                  )}
+                </td>
+              )
+            );
+          })}
         </tr>
       );
     });
@@ -1099,8 +1110,6 @@ const SSOTSpreadsheetView = ({
           );
         }
       });
-
-      
 
       return (
         <tr

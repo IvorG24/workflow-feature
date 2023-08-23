@@ -1503,3 +1503,14 @@ export const FORMSLY_FORM_ORDER = [
   "Release Quantity",
   "Audit",
 ];
+
+export const CHEQUE_REFERENCE_FIELDS_ORDER = [
+  "Treasury Status",
+  "Cheque Cancelled",
+  "Cheque Printed Date",
+  "Cheque Clearing Date",
+  "Cheque First Signatory Name",
+  "Cheque First Date Signed",
+  "Cheque Second Signatory Name",
+  "Cheque Second Date Signed",
+];
