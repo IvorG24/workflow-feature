@@ -213,8 +213,7 @@ export const resetPassword = async (
   password: string
 ) => {
   const { error } = await supabaseClient.auth.updateUser({ password });
-  if (error) throw error;
-  return { error: `${error}` };
+  return { error: error };
 };
 
 // Create User
