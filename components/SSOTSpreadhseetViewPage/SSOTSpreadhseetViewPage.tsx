@@ -1456,6 +1456,13 @@ const SSOTSpreadsheetView = ({
             itemQuantity[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
+          } else if (
+            [
+              "Division Description",
+              "Level 2 Major Group Description",
+              "Level 2 Minor Group Description",
+            ].includes(item.request_response_field_name)
+          ) {
           } else {
             itemDescription[groupIndex] += `${
               item.request_response_field_name
