@@ -352,6 +352,7 @@ const CreateRequisitionRequestPage = ({
 
     if (value) {
       const costCode = await getCostCode(supabaseClient, { costCode: value });
+
       const generalField = [
         ...newSection.section_field.slice(0, 5),
         {
