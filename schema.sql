@@ -863,13 +863,14 @@ RETURNS JSON AS $$
         item_is_available,
         item_unit,
         item_gl_account,
-        item_team_id
+        item_team_id,
+        item_division_id
       },
       itemDescription
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_division_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_division_id}') RETURNING *;`)[0];
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
 
