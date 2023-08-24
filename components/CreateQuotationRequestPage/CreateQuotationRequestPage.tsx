@@ -1,4 +1,4 @@
-import { checkQuotationItemQuantity, getSupplier } from "@/backend/api/get";
+import { checkRequisitionQuantity, getSupplier } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -43,9 +43,16 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
+  requestProjectId: string;
+  requestingProject: string;
 };
 
-const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
+const CreateQuotationRequestPage = ({
+  form,
+  itemOptions,
+  requestProjectId,
+  requestingProject,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -101,7 +108,7 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -111,16 +118,17 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       if (!teamMember) return;
       setIsLoading(true);
 
-      const otpID = JSON.stringify(
+      const requisitionID = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
-      const itemSection = data.sections[3];
       const tempRequestId = uuidv4();
 
       const itemFieldList: RequestResponseTableRow[] = [];
       const quantityFieldList: RequestResponseTableRow[] = [];
 
-      data.sections.forEach((section) => {
+      const itemSection = data.sections.slice(3);
+
+      itemSection.forEach((section) => {
         section.section_field.forEach((field) => {
           if (field.field_name === "Item") {
             itemFieldList.push({
@@ -142,10 +150,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
         });
       });
 
-      const warningItemList = await checkQuotationItemQuantity(supabaseClient, {
-        otpID,
-        itemFieldId: itemSection.section_field[0].field_id,
-        quantityFieldId: itemSection.section_field[2].field_id,
+      const warningItemList = await checkRequisitionQuantity(supabaseClient, {
+        requisitionID,
         itemFieldList,
         quantityFieldList,
       });
@@ -157,7 +163,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the OTP
+                There are items that will exceed the quantity limit of the
+                Requisition
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -179,6 +186,8 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
+          isFormslyForm: true,
+          projectId: requestProjectId,
         });
 
         notifications.show({
@@ -387,7 +396,10 @@ const CreateQuotationRequestPage = ({ form, itemOptions }: Props) => {
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} />
+            <RequestFormDetails
+              formDetails={formDetails}
+              requestingProject={requestingProject}
+            />
             {formSections.map((section, idx) => {
               const sectionIdToFind = section.section_id;
               const sectionLastIndex = getValues("sections")

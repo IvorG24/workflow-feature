@@ -61,8 +61,6 @@ CREATE TABLE team_table (
   team_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
   team_logo VARCHAR(4000),
-  team_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
-  team_project_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
   
   team_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
@@ -71,13 +69,43 @@ CREATE TABLE team_member_table(
   team_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
   team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
-  team_member_group_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
-  team_member_project_list VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
 
   team_member_user_id UUID REFERENCES user_table(user_id) NOT NULL,
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   UNIQUE (team_member_team_id, team_member_user_id)
 );
+CREATE TABLE team_group_table(
+  team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_group_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_group_name VARCHAR(4000) NOT NULL,
+  team_group_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  team_group_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+CREATE TABLE team_project_table(
+  team_project_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_project_name VARCHAR(4000) NOT NULL,
+  team_project_code VARCHAR(4000) NOT NULL,
+  team_project_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+CREATE TABLE team_group_member_table(
+  team_group_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+
+  UNIQUE(team_group_id, team_member_id) 
+);
+CREATE TABLE team_project_member_table(
+  team_project_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_project_id UUID REFERENCES team_project_table(team_project_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  
+  UNIQUE(team_project_id, team_member_id) 
+);
+
 -- End: User and Teams
 
 -- Start: Notification and Invitation
@@ -116,7 +144,6 @@ CREATE TABLE form_table(
   form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
   form_app VARCHAR(4000) NOT NULL,
   form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
-  form_group VARCHAR(4000)[] DEFAULT ARRAY[]::VARCHAR[] NOT NULL,
 
   form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
@@ -128,7 +155,8 @@ CREATE TABLE signer_table (
   signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
-  signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+  signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  signer_team_project_id UUID REFERENCES team_project_table(team_project_id)
 );
 CREATE TABLE section_table (
   section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -158,18 +186,26 @@ CREATE TABLE option_table (
 
   option_field_id UUID REFERENCES field_table(field_id) NOT NULL
 );
+CREATE TABLE form_team_group_table(
+  form_team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  form_id UUID REFERENCES form_table(form_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+
+  UNIQUE(form_id, team_group_id) 
+);
 -- End: Form
 
 -- Start: Request
 CREATE TABLE request_table(
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  request_formsly_id VARCHAR(4000) UNIQUE,
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  request_additional_info VARCHAR(4000),
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
-  request_form_id UUID REFERENCES form_table(form_id) NOT NULL
+  request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  request_project_id UUID REFERENCES team_project_table(team_project_id)
 );
 CREATE TABLE request_response_table(
   request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -203,16 +239,14 @@ CREATE TABLE comment_table(
 );
 -- End: Comments
 
--- Start: Order to Purchase Form
+-- Start: Requisition Form
 CREATE TABLE item_table(
   item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_general_name VARCHAR(4000) NOT NULL,
   item_unit VARCHAR(4000) NOT NULL,
-  item_purpose VARCHAR(4000) NOT NULL,
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  item_cost_code VARCHAR(4000) NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL
@@ -239,7 +273,7 @@ CREATE TABLE item_description_field_table(
   item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
 );
 
--- End: Order to Purchase Form
+-- End: Requisition Form
 
 -- Start: Quotation Form
 
@@ -261,7 +295,7 @@ CREATE TABLE supplier_table(
 
 -- Start: Get current date
 
-CREATE FUNCTION get_current_date()
+CREATE OR REPLACE FUNCTION get_current_date()
 RETURNS TIMESTAMPTZ
 AS $$
 BEGIN
@@ -278,7 +312,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 
 -- Start: Get SSOT
 
-CREATE FUNCTION get_ssot(
+CREATE OR REPLACE FUNCTION get_ssot(
     input_data JSON
 )
 RETURNS JSON as $$
@@ -289,8 +323,9 @@ RETURNS JSON as $$
       pageNumber,
       rowLimit,
       search,
-      otpCondition,
-      numberOfCondition
+      requisitionFilter,
+      requisitionFilterCount,
+      supplierList
     } = input_data;
 
     const rowStart = (pageNumber - 1) * rowLimit;
@@ -299,32 +334,89 @@ RETURNS JSON as $$
     const team_owner = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${activeTeam}' AND team_member_role='OWNER'`)[0];
 
     // Fetch team formsly forms
-    const otp_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Order to Purchase' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const requisition_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Requisition' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const sourced_item_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Sourced Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const rir_purchased_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report (Purchased)' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const rir_sourced_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report (Sourced)' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const transfer_receipt_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
-    let otp_requests;
-
-    if(search){
-      otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_id='${search}'`);
-    }else if(otpCondition.length !== 0){
-    const condition = otpCondition.map(value => `request_response_table.request_response = '"${value}"'`).join(" OR ");
-      otp_requests = plv8.execute(`SELECT * FROM (SELECT request_table.request_id, request_table.request_date_created, request_table.request_team_member_id, request_response_table.request_response, ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id WHERE request_table.request_status = 'APPROVED' AND request_table.request_form_id = '${otp_form.form_id}' AND (${condition}) ORDER BY request_table.request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY) AS a WHERE a.RowNumber = ${numberOfCondition}`);
-    }else{
-      otp_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${otp_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
-    }
+    let requisition_requests;
+    let searchCondition = '';
+    let condition = '';
+    let supplierCondition = '';
     
-    ssot_data = otp_requests.map((otp) => {
-      // OTP request response
-      const otp_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${otp.request_id}'`);
-      
-      if(!otp_response) return;
+    if(search.length !== 0){
+      searchCondition = `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+    }
 
-      // OTP request response with fields
-      const otp_response_fields = otp_response.map(response => {
+    if(requisitionFilterCount || supplierList.length !== 0){
+      if(requisitionFilterCount){
+        condition = requisitionFilter.map(value => `request_response_table.request_response = '"${value}"'`).join(' OR ');
+      }
+
+      if(supplierList.length !== 0){
+        const quotationCondition = supplierList.map(supplier => `request_response_table.request_response='"${supplier}"'`).join(" OR ");
+        const quotationRequestIdList = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}' AND (${quotationCondition})`);
+
+        if(quotationRequestIdList.length === 0){
+          ssot_data = [];
+          return;
+        }
+
+        const sectionId = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${quotation_form.form_id}' AND section_name='ID'`)[0];
+        const fieldId = plv8.execute(`SELECT field_id FROM field_table WHERE field_section_id='${sectionId.section_id}' AND field_name='Requisition ID'`)[0];
+
+        const requisitionCondition = quotationRequestIdList.map(requestId => `(request_response_request_id='${requestId.request_id}' AND request_response_field_id='${fieldId.field_id}')`).join(" OR ");
+        const requisitionIdList = plv8.execute(`SELECT request_response FROM request_response_table WHERE ${requisitionCondition}`);
+
+        supplierCondition = requisitionIdList.map(requestId => `request_table.request_id = '${JSON.parse(requestId.request_response)}'`).join(' OR ');
+      }
+
+      let orCondition = [...(condition ? [`${condition}`] : []), ...(searchCondition ? [`${searchCondition}`] : [])].join(' OR ');
+
+      requisition_requests = plv8.execute(
+        `
+          SELECT * FROM (
+            SELECT 
+              request_table.request_id, 
+              request_table.request_formsly_id,
+              request_table.request_date_created, 
+              request_table.request_team_member_id, 
+              request_response_table.request_response, 
+              ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber 
+            FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id 
+            WHERE 
+              request_table.request_status = 'APPROVED'
+              AND request_table.request_form_id = '${requisition_form.form_id}'
+              AND (
+                ${[...(orCondition ? [`${orCondition}`] : []), ...(supplierCondition ? [`${supplierCondition}`] : [])].join(' AND ')}
+              )
+            ORDER BY request_table.request_date_created DESC
+          ) AS a 
+          WHERE a.RowNumber = ${requisitionFilterCount ? requisitionFilterCount : 1}
+          OFFSET ${rowStart} 
+          ROWS FETCH FIRST ${rowLimit} ROWS ONLY
+        `
+      );
+          
+    }else{
+      requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+    }
+
+    
+    
+    ssot_data = requisition_requests.map((requisition) => {
+      // Requisition request response
+      const requisition_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${requisition.request_id}'`);
+      
+      if(!requisition_response) return;
+
+      // Requisition request response with fields
+      const requisition_response_fields = requisition_response.map(response => {
         const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+
         return {
           request_response: response.request_response,
           request_response_field_name: field.field_name,
@@ -333,19 +425,18 @@ RETURNS JSON as $$
         }
       });
 
-      // OTP team member
-      const otp_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${otp.request_team_member_id}'`)[0];
+      // Requisition team member
+      const requisition_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${requisition.request_team_member_id}'`)[0];
 
-      const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
+      const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
       let quotation_list = [];
-
       if(quotation_ids.length !== 0){
         let quotation_condition = "";
         quotation_ids.forEach(quotation => {
           quotation_condition += `request_id='${quotation.request_id}' OR `;
         });
 
-        const quotation_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
         quotation_list = quotation_requests.map(quotation => {
           // Quotation request response
           const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
@@ -363,7 +454,7 @@ RETURNS JSON as $$
           // Quotation team member
           const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
-          const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_purchased_form.form_id}'`);
+          const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_form.form_id}'`);
           let rir_list = [];
           
           if(rir_ids.length !== 0){
@@ -372,7 +463,7 @@ RETURNS JSON as $$
               rir_condition += `request_id='${rir.request_id}' OR `;
             });
 
-            const rir_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+            const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
             rir_list = rir_requests.map(rir => {
               // rir request response
               const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
@@ -392,6 +483,7 @@ RETURNS JSON as $$
 
               return {
                 rir_request_id: rir.request_id,
+                rir_request_formsly_id: rir.request_formsly_id,
                 rir_request_date_created: rir.request_date_created,
                 rir_request_response: rir_response_fields,
                 rir_request_owner: rir_team_member,
@@ -401,6 +493,7 @@ RETURNS JSON as $$
 
           return {
             quotation_request_id: quotation.request_id,
+            quotation_request_formsly_id: quotation.request_formsly_id,
             quotation_request_date_created: quotation.request_date_created,
             quotation_request_response: quotation_response_fields,
             quotation_request_owner: quotation_team_member,
@@ -409,16 +502,127 @@ RETURNS JSON as $$
         });
       }
 
-      const cheque_reference_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${cheque_reference_form.form_id}'`);
-      let cheque_reference_list = [];
+      const sourced_item_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${sourced_item_form.form_id}'`);
+      let sourced_item_list = [];
+      if(sourced_item_ids.length !== 0){
+        let sourced_item_condition = "";
+        sourced_item_ids.forEach(sourced_item => {
+          sourced_item_condition += `request_id='${sourced_item.request_id}' OR `;
+        });
 
+        const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        sourced_item_list = sourced_item_requests.map(sourced_item => {
+          // Sourced Item request response
+          const sourced_item_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${sourced_item.request_id}'`);
+          
+          // Sourced Item request response with fields
+          const sourced_item_response_fields = sourced_item_response.map(response => {
+            const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+            return {
+              request_response: response.request_response,
+              request_response_field_name: field.field_name,
+              request_response_field_type: field.field_type,
+            }
+          });
+
+          // Sourced Item team member
+          const sourced_item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${sourced_item.request_team_member_id}'`)[0];
+
+          const ro_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${sourced_item.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${ro_form.form_id}'`);
+          let ro_list = [];
+          
+          if(ro_ids.length !== 0){
+            let ro_condition = "";
+            ro_ids.forEach(ro => {
+              ro_condition += `request_id='${ro.request_id}' OR `;
+            });
+
+            const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+            ro_list = ro_requests.map(ro => {
+              // ro request response
+              const ro_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${ro.request_id}'`);
+              
+              // ro request response with fields
+              const ro_response_fields = ro_response.map(response => {
+                const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+                return {
+                  request_response: response.request_response,
+                  request_response_field_name: field.field_name,
+                  request_response_field_type: field.field_type,
+                }
+              });
+
+              // ro team member
+              const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
+
+              const transfer_receipt_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${transfer_receipt_form.form_id}'`);
+              let transfer_receipt_list = [];
+              
+              if(transfer_receipt_ids.length !== 0){
+                let transfer_receipt_condition = "";
+                transfer_receipt_ids.forEach(transfer_receipt => {
+                  transfer_receipt_condition += `request_id='${transfer_receipt.request_id}' OR `;
+                });
+
+                const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+                transfer_receipt_list = transfer_receipt_requests.map(transfer_receipt => {
+                  // transfer_receipt request response
+                  const transfer_receipt_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${transfer_receipt.request_id}'`);
+                  
+                  // transfer_receipt request response with fields
+                  const transfer_receipt_response_fields = transfer_receipt_response.map(response => {
+                    const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+                    return {
+                      request_response: response.request_response,
+                      request_response_field_name: field.field_name,
+                      request_response_field_type: field.field_type,
+                    }
+                  });
+
+                  // transfer_receipt team member
+                  const transfer_receipt_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${transfer_receipt.request_team_member_id}'`)[0];
+
+                  return {
+                    transfer_receipt_request_id: transfer_receipt.request_id,
+                    transfer_receipt_request_formsly_id: transfer_receipt.request_formsly_id,
+                    transfer_receipt_request_date_created: transfer_receipt.request_date_created,
+                    transfer_receipt_request_response: transfer_receipt_response_fields,
+                    transfer_receipt_request_owner: transfer_receipt_team_member,
+                  }
+                });
+              }
+
+              return {
+                ro_request_id: ro.request_id,
+                ro_request_formsly_id: ro.request_formsly_id,
+                ro_request_date_created: ro.request_date_created,
+                ro_request_response: ro_response_fields,
+                ro_request_owner: ro_team_member,
+                ro_transfer_receipt_request: transfer_receipt_list
+              }
+            });
+          }
+
+          return {
+            sourced_item_request_id: sourced_item.request_id,
+            sourced_item_request_formsly_id: sourced_item.request_formsly_id,
+            sourced_item_request_date_created: sourced_item.request_date_created,
+            sourced_item_request_response: sourced_item_response_fields,
+            sourced_item_request_owner: sourced_item_team_member,
+            sourced_item_ro_request: ro_list
+          }
+        });
+      }
+
+      const cheque_reference_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${cheque_reference_form.form_id}'`);
+      let cheque_reference_list = [];
       if(cheque_reference_ids.length !== 0){
         let cheque_reference_condition = "";
         cheque_reference_ids.forEach(cheque_reference => {
           cheque_reference_condition += `request_id='${cheque_reference.request_id}' OR `;
         });
 
-        const cheque_reference_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${cheque_reference_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        const cheque_reference_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${cheque_reference_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
         cheque_reference_list = cheque_reference_requests.map(cheque_reference => {
           // cheque_reference request response
           const cheque_reference_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${cheque_reference.request_id}'`);
@@ -438,6 +642,7 @@ RETURNS JSON as $$
 
           return {
             cheque_reference_request_id: cheque_reference.request_id,
+            cheque_reference_request_formsly_id: cheque_reference.request_formsly_id,
             cheque_reference_request_date_created: cheque_reference.request_date_created,
             cheque_reference_request_response: cheque_reference_response_fields,
             cheque_reference_request_owner: cheque_reference_team_member,
@@ -445,50 +650,15 @@ RETURNS JSON as $$
         });
       }
 
-      const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${otp.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_sourced_form.form_id}'`);
-      let rir_list = [];
-
-      if(rir_ids.length !== 0){
-        let rir_condition = "";
-        rir_ids.forEach(rir => {
-          rir_condition += `request_id='${rir.request_id}' OR `;
-        });
-
-        const rir_requests = plv8.execute(`SELECT request_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
-        rir_list = rir_requests.map(rir => {
-          // rir request response
-          const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
-          
-          // rir request response with fields
-          const rir_response_fields = rir_response.map(response => {
-            const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
-            return {
-              request_response: response.request_response,
-              request_response_field_name: field.field_name,
-              request_response_field_type: field.field_type,
-            }
-          });
-
-          // rir team member
-          const rir_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${rir.request_team_member_id}'`)[0];
-
-          return {
-            rir_request_id: rir.request_id,
-            rir_request_date_created: rir.request_date_created,
-            rir_request_response: rir_response_fields,
-            rir_request_owner: rir_team_member,
-          }
-        });
-      }
-
       return {
-        otp_request_id: otp.request_id,
-        otp_request_date_created: otp.request_date_created,
-        otp_request_response: otp_response_fields,
-        otp_request_owner: otp_team_member,
-        otp_quotation_request: quotation_list,
-        otp_cheque_reference_request: cheque_reference_list,
-        otp_rir_request: rir_list,
+        requisition_request_id: requisition.request_id,
+        requisition_request_formsly_id: requisition.request_formsly_id,
+        requisition_request_date_created: requisition.request_date_created,
+        requisition_request_response: requisition_response_fields,
+        requisition_request_owner: requisition_team_member,
+        requisition_quotation_request: quotation_list,
+        requisition_sourced_item_request: sourced_item_list,
+        requisition_cheque_reference_request: cheque_reference_list,
       }
     })
  });
@@ -499,7 +669,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create user
 
-CREATE FUNCTION create_user(
+CREATE OR REPLACE FUNCTION create_user(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -530,7 +700,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create request
 
-CREATE FUNCTION create_request(
+CREATE OR REPLACE FUNCTION create_request(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -543,10 +713,48 @@ RETURNS JSON AS $$
       responseValues,
       signerValues,
       notificationValues,
+      formName,
+      isFormslyForm,
+      projectId
     } = input_data;
 
+    let request_formsly_id = 'NULL';
+    if(isFormslyForm===true) {
+      const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      const newCount = (Number(requestCount) + 1).toString(36).toUpperCase();
+      const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
+      
+      let endId = '';
+      if(formName==='Quotation') {
+        endId = `Q-${newCount}`;
+      } else if(formName==='Sourced Item') {
+        endId = `SI-${newCount}`;
+      } else if(formName==='Receiving Inspecting Report') {
+        endId = `RIR-${newCount}`;
+      } else if(formName==='Release Order') {
+        endId = `RO-${newCount}`;
+      } else if(formName==='Cheque Reference') {
+        endId = `C-${newCount}`;
+      } else if(formName==='Audit') {
+        endId = `A-${newCount}`;
+      } else if(formName==='Withdrawal Slip') {
+        endId = `WS-${newCount}`;
+      } else if(formName==='Transfer Receipt') {
+        endId = `TR-${newCount}`;
+      } else if(formName==='Release Quantity') {
+        endId = `RQ-${newCount}`;
+      } else {
+        endId = `-${newCount}`;
+      }
+
+      request_formsly_id = `${project.team_project_code}${endId}`;
+    }
     
-    request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
+    if (projectId === "") {
+      request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
+    } else {
+      request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id,request_formsly_id,request_project_id) VALUES ('${requestId}','${formId}','${teamMemberId}','${request_formsly_id}','${projectId}') RETURNING *;`)[0];
+    }
 
     plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
 
@@ -562,7 +770,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Approve or reject request
     
-CREATE FUNCTION approve_or_reject_request(
+CREATE OR REPLACE FUNCTION approve_or_reject_request(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -577,19 +785,18 @@ RETURNS VOID AS $$
       requestAction,
       memberId,
       teamId,
-      additionalInfo
     } = input_data;
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
 
-     plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}' WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
+    plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}' WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
     
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
     
     if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_additional_info='${additionalInfo}' WHERE request_id='${requestId}';`);
+      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}' WHERE request_id='${requestId}';`);
     }
     
  });
@@ -599,7 +806,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create formsly premade forms
 
-CREATE FUNCTION create_formsly_premade_forms(
+CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -629,7 +836,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create item
 
-CREATE FUNCTION create_item(
+CREATE OR REPLACE FUNCTION create_item(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -641,8 +848,6 @@ RETURNS JSON AS $$
         item_general_name,
         item_is_available,
         item_unit,
-        item_purpose,
-        item_cost_code,
         item_gl_account,
         item_team_id
       },
@@ -650,7 +855,7 @@ RETURNS JSON AS $$
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_purpose,item_cost_code,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_purpose}','${item_cost_code}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
 
@@ -669,7 +874,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description,
         field_type: "DROPDOWN",
-        field_order: 10,
+        field_order: 9,
         field_section_id: section_id,
         field_is_required: true,
       });
@@ -702,7 +907,7 @@ $$ LANGUAGE plv8;
 -- Start: Create team invitation
 
 
-CREATE FUNCTION create_team_invitation(
+CREATE OR REPLACE FUNCTION create_team_invitation(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -766,202 +971,11 @@ RETURNS JSON AS $$
   return invitation_data;
 $$ LANGUAGE plv8;
 
-
 -- End: Create team invitation
-
--- Start: Split OTP
-
-CREATE FUNCTION split_otp(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      otpForm,
-      formattedSection,
-      teamMemberId,
-      otpID,
-      remainingQuantityList,
-      approvedQuantityList,
-      formattedData,
-      teamId,
-      signerFullName
-    } = input_data;
-
-    // update parent top request status
-    plv8.execute(`UPDATE request_table SET request_status = 'PAUSED' WHERE request_id = '${otpID}'`);
-    
-    // create new otp request
-    const newOTPRequest = plv8.execute(`
-      INSERT INTO request_table 
-      (request_form_id, request_team_member_id, request_additional_info, request_status)
-      VALUES
-      ('${otpForm.form_id}', '${formattedData.request_team_member_id}', 'SOURCED_OTP', 'PENDING'),
-      ('${otpForm.form_id}', '${formattedData.request_team_member_id}', 'AVAILABLE_INTERNALLY', 'APPROVED')
-      RETURNING *;
-    `);
-
-    // request response data
-    const remainingOTPRequestResponseData = [];
-    const approvedOTPRequestResponseData = [];
-
-    // input the ID and Main section
-    formattedSection.slice(0, 2).map((section) => {
-      section.section_field.map((field) => {
-        remainingOTPRequestResponseData.push({
-          request_response:
-            field.field_name === "Parent OTP ID"
-              ? JSON.stringify(otpID)
-              : `${field.field_response?.request_response}`,
-          request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[0].request_id,
-          request_response_duplicatable_section_id:
-            section.section_duplicatable_id ?? null,
-        });
-        approvedOTPRequestResponseData.push({
-          request_response:
-            field.field_name === "Parent OTP ID"
-              ? JSON.stringify(otpID)
-              : `${field.field_response?.request_response}`,
-          request_response_field_id: field.field_id,
-          request_response_request_id: newOTPRequest[1].request_id,
-          request_response_duplicatable_section_id:
-            section.section_duplicatable_id ?? null,
-        });
-      });
-    });
-
-    // populate request response data
-    formattedSection.slice(2).map((section, sectionIndex) => {
-      if (remainingQuantityList[sectionIndex] !== 0) {
-        section.section_field.forEach((field) => {
-          if (field.field_response?.request_response) {
-            remainingOTPRequestResponseData.push({
-              request_response:
-                field.field_name === "Quantity"
-                  ? `${remainingQuantityList[sectionIndex]}`
-                  : `${field.field_response.request_response}`,
-              request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[0].request_id,
-              request_response_duplicatable_section_id:
-                field.field_response.request_response_duplicatable_section_id ??
-                null,
-            });
-          }
-        });
-      }
-      if (approvedQuantityList[sectionIndex] !== 0) {
-        section.section_field.forEach((field) => {
-          if (field.field_response?.request_response) {
-            approvedOTPRequestResponseData.push({
-              request_response:
-                field.field_name === "Quantity"
-                  ? `${approvedQuantityList[sectionIndex]}`
-                  : `${field.field_response.request_response}`,
-              request_response_field_id: field.field_id,
-              request_response_request_id: newOTPRequest[1].request_id,
-              request_response_duplicatable_section_id:
-                field.field_response.request_response_duplicatable_section_id ??
-                null,
-            });
-          }
-        });
-      }
-    });
-
-    // get request signers
-    const remainingRequestSignerInput = [];
-    const approvedRequestSignerInput = [];
-
-    // request signer notification
-    const signerNotificationInput = [];
-
-    const formattedOtpForm = otpForm;
-    formattedOtpForm.form_signer.forEach((signer) => {
-      remainingRequestSignerInput.push({
-        request_signer_signer_id: signer.signer_id,
-        request_signer_request_id: newOTPRequest[0].request_id,
-        request_signer_status: "PENDING",
-      });
-
-      // remaining otp request signer notification
-      signerNotificationInput.push({
-        notification_app: "REQUEST",
-        notification_type: "REQUEST",
-        notification_content: `${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Order to Purchase request`,
-        notification_redirect_url: `/team-requests/requests/${newOTPRequest[0].request_id}`,
-        notification_user_id:
-          signer.signer_team_member.team_member_user.user_id,
-        notification_team_id: teamId,
-      });
-      if (signer.signer_team_member.team_member_id === teamMemberId) {
-        approvedRequestSignerInput.push({
-          request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
-          request_signer_status: "APPROVED",
-        });
-      } else {
-        approvedRequestSignerInput.push({
-          request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: newOTPRequest[1].request_id,
-          request_signer_status: "PENDING",
-        });
-      }
-    });
-
-    // create request responses
-    let requestResponseInput = "";
-    remainingOTPRequestResponseData.forEach((response) => {
-      requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
-    });
-    approvedOTPRequestResponseData.forEach((response) => {
-      requestResponseInput += `('${response.request_response}', '${response.request_response_field_id}', '${response.request_response_request_id}', ${response.request_response_duplicatable_section_id ? `'${response.request_response_duplicatable_section_id}'` : "NULL"}), `;
-    });
-    plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_request_id, request_response_duplicatable_section_id) VALUES ${requestResponseInput.slice(0, -2)};`);
-
-    let requestSignerInput = "";
-    remainingRequestSignerInput.forEach((signer) => {
-      requestSignerInput += `('${signer.request_signer_signer_id}', '${signer.request_signer_request_id}', '${signer.request_signer_status}'), `;
-    });
-    approvedRequestSignerInput.forEach((signer) => {
-      requestSignerInput += `('${signer.request_signer_signer_id}', '${signer.request_signer_request_id}', '${signer.request_signer_status}'), `;
-    });
-    plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id, request_signer_request_id, request_signer_status) VALUES ${requestSignerInput.slice(0, -2)};`);
-    
-    plv8.execute(`UPDATE request_signer_table SET request_signer_status = 'PAUSED' WHERE request_signer_id = '${formattedData.request_signer[0].request_signer_id}'`);
-    
-
-    // create comment
-    plv8.execute(`
-      INSERT INTO comment_table (comment_request_id, comment_team_member_id, comment_type, comment_content) 
-      VALUES 
-      ('${otpID}', '${teamMemberId}', 'ACTION_PAUSED', '${signerFullName} paused this request'),
-      ('${newOTPRequest[1].request_id}', '${teamMemberId}', 'ACTION_APPROVED', '${signerFullName} approved this request');
-    `);
-
-
-    let notificationInput = "";
-    signerNotificationInput.forEach((notification) => {
-      notificationInput += `('REQUEST', 'REQUEST', '${formattedData.request_team_member.team_member_user.user_first_name} ${formattedData.request_team_member.team_member_user.user_last_name} requested you to sign his/her Order to Purchase request', '/team-requests/requests/${newOTPRequest[0].request_id}', '${notification.notification_user_id}', '${teamId}'), `;
-    });
-    notificationInput += `('REQUEST', 'PAUSE', '${signerFullName} paused your Order to Purchase request', '/team-requests/requests/${otpID}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
-    notificationInput += `('REQUEST', 'APPROVE', '${signerFullName} approved your Order to Purchase request', '/team-requests/requests/${newOTPRequest[1].request_id}', '${formattedData.request_team_member.team_member_user.user_id}', '${teamId}'), `;
-
-    // create notification
-     plv8.execute(`
-      INSERT INTO notification_table (notification_app, notification_type, notification_content, notification_redirect_url, notification_user_id, notification_team_id) 
-      VALUES ${notificationInput.slice(0, -2)};
-    `);
- });
-$$ LANGUAGE plv8;
-
--- End: Split OTP
-
--- End: Get get SSOT
 
 -- Start: Get user's active team id
 
-CREATE FUNCTION get_user_active_team_id(
+CREATE OR REPLACE FUNCTION get_user_active_team_id(
     user_id TEXT
 )
 RETURNS TEXT as $$
@@ -983,9 +997,9 @@ $$ LANGUAGE plv8;
 
 -- End: Get user's active team id
 
--- Start: check if Order to Purchase form can be activated
+-- Start: check if Requisition form can be activated
 
-CREATE FUNCTION check_order_to_purchase_form_status(
+CREATE OR REPLACE FUNCTION check_requisition_form_status(
     team_id TEXT,
     form_id TEXT
 )
@@ -1010,11 +1024,11 @@ RETURNS Text as $$
  return return_data;
 $$ LANGUAGE plv8;
 
--- End: check if Order to Purchase form can be activated
+-- End: check if Requisition form can be activated
 
 -- Start: Transfer ownership 
 
-CREATE FUNCTION transfer_ownership(
+CREATE OR REPLACE FUNCTION transfer_ownership(
     owner_id TEXT,
     member_id TEXT
 )
@@ -1030,24 +1044,46 @@ $$ LANGUAGE plv8;
 
 -- Start: Accept team invitation
 
-CREATE FUNCTION accept_team_invitation(
+CREATE OR REPLACE FUNCTION accept_team_invitation(
     invitation_id TEXT,
     team_id TEXT,
     user_id TEXT
 )
-RETURNS VOID as $$
+RETURNS JSON as $$
+  let user_team_list
   plv8.subtransaction(function(){
 
+    const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
+    const userData = plv8.execute(`SELECT user_id, user_active_team_id FROM user_table WHERE user_id='${user_id}'`)[0];
+
+    if (isUserPreviousMember[0].count > 0) {
+      plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=FALSE WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}'`);
+    } else {
+      plv8.execute(`INSERT INTO team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
+    }
+
+    if (!userData.user_active_team_id) {
+      plv8.execute(`UPDATE user_table SET user_active_team_id='${team_id}' WHERE user_id='${user_id}'`);
+    }
+
     plv8.execute(`UPDATE invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
-    plv8.execute(`INSERT INTO team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
+
+    user_team_list = plv8.execute(`SELECT tt.* 
+      FROM team_member_table as tm
+      JOIN team_table as tt ON tt.team_id = tm.team_member_team_id
+      WHERE team_member_is_disabled=FALSE 
+      AND team_member_user_id='${user_id}'
+      ORDER BY tt.team_date_created DESC`)
+
  });
+ return user_team_list;
 $$ LANGUAGE plv8;
 
 -- End: Accept team invitation
 
 -- Start: Update request status to canceled
 
-CREATE FUNCTION cancel_request(
+CREATE OR REPLACE FUNCTION cancel_request(
     request_id TEXT,
     member_id TEXT,
     comment_type TEXT,
@@ -1065,7 +1101,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Create request form
 
-CREATE FUNCTION create_request_form(
+CREATE OR REPLACE FUNCTION create_request_form(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1085,12 +1121,8 @@ RETURNS JSON AS $$
         signers
       },
     } = input_data;
-    
-    const formmattedGroup = `{${groupList
-      .map((group) => `"${group}"`)
-      .join(",")}}`;
 
-    form_data = plv8.execute(`INSERT INTO form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member,form_group) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}', '${formmattedGroup}') RETURNING *`)[0];
+    form_data = plv8.execute(`INSERT INTO form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}') RETURNING *`)[0];
 
     const sectionInput = [];
     const fieldInput = [];
@@ -1138,6 +1170,13 @@ RETURNS JSON AS $$
           `('${signer.signer_id}','${formId}','${signer.signer_team_member_id}','${signer.signer_action}','${signer.signer_is_primary_signer}','${signer.signer_order}')`
       )
       .join(",");
+
+    const groupValues = groupList
+      .map(
+        (group) =>
+          `('${formId}','${group}')`
+      )
+      .join(",");
     
     const section_query = `INSERT INTO section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
 
@@ -1147,7 +1186,9 @@ RETURNS JSON AS $$
 
     const signer_query = `INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
 
-    const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query};`
+    const form_group_query = `INSERT INTO form_team_group_table (form_id, team_group_id) VALUES ${groupValues}`;
+
+    const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query}; ${groupList.length>0?form_group_query:''};`
     
     plv8.execute(all_query);
  });
@@ -1158,7 +1199,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get all notification
 
-CREATE FUNCTION get_all_notification(
+CREATE OR REPLACE FUNCTION get_all_notification(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1190,7 +1231,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Update form signer
 
-CREATE FUNCTION update_form_signer(
+CREATE OR REPLACE FUNCTION update_form_signer(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1198,19 +1239,20 @@ RETURNS JSON AS $$
   plv8.subtransaction(function(){
     const {
      formId,
-     signers
+     signers,
+     selectedProjectId
     } = input_data;
 
-    plv8.execute(`UPDATE signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}';`);
+    plv8.execute(`UPDATE signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"}`);
 
     const signerValues = signers
       .map(
         (signer) =>
-          `('${signer.signer_id}','${formId}','${signer.signer_team_member_id}','${signer.signer_action}','${signer.signer_is_primary_signer}','${signer.signer_order}','${signer.signer_is_disabled}')`
+          `('${signer.signer_id}','${formId}','${signer.signer_team_member_id}','${signer.signer_action}','${signer.signer_is_primary_signer}','${signer.signer_order}','${signer.signer_is_disabled}', ${selectedProjectId ? `'${selectedProjectId}'` : null})`
       )
       .join(",");
 
-    signer_data = plv8.execute(`INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled RETURNING *;`);
+    signer_data = plv8.execute(`INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled,signer_team_project_id) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled, signer_team_project_id = excluded.signer_team_project_id RETURNING *;`);
 
  });
  return signer_data;
@@ -1218,307 +1260,21 @@ $$ LANGUAGE plv8;
 
 -- End: Update form signer
 
--- Start: Update team and team member group list
+-- Start: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
-CREATE FUNCTION update_team_and_team_member_group_list(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      teamGroupList,
-      upsertGroupName,
-      addedGroupMembers,
-      deletedGroupMembers,
-      previousName,
-      previousGroupMembers
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_group_list='{${teamGroupList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (addedGroupMembers.length !== 0) {
-      
-      const addTeamMemberCondition = addedGroupMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${addTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_group_list: [
-            ...member.team_member_group_list,
-            upsertGroupName,
-          ],
-        };
-      }); 
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if (deletedGroupMembers.length !== 0) {
-      const deleteTeamMemberCondition = deletedGroupMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_group_list: member.team_member_group_list.filter(
-            (group) => group !== upsertGroupName
-          ),
-        };
-      });
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if(previousName && (previousName !== upsertGroupName)){
-      const updateTeamMemberCondition = previousGroupMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${updateTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        const groupList = member.team_member_group_list;
-        const previousNameIndex = groupList.indexOf(previousName);
-        groupList.splice(previousNameIndex, 1);
-        return {
-          ...member,
-          team_member_group_list: groupList,
-        };
-      }); 
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
- });
-$$ LANGUAGE plv8;
-
--- End: Update team and team member group list
-
--- Start: Update team and team member project list
-
-CREATE FUNCTION update_team_and_team_member_project_list(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      teamProjectList,
-      upsertProjectName,
-      addedProjectMembers,
-      deletedProjectMembers,
-      previousName,
-      previousProjectMembers
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_project_list='{${teamProjectList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (addedProjectMembers.length !== 0) {
-      
-      const addTeamMemberCondition = addedProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${addTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-      return {
-        ...member,
-        team_member_project_list: [
-          ...member.team_member_project_list,
-          upsertProjectName,
-        ],
-      };
-    });
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if (deletedProjectMembers.length !== 0) {
-      const deleteTeamMemberCondition = deletedProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_project_list: member.team_member_project_list.filter(
-            (project) => project !== upsertProjectName
-          ),
-        };
-      });
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
-
-    if(previousName && (previousName !== upsertProjectName)){
-      const updateTeamMemberCondition = previousProjectMembers.map((memberId) => `team_member_id='${memberId}'`).join(" OR ");
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${updateTeamMemberCondition}) ;`);
-
-      const upsertTeamMemberData = teamMemberList.map((member) => {
-        const projectList = member.team_member_project_list;
-        const previousNameIndex = projectList.indexOf(previousName);
-        projectList.splice(previousNameIndex, 1);
-        return {
-          ...member,
-          team_member_project_list: projectList,
-        };
-      }); 
-
-      const teamMemberValues = upsertTeamMemberData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_group_list.join(',')}}','{${member.team_member_project_list.join(',')}}')`
-        )
-        .join(",");
-
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_group_list,team_member_project_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_group_list = excluded.team_member_group_list, team_member_project_list = excluded.team_member_project_list;`);
-    }
-    
- });
-$$ LANGUAGE plv8;
-
--- End: Update team and team member project list
-
--- Start: Delete team group
-CREATE FUNCTION delete_team_group(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      groupList,
-      groupMemberList,
-      deletedGroup
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_group_list='{${groupList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (groupMemberList.length !== 0) {
-      const deleteTeamMemberCondition = groupMemberList.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const deleteTeamMemberGroupData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_group_list: member.team_member_group_list.filter(
-            (group) => group !== deletedGroup
-          ),
-        };
-      });
-
-      const teamMemberValues = deleteTeamMemberGroupData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
- });
-$$ LANGUAGE plv8;
-
--- End: Delete team group
-
--- Start: Delete team project
-
-CREATE FUNCTION delete_team_project(
-    input_data JSON
-)
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      teamId,
-      projectList,
-      projectMemberList,
-      deletedProject
-    } = input_data;
-
-    plv8.execute(`UPDATE team_table SET team_project_list='{${projectList.join(',')}}' WHERE team_id='${teamId}';`);
-
-    if (projectMemberList.length !== 0) {
-      const deleteTeamMemberCondition = projectMemberList.map((memberId) => `team_member_id='${memberId}'`).join(" OR ")
-
-      const teamMemberList = plv8.execute(`SELECT * FROM team_member_table WHERE (${deleteTeamMemberCondition}) ;`);
-
-      const deleteTeamMemberProjectData = teamMemberList.map((member) => {
-        return {
-          ...member,
-          team_member_project_list: member.team_member_project_list.filter(
-            (project) => project !== deletedProject
-          ),
-        };
-      });
-
-      const teamMemberValues = deleteTeamMemberProjectData
-        .map(
-          (member) =>
-            `('${member.team_member_id}','${member.team_member_role}','${member.team_member_user_id}','${member.team_member_team_id}','${member.team_member_is_disabled}','{${member.team_member_project_list.join(',')}}','{${member.team_member_group_list.join(',')}}')`
-        )
-        .join(",");
-        
-      plv8.execute(`INSERT INTO team_member_table (team_member_id,team_member_role,team_member_user_id,team_member_team_id,team_member_is_disabled,team_member_project_list,team_member_group_list) VALUES ${teamMemberValues} ON CONFLICT ON CONSTRAINT team_member_table_pkey DO UPDATE SET team_member_id = excluded.team_member_id, team_member_role = excluded.team_member_role, team_member_user_id = excluded.team_member_user_id, team_member_team_id = excluded.team_member_team_id, team_member_is_disabled = excluded.team_member_is_disabled, team_member_project_list = excluded.team_member_project_list, team_member_group_list = excluded.team_member_group_list;`);
-    }
- });
-$$ LANGUAGE plv8;
-
--- End: Delete team project
-
--- Start: Check if the approving or creating quotation item quantity are less than the otp quantity
-
-CREATE FUNCTION check_quotation_item_quantity(
+CREATE OR REPLACE FUNCTION check_requisition_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        otpID,
-        itemFieldId,
-        quantityFieldId,
+        requisitionID,
         itemFieldList,
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${otpID}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Quotation';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionID}' AND form_table.form_is_formsly_form = true AND (form_table.form_name = 'Quotation' OR form_table.form_name = 'Sourced Item')`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1527,16 +1283,16 @@ RETURNS JSON AS $$
                 (response) => `'${response.request_response_request_id}'`
             ).join(",");
 
-            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+            requestResponse = plv8.execute(`SELECT request_response_table.*, field_name FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE (field_name = 'Quantity' OR field_name = 'Item') AND request_response_request_id IN (${requestIdList});`);
         }
 
         const requestResponseItem = [];
         const requestResponseQuantity = [];
 
         requestResponse.forEach((response) => {
-            if (response.request_response_field_id === itemFieldId) {
+            if (response.field_name === "Item") {
             requestResponseItem.push(response);
-            } else if (response.request_response_field_id === quantityFieldId) {
+            } else if (response.field_name === "Quantity") {
             requestResponseQuantity.push(response);
             }
         });
@@ -1594,25 +1350,117 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating quotation item quantity are less than the otp quantity
+-- End: Check if the approving or creating quotation item quantity are less than the requisition quantity
 
--- Start: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+-- Start: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
 
-CREATE FUNCTION check_rir_sourced_item_quantity(
+CREATE OR REPLACE FUNCTION check_withdrawal_slip_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        otpId,
+        withdrawalSlipId,
+        itemFieldList,
+        quantityFieldList
+        } = input_data;
+
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${withdrawalSlipId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Quantity'`);
+        
+        let requestResponse = []
+        if(request.length>0) {
+
+            const requestIdList = request.map(
+                (response) => `'${response.request_response_request_id}'`
+            ).join(",");
+
+            requestResponse = plv8.execute(`SELECT request_response_table.*, field_name FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE (field_name = 'Quantity' OR field_name = 'Item') AND request_response_request_id IN (${requestIdList});`);
+        }
+
+        const requestResponseItem = [];
+        const requestResponseQuantity = [];
+
+        requestResponse.forEach((response) => {
+            if (response.field_name === "Item") {
+            requestResponseItem.push(response);
+            } else if (response.field_name === "Quantity") {
+            requestResponseQuantity.push(response);
+            }
+        });
+
+        requestResponseItem.push(...itemFieldList);
+        requestResponseQuantity.push(...quantityFieldList);
+
+        const itemList = [];
+        const quantityList = [];
+
+        for (let i = 0; i < requestResponseItem.length; i++) {
+            if (itemList.includes(requestResponseItem[i].request_response)) {
+            const quantityIndex = itemList.indexOf(
+                requestResponseItem[i].request_response
+            );
+            quantityList[quantityIndex] += Number(
+                requestResponseQuantity[i].request_response
+            );
+            } else {
+            itemList.push(requestResponseItem[i].request_response);
+            quantityList.push(Number(requestResponseQuantity[i].request_response));
+            }
+        }
+
+        const returnData = [];
+        const regExp = /\(([^)]+)\)/;
+        for (let i = 0; i < itemList.length; i++) {
+            const matches = regExp.exec(itemList[i]);
+            if (!matches) continue;
+
+            const quantityMatch = matches[1].match(/(\d+)/);
+            if (!quantityMatch) continue;
+
+            const expectedQuantity = Number(quantityMatch[1]);
+            const unit = matches[1].replace(/\d+/g, "").trim();
+
+            if (quantityList[i] > expectedQuantity) {
+            const quantityMatch = itemList[i].match(/(\d+)/);
+            if (!quantityMatch) return;
+
+            returnData.push(
+                `${JSON.parse(
+                itemList[i].replace(
+                    quantityMatch[1],
+                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                )
+                )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+            );
+            }
+        }
+        item_data = returnData;
+    });
+    return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
+
+-- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
+
+CREATE OR REPLACE FUNCTION check_ro_item_quantity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let item_data
+    plv8.subtransaction(function(){
+        const {
+        sourcedItemId,
         itemFieldId,
         quantityFieldId,
         itemFieldList,
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${otpId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report (Sourced)';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${sourcedItemId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Order';`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1688,12 +1536,11 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
+-- End: Check if the approving or creating release order item quantity are less than the quotation quantity
 
--- End: Check if the approving or creating rir sourced item quantity are less than the quotation quantity
+-- Start: Check if the approving or creating rir item quantity are less than the quotation quantity
 
--- Start: Check if the approving or creating rir purchased item quantity are less than the quotation quantity
-
-CREATE FUNCTION check_rir_purchased_item_quantity(
+CREATE OR REPLACE FUNCTION check_rir_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1707,7 +1554,7 @@ RETURNS JSON AS $$
         quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${quotationId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report (Purchased)';`);
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${quotationId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report';`);
         
         let requestResponse = []
         if(request.length>0) {
@@ -1783,11 +1630,103 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating rir purchased item quantity are less than the quotation quantity
+-- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
+
+CREATE OR REPLACE FUNCTION check_tranfer_receipt_item_quantity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let item_data
+    plv8.subtransaction(function(){
+        const {
+        releaseOrderItemId,
+        itemFieldId,
+        quantityFieldId,
+        itemFieldList,
+        quantityFieldList
+        } = input_data;
+
+        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${releaseOrderItemId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Transfer Receipt';`);
+        
+        let requestResponse = []
+        if(request.length>0) {
+
+            const requestIdList = request.map(
+                (response) => `'${response.request_response_request_id}'`
+            ).join(",");
+
+            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+        }
+
+        const requestResponseItem = [];
+        const requestResponseQuantity = [];
+
+        requestResponse.forEach((response) => {
+            if (response.request_response_field_id === itemFieldId) {
+            requestResponseItem.push(response);
+            } else if (response.request_response_field_id === quantityFieldId) {
+            requestResponseQuantity.push(response);
+            }
+        });
+
+        requestResponseItem.push(...itemFieldList);
+        requestResponseQuantity.push(...quantityFieldList);
+
+        const itemList = [];
+        const quantityList = [];
+
+        for (let i = 0; i < requestResponseItem.length; i++) {
+            if (itemList.includes(requestResponseItem[i].request_response)) {
+            const quantityIndex = itemList.indexOf(
+                requestResponseItem[i].request_response
+            );
+            quantityList[quantityIndex] += Number(
+                requestResponseQuantity[i].request_response
+            );
+            } else {
+            itemList.push(requestResponseItem[i].request_response);
+            quantityList.push(Number(requestResponseQuantity[i].request_response));
+            }
+        }
+
+        const returnData = [];
+        const regExp = /\(([^)]+)\)/;
+        for (let i = 0; i < itemList.length; i++) {
+            const matches = regExp.exec(itemList[i]);
+            if (!matches) continue;
+
+            const quantityMatch = matches[1].match(/(\d+)/);
+            if (!quantityMatch) continue;
+
+            const expectedQuantity = Number(quantityMatch[1]);
+            const unit = matches[1].replace(/\d+/g, "").trim();
+
+            if (quantityList[i] > expectedQuantity) {
+            const quantityMatch = itemList[i].match(/(\d+)/);
+            if (!quantityMatch) return;
+
+            returnData.push(
+                `${JSON.parse(
+                itemList[i].replace(
+                    quantityMatch[1],
+                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                )
+                )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+            );
+            }
+        }
+        item_data = returnData
+    });
+    return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
 
 -- Start: Fetch request list
 
-CREATE FUNCTION fetch_request_list(
+CREATE OR REPLACE FUNCTION fetch_request_list(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -1810,6 +1749,7 @@ RETURNS JSON AS $$
         `
           SELECT 
             request_table.request_id, 
+            request_table.request_formsly_id,
             request_date_created, 
             request_status,
             request_team_member_id,
@@ -1896,6 +1836,7 @@ RETURNS JSON AS $$
 
         return {
           request_id: request.request_id, 
+          request_formsly_id: request.request_formsly_id,
           request_date_created: request.request_date_created, 
           request_status: request.request_status, 
           request_team_member: {
@@ -1927,6 +1868,286 @@ $$ LANGUAGE plv8;
 
 -- End: Fetch request list
 
+-- Start: Approve sourced requisition request
+
+CREATE OR REPLACE FUNCTION approve_sourced_requisition_request(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      approveOrRejectParameters,
+      teamId,
+      responseData,
+      itemWithDupId,
+      requisitionID
+    } = input_data;
+
+    plv8.execute(`
+        select approve_or_reject_request('{
+            "requestAction": "${approveOrRejectParameters.requestAction}",
+            "requestId": "${approveOrRejectParameters.requestId}",
+            "isPrimarySigner": ${approveOrRejectParameters.isPrimarySigner},
+            "requestSignerId": "${approveOrRejectParameters.requestSignerId}",
+            "requestOwnerId": "${approveOrRejectParameters.requestOwnerId}",
+            "signerFullName": "${approveOrRejectParameters.signerFullName}",
+            "formName": "${approveOrRejectParameters.formName}",
+            "memberId": "${approveOrRejectParameters.memberId}",
+            "teamId": "${approveOrRejectParameters.teamId}",
+        }');
+    `);
+
+    const form = plv8.execute(
+      `
+        SELECT field_table.field_id FROM form_table 
+        INNER JOIN team_member_table ON form_table.form_team_member_id = team_member_table.team_member_id
+        INNER JOIN section_table ON form_table.form_id = section_table.section_form_id
+        INNER JOIN field_table ON section_table.section_id = field_table.field_section_id
+        WHERE form_table.form_name='Requisition'
+        AND team_member_table.team_member_team_id='${teamId}'
+        AND section_table.section_name='Item'
+        AND field_table.field_name='Source Project'
+      `
+    )[0];
+
+    const parsedData = JSON.parse(responseData);
+
+    const inputData = parsedData.sections.map((section) => `('"${section.section_field[2].field_response}"', '${form.field_id}', ${itemWithDupId[`${section.section_field[0].field_response}`] ? `'${itemWithDupId[`${section.section_field[0].field_response}`]}'` : null}, '${requisitionID}')`).join(",");
+    plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_duplicatable_section_id, request_response_request_id) VALUES ${inputData}`);
+
+  });
+$$ LANGUAGE plv8;
+
+-- End: Check if the approving or creating rir item quantity are less than the quotation quantity
+
+
+-- Start: Create Team Project
+CREATE OR REPLACE FUNCTION create_team_project(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let team_project_data;
+  plv8.subtransaction(function(){
+    const {
+    teamProjectName,
+    teamProjectInitials,
+    teamProjectTeamId,
+    } = input_data;
+
+    
+   const projectInitialCount = plv8.execute(`
+      SELECT COUNT(*) FROM team_project_table 
+      WHERE team_project_team_id = $1 
+      AND team_project_code ILIKE '%' || $2 || '%';
+    `, [teamProjectTeamId, teamProjectInitials])[0].count + 1n;
+
+    const teamProjectCode = teamProjectInitials + projectInitialCount.toString(36).toUpperCase();
+
+    team_project_data = plv8.execute(`INSERT INTO team_project_table (team_project_name, team_project_code, team_project_team_id) VALUES ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}') RETURNING *;`)[0];
+
+ });
+ return team_project_data;
+$$ LANGUAGE plv8;
+-- End: Create Team Project
+
+-- Start: Insert Group Member
+
+CREATE OR REPLACE FUNCTION insert_group_member(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let group_data;
+  plv8.subtransaction(function(){
+    const {
+     groupId,
+     teamMemberIdList
+    } = input_data;
+
+    const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",");
+
+    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_group_member_table WHERE team_group_id='${groupId}' AND team_member_id IN (${teamMemberIdListValues});`);
+
+    const alreadyMemberId = alreadyMemberData.map(
+      (member) => member.team_member_id
+    );
+
+    const insertData = [];
+    teamMemberIdList.forEach((memberId) => {
+      if (!alreadyMemberId.includes(memberId)) {
+        insertData.push({
+          team_group_id: groupId,
+          team_member_id: memberId,
+        });
+      }
+    });
+
+    const groupMemberValues = insertData
+      .map(
+        (member) =>
+          `('${member.team_member_id}','${member.team_group_id}')`
+      )
+      .join(",");
+
+    const groupInsertData = plv8.execute(`INSERT INTO team_group_member_table (team_member_id,team_group_id) VALUES ${groupMemberValues} RETURNING *;`);
+
+    const groupInsertValues = groupInsertData.map(group=>`('${group.team_group_member_id}','${group.team_member_id}','${group.team_group_id}')`).join(",");
+
+    const groupJoin = plv8.execute(`SELECT tgm.team_group_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_group_member_table tgm LEFT JOIN team_member_table tmemt ON tgm.team_member_id = tmemt.team_member_id WHERE (tgm.team_group_member_id,tgm.team_member_id,tgm.team_group_id) IN (${groupInsertValues}) GROUP BY tgm.team_group_member_id ,tmemt.team_member_id;`);
+
+    group_data = {data: groupJoin, count: groupJoin.length};
+
+ });
+ return group_data;
+$$ LANGUAGE plv8;
+
+-- End: Insert Group Member
+
+-- Start: Insert Project Member
+
+CREATE OR REPLACE FUNCTION insert_project_member(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let project_data;
+  plv8.subtransaction(function(){
+    const {
+     projectId,
+     teamMemberIdList
+    } = input_data;
+
+    const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",")
+
+    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_project_member_table WHERE team_project_id='${projectId}' AND team_member_id IN (${teamMemberIdListValues});`);
+
+    const alreadyMemberId = alreadyMemberData.map(
+      (member) => member.team_member_id
+    );
+
+    const insertData = [];
+    teamMemberIdList.forEach((memberId) => {
+      if (!alreadyMemberId.includes(memberId)) {
+        insertData.push({
+          team_project_id: projectId,
+          team_member_id: memberId,
+        });
+      }
+    });
+
+    const projectMemberValues = insertData
+      .map(
+        (member) =>
+          `('${member.team_member_id}','${member.team_project_id}')`
+      )
+      .join(",");
+
+    const projectInsertData = plv8.execute(`INSERT INTO team_project_member_table (team_member_id,team_project_id) VALUES ${projectMemberValues} RETURNING *;`);
+
+    const projectInsertValues = projectInsertData.map(project=>`('${project.team_project_member_id}','${project.team_member_id}','${project.team_project_id}')`).join(",")
+
+    const projectJoin = plv8.execute(`SELECT tpm.team_project_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_project_member_table tpm LEFT JOIN team_member_table tmemt ON tpm.team_member_id = tmemt.team_member_id WHERE (tpm.team_project_member_id,tpm.team_member_id,tpm.team_project_id) IN (${projectInsertValues}) GROUP BY tpm.team_project_member_id ,tmemt.team_member_id;`) 
+
+    project_data = {data: projectJoin, count: projectJoin.length};
+
+ });
+ return project_data;
+$$ LANGUAGE plv8;
+
+-- End: Insert Project Member
+
+-- Start: Update Form Group
+
+CREATE OR REPLACE FUNCTION update_form_group(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+     formId,
+     isForEveryone,
+     groupList
+    } = input_data;
+
+    plv8.execute(`UPDATE form_table SET form_is_for_every_member='${isForEveryone?"TRUE":"FALSE"}' WHERE form_id='${formId}';`);
+
+    plv8.execute(`DELETE FROM form_team_group_table WHERE form_id='${formId}';`);
+
+    const newGroupInsertValues = groupList.map((group) =>`('${group}','${formId}')`).join(",");
+    
+    plv8.execute(`INSERT INTO form_team_group_table (team_group_id,form_id) VALUES ${newGroupInsertValues} RETURNING *;`);
+  });
+$$ LANGUAGE plv8;
+
+-- End: Update Form Group
+
+-- Start: Get all team members without existing member of the group
+
+CREATE OR REPLACE FUNCTION get_all_team_members_without_group_members(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let member_data;
+  plv8.subtransaction(function(){
+    const {
+     teamId,
+     groupId
+    } = input_data;
+
+    const teamGroupMemberData = plv8.execute(`SELECT team_member_id FROM team_group_member_table where team_group_id='${groupId}';`);
+
+    const condition = teamGroupMemberData.map((member) => `'${member.team_member_id}'`).join(",");
+
+    let teamMemberList = [];
+    
+    if(condition.length !== 0){
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition})`);
+    }else{
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
+    }
+
+    member_data = teamMemberList.sort((a, b) =>
+      a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
+    )
+ });
+ return member_data;
+$$ LANGUAGE plv8;
+
+-- End: Get all team members without existing member of the group
+
+-- End: Get all team members without existing member of the project
+
+CREATE OR REPLACE FUNCTION get_all_team_members_without_project_members(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let member_data;
+  plv8.subtransaction(function(){
+    const {
+     teamId,
+     projectId
+    } = input_data;
+
+    const teamProjectMemberData = plv8.execute(`SELECT team_member_id FROM team_project_member_table where team_project_id='${projectId}';`);
+
+    const condition = teamProjectMemberData.map((member) => `'${member.team_member_id}'`).join(",");
+
+    let teamMemberList = []
+    
+    if(condition.length !== 0){
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition});`);
+    }else{
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
+    }
+
+    member_data = teamMemberList.sort((a, b) =>
+      a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
+    )
+
+ });
+ return member_data;
+$$ LANGUAGE plv8;
+
+-- End: Get all team members without existing member of the project
+
 ---------- End: FUNCTIONS
 
 
@@ -1950,6 +2171,12 @@ ALTER TABLE section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signer_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE supplier_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_response_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_team_group_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_group_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
+
 
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users only" ON attachment_table;
 
@@ -2043,7 +2270,30 @@ DROP POLICY IF EXISTS "Allow READ for authenticated users" ON user_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_table;
 
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_team_group_table;
 
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_member_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_member_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for authenticated users only" ON "public"."attachment_table"
@@ -2600,7 +2850,7 @@ USING (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
-  )
+  ) OR team_member_user_id = auth.uid()
 );
 
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
@@ -2855,6 +3105,336 @@ CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "public
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (auth.uid() = user_id);
+
+--- FORM_TEAM_GROUP_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id 
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+--- TEAM_GROUP_MEMBER_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+   EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tt.team_group_team_id
+    FROM team_group_table as tt
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    WHERE tt.team_group_id = team_group_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+--- TEAM_GROUP_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_group_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  ) 
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_group_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_group_team_id
+    AND tm.team_member_user_id = auth.uid()
+  ) 
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_group_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  ) 
+)
+WITH CHECK (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_group_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  ) 
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_group_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  ) 
+);
+
+--- TEAM_PROJECT_MEMBER_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tp.team_project_team_id
+    FROM team_project_table as tp
+    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    WHERE tp.team_project_id = team_project_id
+    AND tm.team_member_user_id = auth.uid()
+    AND team_member_role in ('OWNER', 'ADMIN')
+  )
+);
+
+--- TEAM_PROJECT_TABLE
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_project_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  ) 
+);
+
+CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_project_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_project_team_id
+    AND tm.team_member_user_id = auth.uid()
+  ) 
+);
+
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_project_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  ) 
+)
+WITH CHECK (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_project_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  ) 
+);
+
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT tm.team_member_team_id
+    FROM team_member_table as tm
+    JOIN user_table as ut ON ut.user_id = auth.uid()
+    WHERE ut.user_active_team_id = team_project_team_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 -------- End: POLICIES
 

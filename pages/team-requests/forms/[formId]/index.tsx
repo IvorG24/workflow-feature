@@ -1,22 +1,25 @@
 import {
+  getAllTeamGroups,
   getForm,
   getItemList,
   getNameList,
   getTeamAdminList,
-  getTeamGroupList,
+  getTeamProjectList,
   getUserActiveTeamId,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import OrderToPurchaseFormPage from "@/components/OrderToPurchaseFormPage/OrderToPurchaseFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
+import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import {
   FormType,
   ItemWithDescriptionType,
   SupplierTableRow,
+  TeamGroupTableRow,
   TeamMemberWithUserType,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
@@ -36,12 +39,19 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         teamId,
       });
 
-      const teamGroupList = await getTeamGroupList(supabaseClient, {
+      const teamGroupList = await getAllTeamGroups(supabaseClient, {
         teamId,
       });
 
       if (form.form_is_formsly_form) {
-        if (form.form_name === "Order to Purchase") {
+        const { data: teamProjectList, count: teamProjectListCount } =
+          await getTeamProjectList(supabaseClient, {
+            teamId,
+            page: 1,
+            limit: ROW_PER_PAGE,
+          });
+
+        if (form.form_name === "Requisition") {
           const { data: items, count: itemListCount } = await getItemList(
             supabaseClient,
             {
@@ -58,6 +68,8 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               itemListCount,
               teamMemberList,
               teamGroupList,
+              teamProjectList,
+              teamProjectListCount,
             },
           };
         } else if (form.form_name === "Quotation") {
@@ -76,9 +88,20 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
               suppliers,
               supplierListCount,
               teamGroupList,
+              teamProjectList,
+              teamProjectListCount,
             },
           };
         }
+        return {
+          props: {
+            form,
+            teamMemberList,
+            teamGroupList,
+            teamProjectList,
+            teamProjectListCount,
+          },
+        };
       }
 
       return {
@@ -98,32 +121,38 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
 type Props = {
   form: FormType;
   teamMemberList: TeamMemberWithUserType[];
-  teamGroupList: string[];
+  teamGroupList: TeamGroupTableRow[];
   items?: ItemWithDescriptionType[];
   itemListCount?: number;
   suppliers?: SupplierTableRow[];
   supplierListCount?: number;
+  teamProjectList?: TeamProjectTableRow[];
+  teamProjectListCount?: number;
 };
 
 const Page = ({
   form,
   teamMemberList = [],
-  teamGroupList = [],
   items = [],
   itemListCount = 0,
   suppliers = [],
   supplierListCount = 0,
+  teamGroupList,
+  teamProjectList = [],
+  teamProjectListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Order to Purchase":
+      case "Requisition":
         return (
-          <OrderToPurchaseFormPage
+          <RequisitionFormPage
             items={items}
             itemListCount={itemListCount}
             teamMemberList={teamMemberList}
             form={form}
             teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
           />
         );
       case "Quotation":
@@ -134,6 +163,8 @@ const Page = ({
             suppliers={suppliers}
             supplierListCount={supplierListCount}
             teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
           />
         );
 
@@ -143,6 +174,9 @@ const Page = ({
             form={form}
             teamMemberList={teamMemberList}
             teamGroupList={teamGroupList}
+            isFormslyForm={true}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
           />
         );
     }
@@ -157,6 +191,9 @@ const Page = ({
           form={form}
           teamMemberList={teamMemberList}
           teamGroupList={teamGroupList}
+          isFormslyForm={false}
+          teamProjectList={teamProjectList}
+          teamProjectListCount={teamProjectListCount}
         />
       ) : null}
     </>

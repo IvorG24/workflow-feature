@@ -1,5 +1,7 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
+import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/GroupMembers";
+import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
@@ -8,7 +10,6 @@ import {
   CommentTableInsert,
   FormTableRow,
   FormType,
-  InvitationTableInsert,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
   ItemTableInsert,
@@ -17,7 +18,9 @@ import {
   RequestSignerTableInsert,
   RequestTableRow,
   SupplierTableInsert,
+  TeamGroupTableInsert,
   TeamMemberTableInsert,
+  TeamProjectTableRow,
   TeamTableInsert,
   UserTableInsert,
   UserTableRow,
@@ -134,72 +137,6 @@ export const createTeamMember = async (
 };
 
 // Create Team Invitation/s
-export const createTeamInvitationOld = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    emailList: string[];
-    teamMemberId: string;
-    teamName: string;
-  }
-) => {
-  const { emailList, teamMemberId, teamName } = params;
-
-  const invitationInput: InvitationTableInsert[] = [];
-  const notificationInput: NotificationTableInsert[] = [];
-
-  for (const email of emailList) {
-    const invitationId = uuidv4();
-    // check if there is already an invitation
-    const { count: checkInvitationCount, error: checkInvitationError } =
-      await supabaseClient
-        .from("invitation_table")
-        .select("*", { count: "exact", head: true })
-        .eq("invitation_to_email", email)
-        .eq("invitation_from_team_member_id", teamMemberId)
-        .eq("invitation_is_disabled", false)
-        .eq("invitation_status", "PENDING");
-    if (checkInvitationError) throw checkInvitationError;
-
-    if (!checkInvitationCount) {
-      invitationInput.push({
-        invitation_id: invitationId,
-        invitation_to_email: email,
-        invitation_from_team_member_id: teamMemberId,
-      });
-    }
-
-    // check if user exists
-    const { data: checkUserData, error: checkUserError } = await supabaseClient
-      .from("user_table")
-      .select("*")
-      .eq("user_email", email)
-      .maybeSingle();
-    if (checkUserError) throw checkUserError;
-    if (checkUserData) {
-      notificationInput.push({
-        notification_app: "GENERAL",
-        notification_content: `You have been invited to join ${teamName}`,
-        notification_redirect_url: `/team/invitation/${invitationId}`,
-        notification_type: "INVITE",
-        notification_user_id: checkUserData.user_id,
-      });
-    }
-  }
-
-  const { data: invitationData, error: invitationError } = await supabaseClient
-    .from("invitation_table")
-    .insert(invitationInput)
-    .select();
-  if (invitationError) throw invitationError;
-
-  const { error: notificationError } = await supabaseClient
-    .from("notification_table")
-    .insert(notificationInput);
-  if (notificationError) throw notificationError;
-
-  return invitationData;
-};
-
 export const createTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -210,8 +147,7 @@ export const createTeamInvitation = async (
 ) => {
   const { data, error } = await supabaseClient
     .rpc("create_team_invitation", { input_data: params })
-    .select("*")
-    .single();
+    .select("*");
 
   if (error) throw error;
 
@@ -267,7 +203,7 @@ export const sendResetPasswordEmail = async (
   email: string
 ) => {
   await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: "http://localhost:3000/reset-password",
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
   });
 };
 
@@ -276,9 +212,8 @@ export const resetPassword = async (
   supabaseClient: SupabaseClient<Database>,
   password: string
 ) => {
-  const { data, error } = await supabaseClient.auth.updateUser({ password });
-  if (error) throw error;
-  return data;
+  const { error } = await supabaseClient.auth.updateUser({ password });
+  return { error: error };
 };
 
 // Create User
@@ -405,10 +340,19 @@ export const createRequest = async (
     teamId: string;
     requesterName: string;
     formName: string;
+    isFormslyForm: boolean;
+    projectId: string;
   }
 ) => {
-  const { requestFormValues, signers, teamId, requesterName, formName } =
-    params;
+  const {
+    requestFormValues,
+    signers,
+    teamId,
+    requesterName,
+    formName,
+    isFormslyForm,
+    projectId,
+  } = params;
 
   const requestId = uuidv4();
 
@@ -516,6 +460,9 @@ export const createRequest = async (
         responseValues,
         signerValues,
         notificationValues,
+        formName,
+        isFormslyForm,
+        projectId,
       },
     })
     .select()
@@ -527,43 +474,6 @@ export const createRequest = async (
 };
 
 // Create formsly premade forms
-export const createFormslyPremadeFormsOld = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamMemberId: string;
-  }
-) => {
-  const { teamMemberId } = params;
-
-  const { forms, sections, fieldWithId, fieldsWithoutId, options } =
-    formslyPremadeFormsData(teamMemberId);
-
-  const { error: formError } = await supabaseClient
-    .from("form_table")
-    .insert(forms);
-  if (formError) throw formError;
-
-  const { error: sectionError } = await supabaseClient
-    .from("section_table")
-    .insert(sections);
-  if (sectionError) throw sectionError;
-
-  const { error: fieldWithIdError } = await supabaseClient
-    .from("field_table")
-    .insert(fieldWithId);
-  if (fieldWithIdError) throw fieldWithIdError;
-
-  const { error: fieldWithoutIdError } = await supabaseClient
-    .from("field_table")
-    .insert(fieldsWithoutId);
-  if (fieldWithoutIdError) throw fieldWithoutIdError;
-
-  const { error: optionError } = await supabaseClient
-    .from("option_table")
-    .insert(options);
-  if (optionError) throw optionError;
-};
-
 export const createFormslyPremadeForms = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -641,4 +551,91 @@ export const createSupplier = async (
     .single();
   if (error) throw error;
   return data;
+};
+
+// Create Team Group
+export const createTeamGroup = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TeamGroupTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_group_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data;
+};
+
+// Create Team Project
+export const createTeamProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamProjectName: string;
+    teamProjectInitials: string;
+    teamProjectTeamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("create_team_project", {
+      input_data: {
+        ...params,
+      },
+    })
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data as TeamProjectTableRow;
+};
+
+// Insert team member to group
+export const insertGroupMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    groupId: string;
+    teamMemberIdList: string[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("insert_group_member", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as unknown as { data: GroupTeamMemberType[]; count: number };
+};
+
+// Insert team member to project
+export const insertProjectMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    teamMemberIdList: string[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("insert_project_member", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as unknown as { data: ProjectTeamMemberType[]; count: number };
+};
+
+export const cancelTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    invitation_id: string;
+  }
+) => {
+  const { invitation_id } = params;
+  const { error } = await supabaseClient
+    .from("invitation_table")
+    .update({ invitation_is_disabled: true })
+    .eq("invitation_id", invitation_id)
+    .select();
+
+  if (error) throw Error;
 };

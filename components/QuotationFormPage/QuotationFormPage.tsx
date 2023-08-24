@@ -1,22 +1,32 @@
-import { checkOrderToPurchaseFormStatus } from "@/backend/api/get";
+import {
+  checkRequisitionFormStatus,
+  getProjectSigner,
+  getTeamProjectList,
+} from "@/backend/api/get";
 import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
   SupplierTableRow,
+  TeamGroupTableRow,
   TeamMemberWithUserType,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import {
+  ActionIcon,
   Button,
   Center,
   Container,
   Flex,
   Group,
+  LoadingOverlay,
   Paper,
   Space,
   Stack,
   Switch,
+  Text,
+  TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -27,8 +37,12 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 
+import { ROW_PER_PAGE } from "@/utils/constant";
+import { IconSearch } from "@tabler/icons-react";
+import { DataTable } from "mantine-datatable";
 import { v4 as uuidv4 } from "uuid";
 import GroupSection from "../FormBuilder/GroupSection";
+import SignerPerProject from "../FormBuilder/SignerPerProject";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSection from "../RequestFormPage/FormSection";
 import CreateSupplier from "./SupplierList/CreateSupplier";
@@ -39,7 +53,9 @@ type Props = {
   form: FormType;
   suppliers: SupplierTableRow[];
   supplierListCount: number;
-  teamGroupList: string[];
+  teamGroupList: TeamGroupTableRow[];
+  teamProjectList: TeamProjectTableRow[];
+  teamProjectListCount: number;
 };
 
 const QuotationFormPage = ({
@@ -48,6 +64,8 @@ const QuotationFormPage = ({
   suppliers,
   supplierListCount,
   teamGroupList,
+  teamProjectList,
+  teamProjectListCount,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -78,7 +96,23 @@ const QuotationFormPage = ({
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
   const [switchValue, setSwitchValue] = useState(false);
 
-  const [initialRequester, setInitialRequester] = useState(form.form_group);
+  const [projectPage, setProjectPage] = useState(1);
+  const [isFetchingProject, setIsFetchingProject] = useState(false);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectList, setProjectList] = useState(teamProjectList);
+  const [projectCount, setProjectCount] = useState(teamProjectListCount);
+  const [selectedProject, setSelectedProject] = useState<{
+    projectName: string;
+    projectId: string;
+  } | null>(null);
+  const [selectedProjectSigner, setSelectedProjectSigner] = useState<
+    RequestSigner[]
+  >([]);
+  const [isFetchingProjectSigner, setIsFetchingProjectSigner] = useState(false);
+
+  const [initialRequester, setInitialRequester] = useState(
+    form.form_team_group.map((group) => group.team_group.team_group_id)
+  );
   const [initialGroupBoolean, setInitialGroupBoolean] = useState(
     form.form_is_for_every_member
   );
@@ -94,7 +128,9 @@ const QuotationFormPage = ({
     isForEveryone: boolean;
   }>({
     defaultValues: {
-      groupList: form.form_group,
+      groupList: form.form_team_group.map(
+        (group) => group.team_group.team_group_id
+      ),
       isForEveryone: form.form_is_for_every_member,
     },
   });
@@ -151,6 +187,7 @@ const QuotationFormPage = ({
         signers: values.signers.map((signer) => {
           return { ...signer, signer_is_disabled: false };
         }),
+        selectedProjectId: null,
         formId: formId as string,
       });
       setIntialSigners(values.signers);
@@ -195,7 +232,7 @@ const QuotationFormPage = ({
 
   const handleFormVisibilityRestriction = async () => {
     try {
-      const result = await checkOrderToPurchaseFormStatus(supabaseClient, {
+      const result = await checkRequisitionFormStatus(supabaseClient, {
         teamId: team.team_id,
         formId: `${formId}`,
       });
@@ -205,6 +242,53 @@ const QuotationFormPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    }
+  };
+
+  const handleFetchProject = async (page: number, search: string) => {
+    try {
+      setIsFetchingProject(true);
+      const { data, count } = await getTeamProjectList(supabaseClient, {
+        teamId: team.team_id,
+        page: page,
+        limit: ROW_PER_PAGE,
+        search,
+      });
+      setProjectList(data);
+      setProjectCount(count ?? 0);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingProject(false);
+    }
+  };
+
+  const handleFetchProjectSigner = async (
+    projectId: string,
+    projectName: string
+  ) => {
+    try {
+      setSelectedProject(null);
+      setIsFetchingProjectSigner(true);
+      const data = await getProjectSigner(supabaseClient, {
+        projectId,
+        formId: `${formId}`,
+      });
+      setSelectedProjectSigner(data);
+      setSelectedProject({
+        projectId,
+        projectName,
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingProjectSigner(false);
     }
   };
 
@@ -284,15 +368,26 @@ const QuotationFormPage = ({
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>
         <Space h="xl" />
+
         <FormProvider {...requesterMethods}>
-          <GroupSection teamGroupList={teamGroupList} />
+          <GroupSection
+            teamGroupList={teamGroupList.map((group) => {
+              return {
+                label: group.team_group_name,
+                value: group.team_group_id,
+              };
+            })}
+          />
         </FormProvider>
 
-        {!isEqual(initialRequester, watchGroup) ||
-        !isEqual(
-          initialGroupBoolean,
-          requesterMethods.getValues("isForEveryone")
-        ) ? (
+        {(!isEqual(initialRequester, watchGroup) ||
+          !isEqual(
+            initialGroupBoolean,
+            requesterMethods.getValues("isForEveryone")
+          )) &&
+        (requesterMethods.getValues("isForEveryone") ||
+          (!requesterMethods.getValues("isForEveryone") &&
+            requesterMethods.getValues("groupList").length !== 0)) ? (
           <Center mt="xl">
             <Button loading={isSavingRequester} onClick={handleSaveRequesters}>
               Save Changes
@@ -302,7 +397,7 @@ const QuotationFormPage = ({
       </Paper>
 
       <Paper p="xl" shadow="xs" mt="xl">
-        <Title order={3}>Signer Details</Title>
+        <Title order={3}>Default Signer</Title>
         <Space h="xl" />
         <FormProvider {...signerMethods}>
           <SignerSection
@@ -321,6 +416,88 @@ const QuotationFormPage = ({
               Save Changes
             </Button>
           </Center>
+        ) : null}
+      </Paper>
+
+      <Paper p="xl" shadow="xs" mt="xl">
+        <Title order={3}>Signer Per Project</Title>
+        <Space h="xl" />
+
+        <Group>
+          <Title m={0} p={0} order={3}>
+            List of Projects
+          </Title>
+          <TextInput
+            miw={250}
+            placeholder="Project"
+            rightSection={
+              <ActionIcon onClick={() => handleFetchProject(1, projectSearch)}>
+                <IconSearch size={16} />
+              </ActionIcon>
+            }
+            value={projectSearch}
+            onChange={async (e) => {
+              setProjectSearch(e.target.value);
+            }}
+            onKeyUp={(e) => {
+              if (e.key === "Enter") {
+                handleFetchProject(1, projectSearch);
+              }
+            }}
+            maxLength={4000}
+          />
+        </Group>
+
+        <DataTable
+          idAccessor="team_project_id"
+          mt="xs"
+          withBorder
+          fw="bolder"
+          c="dimmed"
+          minHeight={390}
+          fetching={isFetchingProject}
+          records={projectList}
+          columns={[
+            {
+              accessor: "team_project_name",
+              title: "Project",
+              render: ({ team_project_name, team_project_id }) => (
+                <Text
+                  sx={{ cursor: "pointer" }}
+                  onClick={() =>
+                    handleFetchProjectSigner(team_project_id, team_project_name)
+                  }
+                >
+                  {team_project_name}
+                </Text>
+              ),
+            },
+          ]}
+          totalRecords={projectCount}
+          recordsPerPage={ROW_PER_PAGE}
+          page={projectPage}
+          onPageChange={(page: number) => {
+            setProjectPage(page);
+            handleFetchProject(projectPage, projectSearch);
+          }}
+        />
+      </Paper>
+
+      <Paper p="xl" shadow="xs" mt="xl" pos="relative">
+        <LoadingOverlay visible={isFetchingProjectSigner} overlayBlur={2} />
+        {!selectedProject ? (
+          <Center>
+            <Text color="dimmed">No project selected</Text>
+          </Center>
+        ) : null}
+        {selectedProject ? (
+          <SignerPerProject
+            teamMemberList={teamMemberList}
+            formId={form.form_id}
+            formSigner={selectedProjectSigner}
+            selectedProject={selectedProject}
+            setSelectedProject={setSelectedProject}
+          />
         ) : null}
       </Paper>
     </Container>

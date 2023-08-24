@@ -141,6 +141,7 @@ const OnboardingPage = ({ user }: Props) => {
               })}
               error={errors.user_username?.message}
               mt="sm"
+              data-cy="onboarding-input-username"
             />
 
             <TextInput
@@ -158,6 +159,7 @@ const OnboardingPage = ({ user }: Props) => {
               })}
               error={errors.user_first_name?.message}
               mt="sm"
+              data-cy="onboarding-input-first-name"
             />
 
             <TextInput
@@ -175,6 +177,7 @@ const OnboardingPage = ({ user }: Props) => {
               })}
               error={errors.user_last_name?.message}
               mt="sm"
+              data-cy="onboarding-input-last-name"
             />
 
             <Text size="lg" mt="lg" fw="bold">

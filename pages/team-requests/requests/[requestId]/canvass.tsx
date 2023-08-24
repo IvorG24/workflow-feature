@@ -1,8 +1,12 @@
 import { getCanvassData } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import OrderToPurchaseCanvassPage from "@/components/OrderToPurchaseCanvassPage/OrderToPurchaseCanvassPage";
+import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { CanvassLowestPriceType, CanvassType } from "@/utils/types";
+import {
+  CanvassAdditionalDetailsType,
+  CanvassLowestPriceType,
+  CanvassType,
+} from "@/utils/types";
 import { isEmpty } from "lodash";
 import { GetServerSideProps } from "next";
 
@@ -13,6 +17,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         canvassData,
         lowestPricePerItem,
         summaryData,
+        summaryAdditionalDetails,
         lowestQuotation,
         requestAdditionalCharge,
         lowestAdditionalCharge,
@@ -33,6 +38,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           canvassData,
           lowestPricePerItem,
           summaryData,
+          summaryAdditionalDetails,
           lowestQuotation,
           requestAdditionalCharge,
           lowestAdditionalCharge,
@@ -54,7 +60,8 @@ type Props = {
   canvassData: CanvassType;
   lowestPricePerItem: CanvassLowestPriceType;
   summaryData: CanvassLowestPriceType;
-  lowestQuotation: { id: string; value: number };
+  summaryAdditionalDetails: CanvassAdditionalDetailsType;
+  lowestQuotation: { id: string; request_id: string; value: number };
   requestAdditionalCharge: CanvassLowestPriceType;
   lowestAdditionalCharge: number;
 };
@@ -63,9 +70,10 @@ const Page = ({
   canvassData,
   lowestPricePerItem,
   summaryData,
+  summaryAdditionalDetails,
   lowestQuotation,
   requestAdditionalCharge,
-  lowestAdditionalCharge
+  lowestAdditionalCharge,
 }: Props) => {
   return (
     <>
@@ -73,10 +81,11 @@ const Page = ({
         description="Canvass Page"
         url="/team-requests/request/<requestId>/canvass"
       />
-      <OrderToPurchaseCanvassPage
+      <RequisitionCanvassPage
         canvassData={canvassData}
         lowestPricePerItem={lowestPricePerItem}
         summaryData={summaryData}
+        summaryAdditionalDetails={summaryAdditionalDetails}
         lowestQuotation={lowestQuotation}
         requestAdditionalCharge={requestAdditionalCharge}
         lowestAdditionalCharge={lowestAdditionalCharge}

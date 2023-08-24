@@ -103,6 +103,16 @@ const SelectTeam = () => {
       // set user team member id
       if (teamMember) {
         setUserTeamMember(teamMember);
+
+        // fetch form list
+        const formList = await getFormList(supabaseClient, {
+          teamId: `${value}`,
+          app: activeApp,
+          memberId: teamMember.team_member_id,
+        });
+
+        // set form list
+        setFormList(formList);
       }
 
       // fetch notification list
@@ -119,15 +129,6 @@ const SelectTeam = () => {
       setNotificationList(notificationList);
       setUnreadNotification(unreadNotificationCount || 0);
     }
-
-    // fetch form list
-    const formList = await getFormList(supabaseClient, {
-      teamId: `${value}`,
-      app: activeApp,
-    });
-
-    // set form list
-    setFormList(formList);
 
     await router.push(`/team-${lowerCase(activeApp)}s/dashboard`);
 

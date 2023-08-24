@@ -30,9 +30,15 @@ export type FieldWithResponseArray = Field & {
 
 type Props = {
   form: FormType;
+  requestProjectId: string;
+  requestingProject: string;
 };
 
-const CreateChequeReferenceRequestPage = ({ form }: Props) => {
+const CreateChequeReferenceRequestPage = ({
+  form,
+  requestProjectId,
+  requestingProject,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -64,7 +70,7 @@ const CreateChequeReferenceRequestPage = ({ form }: Props) => {
     replaceSection(form.form_section);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.otpId
+      router.query.requisitionId
     );
   }, [form, replaceSection]);
 
@@ -82,6 +88,8 @@ const CreateChequeReferenceRequestPage = ({ form }: Props) => {
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
+        isFormslyForm: true,
+        projectId: requestProjectId,
       });
 
       notifications.show({
@@ -108,7 +116,10 @@ const CreateChequeReferenceRequestPage = ({ form }: Props) => {
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
           <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} />
+            <RequestFormDetails
+              formDetails={formDetails}
+              requestingProject={requestingProject}
+            />
             {formSections.map((section, idx) => {
               return (
                 <Box key={section.section_id}>

@@ -127,6 +127,8 @@ const CreateTeamProject = ({
     handleSubmit,
     control,
     register,
+    watch,
+    setValue,
   } = useForm<TeamProjectFormType>({
     defaultValues: editProjectData,
   });
@@ -134,6 +136,8 @@ const CreateTeamProject = ({
   const onSubmit = async (data: TeamProjectFormType) => {
     handleUpsertProject(data);
   };
+
+  const watchProjectMembers = watch("projectMembers");
 
   return (
     <Stack spacing={12}>
@@ -147,19 +151,24 @@ const CreateTeamProject = ({
             withAsterisk
             w="100%"
             {...register("projectName", {
-              required: {
-                message: "Project Name is required",
-                value: true,
-              },
-              minLength: {
-                message: "Project Name must have atleast 3 characters",
-                value: 3,
-              },
-              maxLength: {
-                message: "Project Name must be shorter than 500 characters",
-                value: 500,
+              validate: {
+                required: (value) =>
+                  value.trim() ? true : "Project Name is required",
+                minLength: (value) =>
+                  value.trim().length > 2
+                    ? true
+                    : "Project Name must have atleast 3 characters",
+                maxLength: (value) =>
+                  value.trim().length < 500
+                    ? true
+                    : "Project Name must be shorter than 500 characters",
               },
             })}
+            sx={{
+              input: {
+                textTransform: "uppercase",
+              },
+            }}
             error={errors.projectName?.message}
           />
 
@@ -184,6 +193,20 @@ const CreateTeamProject = ({
               );
             }}
           />
+
+          {watchProjectMembers.length < teamMemberList.length ? (
+            <Button
+              variant="subtle"
+              onClick={() => {
+                setValue(
+                  "projectMembers",
+                  teamMemberList.map((member) => member.value)
+                );
+              }}
+            >
+              Select all team members
+            </Button>
+          ) : null}
         </Flex>
 
         <Button type="submit" miw={100} mt={30} mr={14}>

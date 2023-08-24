@@ -1,40 +1,69 @@
-import { ActionIcon, Flex, MultiSelect, TextInput } from "@mantine/core";
-import { useFocusWithin } from "@mantine/hooks";
-import { IconSearch } from "@tabler/icons-react";
-import { useState } from "react";
+import { getSupplier } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { Database } from "@/utils/database";
+import {
+  Box,
+  Button,
+  Drawer,
+  Group,
+  Loader,
+  MultiSelect,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconFilter } from "@tabler/icons-react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { SSOTFilterFormValues } from "./SSOTSpreadhseetViewPage";
 
 type RequestListFilterProps = {
-  projectNameList: string[];
+  requestingProjectList: string[];
   itemNameList: string[];
   handleFilterSSOT: () => void;
 };
 
-type FilterSelectedValuesType = {
-  projectNameList: string[];
-  itemNameList: string[];
-};
-
 const SSOTSpreadsheetViewFilter = ({
-  projectNameList,
+  requestingProjectList,
   itemNameList,
   handleFilterSSOT,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
-    w: { base: 200, sm: 300 },
     clearable: true,
     clearSearchOnChange: true,
     clearSearchOnBlur: true,
     searchable: true,
     nothingFound: "Nothing found",
   };
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const team = useActiveTeam();
+  const [isSearching, setIsSearching] = useState(false);
+  const [supplierKeyword, setSupplierKeyword] = useState("");
+  const [supplierOptions, setSupplierOptions] = useState<
+    {
+      label: string;
+      value: string;
+    }[]
+  >([]);
 
-  const { ref: projectNameRef, focused: projectNameRefFocused } =
-    useFocusWithin();
-  const { ref: itemRef, focused: itemRefFocused } = useFocusWithin();
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const {
+    reset,
+    formState: { isDirty },
+  } = useFormContext<SSOTFilterFormValues>();
 
-  const projectNameListData = projectNameList.map((project) => ({
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const requestingProjectListData = requestingProjectList.map((project) => ({
     label: project,
     value: project,
   }));
@@ -44,86 +73,142 @@ const SSOTSpreadsheetViewFilter = ({
     value: item,
   }));
 
-  const [filterSelectedValues, setFilterSelectedValues] =
-    useState<FilterSelectedValuesType>({
-      projectNameList: [],
-      itemNameList: [],
-    });
+  const { register, control, getValues } =
+    useFormContext<SSOTFilterFormValues>();
 
-  const { register, control } = useFormContext<SSOTFilterFormValues>();
+  const supplierSearch = async (value: string) => {
+    if (!value || value === supplierKeyword) return;
 
-  const handleFilterChange = async (
-    key: keyof FilterSelectedValuesType,
-    value: string[] = []
-  ) => {
-    const filterMatch = filterSelectedValues[`${key}`];
-    if (value !== filterMatch) {
-      if (value.length === 0 && filterMatch.length === 0) return;
-      handleFilterSSOT();
+    try {
+      setIsSearching(true);
+      const supplierList = await getSupplier(supabaseClient, {
+        supplier: value,
+        teamId: team.team_id,
+        fieldId: "",
+      });
+      const options = supplierList.map((supplier) => {
+        return {
+          label: supplier.option_value,
+          value: supplier.option_value,
+        };
+      });
+      const keywords = getValues("supplierList");
+      if (keywords) {
+        keywords.forEach((supplier) => {
+          options.push({
+            label: supplier,
+            value: supplier,
+          });
+        });
+      }
+      setSupplierOptions(options);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
     }
-    setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
   };
 
   return (
-    <Flex justify="flex-start" gap="md" wrap="wrap">
-      <TextInput
-        placeholder="Search by OTP ID"
-        rightSection={
-          <ActionIcon size="xs" type="submit">
-            <IconSearch />
-          </ActionIcon>
-        }
-        {...register("search")}
-        sx={{ flex: 1 }}
-        miw={250}
-        maw={{ base: 500, xs: 300 }}
-      />
-
-      <Controller
-        control={control}
-        name="projectNameList"
-        render={({ field: { value, onChange } }) => (
-          <MultiSelect
-            data={projectNameListData}
-            placeholder="Project Name"
-            ref={projectNameRef}
-            value={value}
-            onChange={(value) => {
-              onChange(value);
-              if (!projectNameRefFocused)
-                handleFilterChange("projectNameList", value);
-            }}
-            onDropdownClose={() => handleFilterChange("projectNameList", value)}
-            {...inputFilterProps}
-            sx={{ flex: 1 }}
-            miw={250}
-            maw={{ base: 500, xs: 300 }}
+    <Box>
+      <Drawer
+        opened={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        title={<Text weight={600}>Filter SSOT</Text>}
+        position="right"
+      >
+        <Stack>
+          <TextInput
+            placeholder="Search by Project ID"
+            {...register("search")}
           />
-        )}
-      />
 
-      <Controller
-        control={control}
-        name="itemNameList"
-        render={({ field: { value, onChange } }) => (
-          <MultiSelect
-            placeholder="Item Name"
-            ref={itemRef}
-            data={itemNameListData}
-            value={value}
-            onChange={(value) => {
-              onChange(value);
-              if (!itemRefFocused) handleFilterChange("itemNameList", value);
-            }}
-            onDropdownClose={() => handleFilterChange("itemNameList", value)}
-            {...inputFilterProps}
-            sx={{ flex: 1 }}
-            miw={250}
-            maw={{ base: 500, xs: 300 }}
+          <Controller
+            control={control}
+            name="requestingProjectList"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                data={requestingProjectListData}
+                placeholder="Requesting Project"
+                value={value}
+                onChange={onChange}
+                {...inputFilterProps}
+              />
+            )}
           />
-        )}
-      />
-    </Flex>
+
+          <Controller
+            control={control}
+            name="itemNameList"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                placeholder="Item Name"
+                data={itemNameListData}
+                value={value}
+                onChange={onChange}
+                {...inputFilterProps}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="supplierList"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                placeholder="Supplier"
+                value={value}
+                onChange={onChange}
+                data={supplierOptions}
+                {...inputFilterProps}
+                onSearchChange={(value) => {
+                  setSupplierKeyword(value);
+                  if (timeoutRef.current) {
+                    clearTimeout(timeoutRef.current);
+                  }
+                  timeoutRef.current = setTimeout(() => {
+                    supplierSearch(value);
+                  }, 500);
+                }}
+                rightSection={isSearching ? <Loader size={16} /> : null}
+                nothingFound="Nothing found. Try a different keyword"
+              />
+            )}
+          />
+
+          <Button
+            color="red"
+            variant="outline"
+            disabled={!isDirty}
+            onClick={() => {
+              reset();
+              handleFilterSSOT();
+            }}
+          >
+            Reset
+          </Button>
+          <Button
+            onClick={() => {
+              handleFilterSSOT();
+              setShowFilterModal(false);
+            }}
+          >
+            Apply Filters
+          </Button>
+        </Stack>
+      </Drawer>
+      <Group position="center">
+        <Button
+          onClick={() => setShowFilterModal(true)}
+          leftIcon={<IconFilter size={14} />}
+        >
+          Filters
+        </Button>
+      </Group>
+    </Box>
   );
 };
 

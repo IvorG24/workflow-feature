@@ -1,7 +1,6 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { checkIfTwoArrayHaveAtLeastOneEqualElement } from "@/utils/arrayFunctions/arrayFunctions";
 import { FormTableRow } from "@/utils/types";
 import {
   Anchor,
@@ -25,20 +24,26 @@ const FormList = () => {
   const activeApp = useActiveApp();
   const teamMember = useUserTeamMember();
 
-  const [formList, setFormList] = useState<FormTableRow[]>([]);
+  const [formList, setFormList] = useState<
+    (FormTableRow & { form_team_group: string[] })[]
+  >([]);
 
   useEffect(() => {
-    setFormList(forms);
+    setFormList(forms as (FormTableRow & { form_team_group: string[] })[]);
   }, [forms]);
 
   const handleSearchForm = (value: string) => {
     if (!value) {
-      return setFormList(forms);
+      return setFormList(
+        forms as (FormTableRow & { form_team_group: string[] })[]
+      );
     }
     const filteredFormList = forms.filter((form) =>
       form.form_name.toLowerCase().includes(value.toLowerCase())
     );
-    setFormList(filteredFormList);
+    setFormList(
+      filteredFormList as (FormTableRow & { form_team_group: string[] })[]
+    );
   };
 
   return (
@@ -77,15 +82,10 @@ const FormList = () => {
       />
       <Navbar.Section grow component={ScrollArea} mx="-xs" px="xs" mt="sm">
         {formList.map((form) => {
-          const isGroupMember =
-            form.form_is_for_every_member ||
-            (teamMember?.team_member_group_list &&
-              checkIfTwoArrayHaveAtLeastOneEqualElement(
-                form.form_group,
-                teamMember?.team_member_group_list
-              ));
+          const isGroupMember = Boolean(form.form_team_group?.length);
 
-          return !form.form_is_hidden && isGroupMember ? (
+          return !form.form_is_hidden &&
+            (form.form_is_for_every_member || isGroupMember) ? (
             <NavLink
               key={form.form_id}
               label={form.form_name}

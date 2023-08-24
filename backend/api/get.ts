@@ -1,10 +1,14 @@
+import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
+import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
+  CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
   CanvassType,
+  ConnectedRequestItemType,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -12,14 +16,19 @@ import {
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
+  RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
+  RequisitionFieldsType,
   TeamMemberType,
+  TeamMemberWithUserDetails,
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { lowerCase, startCase } from "lodash";
+import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
+import validator from "validator";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
@@ -100,17 +109,35 @@ export const getFormList = async (
   params: {
     teamId: string;
     app: string;
+    memberId: string;
   }
 ) => {
-  const { teamId, app } = params;
+  const { teamId, app, memberId } = params;
+
   const { data, error } = await supabaseClient
     .from("form_table")
-    .select("*, form_team_member:form_team_member_id!inner(*)")
+    .select(
+      `
+        *, 
+        form_team_member:form_team_member_id!inner(
+          *
+        ),
+        form_team_group: form_team_group_table(
+          team_group: team_group_id!inner(
+            team_group_member: team_group_member_table!inner(
+              team_member_id
+            )
+          )
+        )
+      `
+    )
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_is_disabled", false)
     .eq("form_app", app)
+    .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
     .order("form_date_created", { ascending: false });
   if (error) throw error;
+
   return data;
 };
 
@@ -149,15 +176,20 @@ export const getRequestList = async (
     ?.map((value) => `request_table.request_form_id = '${value}'`)
     .join(" OR ");
 
+  const searchCondition =
+    search && validator.isUUID(search)
+      ? `request_table.request_id = '${search}'`
+      : `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+
   const { data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {
       teamId: teamId,
       page: page,
       limit: limit,
-      requestor: requestorCondition ? `AND ${requestorCondition}` : "",
-      form: formCondition ? `AND ${formCondition}` : "",
-      status: statusCondition ? `AND ${statusCondition}` : "",
-      search: search ? `AND request_table.request_id = '${search}'` : "",
+      requestor: requestorCondition ? `AND (${requestorCondition})` : "",
+      form: formCondition ? `AND (${formCondition})` : "",
+      status: statusCondition ? `AND (${statusCondition})` : "",
+      search: search ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
     },
   });
@@ -252,6 +284,7 @@ export const getRequest = async (
           signer_is_primary_signer, 
           signer_action, 
           signer_order, 
+          signer_form_id,
           signer_team_member: signer_team_member_id!inner(
             team_member_id, 
             team_member_user: team_member_user_id!inner(
@@ -292,7 +325,8 @@ export const getRequest = async (
             field_response: request_response_table(*)
           )
         )
-      )`
+      ),
+      request_project: request_project_id(team_project_name)`
     )
     .eq("request_id", requestId)
     .eq("request_is_disabled", false)
@@ -440,15 +474,23 @@ export const getFormListWithFilter = async (
     query = query.ilike("form_name", `%${search}%`);
   }
 
-  query = query.order("form_date_created", {
-    ascending: sort === "ascending",
-  });
+  query = query
+    .order("form_is_formsly_form", {
+      ascending: false,
+    })
+    .order("form_date_created", {
+      ascending: sort === "ascending",
+    });
+
   query.limit(limit);
   query.range(start, start + limit - 1);
 
-  const { data, count, error } = await query;
+  const { data: formList, count, error } = await query;
   if (error) throw error;
-  return { data, count };
+
+  const sortedFormList = sortFormList(formList, FORMSLY_FORM_ORDER);
+
+  return { data: sortedFormList, count };
 };
 
 // Get all team members
@@ -490,7 +532,25 @@ export const getTeamAdminList = async (
     .or("team_member_role.eq.ADMIN, team_member_role.eq.OWNER");
   if (error) throw error;
 
-  return data;
+  const formattedData = data as unknown as {
+    team_member_id: string;
+    team_member_role: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+    };
+  }[];
+
+  return formattedData.sort((a, b) =>
+    `${a.team_member_user.user_first_name}` >
+    `${b.team_member_user.user_first_name}`
+      ? 1
+      : `${b.team_member_user.user_first_name}` >
+        `${a.team_member_user.user_first_name}`
+      ? -1
+      : 0
+  );
 };
 
 // Get specific form
@@ -510,7 +570,6 @@ export const getForm = async (
       form_date_created, 
       form_is_hidden, 
       form_is_formsly_form, 
-      form_group, 
       form_is_for_every_member, 
       form_team_member: form_team_member_id(
         team_member_id, 
@@ -528,6 +587,7 @@ export const getForm = async (
         signer_action, 
         signer_order,
         signer_is_disabled, 
+        signer_team_project_id,
         signer_team_member: signer_team_member_id(
           team_member_id, 
           team_member_user: team_member_user_id(
@@ -545,11 +605,20 @@ export const getForm = async (
           *, 
           field_option: option_table(*)
         )
+      ),
+      form_team_group: form_team_group_table(
+        team_group: team_group_id(
+          team_group_id,
+          team_group_name,
+          team_group_is_disabled
+        )
       )`
     )
     .eq("form_id", formId)
     // .eq("form_is_disabled", false)
+    .eq("form_team_group.team_group.team_group_is_disabled", false)
     .eq("form_signer.signer_is_disabled", false)
+    .is("form_signer.signer_team_project_id", null)
     .single();
   if (error) throw error;
 
@@ -769,15 +838,15 @@ export const getItem = async (
   return data as ItemWithDescriptionAndField;
 };
 
-// check if Order to Purchase form can be activated
-export const checkOrderToPurchaseFormStatus = async (
+// check if Requisition form can be activated
+export const checkRequisitionFormStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; formId: string }
 ) => {
   const { teamId, formId } = params;
 
   const { data, error } = await supabaseClient
-    .rpc("check_order_to_purchase_form_status", {
+    .rpc("check_requisition_form_status", {
       form_id: formId,
       team_id: teamId,
     })
@@ -799,24 +868,6 @@ export const checkItemName = async (
     .from("item_table")
     .select("*", { count: "exact", head: true })
     .eq("item_general_name", itemName)
-    .eq("item_is_disabled", false)
-    .eq("item_team_id", teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// check if item's code already exists
-export const checkItemCode = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { itemCode: string; teamId: string }
-) => {
-  const { itemCode, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from("item_table")
-    .select("*", { count: "exact", head: true })
-    .or(`item_cost_code.eq.${itemCode}, item_gl_account.eq.${itemCode}`)
     .eq("item_is_disabled", false)
     .eq("item_team_id", teamId);
   if (error) throw error;
@@ -855,7 +906,7 @@ export const getTeamMemberList = async (
   let query = supabaseClient
     .from("team_member_table")
     .select(
-      "team_member_id, team_member_role, team_member_group_list, team_member_project_list, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
+      "team_member_id, team_member_role, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
     )
     .eq("team_member_team_id", teamId)
     .eq("team_member_is_disabled", false)
@@ -1264,51 +1315,115 @@ export const getFormslyForm = async (
   params: {
     formName: string;
     teamId: string;
+    memberId: string;
   }
 ) => {
-  const { formName, teamId } = params;
+  const { formName, teamId, memberId } = params;
 
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_group, form_is_for_every_member, form_team_member: form_team_member_id!inner(team_member_team_id)"
+      `
+        form_id, 
+        form_is_for_every_member, 
+        form_team_member: form_team_member_id!inner(
+          team_member_team_id
+        ),
+        form_team_group: form_team_group_table(
+          team_group: team_group_id!inner(
+            team_group_member: team_group_member_table!inner(
+              team_member_id
+            )
+          )
+        ) 
+      `
     )
     .eq("form_name", formName)
     .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
     .eq("form_is_formsly_form", true)
     .maybeSingle();
-
   if (error) throw error;
 
-  return data;
+  const formattedData = data as unknown as {
+    form_id: string;
+    form_is_for_every_member: string;
+    form_team_group: {
+      team_group_id: {
+        team_group: {
+          team_group_member: {
+            team_member_id: string;
+          };
+        };
+      };
+    }[];
+  };
+
+  return {
+    form_id: formattedData.form_id,
+    form_is_for_every_member: formattedData.form_is_for_every_member,
+    form_is_member: Boolean(formattedData.form_team_group.length),
+  };
 };
 
-// Get specific OTP form id by name and team id
-export const getFormIDForOTP = async (
+// Get specific Requisition form id by name and team id
+export const getFormIDForRequsition = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
+    memberId: string;
   }
 ) => {
-  const { teamId } = params;
+  const { teamId, memberId } = params;
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      "form_id, form_name, form_group, form_is_for_every_member, form_team_member: form_team_member_id!inner(team_member_team_id)"
+      `
+        form_id, 
+        form_name, 
+        form_is_for_every_member, 
+        form_team_member: form_team_member_id!inner(
+          team_member_team_id
+        ), 
+        form_team_group: form_team_group_table(
+          team_group: team_group_id!inner(
+            team_group_member: team_group_member_table!inner(
+              team_member_id
+            )
+          )
+        ) 
+      `
     )
     .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.ilike.%Sourced%, form_name.eq.Sourced Order to Purchase"
+      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Sourced Item"
     )
     .eq("form_team_member.team_member_team_id", teamId)
+    .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
     .eq("form_is_formsly_form", true);
+
   if (error) throw error;
 
-  return data.map((form) => {
+  const formattedData = data as unknown as {
+    form_id: string;
+    form_name: string;
+    form_is_for_every_member: string;
+    form_team_group: {
+      team_group_id: {
+        team_group: {
+          team_group_member: {
+            team_member_id: string;
+          };
+        };
+      };
+    }[];
+  }[];
+
+  return formattedData.map((form) => {
     return {
       form_id: form.form_id,
       form_name: form.form_name,
-      form_group: form.form_group,
       form_is_for_every_member: form.form_is_for_every_member,
+      form_is_member: Boolean(form.form_team_group.length),
     };
   });
 };
@@ -1339,18 +1454,18 @@ export const checkRequest = async (
 };
 
 // Check if the request is pending
-export const checkOTPRequestForSourced = async (
+export const checkRequsitionRequestForReleaseOrder = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpId: string;
+    requisitionId: string;
   }
 ) => {
-  const { otpId } = params;
+  const { requisitionId } = params;
 
   const { count, error } = await supabaseClient
     .from("request_table")
     .select("*", { count: "exact" })
-    .eq("request_id", otpId)
+    .eq("request_id", requisitionId)
     .eq("request_status", "PENDING")
     .eq("request_is_disabled", false);
 
@@ -1414,7 +1529,7 @@ export const getFormslyForwardLinkFormId = async (
   const { data, error } = await supabaseClient
     .from("request_response_table")
     .select(
-      "request_response_request: request_response_request_id!inner(request_id, request_status, request_form: request_form_id(form_name))"
+      "request_response_request: request_response_request_id!inner(request_id, request_formsly_id, request_status, request_form: request_form_id(form_name))"
     )
     .eq("request_response", `"${requestId}"`)
     .eq("request_response_request.request_status", "APPROVED");
@@ -1422,6 +1537,7 @@ export const getFormslyForwardLinkFormId = async (
   const formattedData = data as unknown as {
     request_response_request: {
       request_id: string;
+      request_formsly_id: string;
       request_form: {
         form_name: string;
       };
@@ -1429,33 +1545,45 @@ export const getFormslyForwardLinkFormId = async (
   }[];
 
   const requestList = {
-    "Order to Purchase": [] as string[],
-    Quotation: [] as string[],
-    "Receiving Inspecting Report (Purchased)": [] as string[],
-    "Receiving Inspecting Report (Sourced)": [] as string[],
+    Requisition: [] as ConnectedRequestItemType[],
+    "Sourced Item": [] as ConnectedRequestItemType[],
+    Quotation: [] as ConnectedRequestItemType[],
+    "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
+    "Release Order": [] as ConnectedRequestItemType[],
+    "Transfer Receipt": [] as ConnectedRequestItemType[],
+    "Cheque Reference": [] as ConnectedRequestItemType[],
+    "Release Quantity": [] as ConnectedRequestItemType[],
   };
 
   formattedData.forEach((request) => {
+    const newFormattedData = {
+      request_id: request.request_response_request.request_id,
+      request_formsly_id: request.request_response_request.request_formsly_id,
+    };
     switch (request.request_response_request.request_form.form_name) {
-      case "Order to Purchase":
-        requestList["Order to Purchase"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+      case "Requisition":
+        requestList["Requisition"].push(newFormattedData);
+        break;
+      case "Sourced Item":
+        requestList["Sourced Item"].push(newFormattedData);
         break;
       case "Quotation":
-        requestList["Quotation"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+        requestList["Quotation"].push(newFormattedData);
         break;
-      case "Receiving Inspecting Report (Purchased)":
-        requestList["Receiving Inspecting Report (Purchased)"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+      case "Receiving Inspecting Report":
+        requestList["Receiving Inspecting Report"].push(newFormattedData);
         break;
-      case "Receiving Inspecting Report (Sourced)":
-        requestList["Receiving Inspecting Report (Sourced)"].push(
-          `"${request.request_response_request.request_id}"`
-        );
+      case "Release Order":
+        requestList["Release Order"].push(newFormattedData);
+        break;
+      case "Transfer Receipt":
+        requestList["Transfer Receipt"].push(newFormattedData);
+        break;
+      case "Cheque Reference":
+        requestList["Cheque Reference"].push(newFormattedData);
+        break;
+      case "Release Quantity":
+        requestList["Release Quantity"].push(newFormattedData);
         break;
     }
   });
@@ -1463,7 +1591,7 @@ export const getFormslyForwardLinkFormId = async (
   return requestList;
 };
 
-// Get item response of an otp request
+// Get item response of an requisition request
 export const getItemResponseForQuotation = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
@@ -1523,7 +1651,7 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].quantity = Number(
             response.request_response
           );
-        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
+        } else if (fieldName === "GL Account") {
         } else {
           options[duplicatableSectionId].description += `${
             options[duplicatableSectionId].description ? ", " : ""
@@ -1536,7 +1664,7 @@ export const getItemResponseForQuotation = async (
 };
 
 // Get item response of a quotation request
-export const getItemResponseForRIRPurchased = async (
+export const getItemResponseForRIR = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1571,7 +1699,7 @@ export const getItemResponseForRIRPurchased = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 4) {
+      if (response.request_response_field.field_order > 12) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
             item: "",
@@ -1600,8 +1728,8 @@ export const getItemResponseForRIRPurchased = async (
   return options;
 };
 
-// Get item response of a otp request
-export const getItemResponseForRIRSourced = async (
+// Get item response of a requisition request
+export const getItemResponseForRO = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
 ) => {
@@ -1624,10 +1752,9 @@ export const getItemResponseForRIRSourced = async (
   const options: Record<
     string,
     {
-      generalName: string;
-      unit: string;
+      item: string;
       quantity: number;
-      description: string;
+      sourceProject: string;
     }
   > = {};
   const idForNullDuplicationId = uuidv4();
@@ -1638,33 +1765,27 @@ export const getItemResponseForRIRSourced = async (
         response.request_response_duplicatable_section_id ??
         idForNullDuplicationId;
 
-      if (response.request_response_field.field_order > 3) {
+      if (response.request_response_field.field_order > 1) {
         if (!options[duplicatableSectionId]) {
           options[duplicatableSectionId] = {
-            generalName: "",
-            unit: "",
+            item: "",
             quantity: 0,
-            description: "",
+            sourceProject: "",
           };
         }
 
-        if (fieldName === "General Name") {
-          options[duplicatableSectionId].generalName = JSON.parse(
-            response.request_response
-          );
-        } else if (fieldName === "Unit of Measurement") {
-          options[duplicatableSectionId].unit = JSON.parse(
+        if (fieldName === "Item") {
+          options[duplicatableSectionId].item = JSON.parse(
             response.request_response
           );
         } else if (fieldName === "Quantity") {
           options[duplicatableSectionId].quantity = JSON.parse(
             response.request_response
           );
-        } else if (fieldName === "Cost Code" || fieldName === "GL Account") {
-        } else {
-          options[duplicatableSectionId].description += `${
-            response.request_response_field.field_name
-          }: ${JSON.parse(response.request_response)}, `;
+        } else if (fieldName === "Source Project") {
+          options[duplicatableSectionId].sourceProject = JSON.parse(
+            response.request_response
+          );
         }
       }
     }
@@ -1673,19 +1794,17 @@ export const getItemResponseForRIRSourced = async (
   return options;
 };
 
-// Check if the approving or creating quotation item quantity are less than the otp quantity
-export const checkQuotationItemQuantity = async (
+// Check if the approving or creating quotation or sourced item quantity are less than the requisition quantity
+export const checkRequisitionQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpID: string;
-    itemFieldId: string;
-    quantityFieldId: string;
+    requisitionID: string;
     itemFieldList: RequestResponseTableRow[];
     quantityFieldList: RequestResponseTableRow[];
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_quotation_item_quantity", { input_data: params })
+    .rpc("check_requisition_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;
@@ -1693,8 +1812,26 @@ export const checkQuotationItemQuantity = async (
   return data as string[];
 };
 
-// Check if the approving or creating rir purchased item quantity are less than the quotation quantity
-export const checkRIRPurchasedItemQuantity = async (
+// Check if the approving or creating release quantity are less than the withdrawal slip quantity
+export const checkWithdrawalSlipQuantity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    withdrawalSlipId: string;
+    itemFieldList: RequestResponseTableRow[];
+    quantityFieldList: RequestResponseTableRow[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_withdrawal_slip_quantity", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as string[];
+};
+
+// Check if the approving or creating rir item quantity are less than the quotation quantity
+export const checkRIRItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     quotationId: string;
@@ -1705,7 +1842,7 @@ export const checkRIRPurchasedItemQuantity = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_rir_purchased_item_quantity", { input_data: params })
+    .rpc("check_rir_item_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;
@@ -1713,11 +1850,11 @@ export const checkRIRPurchasedItemQuantity = async (
   return data as string[];
 };
 
-// Check if the approving or creating rir sourced item quantity are less than the quotation quantity
-export const checkRIRSourcedItemQuantity = async (
+// Check if the approving or creating release order item quantity are less than the quotation quantity
+export const checkROItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    otpId: string;
+    sourcedItemId: string;
     itemFieldId: string;
     quantityFieldId: string;
     itemFieldList: RequestResponseTableRow[];
@@ -1725,7 +1862,27 @@ export const checkRIRSourcedItemQuantity = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("check_rir_sourced_item_quantity", { input_data: params })
+    .rpc("check_ro_item_quantity", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as string[];
+};
+
+// Check if the approving or creating transfer receipt item quantity are less than the release order quantity
+export const checkTransferReceiptItemQuantity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    releaseOrderItemId: string;
+    itemFieldId: string;
+    quantityFieldId: string;
+    itemFieldList: RequestResponseTableRow[];
+    quantityFieldList: RequestResponseTableRow[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_tranfer_receipt_item_quantity", { input_data: params })
     .select("*");
 
   if (error) throw error;
@@ -1756,44 +1913,6 @@ export const checkIfTeamHaveFormslyForms = async (
   if (error) throw error;
 
   return Boolean(count);
-};
-
-// Get team member list of projects
-export const getMemberProjectList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    userId: string;
-    teamId: string;
-  }
-) => {
-  const { userId, teamId } = params;
-  const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select("team_member_project_list")
-    .eq("team_member_user_id", userId)
-    .eq("team_member_team_id", teamId)
-    .single();
-  if (error) throw error;
-
-  return data.team_member_project_list;
-};
-
-// Get team group list
-export const getTeamGroupList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-  }
-) => {
-  const { teamId } = params;
-  const { data, error } = await supabaseClient
-    .from("team_table")
-    .select("team_group_list")
-    .eq("team_id", teamId)
-    .single();
-  if (error) throw error;
-
-  return data.team_group_list;
 };
 
 // Get request per status count
@@ -1911,8 +2030,8 @@ export const getSignerData = async (
   return data;
 };
 
-// Get all quotation request for the otp
-export const getOTPPendingQuotationRequestList = async (
+// Get all quotation request for the requisition
+export const getRequisitionPendingQuotationRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -1925,6 +2044,7 @@ export const getOTPPendingQuotationRequestList = async (
     .select(
       `request_response_request: request_response_request_id!inner(
         request_id, 
+        request_formsly_id,
         request_status, 
         request_form: request_form_id!inner(
           form_name
@@ -1937,11 +2057,12 @@ export const getOTPPendingQuotationRequestList = async (
 
   if (error) throw error;
   const formattedData = data as unknown as {
-    request_response_request: { request_id: string };
+    request_response_request: {
+      request_id: string;
+      request_formsly_id: string;
+    };
   }[];
-  return formattedData.map(
-    (request) => request.request_response_request.request_id
-  );
+  return formattedData.map((request) => request.request_response_request);
 };
 
 // Get canvass data
@@ -1961,7 +2082,7 @@ export const getCanvassData = async (
       `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
   );
 
-  const canvassRequest = await getOTPPendingQuotationRequestList(
+  const canvassRequest = await getRequisitionPendingQuotationRequestList(
     supabaseClient,
     { requestId }
   );
@@ -1978,29 +2099,43 @@ export const getCanvassData = async (
   ];
 
   const summaryData: CanvassLowestPriceType = {};
+  let summaryAdditionalDetails: CanvassAdditionalDetailsType = [];
   const quotationRequestList = await Promise.all(
-    canvassRequest.map(async (canvassRequestId) => {
+    canvassRequest.map(async ({ request_id, request_formsly_id }) => {
       const { data: quotationResponseList, error: quotationResponseListError } =
         await supabaseClient
           .from("request_response_table")
           .select(
-            "*, request_response_field: request_response_field_id!inner(field_name)"
+            "*, request_response_field: request_response_field_id!inner(field_name), request_response_request: request_response_request_id!inner(request_id,request_formsly_id)"
           )
-          .eq("request_response_request_id", canvassRequestId)
+          .eq("request_response_request_id", request_id)
           .in("request_response_field.field_name", [
             "Item",
             "Price per Unit",
             "Quantity",
+            "Lead Time",
+            "Payment Terms",
             ...additionalChargeFields,
           ]);
       if (quotationResponseListError) throw quotationResponseListError;
-      summaryData[canvassRequestId] = 0;
+      summaryData[request_formsly_id] = 0;
+      summaryAdditionalDetails.push({
+        quotation_id: request_id,
+        formsly_id: request_formsly_id,
+        lead_time: 0,
+        payment_terms: "",
+      });
       return quotationResponseList;
     })
   );
+
   const formattedQuotationRequestList =
     quotationRequestList as unknown as (RequestResponseTableRow & {
       request_response_field: { field_name: string };
+      request_response_request: {
+        request_id: string;
+        request_formsly_id: string;
+      };
     })[][];
 
   const canvassData: CanvassType = {};
@@ -2021,7 +2156,7 @@ export const getCanvassData = async (
       if (response.request_response_field.field_name === "Item") {
         currentItem = JSON.parse(response.request_response);
         canvassData[currentItem].push({
-          quotationId: response.request_response_request_id,
+          quotationId: response.request_response_request.request_formsly_id,
           price: 0,
           quantity: 0,
         });
@@ -2034,7 +2169,25 @@ export const getCanvassData = async (
         if (price < lowestPricePerItem[currentItem]) {
           lowestPricePerItem[currentItem] = price;
         }
-        summaryData[response.request_response_request_id] += price;
+        summaryData[response.request_response_request.request_formsly_id] +=
+          price;
+      } else if (
+        response.request_response_field.field_name === "Payment Terms"
+      ) {
+        summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
+          if (request.quotation_id === response.request_response_request_id)
+            return {
+              ...request,
+              payment_terms: JSON.parse(response.request_response) as string,
+            };
+          else return request;
+        });
+      } else if (response.request_response_field.field_name === "Lead Time") {
+        summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
+          if (request.quotation_id === response.request_response_request_id)
+            return { ...request, lead_time: Number(response.request_response) };
+          else return request;
+        });
       } else if (response.request_response_field.field_name === "Quantity") {
         canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
           Number(response.request_response);
@@ -2044,13 +2197,15 @@ export const getCanvassData = async (
         )
       ) {
         const price = Number(response.request_response);
-        summaryData[response.request_response_request_id] += price;
+        summaryData[response.request_response_request.request_formsly_id] +=
+          price;
         tempAdditionalCharge += price;
       }
     });
 
-    requestAdditionalCharge[request[0].request_response_request_id] =
-      tempAdditionalCharge;
+    requestAdditionalCharge[
+      request[0].request_response_request.request_formsly_id
+    ] = tempAdditionalCharge;
     if (tempAdditionalCharge < lowestAdditionalCharge) {
       lowestAdditionalCharge = tempAdditionalCharge;
     }
@@ -2060,13 +2215,17 @@ export const getCanvassData = async (
     .sort(([, a], [, b]) => a - b)
     .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
   const recommendedQuotationId = Object.keys(sortedQuotation)[0];
-
+  const request_id = canvassRequest.find(
+    (request) => request.request_formsly_id === recommendedQuotationId
+  )?.request_id;
   return {
     canvassData,
     lowestPricePerItem,
     summaryData,
+    summaryAdditionalDetails,
     lowestQuotation: {
       id: recommendedQuotationId,
+      request_id: request_id,
       value: sortedQuotation[recommendedQuotationId],
     },
     requestAdditionalCharge,
@@ -2117,22 +2276,24 @@ export const getRequestStatusMonthlyCount = async (
   };
 
   // Generate the list of month ranges within the specified date range
-  const startDateObj = new Date(startDate);
-  const endDateObj = new Date(endDate);
+  // Generate the list of month ranges within the specified date range
+  const startDateObj = moment(startDate);
+  const endDateObj = moment(endDate).endOf("month");
+
   const monthRanges = [];
 
-  while (startDateObj < endDateObj) {
-    const startOfMonth = new Date(startDateObj);
-    const endOfMonth = new Date(
-      startDateObj.getFullYear(),
-      startDateObj.getMonth() + 1,
-      0
-    );
+  while (startDateObj.isSameOrBefore(endDateObj, "month")) {
+    const startOfMonth = startDateObj.clone().startOf("month");
+    const endOfMonth = startDateObj.clone().endOf("month");
+
     monthRanges.push({
-      start_of_month: startOfMonth.toISOString(),
-      end_of_month: endOfMonth.toISOString(),
+      start_of_month: startOfMonth.format(),
+      end_of_month: endOfMonth.isSameOrBefore(endDateObj)
+        ? endOfMonth.format()
+        : endDateObj.format(),
     });
-    startDateObj.setMonth(startDateObj.getMonth() + 1);
+
+    startDateObj.add(1, "month");
   }
 
   const monthlyData = await Promise.all(
@@ -2185,4 +2346,663 @@ export const getSupplier = async (
   });
 
   return supplierList;
+};
+
+// Get team member
+export const getTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string }
+) => {
+  const { teamMemberId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select("*, team_member_user: team_member_user_id(*)")
+    .eq("team_member_id", teamMemberId)
+    .single();
+  if (error) throw error;
+
+  return data;
+};
+
+// Get team group list
+export const getTeamGroupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { teamId, search = "", page, limit } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_group_table")
+    .select("*", { count: "exact" })
+    .eq("team_group_team_id", teamId)
+    .eq("team_group_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("team_group_name", `%${search}%`);
+  }
+
+  query = query.order("team_group_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return { data, count };
+};
+
+// Get team project list
+export const getTeamProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { teamId, search = "", page, limit } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_project_table")
+    .select("*", { count: "exact" })
+    .eq("team_project_team_id", teamId)
+    .eq("team_project_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("team_project_name", `%${search}%`);
+  }
+
+  query = query.order("team_project_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return { data, count };
+};
+
+// Check if team group exists
+export const checkIfTeamGroupExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    groupName: string;
+    teamId: string;
+  }
+) => {
+  const { groupName, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("team_group_table")
+    .select("*", { count: "exact", head: true })
+    .eq("team_group_name", groupName)
+    .eq("team_group_team_id", teamId)
+    .eq("team_group_is_disabled", false);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Check if team project exists
+export const checkIfTeamProjectExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectName: string;
+    teamId: string;
+  }
+) => {
+  const { projectName, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("team_project_table")
+    .select("*", { count: "exact", head: true })
+    .eq("team_project_name", projectName)
+    .eq("team_project_team_id", teamId)
+    .eq("team_project_is_disabled", false);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get team group member list
+export const getTeamGroupMemberList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    groupId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { groupId, search = "", page, limit } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_group_member_table")
+    .select(
+      `
+        team_group_member_id,
+        team_member: team_member_id!inner(
+          team_member_id,
+          team_member_date_created, 
+          team_member_user: team_member_user_id!inner(
+            user_id, 
+            user_first_name, 
+            user_last_name,
+            user_avatar, 
+            user_email
+          )
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("team_group_id", groupId)
+    .eq("team_member.team_member_is_disabled", false);
+
+  if (search) {
+    query = query.or(
+      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
+      { foreignTable: "team_member.team_member_user" }
+    );
+  }
+
+  query = query.order("team_member_date_created", {
+    ascending: false,
+    foreignTable: "team_member",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get all team members without existing member of the group
+export const getAllTeamMembersWithoutGroupMembers = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    groupId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_all_team_members_without_group_members", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as TeamMemberWithUserDetails;
+};
+
+// Get team project member list
+export const getTeamProjectMemberList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { projectId, search = "", page, limit } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_project_member_table")
+    .select(
+      `
+        team_project_member_id,
+        team_member: team_member_id!inner(
+          team_member_id,
+          team_member_date_created, 
+          team_member_user: team_member_user_id!inner(
+            user_id, 
+            user_first_name, 
+            user_last_name,
+            user_avatar, 
+            user_email
+          )
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("team_project_id", projectId)
+    .eq("team_member.team_member_is_disabled", false);
+
+  if (search) {
+    query = query.or(
+      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
+      { foreignTable: "team_member.team_member_user" }
+    );
+  }
+
+  query = query.order("team_member_date_created", {
+    ascending: false,
+    foreignTable: "team_member",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get all team members without existing member of the project
+export const getAllTeamMembersWithoutProjectMembers = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    projectId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_all_team_members_without_project_members", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as TeamMemberWithUserDetails;
+};
+
+// Get team member project list
+export const getTeamMemberProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string; search?: string; page: number; limit: number }
+) => {
+  const { teamMemberId, search, page, limit } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_project_member_table")
+    .select("team_project_member_id, team_project: team_project_id!inner(*)", {
+      count: "exact",
+    })
+    .eq("team_member_id", teamMemberId);
+
+  if (search) {
+    query = query.ilike("team_project.team_project_name", `%${search}%`);
+  }
+
+  query = query.order("team_project_name", {
+    ascending: true,
+    foreignTable: "team_project",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get team member group list
+export const getTeamMemberGroupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string; search?: string; page: number; limit: number }
+) => {
+  const { teamMemberId, search, page, limit } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_group_member_table")
+    .select("team_group_member_id, team_group: team_group_id!inner(*)", {
+      count: "exact",
+    })
+    .eq("team_member_id", teamMemberId);
+
+  if (search) {
+    query = query.ilike("team_group.team_group_name", `%${search}%`);
+  }
+
+  query = query.order("team_group_name", {
+    ascending: true,
+    foreignTable: "team_group",
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get all team groups
+export const getAllTeamGroups = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { teamId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("team_group_table")
+    .select("*")
+    .eq("team_group_team_id", teamId)
+    .eq("team_group_is_disabled", false);
+  if (error) throw error;
+
+  return data;
+};
+
+// Check if a team member is a member of a group
+export const checkIfTeamGroupMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string; groupId: string[] }
+) => {
+  const { teamMemberId, groupId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("team_group_member_table")
+    .select("*", { count: "exact", head: true })
+    .in("team_group_id", groupId)
+    .eq("team_member_id", teamMemberId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get all team projects
+export const getAllTeamMemberProjects = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; memberId: string }
+) => {
+  const { teamId, memberId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("team_project_table")
+    .select(
+      "*, team_project_member: team_project_member_table!inner(team_member_id)"
+    )
+    .eq("team_project_team_id", teamId)
+    .eq("team_project_member.team_member_id", memberId)
+    .eq("team_project_is_disabled", false);
+  if (error) throw error;
+
+  return data;
+};
+
+// Get all team projects
+export const getAllTeamProjects = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { teamId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("team_project_table")
+    .select("*")
+    .eq("team_project_team_id", teamId)
+    .eq("team_project_is_disabled", false);
+  if (error) throw error;
+
+  return data;
+};
+
+// Get all invitations sent by a team
+export const getTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    status: string;
+  }
+) => {
+  const { teamId, status } = params;
+  const { data, error } = await supabaseClient
+    .from("invitation_table")
+    .select(
+      "invitation_id, invitation_to_email, invitation_date_created, team_member: invitation_from_team_member_id!inner(team_member_team_id)"
+    )
+    .eq("team_member.team_member_team_id", teamId)
+    .eq("invitation_status", status)
+    .eq("invitation_is_disabled", false);
+
+  if (error) throw error;
+
+  return { data, error: null };
+};
+
+export const getRequestFormslyId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select("request_formsly_id")
+    .eq("request_id", requestId);
+  if (error) throw error;
+  const requestFormslyId = data[0].request_formsly_id;
+
+  return requestFormslyId;
+};
+
+// Fetch request signer based on Source Project
+export const getProjectSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    formId: string;
+  }
+) => {
+  const { projectId, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select("*")
+    .eq("signer_team_project_id", projectId)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false);
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch request signer with team member based on Source Project
+export const getProjectSignerWithTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    formId: string;
+  }
+) => {
+  const { projectId, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select(
+      `signer_id, 
+      signer_is_primary_signer, 
+      signer_action, 
+      signer_order,
+      signer_is_disabled, 
+      signer_team_project_id,
+      signer_team_member: signer_team_member_id(
+        team_member_id, 
+        team_member_user: team_member_user_id(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar
+        )
+      )`
+    )
+    .eq("signer_team_project_id", projectId)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false);
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch request project id
+export const getRequestProjectIdAndName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select(
+      "request_project: request_project_id(team_project_id, team_project_name)"
+    )
+    .eq("request_id", requestId)
+    .single();
+  if (error) throw error;
+
+  return data.request_project;
+};
+
+// Fetch multiple request signer with team member based on project site
+export const getMultipleProjectSignerWithTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectName: string[];
+    formId: string;
+  }
+) => {
+  const { projectName, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select(
+      `signer_id, 
+      signer_is_primary_signer, 
+      signer_action, 
+      signer_order,
+      signer_is_disabled, 
+      signer_team_project: signer_team_project_id!inner(
+        team_project_name
+      ),
+      signer_team_member: signer_team_member_id(
+        team_member_id, 
+        team_member_user: team_member_user_id(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar
+        )
+      )`
+    )
+    .in("signer_team_project.team_project_name", projectName)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false);
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch request signer based on formId and projectId
+export const getFormSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    formId: string;
+  }
+) => {
+  const { projectId, formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select("signer_id")
+    .eq("signer_form_id", formId)
+    .or(
+      `signer_team_project_id.eq.${projectId}, signer_team_project_id.is.null`
+    )
+    .eq("signer_is_disabled", false);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch withdrawal slip item descriptions
+export const getWithdrawalSlipItemDescriptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    teamId: string;
+  }
+) => {
+  const { requestId, teamId } = params;
+
+  const { data: form, error: formError } = await supabaseClient
+    .from("form_table")
+    .select(
+      "form_id, form_team_member: form_team_member_id!inner(team_member_team_id)"
+    )
+    .eq("form_name", "Requisition")
+    .eq("form_is_formsly_form", true)
+    .eq("form_team_member.team_member_team_id", teamId)
+    .single();
+  if (formError) throw formError;
+
+  const { data, error } = await supabaseClient
+    .from("section_table")
+    .select(
+      `
+      section_name,
+      section_field: field_table!inner(
+        *, 
+        field_option: option_table(*), 
+        field_response: request_response_table!inner(*)
+      )
+    `
+    )
+    .eq("section_form_id", form.form_id)
+    .eq("section_name", "Item")
+    .eq("section_field.field_response.request_response_request_id", requestId)
+    .single();
+  if (error) throw error;
+
+  return data.section_field as unknown as RequisitionFieldsType;
+};
+
+// Fetch request project signer
+export const getRequestProjectSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      "*, request_signer: request_signer_signer_id!inner(*, signer_team_project: signer_team_project_id!inner(team_project_name))"
+    )
+    .eq("request_signer_request_id", requestId)
+    .eq("request_signer.signer_is_disabled", false);
+  if (error) throw error;
+
+  return data as unknown as RequestProjectSignerType;
 };

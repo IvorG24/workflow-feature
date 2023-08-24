@@ -97,15 +97,6 @@ const Layout = ({ children }: LayoutProps) => {
             setActiveTeam(teamList[0]);
           }
 
-          // fetch form list of active team
-          const formList = await getFormList(supabaseClient, {
-            teamId: activeTeamId,
-            app: user.user_active_app,
-          });
-
-          // set form list
-          setFormList(formList);
-
           // fetch user team member id
           const teamMember = await getUserTeamMemberData(supabaseClient, {
             teamId: activeTeamId,
@@ -114,6 +105,16 @@ const Layout = ({ children }: LayoutProps) => {
           // set user team member id
           if (teamMember) {
             setUserTeamMember(teamMember);
+
+            // fetch form list of active team
+            const formList = await getFormList(supabaseClient, {
+              teamId: activeTeamId,
+              app: user.user_active_app,
+              memberId: teamMember.team_member_id,
+            });
+
+            // set form list
+            setFormList(formList);
           }
         }
 

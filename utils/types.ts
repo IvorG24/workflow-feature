@@ -129,6 +129,20 @@ export type SupplierTableInsert =
 export type SupplierTableUpdate =
   Database["public"]["Tables"]["supplier_table"]["Update"];
 
+export type TeamGroupTableRow =
+  Database["public"]["Tables"]["team_group_table"]["Row"];
+export type TeamGroupTableInsert =
+  Database["public"]["Tables"]["team_group_table"]["Insert"];
+export type TeamGroupTableUpdate =
+  Database["public"]["Tables"]["team_group_table"]["Update"];
+
+export type TeamProjectTableRow =
+  Database["public"]["Tables"]["team_project_table"]["Row"];
+export type TeamProjectTableInsert =
+  Database["public"]["Tables"]["team_project_table"]["Insert"];
+export type TeamProjectTableUpdate =
+  Database["public"]["Tables"]["team_project_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -140,7 +154,7 @@ export type AttachmentBucketType =
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS";
-export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED" | "PAUSED";
+export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type FieldType =
   | "TEXT"
@@ -282,13 +296,15 @@ export type RequestWithResponseType = RequestTableRow & {
       };
     };
   }[];
+} & {
+  request_project: {
+    team_project_name: string;
+  };
 };
 
 export type TeamMemberType = {
   team_member_id: string;
   team_member_role: MemberRoleType;
-  team_member_group_list: string[];
-  team_member_project_list: string[];
   team_member_user: {
     user_id: string;
     user_first_name: string;
@@ -327,7 +343,6 @@ export type FormType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
-  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -358,6 +373,13 @@ export type FormType = {
       field_option: OptionTableRow[];
     })[];
   })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
 };
 
 export type FormWithResponseType = {
@@ -368,7 +390,6 @@ export type FormWithResponseType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
-  form_group: string[];
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -402,6 +423,13 @@ export type FormWithResponseType = {
       field_response?: unknown;
     })[];
   })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
 };
 
 export type FormWithTeamMember = FormTableRow & {
@@ -417,8 +445,7 @@ export type ItemForm = {
   descriptions: { description: string }[];
   unit: string;
   isAvailable: boolean;
-  purpose: string;
-  costCode: string;
+
   glAccount: string;
 };
 
@@ -516,7 +543,7 @@ export type RequestDashboardOverviewData = RequestTableRow & {
 };
 
 export type ConnectedFormsType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Invoice"
   | "Account Payable Voucher";
 
@@ -564,15 +591,15 @@ export type RequestResponseDataType = {
   responseData: FieldWithResponseType;
 };
 export type FormslyFormType = {
-  "Order to Purchase": string[];
+  Requisition: string[];
   Quotation: string[];
-  "Receiving Inspecting Report (Purchased)": string[];
+  "Receiving Inspecting Report": string[];
 };
 
 export type FormslyFormKeyType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Quotation"
-  | "Receiving Inspecting Report (Purchased)";
+  | "Receiving Inspecting Report";
 
 export type RequestSignerListType =
   RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
@@ -582,9 +609,9 @@ export type RequestSignerListType =
     };
   };
 export type TeamGroupForFormType =
-  | "Order to Purchase"
+  | "Requisition"
   | "Quotation"
-  | "Receiving Inspecting Report (Purchased)"
+  | "Receiving Inspecting Report"
   | "Cheque Reference"
   | "Audit";
 
@@ -601,33 +628,52 @@ export type SSOTResponseType = {
 };
 
 export type SSOTType = {
-  otp_request_id: string;
-  otp_request_date_created: string;
-  otp_request_owner: SSOTRequestOwnerType;
-  otp_request_response: SSOTResponseType[];
-  otp_quotation_request: {
+  requisition_request_formsly_id: string;
+  requisition_request_id: string;
+  requisition_request_date_created: string;
+  requisition_request_owner: SSOTRequestOwnerType;
+  requisition_request_response: SSOTResponseType[];
+  requisition_quotation_request: {
     quotation_request_id: string;
+    quotation_request_formsly_id: string;
     quotation_request_date_created: string;
     quotation_request_owner: SSOTRequestOwnerType;
     quotation_request_response: SSOTResponseType[];
     quotation_rir_request: {
       rir_request_id: string;
+      rir_request_formsly_id: string;
       rir_request_date_created: string;
       rir_request_owner: SSOTRequestOwnerType;
       rir_request_response: SSOTResponseType[];
     }[];
   }[];
-  otp_cheque_reference_request: {
+  requisition_sourced_item_request: {
+    sourced_item_request_id: string;
+    sourced_item_request_formsly_id: string;
+    sourced_item_request_date_created: string;
+    sourced_item_request_owner: SSOTRequestOwnerType;
+    sourced_item_request_response: SSOTResponseType[];
+    sourced_item_ro_request: {
+      ro_request_id: string;
+      ro_request_formsly_id: string;
+      ro_request_date_created: string;
+      ro_request_owner: SSOTRequestOwnerType;
+      ro_request_response: SSOTResponseType[];
+      ro_transfer_receipt_request: {
+        transfer_receipt_request_id: string;
+        transfer_receipt_request_formsly_id: string;
+        transfer_receipt_request_date_created: string;
+        transfer_receipt_request_owner: SSOTRequestOwnerType;
+        transfer_receipt_request_response: SSOTResponseType[];
+      }[];
+    }[];
+  }[];
+  requisition_cheque_reference_request: {
     cheque_reference_request_id: string;
+    cheque_reference_request_formsly_id: string;
     cheque_reference_request_date_created: string;
     cheque_reference_request_response: SSOTResponseType[];
     cheque_reference_request_owner: SSOTRequestOwnerType;
-  }[];
-  otp_rir_request: {
-    rir_request_id: string;
-    rir_request_date_created: string;
-    rir_request_owner: SSOTRequestOwnerType;
-    rir_request_response: SSOTResponseType[];
   }[];
 };
 
@@ -659,9 +705,40 @@ export type CanvassType = Record<
   }[]
 >;
 export type CanvassLowestPriceType = Record<string, number>;
+export type CanvassAdditionalDetailsType = {
+  quotation_id: string;
+  formsly_id: string;
+  lead_time: number;
+  payment_terms: string;
+}[];
+
+export type RequestProjectSignerStatusType = {
+  signer_project_name: string;
+  signer_status: ReceiverStatusType;
+  signer_team_member_id: string;
+}[];
+
+export type RequestProjectSignerType = {
+  request_signer_id: string;
+  request_signer_status: string;
+  request_signer_request_id: string;
+  request_signer_signer_id: string;
+  request_signer: {
+    signer_id: string;
+    signer_is_primary_signer: boolean;
+    signer_action: string;
+    signer_order: number;
+    signer_is_disabled: boolean;
+    signer_form_id: string;
+    signer_team_member_id: string;
+    signer_team_project_id: string;
+    signer_team_project: { team_project_name: string };
+  };
+}[];
 
 export type RequestListItemType = {
   request_id: string;
+  request_formsly_id: string;
   request_date_created: string;
   request_status: string;
   request_team_member: {
@@ -694,3 +771,27 @@ export type RequestListItemType = {
     };
   }[];
 };
+
+export type ConnectedRequestItemType = {
+  request_id: string;
+  request_formsly_id: string;
+};
+
+export type ConnectedRequestIdList = {
+  [key: string]: ConnectedRequestItemType[];
+};
+
+export type RequisitionFieldsType = FieldTableRow & {
+  field_option: OptionTableRow[];
+} & { field_response: RequestResponseTableRow[] }[];
+
+export type TeamMemberWithUserDetails = {
+  team_member_id: string;
+  team_member_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+}[];

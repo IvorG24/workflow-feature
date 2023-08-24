@@ -23,7 +23,7 @@ import Overview from "./OverviewTab/Overview";
 // response tab is hidden
 const TABS = ["overview"];
 // const SPECIAL_FORMS = [
-//   "Order to Purchase",
+//   "Requisition",
 //   "Receiving Inspecting Report",
 //   "Quotation",
 // ];
@@ -37,7 +37,7 @@ const Dashboard = () => {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
   const previousActiveTeamId = usePrevious(activeTeam.team_id);
-  // const [isOTPForm, setIsOTPForm] = useState(false);
+  // const [isRequsitionForm, setIsRequsitionForm] = useState(false);
 
   const currentDate = moment().toDate();
   const firstDayOfCurrentYear = moment({
@@ -59,7 +59,7 @@ const Dashboard = () => {
   //   formList.find((form) => form.form_id === selectedForm)?.form_name || "";
 
   // useEffect(() => {
-  //   setIsOTPForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
+  //   setIsRequsitionForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
   // }, [isFormslyForm, selectedFormName]);
 
   useEffect(() => {
@@ -89,7 +89,7 @@ const Dashboard = () => {
       // case "responses":
       //   return selectedForm ? (
       //     <ResponseTab
-      //       isOTPForm={isOTPForm}
+      //       isRequsitionForm={isRequsitionForm}
       //       selectedForm={selectedForm}
       //       selectedFormName={selectedFormName}
       //       activeTeamId={activeTeam.team_id}
@@ -114,6 +114,7 @@ const Dashboard = () => {
             onChange={setDateFilter}
             icon={<IconCalendarEvent />}
             dropdownType="popover"
+            minDate={new Date("2023-01-01")}
             maxDate={currentDate}
             allowSingleDateInRange
             w={300}

@@ -36,23 +36,28 @@ const RequestItemRow = ({ request }: Props) => {
     request_signer,
   } = request;
 
+  const requestId = request.request_formsly_id || request.request_id;
+
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
       <Grid.Col span={2}>
-        <Group spacing={0}>
-          <Text truncate w={100}>
-            {request.request_id}
+        <Flex justify="space-between">
+          <Text truncate maw={150}>
+            {requestId}
           </Text>
-          <CopyButton value={request.request_id}>
+          <CopyButton value={requestId}>
             {({ copied, copy }) => (
-              <Tooltip label={copied ? "Copied" : "Copy"} onClick={copy}>
+              <Tooltip
+                label={copied ? "Copied" : "Copy request id"}
+                onClick={copy}
+              >
                 <ActionIcon>
                   <IconCopy size={16} />
                 </ActionIcon>
               </Tooltip>
             )}
           </CopyButton>
-        </Group>
+        </Flex>
       </Grid.Col>
       <Grid.Col span={3}>
         <Text>{request.request_form.form_name}</Text>

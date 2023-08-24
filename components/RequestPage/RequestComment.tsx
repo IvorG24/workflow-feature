@@ -23,7 +23,6 @@ import {
   IconDots,
   IconEdit,
   IconFolderCancel,
-  IconPlayerPause,
   IconX,
 } from "@tabler/icons-react";
 import { capitalize } from "lodash";
@@ -109,7 +108,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const actionCommentList = [
     "ACTION_APPROVED",
     "ACTION_REJECTED",
-    "ACTION_PAUSED",
     "ACTION_CANCELED",
   ];
 
@@ -119,8 +117,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "green";
       case "ACTION_REJECTED":
         return "red";
-      case "ACTION_PAUSED":
-        return "orange";
       case "ACTION_CANCELED":
         return "gray";
     }
@@ -132,8 +128,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "Approved!";
       case "ACTION_REJECTED":
         return "Rejected!";
-      case "ACTION_PAUSED":
-        return "Paused!";
       case "ACTION_CANCELED":
         return "Canceled!";
     }
@@ -145,8 +139,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return <IconCheck size={16} />;
       case "ACTION_REJECTED":
         return <IconX size={16} />;
-      case "ACTION_PAUSED":
-        return <IconPlayerPause size={16} />;
       case "ACTION_CANCELED":
         return <IconFolderCancel size={16} />;
     }

@@ -211,6 +211,7 @@ const SignerForm = ({
                 }
                 sx={{ flex: 1 }}
                 miw={150}
+                searchable
               />
             )}
           />

@@ -3,7 +3,11 @@ import { useFormActions } from "@/stores/useFormStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { defaultRequestFormBuilderSection } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { AppType, TeamMemberWithUserType } from "@/utils/types";
+import {
+  AppType,
+  TeamGroupTableRow,
+  TeamMemberWithUserType,
+} from "@/utils/types";
 import {
   Box,
   Button,
@@ -44,10 +48,10 @@ const useStyles = createStyles((theme) => ({
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
   formId: string;
-  teamGroupList: string[];
+  groupList: TeamGroupTableRow[];
 };
 
-const BuildFormPage = ({ teamMemberList, formId, teamGroupList }: Props) => {
+const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -236,7 +240,15 @@ const BuildFormPage = ({ teamMemberList, formId, teamGroupList }: Props) => {
           />
 
           {formType === "REQUEST" && (
-            <FormBuilder.GroupSection mt={32} teamGroupList={teamGroupList} />
+            <FormBuilder.GroupSection
+              mt={32}
+              teamGroupList={groupList.map((group) => {
+                return {
+                  label: group.team_group_name,
+                  value: group.team_group_id,
+                };
+              })}
+            />
           )}
 
           {formType === "REQUEST" && (

@@ -1,16 +1,24 @@
 import {
-  getFormIDForOTP,
+  getFormIDForRequsition,
+  getFormSigner,
   getFormslyForm,
   getFormslyForwardLinkFormId,
-  getOTPPendingQuotationRequestList,
   getRequest,
+  getRequestProjectSigner,
+  getRequisitionPendingQuotationRequestList,
   getUserActiveTeamId,
+  getUserTeamMemberData,
+  getWithdrawalSlipItemDescriptions,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import OrderToPurchaseRequestPage from "@/components/OrderToPurchaseRequestPage/OrderToPurchaseRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
+import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormslyFormType, RequestWithResponseType } from "@/utils/types";
+import {
+  ConnectedRequestIdList,
+  RequestProjectSignerStatusType,
+  RequestWithResponseType,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -40,6 +48,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (!teamId) throw new Error("No team found");
 
+      const teamMember = await getUserTeamMemberData(supabaseClient, {
+        teamId,
+        userId: user.id,
+      });
+
       const connectedRequestIDList = await getFormslyForwardLinkFormId(
         supabaseClient,
         {
@@ -47,14 +60,19 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         }
       );
 
-      if (request.request_form.form_name === "Order to Purchase") {
-        const connectedForm = await getFormIDForOTP(supabaseClient, {
+      if (request.request_form.form_name === "Requisition") {
+        const connectedForm = await getFormIDForRequsition(supabaseClient, {
           teamId,
+          memberId: `${teamMember?.team_member_id}`,
         });
 
-        const canvassRequest = await getOTPPendingQuotationRequestList(
-          supabaseClient,
-          { requestId: request.request_id }
+        const canvassRequestList =
+          await getRequisitionPendingQuotationRequestList(supabaseClient, {
+            requestId: request.request_id,
+          });
+
+        const canvassRequest = canvassRequestList.map(
+          (request) => request.request_id
         );
 
         return {
@@ -67,8 +85,9 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       } else if (request.request_form.form_name === "Quotation") {
         const connectedForm = await getFormslyForm(supabaseClient, {
-          formName: "Receiving Inspecting Report (Purchased)",
+          formName: "Receiving Inspecting Report",
           teamId,
+          memberId: `${teamMember?.team_member_id}`,
         });
 
         return {
@@ -76,8 +95,125 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             request,
             connectedFormIdAndGroup: {
               formId: connectedForm?.form_id,
-              formGroup: connectedForm?.form_group,
               formIsForEveryone: connectedForm?.form_is_for_every_member,
+              formIsMember: connectedForm?.form_is_member,
+              formName: "Receiving Inspecting Report",
+            },
+            connectedRequestIDList,
+          },
+        };
+      } else if (request.request_form.form_name === "Sourced Item") {
+        const connectedForm = await getFormslyForm(supabaseClient, {
+          formName: "Release Order",
+          teamId,
+          memberId: `${teamMember?.team_member_id}`,
+        });
+
+        const data = await getFormSigner(supabaseClient, {
+          formId: request.request_form.form_id,
+          projectId: `${request.request_project_id}`,
+        });
+
+        const requestProjectSigner = await getRequestProjectSigner(
+          supabaseClient,
+          {
+            requestId: request.request_id,
+          }
+        );
+
+        const projectSignerStatus = requestProjectSigner.map((signer) => ({
+          signer_project_name:
+            signer.request_signer.signer_team_project.team_project_name,
+          signer_status: signer.request_signer_status,
+          signer_team_member_id: signer.request_signer.signer_team_member_id,
+        }));
+
+        const mainSignerIdList = data.map((signer) => signer.signer_id);
+
+        return {
+          props: {
+            request: {
+              ...request,
+              request_signer: request.request_signer.map((requestSigner) => {
+                if (
+                  !mainSignerIdList.includes(
+                    requestSigner.request_signer_signer.signer_id
+                  )
+                ) {
+                  return {
+                    ...requestSigner,
+                    request_signer_signer: {
+                      ...requestSigner.request_signer_signer,
+                      signer_is_primary_signer: false,
+                    },
+                  };
+                } else {
+                  return requestSigner;
+                }
+              }),
+            },
+            connectedFormIdAndGroup: {
+              formId: connectedForm?.form_id,
+              formIsForEveryone: connectedForm?.form_is_for_every_member,
+              formIsMember: connectedForm?.form_is_member,
+              formName: "Release Order",
+            },
+            connectedRequestIDList,
+            projectSignerStatus,
+          },
+        };
+      } else if (request.request_form.form_name === "Release Order") {
+        const connectedForm = await getFormslyForm(supabaseClient, {
+          formName: "Transfer Receipt",
+          teamId,
+          memberId: `${teamMember?.team_member_id}`,
+        });
+
+        return {
+          props: {
+            request,
+            connectedFormIdAndGroup: {
+              formId: connectedForm?.form_id,
+              formIsForEveryone: connectedForm?.form_is_for_every_member,
+              formIsMember: connectedForm?.form_is_member,
+              formName: "Transfer Receipt",
+            },
+            connectedRequestIDList,
+          },
+        };
+      } else if (request.request_form.form_name === "Withdrawal Slip") {
+        const connectedForm = await getFormslyForm(supabaseClient, {
+          formName: "Release Quantity",
+          teamId,
+          memberId: `${teamMember?.team_member_id}`,
+        });
+        const itemDescriptionFields = await getWithdrawalSlipItemDescriptions(
+          supabaseClient,
+          { requestId: request.request_id, teamId: teamId }
+        );
+        return {
+          props: {
+            request: {
+              ...request,
+              request_form: {
+                ...request.request_form,
+                form_section: [
+                  request.request_form.form_section[0],
+                  {
+                    ...request.request_form.form_section[1],
+                    section_field: [
+                      ...request.request_form.form_section[1].section_field,
+                      ...itemDescriptionFields,
+                    ],
+                  },
+                ],
+              },
+            },
+            connectedFormIdAndGroup: {
+              formId: connectedForm?.form_id,
+              formIsForEveryone: connectedForm?.form_is_for_every_member,
+              formIsMember: connectedForm?.form_is_member,
+              formName: "Release Quantity",
             },
             connectedRequestIDList,
           },
@@ -106,17 +242,19 @@ type Props = {
   request: RequestWithResponseType;
   connectedFormIdAndGroup: {
     formId: string;
-    formGroup: string[];
     formIsForEveryone: boolean;
+    formIsMember: boolean;
+    formName: string;
   };
-  connectedRequestIDList: FormslyFormType;
+  connectedRequestIDList: ConnectedRequestIdList;
   connectedForm: {
     form_name: string;
     form_id: string;
-    form_group: string[];
     form_is_for_every_member: boolean;
+    form_is_member: boolean;
   }[];
   canvassRequest?: string[];
+  projectSignerStatus?: RequestProjectSignerStatusType;
 };
 
 const Page = ({
@@ -125,11 +263,12 @@ const Page = ({
   connectedRequestIDList,
   connectedForm,
   canvassRequest = [],
+  projectSignerStatus,
 }: Props) => {
   const formslyForm = () => {
-    if (request.request_form.form_name === "Order to Purchase") {
+    if (request.request_form.form_name === "Requisition") {
       return (
-        <OrderToPurchaseRequestPage
+        <RequisitionRequestPage
           request={request}
           connectedForm={connectedForm}
           connectedRequestIDList={connectedRequestIDList}
@@ -143,6 +282,7 @@ const Page = ({
           isFormslyForm
           connectedFormIdAndGroup={connectedFormIdAndGroup}
           connectedRequestIDList={connectedRequestIDList}
+          projectSignerStatus={projectSignerStatus}
         />
       );
     }
