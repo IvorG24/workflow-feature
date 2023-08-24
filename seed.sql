@@ -467,19 +467,3 @@ INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('c4cc353e-7b92-421b-b161-47e3f19c1c26', 'Symmetric Intercontinental IT Solutions Inc', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('3753ab78-290b-4b53-a4b0-752a8e42daf5', 'Fire Solution Inc', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('15c734e9-174f-4a19-b9ab-a3cc2f661b56', 'Begul Builders Corporation', 'a5a28977-6956-45c1-a624-b9e90911502e');
-
-INSERT INTO cost_code_table (
-    cost_code_section, 
-    cost_code_division_id, 
-    cost_code_division_description,
-    cost_code_level_two_major_group_id, 
-    cost_code_level_two_major_group_description, 
-    cost_code_level_two_minor_group_id, 
-    cost_code_level_two_minor_group_description, 
-    cost_code_level_three_id,
-    cost_code_level_three_description
-) VALUES
-('00 00 00', '00', 'Div Desc 1', '0', 'Procureemnt and Contracting Requiremments', '0', 'NONE', '00', 'Procureemnt and Contracting Requiremments'),
-('01 01 01', '01', 'Div Desc 2', '0', 'Procureemnt and Contracting Requiremments', '1', 'NONE', '01', 'Project Title Page'),
-('02 11 00', '02', 'Div Desc 3', '1', 'Solicitation', '0', 'Proposal Forms', '00', 'Advetisements and Invitations'),
-('03 63 57', '03', 'Div Desc 4', '6', 'Project Formms', '5', 'Closeout Forms', '00', 'Change Order Request Form');

@@ -4368,7 +4368,7 @@ RETURNS VOID AS $$
         item_unit: item.unit,
         item_gl_account: item.glAccount,
         item_team_id: TEAM_ID,
-        item_division_id: `0${Math.floor(Math.random() * 4)}`
+        item_division_id: `${Math.floor(Math.random() * 48)}`
       });
 
       item.description.forEach((description, index) => {
