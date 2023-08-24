@@ -1154,9 +1154,11 @@ const SSOTSpreadsheetView = ({
             <td>{proofOfSending}</td>
           )}
           {showQuotationColumnList["payment_terms"] && <td>{paymentTerms}</td>}
-          {showQuotationColumnList["lead_time"] && <td>{leadTime}</td>}
+          {showQuotationColumnList["lead_time"] && (
+            <td>{addCommaToNumber(Number(leadTime))}</td>
+          )}
           {showQuotationColumnList["required_down_payment"] && (
-            <td>{requiredDownPayment}</td>
+            <td>₱ {addCommaToNumber(Number(requiredDownPayment))}</td>
           )}
           {showQuotationColumnList["item"] && (
             <td>
@@ -1620,7 +1622,7 @@ const SSOTSpreadsheetView = ({
                         <th className={classes.normal}>Proof of Sending</th>
                       )}
                       {showQuotationColumnList["payment_terms"] && (
-                        <th className={classes.long}>Payment Terms</th>
+                        <th className={classes.normal}>Payment Terms</th>
                       )}
                       {showQuotationColumnList["lead_time"] && (
                         <th className={classes.normal}>Lead Time</th>
@@ -1941,7 +1943,7 @@ const SSOTSpreadsheetView = ({
                         <th className={classes.short}>GL Account</th>
                       )}
                       {showRequisitionColumnList["cost_code"] && (
-                        <th className={classes.short}>Cost Code</th>
+                        <th className={classes.description}>Cost Code</th>
                       )}
                     </>
                   )}
