@@ -8,6 +8,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
+  CostCodeTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
@@ -44,12 +45,16 @@ type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
+  costCodeOptions: OptionTableRow[];
+  costCodeList: CostCodeTableRow[];
 };
 
 const CreateWithdrawalSlipRequestPage = ({
   form,
   itemOptions,
   projectOptions,
+  costCodeOptions,
+  costCodeList,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -183,11 +188,25 @@ const CreateWithdrawalSlipRequestPage = ({
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
-        (field) => ({
-          ...field,
-          field_section_duplicatable_id: sectionDuplicatableId,
-          field_option: itemOptions,
-        })
+        (field) => {
+          if (field.field_name === "General Name") {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: itemOptions,
+            };
+          } else if (field.field_name === "Cost Code") {
+            return {
+              ...field,
+              field_option: costCodeOptions,
+            };
+          } else {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+            };
+          }
+        }
       );
       const newSection = {
         ...sectionMatch,
@@ -212,10 +231,19 @@ const CreateWithdrawalSlipRequestPage = ({
 
   useEffect(() => {
     const newFields = form.form_section[1].section_field.map((field) => {
-      return {
-        ...field,
-        field_option: itemOptions,
-      };
+      if (field.field_name === "General Name") {
+        return {
+          ...field,
+          field_option: itemOptions,
+        };
+      } else if (field.field_name === "Cost Code") {
+        return {
+          ...field,
+          field_option: costCodeOptions,
+        };
+      } else {
+        return field;
+      }
     });
     replaceSection([
       form.form_section[0],
@@ -224,7 +252,7 @@ const CreateWithdrawalSlipRequestPage = ({
         section_field: newFields,
       },
     ]);
-  }, [form, replaceSection, requestFormMethods, itemOptions]);
+  }, [form, replaceSection, requestFormMethods, itemOptions, costCodeList]);
 
   const handleGeneralNameChange = async (
     index: number,
@@ -280,40 +308,79 @@ const CreateWithdrawalSlipRequestPage = ({
       updateSection(index, {
         ...newSection,
         section_field: [
-          {
-            ...generalField[0],
-            field_section_duplicatable_id: duplicatableSectionId,
-          },
-          {
-            ...generalField[1],
-            field_section_duplicatable_id: duplicatableSectionId,
-          },
-          {
-            ...generalField[2],
-            field_section_duplicatable_id: duplicatableSectionId,
-          },
-          {
-            ...generalField[3],
-            field_section_duplicatable_id: duplicatableSectionId,
-          },
-          {
-            ...generalField[4],
-            field_section_duplicatable_id: duplicatableSectionId,
-          },
+          ...generalField.map((field) => {
+            return {
+              ...field,
+              field_section_duplicatable_id: duplicatableSectionId,
+            };
+          }),
           ...newFields,
         ],
       });
     } else {
       const generalField = [
         ...newSection.section_field.slice(0, 3),
+        ...newSection.section_field.slice(3, 8).map((field) => {
+          return {
+            ...field,
+            field_response: "",
+          };
+        }),
+      ];
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
+      });
+    }
+  };
+
+  const handleCostCodeChange = async (index: number, value: string | null) => {
+    const newSection = getValues(`sections.${index}`);
+
+    if (value) {
+      const costCode = costCodeList.find(
+        (costCode) => costCode.cost_code_level_three_description === value
+      );
+
+      const generalField = [
+        ...newSection.section_field.slice(0, 5),
         {
-          ...newSection.section_field[3],
-          field_response: "",
+          ...newSection.section_field[5],
+          field_response: costCode?.cost_code_division_description,
         },
         {
-          ...newSection.section_field[4],
-          field_response: "",
+          ...newSection.section_field[6],
+          field_response: costCode?.cost_code_level_two_major_group_description,
         },
+        {
+          ...newSection.section_field[7],
+          field_response: costCode?.cost_code_level_two_minor_group_description,
+        },
+        ...newSection.section_field.slice(8),
+      ];
+      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
+
+      updateSection(index, {
+        ...newSection,
+        section_field: [
+          ...generalField.map((field) => {
+            return {
+              ...field,
+              field_section_duplicatable_id: duplicatableSectionId,
+            };
+          }),
+        ],
+      });
+    } else {
+      const generalField = [
+        ...newSection.section_field.slice(0, 3),
+        ...newSection.section_field.slice(3, 8).map((field) => {
+          return {
+            ...field,
+            field_response: "",
+          };
+        }),
+        ...newSection.section_field.slice(8),
       ];
       updateSection(index, {
         ...newSection,
@@ -388,6 +455,7 @@ const CreateWithdrawalSlipRequestPage = ({
                     requisitionFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
+                      onCostCodeChange: handleCostCodeChange,
                     }}
                     formslyFormName="Requisition"
                   />

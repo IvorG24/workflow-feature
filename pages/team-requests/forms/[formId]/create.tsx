@@ -181,6 +181,18 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           });
 
+          // cost code
+          const costCode = await getAllCostCode(supabaseClient);
+          const costCodeOptions = costCode.map((costCode, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: costCode.cost_code_id,
+              option_order: index,
+              option_value: costCode.cost_code_level_three_description,
+            };
+          });
+
           return {
             props: {
               form: {
@@ -201,6 +213,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               },
               itemOptions,
               projectOptions,
+              costCodeOptions,
+              costCodeList: costCode,
             },
           };
         }
@@ -690,6 +704,8 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
+            costCodeOptions={costCodeOptions}
+            costCodeList={costCodeList}
           />
         );
       case "Release Quantity":
