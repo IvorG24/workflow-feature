@@ -289,6 +289,19 @@ CREATE TABLE supplier_table(
 
 -- End: Quotation Form
 
+CREATE TABLE cost_code_table(
+  cost_code_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  cost_code_section VARCHAR(4000) NOT NULL,
+  cost_code_division_id VARCHAR(4000) NOT NULL,
+  cost_code_division_description VARCHAR(4000) NOT NULL,
+  cost_code_level_two_major_group_id VARCHAR(4000) NOT NULL,
+  cost_code_level_two_major_group_description VARCHAR(4000) NOT NULL,
+  cost_code_level_two_minor_group_id VARCHAR(4000) NOT NULL,
+  cost_code_level_two_minor_group_description VARCHAR(4000) NOT NULL,
+  cost_code_level_three_id VARCHAR(4000) NOT NULL,
+  cost_code_level_three_description VARCHAR(4000) NOT NULL
+);
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -874,7 +887,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description,
         field_type: "DROPDOWN",
-        field_order: 9,
+        field_order: 13,
         field_section_id: section_id,
         field_is_required: true,
       });

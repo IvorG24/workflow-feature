@@ -170,6 +170,10 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Unit of Measurement', 'TEXT', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 ('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
 ('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('a6266f0b-1339-4c50-910e-9bae73031df0', 'Cost Code', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('64bb5899-bad4-4fe4-bc08-60dce9923f57', 'Division Description', 'TEXT', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('8fdb158b-bed5-4eac-a6dc-bc69275f1ac7', 'Level 2 Major Group Description', 'TEXT', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('b69182a9-dc96-472b-aa31-b1f2f92ec78b', 'Level 2 Minor Group Description', 'TEXT', 12, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 
 -- Sourced Item 
 ('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
@@ -459,3 +463,19 @@ INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
 ('c4cc353e-7b92-421b-b161-47e3f19c1c26', 'Symmetric Intercontinental IT Solutions Inc', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('3753ab78-290b-4b53-a4b0-752a8e42daf5', 'Fire Solution Inc', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('15c734e9-174f-4a19-b9ab-a3cc2f661b56', 'Begul Builders Corporation', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+INSERT INTO cost_code_table (
+    cost_code_section, 
+    cost_code_division_id, 
+    cost_code_division_description,
+    cost_code_level_two_major_group_id, 
+    cost_code_level_two_major_group_description, 
+    cost_code_level_two_minor_group_id, 
+    cost_code_level_two_minor_group_description, 
+    cost_code_level_three_id,
+    cost_code_level_three_description
+) VALUES
+('00 00 00', '00', 'Div Desc 1', '0', 'Procureemnt and Contracting Requiremments', '0', 'NONE', '00', 'Procureemnt and Contracting Requiremments'),
+('00 01 01', '00', 'Div Desc 2', '0', 'Procureemnt and Contracting Requiremments', '1', 'NONE', '01', 'Project Title Page'),
+('00 11 00', '00', 'Div Desc 3', '1', 'Solicitation', '0', 'Proposal Forms', '00', 'Advetisements and Invitations'),
+('00 63 57', '00', 'Div Desc 4', '6', 'Project Formms', '5', 'Closeout Forms', '00', 'Change Order Request Form');

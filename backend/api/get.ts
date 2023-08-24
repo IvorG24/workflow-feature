@@ -1651,7 +1651,13 @@ export const getItemResponseForQuotation = async (
           options[duplicatableSectionId].quantity = Number(
             response.request_response
           );
-        } else if (fieldName === "GL Account") {
+        } else if (
+          fieldName === "GL Account" ||
+          fieldName === "Cost Code" ||
+          fieldName === "Division Description" ||
+          fieldName === "Level 2 Major Group Description" ||
+          fieldName === "Level 2 Minor Group Description"
+        ) {
         } else {
           options[duplicatableSectionId].description += `${
             options[duplicatableSectionId].description ? ", " : ""
@@ -3005,4 +3011,15 @@ export const getRequestProjectSigner = async (
   if (error) throw error;
 
   return data as unknown as RequestProjectSignerType;
+};
+
+// Fetch all cost code
+export const getAllCostCode = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("cost_code_table")
+    .select("*");
+  if (error) throw error;
+  return data;
 };

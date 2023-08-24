@@ -1,5 +1,6 @@
 import {
   checkRequest,
+  getAllCostCode,
   getAllItems,
   getAllTeamMemberProjects,
   getAllTeamProjects,
@@ -26,7 +27,11 @@ import CreateWithdrawalSlipRequestPage from "@/components/CreateWithdrawalSlipRe
 
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormWithResponseType, OptionTableRow } from "@/utils/types";
+import {
+  CostCodeTableRow,
+  FormWithResponseType,
+  OptionTableRow,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -94,6 +99,18 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           });
 
+          // cost code
+          const costCode = await getAllCostCode(supabaseClient);
+          const costCodeOptions = costCode.map((costCode, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: costCode.cost_code_id,
+              option_order: index,
+              option_value: costCode.cost_code_level_three_description,
+            };
+          });
+
           return {
             props: {
               form: {
@@ -112,13 +129,15 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   {
                     ...form.form_section[1],
                     section_field: [
-                      ...form.form_section[1].section_field.slice(0, 4),
+                      ...form.form_section[1].section_field.slice(0, 8),
                     ],
                   },
                 ],
               },
               itemOptions,
               projectOptions,
+              costCodeOptions,
+              costCodeList: costCode,
             },
           };
         }
@@ -162,6 +181,18 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             };
           });
 
+          // cost code
+          const costCode = await getAllCostCode(supabaseClient);
+          const costCodeOptions = costCode.map((costCode, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: costCode.cost_code_id,
+              option_order: index,
+              option_value: costCode.cost_code_level_three_description,
+            };
+          });
+
           return {
             props: {
               form: {
@@ -182,6 +213,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               },
               itemOptions,
               projectOptions,
+              costCodeOptions,
+              costCodeList: costCode,
             },
           };
         }
@@ -582,6 +615,8 @@ type Props = {
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
   requestingProject?: string;
+  costCodeOptions?: OptionTableRow[];
+  costCodeList?: CostCodeTableRow[];
 };
 
 const Page = ({
@@ -591,6 +626,8 @@ const Page = ({
   requestProjectId = "",
   projectOptions = [],
   requestingProject = "",
+  costCodeOptions = [],
+  costCodeList = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -600,6 +637,8 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
+            costCodeOptions={costCodeOptions}
+            costCodeList={costCodeList}
           />
         );
       case "Sourced Item":
@@ -665,6 +704,8 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
+            costCodeOptions={costCodeOptions}
+            costCodeList={costCodeList}
           />
         );
       case "Release Quantity":
