@@ -4368,6 +4368,7 @@ RETURNS VOID AS $$
         item_unit: item.unit,
         item_gl_account: item.glAccount,
         item_team_id: TEAM_ID,
+        item_division_id: `0${Math.floor(Math.random() * 4)}`
       });
 
       item.description.forEach((description, index) => {
@@ -4402,7 +4403,7 @@ RETURNS VOID AS $$
       });
     });
 
-    const item_input = itemInput.map((item) => `('${item.item_id}', '${item.item_general_name}', '${item.item_unit}', '${item.item_gl_account}', '${item.item_team_id}')`).join(',');
+    const item_input = itemInput.map((item) => `('${item.item_id}', '${item.item_general_name}', '${item.item_unit}', '${item.item_gl_account}', '${item.item_team_id}', '${item.item_division_id}')`).join(',');
 
     const field_input = fieldInput.map((field) => `('${field.field_id}', '${field.field_name}', '${field.field_is_required}', '${field.field_type}', '${field.field_order}', '${field.field_section_id}')`).join(',');
 
@@ -4410,7 +4411,7 @@ RETURNS VOID AS $$
 
     const item_description_field_input = itemDescriptionFieldInput.map((itemDescriptionField) => `('${itemDescriptionField.item_description_field_value}', '${itemDescriptionField.item_description_field_item_description_id}')`).join(',');
 
-    plv8.execute(`INSERT INTO item_table (item_id, item_general_name, item_unit, item_gl_account, item_team_id) VALUES ${item_input}`);
+    plv8.execute(`INSERT INTO item_table (item_id, item_general_name, item_unit, item_gl_account, item_team_id, item_division_id) VALUES ${item_input}`);
     plv8.execute(`INSERT INTO field_table (field_id, field_name, field_is_required, field_type, field_order, field_section_id) VALUES ${field_input}`);
     plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label, item_description_field_id, item_description_item_id) VALUES ${item_description_input}`);
     plv8.execute(`INSERT INTO item_description_field_table (item_description_field_value, item_description_field_item_description_id) VALUES ${item_description_field_input}`);

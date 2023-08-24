@@ -248,6 +248,7 @@ CREATE TABLE item_table(
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
+  item_division_id VARCHAR(4000) NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );

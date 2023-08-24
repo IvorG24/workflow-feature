@@ -261,6 +261,10 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('e49b046a-12b2-472c-a4ca-8e1a23d71f87', 'Unit of Measurement', 'TEXT', 6, '1a67a69b-468c-4f22-9545-11bdd81907cc', true, true),
 ('4287cc21-7533-442f-b8cc-1f13de701146', 'Quantity', 'NUMBER', 7, '1a67a69b-468c-4f22-9545-11bdd81907cc', true, false),
 ('cffe1f46-885f-406a-8e8b-5a22c49d9a19', 'GL Account', 'TEXT', 8, '1a67a69b-468c-4f22-9545-11bdd81907cc', true, true),
+('ec7c0235-d6a0-4ca8-8e76-9ad628e473e1', 'Cost Code', 'DROPDOWN', 9, '1a67a69b-468c-4f22-9545-11bdd81907cc', true, false),
+('de6461d9-705c-4ce3-a3b6-0aa4c171d754', 'Division Description', 'TEXT', 10, '1a67a69b-468c-4f22-9545-11bdd81907cc', true, true),
+('ec1ba524-b004-4f91-bce7-b8222537bc33', 'Level 2 Major Group Description', 'TEXT', 11, '1a67a69b-468c-4f22-9545-11bdd81907cc', true, true),
+('3ec2842e-3066-48b8-97d3-19ccf3db1a5e', 'Level 2 Minor Group Description', 'TEXT', 12, '1a67a69b-468c-4f22-9545-11bdd81907cc', true, true),
 
 -- Release Quantity
 ('f6db1198-fc98-4a10-ae75-367b44789642', 'Withdrawal Slip ID', 'LINK', 1, 'd2ddbe45-76f2-4132-8846-b36c7f71b590', true, true),
@@ -476,6 +480,6 @@ INSERT INTO cost_code_table (
     cost_code_level_three_description
 ) VALUES
 ('00 00 00', '00', 'Div Desc 1', '0', 'Procureemnt and Contracting Requiremments', '0', 'NONE', '00', 'Procureemnt and Contracting Requiremments'),
-('00 01 01', '00', 'Div Desc 2', '0', 'Procureemnt and Contracting Requiremments', '1', 'NONE', '01', 'Project Title Page'),
-('00 11 00', '00', 'Div Desc 3', '1', 'Solicitation', '0', 'Proposal Forms', '00', 'Advetisements and Invitations'),
-('00 63 57', '00', 'Div Desc 4', '6', 'Project Formms', '5', 'Closeout Forms', '00', 'Change Order Request Form');
+('01 01 01', '01', 'Div Desc 2', '0', 'Procureemnt and Contracting Requiremments', '1', 'NONE', '01', 'Project Title Page'),
+('02 11 00', '02', 'Div Desc 3', '1', 'Solicitation', '0', 'Proposal Forms', '00', 'Advetisements and Invitations'),
+('03 63 57', '03', 'Div Desc 4', '6', 'Project Formms', '5', 'Closeout Forms', '00', 'Change Order Request Form');
