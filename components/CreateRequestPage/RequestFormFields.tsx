@@ -36,6 +36,7 @@ type RequestFormFieldsProps = {
   requisitionFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
+    onCostCodeChange: (index: number, value: string | null) => void;
   };
   quotationFormMethods?: {
     onItemChange: (
@@ -294,6 +295,11 @@ const RequestFormFields = ({
                       sectionIndex,
                       value,
                       prevValue === null ? null : `${prevValue}`
+                    );
+                  } else if (field.field_name === "Cost Code") {
+                    requisitionFormMethods?.onCostCodeChange(
+                      sectionIndex,
+                      value
                     );
                   } else if (field.field_name === "Source Project") {
                     sourcedItemFormMethods?.onProjectSiteChange();

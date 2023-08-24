@@ -143,6 +143,13 @@ export type TeamProjectTableInsert =
 export type TeamProjectTableUpdate =
   Database["public"]["Tables"]["team_project_table"]["Update"];
 
+export type CostCodeTableRow =
+  Database["public"]["Tables"]["cost_code_table"]["Row"];
+export type CostCodeTableInsert =
+  Database["public"]["Tables"]["cost_code_table"]["Insert"];
+export type CostCodeTableUpdate =
+  Database["public"]["Tables"]["cost_code_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums

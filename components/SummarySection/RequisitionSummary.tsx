@@ -34,6 +34,7 @@ const RequisitionSummary = ({ summaryData }: Props) => {
               <th>Item</th>
               <th>Description</th>
               <th>GL Account</th>
+              <th>Cost Code</th>
               <th>Quantity</th>
               <th>Unit</th>
             </tr>
@@ -45,7 +46,7 @@ const RequisitionSummary = ({ summaryData }: Props) => {
               );
 
               let description = "";
-              summary.section_field.slice(4).forEach((field) => {
+              summary.section_field.slice(8).forEach((field) => {
                 if (field.field_response) {
                   description += `${field.field_name}: ${JSON.parse(
                     field.field_response.request_response
@@ -53,6 +54,9 @@ const RequisitionSummary = ({ summaryData }: Props) => {
                 }
               });
 
+              const costCode = JSON.parse(
+                `${summary.section_field[4].field_response?.request_response}`
+              );
               const glAccount = JSON.parse(
                 `${summary.section_field[3].field_response?.request_response}`
               );
@@ -68,6 +72,7 @@ const RequisitionSummary = ({ summaryData }: Props) => {
                   <td>{item}</td>
                   <td>{description.slice(0, -2)}</td>
                   <td>{glAccount}</td>
+                  <td>{costCode}</td>
                   <td>{addCommaToNumber(quantity)}</td>
                   <td>{unit}</td>
                 </tr>
