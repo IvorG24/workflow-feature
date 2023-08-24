@@ -3460,6 +3460,12 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 
 -------- End: INDEXES
 
+---------- Start: VIEWS
+
+CREATE VIEW distinct_division_id AS SELECT DISTINCT cost_code_division_id from cost_code_table;
+
+-------- End: VIEWS
+
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
 
