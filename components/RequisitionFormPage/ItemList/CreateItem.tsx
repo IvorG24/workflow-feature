@@ -72,6 +72,7 @@ const CreateItem = ({
           item_unit: data.unit,
           item_gl_account: toUpper(data.glAccount),
           item_team_id: activeTeam.team_id,
+          item_division_id: `0${Math.floor(Math.random() * 4)}`,
         },
         formId: formId,
       });

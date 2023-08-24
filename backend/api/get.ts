@@ -3048,3 +3048,17 @@ export const getCostCode = async (
 
   return data as CostCodeTableRow;
 };
+
+// // Fetch all itemm division option
+// export const getItemDivisionOption = async (
+//   supabaseClient: SupabaseClient<Database>,
+// ) => {
+//   const { data, error } = await supabaseClient
+//     .from("cost_code_table")
+//     .select("*")
+//     .eq("cost_code_level_three_description", costCode)
+//     .single();
+//   if (error) throw error;
+
+//   return data as CostCodeTableRow;
+// };
