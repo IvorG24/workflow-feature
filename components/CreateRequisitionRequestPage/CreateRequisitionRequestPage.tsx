@@ -1,4 +1,9 @@
-import { getItem, getProjectSignerWithTeamMember } from "@/backend/api/get";
+import {
+  getCostCode,
+  getCostCodeOptionsForItems,
+  getItem,
+  getProjectSignerWithTeamMember,
+} from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -8,7 +13,6 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
-  CostCodeTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
@@ -45,16 +49,12 @@ type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
-  costCodeOptions: OptionTableRow[];
-  costCodeList: CostCodeTableRow[];
 };
 
 const CreateRequisitionRequestPage = ({
   form,
   itemOptions,
   projectOptions,
-  costCodeOptions,
-  costCodeList,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -195,11 +195,6 @@ const CreateRequisitionRequestPage = ({
               field_section_duplicatable_id: sectionDuplicatableId,
               field_option: itemOptions,
             };
-          } else if (field.field_name === "Cost Code") {
-            return {
-              ...field,
-              field_option: costCodeOptions,
-            };
           } else {
             return {
               ...field,
@@ -236,11 +231,6 @@ const CreateRequisitionRequestPage = ({
           ...field,
           field_option: itemOptions,
         };
-      } else if (field.field_name === "Cost Code") {
-        return {
-          ...field,
-          field_option: costCodeOptions,
-        };
       } else {
         return field;
       }
@@ -252,7 +242,7 @@ const CreateRequisitionRequestPage = ({
         section_field: newFields,
       },
     ]);
-  }, [form, replaceSection, requestFormMethods, itemOptions, costCodeList]);
+  }, [form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleGeneralNameChange = async (
     index: number,
@@ -264,6 +254,10 @@ const CreateRequisitionRequestPage = ({
       const item = await getItem(supabaseClient, {
         teamId: team.team_id,
         itemName: value,
+      });
+
+      const costCodeList = await getCostCodeOptionsForItems(supabaseClient, {
+        divisionId: item.item_division_id,
       });
 
       const generalField = [
@@ -281,7 +275,25 @@ const CreateRequisitionRequestPage = ({
           ...newSection.section_field[3],
           field_response: item.item_gl_account,
         },
-        ...newSection.section_field.slice(4, 8),
+        {
+          ...newSection.section_field[4],
+          field_response: "",
+          field_option: costCodeList.map((costCode, index) => {
+            return {
+              option_description: null,
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: costCode.cost_code_id,
+              option_order: index,
+              option_value: costCode.cost_code_level_three_description,
+            };
+          }),
+        },
+        ...newSection.section_field.slice(5, 8).map((field) => {
+          return {
+            ...field,
+            field_response: "",
+          };
+        }),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
@@ -339,9 +351,7 @@ const CreateRequisitionRequestPage = ({
     const newSection = getValues(`sections.${index}`);
 
     if (value) {
-      const costCode = costCodeList.find(
-        (costCode) => costCode.cost_code_level_three_description === value
-      );
+      const costCode = await getCostCode(supabaseClient, { costCode: value });
 
       const generalField = [
         ...newSection.section_field.slice(0, 5),
@@ -374,8 +384,8 @@ const CreateRequisitionRequestPage = ({
       });
     } else {
       const generalField = [
-        ...newSection.section_field.slice(0, 3),
-        ...newSection.section_field.slice(3, 8).map((field) => {
+        ...newSection.section_field.slice(0, 4),
+        ...newSection.section_field.slice(4, 8).map((field) => {
           return {
             ...field,
             field_response: "",

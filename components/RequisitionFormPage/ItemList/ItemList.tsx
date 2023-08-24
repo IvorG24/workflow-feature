@@ -353,6 +353,20 @@ const ItemList = ({
             ),
           },
           {
+            accessor: "item_division_id",
+            title: "Division",
+            render: ({ item_division_id, item_id }) => (
+              <Text
+                className={classes.clickableColumn}
+                onClick={() => {
+                  handleColumnClick(item_id);
+                }}
+              >
+                {item_division_id}
+              </Text>
+            ),
+          },
+          {
             accessor: "status",
             title: "Status",
             textAlignment: "center",

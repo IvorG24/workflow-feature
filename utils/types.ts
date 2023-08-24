@@ -452,8 +452,8 @@ export type ItemForm = {
   descriptions: { description: string }[];
   unit: string;
   isAvailable: boolean;
-
   glAccount: string;
+  divisionId: string;
 };
 
 export type ItemDescriptionFieldForm = {

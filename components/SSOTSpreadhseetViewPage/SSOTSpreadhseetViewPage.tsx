@@ -194,6 +194,7 @@ const requisitionTableColumnList = [
   "Unit of Measurement",
   "Description",
   "GL Account",
+  "Cost Code",
 ];
 
 const quotationTableColumnList = [
@@ -1153,9 +1154,11 @@ const SSOTSpreadsheetView = ({
             <td>{proofOfSending}</td>
           )}
           {showQuotationColumnList["payment_terms"] && <td>{paymentTerms}</td>}
-          {showQuotationColumnList["lead_time"] && <td>{leadTime}</td>}
+          {showQuotationColumnList["lead_time"] && (
+            <td>{addCommaToNumber(Number(leadTime))}</td>
+          )}
           {showQuotationColumnList["required_down_payment"] && (
-            <td>{requiredDownPayment}</td>
+            <td>₱ {addCommaToNumber(Number(requiredDownPayment))}</td>
           )}
           {showQuotationColumnList["item"] && (
             <td>
@@ -1430,6 +1433,7 @@ const SSOTSpreadsheetView = ({
       const itemQuantity: string[] = [];
       const itemDescription: string[] = [];
       const itemGlAccount: string[] = [];
+      const itemCostCode: string[] = [];
 
       const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
@@ -1456,6 +1460,15 @@ const SSOTSpreadsheetView = ({
             itemQuantity[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "Cost Code") {
+            itemCostCode[groupIndex] = JSON.parse(item.request_response);
+          } else if (
+            [
+              "Division Description",
+              "Level 2 Major Group Description",
+              "Level 2 Minor Group Description",
+            ].includes(item.request_response_field_name)
+          ) {
           } else {
             itemDescription[groupIndex] += `${
               item.request_response_field_name
@@ -1563,6 +1576,17 @@ const SSOTSpreadsheetView = ({
                   </List>
                 </td>
               )}
+              {showRequisitionColumnList["cost_code"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemCostCode.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
             </>
           )}
           {showQuotationTable && (
@@ -1598,7 +1622,7 @@ const SSOTSpreadsheetView = ({
                         <th className={classes.normal}>Proof of Sending</th>
                       )}
                       {showQuotationColumnList["payment_terms"] && (
-                        <th className={classes.long}>Payment Terms</th>
+                        <th className={classes.normal}>Payment Terms</th>
                       )}
                       {showQuotationColumnList["lead_time"] && (
                         <th className={classes.normal}>Lead Time</th>
@@ -1917,6 +1941,9 @@ const SSOTSpreadsheetView = ({
                       )}
                       {showRequisitionColumnList["gl_account"] && (
                         <th className={classes.short}>GL Account</th>
+                      )}
+                      {showRequisitionColumnList["cost_code"] && (
+                        <th className={classes.description}>Cost Code</th>
                       )}
                     </>
                   )}

@@ -9,6 +9,7 @@ import {
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
+  CostCodeTableRow,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -3013,13 +3014,50 @@ export const getRequestProjectSigner = async (
   return data as unknown as RequestProjectSignerType;
 };
 
+// Fetch all cost code based on division id
+export const getCostCodeOptionsForItems = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    divisionId: string;
+  }
+) => {
+  const { divisionId } = params;
+  const { data, error } = await supabaseClient
+    .from("cost_code_table")
+    .select("*")
+    .eq("cost_code_division_id", divisionId);
+  if (error) throw error;
+
+  return data as CostCodeTableRow[];
+};
+
 // Fetch all cost code
-export const getAllCostCode = async (
+export const getCostCode = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    costCode: string;
+  }
+) => {
+  const { costCode } = params;
+  const { data, error } = await supabaseClient
+    .from("cost_code_table")
+    .select("*")
+    .eq("cost_code_level_three_description", costCode)
+    .single();
+  if (error) throw error;
+
+  return data as CostCodeTableRow;
+};
+
+// Fetch all itemm division option
+export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
-    .from("cost_code_table")
-    .select("*");
+    .from("distinct_division_id")
+    .select("cost_code_division_id")
+    .order("cost_code_division_id", { ascending: true });
   if (error) throw error;
+
   return data;
 };
