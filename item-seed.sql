@@ -7,7 +7,13 @@ RETURNS VOID AS $$
       {
         generalName: "REINFORCED STEEL BAR",
         unit: "piece",
-        description: ["TYPE", "DIAMETER", "LENGTH", "GRADE MARK", "MATERIAL TYPE"],
+        description: [
+          "TYPE",
+          "DIAMETER",
+          "LENGTH",
+          "GRADE MARK",
+          "MATERIAL TYPE",
+        ],
         descriptionField: [
           ["CUT & BEND", "NONE"],
           ["10 mm", "12 mm", "16 mm", "20 mm", "25 mm", "40 mm"],
@@ -16,6 +22,7 @@ RETURNS VOID AS $$
           ["WELDABLE", "NON-WELDABLE"],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "ELECTRICAL WIRE",
@@ -30,13 +37,24 @@ RETURNS VOID AS $$
         ],
         descriptionField: [
           ["STRANDED", "SOLID"],
-          ["THHN", "THHN/THWN-2", "THWN", "THW", "TW", "TF", "TFN", "TFFN", "PDX"],
+          [
+            "THHN",
+            "THHN/THWN-2",
+            "THWN",
+            "THW",
+            "TW",
+            "TF",
+            "TFN",
+            "TFFN",
+            "PDX",
+          ],
           ["0.75 mm²", "300 mm²"],
           ["1C", "2C", "3C", "4C", "5C", "10C"],
           ["BLUE", "RED", "YELLOW", "GREEN", "WHITE", "BLACK", "BARE"],
           ["ROYAL CORD", "PHELPS DODGE"],
         ],
         glAccount: "1010602",
+        divisionId: "26",
       },
       {
         generalName: "BOLT",
@@ -78,6 +96,7 @@ RETURNS VOID AS $$
           ["YES", "NO"],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "CEMENT",
@@ -88,6 +107,7 @@ RETURNS VOID AS $$
           ["CEMEX", "EAGLE", "HOLCIM", "PORTLAND", "REPUBLIC"],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "FIXED CLAMP",
@@ -95,6 +115,7 @@ RETURNS VOID AS $$
         description: ["SIZE"],
         descriptionField: [["1 1/2 inch", "2 inch"]],
         glAccount: "1010601",
+        divisionId: "22",
       },
       {
         generalName: "RIVET",
@@ -106,6 +127,7 @@ RETURNS VOID AS $$
           ["5/8 inch", "3/8 inch", "1/2 inch", "3/4 inch"],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "ENGINE OIL",
@@ -123,6 +145,7 @@ RETURNS VOID AS $$
           ["SHELL"],
         ],
         glAccount: "1010605",
+        divisionId: "15",
       },
       {
         generalName: "TRANSMISSION AND GEAR OIL",
@@ -145,6 +168,7 @@ RETURNS VOID AS $$
           ["SHELL"],
         ],
         glAccount: "1010605",
+        divisionId: "42",
       },
       {
         generalName: "GREASE",
@@ -152,6 +176,7 @@ RETURNS VOID AS $$
         description: ["PRODUCT NAME", "BRAND"],
         descriptionField: [["SHELL GADUS S2 V220 0"], ["SHELL"]],
         glAccount: "1010605",
+        divisionId: "15",
       },
       {
         generalName: "HYDRAULIC OIL AND FLUID",
@@ -162,6 +187,7 @@ RETURNS VOID AS $$
           ["SHELL", "MOBIL"],
         ],
         glAccount: "1010605",
+        divisionId: "45",
       },
       {
         generalName: "DEGREASER",
@@ -169,6 +195,7 @@ RETURNS VOID AS $$
         description: ["PRODUCT NAME", "BRAND"],
         descriptionField: [["GREASOLVE"], ["PETRON"]],
         glAccount: "1010602",
+        divisionId: "9",
       },
       {
         generalName: "FUEL",
@@ -176,6 +203,7 @@ RETURNS VOID AS $$
         description: ["PRODUCT"],
         descriptionField: [["DIESEL", "GASOLINE"]],
         glAccount: "1010605",
+        divisionId: "28",
       },
       {
         generalName: "DIESEL EXHAUST FLUID",
@@ -183,6 +211,7 @@ RETURNS VOID AS $$
         description: ["PRODUCT", "BRAND"],
         descriptionField: [["ADBLUE"], ["PRO-99", "PURE BLULE"]],
         glAccount: "1010605",
+        divisionId: "1",
       },
       {
         generalName: "COOLANT AND ANTI-FREEZE",
@@ -198,6 +227,7 @@ RETURNS VOID AS $$
           ["CALTEX", "DERFOE", "SEGA", "LIQUI MOLY"],
         ],
         glAccount: "NONE",
+        divisionId: "0",
       },
       {
         generalName: "READY MIX CONCRETE",
@@ -225,6 +255,7 @@ RETURNS VOID AS $$
           ["7 days", "14 days", "21 days", "28 days"],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "SCREW",
@@ -235,6 +266,7 @@ RETURNS VOID AS $$
           ["3 mm"],
         ],
         glAccount: "1010602",
+        divisionId: "1",
       },
       {
         generalName: "GI PIPE",
@@ -247,6 +279,7 @@ RETURNS VOID AS $$
           ["YES", "NULL"],
         ],
         glAccount: "1010602",
+        divisionId: "22",
       },
       {
         generalName: "COVID19 RAPID ANTIGEN TEST KIT",
@@ -257,6 +290,7 @@ RETURNS VOID AS $$
           ["INNOVITA", "ABBOTT"],
         ],
         glAccount: "NONE",
+        divisionId: "22",
       },
       {
         generalName: "KNITTED GLOVE",
@@ -268,6 +302,7 @@ RETURNS VOID AS $$
           ["SMALL", "MEDIUM", "LARGE", "EXTRA LARGE"],
         ],
         glAccount: "1010604",
+        divisionId: "45",
       },
       {
         generalName: "GOGGLES",
@@ -278,6 +313,7 @@ RETURNS VOID AS $$
           ["CLEAR", "DARK"],
         ],
         glAccount: "1010604",
+        divisionId: "1",
       },
       {
         generalName: "HARD HAT",
@@ -296,6 +332,7 @@ RETURNS VOID AS $$
           ["WHITE", "GREEN", "RED", "ORANGE", "YELLOW", "BLUE"],
         ],
         glAccount: "1010604",
+        divisionId: "8",
       },
       {
         generalName: "T SHIRT",
@@ -307,16 +344,27 @@ RETURNS VOID AS $$
           ["MINT GREEN"],
         ],
         glAccount: "1010604",
+        divisionId: "32",
       },
       {
         generalName: "REFLECTORIZED VEST",
         unit: "piece",
         description: ["COLOR", "ADD-ONS"],
         descriptionField: [
-          ["WHITE", "GREEN", "RED", "ORANGE", "YELLOW", "BLUE", "SILVER", "BLACK"],
+          [
+            "WHITE",
+            "GREEN",
+            "RED",
+            "ORANGE",
+            "YELLOW",
+            "BLUE",
+            "SILVER",
+            "BLACK",
+          ],
           ["WITH SCIC LOGO", "WITH SMCC LOGO"],
         ],
         glAccount: "1010604",
+        divisionId: "31",
       },
       {
         generalName: "EAR PLUG",
@@ -324,6 +372,7 @@ RETURNS VOID AS $$
         description: ["MODEL", "MANUFACTURER"],
         descriptionField: [["MAX1"], ["HOWARD LIGHT"]],
         glAccount: "NONE",
+        divisionId: "7",
       },
       {
         generalName: "TAPE",
@@ -392,6 +441,7 @@ RETURNS VOID AS $$
           ["SMALL", "MEDIUM", "BIG"],
         ],
         glAccount: "1010606",
+        divisionId: "31",
       },
       {
         generalName: "PLASTIC CONE",
@@ -403,6 +453,7 @@ RETURNS VOID AS $$
           ["12 mm", "15 mm", "16 mm", "20 mm", "21 mm", "23 mm X 27 mm", "50 mm"],
         ],
         glAccount: "1010601",
+        divisionId: "1",
       },
       {
         generalName: "GASKET",
@@ -410,6 +461,7 @@ RETURNS VOID AS $$
         description: ["TYPE", "DIAMETER NOMINAL", "THICKNESS"],
         descriptionField: [["RUBBER GASKET"], ["50 mm"], ["10 mm"]],
         glAccount: "1010604",
+        divisionId: "3",
       },
       {
         generalName: "DUST MASK",
@@ -417,6 +469,7 @@ RETURNS VOID AS $$
         description: ["KIND"],
         descriptionField: [["WITH FILTER", "WITHOUT FILTER"]],
         glAccount: "NONE",
+        divisionId: "13",
       },
       {
         generalName: "CROSS BRACE",
@@ -424,13 +477,19 @@ RETURNS VOID AS $$
         description: ["LENGTH"],
         descriptionField: [["1.70 m", "2.20 m"]],
         glAccount: "NONE",
+        divisionId: "41",
       },
       {
         generalName: "PAPER CLIP",
         unit: "piece",
         description: ["KIND", "SIZE"],
         descriptionField: [
-          ["BINDER CLIP", "BULLDOG CLIP", "USED BINDER CLIP", "USED BULLDOG CLIP"],
+          [
+            "BINDER CLIP",
+            "BULLDOG CLIP",
+            "USED BINDER CLIP",
+            "USED BULLDOG CLIP",
+          ],
           [
             "3/4 inch",
             "1 inch",
@@ -444,6 +503,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "PIPE CLAMP",
@@ -463,6 +523,7 @@ RETURNS VOID AS $$
           ["KOREA", "JAPAN", "NONE"],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "CLAMP ASSEMBLY",
@@ -473,6 +534,7 @@ RETURNS VOID AS $$
           ["B265", "100359", "NONE"],
         ],
         glAccount: "NONE",
+        divisionId: "28",
       },
       {
         generalName: "STEEL BALL",
@@ -480,6 +542,7 @@ RETURNS VOID AS $$
         description: ["SIZE"],
         descriptionField: [["1/8 inch"]],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "FLAT TIE",
@@ -490,6 +553,7 @@ RETURNS VOID AS $$
           ["3 mm", "4 mm", "2 mm"],
         ],
         glAccount: "NONE",
+        divisionId: "4",
       },
       {
         generalName: "ENVELOPE",
@@ -508,6 +572,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "CONCRETE HOLLOW BLOCK",
@@ -556,6 +621,7 @@ RETURNS VOID AS $$
           ["7 days", "14 days", "21 days", "28 days"],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "TEKSCREW",
@@ -568,6 +634,7 @@ RETURNS VOID AS $$
           ["16", "20", "25", "35", "45", "50", "55", "65", "75"],
         ],
         glAccount: "NONE",
+        divisionId: "5",
       },
       {
         generalName: "WEDGE PINS",
@@ -575,6 +642,7 @@ RETURNS VOID AS $$
         description: ["LENGTH"],
         descriptionField: [["70 mm"]],
         glAccount: "NONE",
+        divisionId: "33",
       },
       {
         generalName: "VIBRO SAND",
@@ -582,6 +650,7 @@ RETURNS VOID AS $$
         description: ["GRAIN SIZE"],
         descriptionField: [["2 mm", "4 mm"]],
         glAccount: "NONE",
+        divisionId: "26",
       },
       {
         generalName: "CONCRETE MIX",
@@ -589,6 +658,7 @@ RETURNS VOID AS $$
         description: ["DESCRIPTION"],
         descriptionField: [["MIX SAND AND GRAVEL"]],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "FORM",
@@ -629,6 +699,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "TIME CARD",
@@ -636,6 +707,7 @@ RETURNS VOID AS $$
         description: ["MODEL", "PACKAGING SIZE"],
         descriptionField: [["9000+"], ["100 PCS PER PACK"]],
         glAccount: "NONE",
+        divisionId: "5",
       },
       {
         generalName: "ALUMINUM CONDUCTOR STEEL REINFORCED",
@@ -646,6 +718,7 @@ RETURNS VOID AS $$
           ["1/0", "4/0", "2/0", "250", "336.4"],
         ],
         glAccount: "1010602",
+        divisionId: "7",
       },
       {
         generalName: "STEEL ROPE",
@@ -663,6 +736,7 @@ RETURNS VOID AS $$
           ["12"],
         ],
         glAccount: "1010602",
+        divisionId: "10",
       },
       {
         generalName: "COUPLER",
@@ -682,6 +756,7 @@ RETURNS VOID AS $$
           ["40 mm"],
         ],
         glAccount: "NONE",
+        divisionId: "43",
       },
       {
         generalName: "CONCRETE HARDENER",
@@ -693,6 +768,7 @@ RETURNS VOID AS $$
           ["CUREHARD-24"],
         ],
         glAccount: "NONE",
+        divisionId: "9",
       },
       {
         generalName: "IRON SHEET",
@@ -723,6 +799,7 @@ RETURNS VOID AS $$
           ["RED", "GREEN", "BLUE", "NOT AVAILABLE"],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "PAINT BRUSH",
@@ -778,6 +855,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "9",
       },
       {
         generalName: "PAINT",
@@ -852,6 +930,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "9",
       },
       {
         generalName: "STOCK CARD",
@@ -862,6 +941,7 @@ RETURNS VOID AS $$
           ["5 inch", "8.5 inch"],
         ],
         glAccount: "NONE",
+        divisionId: "43",
       },
       {
         generalName: "INVENTORY STOCK TAG",
@@ -872,6 +952,7 @@ RETURNS VOID AS $$
           ["2.625 inch", "3.125 inch"],
         ],
         glAccount: "NONE",
+        divisionId: "48",
       },
       {
         generalName: "WASHER",
@@ -892,6 +973,7 @@ RETURNS VOID AS $$
           ["M16 mm", "M10 mm", "M12 mm", "M24 mm", "M19 mm"],
         ],
         glAccount: "1010602",
+        divisionId: "22",
       },
       {
         generalName: "NUTS",
@@ -910,6 +992,7 @@ RETURNS VOID AS $$
           ["M16 mm", "M10 mm", "M12 mm", "M24 mm", "M19 mm"],
         ],
         glAccount: "NONE",
+        divisionId: "5",
       },
       {
         generalName: "PIPE HOOK",
@@ -920,6 +1003,7 @@ RETURNS VOID AS $$
           ["SHORT", "LONG"],
         ],
         glAccount: "NONE",
+        divisionId: "4",
       },
       {
         generalName: "METAL SCREW",
@@ -939,6 +1023,7 @@ RETURNS VOID AS $$
           ["16", "20", "25", "35", "45", "50", "55", "65", "75"],
         ],
         glAccount: "1010602",
+        divisionId: "6",
       },
       {
         generalName: "TIE ROD",
@@ -949,6 +1034,7 @@ RETURNS VOID AS $$
           ["0.6 m", "1 m", "1.8 m", "2.1 m", "2.8 m", "3 m", "4 m", "6 m"],
         ],
         glAccount: "NONE",
+        divisionId: "13",
       },
       {
         generalName: "WOOD SCREW",
@@ -978,6 +1064,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "NONE",
+        divisionId: "31",
       },
       {
         generalName: "TIE WIRE",
@@ -988,6 +1075,7 @@ RETURNS VOID AS $$
           ["8", "10", "12", "14", "16", "18", "20", "22"],
         ],
         glAccount: "NONE",
+        divisionId: "8",
       },
       {
         generalName: "SHORING JACK",
@@ -999,13 +1087,19 @@ RETURNS VOID AS $$
           ["30 mm", "32 mm", "34 mm"],
         ],
         glAccount: "NONE",
+        divisionId: "45",
       },
       {
         generalName: "JOINT PIN",
         unit: "piece",
         description: ["FORMWORKS TYPE", "SPECS", "DIMENSION"],
-        descriptionField: [["PUR", "REN"], ["HD", "RINGLOCK"], ["48 mm X 200 mm"]],
+        descriptionField: [
+          ["PUR", "REN"],
+          ["HD", "RINGLOCK"],
+          ["48 mm X 200 mm"],
+        ],
         glAccount: "NONE",
+        divisionId: "32",
       },
       {
         generalName: "ACOUSTIC CEILING BOARD",
@@ -1027,6 +1121,7 @@ RETURNS VOID AS $$
           ["60 mm X 60 mm", "60 mm X 60 mm X 4 ft", "600 mm X 600 mm X 4 ft"],
         ],
         glAccount: "1010602",
+        divisionId: "9",
       },
       {
         generalName: "SUPERSLIM PIN",
@@ -1034,6 +1129,7 @@ RETURNS VOID AS $$
         description: ["FORMWORKS TYPE", "SIZE"],
         descriptionField: [["PUR", "REN"], ["19 mm"]],
         glAccount: "NONE",
+        divisionId: "41",
       },
       {
         generalName: "SPRING CLIP",
@@ -1041,6 +1137,7 @@ RETURNS VOID AS $$
         description: ["FORMWORKS TYPE", "MATERIAL", "SIZE"],
         descriptionField: [["PUR", "REN"], ["S/S"], ["19 mm"]],
         glAccount: "NONE",
+        divisionId: "10",
       },
       {
         generalName: "GYPSUM SCREW",
@@ -1057,9 +1154,19 @@ RETURNS VOID AS $$
           ["STAINLESS STEEL", "STEEL", "METAL"],
           ["FLAT", "HEX", "OVAL", "PAN", "PANCAKE", "WAFER"],
           ["8 mm", "12 mm", "14 mm"],
-          ["16 mm", "25 mm", "35 mm", "45 mm", "50 mm", "55 mm", "65 mm", "75 mm"],
+          [
+            "16 mm",
+            "25 mm",
+            "35 mm",
+            "45 mm",
+            "50 mm",
+            "55 mm",
+            "65 mm",
+            "75 mm",
+          ],
         ],
         glAccount: "NONE",
+        divisionId: "33",
       },
       {
         generalName: "AAC BLOCK ADHESIVE",
@@ -1067,6 +1174,7 @@ RETURNS VOID AS $$
         description: ["NET WEIGHT PER BAG"],
         descriptionField: [["25K g"]],
         glAccount: "NONE",
+        divisionId: "48",
       },
       {
         generalName: "CABLE",
@@ -1079,13 +1187,17 @@ RETURNS VOID AS $$
           ["6 mm"],
         ],
         glAccount: "1010602",
+        divisionId: "1",
       },
       {
         generalName: "ADMIXTURE",
         unit: "liter",
         description: ["BRAND"],
-        descriptionField: [["CHRYSO OMEGA 98S", "SUPERKONTARD R2", "SHOT-SET 250"]],
+        descriptionField: [
+          ["CHRYSO OMEGA 98S", "SUPERKONTARD R2", "SHOT-SET 250"],
+        ],
         glAccount: "NONE",
+        divisionId: "11",
       },
       {
         generalName: "LOG BOOK",
@@ -1096,6 +1208,7 @@ RETURNS VOID AS $$
           ["150", "200", "300"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "RAIN COAT",
@@ -1113,6 +1226,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010604",
+        divisionId: "5",
       },
       {
         generalName: "STAMP PAD",
@@ -1120,6 +1234,7 @@ RETURNS VOID AS $$
         description: ["BRAND"],
         descriptionField: [["Best Buy", "Orions", "HBW", "Joy", "Artline"]],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "SHEET PILE",
@@ -1151,6 +1266,7 @@ RETURNS VOID AS $$
           ["8", "8.5", "10.5", "13", "13.1", "15.5"],
         ],
         glAccount: "1010602",
+        divisionId: "31",
       },
       {
         generalName: "AGGREGATES",
@@ -1187,16 +1303,32 @@ RETURNS VOID AS $$
           ["75-600MM", "600MM", "400MM"],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "CANVASS LONA",
         unit: "piece",
         description: ["WIDTH (m)", "LENGTH (m)"],
         descriptionField: [
-          ["3", "6", "7", "8", "9", "10", "12", "15", "18", "36", "45", "80", "90"],
+          [
+            "3",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "12",
+            "15",
+            "18",
+            "36",
+            "45",
+            "80",
+            "90",
+          ],
           ["3", "4", "8", "7", "10", "15", "100"],
         ],
         glAccount: "1010602",
+        divisionId: "9",
       },
       {
         generalName: "GLOVES",
@@ -1234,6 +1366,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010604",
+        divisionId: "5",
       },
       {
         generalName: "PRINTER INK",
@@ -1272,6 +1405,7 @@ RETURNS VOID AS $$
           ["Bottle", "Cartridge"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "TRANSMISSION OIL",
@@ -1305,6 +1439,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010605",
+        divisionId: "11",
       },
       {
         generalName: "TARPAULIN",
@@ -1315,6 +1450,7 @@ RETURNS VOID AS $$
           ["2", "10", "5", "20"],
         ],
         glAccount: "1010602",
+        divisionId: "7",
       },
       {
         generalName: "WHITE BOARD",
@@ -1325,6 +1461,7 @@ RETURNS VOID AS $$
           ["600", "900", "1200"],
         ],
         glAccount: "1010606",
+        divisionId: "10",
       },
       {
         generalName: "ACETATE SHEET",
@@ -1359,6 +1496,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "RAIN BOOTS",
@@ -1370,6 +1508,7 @@ RETURNS VOID AS $$
           ["5", "6", "7", "8", "9", "10", "11"],
         ],
         glAccount: "1010604",
+        divisionId: "5",
       },
       {
         generalName: "CONCRETE PRIMER",
@@ -1377,11 +1516,16 @@ RETURNS VOID AS $$
         description: ["TYPE", "FINISH"],
         descriptionField: [["Acrylic", "Silicone"], ["Flat"]],
         glAccount: "NONE",
+        divisionId: "9",
       },
       {
         generalName: "CONTAINER VAN",
         unit: "unit",
-        description: ["TYPE", "CONTAINER FEATURE", "STANDARD SIZE IN LENGTH (FT)"],
+        description: [
+          "TYPE",
+          "CONTAINER FEATURE",
+          "STANDARD SIZE IN LENGTH (FT)",
+        ],
         descriptionField: [
           [
             "OFFICE TYPE",
@@ -1393,6 +1537,7 @@ RETURNS VOID AS $$
           ["20", "40"],
         ],
         glAccount: "1020606",
+        divisionId: "1",
       },
       {
         generalName: "CHEMICAL ANCHOR EPOXY",
@@ -1413,6 +1558,7 @@ RETURNS VOID AS $$
           ["250", "265", "390", "470", "500", "580", "900"],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "LAMINATING FILM",
@@ -1424,6 +1570,7 @@ RETURNS VOID AS $$
           ["10", "15", "25", "100"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "CERTIFICATE FRAME",
@@ -1434,6 +1581,7 @@ RETURNS VOID AS $$
           ["A3", "A4"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "NOTEBOOK",
@@ -1444,6 +1592,7 @@ RETURNS VOID AS $$
           ["PASSPORT", "POCKET", "A6", "B6", "STANDARD", "A5", "B5", "A4"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "GLUE",
@@ -1454,16 +1603,26 @@ RETURNS VOID AS $$
           ["36.9", "118", "225", "473", "946", "3875"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "FLASH DRIVE",
         unit: "piece",
         description: ["BRAND", "STORAGE (gb)"],
         descriptionField: [
-          ["SAMSUNG", "SANDISK", "KINGSTON", "PNY", "TRANSCEND", "SONY", "TOSHIBA"],
+          [
+            "SAMSUNG",
+            "SANDISK",
+            "KINGSTON",
+            "PNY",
+            "TRANSCEND",
+            "SONY",
+            "TOSHIBA",
+          ],
           ["8", "16", "32", "64", "128", "256", "512", "1000"],
         ],
         glAccount: "1010606",
+        divisionId: "34",
       },
       {
         generalName: "ID LACE",
@@ -1476,6 +1635,7 @@ RETURNS VOID AS $$
           ["BUCKLE", "PLASTIC HOOK", "METAL HOOK", "CARD HOLDER"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "BOX FILE",
@@ -1486,6 +1646,7 @@ RETURNS VOID AS $$
           ["Black", "Red", "Yellow", "Green", "Blue", "Gray"],
         ],
         glAccount: "1010606",
+        divisionId: "23",
       },
       {
         generalName: "GROUT",
@@ -1516,6 +1677,7 @@ RETURNS VOID AS $$
           ["2", "5"],
         ],
         glAccount: "1010602",
+        divisionId: "7",
       },
       {
         generalName: "FLAT BAR",
@@ -1569,6 +1731,7 @@ RETURNS VOID AS $$
           ["1.5", "9"],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "TILE",
@@ -1580,6 +1743,7 @@ RETURNS VOID AS $$
           ["20", "30", "60", "8", "600", "300"],
         ],
         glAccount: "NONE",
+        divisionId: "40",
       },
       {
         generalName: "MASK",
@@ -1589,6 +1753,7 @@ RETURNS VOID AS $$
           ["Respiratory", "Face", "Welding", "Washable", "Gas", "Surgical"],
         ],
         glAccount: "1010604",
+        divisionId: "5",
       },
       {
         generalName: "FILE TRAY",
@@ -1599,6 +1764,7 @@ RETURNS VOID AS $$
           ["2", "3", "4", "5"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "WELDING ROD",
@@ -1625,6 +1791,7 @@ RETURNS VOID AS $$
           ["2.5", "2.6", "3.2", "4", "5"],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "FOLDER",
@@ -1645,6 +1812,7 @@ RETURNS VOID AS $$
           ["A3", "Legal", "A4", "Long", "Short", "Letter"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "BRAKE FLUID",
@@ -1656,6 +1824,7 @@ RETURNS VOID AS $$
           ["DOT 2", "DOT 3", "DOT 4", "DOT 5", "DOT 5.1"],
         ],
         glAccount: "1010605",
+        divisionId: "11",
       },
       {
         generalName: "BED SHEET",
@@ -1679,6 +1848,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "5010500",
+        divisionId: "12",
       },
       {
         generalName: "METAL CLAMP",
@@ -1686,6 +1856,7 @@ RETURNS VOID AS $$
         description: ["SIZE (inch)"],
         descriptionField: [["1/2", "1", "2", "3/4"]],
         glAccount: "1010606",
+        divisionId: "5",
       },
       {
         generalName: "STICKER CARTRIDGE",
@@ -1697,6 +1868,7 @@ RETURNS VOID AS $$
           ["1", "2", "3.5", "6", "5"],
         ],
         glAccount: "NONE",
+        divisionId: "12",
       },
       {
         generalName: "PEN",
@@ -1720,6 +1892,7 @@ RETURNS VOID AS $$
           ["Black", "Blue", "Red"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "PEN INK",
@@ -1751,6 +1924,7 @@ RETURNS VOID AS $$
           ["10", "12", "20", "30"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "SOLVENT CEMENT",
@@ -1761,6 +1935,7 @@ RETURNS VOID AS $$
           ["100", "200", "250", "300", "400", "724"],
         ],
         glAccount: "1010606",
+        divisionId: "22",
       },
       {
         generalName: "CLIP BOARD",
@@ -1780,6 +1955,7 @@ RETURNS VOID AS $$
           ["Letter", "Legal", "A4", "Mini"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "AIR CONDITIONER",
@@ -1812,11 +1988,18 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "5010500",
+        divisionId: "23",
       },
       {
         generalName: "RESPIRATOR CARTRIDGE",
         unit: "piece",
-        description: ["BRAND", "TYPE", "FACEPIECE TYPE", "CARTRIDGE USE", "MODEL"],
+        description: [
+          "BRAND",
+          "TYPE",
+          "FACEPIECE TYPE",
+          "CARTRIDGE USE",
+          "MODEL",
+        ],
         descriptionField: [
           ["3M", "North", "Moldex"],
           ["Single", "Twin"],
@@ -1870,6 +2053,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010604",
+        divisionId: "11",
       },
       {
         generalName: "LEAD WIRE",
@@ -1881,6 +2065,7 @@ RETURNS VOID AS $$
           ["1", "1.5", "3", "7"],
         ],
         glAccount: "1010602",
+        divisionId: "11",
       },
       {
         generalName: "EXHAUST FLUID",
@@ -1893,6 +2078,7 @@ RETURNS VOID AS $$
           ["85109697", "ADBLUE10", "12674"],
         ],
         glAccount: "1010605",
+        divisionId: "11",
       },
       {
         generalName: "STEEL EPOXY",
@@ -1915,6 +2101,7 @@ RETURNS VOID AS $$
           ["25", "48.5", "100", "390", "470", "1000", "1500", "2000", "4000"],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "DOOR JAMB",
@@ -1935,6 +2122,7 @@ RETURNS VOID AS $$
           ["210"],
         ],
         glAccount: "1010602",
+        divisionId: "8",
       },
       {
         generalName: "WATER CONTAINER",
@@ -1946,6 +2134,7 @@ RETURNS VOID AS $$
           ["3", "6", "10", "20", "75", "100", "150", "200"],
         ],
         glAccount: "1010607",
+        divisionId: "33",
       },
       {
         generalName: "RUBBER BAND",
@@ -1957,6 +2146,7 @@ RETURNS VOID AS $$
           ["350", "50"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "JACKET",
@@ -1968,6 +2158,7 @@ RETURNS VOID AS $$
           ["Small", "Medium", "Large", "Extra Large", "XXL"],
         ],
         glAccount: "1010604",
+        divisionId: "5",
       },
       {
         generalName: "DRIFTER ROD",
@@ -1988,6 +2179,7 @@ RETURNS VOID AS $$
           ["35", "32"],
         ],
         glAccount: "NONE",
+        divisionId: "41",
       },
       {
         generalName: "TERMINAL LUG",
@@ -2088,6 +2280,7 @@ RETURNS VOID AS $$
           ["Insulated", "Non-Insulated"],
         ],
         glAccount: "1010603",
+        divisionId: "26",
       },
       {
         generalName: "CABLE TESTER",
@@ -2184,6 +2377,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "26",
       },
       {
         generalName: "SPUD",
@@ -2194,6 +2388,7 @@ RETURNS VOID AS $$
           ["12.7", "25.4", "50", "12.7", "25.4", "19.05", "20", "41"],
         ],
         glAccount: "1010602",
+        divisionId: "22",
       },
       {
         generalName: "HANDLE CLAMP",
@@ -2217,6 +2412,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "6",
       },
       {
         generalName: "BENTONITE",
@@ -2239,6 +2435,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "2",
       },
       {
         generalName: "STICKY NOTES",
@@ -2274,6 +2471,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "STP CABLE",
@@ -2312,9 +2510,23 @@ RETURNS VOID AS $$
             "1000000",
             "4000000",
           ],
-          ["1", "5", "10", "15", "20", "30", "40", "50", "60", "80", "100", "305"],
+          [
+            "1",
+            "5",
+            "10",
+            "15",
+            "20",
+            "30",
+            "40",
+            "50",
+            "60",
+            "80",
+            "100",
+            "305",
+          ],
         ],
         glAccount: "1010602",
+        divisionId: "26",
       },
       {
         generalName: "BEARING",
@@ -2382,6 +2594,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "VEST",
@@ -2398,6 +2611,7 @@ RETURNS VOID AS $$
           ["SMALL", "MEDIUM", "LARGE"],
         ],
         glAccount: "1010604",
+        divisionId: "1",
       },
       {
         generalName: "WINDOW CURTAIN ROD",
@@ -2415,6 +2629,7 @@ RETURNS VOID AS $$
           ["1219.2", "2133.6", "3048", "4318"],
         ],
         glAccount: "1010607",
+        divisionId: "12",
       },
       {
         generalName: "PRINTER TONER",
@@ -2484,6 +2699,7 @@ RETURNS VOID AS $$
           ["Black", "Cyan", "Magenta", "Yellow"],
         ],
         glAccount: "1010606",
+        divisionId: "0",
       },
       {
         generalName: "PENCIL GRINDER",
@@ -2531,6 +2747,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "41",
       },
       {
         generalName: "RJ45",
@@ -2541,6 +2758,7 @@ RETURNS VOID AS $$
           ["50", "100", "150", "200", "60", "70", "80", "90", "120", "140"],
         ],
         glAccount: "1010606",
+        divisionId: "26",
       },
       {
         generalName: "DISC",
@@ -2569,6 +2787,7 @@ RETURNS VOID AS $$
           ["4", "7", "5", "4.5", "6", "9"],
         ],
         glAccount: "1010602",
+        divisionId: "11",
       },
       {
         generalName: "CONCRETE CURING COMPOUND",
@@ -2604,6 +2823,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "3",
       },
       {
         generalName: "WIRE ROPE CLIP",
@@ -2676,6 +2896,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "FIBER CEMENT BOARD",
@@ -2688,6 +2909,7 @@ RETURNS VOID AS $$
           ["3.2", "3.5", "4", "4.5", "6", "8", "9", "10", "12", "15", "18", "20"],
         ],
         glAccount: "1010602",
+        divisionId: "7",
       },
       {
         generalName: "BINDING COVER",
@@ -2699,6 +2921,7 @@ RETURNS VOID AS $$
           ["297", "279.4", "228.6", "209.804", "215.9"],
         ],
         glAccount: "NONE",
+        divisionId: "11",
       },
       {
         generalName: "STAPLER",
@@ -2745,6 +2968,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "ROPE",
@@ -2790,6 +3014,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "11",
       },
       {
         generalName: "JALOUSIE FRAME",
@@ -2825,6 +3050,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "8",
       },
       {
         generalName: "DOOR CLOSER",
@@ -2868,6 +3094,7 @@ RETURNS VOID AS $$
           ["with Hold-Open", "None"],
         ],
         glAccount: "1010602",
+        divisionId: "8",
       },
       {
         generalName: "ENGINEERS FIELD BOOK",
@@ -2875,6 +3102,7 @@ RETURNS VOID AS $$
         description: ["BRAND", "LENGTH (mm)", "WIDTH (mm)", "HEIGHT (mm)"],
         descriptionField: [["VECO", "VALIANT"], ["184"], ["144"], ["10.3"]],
         glAccount: "1010606",
+        divisionId: "23",
       },
       {
         generalName: "CABLE CLAMP",
@@ -2949,6 +3177,7 @@ RETURNS VOID AS $$
           ["Rubber", "None"],
         ],
         glAccount: "1010602",
+        divisionId: "28",
       },
       {
         generalName: "PLASTIC BAG",
@@ -2968,6 +3197,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "2",
       },
       {
         generalName: "PILLOW",
@@ -2978,6 +3208,7 @@ RETURNS VOID AS $$
           ["Standard", "Super Standard", "King", "Queen", "Body", "Euro pillow"],
         ],
         glAccount: "5010500",
+        divisionId: "12",
       },
       {
         generalName: "TOE BOARD",
@@ -3002,6 +3233,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "BORAL POWDER",
@@ -3009,6 +3241,7 @@ RETURNS VOID AS $$
         description: ["BRAND"],
         descriptionField: [["USG BORAL", "BORAL"]],
         glAccount: "1010602",
+        divisionId: "4",
       },
       {
         generalName: "VALVE, FIRE EXTINGUISHER",
@@ -3100,6 +3333,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010604",
+        divisionId: "14",
       },
       {
         generalName: "SUBMERSIBLE PUMP CABLE",
@@ -3148,6 +3382,7 @@ RETURNS VOID AS $$
           ["PVC", "Rubber"],
         ],
         glAccount: "1010602",
+        divisionId: "26",
       },
       {
         generalName: "PENCIL",
@@ -3189,6 +3424,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "ALUMINUM CLIP",
@@ -3208,6 +3444,7 @@ RETURNS VOID AS $$
           ["6", "300", "400", "500", "600", "1.2", "1.6", "19.05", "9.525"],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "BEAM, ALUMA",
@@ -3220,6 +3457,7 @@ RETURNS VOID AS $$
           ["75", "85", "81", "84"],
         ],
         glAccount: "1010602",
+        divisionId: "32",
       },
       {
         generalName: "OIL SPILL KIT ",
@@ -3243,6 +3481,7 @@ RETURNS VOID AS $$
           ["80", "120"],
         ],
         glAccount: "1010604",
+        divisionId: "46",
       },
       {
         generalName: "COMPACT DISC",
@@ -3255,6 +3494,7 @@ RETURNS VOID AS $$
           ["120"],
         ],
         glAccount: "1010606",
+        divisionId: "12",
       },
       {
         generalName: "VALVE, CHECK",
@@ -3429,6 +3669,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "25",
       },
       {
         generalName: "BEAM, I",
@@ -4131,6 +4372,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "5",
       },
       {
         generalName: "BLIND RIVET",
@@ -4208,6 +4450,7 @@ RETURNS VOID AS $$
           ],
         ],
         glAccount: "1010602",
+        divisionId: "6",
       },
       {
         generalName: "EXHAUST FAN",
@@ -4219,6 +4462,7 @@ RETURNS VOID AS $$
           ["203.2"],
         ],
         glAccount: "NONE",
+        divisionId: "8",
       },
       {
         generalName: "EMULSION EXPLOSIVE ",
@@ -4245,6 +4489,7 @@ RETURNS VOID AS $$
           ["4000", "4500"],
         ],
         glAccount: "NONE",
+        divisionId: "40",
       },
     ];
 
@@ -4368,7 +4613,7 @@ RETURNS VOID AS $$
         item_unit: item.unit,
         item_gl_account: item.glAccount,
         item_team_id: TEAM_ID,
-        item_division_id: `${Math.floor(Math.random() * 48)}`
+        item_division_id: item.divisionId
       });
 
       item.description.forEach((description, index) => {

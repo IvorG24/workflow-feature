@@ -1,4 +1,4 @@
-import { checkItemName } from "@/backend/api/get";
+import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ITEM_UNIT_CHOICES } from "@/utils/constant";
@@ -20,7 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { toUpper } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
 
@@ -40,6 +40,33 @@ const CreateItem = ({
   const formId = router.query.formId as string;
 
   const activeTeam = useActiveTeam();
+
+  const [divisionIdOption, setDivisionIdOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchDivisionOption = async () => {
+      try {
+        const option = await getItemDivisionOption(supabaseClient);
+        option &&
+          setDivisionIdOption(
+            option.map((divisionId) => {
+              return {
+                label: `${divisionId.cost_code_division_id}`,
+                value: `${divisionId.cost_code_division_id}`,
+              };
+            })
+          );
+      } catch {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      }
+    };
+    fetchDivisionOption();
+  }, []);
 
   const { register, getValues, formState, handleSubmit, control } =
     useForm<ItemForm>({
@@ -72,7 +99,7 @@ const CreateItem = ({
           item_unit: data.unit,
           item_gl_account: toUpper(data.glAccount),
           item_team_id: activeTeam.team_id,
-          item_division_id: `0${Math.floor(Math.random() * 4)}`,
+          item_division_id: data.divisionId,
         },
         formId: formId,
       });
@@ -183,6 +210,28 @@ const CreateItem = ({
               sx={{
                 input: {
                   textTransform: "uppercase",
+                },
+              }}
+            />
+            <Controller
+              control={control}
+              name="divisionId"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value as string}
+                  onChange={onChange}
+                  data={divisionIdOption}
+                  withAsterisk
+                  error={formState.errors.divisionId?.message}
+                  searchable
+                  clearable
+                  label="Division ID"
+                />
+              )}
+              rules={{
+                required: {
+                  message: "Division Id is required",
+                  value: true,
                 },
               }}
             />
