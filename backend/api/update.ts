@@ -4,6 +4,7 @@ import {
   AppType,
   MemberRoleType,
   SignerTableRow,
+  TeamTableRow,
   TeamTableUpdate,
   UserTableUpdate,
 } from "@/utils/types";
@@ -236,15 +237,14 @@ export const acceptTeamInvitation = async (
 ) => {
   const { invitationId, teamId, userId } = params;
 
-  const { error } = await supabaseClient
-    .rpc("accept_team_invitation", {
-      invitation_id: invitationId,
-      team_id: teamId,
-      user_id: userId,
-    })
-    .select("*")
-    .single();
+  const { data, error } = await supabaseClient.rpc("accept_team_invitation", {
+    invitation_id: invitationId,
+    team_id: teamId,
+    user_id: userId,
+  });
   if (error) throw error;
+
+  return data as TeamTableRow[];
 };
 
 // Decline team invitation
