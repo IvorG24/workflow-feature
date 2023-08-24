@@ -194,6 +194,7 @@ const requisitionTableColumnList = [
   "Unit of Measurement",
   "Description",
   "GL Account",
+  "Cost Code",
 ];
 
 const quotationTableColumnList = [
@@ -1430,6 +1431,7 @@ const SSOTSpreadsheetView = ({
       const itemQuantity: string[] = [];
       const itemDescription: string[] = [];
       const itemGlAccount: string[] = [];
+      const itemCostCode: string[] = [];
 
       const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
@@ -1456,6 +1458,8 @@ const SSOTSpreadsheetView = ({
             itemQuantity[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "Cost Code") {
+            itemCostCode[groupIndex] = JSON.parse(item.request_response);
           } else if (
             [
               "Division Description",
@@ -1563,6 +1567,17 @@ const SSOTSpreadsheetView = ({
                 <td>
                   <List sx={{ listStyle: "none" }} spacing="xs">
                     {itemGlAccount.map((item, index) => (
+                      <List.Item key={index}>
+                        <Text size={14}>{item}</Text>
+                      </List.Item>
+                    ))}
+                  </List>
+                </td>
+              )}
+              {showRequisitionColumnList["cost_code"] && (
+                <td>
+                  <List sx={{ listStyle: "none" }} spacing="xs">
+                    {itemCostCode.map((item, index) => (
                       <List.Item key={index}>
                         <Text size={14}>{item}</Text>
                       </List.Item>
@@ -1924,6 +1939,9 @@ const SSOTSpreadsheetView = ({
                       )}
                       {showRequisitionColumnList["gl_account"] && (
                         <th className={classes.short}>GL Account</th>
+                      )}
+                      {showRequisitionColumnList["cost_code"] && (
+                        <th className={classes.short}>Cost Code</th>
                       )}
                     </>
                   )}
