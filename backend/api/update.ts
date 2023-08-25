@@ -324,6 +324,6 @@ export const deleteTeam = async (
     team_id: teamId,
     team_member_id: teamMemberId,
   });
-  console.log(error);
+
   if (error) throw error;
 };

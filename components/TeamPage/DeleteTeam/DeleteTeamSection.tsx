@@ -5,7 +5,6 @@ import {
   useTeamList,
 } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   ActionIcon,
@@ -45,7 +44,7 @@ const DeleteTeamSection = ({ totalMembers }: Props) => {
   const activeTeam = useActiveTeam();
   const authUserMember = useUserTeamMember();
   const authUserTeamList = useTeamList();
-  const { setActiveTeam, setTeamList } = useTeamActions();
+  const { setTeamList } = useTeamActions();
   const [openFirstWarningModal, setOpenFirstWarningModal] = useState(false);
   const [openDeleteTeamFormModal, setOpenDeleteTeamFormModal] = useState(false);
 
@@ -71,6 +70,7 @@ const DeleteTeamSection = ({ totalMembers }: Props) => {
         teamId: teamId,
         teamMemberId: authUserMember.team_member_id,
       });
+      reset();
       const updatedTeamList = authUserTeamList.filter(
         (team) => team.team_id !== teamId
       );
@@ -78,12 +78,7 @@ const DeleteTeamSection = ({ totalMembers }: Props) => {
 
       setTimeout(router.reload, 500);
 
-      const availableTeam = updatedTeamList[0];
-
-      if (availableTeam) {
-        setActiveTeam(availableTeam);
-        router.push(DEFAULT_LANDING_PAGE);
-      } else {
+      if (updatedTeamList.length <= 0) {
         router.push("/team/create");
       }
     } catch (error) {
@@ -176,7 +171,8 @@ const DeleteTeamSection = ({ totalMembers }: Props) => {
           <form onSubmit={handleSubmit(onDeleteTeam)}>
             <Stack>
               <TextInput
-                label={`To confirm, type "${activeTeam.team_name.toLowerCase()}" in the box below.`}
+                sx={{ userSelect: "none" }}
+                label={`To confirm, type "${activeTeam.team_name.toLowerCase()}" (case-sensitive) in the box below.`}
                 {...register("teamName", {
                   required: true,
                   validate: (value: string) =>
