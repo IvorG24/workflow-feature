@@ -226,7 +226,7 @@ RETURNS VOID AS $$
           ],
           ["CALTEX", "DERFOE", "SEGA", "LIQUI MOLY"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "0",
       },
       {
@@ -289,7 +289,7 @@ RETURNS VOID AS $$
           ["INNOVITA", "PANBIO"],
           ["INNOVITA", "ABBOTT"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "22",
       },
       {
@@ -371,7 +371,7 @@ RETURNS VOID AS $$
         unit: "pack",
         description: ["MODEL", "MANUFACTURER"],
         descriptionField: [["MAX1"], ["HOWARD LIGHT"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "7",
       },
       {
@@ -468,7 +468,7 @@ RETURNS VOID AS $$
         unit: "piece",
         description: ["KIND"],
         descriptionField: [["WITH FILTER", "WITHOUT FILTER"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "13",
       },
       {
@@ -476,7 +476,7 @@ RETURNS VOID AS $$
         unit: "piece",
         description: ["LENGTH"],
         descriptionField: [["1.70 m", "2.20 m"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "41",
       },
       {
@@ -533,7 +533,7 @@ RETURNS VOID AS $$
           ["A-CLAMP ASSEMBLY", "PUR - A-CLAMP ASSEMBLY", "CLAMP LIGHT ASSEMBLY"],
           ["B265", "100359", "NONE"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "28",
       },
       {
@@ -552,7 +552,7 @@ RETURNS VOID AS $$
           ["900 mm", "300 mm"],
           ["3 mm", "4 mm", "2 mm"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "4",
       },
       {
@@ -633,7 +633,7 @@ RETURNS VOID AS $$
           ["8", "12", "14"],
           ["16", "20", "25", "35", "45", "50", "55", "65", "75"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "5",
       },
       {
@@ -641,7 +641,7 @@ RETURNS VOID AS $$
         unit: "piece",
         description: ["LENGTH"],
         descriptionField: [["70 mm"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "33",
       },
       {
@@ -649,7 +649,7 @@ RETURNS VOID AS $$
         unit: "cubic meter",
         description: ["GRAIN SIZE"],
         descriptionField: [["2 mm", "4 mm"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "26",
       },
       {
@@ -706,7 +706,7 @@ RETURNS VOID AS $$
         unit: "pack",
         description: ["MODEL", "PACKAGING SIZE"],
         descriptionField: [["9000+"], ["100 PCS PER PACK"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "5",
       },
       {
@@ -755,7 +755,7 @@ RETURNS VOID AS $$
           ],
           ["40 mm"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "43",
       },
       {
@@ -767,7 +767,7 @@ RETURNS VOID AS $$
           ["CUREHARD-24"],
           ["CUREHARD-24"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "9",
       },
       {
@@ -940,7 +940,7 @@ RETURNS VOID AS $$
           ["7 inch", "11 inch"],
           ["5 inch", "8.5 inch"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "43",
       },
       {
@@ -951,7 +951,7 @@ RETURNS VOID AS $$
           ["5.25 inch", "6.25 inch"],
           ["2.625 inch", "3.125 inch"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "48",
       },
       {
@@ -991,7 +991,7 @@ RETURNS VOID AS $$
           ],
           ["M16 mm", "M10 mm", "M12 mm", "M24 mm", "M19 mm"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "5",
       },
       {
@@ -1002,7 +1002,7 @@ RETURNS VOID AS $$
           ["HORIZONTAL", "VERTICAL"],
           ["SHORT", "LONG"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "4",
       },
       {
@@ -1033,7 +1033,7 @@ RETURNS VOID AS $$
           ["17 mm"],
           ["0.6 m", "1 m", "1.8 m", "2.1 m", "2.8 m", "3 m", "4 m", "6 m"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "13",
       },
       {
@@ -1063,7 +1063,7 @@ RETURNS VOID AS $$
             "75 mm",
           ],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "31",
       },
       {
@@ -1074,7 +1074,7 @@ RETURNS VOID AS $$
           ["With PVC Coat", "Without PVC Coat"],
           ["8", "10", "12", "14", "16", "18", "20", "22"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "8",
       },
       {
@@ -1086,7 +1086,7 @@ RETURNS VOID AS $$
           ["1.7 m", "2.2 m", "3 m", "4.2 m", "6 m"],
           ["30 mm", "32 mm", "34 mm"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "45",
       },
       {
@@ -1098,7 +1098,7 @@ RETURNS VOID AS $$
           ["HD", "RINGLOCK"],
           ["48 mm X 200 mm"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "32",
       },
       {
@@ -1128,7 +1128,7 @@ RETURNS VOID AS $$
         unit: "kilogram",
         description: ["FORMWORKS TYPE", "SIZE"],
         descriptionField: [["PUR", "REN"], ["19 mm"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "41",
       },
       {
@@ -1136,7 +1136,7 @@ RETURNS VOID AS $$
         unit: "kilogram",
         description: ["FORMWORKS TYPE", "MATERIAL", "SIZE"],
         descriptionField: [["PUR", "REN"], ["S/S"], ["19 mm"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "10",
       },
       {
@@ -1165,7 +1165,7 @@ RETURNS VOID AS $$
             "75 mm",
           ],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "33",
       },
       {
@@ -1173,7 +1173,7 @@ RETURNS VOID AS $$
         unit: "bag",
         description: ["NET WEIGHT PER BAG"],
         descriptionField: [["25K g"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "48",
       },
       {
@@ -1196,7 +1196,7 @@ RETURNS VOID AS $$
         descriptionField: [
           ["CHRYSO OMEGA 98S", "SUPERKONTARD R2", "SHOT-SET 250"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "11",
       },
       {
@@ -1515,7 +1515,7 @@ RETURNS VOID AS $$
         unit: "liter",
         description: ["TYPE", "FINISH"],
         descriptionField: [["Acrylic", "Silicone"], ["Flat"]],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "9",
       },
       {
@@ -1742,7 +1742,7 @@ RETURNS VOID AS $$
           ["20", "30", "60", "8", "600"],
           ["20", "30", "60", "8", "600", "300"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "40",
       },
       {
@@ -1867,7 +1867,7 @@ RETURNS VOID AS $$
           ["1", "2", "4", "5"],
           ["1", "2", "3.5", "6", "5"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "12",
       },
       {
@@ -2178,7 +2178,7 @@ RETURNS VOID AS $$
           ["2475", "3090", "3700", "4305", "4915", "5525", "6135", "6440"],
           ["35", "32"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "41",
       },
       {
@@ -2920,7 +2920,7 @@ RETURNS VOID AS $$
           ["210", "215.9", "177.8", "144.78", "139.7"],
           ["297", "279.4", "228.6", "209.804", "215.9"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "11",
       },
       {
@@ -4461,7 +4461,7 @@ RETURNS VOID AS $$
           ["WALL MOUNTED", "CEILING MOUNTED", "INDUSTRIAL", "STANDARD MOUNTED"],
           ["203.2"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "8",
       },
       {
@@ -4488,7 +4488,7 @@ RETURNS VOID AS $$
           ["125", "185", "395", "125", "185", "395"],
           ["4000", "4500"],
         ],
-        glAccount: "NONE",
+        glAccount: "1010602",
         divisionId: "40",
       },
     ];
