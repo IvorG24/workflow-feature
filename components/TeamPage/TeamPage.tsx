@@ -30,6 +30,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { lowerCase } from "lodash";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
 import CreateGroup from "./TeamGroup/CreateGroup";
 import GroupList from "./TeamGroup/GroupList";
@@ -100,11 +101,9 @@ const TeamPage = ({
     (member) => member.team_member_user.user_email
   );
 
-  const userRole = teamMemberList.find(
-    (member) => member.team_member_id === teamMember?.team_member_id
-  )?.team_member_role as MemberRoleType;
-
-  const isOwnerOrAdmin = userRole === "ADMIN" || userRole === "OWNER";
+  const userRole = teamMember ? teamMember.team_member_role : null;
+  const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(`${userRole}`);
+  const isOwner = userRole === "OWNER";
 
   const updateTeamMethods = useForm<UpdateTeamInfoForm>({
     defaultValues: { teamName: team.team_name, teamLogo: team.team_logo || "" },
@@ -437,6 +436,8 @@ const TeamPage = ({
           memberEmailList={memberEmailList}
         />
       )}
+
+      {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />}
 
       <Space mt={32} />
     </Container>

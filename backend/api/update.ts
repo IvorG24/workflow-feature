@@ -309,3 +309,21 @@ export const updateFormDescription = async (
     .eq("form_id", formId);
   if (error) throw error;
 };
+
+// Delete team
+export const deleteTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    teamMemberId: string;
+  }
+) => {
+  const { teamId, teamMemberId } = params;
+
+  const { error } = await supabaseClient.rpc("delete_team", {
+    team_id: teamId,
+    team_member_id: teamMemberId,
+  });
+  console.log(error);
+  if (error) throw error;
+};
