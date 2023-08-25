@@ -1,6 +1,6 @@
 import { addCommaToNumber } from "@/utils/string";
 import { DuplicateSectionType } from "@/utils/types";
-import { Paper, ScrollArea, Table, Title } from "@mantine/core";
+import { Paper, ScrollArea, Table, Text, Title } from "@mantine/core";
 
 type Props = {
   summaryData: DuplicateSectionType[];
@@ -50,7 +50,7 @@ const RequisitionSummary = ({ summaryData }: Props) => {
                 if (field.field_response) {
                   description += `${field.field_name}: ${JSON.parse(
                     field.field_response.request_response
-                  )}, `;
+                  )}\n`;
                 }
               });
 
@@ -70,7 +70,11 @@ const RequisitionSummary = ({ summaryData }: Props) => {
               return (
                 <tr key={index}>
                   <td>{item}</td>
-                  <td>{description.slice(0, -2)}</td>
+                  <td>
+                    <pre>
+                      <Text>{description.slice(0, -1)}</Text>
+                    </pre>
+                  </td>
                   <td>{glAccount}</td>
                   <td>{csiCode}</td>
                   <td>{addCommaToNumber(quantity)}</td>

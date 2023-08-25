@@ -388,7 +388,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           const itemOptions = Object.keys(items).map((item, index) => {
             const itemName = items[item].item;
             const quantity = items[item].quantity;
-            const sourceProject = items[item].sourceProject;
 
             const matches = regex.exec(itemName);
             const unit = matches && matches[1].replace(/\d+/g, "").trim();
@@ -398,7 +397,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
             const value = `${itemName.replace(
               replace[0],
-              `(${quantity} ${unit}) (${sourceProject})`
+              `(${quantity} ${unit})`
             )} `;
 
             sourceProjectList[value] = items[item].sourceProject;
