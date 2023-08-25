@@ -2027,6 +2027,87 @@ $$ LANGUAGE plv8;
 
 -- End: Get all team members without existing member of the project
 
+-- Start: Delete team
+
+CREATE OR REPLACE FUNCTION delete_team(
+    team_id TEXT,
+    team_member_id TEXT
+)
+RETURNS VOID as $$
+  plv8.subtransaction(function(){
+    const user = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
+    const isUserOwner = user.team_member_role === 'OWNER';
+
+    if (!isUserOwner) return;
+
+
+    plv8.execute(`UPDATE team_table SET team_is_disabled=TRUE WHERE team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE invitation_table it
+      SET invitation_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = it.invitation_from_team_member_id `);
+
+    plv8.execute(`UPDATE form_table ft
+      SET form_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = ft.form_team_member_id `);
+
+    plv8.execute(`UPDATE request_table rt
+      SET request_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = rt.request_team_member_id `);
+
+    plv8.execute(`UPDATE signer_table st
+      SET signer_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = st.signer_team_member_id `);
+
+    plv8.execute(`UPDATE comment_table ct
+      SET comment_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = ct.comment_team_member_id `);
+
+    plv8.execute(`UPDATE team_group_table SET team_group_is_disabled=TRUE WHERE team_group_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE team_project_table SET team_project_is_disabled=TRUE WHERE team_project_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE item_table SET item_is_disabled=TRUE, item_is_available=FALSE WHERE item_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE item_description_table dt
+      SET item_description_is_disabled=TRUE, item_description_is_available=FALSE
+      FROM item_table it
+      WHERE it.item_team_id='${team_id}'
+      AND dt.item_description_item_id = it.item_id `);
+
+    plv8.execute(`UPDATE item_description_field_table AS idf
+      SET item_description_field_is_disabled=TRUE, item_description_field_is_available=FALSE
+      FROM item_description_table AS dt
+      JOIN item_table AS it ON it.item_id = dt.item_description_item_id
+      WHERE dt.item_description_id = idf.item_description_field_item_description_id
+      AND it.item_team_id = '${team_id}'
+      AND dt.item_description_item_id = it.item_id`);
+
+    const userTeamList = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_id='${team_member_id}' AND team_member_is_disabled=FALSE`);
+
+    if (userTeamList.length > 0) {
+      plv8.execute(`UPDATE user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${user.team_member_user_id}'`);
+    } else {
+      plv8.execute(`UPDATE user_table SET user_active_team_id=NULL WHERE user_id='${user.team_member_user_id}'`);
+    }
+ });
+$$ LANGUAGE plv8;
+
+-- END: Delete team
+
+
 ---------- End: FUNCTIONS
 
 
@@ -2728,7 +2809,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role = 'OWNER'
   ) OR team_member_user_id = auth.uid()
 );
 
@@ -2739,7 +2820,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role = 'OWNER'
   )
 );
 
