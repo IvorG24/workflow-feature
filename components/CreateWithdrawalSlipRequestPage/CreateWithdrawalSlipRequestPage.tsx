@@ -1,6 +1,6 @@
 import {
-  getCostCode,
-  getCostCodeOptionsForItems,
+  getCSICode,
+  getCSICodeOptionsForItems,
   getItem,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
@@ -256,7 +256,7 @@ const CreateWithdrawalSlipRequestPage = ({
         itemName: value,
       });
 
-      const costCodeList = await getCostCodeOptionsForItems(supabaseClient, {
+      const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
         divisionId: item.item_division_id,
       });
 
@@ -278,13 +278,13 @@ const CreateWithdrawalSlipRequestPage = ({
         {
           ...newSection.section_field[4],
           field_response: "",
-          field_option: costCodeList.map((costCode, index) => {
+          field_option: csiCodeList.map((csiCode, index) => {
             return {
               option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: costCode.cost_code_id,
+              option_id: csiCode.csi_code_id,
               option_order: index,
-              option_value: costCode.cost_code_level_three_description,
+              option_value: csiCode.csi_code_level_three_description,
             };
           }),
         },
@@ -347,24 +347,24 @@ const CreateWithdrawalSlipRequestPage = ({
     }
   };
 
-  const handleCostCodeChange = async (index: number, value: string | null) => {
+  const handleCSICodeChange = async (index: number, value: string | null) => {
     const newSection = getValues(`sections.${index}`);
 
     if (value) {
-      const costCode = await getCostCode(supabaseClient, { costCode: value });
+      const csiCode = await getCSICode(supabaseClient, { csiCode: value });
       const generalField = [
         ...newSection.section_field.slice(0, 5),
         {
           ...newSection.section_field[5],
-          field_response: costCode?.cost_code_division_description,
+          field_response: csiCode?.csi_code_division_description,
         },
         {
           ...newSection.section_field[6],
-          field_response: costCode?.cost_code_level_two_major_group_description,
+          field_response: csiCode?.csi_code_level_two_major_group_description,
         },
         {
           ...newSection.section_field[7],
-          field_response: costCode?.cost_code_level_two_minor_group_description,
+          field_response: csiCode?.csi_code_level_two_minor_group_description,
         },
         ...newSection.section_field.slice(8),
       ];
@@ -465,7 +465,7 @@ const CreateWithdrawalSlipRequestPage = ({
                     requisitionFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
-                      onCostCodeChange: handleCostCodeChange,
+                      onCSICodeChange: handleCSICodeChange,
                     }}
                     formslyFormName="Requisition"
                   />

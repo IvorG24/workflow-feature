@@ -290,17 +290,17 @@ CREATE TABLE supplier_table(
 
 -- End: Quotation Form
 
-CREATE TABLE cost_code_table(
-  cost_code_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  cost_code_section VARCHAR(4000) NOT NULL,
-  cost_code_division_id VARCHAR(4000) NOT NULL,
-  cost_code_division_description VARCHAR(4000) NOT NULL,
-  cost_code_level_two_major_group_id VARCHAR(4000) NOT NULL,
-  cost_code_level_two_major_group_description VARCHAR(4000) NOT NULL,
-  cost_code_level_two_minor_group_id VARCHAR(4000) NOT NULL,
-  cost_code_level_two_minor_group_description VARCHAR(4000) NOT NULL,
-  cost_code_level_three_id VARCHAR(4000) NOT NULL,
-  cost_code_level_three_description VARCHAR(4000) NOT NULL
+CREATE TABLE csi_code_table(
+  csi_code_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  csi_code_section VARCHAR(4000) NOT NULL,
+  csi_code_division_id VARCHAR(4000) NOT NULL,
+  csi_code_division_description VARCHAR(4000) NOT NULL,
+  csi_code_level_two_major_group_id VARCHAR(4000) NOT NULL,
+  csi_code_level_two_major_group_description VARCHAR(4000) NOT NULL,
+  csi_code_level_two_minor_group_id VARCHAR(4000) NOT NULL,
+  csi_code_level_two_minor_group_description VARCHAR(4000) NOT NULL,
+  csi_code_level_three_id VARCHAR(4000) NOT NULL,
+  csi_code_level_three_description VARCHAR(4000) NOT NULL
 );
 
 ---------- End: TABLES
@@ -889,7 +889,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description,
         field_type: "DROPDOWN",
-        field_order: 13,
+        field_order: 14,
         field_section_id: section_id,
         field_is_required: true,
       });
@@ -1305,11 +1305,11 @@ RETURNS JSON AS $$
         const requestResponseQuantity = [];
 
         requestResponse.forEach((response) => {
-            if (response.field_name === "Item") {
+          if (response.field_name === "Item") {
             requestResponseItem.push(response);
-            } else if (response.field_name === "Quantity") {
+          } else if (response.field_name === "Quantity") {
             requestResponseQuantity.push(response);
-            }
+          }
         });
 
         requestResponseItem.push(...itemFieldList);
@@ -1319,17 +1319,17 @@ RETURNS JSON AS $$
         const quantityList = [];
 
         for (let i = 0; i < requestResponseItem.length; i++) {
-            if (itemList.includes(requestResponseItem[i].request_response)) {
+          if (itemList.includes(requestResponseItem[i].request_response)) {
             const quantityIndex = itemList.indexOf(
                 requestResponseItem[i].request_response
             );
             quantityList[quantityIndex] += Number(
                 requestResponseQuantity[i].request_response
             );
-            } else {
+          } else {
             itemList.push(requestResponseItem[i].request_response);
             quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
+          }
         }
 
         const returnData = [];
@@ -3537,7 +3537,7 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 
 ---------- Start: VIEWS
 
-CREATE VIEW distinct_division_id AS SELECT DISTINCT cost_code_division_id from cost_code_table;
+CREATE VIEW distinct_division_id AS SELECT DISTINCT csi_code_division_id from csi_code_table;
 
 -------- End: VIEWS
 

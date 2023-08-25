@@ -53,8 +53,8 @@ const CreateItem = ({
           setDivisionIdOption(
             option.map((divisionId) => {
               return {
-                label: `${divisionId.cost_code_division_id}`,
-                value: `${divisionId.cost_code_division_id}`,
+                label: `${divisionId.csi_code_division_id}`,
+                value: `${divisionId.csi_code_division_id}`,
               };
             })
           );
@@ -114,7 +114,6 @@ const CreateItem = ({
       });
       setIsCreatingItem(false);
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
