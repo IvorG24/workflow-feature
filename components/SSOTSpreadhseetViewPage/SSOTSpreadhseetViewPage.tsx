@@ -193,7 +193,7 @@ const requisitionTableColumnList = [
   "Unit of Measurement",
   "Description",
   "GL Account",
-  "Cost Code",
+  "CSI Code",
 ];
 
 const quotationTableColumnList = [
@@ -1335,7 +1335,7 @@ const SSOTSpreadsheetView = ({
       const itemQuantity: string[] = [];
       const itemDescription: string[] = [];
       const itemGlAccount: string[] = [];
-      const itemCostCode: string[] = [];
+      const itemCSICode: string[] = [];
 
       const fields = request.requisition_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
@@ -1362,8 +1362,8 @@ const SSOTSpreadsheetView = ({
             itemQuantity[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
-          } else if (item.request_response_field_name === "Cost Code") {
-            itemCostCode[groupIndex] = JSON.parse(item.request_response);
+          } else if (item.request_response_field_name === "CSI Code") {
+            itemCSICode[groupIndex] = JSON.parse(item.request_response);
           } else if (
             [
               "Division Description",
@@ -1478,10 +1478,10 @@ const SSOTSpreadsheetView = ({
                   </List>
                 </td>
               )}
-              {showRequisitionColumnList["cost_code"] && (
+              {showRequisitionColumnList["csi_code"] && (
                 <td>
                   <List sx={{ listStyle: "none" }} spacing="xs">
-                    {itemCostCode.map((item, index) => (
+                    {itemCSICode.map((item, index) => (
                       <List.Item key={index}>
                         <Text size={14}>{item}</Text>
                       </List.Item>
@@ -1765,8 +1765,8 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["gl_account"] && (
                         <th className={classes.short}>GL Account</th>
                       )}
-                      {showRequisitionColumnList["cost_code"] && (
-                        <th className={classes.description}>Cost Code</th>
+                      {showRequisitionColumnList["csi_code"] && (
+                        <th className={classes.description}>CSI Code</th>
                       )}
                     </>
                   )}
