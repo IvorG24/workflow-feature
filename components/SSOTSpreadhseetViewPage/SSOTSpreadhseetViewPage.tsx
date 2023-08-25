@@ -1,6 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
-  CHEQUE_REFERENCE_FIELDS_ORDER,
   DEFAULT_NUMBER_SSOT_ROWS,
   REQUISITION_FIELDS_ORDER,
 } from "@/utils/constant";
@@ -261,20 +260,6 @@ const transferReceiptTableColumnList = [
   "Source Project",
 ];
 
-const chequeReferenceTableColumnList = [
-  "Cheque Reference ID",
-  "Date Created",
-  "Treasury",
-  "Treasury Status",
-  "Cheque Cancelled",
-  "Cheque Printed Date",
-  "Cheque Clearing Date",
-  "Cheque First Signatory Name",
-  "Cheque First Date Signed",
-  "Cheque Second Signatory Name",
-  "Cheque Second Date Signed",
-];
-
 const convertColumnListArrayToObject = (array: string[]) => {
   const obj = array.reduce((obj, item) => {
     obj[item.toLowerCase().replace(/\s+/g, "_")] = true;
@@ -315,8 +300,6 @@ const SSOTSpreadsheetView = ({
   const [showReleaseOrderTable, setShowReleaseOrderTable] = useState(true);
   const [showTransferReceiptTable, setShowTransferReceiptTable] =
     useState(true);
-  const [showChequeReferenceTable, setShowChequeReferenceTable] =
-    useState(true);
 
   const [showRequisitionColumnList, setShowRequisitionColumnList] =
     useState<ShowColumnList>(
@@ -345,11 +328,6 @@ const SSOTSpreadsheetView = ({
   const [showTransferReceiptColumnList, setShowTransferReceiptColumnList] =
     useState<ShowColumnList>(
       convertColumnListArrayToObject(transferReceiptTableColumnList)
-    );
-
-  const [showChequeReferenceColumnList, setShowChequeReferenceColumnList] =
-    useState<ShowColumnList>(
-      convertColumnListArrayToObject(chequeReferenceTableColumnList)
     );
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
@@ -495,82 +473,6 @@ const SSOTSpreadsheetView = ({
       setOffset((prev) => (prev += 1));
     }
   }, [isInView]);
-
-  const renderChequeReference = (
-    request: SSOTType["requisition_cheque_reference_request"]
-  ) => {
-    return request.map((request) => {
-      const fields = request.cheque_reference_request_response.sort(
-        (a: SSOTResponseType, b: SSOTResponseType) => {
-          return (
-            CHEQUE_REFERENCE_FIELDS_ORDER.indexOf(
-              a.request_response_field_name
-            ) -
-            CHEQUE_REFERENCE_FIELDS_ORDER.indexOf(b.request_response_field_name)
-          );
-        }
-      );
-
-      return (
-        <tr
-          key={request.cheque_reference_request_id}
-          className={classes.cell}
-          style={{ borderTop: "solid 1px #DEE2E6" }}
-        >
-          {showChequeReferenceColumnList["cheque_reference_id"] && (
-            <td>{request.cheque_reference_request_formsly_id}</td>
-          )}
-          {showChequeReferenceColumnList["date_created"] && (
-            <td>
-              {new Date(
-                request.cheque_reference_request_date_created
-              ).toLocaleDateString()}
-            </td>
-          )}
-          {showChequeReferenceColumnList["treasury"] && (
-            <td>{`${request.cheque_reference_request_owner.user_first_name} ${request.cheque_reference_request_owner.user_last_name}`}</td>
-          )}
-
-          {fields.map((response, index) => {
-            const fieldName =
-              response.request_response_field_name.toLowerCase();
-
-            const columnPropName = fieldName.replace(/\s+/g, "_");
-            const showColumn = showChequeReferenceColumnList[columnPropName];
-
-            return (
-              showColumn && (
-                <td key={index}>
-                  {response.request_response_field_type === "DATE" ? (
-                    new Date(
-                      JSON.parse(response.request_response)
-                    ).toLocaleDateString()
-                  ) : response.request_response_field_type === "FILE" ? (
-                    <ActionIcon
-                      w="100%"
-                      variant="outline"
-                      onClick={() =>
-                        window.open(
-                          `${JSON.parse(response.request_response)}`,
-                          "_blank"
-                        )
-                      }
-                    >
-                      <Flex align="center" justify="center" gap={2}>
-                        <Text size={14}>File</Text> <IconFile size={14} />
-                      </Flex>
-                    </ActionIcon>
-                  ) : (
-                    `${JSON.parse(response.request_response)}`
-                  )}
-                </td>
-              )
-            );
-          })}
-        </tr>
-      );
-    });
-  };
 
   const renderRir = (
     request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"]
@@ -1704,80 +1606,6 @@ const SSOTSpreadsheetView = ({
               ) : null}
             </td>
           )}
-
-          {showChequeReferenceTable && (
-            <td style={{ padding: 0 }}>
-              {request.requisition_cheque_reference_request.length !== 0 ? (
-                <Table
-                  withBorder
-                  withColumnBorders
-                  h="100%"
-                  className={classes.chequeReferenceTable}
-                >
-                  <thead>
-                    <tr>
-                      {showChequeReferenceColumnList["cheque_reference_id"] && (
-                        <th className={classes.long}>Cheque Reference ID</th>
-                      )}
-                      {showChequeReferenceColumnList["date_created"] && (
-                        <th className={classes.date}>Date Created</th>
-                      )}
-                      {showChequeReferenceColumnList["treasury"] && (
-                        <th className={classes.processor}>Treasury</th>
-                      )}
-                      {showChequeReferenceColumnList["treasury_status"] && (
-                        <th className={classes.normal}>Treasury Status</th>
-                      )}
-                      {showChequeReferenceColumnList["cheque_cancelled"] && (
-                        <th className={classes.short}>Cheque Cancelled</th>
-                      )}
-                      {showChequeReferenceColumnList["cheque_printed_date"] && (
-                        <th className={classes.date}>Cheque Printed Date</th>
-                      )}
-                      {showChequeReferenceColumnList[
-                        "cheque_clearing_date"
-                      ] && (
-                        <th className={classes.date}>Cheque Clearing Date</th>
-                      )}
-                      {showChequeReferenceColumnList[
-                        "cheque_first_signatory_name"
-                      ] && (
-                        <th className={classes.processor}>
-                          Cheque First Signatory Name
-                        </th>
-                      )}
-                      {showChequeReferenceColumnList[
-                        "cheque_first_date_signed"
-                      ] && (
-                        <th className={classes.date}>
-                          Cheque First Date Signed
-                        </th>
-                      )}
-                      {showChequeReferenceColumnList[
-                        "cheque_second_signatory_name"
-                      ] && (
-                        <th className={classes.processor}>
-                          Cheque Second Signatory Name
-                        </th>
-                      )}
-                      {showChequeReferenceColumnList[
-                        "cheque_second_date_signed"
-                      ] && (
-                        <th className={classes.date}>
-                          Cheque Second Date Signed
-                        </th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderChequeReference(
-                      request.requisition_cheque_reference_request
-                    )}
-                  </tbody>
-                </Table>
-              ) : null}
-            </td>
-          )}
         </tr>
       );
     });
@@ -1834,7 +1662,6 @@ const SSOTSpreadsheetView = ({
             sourcedItemTableColumnList={sourcedItemTableColumnList}
             releaseOrderTableColumnList={releaseOrderTableColumnList}
             transferReceiptTableColumnList={transferReceiptTableColumnList}
-            chequeReferenceTableColumnList={chequeReferenceTableColumnList}
             // table list state
             showRequisitionTable={showRequisitionTable}
             setShowRequisitionTable={setShowRequisitionTable}
@@ -1848,8 +1675,6 @@ const SSOTSpreadsheetView = ({
             setShowReleaseOrderTable={setShowReleaseOrderTable}
             showTransferReceiptTable={showTransferReceiptTable}
             setShowTransferReceiptTable={setShowTransferReceiptTable}
-            showChequeReferenceTable={showChequeReferenceTable}
-            setShowChequeReferenceTable={setShowChequeReferenceTable}
             // column list state
             showRequisitionColumnList={showRequisitionColumnList}
             setShowRequisitionColumnList={setShowRequisitionColumnList}
@@ -1863,8 +1688,6 @@ const SSOTSpreadsheetView = ({
             setShowReleaseOrderColumnList={setShowReleaseOrderColumnList}
             showTransferReceiptColumnList={showTransferReceiptColumnList}
             setShowTransferReceiptColumnList={setShowTransferReceiptColumnList}
-            showChequeReferenceColumnList={showChequeReferenceColumnList}
-            setShowChequeReferenceColumnList={setShowChequeReferenceColumnList}
           />
         </Group>
       </Box>
@@ -1949,7 +1772,6 @@ const SSOTSpreadsheetView = ({
                   )}
                   {showQuotationTable && <th>Quotation</th>}
                   {showSourcedItemTable && <th>Sourced Item</th>}
-                  {showChequeReferenceTable && <th>Cheque Reference</th>}
                 </tr>
               </thead>
               <tbody>{renderRequisition()}</tbody>

@@ -20,7 +20,6 @@ type Props = {
   sourcedItemTableColumnList: string[];
   releaseOrderTableColumnList: string[];
   transferReceiptTableColumnList: string[];
-  chequeReferenceTableColumnList: string[];
   showRequisitionTable: boolean;
   setShowRequisitionTable: Dispatch<SetStateAction<boolean>>;
   showQuotationTable: boolean;
@@ -33,8 +32,6 @@ type Props = {
   setShowReleaseOrderTable: Dispatch<SetStateAction<boolean>>;
   showTransferReceiptTable: boolean;
   setShowTransferReceiptTable: Dispatch<SetStateAction<boolean>>;
-  showChequeReferenceTable: boolean;
-  setShowChequeReferenceTable: Dispatch<SetStateAction<boolean>>;
   showRequisitionColumnList: ShowColumnList;
   setShowRequisitionColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showQuotationColumnList: ShowColumnList;
@@ -47,8 +44,6 @@ type Props = {
   setShowReleaseOrderColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showTransferReceiptColumnList: ShowColumnList;
   setShowTransferReceiptColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showChequeReferenceColumnList: ShowColumnList;
-  setShowChequeReferenceColumnList: Dispatch<SetStateAction<ShowColumnList>>;
 };
 
 const SSOTSpreadsheetViewTableFilter = (props: Props) => {
@@ -59,7 +54,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     sourcedItemTableColumnList,
     releaseOrderTableColumnList,
     transferReceiptTableColumnList,
-    chequeReferenceTableColumnList,
     showRequisitionTable,
     setShowRequisitionTable,
     showRequisitionColumnList,
@@ -76,8 +70,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowReleaseOrderTable,
     showTransferReceiptTable,
     setShowTransferReceiptTable,
-    showChequeReferenceTable,
-    setShowChequeReferenceTable,
     showRIRColumnList,
     setShowRIRColumnList,
     showSourcedItemColumnList,
@@ -86,8 +78,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowReleaseOrderColumnList,
     showTransferReceiptColumnList,
     setShowTransferReceiptColumnList,
-    showChequeReferenceColumnList,
-    setShowChequeReferenceColumnList,
   } = props;
   const switchInputProps = { color: "green" };
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
@@ -99,14 +89,12 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     showSourcedItemTable,
     showReleaseOrderTable,
     showTransferReceiptTable,
-    showChequeReferenceTable,
     showRequisitionColumnList,
     showQuotationColumnList,
     showRIRColumnList,
     showSourcedItemColumnList,
     showReleaseOrderColumnList,
     showTransferReceiptColumnList,
-    showChequeReferenceColumnList,
   };
   const [
     localFilterSettings,
@@ -125,14 +113,12 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       showSourcedItemTable,
       showReleaseOrderTable,
       showTransferReceiptTable,
-      showChequeReferenceTable,
       showRequisitionColumnList,
       showQuotationColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
       showTransferReceiptColumnList,
-      showChequeReferenceColumnList,
     });
     setShowFilterColumnModal(false);
     return;
@@ -166,14 +152,12 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       showSourcedItemTable,
       showReleaseOrderTable,
       showTransferReceiptTable,
-      showChequeReferenceTable,
       showRequisitionColumnList,
       showQuotationColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
       showTransferReceiptColumnList,
-      showChequeReferenceColumnList,
     } = localFilterSettings;
 
     if (
@@ -192,14 +176,12 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowRIRTable(showRIRTable);
     setShowReleaseOrderTable(showReleaseOrderTable);
     setShowTransferReceiptTable(showTransferReceiptTable);
-    setShowChequeReferenceTable(showChequeReferenceTable);
     setShowRequisitionColumnList(showRequisitionColumnList);
     setShowQuotationColumnList(showQuotationColumnList);
     setShowRIRColumnList(showRIRColumnList);
     setShowSourcedItemColumnList(showSourcedItemColumnList);
     setShowReleaseOrderColumnList(showReleaseOrderColumnList);
     setShowTransferReceiptColumnList(showTransferReceiptColumnList);
-    setShowChequeReferenceColumnList(showChequeReferenceColumnList);
   }, [localFilterSettings]);
 
   return (
@@ -500,54 +482,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                               !showReleaseOrderTable ||
                               !showTransferReceiptTable
                             }
-                            {...switchInputProps}
-                            styles={{ track: { cursor: "pointer" } }}
-                          />
-                        </Group>
-                      );
-                    })}
-                  </Flex>
-                </Box>
-              </Accordion.Panel>
-            </Accordion.Item>
-            <Accordion.Item value="cheque-reference-table">
-              <Accordion.Control>Cheque Reference Table</Accordion.Control>
-              <Accordion.Panel>
-                <Box w="100%" p="sm">
-                  <Group mb="sm" position="apart">
-                    <Text weight={600}>Cheque Reference Table</Text>
-                    <Switch
-                      checked={showChequeReferenceTable}
-                      onChange={(e) =>
-                        setShowChequeReferenceTable(e.currentTarget.checked)
-                      }
-                      onLabel={<IconEye size="1rem" stroke={2.5} />}
-                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                      {...switchInputProps}
-                      styles={{ track: { cursor: "pointer" } }}
-                    />
-                  </Group>
-                  <Flex gap="sm" direction="column">
-                    {chequeReferenceTableColumnList.map((column, index) => {
-                      const propName = column
-                        .toLowerCase()
-                        .replace(/\s+/g, "_");
-                      return (
-                        <Group key={index} position="apart">
-                          <Flex maw={150} wrap="wrap">
-                            <Text>{column}</Text>
-                          </Flex>
-                          <Switch
-                            checked={showChequeReferenceColumnList[propName]}
-                            onChange={(e) =>
-                              setShowChequeReferenceColumnList((prev) => ({
-                                ...prev,
-                                [propName]: e.currentTarget.checked,
-                              }))
-                            }
-                            onLabel={<IconEye size="1rem" stroke={2.5} />}
-                            offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                            disabled={!showChequeReferenceTable}
                             {...switchInputProps}
                             styles={{ track: { cursor: "pointer" } }}
                           />

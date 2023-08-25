@@ -354,7 +354,6 @@ RETURNS JSON as $$
     const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const transfer_receipt_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-    const cheque_reference_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Cheque Reference' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
     let requisition_requests;
     let searchCondition = '';
@@ -628,41 +627,7 @@ RETURNS JSON as $$
         });
       }
 
-      const cheque_reference_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${cheque_reference_form.form_id}'`);
-      let cheque_reference_list = [];
-      if(cheque_reference_ids.length !== 0){
-        let cheque_reference_condition = "";
-        cheque_reference_ids.forEach(cheque_reference => {
-          cheque_reference_condition += `request_id='${cheque_reference.request_id}' OR `;
-        });
-
-        const cheque_reference_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${cheque_reference_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
-        cheque_reference_list = cheque_reference_requests.map(cheque_reference => {
-          // cheque_reference request response
-          const cheque_reference_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${cheque_reference.request_id}'`);
-          
-          // cheque_reference request response with fields
-          const cheque_reference_response_fields = cheque_reference_response.map(response => {
-            const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
-            return {
-              request_response: response.request_response,
-              request_response_field_name: field.field_name,
-              request_response_field_type: field.field_type,
-            }
-          });
-
-          // cheque_reference team member
-          const cheque_reference_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${cheque_reference.request_team_member_id}'`)[0];
-
-          return {
-            cheque_reference_request_id: cheque_reference.request_id,
-            cheque_reference_request_formsly_id: cheque_reference.request_formsly_id,
-            cheque_reference_request_date_created: cheque_reference.request_date_created,
-            cheque_reference_request_response: cheque_reference_response_fields,
-            cheque_reference_request_owner: cheque_reference_team_member,
-          }
-        });
-      }
+      
 
       return {
         requisition_request_id: requisition.request_id,
@@ -672,7 +637,6 @@ RETURNS JSON as $$
         requisition_request_owner: requisition_team_member,
         requisition_quotation_request: quotation_list,
         requisition_sourced_item_request: sourced_item_list,
-        requisition_cheque_reference_request: cheque_reference_list,
       }
     })
  });
@@ -747,16 +711,8 @@ RETURNS JSON AS $$
         endId = `RIR-${newCount}`;
       } else if(formName==='Release Order') {
         endId = `RO-${newCount}`;
-      } else if(formName==='Cheque Reference') {
-        endId = `C-${newCount}`;
-      } else if(formName==='Audit') {
-        endId = `A-${newCount}`;
-      } else if(formName==='Withdrawal Slip') {
-        endId = `WS-${newCount}`;
       } else if(formName==='Transfer Receipt') {
         endId = `TR-${newCount}`;
-      } else if(formName==='Release Quantity') {
-        endId = `RQ-${newCount}`;
       } else {
         endId = `-${newCount}`;
       }
@@ -1366,98 +1322,6 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Check if the approving or creating quotation item quantity are less than the requisition quantity
-
--- Start: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
-
-CREATE OR REPLACE FUNCTION check_withdrawal_slip_quantity(
-    input_data JSON
-)
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-        withdrawalSlipId,
-        itemFieldList,
-        quantityFieldList
-        } = input_data;
-
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${withdrawalSlipId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Quantity'`);
-        
-        let requestResponse = []
-        if(request.length>0) {
-
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
-
-            requestResponse = plv8.execute(`SELECT request_response_table.*, field_name FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE (field_name = 'Quantity' OR field_name = 'Item') AND request_response_request_id IN (${requestIdList});`);
-        }
-
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
-
-        requestResponse.forEach((response) => {
-            if (response.field_name === "Item") {
-            requestResponseItem.push(response);
-            } else if (response.field_name === "Quantity") {
-            requestResponseQuantity.push(response);
-            }
-        });
-
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
-
-        const itemList = [];
-        const quantityList = [];
-
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            if (itemList.includes(requestResponseItem[i].request_response)) {
-            const quantityIndex = itemList.indexOf(
-                requestResponseItem[i].request_response
-            );
-            quantityList[quantityIndex] += Number(
-                requestResponseQuantity[i].request_response
-            );
-            } else {
-            itemList.push(requestResponseItem[i].request_response);
-            quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
-        }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-            const quantityMatch = itemList[i].match(/(\d+)/);
-            if (!quantityMatch) return;
-
-            returnData.push(
-                `${JSON.parse(
-                itemList[i].replace(
-                    quantityMatch[1],
-                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                )
-                )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-            );
-            }
-        }
-        item_data = returnData;
-    });
-    return item_data;
-$$ LANGUAGE plv8;
-
--- End: Check if the approving or creating release quantity item quantity are less than the withdrawal slip quantity
 
 -- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
 

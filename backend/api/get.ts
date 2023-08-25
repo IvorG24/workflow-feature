@@ -20,7 +20,6 @@ import {
   RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
-  RequisitionFieldsType,
   TeamMemberType,
   TeamMemberWithUserDetails,
   TeamTableRow,
@@ -1820,24 +1819,6 @@ export const checkRequisitionQuantity = async (
   return data as string[];
 };
 
-// Check if the approving or creating release quantity are less than the withdrawal slip quantity
-export const checkWithdrawalSlipQuantity = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    withdrawalSlipId: string;
-    itemFieldList: RequestResponseTableRow[];
-    quantityFieldList: RequestResponseTableRow[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("check_withdrawal_slip_quantity", { input_data: params })
-    .select("*");
-
-  if (error) throw error;
-
-  return data as string[];
-};
-
 // Check if the approving or creating rir item quantity are less than the quotation quantity
 export const checkRIRItemQuantity = async (
   supabaseClient: SupabaseClient<Database>,
@@ -2951,48 +2932,6 @@ export const getFormSigner = async (
   if (error) throw error;
 
   return data;
-};
-
-// Fetch withdrawal slip item descriptions
-export const getWithdrawalSlipItemDescriptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-    teamId: string;
-  }
-) => {
-  const { requestId, teamId } = params;
-
-  const { data: form, error: formError } = await supabaseClient
-    .from("form_table")
-    .select(
-      "form_id, form_team_member: form_team_member_id!inner(team_member_team_id)"
-    )
-    .eq("form_name", "Requisition")
-    .eq("form_is_formsly_form", true)
-    .eq("form_team_member.team_member_team_id", teamId)
-    .single();
-  if (formError) throw formError;
-
-  const { data, error } = await supabaseClient
-    .from("section_table")
-    .select(
-      `
-      section_name,
-      section_field: field_table!inner(
-        *, 
-        field_option: option_table(*), 
-        field_response: request_response_table!inner(*)
-      )
-    `
-    )
-    .eq("section_form_id", form.form_id)
-    .eq("section_name", "Item")
-    .eq("section_field.field_response.request_response_request_id", requestId)
-    .single();
-  if (error) throw error;
-
-  return data.section_field as unknown as RequisitionFieldsType;
 };
 
 // Fetch request project signer
