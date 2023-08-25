@@ -1050,12 +1050,6 @@ export type Database = {
         };
         Returns: Json;
       };
-      check_withdrawal_slip_quantity: {
-        Args: {
-          input_data: Json;
-        };
-        Returns: Json;
-      };
       create_formsly_premade_forms: {
         Args: {
           input_data: Json;
