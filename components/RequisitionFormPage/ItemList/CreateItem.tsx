@@ -53,8 +53,8 @@ const CreateItem = ({
           setDivisionIdOption(
             option.map((divisionId) => {
               return {
-                label: `${divisionId.cost_code_division_id}`,
-                value: `${divisionId.cost_code_division_id}`,
+                label: `${divisionId.csi_code_division_id}`,
+                value: `${divisionId.csi_code_division_id}`,
               };
             })
           );

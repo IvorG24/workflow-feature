@@ -333,7 +333,7 @@ const RequestPage = ({
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
-   
+
           const warningItemList = await checkWithdrawalSlipQuantity(
             supabaseClient,
             {
@@ -520,7 +520,7 @@ const RequestPage = ({
     } else if (formName === "Release Quantity") {
       directory += `/create?withdrawalSlipId=${request.request_id}`;
     }
-   
+
     return directory;
   };
 
