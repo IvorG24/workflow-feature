@@ -9,7 +9,7 @@ import {
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
-  CostCodeTableRow,
+  CSICodeTableRow,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -1654,7 +1654,8 @@ export const getItemResponseForQuotation = async (
           );
         } else if (
           fieldName === "GL Account" ||
-          fieldName === "Cost Code" ||
+          fieldName === "CSI Code" ||
+          fieldName === "CSI Code Description" ||
           fieldName === "Division Description" ||
           fieldName === "Level 2 Major Group Description" ||
           fieldName === "Level 2 Minor Group Description"
@@ -3014,8 +3015,8 @@ export const getRequestProjectSigner = async (
   return data as unknown as RequestProjectSignerType;
 };
 
-// Fetch all cost code based on division id
-export const getCostCodeOptionsForItems = async (
+// Fetch all CSI Code based on division id
+export const getCSICodeOptionsForItems = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     divisionId: string;
@@ -3023,30 +3024,30 @@ export const getCostCodeOptionsForItems = async (
 ) => {
   const { divisionId } = params;
   const { data, error } = await supabaseClient
-    .from("cost_code_table")
+    .from("csi_code_table")
     .select("*")
-    .eq("cost_code_division_id", divisionId);
+    .eq("csi_code_division_id", divisionId);
   if (error) throw error;
 
-  return data as CostCodeTableRow[];
+  return data as CSICodeTableRow[];
 };
 
-// Fetch all cost code
-export const getCostCode = async (
+// Fetch all CSI Code
+export const getCSICode = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    costCode: string;
+    csiCode: string;
   }
 ) => {
-  const { costCode } = params;
+  const { csiCode } = params;
   const { data, error } = await supabaseClient
-    .from("cost_code_table")
+    .from("csi_code_table")
     .select("*")
-    .eq("cost_code_level_three_description", costCode)
+    .eq("csi_code_level_three_description", csiCode)
     .single();
   if (error) throw error;
 
-  return data as CostCodeTableRow;
+  return data as CSICodeTableRow;
 };
 
 // Fetch all itemm division option
@@ -3055,8 +3056,8 @@ export const getItemDivisionOption = async (
 ) => {
   const { data, error } = await supabaseClient
     .from("distinct_division_id")
-    .select("cost_code_division_id")
-    .order("cost_code_division_id", { ascending: true });
+    .select("csi_code_division_id")
+    .order("csi_code_division_id", { ascending: true });
   if (error) throw error;
 
   return data;

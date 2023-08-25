@@ -4626,7 +4626,7 @@ RETURNS VOID AS $$
           field_name: description,
           field_is_required: true,
           field_type: 'DROPDOWN',
-          field_order: 13,
+          field_order: 14,
           field_section_id: SECTION_ID,
         });
 
