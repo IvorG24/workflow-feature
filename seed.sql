@@ -18,13 +18,10 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', 'beb2d52c-77d5-49a9-a175-637152c44424');
 
 INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
-('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'OPERATIONS/ENGINEERING', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition
+('fd0957f6-cf42-4682-88c4-11696450eb94', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Admin
+('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition 
 ('51277fb9-7f1f-4c80-a122-c3fea3cf3ed7', 'PURCHASER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Quotation
-('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'SITE WAREHOUSE', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Receiving Inspecting Report
-('9300b7b6-a928-43a0-a3a1-bb6fcacaf987', 'LEAD INVENTORY CONTROLLER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Sourced Item
-('f2c96f9c-3bf7-437f-aa9c-f81c1fadc298', 'WAREHOUSE CORPORATE SUPPORT LEAD', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Release Order
-('13a506c2-a93e-44e1-b1bd-6742dbbf6f84', 'TREASURY PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Cheque Reference
-('7a91ae20-68b8-4f80-bcba-2a850b33b3d1', 'AUDIT PROCESSOR', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Audit
+('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'WAREHOUSE', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Sourced Item , Release Order , Transfer Receipt, Receiving Inspecting Report
 
 INSERT INTO team_project_table (team_project_id, team_project_name, team_project_team_id, team_project_code) VALUES
 ('4b3a151a-a077-486c-9dfb-e996c2c9184c', 'PHILIP MORRIS', 'a5a28977-6956-45c1-a624-b9e90911502e', 'PM1'),
@@ -32,27 +29,16 @@ INSERT INTO team_project_table (team_project_id, team_project_name, team_project
 ('989dbcc2-fdfe-48c7-806a-98cf80e1bf42', 'LAKE MAINIT', 'a5a28977-6956-45c1-a624-b9e90911502e', 'LM1');
 
 INSERT INTO team_group_member_table (team_member_id, team_group_id) VALUES
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'fd0957f6-cf42-4682-88c4-11696450eb94'),
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '13a506c2-a93e-44e1-b1bd-6742dbbf6f84'),
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('d9c6c738-8a60-43de-965f-f1f666da1639', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
-('d9c6c738-8a60-43de-965f-f1f666da1639', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
-('d9c6c738-8a60-43de-965f-f1f666da1639', '13a506c2-a93e-44e1-b1bd-6742dbbf6f84'),
-('d9c6c738-8a60-43de-965f-f1f666da1639', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '13a506c2-a93e-44e1-b1bd-6742dbbf6f84'),
-('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '7a91ae20-68b8-4f80-bcba-2a850b33b3d1');
+('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275');
 
 INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '4b3a151a-a077-486c-9dfb-e996c2c9184c'),
@@ -269,10 +255,10 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 
 INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) VALUES
 ('39aa91ef-7b4a-4f16-ba9c-7e78cefd90d3', 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
-('169ba447-3b92-4510-9b2a-b9021a1b8774', 'e5062660-9026-4629-bc2c-633826fdaa24', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('169ba447-3b92-4510-9b2a-b9021a1b8774', 'e5062660-9026-4629-bc2c-633826fdaa24', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('3be21f1a-ee76-4dce-9d94-f0c9f7224553', 'a732196f-9779-45e2-85fa-7320397e5b0a', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('8fa70223-807d-41eb-898b-31f16a34fb4f', '5782d70a-5f6b-486c-a77f-401066afd005', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
+('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('2b3806c6-c61c-46d4-a56e-eb563e2fc78c', '8e173d92-c346-4fb5-8ef2-490105e19263', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES

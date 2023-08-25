@@ -26,11 +26,10 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('819d049f-7302-4c19-b104-11226b5023f0', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'ee69d901-455f-4b5c-8dde-f8b1811233ab');
 
 INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
-('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'OPERATIONS/ENGINEERING', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition
+('fd0957f6-cf42-4682-88c4-11696450eb94', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Admin
+('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition
 ('51277fb9-7f1f-4c80-a122-c3fea3cf3ed7', 'PURCHASER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Quotation
-('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'SITE WAREHOUSE', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Receiving Inspecting Report
-('9300b7b6-a928-43a0-a3a1-bb6fcacaf987', 'LEAD INVENTORY CONTROLLER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Sourced Item
-('f2c96f9c-3bf7-437f-aa9c-f81c1fadc298', 'WAREHOUSE CORPORATE SUPPORT LEAD', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Release Order
+('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'WAREHOUSE', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Sourced Item , Release Order , Transfer Receipt, Receiving Inspecting Report
 
 INSERT INTO team_project_table (team_project_id, team_project_name, team_project_team_id, team_project_code) VALUES
 ('4b3a151a-a077-486c-9dfb-e996c2c9184c', 'PHILIP MORRIS', 'a5a28977-6956-45c1-a624-b9e90911502e', 'PM01'),
@@ -38,11 +37,10 @@ INSERT INTO team_project_table (team_project_id, team_project_name, team_project
 ('989dbcc2-fdfe-48c7-806a-98cf80e1bf42', 'LAKE MAINIT', 'a5a28977-6956-45c1-a624-b9e90911502e', 'LM01');
 
 INSERT INTO team_group_member_table (team_member_id, team_group_id) VALUES
+('05078711-7d04-4364-b7d8-2962575ff43f', 'fd0957f6-cf42-4682-88c4-11696450eb94'),
 ('05078711-7d04-4364-b7d8-2962575ff43f', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
 ('25b8b986-d4b6-4f63-89c1-93c7fbd1a0c9', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
-('2824efad-505d-44f5-8ad6-26fb27c57788', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('1482f41b-d69c-409b-88bb-c92b2836d9f9', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
-('8d4df42b-a861-4b4d-8870-14aaf9f6b668', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298');
+('2824efad-505d-44f5-8ad6-26fb27c57788', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275');
 
 INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
 ('05078711-7d04-4364-b7d8-2962575ff43f', '4b3a151a-a077-486c-9dfb-e996c2c9184c'),
@@ -222,11 +220,11 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 
 INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) VALUES
 ('39aa91ef-7b4a-4f16-ba9c-7e78cefd90d3', 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
-('169ba447-3b92-4510-9b2a-b9021a1b8774', 'e5062660-9026-4629-bc2c-633826fdaa24', '9300b7b6-a928-43a0-a3a1-bb6fcacaf987'),
+('169ba447-3b92-4510-9b2a-b9021a1b8774', 'e5062660-9026-4629-bc2c-633826fdaa24', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('3be21f1a-ee76-4dce-9d94-f0c9f7224553', 'a732196f-9779-45e2-85fa-7320397e5b0a', '51277fb9-7f1f-4c80-a122-c3fea3cf3ed7'),
 ('8fa70223-807d-41eb-898b-31f16a34fb4f', '5782d70a-5f6b-486c-a77f-401066afd005', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'f2c96f9c-3bf7-437f-aa9c-f81c1fadc298'),
-('25377a8a-30d5-4245-b22a-dd6f29ef86c8', '8e173d92-c346-4fb5-8ef2-490105e19263', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275');
+('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
+('2b3806c6-c61c-46d4-a56e-eb563e2fc78c', '8e173d92-c346-4fb5-8ef2-490105e19263', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('37067546-44b2-4bfa-a952-b0332e98298c', TRUE, 'Approved', 1, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '05078711-7d04-4364-b7d8-2962575ff43f'),
