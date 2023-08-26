@@ -180,12 +180,12 @@ const CreateItem = ({
                   error={formState.errors.unit?.message}
                   searchable
                   clearable
-                  label="Unit of Measurement"
+                  label="Base Unit of Measurement"
                 />
               )}
               rules={{
                 required: {
-                  message: "Unit of Measurement is required",
+                  message: "Base Unit of Measurement is required",
                   value: true,
                 },
               }}

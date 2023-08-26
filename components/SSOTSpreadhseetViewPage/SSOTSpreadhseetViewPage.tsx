@@ -190,7 +190,7 @@ const requisitionTableColumnList = [
   "Purpose",
   "Item Name",
   "Quantity",
-  "Unit of Measurement",
+  "Base Unit of Measurement",
   "Description",
   "GL Account",
   "CSI Code",
@@ -210,7 +210,7 @@ const quotationTableColumnList = [
   "Item",
   "Price Per Unit",
   "Quantity",
-  "Unit of Measurement",
+  "Base Unit of Measurement",
 ];
 
 const sourcedItemTableColumnList = [
@@ -219,7 +219,7 @@ const sourcedItemTableColumnList = [
   "Lead Inventory Controller",
   "Item",
   "Quantity",
-  "Unit of Measurement",
+  "Base Unit of Measurement",
   "Source Project",
 ];
 
@@ -232,7 +232,7 @@ const rirTableColumnList = [
   "QCIR",
   "Item",
   "Quantity",
-  "Unit of Measurement",
+  "Base Unit of Measurement",
   "Receiving Status",
 ];
 
@@ -242,7 +242,7 @@ const releaseOrderTableColumnList = [
   "Warehouse Corporate Support Lead",
   "Item",
   "Quantity",
-  "Unit of Measurement",
+  "Base Unit of Measurement",
   "Receiving Status",
   "Source Project",
 ];
@@ -255,7 +255,7 @@ const transferReceiptTableColumnList = [
   "Transfer Receipt",
   "Item",
   "Quantity",
-  "Unit of Measurement",
+  "Base Unit of Measurement",
   "Receiving Status",
   "Source Project",
 ];
@@ -600,7 +600,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showRIRColumnList["unit_of_measurement"] && (
+          {showRIRColumnList["base_unit_of_measurement"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemUnit.map((item, index) => (
@@ -745,7 +745,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showTransferReceiptColumnList["unit_of_measurement"] && (
+          {showTransferReceiptColumnList["base_unit_of_measurement"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemUnit.map((item, index) => (
@@ -859,7 +859,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showReleaseOrderColumnList["unit_of_measurement"] && (
+          {showReleaseOrderColumnList["base_unit_of_measurement"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemUnit.map((item, index) => (
@@ -925,8 +925,12 @@ const SSOTSpreadsheetView = ({
                       {showTransferReceiptColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
-                      {showTransferReceiptColumnList["unit_of_measurement"] && (
-                        <th className={classes.long}>Unit of Measurement</th>
+                      {showTransferReceiptColumnList[
+                        "base_unit_of_measurement"
+                      ] && (
+                        <th className={classes.long}>
+                          Base Unit of Measurement
+                        </th>
                       )}
                       {showTransferReceiptColumnList["receiving_status"] && (
                         <th className={classes.long}>Receiving Status</th>
@@ -1095,7 +1099,7 @@ const SSOTSpreadsheetView = ({
               </List>
             </td>
           )}
-          {showQuotationColumnList["unit_of_measurement"] && (
+          {showQuotationColumnList["base_unit_of_measurement"] && (
             <td>
               <List sx={{ listStyle: "none" }} spacing="xs">
                 {itemUnit.map((item, index) => (
@@ -1141,8 +1145,10 @@ const SSOTSpreadsheetView = ({
                       {showRIRColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
-                      {showRIRColumnList["unit_of_measurement"] && (
-                        <th className={classes.date}>Unit of Measurement</th>
+                      {showRIRColumnList["base_unit_of_measurement"] && (
+                        <th className={classes.date}>
+                          Base Unit of Measurement
+                        </th>
                       )}
                       {showRIRColumnList["receiving_status"] && (
                         <th className={classes.long}>Receiving Status</th>
@@ -1242,7 +1248,7 @@ const SSOTSpreadsheetView = ({
                   </List>
                 </td>
               )}
-              {showSourcedItemColumnList["unit_of_measurement"] && (
+              {showSourcedItemColumnList["base_unit_of_measurement"] && (
                 <td>
                   <List sx={{ listStyle: "none" }} spacing="xs">
                     {itemUnit.map((unit, index) => (
@@ -1296,10 +1302,10 @@ const SSOTSpreadsheetView = ({
                             <th className={classes.normal}>Quantity</th>
                           )}
                           {showReleaseOrderColumnList[
-                            "unit_of_measurement"
+                            "base_unit_of_measurement"
                           ] && (
                             <th className={classes.long}>
-                              Unit of Measurement
+                              Base Unit of Measurement
                             </th>
                           )}
                           {showReleaseOrderColumnList["receiving_status"] && (
@@ -1355,7 +1361,7 @@ const SSOTSpreadsheetView = ({
           if (item.request_response_field_name === "General Name") {
             itemName[groupIndex] = JSON.parse(item.request_response);
           } else if (
-            item.request_response_field_name === "Unit of Measurement"
+            item.request_response_field_name === "Base Unit of Measurement"
           ) {
             itemUnit[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "Quantity") {
@@ -1445,7 +1451,7 @@ const SSOTSpreadsheetView = ({
                   </List>
                 </td>
               )}
-              {showRequisitionColumnList["unit_of_measurement"] && (
+              {showRequisitionColumnList["base_unit_of_measurement"] && (
                 <td>
                   <List sx={{ listStyle: "none" }} spacing="xs">
                     {itemUnit.map((item, index) => (
@@ -1541,8 +1547,10 @@ const SSOTSpreadsheetView = ({
                       {showQuotationColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
-                      {showQuotationColumnList["unit_of_measurement"] && (
-                        <th className={classes.date}>Unit of Measurement</th>
+                      {showQuotationColumnList["base_unit_of_measurement"] && (
+                        <th className={classes.date}>
+                          Base Unit of Measurement
+                        </th>
                       )}
                       {showQuotationTable && showRIRTable && (
                         <th>Receiving Inspecting Report</th>
@@ -1586,8 +1594,12 @@ const SSOTSpreadsheetView = ({
                       {showSourcedItemColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
-                      {showSourcedItemColumnList["unit_of_measurement"] && (
-                        <th className={classes.date}>Unit of Measurement</th>
+                      {showSourcedItemColumnList[
+                        "base_unit_of_measurement"
+                      ] && (
+                        <th className={classes.date}>
+                          Base Unit of Measurement
+                        </th>
                       )}
                       {showSourcedItemColumnList["source_project"] && (
                         <th className={classes.long}>Source Project</th>
@@ -1756,8 +1768,12 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["quantity"] && (
                         <th className={classes.normal}>Quantity</th>
                       )}
-                      {showRequisitionColumnList["unit_of_measurement"] && (
-                        <th className={classes.date}>Unit of Measurement</th>
+                      {showRequisitionColumnList[
+                        "base_unit_of_measurement"
+                      ] && (
+                        <th className={classes.date}>
+                          Base Unit of Measurement
+                        </th>
                       )}
                       {showRequisitionColumnList["description"] && (
                         <th className={classes.description}>Description</th>
