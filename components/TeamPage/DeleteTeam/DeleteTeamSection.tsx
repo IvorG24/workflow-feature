@@ -82,7 +82,6 @@ const DeleteTeamSection = ({ totalMembers }: Props) => {
         router.push("/team/create");
       }
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Error: can not delete team",
         color: "red",
