@@ -1,4 +1,5 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
+import { TeamAdminChoiceType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { Database } from "@/utils/database";
 import {
   AppType,
@@ -326,4 +327,19 @@ export const deleteTeam = async (
   });
 
   if (error) throw error;
+};
+
+// Update admin role
+export const updateAdminRole = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamAdminIdList: string[];
+    updateRole: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("update_multiple_admin", {
+    input_data: params,
+  });
+  if (error) throw error;
+  return data as unknown as TeamAdminChoiceType[];
 };

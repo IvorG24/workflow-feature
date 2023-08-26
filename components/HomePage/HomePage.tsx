@@ -52,7 +52,7 @@ const useStyles = createStyles((theme) => ({
     [theme.fn.smallerThan(800)]: {
       fontSize: 16,
     },
-    fontSize: 24,
+    fontSize: 20,
   },
   simplifyContainer: {
     backgroundColor:

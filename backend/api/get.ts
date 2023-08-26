@@ -3001,3 +3001,89 @@ export const getItemDivisionOption = async (
 
   return data;
 };
+
+// Get team admin list with filter
+export const getTeamAdminListWithFilter = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { teamId, search = "", page, limit } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+        team_member_id,
+        team_member_date_created, 
+        team_member_user: team_member_user_id!inner(
+          user_id, 
+          user_first_name, 
+          user_last_name,
+          user_avatar, 
+          user_email
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("team_member_role", "ADMIN")
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_is_disabled", false);
+
+  if (search) {
+    query = query.or(
+      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
+      { foreignTable: "team_member_user" }
+    );
+  }
+
+  query = query.order("team_member_date_created", {
+    ascending: false,
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// Get all team members with "MEMBER" role
+export const getTeamMembersWithMemberRole = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+      team_member_id,
+      team_member_date_created, 
+      team_member_user: team_member_user_id!inner(
+        user_id, 
+        user_first_name, 
+        user_last_name,
+        user_avatar, 
+        user_email
+      )
+    `
+    )
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_is_disabled", false)
+    .eq("team_member_role", "MEMBER");
+  if (error) throw error;
+  return data;
+};

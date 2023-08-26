@@ -2107,6 +2107,39 @@ $$ LANGUAGE plv8;
 
 -- END: Delete team
 
+-- Start: Update multiple admin
+
+CREATE OR REPLACE FUNCTION update_multiple_admin(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let adminList = [];
+  plv8.subtransaction(function(){
+    const {
+      teamAdminIdList,
+      updateRole
+    } = input_data;
+    teamAdminIdList.forEach(id => {
+      const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
+      const user = plv8.execute(`SELECT * FROM user_table WHERE user_id='${member.team_member_user_id}'`)[0];
+
+      adminList.push({
+        team_member_id: member.team_member_id,
+        team_member_user: {
+          user_id: user.user_id,
+          user_first_name: user.user_first_name,
+          user_last_name: user.user_last_name,
+          user_avatar: user.user_avatar,
+          user_email: user.user_email
+        }
+      });
+    });
+ });
+ return adminList;
+$$ LANGUAGE plv8;
+
+-- END: Update multiple admin
+
 
 ---------- End: FUNCTIONS
 

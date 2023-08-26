@@ -32,6 +32,7 @@ import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
+import AdminGroup from "./TeamGroup/AdminGroup";
 import CreateGroup from "./TeamGroup/CreateGroup";
 import GroupList from "./TeamGroup/GroupList";
 import GroupMembers from "./TeamGroup/GroupMembers";
@@ -343,6 +344,14 @@ const TeamPage = ({
           handlePageChange={handleMemberPageChange}
         />
       </FormProvider>
+
+      {isOwner && (
+        <Box mt="xl">
+          <Paper p="xl" shadow="xs">
+            <AdminGroup teamId={initialTeam.team_id} />
+          </Paper>
+        </Box>
+      )}
 
       <Box mt="xl">
         <Paper p="xl" shadow="xs">
