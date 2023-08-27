@@ -70,11 +70,11 @@ const ItemDescriptionFieldTable = ({
     handleFetch("", 1);
   }, [description]);
 
-  const handleCheckRow = (driverId: string) => {
-    if (checkList.includes(driverId)) {
-      setCheckList(checkList.filter((id) => id !== driverId));
+  const handleCheckRow = (descriptionId: string) => {
+    if (checkList.includes(descriptionId)) {
+      setCheckList(checkList.filter((id) => id !== descriptionId));
     } else {
-      setCheckList([...checkList, driverId]);
+      setCheckList([...checkList, descriptionId]);
     }
   };
 
@@ -222,8 +222,8 @@ const ItemDescriptionFieldTable = ({
                     <Text size={14}>
                       Are you sure you want to delete{" "}
                       {checkList.length === 1
-                        ? "this driver?"
-                        : "these drivers?"}
+                        ? "this description?"
+                        : "these descriptions?"}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -280,6 +280,15 @@ const ItemDescriptionFieldTable = ({
             width: 40,
           },
           { accessor: "item_description_field_value", title: "Value" },
+          ...(description.item_description_is_with_uom
+            ? [
+                {
+                  accessor: "item_description_field_uom",
+                  title: "Base Unit of Measurement",
+                },
+              ]
+            : []),
+
           {
             accessor: "item_description_field_is_available",
             title: "Status",
