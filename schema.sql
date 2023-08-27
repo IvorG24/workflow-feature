@@ -259,6 +259,7 @@ CREATE TABLE item_description_table(
   item_description_label VARCHAR(4000) NOT NULL,
   item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  item_description_is_with_uom BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
   item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
@@ -268,6 +269,7 @@ CREATE TABLE item_description_field_table(
   item_description_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_description_field_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_description_field_value VARCHAR(4000) NOT NULL,
+  item_description_field_uom VARCHAR(4000),
   item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
@@ -836,14 +838,15 @@ RETURNS JSON AS $$
     itemDescription.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4
       itemDescriptionInput.push({
-        item_description_label: description,
+        item_description_label: description.description,
         item_description_item_id: item_result.item_id,
         item_description_is_available: true,
         item_description_field_id: fieldId,
+        item_description_is_with_uom: description.withUoM
       });
       fieldInput.push({
         field_id: fieldId,
-        field_name: description,
+        field_name: description.description,
         field_type: "DROPDOWN",
         field_order: 14,
         field_section_id: section_id,
@@ -853,7 +856,7 @@ RETURNS JSON AS $$
 
     const itemDescriptionValues = itemDescriptionInput
       .map((item) =>
-        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}')`
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}')`
       )
       .join(",");
 
@@ -865,7 +868,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
     
-    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id) VALUES ${itemDescriptionValues} RETURNING *;`);
+    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom) VALUES ${itemDescriptionValues} RETURNING *;`);
 
     item_data = {...item_result, item_description: item_description}
 
