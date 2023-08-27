@@ -89,7 +89,7 @@ const SourcedItemSummary = ({ summaryData, projectSignerStatus }: Props) => {
             <tr>
               <th>Item</th>
               <th>Quantity</th>
-              <th>Unit</th>
+              <th>Base Unit of Measurement</th>
               <th>Source Project</th>
             </tr>
           </thead>

@@ -39,6 +39,7 @@ const ItemDescriptionField = ({ description }: Props) => {
           setsetItemDescriptionFieldCount={setsetItemDescriptionFieldCount}
           label={description.item_description_label}
           descriptionId={description.item_description_id}
+          isWithUoM={description.item_description_is_with_uom}
         />
       ) : null}
     </Box>

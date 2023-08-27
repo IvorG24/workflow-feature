@@ -2,7 +2,6 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { MemberRoleType, TeamMemberType } from "@/utils/types";
 import { ActionIcon, Menu, Text } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
-import { useUser } from "@supabase/auth-helpers-react";
 import {
   IconArrowsLeftRight,
   IconDotsVertical,
@@ -21,8 +20,6 @@ type Props = {
   onTransferOwnership: (ownerId: string, memberId: string) => void;
 };
 
-const rolesOrder = { OWNER: 1, ADMIN: 2, MEMBER: 3 };
-
 const TeamMemberMenu = ({
   member,
   onRemoveFromTeam,
@@ -31,20 +28,15 @@ const TeamMemberMenu = ({
 }: Props) => {
   const defaultMenuIconProps = { size: 20 };
   const router = useRouter();
-  const authUser = useUser();
   const authTeamMember = useUserTeamMember();
 
+  const authUserRole = authTeamMember ? authTeamMember.team_member_role : null;
   const canUserUpdateMember =
-    authTeamMember &&
-    authTeamMember.team_member_role !== "MEMBER" &&
-    authUser?.id !== member.team_member_user.user_id &&
-    rolesOrder[authTeamMember.team_member_role as MemberRoleType] <
-      rolesOrder[member.team_member_role];
+    authUserRole === "OWNER" &&
+    authTeamMember?.team_member_user_id !== member.team_member_user.user_id;
 
   const canUserAccessDangerZone =
-    authTeamMember &&
-    (authTeamMember.team_member_role === "OWNER" ||
-      authTeamMember.team_member_role === "ADMIN");
+    authTeamMember && authTeamMember.team_member_role === "OWNER";
 
   return (
     <Menu position="left-start" width={200} withArrow>

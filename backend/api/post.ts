@@ -282,7 +282,10 @@ export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     itemData: ItemTableInsert;
-    itemDescription: string[];
+    itemDescription: {
+      description: string;
+      withUoM: boolean;
+    }[];
     formId: string;
   }
 ) => {
