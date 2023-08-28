@@ -187,13 +187,6 @@ const requisitionTableColumnList = [
   "Type",
   "Date Needed",
   "Purpose",
-  "Item",
-  "General Name",
-  "Quantity",
-  "Unit of Measurement",
-  "Description",
-  "GL Account",
-  "CSI Code",
 ];
 
 const quotationTableColumnList = [
@@ -207,22 +200,12 @@ const quotationTableColumnList = [
   "Payment Terms",
   "Lead Time",
   "Required Down Payment",
-  "Item",
-  "Item Description",
-  "Price per Unit",
-  "Quantity",
-  "Unit of Measurement",
 ];
 
 const sourcedItemTableColumnList = [
   "Sourced Item ID",
   "Date Created",
   "Lead Inventory Controller",
-  "Item",
-  "Item Description",
-  "Quantity",
-  "Unit of Measurement",
-  "Source Project",
 ];
 
 const rirTableColumnList = [
@@ -232,22 +215,12 @@ const rirTableColumnList = [
   "DR",
   "SI",
   "QCIR",
-  "Item",
-  "Item Description",
-  "Quantity",
-  "Unit of Measurement",
 ];
 
 const releaseOrderTableColumnList = [
   "RO ID",
   "Date Created",
   "Warehouse Corporate Support Lead",
-  "Item",
-  "Item Description",
-  "Quantity",
-  "Unit of Measurement",
-  "Receiving Status",
-  "Source Project",
 ];
 
 const transferReceiptTableColumnList = [
@@ -255,13 +228,20 @@ const transferReceiptTableColumnList = [
   "Date Created",
   "Site Warehouse",
   "Transfer Shipment",
+
   "Transfer Receipt",
-  "Item",
+];
+
+const itemDescriptionTableColumnList = [
+  "General Name",
   "Item Description",
+  "Price per Unit",
   "Quantity",
   "Unit of Measurement",
   "Receiving Status",
   "Source Project",
+  "GL Account",
+  "CSI Code",
 ];
 
 const convertColumnListArrayToObject = (array: string[]) => {
@@ -304,6 +284,8 @@ const SSOTSpreadsheetView = ({
   const [showReleaseOrderTable, setShowReleaseOrderTable] = useState(true);
   const [showTransferReceiptTable, setShowTransferReceiptTable] =
     useState(true);
+  const [showItemDescriptionTable, setShowItemDescriptionTable] =
+    useState(false);
 
   const [showRequisitionColumnList, setShowRequisitionColumnList] =
     useState<ShowColumnList>(
@@ -332,6 +314,11 @@ const SSOTSpreadsheetView = ({
   const [showTransferReceiptColumnList, setShowTransferReceiptColumnList] =
     useState<ShowColumnList>(
       convertColumnListArrayToObject(transferReceiptTableColumnList)
+    );
+
+  const [showItemDescriptionColumnList, setShowItemDescriptionColumnList] =
+    useState<ShowColumnList>(
+      convertColumnListArrayToObject(itemDescriptionTableColumnList)
     );
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
@@ -595,7 +582,7 @@ const SSOTSpreadsheetView = ({
               )}
             </td>
           )}
-          {showRIRColumnList["item"] && (
+          {showItemDescriptionTable && (
             <td style={{ padding: 0 }}>
               <Table
                 withBorder
@@ -607,16 +594,16 @@ const SSOTSpreadsheetView = ({
               >
                 <thead>
                   <tr>
-                    {showRIRColumnList["item_description"] && (
+                    {showItemDescriptionColumnList["item_description"] && (
                       <th className={classes.description}>Item Description</th>
                     )}
-                    {showRIRColumnList["quantity"] && (
+                    {showItemDescriptionColumnList["quantity"] && (
                       <th className={classes.normal}>Quantity</th>
                     )}
-                    {showRIRColumnList["unit_of_measurement"] && (
+                    {showItemDescriptionColumnList["unit_of_measurement"] && (
                       <th className={classes.date}>Unit of Measurement</th>
                     )}
-                    {showRIRColumnList["receiving_status"] && (
+                    {showItemDescriptionColumnList["receiving_status"] && (
                       <th className={classes.long}>Receiving Status</th>
                     )}
                   </tr>
@@ -625,24 +612,33 @@ const SSOTSpreadsheetView = ({
                   {itemName.map((item, index) => {
                     return (
                       <tr key={index} className={classes.cell}>
-                        <td>
-                          <Text fw={700}>{itemNameOnly[index]}</Text>
-                          <pre style={{ marginTop: 10 }}>
-                            <Text>{itemDescriptionOnly[index]}</Text>
-                          </pre>
-                        </td>
-
-                        <td>
-                          <Text size={14}>
-                            {addCommaToNumber(Number(itemQuantity[index]))}
-                          </Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemUnit[index]}</Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemStatus[index]}</Text>
-                        </td>
+                        {showItemDescriptionColumnList["item_description"] && (
+                          <td>
+                            <Text fw={700}>{itemNameOnly[index]}</Text>
+                            <pre style={{ marginTop: 10 }}>
+                              <Text>{itemDescriptionOnly[index]}</Text>
+                            </pre>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["quantity"] && (
+                          <td>
+                            <Text size={14}>
+                              {addCommaToNumber(Number(itemQuantity[index]))}
+                            </Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList[
+                          "unit_of_measurement"
+                        ] && (
+                          <td>
+                            <Text size={14}>{itemUnit[index]}</Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["receiving_status"] && (
+                          <td>
+                            <Text size={14}>{itemStatus[index]}</Text>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -769,7 +765,7 @@ const SSOTSpreadsheetView = ({
             </td>
           )}
 
-          {showTransferReceiptColumnList["item"] && (
+          {showItemDescriptionTable && (
             <td style={{ padding: 0 }}>
               <Table
                 withBorder
@@ -781,19 +777,19 @@ const SSOTSpreadsheetView = ({
               >
                 <thead>
                   <tr>
-                    {showTransferReceiptColumnList["item_description"] && (
+                    {showItemDescriptionColumnList["item_description"] && (
                       <th className={classes.description}>Item Description</th>
                     )}
-                    {showTransferReceiptColumnList["quantity"] && (
+                    {showItemDescriptionColumnList["quantity"] && (
                       <th className={classes.normal}>Quantity</th>
                     )}
-                    {showTransferReceiptColumnList["unit_of_measurement"] && (
+                    {showItemDescriptionColumnList["unit_of_measurement"] && (
                       <th className={classes.date}>Unit of Measurement</th>
                     )}
-                    {showTransferReceiptColumnList["receiving_status"] && (
+                    {showItemDescriptionColumnList["receiving_status"] && (
                       <th className={classes.long}>Receiving Status</th>
                     )}
-                    {showTransferReceiptColumnList["source_project"] && (
+                    {showItemDescriptionColumnList["source_project"] && (
                       <th className={classes.long}>Source Project</th>
                     )}
                   </tr>
@@ -802,26 +798,38 @@ const SSOTSpreadsheetView = ({
                   {itemName.map((item, index) => {
                     return (
                       <tr key={index} className={classes.cell}>
-                        <td>
-                          <Text fw={700}>{itemNameOnly[index]}</Text>
-                          <pre style={{ marginTop: 10 }}>
-                            <Text>{itemDescriptionOnly[index]}</Text>
-                          </pre>
-                        </td>
-                        <td>
-                          <Text size={14}>
-                            {addCommaToNumber(Number(itemQuantity[index]))}
-                          </Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemUnit[index]}</Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemStatus[index]}</Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemSourceProject[index]}</Text>
-                        </td>
+                        {showItemDescriptionColumnList["item_description"] && (
+                          <td>
+                            <Text fw={700}>{itemNameOnly[index]}</Text>
+                            <pre style={{ marginTop: 10 }}>
+                              <Text>{itemDescriptionOnly[index]}</Text>
+                            </pre>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["quantity"] && (
+                          <td>
+                            <Text size={14}>
+                              {addCommaToNumber(Number(itemQuantity[index]))}
+                            </Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList[
+                          "unit_of_measurement"
+                        ] && (
+                          <td>
+                            <Text size={14}>{itemUnit[index]}</Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["receiving_status"] && (
+                          <td>
+                            <Text size={14}>{itemStatus[index]}</Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["source_project"] && (
+                          <td>
+                            <Text size={14}>{itemSourceProject[index]}</Text>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -905,7 +913,7 @@ const SSOTSpreadsheetView = ({
             <td>{`${request.ro_request_owner.user_first_name} ${request.ro_request_owner.user_last_name}`}</td>
           )}
 
-          {showReleaseOrderColumnList["item"] && (
+          {showItemDescriptionTable && (
             <td style={{ padding: 0 }}>
               <Table
                 withBorder
@@ -917,19 +925,19 @@ const SSOTSpreadsheetView = ({
               >
                 <thead>
                   <tr>
-                    {showReleaseOrderColumnList["item_description"] && (
+                    {showItemDescriptionColumnList["item_description"] && (
                       <th className={classes.description}>Item Description</th>
                     )}
-                    {showReleaseOrderColumnList["quantity"] && (
+                    {showItemDescriptionColumnList["quantity"] && (
                       <th className={classes.normal}>Quantity</th>
                     )}
-                    {showReleaseOrderColumnList["unit_of_measurement"] && (
+                    {showItemDescriptionColumnList["unit_of_measurement"] && (
                       <th className={classes.date}>Unit of Measurement</th>
                     )}
-                    {showReleaseOrderColumnList["receiving_status"] && (
+                    {showItemDescriptionColumnList["receiving_status"] && (
                       <th className={classes.long}>Receiving Status</th>
                     )}
-                    {showReleaseOrderColumnList["source_project"] && (
+                    {showItemDescriptionColumnList["source_project"] && (
                       <th className={classes.long}>Source Project</th>
                     )}
                   </tr>
@@ -938,26 +946,38 @@ const SSOTSpreadsheetView = ({
                   {itemName.map((item, index) => {
                     return (
                       <tr key={index} className={classes.cell}>
-                        <td>
-                          <Text fw={700}>{itemNameOnly[index]}</Text>
-                          <pre style={{ marginTop: 10 }}>
-                            <Text>{itemDescriptionOnly[index]}</Text>
-                          </pre>
-                        </td>
-                        <td>
-                          <Text size={14}>
-                            {addCommaToNumber(Number(itemQuantity[index]))}
-                          </Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemUnit[index]}</Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemStatus[index]}</Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemSourceProject[index]}</Text>
-                        </td>
+                        {showItemDescriptionColumnList["item_description"] && (
+                          <td>
+                            <Text fw={700}>{itemNameOnly[index]}</Text>
+                            <pre style={{ marginTop: 10 }}>
+                              <Text>{itemDescriptionOnly[index]}</Text>
+                            </pre>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["quantity"] && (
+                          <td>
+                            <Text size={14}>
+                              {addCommaToNumber(Number(itemQuantity[index]))}
+                            </Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList[
+                          "unit_of_measurement"
+                        ] && (
+                          <td>
+                            <Text size={14}>{itemUnit[index]}</Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["receiving_status"] && (
+                          <td>
+                            <Text size={14}>{itemStatus[index]}</Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["source_project"] && (
+                          <td>
+                            <Text size={14}>{itemSourceProject[index]}</Text>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -992,7 +1012,7 @@ const SSOTSpreadsheetView = ({
                       {showTransferReceiptColumnList["transfer_receipt"] && (
                         <th className={classes.short}>Transfer Receipt</th>
                       )}
-                      {showTransferReceiptColumnList["item"] && <th>Item</th>}
+                      {showItemDescriptionTable && <th>Item</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -1132,9 +1152,9 @@ const SSOTSpreadsheetView = ({
             <td>{addCommaToNumber(Number(leadTime))}</td>
           )}
           {showQuotationColumnList["required_down_payment"] && (
-            <td>₱ {addCommaToNumber(Number(requiredDownPayment))}</td>
+            <td>₱ {requiredDownPayment}</td>
           )}
-          {showQuotationColumnList["item"] && (
+          {showItemDescriptionTable && (
             <td style={{ padding: 0 }}>
               <Table
                 withBorder
@@ -1146,16 +1166,16 @@ const SSOTSpreadsheetView = ({
               >
                 <thead>
                   <tr>
-                    {showQuotationColumnList["item_description"] && (
+                    {showItemDescriptionColumnList["item_description"] && (
                       <th className={classes.description}>Item Description</th>
                     )}
-                    {showQuotationColumnList["price_per_unit"] && (
+                    {showItemDescriptionColumnList["price_per_unit"] && (
                       <th className={classes.normal}>Price per Unit</th>
                     )}
-                    {showQuotationColumnList["quantity"] && (
+                    {showItemDescriptionColumnList["quantity"] && (
                       <th className={classes.normal}>Quantity</th>
                     )}
-                    {showQuotationColumnList["unit_of_measurement"] && (
+                    {showItemDescriptionColumnList["unit_of_measurement"] && (
                       <th className={classes.date}>Unit of Measurement</th>
                     )}
                   </tr>
@@ -1164,25 +1184,35 @@ const SSOTSpreadsheetView = ({
                   {itemName.map((item, index) => {
                     return (
                       <tr key={index} className={classes.cell}>
-                        <td>
-                          <Text fw={700}>{itemNameOnly[index]}</Text>
-                          <pre style={{ marginTop: 10 }}>
-                            <Text>{itemDescriptionOnly[index]}</Text>
-                          </pre>
-                        </td>
-                        <td>
-                          <Text size={14}>
-                            ₱ {addCommaToNumber(Number(itemPrice[index]))}
-                          </Text>
-                        </td>
-                        <td>
-                          <Text size={14}>
-                            {addCommaToNumber(Number(itemQuantity[index]))}
-                          </Text>
-                        </td>
-                        <td>
-                          <Text size={14}>{itemUnit[index]}</Text>
-                        </td>
+                        {showItemDescriptionColumnList["item_description"] && (
+                          <td>
+                            <Text fw={700}>{itemNameOnly[index]}</Text>
+                            <pre style={{ marginTop: 10 }}>
+                              <Text>{itemDescriptionOnly[index]}</Text>
+                            </pre>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["price_per_unit"] && (
+                          <td>
+                            <Text size={14}>
+                              ₱ {addCommaToNumber(Number(itemPrice[index]))}
+                            </Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList["quantity"] && (
+                          <td>
+                            <Text size={14}>
+                              {addCommaToNumber(Number(itemQuantity[index]))}
+                            </Text>
+                          </td>
+                        )}
+                        {showItemDescriptionColumnList[
+                          "unit_of_measurement"
+                        ] && (
+                          <td>
+                            <Text size={14}>{itemUnit[index]}</Text>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -1219,7 +1249,7 @@ const SSOTSpreadsheetView = ({
                       {showRIRColumnList["qcir"] && (
                         <th className={classes.short}>QCIR</th>
                       )}
-                      {showRIRColumnList["item"] && <th>Item</th>}
+                      {showItemDescriptionTable && <th>Item</th>}
                     </tr>
                   </thead>
                   <tbody>{renderRir(request.quotation_rir_request)}</tbody>
@@ -1300,7 +1330,7 @@ const SSOTSpreadsheetView = ({
               {showSourcedItemColumnList["lead_inventory_controller"] && (
                 <td>{`${request.sourced_item_request_owner.user_first_name} ${request.sourced_item_request_owner.user_last_name}`}</td>
               )}
-              {showSourcedItemColumnList["item"] && (
+              {showItemDescriptionTable && (
                 <td style={{ padding: 0 }}>
                   <Table
                     withBorder
@@ -1312,18 +1342,20 @@ const SSOTSpreadsheetView = ({
                   >
                     <thead>
                       <tr>
-                        {showSourcedItemColumnList["item_description"] && (
+                        {showItemDescriptionColumnList["item_description"] && (
                           <th className={classes.description}>
                             Item Description
                           </th>
                         )}
-                        {showSourcedItemColumnList["quantity"] && (
+                        {showItemDescriptionColumnList["quantity"] && (
                           <th className={classes.normal}>Quantity</th>
                         )}
-                        {showSourcedItemColumnList["unit_of_measurement"] && (
+                        {showItemDescriptionColumnList[
+                          "unit_of_measurement"
+                        ] && (
                           <th className={classes.date}>Unit of Measurement</th>
                         )}
-                        {showSourcedItemColumnList["source_project"] && (
+                        {showItemDescriptionColumnList["source_project"] && (
                           <th className={classes.long}>Source Project</th>
                         )}
                       </tr>
@@ -1332,24 +1364,42 @@ const SSOTSpreadsheetView = ({
                       {itemName.map((item, index) => {
                         return (
                           <tr key={index} className={classes.cell}>
-                            <td>
-                              <Text fw={700}>{itemNameOnly[index]}</Text>
-                              <pre style={{ marginTop: 10 }}>
-                                <Text>{itemDescriptionOnly[index]}</Text>
-                              </pre>
-                            </td>
+                            {showItemDescriptionColumnList[
+                              "item_description"
+                            ] && (
+                              <td>
+                                <Text fw={700}>{itemNameOnly[index]}</Text>
+                                <pre style={{ marginTop: 10 }}>
+                                  <Text>{itemDescriptionOnly[index]}</Text>
+                                </pre>
+                              </td>
+                            )}
 
-                            <td>
-                              <Text size={14}>
-                                {addCommaToNumber(Number(itemQuantity[index]))}
-                              </Text>
-                            </td>
-                            <td>
-                              <Text size={14}>{itemUnit[index]}</Text>
-                            </td>
-                            <td>
-                              <Text size={14}>{itemSourceProject[index]}</Text>
-                            </td>
+                            {showItemDescriptionColumnList["quantity"] && (
+                              <td>
+                                <Text size={14}>
+                                  {addCommaToNumber(
+                                    Number(itemQuantity[index])
+                                  )}
+                                </Text>
+                              </td>
+                            )}
+                            {showItemDescriptionColumnList[
+                              "unit_of_measurement"
+                            ] && (
+                              <td>
+                                <Text size={14}>{itemUnit[index]}</Text>
+                              </td>
+                            )}
+                            {showItemDescriptionColumnList[
+                              "source_project"
+                            ] && (
+                              <td>
+                                <Text size={14}>
+                                  {itemSourceProject[index]}
+                                </Text>
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
@@ -1382,7 +1432,7 @@ const SSOTSpreadsheetView = ({
                               Warehouse Corporate Support Lead
                             </th>
                           )}
-                          {showReleaseOrderColumnList["item"] && <th>Item</th>}
+                          {showItemDescriptionTable && <th>Item</th>}
                           {showReleaseOrderTable &&
                             showTransferReceiptTable && (
                               <th>Transfer Receipt</th>
@@ -1501,7 +1551,7 @@ const SSOTSpreadsheetView = ({
                     )
                   );
                 })}
-              {showRequisitionColumnList["item"] && (
+              {showItemDescriptionTable && (
                 <td style={{ padding: 0 }}>
                   <Table
                     withBorder
@@ -1513,22 +1563,24 @@ const SSOTSpreadsheetView = ({
                   >
                     <thead>
                       <tr>
-                        {showRequisitionColumnList["general_name"] && (
+                        {showItemDescriptionColumnList["general_name"] && (
                           <th className={classes.description}>General Name</th>
                         )}
-                        {showRequisitionColumnList["quantity"] && (
+                        {showItemDescriptionColumnList["quantity"] && (
                           <th className={classes.normal}>Quantity</th>
                         )}
-                        {showRequisitionColumnList["unit_of_measurement"] && (
+                        {showItemDescriptionColumnList[
+                          "unit_of_measurement"
+                        ] && (
                           <th className={classes.date}>Unit of Measurement</th>
                         )}
-                        {showRequisitionColumnList["description"] && (
+                        {showItemDescriptionColumnList["item_description"] && (
                           <th className={classes.description}>Description</th>
                         )}
-                        {showRequisitionColumnList["gl_account"] && (
+                        {showItemDescriptionColumnList["gl_account"] && (
                           <th className={classes.short}>GL Account</th>
                         )}
-                        {showRequisitionColumnList["csi_code"] && (
+                        {showItemDescriptionColumnList["csi_code"] && (
                           <th className={classes.description}>CSI Code</th>
                         )}
                       </tr>
@@ -1537,28 +1589,48 @@ const SSOTSpreadsheetView = ({
                       {itemName.map((item, index) => {
                         return (
                           <tr key={index} className={classes.cell}>
-                            <td>
-                              <Text size={14}>{item}</Text>
-                            </td>
-                            <td>
-                              <Text size={14}>
-                                {addCommaToNumber(Number(itemQuantity[index]))}
-                              </Text>
-                            </td>
-                            <td>
-                              <Text size={14}>{itemUnit[index]}</Text>
-                            </td>
-                            <td>
-                              <pre style={{ margin: 0 }}>
-                                <Text size={14}>{itemDescription[index]}</Text>
-                              </pre>
-                            </td>
-                            <td>
-                              <Text size={14}>{itemGlAccount[index]}</Text>
-                            </td>
-                            <td>
-                              <Text size={14}>{itemCSICode[index]}</Text>
-                            </td>
+                            {showItemDescriptionColumnList["general_name"] && (
+                              <td>
+                                <Text size={14}>{item}</Text>
+                              </td>
+                            )}
+                            {showItemDescriptionColumnList["quantity"] && (
+                              <td>
+                                <Text size={14}>
+                                  {addCommaToNumber(
+                                    Number(itemQuantity[index])
+                                  )}
+                                </Text>
+                              </td>
+                            )}
+                            {showItemDescriptionColumnList[
+                              "unit_of_measurement"
+                            ] && (
+                              <td>
+                                <Text size={14}>{itemUnit[index]}</Text>
+                              </td>
+                            )}
+                            {showItemDescriptionColumnList[
+                              "item_description"
+                            ] && (
+                              <td>
+                                <pre style={{ margin: 0 }}>
+                                  <Text size={14}>
+                                    {itemDescription[index]}
+                                  </Text>
+                                </pre>
+                              </td>
+                            )}
+                            {showItemDescriptionColumnList["gl_account"] && (
+                              <td>
+                                <Text size={14}>{itemGlAccount[index]}</Text>
+                              </td>
+                            )}
+                            {showItemDescriptionColumnList["csi_code"] && (
+                              <td>
+                                <Text size={14}>{itemCSICode[index]}</Text>
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
@@ -1609,7 +1681,7 @@ const SSOTSpreadsheetView = ({
                       {showQuotationColumnList["required_down_payment"] && (
                         <th className={classes.long}>Required Down Payment</th>
                       )}
-                      {showQuotationColumnList["item"] && <th>Item</th>}
+                      {showItemDescriptionTable && <th>Item</th>}
 
                       {showQuotationTable && showRIRTable && (
                         <th>Receiving Inspecting Report</th>
@@ -1647,7 +1719,7 @@ const SSOTSpreadsheetView = ({
                           Lead Inventory Controller
                         </th>
                       )}
-                      {showSourcedItemColumnList["item"] && <th>Item</th>}
+                      {showItemDescriptionTable && <th>Item</th>}
 
                       {showSourcedItemTable && showReleaseOrderTable && (
                         <th>Release Order</th>
@@ -1719,6 +1791,7 @@ const SSOTSpreadsheetView = ({
             sourcedItemTableColumnList={sourcedItemTableColumnList}
             releaseOrderTableColumnList={releaseOrderTableColumnList}
             transferReceiptTableColumnList={transferReceiptTableColumnList}
+            itemDescriptionTableColumnList={itemDescriptionTableColumnList}
             // table list state
             showRequisitionTable={showRequisitionTable}
             setShowRequisitionTable={setShowRequisitionTable}
@@ -1732,6 +1805,8 @@ const SSOTSpreadsheetView = ({
             setShowReleaseOrderTable={setShowReleaseOrderTable}
             showTransferReceiptTable={showTransferReceiptTable}
             setShowTransferReceiptTable={setShowTransferReceiptTable}
+            showItemDescriptionTable={showItemDescriptionTable}
+            setShowItemDescriptionTable={setShowItemDescriptionTable}
             // column list state
             showRequisitionColumnList={showRequisitionColumnList}
             setShowRequisitionColumnList={setShowRequisitionColumnList}
@@ -1745,6 +1820,8 @@ const SSOTSpreadsheetView = ({
             setShowReleaseOrderColumnList={setShowReleaseOrderColumnList}
             showTransferReceiptColumnList={showTransferReceiptColumnList}
             setShowTransferReceiptColumnList={setShowTransferReceiptColumnList}
+            showItemDescriptionColumnList={showItemDescriptionColumnList}
+            setShowItemDescriptionColumnList={setShowItemDescriptionColumnList}
           />
         </Group>
       </Box>
@@ -1807,7 +1884,7 @@ const SSOTSpreadsheetView = ({
                       {showRequisitionColumnList["purpose"] && (
                         <th className={classes.long}>Purpose</th>
                       )}
-                      {showRequisitionColumnList["item"] && <th>Item</th>}
+                      {showItemDescriptionTable && <th>Item</th>}
                     </>
                   )}
                   {showQuotationTable && <th>Quotation</th>}

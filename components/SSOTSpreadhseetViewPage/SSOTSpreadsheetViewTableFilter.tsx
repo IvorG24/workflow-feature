@@ -20,6 +20,7 @@ type Props = {
   sourcedItemTableColumnList: string[];
   releaseOrderTableColumnList: string[];
   transferReceiptTableColumnList: string[];
+  itemDescriptionTableColumnList: string[];
   showRequisitionTable: boolean;
   setShowRequisitionTable: Dispatch<SetStateAction<boolean>>;
   showQuotationTable: boolean;
@@ -32,6 +33,8 @@ type Props = {
   setShowReleaseOrderTable: Dispatch<SetStateAction<boolean>>;
   showTransferReceiptTable: boolean;
   setShowTransferReceiptTable: Dispatch<SetStateAction<boolean>>;
+  showItemDescriptionTable: boolean;
+  setShowItemDescriptionTable: Dispatch<SetStateAction<boolean>>;
   showRequisitionColumnList: ShowColumnList;
   setShowRequisitionColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showQuotationColumnList: ShowColumnList;
@@ -44,6 +47,8 @@ type Props = {
   setShowReleaseOrderColumnList: Dispatch<SetStateAction<ShowColumnList>>;
   showTransferReceiptColumnList: ShowColumnList;
   setShowTransferReceiptColumnList: Dispatch<SetStateAction<ShowColumnList>>;
+  showItemDescriptionColumnList: ShowColumnList;
+  setShowItemDescriptionColumnList: Dispatch<SetStateAction<ShowColumnList>>;
 };
 
 const SSOTSpreadsheetViewTableFilter = (props: Props) => {
@@ -54,6 +59,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     sourcedItemTableColumnList,
     releaseOrderTableColumnList,
     transferReceiptTableColumnList,
+    itemDescriptionTableColumnList,
     showRequisitionTable,
     setShowRequisitionTable,
     showRequisitionColumnList,
@@ -78,6 +84,10 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowReleaseOrderColumnList,
     showTransferReceiptColumnList,
     setShowTransferReceiptColumnList,
+    showItemDescriptionTable,
+    setShowItemDescriptionTable,
+    showItemDescriptionColumnList,
+    setShowItemDescriptionColumnList,
   } = props;
   const switchInputProps = { color: "green" };
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
@@ -89,12 +99,16 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     showSourcedItemTable,
     showReleaseOrderTable,
     showTransferReceiptTable,
+    showItemDescriptionTable,
+    setShowItemDescriptionTable,
     showRequisitionColumnList,
     showQuotationColumnList,
     showRIRColumnList,
     showSourcedItemColumnList,
     showReleaseOrderColumnList,
     showTransferReceiptColumnList,
+    showItemDescriptionColumnList,
+    setShowItemDescriptionColumnList,
   };
   const [
     localFilterSettings,
@@ -113,12 +127,16 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       showSourcedItemTable,
       showReleaseOrderTable,
       showTransferReceiptTable,
+      showItemDescriptionTable,
+      setShowItemDescriptionTable,
       showRequisitionColumnList,
       showQuotationColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
       showTransferReceiptColumnList,
+      showItemDescriptionColumnList,
+      setShowItemDescriptionColumnList,
     });
     setShowFilterColumnModal(false);
     return;
@@ -480,6 +498,56 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                             offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
                             disabled={
                               !showReleaseOrderTable ||
+                              !showTransferReceiptTable
+                            }
+                            {...switchInputProps}
+                            styles={{ track: { cursor: "pointer" } }}
+                          />
+                        </Group>
+                      );
+                    })}
+                  </Flex>
+                </Box>
+              </Accordion.Panel>
+            </Accordion.Item>
+            <Accordion.Item value="item-description-table">
+              <Accordion.Control>Item Description Table</Accordion.Control>
+              <Accordion.Panel>
+                <Box w="100%" p="sm">
+                  <Group mb="sm" position="apart">
+                    <Text weight={600}>Item Description Table</Text>
+                    <Switch
+                      checked={showItemDescriptionTable}
+                      onChange={(e) =>
+                        setShowItemDescriptionTable(e.currentTarget.checked)
+                      }
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                      disabled={!showTransferReceiptTable}
+                      {...switchInputProps}
+                      styles={{ track: { cursor: "pointer" } }}
+                    />
+                  </Group>
+                  <Flex gap="sm" direction="column">
+                    {itemDescriptionTableColumnList.map((column, index) => {
+                      const propName = column
+                        .toLowerCase()
+                        .replace(/\s+/g, "_");
+                      return (
+                        <Group key={index} position="apart">
+                          <Text>{column}</Text>
+                          <Switch
+                            checked={showItemDescriptionColumnList[propName]}
+                            onChange={(e) =>
+                              setShowItemDescriptionColumnList((prev) => ({
+                                ...prev,
+                                [propName]: e.currentTarget.checked,
+                              }))
+                            }
+                            onLabel={<IconEye size="1rem" stroke={2.5} />}
+                            offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                            disabled={
+                              !showItemDescriptionTable ||
                               !showTransferReceiptTable
                             }
                             {...switchInputProps}
