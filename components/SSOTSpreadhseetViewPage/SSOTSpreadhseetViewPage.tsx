@@ -285,7 +285,7 @@ const SSOTSpreadsheetView = ({
   const [showTransferReceiptTable, setShowTransferReceiptTable] =
     useState(true);
   const [showItemDescriptionTable, setShowItemDescriptionTable] =
-    useState(false);
+    useState(true);
 
   const [showRequisitionColumnList, setShowRequisitionColumnList] =
     useState<ShowColumnList>(
