@@ -20,6 +20,7 @@ import {
   RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
+  TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
   TeamTableRow,
@@ -2335,6 +2336,21 @@ export const getSupplier = async (
   });
 
   return supplierList;
+};
+
+// Get team member on load (getTeamMember, getTeamMemberGroupList,getTeamMemberProjectList )
+
+export const getTeamMemberOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_team_member_on_load", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as unknown as TeamMemberOnLoad;
 };
 
 // Get team member

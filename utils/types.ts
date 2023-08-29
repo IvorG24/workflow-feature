@@ -803,3 +803,17 @@ export type TeamMemberWithUserDetails = {
     user_email: string;
   };
 }[];
+
+export type TeamMemberOnLoad = {
+  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  groupList: {
+    team_group_member_id: string;
+    team_group: TeamGroupTableRow;
+  }[];
+  groupCount: number;
+  projectList: {
+    team_project_member_id: string;
+    team_project: TeamProjectTableRow;
+  }[];
+  projectCount: number;
+};
