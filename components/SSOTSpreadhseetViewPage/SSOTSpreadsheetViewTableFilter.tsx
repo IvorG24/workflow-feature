@@ -100,7 +100,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     showReleaseOrderTable,
     showTransferReceiptTable,
     showItemDescriptionTable,
-    setShowItemDescriptionTable,
     showRequisitionColumnList,
     showQuotationColumnList,
     showRIRColumnList,
@@ -108,7 +107,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     showReleaseOrderColumnList,
     showTransferReceiptColumnList,
     showItemDescriptionColumnList,
-    setShowItemDescriptionColumnList,
   };
   const [
     localFilterSettings,
@@ -128,7 +126,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       showReleaseOrderTable,
       showTransferReceiptTable,
       showItemDescriptionTable,
-      setShowItemDescriptionTable,
       showRequisitionColumnList,
       showQuotationColumnList,
       showRIRColumnList,
@@ -136,7 +133,6 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       showReleaseOrderColumnList,
       showTransferReceiptColumnList,
       showItemDescriptionColumnList,
-      setShowItemDescriptionColumnList,
     });
     setShowFilterColumnModal(false);
     return;
@@ -170,14 +166,15 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
       showSourcedItemTable,
       showReleaseOrderTable,
       showTransferReceiptTable,
+      showItemDescriptionTable,
       showRequisitionColumnList,
       showQuotationColumnList,
       showRIRColumnList,
       showSourcedItemColumnList,
       showReleaseOrderColumnList,
       showTransferReceiptColumnList,
+      showItemDescriptionColumnList,
     } = localFilterSettings;
-
     if (
       !checkIfDefaultAndLocalHasSameProps(
         defaultFilterSettings,
@@ -194,12 +191,14 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     setShowRIRTable(showRIRTable);
     setShowReleaseOrderTable(showReleaseOrderTable);
     setShowTransferReceiptTable(showTransferReceiptTable);
+    setShowItemDescriptionTable(showItemDescriptionTable);
     setShowRequisitionColumnList(showRequisitionColumnList);
     setShowQuotationColumnList(showQuotationColumnList);
     setShowRIRColumnList(showRIRColumnList);
     setShowSourcedItemColumnList(showSourcedItemColumnList);
     setShowReleaseOrderColumnList(showReleaseOrderColumnList);
     setShowTransferReceiptColumnList(showTransferReceiptColumnList);
+    setShowItemDescriptionColumnList(showItemDescriptionColumnList);
   }, [localFilterSettings]);
 
   return (
