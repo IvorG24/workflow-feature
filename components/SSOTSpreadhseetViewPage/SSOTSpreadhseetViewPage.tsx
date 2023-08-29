@@ -228,6 +228,7 @@ const transferReceiptTableColumnList = [
   "Date Created",
   "Site Warehouse",
   "Transfer Shipment",
+
   "Transfer Receipt",
 ];
 
