@@ -36,7 +36,7 @@ const RequisitionSummary = ({ summaryData }: Props) => {
               <th>GL Account</th>
               <th>CSI Code Description</th>
               <th>Quantity</th>
-              <th>Unit</th>
+              <th>Base Unit of Measurement</th>
             </tr>
           </thead>
           <tbody>

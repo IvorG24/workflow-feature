@@ -449,7 +449,7 @@ export type ItemWithDescriptionType = ItemTableRow & {
 
 export type ItemForm = {
   generalName: string;
-  descriptions: { description: string }[];
+  descriptions: { description: string; withUoM: boolean }[];
   unit: string;
   isAvailable: boolean;
   glAccount: string;
@@ -458,6 +458,7 @@ export type ItemForm = {
 
 export type ItemDescriptionFieldForm = {
   value: string;
+  unitOfMeasurement: string;
   isAvailable: boolean;
 };
 export type SectionWithField = {

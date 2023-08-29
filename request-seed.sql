@@ -162,7 +162,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('3b09156e-40c8-47f5-a5a8-4073ddb474de', 'Date Needed', 'DATE', 3, 'bbb22159-13cd-4a91-8579-175aa6344663', true, false),
 
 ('179be4af-5ef2-47f6-8d0f-51726736c801', 'General Name', 'DROPDOWN', 4, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
-('390cae92-815a-4851-8497-7c81cf62bc3e', 'Unit of Measurement', 'TEXT', 5, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, true),
+('390cae92-815a-4851-8497-7c81cf62bc3e', 'Base Unit of Measurement', 'TEXT', 5, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, true),
 ('ad82b849-42e2-4eee-9f0d-2effb2a24395', 'Quantity', 'NUMBER', 6, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
 ('055b465c-52c9-4353-811c-fd002bb639d6', 'CSI Code', 'TEXT', 7, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
 ('2e0d9f52-e844-44c9-bb59-5dc2b887827c', 'GL Account', 'TEXT', 8, '275782b4-4291-40f9-bb9f-dd5d658b1943', true, false),
@@ -357,7 +357,7 @@ SELECT var_value INTO requisitionFormId
 
       -- General Name
       (gen_random_uuid(), '"Gasoline"', NULL, '179be4af-5ef2-47f6-8d0f-51726736c801', optRequestId),
-      -- Unit of Measurement
+      -- Base Unit of Measurement
       (gen_random_uuid(), '"litre"', NULL, '390cae92-815a-4851-8497-7c81cf62bc3e', optRequestId),
       -- Quantity
       (gen_random_uuid(), item_quantity1, NULL, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', optRequestId),
@@ -372,7 +372,7 @@ SELECT var_value INTO requisitionFormId
 
       -- General Name
       (gen_random_uuid(), '"Wood"', duplicatatable_section_id1, '179be4af-5ef2-47f6-8d0f-51726736c801', optRequestId),
-      -- Unit of Measurement
+      -- Base Unit of Measurement
       (gen_random_uuid(), '"piece"', duplicatatable_section_id1, '390cae92-815a-4851-8497-7c81cf62bc3e', optRequestId),
       -- Quantity
       (gen_random_uuid(), item_quantity2, duplicatatable_section_id1, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', optRequestId),
@@ -389,7 +389,7 @@ SELECT var_value INTO requisitionFormId
 
       -- General Name
       (gen_random_uuid(), '"Nail"', duplicatatable_section_id2, '179be4af-5ef2-47f6-8d0f-51726736c801', optRequestId),
-      -- Unit of Measurement
+      -- Base Unit of Measurement
       (gen_random_uuid(), '"bag"', duplicatatable_section_id2, '390cae92-815a-4851-8497-7c81cf62bc3e', optRequestId),
       -- Quantity
       (gen_random_uuid(), item_quantity3, duplicatatable_section_id2, 'ad82b849-42e2-4eee-9f0d-2effb2a24395', optRequestId),

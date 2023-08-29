@@ -259,6 +259,7 @@ CREATE TABLE item_description_table(
   item_description_label VARCHAR(4000) NOT NULL,
   item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  item_description_is_with_uom BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
   item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
@@ -268,6 +269,7 @@ CREATE TABLE item_description_field_table(
   item_description_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_description_field_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_description_field_value VARCHAR(4000) NOT NULL,
+  item_description_field_uom VARCHAR(4000),
   item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
@@ -836,14 +838,15 @@ RETURNS JSON AS $$
     itemDescription.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4
       itemDescriptionInput.push({
-        item_description_label: description,
+        item_description_label: description.description,
         item_description_item_id: item_result.item_id,
         item_description_is_available: true,
         item_description_field_id: fieldId,
+        item_description_is_with_uom: description.withUoM
       });
       fieldInput.push({
         field_id: fieldId,
-        field_name: description,
+        field_name: description.description,
         field_type: "DROPDOWN",
         field_order: 14,
         field_section_id: section_id,
@@ -853,7 +856,7 @@ RETURNS JSON AS $$
 
     const itemDescriptionValues = itemDescriptionInput
       .map((item) =>
-        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}')`
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}')`
       )
       .join(",");
 
@@ -865,7 +868,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
     
-    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id) VALUES ${itemDescriptionValues} RETURNING *;`);
+    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom) VALUES ${itemDescriptionValues} RETURNING *;`);
 
     item_data = {...item_result, item_description: item_description}
 
@@ -2027,6 +2030,120 @@ $$ LANGUAGE plv8;
 
 -- End: Get all team members without existing member of the project
 
+-- Start: Delete team
+
+CREATE OR REPLACE FUNCTION delete_team(
+    team_id TEXT,
+    team_member_id TEXT
+)
+RETURNS VOID as $$
+  plv8.subtransaction(function(){
+    const user = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
+    const isUserOwner = user.team_member_role === 'OWNER';
+
+    if (!isUserOwner) return;
+
+
+    plv8.execute(`UPDATE team_table SET team_is_disabled=TRUE WHERE team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE invitation_table it
+      SET invitation_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = it.invitation_from_team_member_id `);
+
+    plv8.execute(`UPDATE form_table ft
+      SET form_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = ft.form_team_member_id `);
+
+    plv8.execute(`UPDATE request_table rt
+      SET request_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = rt.request_team_member_id `);
+
+    plv8.execute(`UPDATE signer_table st
+      SET signer_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = st.signer_team_member_id `);
+
+    plv8.execute(`UPDATE comment_table ct
+      SET comment_is_disabled=TRUE
+      FROM team_member_table tm
+      WHERE tm.team_member_team_id='${team_id}'
+      AND tm.team_member_id = ct.comment_team_member_id `);
+
+    plv8.execute(`UPDATE team_group_table SET team_group_is_disabled=TRUE WHERE team_group_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE team_project_table SET team_project_is_disabled=TRUE WHERE team_project_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE item_table SET item_is_disabled=TRUE, item_is_available=FALSE WHERE item_team_id='${team_id}'`);
+
+    plv8.execute(`UPDATE item_description_table dt
+      SET item_description_is_disabled=TRUE, item_description_is_available=FALSE
+      FROM item_table it
+      WHERE it.item_team_id='${team_id}'
+      AND dt.item_description_item_id = it.item_id `);
+
+    plv8.execute(`UPDATE item_description_field_table AS idf
+      SET item_description_field_is_disabled=TRUE, item_description_field_is_available=FALSE
+      FROM item_description_table AS dt
+      JOIN item_table AS it ON it.item_id = dt.item_description_item_id
+      WHERE dt.item_description_id = idf.item_description_field_item_description_id
+      AND it.item_team_id = '${team_id}'
+      AND dt.item_description_item_id = it.item_id`);
+
+    const userTeamList = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_id='${team_member_id}' AND team_member_is_disabled=FALSE`);
+
+    if (userTeamList.length > 0) {
+      plv8.execute(`UPDATE user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${user.team_member_user_id}'`);
+    } else {
+      plv8.execute(`UPDATE user_table SET user_active_team_id=NULL WHERE user_id='${user.team_member_user_id}'`);
+    }
+ });
+$$ LANGUAGE plv8;
+
+-- END: Delete team
+
+-- Start: Update multiple admin
+
+CREATE OR REPLACE FUNCTION update_multiple_admin(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let adminList = [];
+  plv8.subtransaction(function(){
+    const {
+      teamAdminIdList,
+      updateRole
+    } = input_data;
+    teamAdminIdList.forEach(id => {
+      const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
+      const user = plv8.execute(`SELECT * FROM user_table WHERE user_id='${member.team_member_user_id}'`)[0];
+
+      adminList.push({
+        team_member_id: member.team_member_id,
+        team_member_user: {
+          user_id: user.user_id,
+          user_first_name: user.user_first_name,
+          user_last_name: user.user_last_name,
+          user_avatar: user.user_avatar,
+          user_email: user.user_email
+        }
+      });
+    });
+ });
+ return adminList;
+$$ LANGUAGE plv8;
+
+-- END: Update multiple admin
+
+
 ---------- End: FUNCTIONS
 
 
@@ -2728,7 +2845,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role = 'OWNER'
   ) OR team_member_user_id = auth.uid()
 );
 
@@ -2739,7 +2856,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role = 'OWNER'
   )
 );
 

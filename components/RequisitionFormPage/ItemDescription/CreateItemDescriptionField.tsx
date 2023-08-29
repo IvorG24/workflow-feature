@@ -1,5 +1,6 @@
 import { checkItemDescription } from "@/backend/api/get";
 import { createItemDescriptionField } from "@/backend/api/post";
+import { ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   ItemDescriptionFieldForm,
@@ -12,6 +13,7 @@ import {
   Divider,
   Flex,
   LoadingOverlay,
+  Select,
   Stack,
   TextInput,
   Title,
@@ -19,7 +21,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 type Props = {
   setIsCreating: Dispatch<SetStateAction<boolean>>;
@@ -29,6 +31,7 @@ type Props = {
   setsetItemDescriptionFieldCount: Dispatch<SetStateAction<number>>;
   label: string;
   descriptionId: string;
+  isWithUoM: boolean;
 };
 
 const CreateItemDescriptionField = ({
@@ -37,13 +40,15 @@ const CreateItemDescriptionField = ({
   setsetItemDescriptionFieldCount,
   label,
   descriptionId,
+  isWithUoM,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  const { register, formState, handleSubmit } =
+  const { register, formState, handleSubmit, control } =
     useForm<ItemDescriptionFieldForm>({
       defaultValues: {
         value: "",
+        unitOfMeasurement: "",
         isAvailable: true,
       },
     });
@@ -54,6 +59,7 @@ const CreateItemDescriptionField = ({
         item_description_field_value: data.value,
         item_description_field_is_available: data.isAvailable,
         item_description_field_item_description_id: descriptionId,
+        item_description_field_uom: data.unitOfMeasurement,
       });
       setItemDescriptionFieldList((prev) => {
         prev.unshift(newItem);
@@ -85,31 +91,59 @@ const CreateItemDescriptionField = ({
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Flex direction="column" gap={16}>
-            <TextInput
-              {...register("value", {
-                required: { message: "Value required", value: true },
-                maxLength: {
-                  message: "Value must be shorter than 500 characters",
-                  value: 500,
-                },
-                validate: {
-                  duplicate: async (value) => {
-                    const isExisting = await checkItemDescription(
-                      supabaseClient,
-                      {
-                        itemDescription: value,
-                        descriptionId: descriptionId,
-                      }
-                    );
-                    return isExisting ? "Value already exists" : true;
+            <Flex align="center" justify="center" gap="xs">
+              <TextInput
+                {...register("value", {
+                  required: { message: "Value required", value: true },
+                  maxLength: {
+                    message: "Value must be shorter than 500 characters",
+                    value: 500,
                   },
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Value"
-              error={formState.errors.value?.message}
-            />
+                  validate: {
+                    duplicate: async (value) => {
+                      const isExisting = await checkItemDescription(
+                        supabaseClient,
+                        {
+                          itemDescription: value,
+                          descriptionId: descriptionId,
+                        }
+                      );
+                      return isExisting ? "Value already exists" : true;
+                    },
+                  },
+                })}
+                withAsterisk
+                w="100%"
+                label="Value"
+                error={formState.errors.value?.message}
+                type={isWithUoM ? "number" : "text"}
+              />
+              {isWithUoM && (
+                <Controller
+                  control={control}
+                  name="unitOfMeasurement"
+                  rules={{
+                    required: {
+                      message: "Base unit of Measurement is required",
+                      value: true,
+                    },
+                  }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      value={value as string}
+                      data={ITEM_UNIT_CHOICES}
+                      withAsterisk={isWithUoM}
+                      clearable
+                      error={formState.errors.unitOfMeasurement?.message}
+                      searchable
+                      nothingFound="Nothing found. Try a different keyword"
+                      label="Base UoM"
+                      onChange={onChange}
+                    />
+                  )}
+                />
+              )}
+            </Flex>
 
             <Checkbox
               label="Available"

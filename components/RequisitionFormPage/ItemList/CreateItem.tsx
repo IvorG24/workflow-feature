@@ -71,10 +71,9 @@ const CreateItem = ({
   const { register, getValues, formState, handleSubmit, control } =
     useForm<ItemForm>({
       defaultValues: {
-        descriptions: [{ description: "" }],
+        descriptions: [{ description: "", withUoM: false }],
         generalName: "",
         unit: "",
-
         isAvailable: true,
       },
     });
@@ -85,14 +84,17 @@ const CreateItem = ({
     rules: { minLength: 1, maxLength: 10 },
   });
 
-  const onAddInput = () => append({ description: "" });
+  const onAddInput = () => append({ description: "", withUoM: false });
 
   const onSubmit = async (data: ItemForm) => {
     try {
       const newItem = await createItem(supabaseClient, {
-        itemDescription: data.descriptions.map((decription) =>
-          toUpper(decription.description)
-        ),
+        itemDescription: data.descriptions.map((description) => {
+          return {
+            description: toUpper(description.description),
+            withUoM: description.withUoM,
+          };
+        }),
         itemData: {
           item_general_name: toUpper(data.generalName),
           item_is_available: data.isAvailable,
@@ -180,12 +182,12 @@ const CreateItem = ({
                   error={formState.errors.unit?.message}
                   searchable
                   clearable
-                  label="Unit of Measurement"
+                  label="Base Unit of Measurement"
                 />
               )}
               rules={{
                 required: {
-                  message: "Unit of Measurement is required",
+                  message: "Base Unit of Measurement is required",
                   value: true,
                 },
               }}
@@ -229,51 +231,63 @@ const CreateItem = ({
               )}
               rules={{
                 required: {
-                  message: "Division Id is required",
+                  message: "Division ID is required",
                   value: true,
                 },
               }}
             />
             {fields.map((field, index) => {
               return (
-                <TextInput
-                  key={field.id}
-                  withAsterisk
-                  label={`Description #${index + 1}`}
-                  {...register(`descriptions.${index}.description`, {
-                    required: `Description #${index + 1} is required`,
-                    minLength: {
-                      message: "Description must be at least 3 characters",
-                      value: 3,
-                    },
-                    validate: {
-                      isDuplicate: (value) => {
-                        let count = 0;
-                        getValues("descriptions").map(
-                          ({ description }: { description: string }) => {
-                            if (description === value) {
-                              count += 1;
-                            }
-                          }
-                        );
-                        if (count > 1) {
-                          return "Invalid Duplicate Description";
-                        } else {
-                          return true;
-                        }
+                <Flex key={field.id} gap="xs">
+                  <TextInput
+                    withAsterisk
+                    label={`Description #${index + 1}`}
+                    {...register(`descriptions.${index}.description`, {
+                      required: `Description #${index + 1} is required`,
+                      minLength: {
+                        message: "Description must be at least 3 characters",
+                        value: 3,
                       },
-                    },
-                  })}
-                  sx={{
-                    input: {
-                      textTransform: "uppercase",
-                    },
-                  }}
-                  error={
-                    formState.errors.descriptions !== undefined &&
-                    formState.errors.descriptions[index]?.description?.message
-                  }
-                />
+                      validate: {
+                        isDuplicate: (value) => {
+                          let count = 0;
+                          getValues("descriptions").map(
+                            ({ description }: { description: string }) => {
+                              if (description === value) {
+                                count += 1;
+                              }
+                            }
+                          );
+                          if (count > 1) {
+                            return "Invalid Duplicate Description";
+                          } else {
+                            return true;
+                          }
+                        },
+                      },
+                    })}
+                    sx={{
+                      input: {
+                        textTransform: "uppercase",
+                      },
+                      flex: 1,
+                    }}
+                    error={
+                      formState.errors.descriptions !== undefined &&
+                      formState.errors.descriptions[index]?.description?.message
+                    }
+                  />
+                  <Checkbox
+                    {...register(`descriptions.${index}.withUoM`)}
+                    sx={{
+                      input: {
+                        cursor: "pointer",
+                      },
+                    }}
+                    mt={32}
+                    label={"with UoM?"}
+                  />
+                </Flex>
               );
             })}
             <InputAddRemove

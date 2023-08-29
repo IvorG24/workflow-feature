@@ -33,7 +33,7 @@ const ReceivingInspectingReportSummary = ({ summaryData }: Props) => {
             <tr>
               <th>Item</th>
               <th>Quantity</th>
-              <th>Unit</th>
+              <th>Base Unit of Measurement</th>
               <th>Receiving Status</th>
             </tr>
           </thead>

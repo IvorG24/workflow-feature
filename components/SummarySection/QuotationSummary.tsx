@@ -47,7 +47,7 @@ const QuotationSummary = ({ summaryData, additionalChargeData }: Props) => {
               <th>Item</th>
               <th>Price per Unit</th>
               <th>Quantity</th>
-              <th>Unit</th>
+              <th>Base Unit of Measurement</th>
               <th>Total Price</th>
             </tr>
           </thead>
