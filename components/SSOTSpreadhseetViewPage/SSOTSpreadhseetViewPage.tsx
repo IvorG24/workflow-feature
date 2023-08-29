@@ -1047,7 +1047,7 @@ const SSOTSpreadsheetView = ({
       let supplier,
         supplierQuotation: string,
         requestSendMethod,
-        proofOfSending,
+        proofOfSending: string,
         paymentTerms,
         leadTime,
         requiredDownPayment = "";
@@ -1151,7 +1151,17 @@ const SSOTSpreadsheetView = ({
             <td>{requestSendMethod}</td>
           )}
           {showQuotationColumnList["proof_of_sending"] && (
-            <td>{proofOfSending}</td>
+            <td>
+              <ActionIcon
+                w="100%"
+                variant="outline"
+                onClick={() => window.open(proofOfSending, "_blank")}
+              >
+                <Flex align="center" justify="center" gap={2}>
+                  <Text size={14}>File</Text> <IconFile size={14} />
+                </Flex>
+              </ActionIcon>
+            </td>
           )}
           {showQuotationColumnList["payment_terms"] && <td>{paymentTerms}</td>}
           {showQuotationColumnList["lead_time"] && (
