@@ -2188,6 +2188,39 @@ $$ LANGUAGE plv8;
 
 -- END: Get team member on load
 
+-- START: Get team on load
+
+CREATE FUNCTION get_team_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let team_data;
+  plv8.subtransaction(function(){
+    const {
+      userId
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    
+    const team = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
+
+    const teamMembers = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) AS team_member_user  FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id = usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false AND usert.user_is_disabled=false;`);
+
+    const teamGroups = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
+
+    const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
+
+    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_date_created DESC LIMIT 10;`);
+
+    const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
+
+    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`}
+ });
+ return team_data;
+$$ LANGUAGE plv8;
+
+-- END: Get team on load
+
 ---------- End: FUNCTIONS
 
 

@@ -1,13 +1,6 @@
-import {
-  getTeam,
-  getTeamGroupList,
-  getTeamMemberList,
-  getTeamProjectList,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
+import { getTeamOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TeamPage from "@/components/TeamPage/TeamPage";
-import { ROW_PER_PAGE } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
   TeamGroupTableRow,
@@ -20,50 +13,12 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user }) => {
     try {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
+      const teamData = await getTeamOnLoad(supabaseClient, {
         userId: user.id,
       });
-      if (!teamId) throw new Error("No team found");
-
-      const team = await getTeam(supabaseClient, {
-        teamId: teamId,
-      });
-      if (!team) {
-        return {
-          redirect: {
-            destination: "/404",
-            permanent: false,
-          },
-        };
-      }
-
-      const teamMembers = await getTeamMemberList(supabaseClient, {
-        teamId: team.team_id,
-      });
-
-      const { data: teamGroups, count: teamGroupsCount } =
-        await getTeamGroupList(supabaseClient, {
-          teamId: team.team_id,
-          page: 1,
-          limit: ROW_PER_PAGE,
-        });
-
-      const { data: teamProjects, count: teamProjectsCount } =
-        await getTeamProjectList(supabaseClient, {
-          teamId: team.team_id,
-          page: 1,
-          limit: ROW_PER_PAGE,
-        });
 
       return {
-        props: {
-          team,
-          teamMembers,
-          teamGroups,
-          teamProjects,
-          teamGroupsCount,
-          teamProjectsCount,
-        },
+        props: teamData,
       };
     } catch (error) {
       console.error(error);

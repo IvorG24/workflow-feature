@@ -23,6 +23,7 @@ import {
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
+  TeamOnLoad,
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -3100,4 +3101,17 @@ export const getTeamMembersWithMemberRole = async (
     .eq("team_member_role", "MEMBER");
   if (error) throw error;
   return data;
+};
+
+// Get user's active team id
+export const getTeamOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { userId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_team_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as TeamOnLoad;
 };

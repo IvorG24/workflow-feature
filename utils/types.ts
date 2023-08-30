@@ -817,3 +817,11 @@ export type TeamMemberOnLoad = {
   }[];
   projectCount: number;
 };
+export type TeamOnLoad = {
+  team: TeamTableRow;
+  teamMembers: TeamMemberType[];
+  teamGroups: TeamGroupTableRow[];
+  teamProjects: TeamProjectTableRow[];
+  teamGroupsCount: number;
+  teamProjectsCount: number;
+};
