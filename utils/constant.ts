@@ -994,7 +994,7 @@ export const ITEM_PURPOSE_CHOICES = [
 
 export const ITEM_UNIT_CHOICES = [
   "ampere",
-  "are",
+  "area",
   "assembly",
   "bank cubic meter",
   "bit",

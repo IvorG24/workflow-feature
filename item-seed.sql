@@ -4495,7 +4495,7 @@ RETURNS VOID AS $$
 
     const ITEM_UNIT_CHOICES = [
       "ampere",
-      "are",
+      "area",
       "assembly",
       "bank cubic meter",
       "bit",
