@@ -3103,7 +3103,7 @@ export const getTeamMembersWithMemberRole = async (
   return data;
 };
 
-// Get user's active team id
+// Get Team on load
 export const getTeamOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: { userId: string }
