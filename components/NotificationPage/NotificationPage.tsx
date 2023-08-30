@@ -69,7 +69,6 @@ const NotificationPage = ({
         userId: userId,
         appType: app,
       });
-
       setNotificationList((prev) =>
         prev.map((notification) => ({
           ...notification,

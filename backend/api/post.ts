@@ -213,8 +213,7 @@ export const resetPassword = async (
   password: string
 ) => {
   const { error } = await supabaseClient.auth.updateUser({ password });
-  if (error) throw error;
-  return { error: `${error}` };
+  return { error: error };
 };
 
 // Create User
@@ -283,7 +282,10 @@ export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     itemData: ItemTableInsert;
-    itemDescription: string[];
+    itemDescription: {
+      description: string;
+      withUoM: boolean;
+    }[];
     formId: string;
   }
 ) => {

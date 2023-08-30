@@ -143,6 +143,13 @@ export type TeamProjectTableInsert =
 export type TeamProjectTableUpdate =
   Database["public"]["Tables"]["team_project_table"]["Update"];
 
+export type CSICodeTableRow =
+  Database["public"]["Tables"]["csi_code_table"]["Row"];
+export type CSICodeTableInsert =
+  Database["public"]["Tables"]["csi_code_table"]["Insert"];
+export type CSICodeTableUpdate =
+  Database["public"]["Tables"]["csi_code_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -283,7 +290,6 @@ export type RequestWithResponseType = RequestTableRow & {
     comment_date_created: string;
     comment_content: string;
     comment_is_edited: boolean;
-    comment_is_disabled: boolean;
     comment_last_updated: string;
     comment_type: CommentType;
     comment_team_member_id: string;
@@ -293,7 +299,7 @@ export type RequestWithResponseType = RequestTableRow & {
         user_first_name: string;
         user_last_name: string;
         user_username: string;
-        user_avatar: string | null;
+        user_avatar: string;
       };
     };
   }[];
@@ -443,15 +449,16 @@ export type ItemWithDescriptionType = ItemTableRow & {
 
 export type ItemForm = {
   generalName: string;
-  descriptions: { description: string }[];
+  descriptions: { description: string; withUoM: boolean }[];
   unit: string;
   isAvailable: boolean;
-
   glAccount: string;
+  divisionId: string;
 };
 
 export type ItemDescriptionFieldForm = {
   value: string;
+  unitOfMeasurement: string;
   isAvailable: boolean;
 };
 export type SectionWithField = {

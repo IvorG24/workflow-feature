@@ -89,7 +89,7 @@ const SourcedItemSummary = ({ summaryData, projectSignerStatus }: Props) => {
             <tr>
               <th>Item</th>
               <th>Quantity</th>
-              <th>Unit</th>
+              <th>Base Unit of Measurement</th>
               <th>Source Project</th>
             </tr>
           </thead>
@@ -138,6 +138,14 @@ const SourcedItemSummary = ({ summaryData, projectSignerStatus }: Props) => {
                   ? `${colors.yellow[5]}88`
                   : colors.yellow[0];
 
+              const parsedItem = JSON.parse(item);
+              const closingIndex = parsedItem.indexOf(")");
+              const newItem = parsedItem.slice(0, closingIndex + 1);
+              const description = parsedItem
+                .slice(closingIndex + 3, parsedItem.length - 1)
+                .split(", ")
+                .join("\n");
+
               return (
                 <tr
                   key={index}
@@ -153,7 +161,12 @@ const SourcedItemSummary = ({ summaryData, projectSignerStatus }: Props) => {
                       color="transparent"
                       offset={10}
                     >
-                      <Text pl={32}>{JSON.parse(item)}</Text>
+                      <Text pl={32} fw={700}>
+                        {newItem}
+                      </Text>
+                      <pre style={{ marginTop: 10 }}>
+                        <Text pl={32}>{description}</Text>
+                      </pre>
                     </Indicator>
                   </td>
                   <td>{addCommaToNumber(parsedQuantity)}</td>

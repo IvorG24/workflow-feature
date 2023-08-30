@@ -49,6 +49,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     comment.comment_is_edited
   );
   const commenter = comment.comment_team_member.team_member_user;
+
   const isUserOwner =
     comment.comment_team_member_id === teamMember?.team_member_id;
 

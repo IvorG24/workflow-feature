@@ -1,4 +1,3 @@
-import { getAllTeamOfUser } from "@/backend/api/get";
 import {
   acceptTeamInvitation,
   declineTeamInvitation,
@@ -46,18 +45,14 @@ const TeamInvitationPage = ({ invitation }: Props) => {
     if (!user) return;
     setIsLoading(true);
     try {
-      await acceptTeamInvitation(supabaseClient, {
+      const teamListData = await acceptTeamInvitation(supabaseClient, {
         invitationId: invitation.invitation_id,
         teamId: invitation.invitation_from_team_member.team_member_team_id,
         userId: user.user_id,
       });
-      setStatus("ACCEPTED");
 
-      const data = await getAllTeamOfUser(supabaseClient, {
-        userId: user.user_id,
-      });
-      const teamList = data as TeamTableRow[];
-      setTeamList(teamList);
+      setStatus("ACCEPTED");
+      setTeamList(teamListData as TeamTableRow[]);
 
       notifications.show({
         message: "Invitation accepted.",

@@ -4,14 +4,12 @@ import {
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
-  checkWithdrawalSlipQuantity,
   getMemberUserData,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { Database } from "@/utils/database";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -32,7 +30,7 @@ import {
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
@@ -40,8 +38,6 @@ import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
-import ReleaseQuantitySummary from "../SummarySection/ReleaseQuantitySummary";
-import RequisitionSummary from "../SummarySection/RequisitionSummary";
 import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
@@ -72,7 +68,7 @@ const RequestPage = ({
   projectSignerStatus: initialProjectSignerStatus,
 }: Props) => {
   const router = useRouter();
-  const supabaseClient = createPagesBrowserClient<Database>();
+  const supabaseClient = useSupabaseClient();
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
@@ -90,12 +86,12 @@ const RequestPage = ({
       };
     })
   );
-  const [requestCommentList, setRequestCommentList] = useState(
-    request.request_comment
-  );
-
   const [projectSignerStatus, setProjectSignerStatus] = useState(
     initialProjectSignerStatus || []
+  );
+
+  const [requestCommentList, setRequestCommentList] = useState(
+    request.request_comment
   );
 
   const requestor = request.request_team_member.team_member_user;
@@ -330,44 +326,6 @@ const RequestPage = ({
             });
             return;
           }
-        } else if (request.request_form.form_name === "Release Quantity") {
-          const withdrawalSlipId =
-            request.request_form.form_section[0].section_field[0]
-              .field_response[0].request_response;
-          const itemSection = request.request_form.form_section[2];
-
-          const warningItemList = await checkWithdrawalSlipQuantity(
-            supabaseClient,
-            {
-              withdrawalSlipId,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
-            }
-          );
-
-          if (warningItemList && warningItemList.length !== 0) {
-            modals.open({
-              title: "You cannot approve create this request.",
-              centered: true,
-              children: (
-                <Box maw={390}>
-                  <Title order={5}>
-                    There are items that will exceed the quantity limit of the
-                    Withdrawal Slip
-                  </Title>
-                  <List size="sm" mt="md" spacing="xs">
-                    {warningItemList.map((item) => (
-                      <List.Item key={item}>{item}</List.Item>
-                    ))}
-                  </List>
-                  <Button fullWidth onClick={() => modals.closeAll()} mt="md">
-                    Close
-                  </Button>
-                </Box>
-              ),
-            });
-            return;
-          }
         }
       }
 
@@ -385,6 +343,8 @@ const RequestPage = ({
 
       if (signer.signer_is_primary_signer) {
         setRequestStatus(status);
+      } else {
+        router.reload();
       }
 
       setSignerList((prev) =>
@@ -497,7 +457,7 @@ const RequestPage = ({
 
   const getDirectory = (formId: string, formName: string) => {
     let directory = `/team-requests/forms/${formId}`;
-    if (["Quotation", "Sourced Item", "Cheque Reference"].includes(formName)) {
+    if (["Quotation", "Sourced Item"].includes(formName)) {
       directory += `/create?requisitionId=${request.request_id}`;
     } else if (formName === "Release Order") {
       directory += `/create?requisitionId=${JSON.parse(
@@ -517,8 +477,6 @@ const RequestPage = ({
         request.request_form.form_section[0].section_field[1].field_response[0]
           .request_response
       )}&releaseOrderId=${request.request_id}`;
-    } else if (formName === "Release Quantity") {
-      directory += `/create?withdrawalSlipId=${request.request_id}`;
     }
 
     return directory;
@@ -688,9 +646,6 @@ const RequestPage = ({
               key={section.section_id + idx}
               section={section}
               isFormslyForm={isFormslyForm}
-              isOnlyWithResponse={
-                request.request_form.form_name === "Withdrawal Slip"
-              }
             />
           ))}
         </Stack>
@@ -770,40 +725,6 @@ const RequestPage = ({
         {request.request_form.form_name === "Transfer Receipt" &&
         request.request_form.form_is_formsly_form ? (
           <TransferReceiptSummary
-            summaryData={sectionWithDuplicateList
-              .slice(2)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Withdrawal Slip" &&
-        request.request_form.form_is_formsly_form ? (
-          <RequisitionSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Release Quantity" &&
-        request.request_form.form_is_formsly_form ? (
-          <ReleaseQuantitySummary
             summaryData={sectionWithDuplicateList
               .slice(2)
               .sort((a, b) =>

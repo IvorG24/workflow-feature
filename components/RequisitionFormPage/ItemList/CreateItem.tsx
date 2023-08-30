@@ -1,4 +1,4 @@
-import { checkItemName } from "@/backend/api/get";
+import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ITEM_UNIT_CHOICES } from "@/utils/constant";
@@ -20,7 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { toUpper } from "lodash";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
 
@@ -41,13 +41,39 @@ const CreateItem = ({
 
   const activeTeam = useActiveTeam();
 
+  const [divisionIdOption, setDivisionIdOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchDivisionOption = async () => {
+      try {
+        const option = await getItemDivisionOption(supabaseClient);
+        option &&
+          setDivisionIdOption(
+            option.map((divisionId) => {
+              return {
+                label: `${divisionId.csi_code_division_id}`,
+                value: `${divisionId.csi_code_division_id}`,
+              };
+            })
+          );
+      } catch {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      }
+    };
+    fetchDivisionOption();
+  }, []);
+
   const { register, getValues, formState, handleSubmit, control } =
     useForm<ItemForm>({
       defaultValues: {
-        descriptions: [{ description: "" }],
+        descriptions: [{ description: "", withUoM: false }],
         generalName: "",
         unit: "",
-
         isAvailable: true,
       },
     });
@@ -58,20 +84,24 @@ const CreateItem = ({
     rules: { minLength: 1, maxLength: 10 },
   });
 
-  const onAddInput = () => append({ description: "" });
+  const onAddInput = () => append({ description: "", withUoM: false });
 
   const onSubmit = async (data: ItemForm) => {
     try {
       const newItem = await createItem(supabaseClient, {
-        itemDescription: data.descriptions.map((decription) =>
-          toUpper(decription.description)
-        ),
+        itemDescription: data.descriptions.map((description) => {
+          return {
+            description: toUpper(description.description),
+            withUoM: description.withUoM,
+          };
+        }),
         itemData: {
           item_general_name: toUpper(data.generalName),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_gl_account: toUpper(data.glAccount),
           item_team_id: activeTeam.team_id,
+          item_division_id: data.divisionId,
         },
         formId: formId,
       });
@@ -85,7 +115,7 @@ const CreateItem = ({
         color: "green",
       });
       setIsCreatingItem(false);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -152,12 +182,12 @@ const CreateItem = ({
                   error={formState.errors.unit?.message}
                   searchable
                   clearable
-                  label="Unit of Measurement"
+                  label="Base Unit of Measurement"
                 />
               )}
               rules={{
                 required: {
-                  message: "Unit of Measurement is required",
+                  message: "Base Unit of Measurement is required",
                   value: true,
                 },
               }}
@@ -184,46 +214,80 @@ const CreateItem = ({
                 },
               }}
             />
+            <Controller
+              control={control}
+              name="divisionId"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value as string}
+                  onChange={onChange}
+                  data={divisionIdOption}
+                  withAsterisk
+                  error={formState.errors.divisionId?.message}
+                  searchable
+                  clearable
+                  label="Division ID"
+                />
+              )}
+              rules={{
+                required: {
+                  message: "Division ID is required",
+                  value: true,
+                },
+              }}
+            />
             {fields.map((field, index) => {
               return (
-                <TextInput
-                  key={field.id}
-                  withAsterisk
-                  label={`Description #${index + 1}`}
-                  {...register(`descriptions.${index}.description`, {
-                    required: `Description #${index + 1} is required`,
-                    minLength: {
-                      message: "Description must be at least 3 characters",
-                      value: 3,
-                    },
-                    validate: {
-                      isDuplicate: (value) => {
-                        let count = 0;
-                        getValues("descriptions").map(
-                          ({ description }: { description: string }) => {
-                            if (description === value) {
-                              count += 1;
-                            }
-                          }
-                        );
-                        if (count > 1) {
-                          return "Invalid Duplicate Description";
-                        } else {
-                          return true;
-                        }
+                <Flex key={field.id} gap="xs">
+                  <TextInput
+                    withAsterisk
+                    label={`Description #${index + 1}`}
+                    {...register(`descriptions.${index}.description`, {
+                      required: `Description #${index + 1} is required`,
+                      minLength: {
+                        message: "Description must be at least 3 characters",
+                        value: 3,
                       },
-                    },
-                  })}
-                  sx={{
-                    input: {
-                      textTransform: "uppercase",
-                    },
-                  }}
-                  error={
-                    formState.errors.descriptions !== undefined &&
-                    formState.errors.descriptions[index]?.description?.message
-                  }
-                />
+                      validate: {
+                        isDuplicate: (value) => {
+                          let count = 0;
+                          getValues("descriptions").map(
+                            ({ description }: { description: string }) => {
+                              if (description === value) {
+                                count += 1;
+                              }
+                            }
+                          );
+                          if (count > 1) {
+                            return "Invalid Duplicate Description";
+                          } else {
+                            return true;
+                          }
+                        },
+                      },
+                    })}
+                    sx={{
+                      input: {
+                        textTransform: "uppercase",
+                      },
+                      flex: 1,
+                    }}
+                    error={
+                      formState.errors.descriptions !== undefined &&
+                      formState.errors.descriptions[index]?.description?.message
+                    }
+                  />
+                  <Checkbox
+                    {...register(`descriptions.${index}.withUoM`)}
+                    sx={{
+                      input: {
+                        cursor: "pointer",
+                      },
+                    }}
+                    mt={32}
+                    label={"with UoM?"}
+                  />
+                </Flex>
               );
             })}
             <InputAddRemove

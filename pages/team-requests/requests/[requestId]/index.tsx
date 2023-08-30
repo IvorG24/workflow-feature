@@ -8,7 +8,6 @@ import {
   getRequisitionPendingQuotationRequestList,
   getUserActiveTeamId,
   getUserTeamMemberData,
-  getWithdrawalSlipItemDescriptions,
 } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
@@ -177,45 +176,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               formIsForEveryone: connectedForm?.form_is_for_every_member,
               formIsMember: connectedForm?.form_is_member,
               formName: "Transfer Receipt",
-            },
-            connectedRequestIDList,
-          },
-        };
-      } else if (request.request_form.form_name === "Withdrawal Slip") {
-        const connectedForm = await getFormslyForm(supabaseClient, {
-          formName: "Release Quantity",
-          teamId,
-          memberId: `${teamMember?.team_member_id}`,
-        });
-
-        const itemDescriptionFields = await getWithdrawalSlipItemDescriptions(
-          supabaseClient,
-          { requestId: request.request_id, teamId: teamId }
-        );
-
-        return {
-          props: {
-            request: {
-              ...request,
-              request_form: {
-                ...request.request_form,
-                form_section: [
-                  request.request_form.form_section[0],
-                  {
-                    ...request.request_form.form_section[1],
-                    section_field: [
-                      ...request.request_form.form_section[1].section_field,
-                      ...itemDescriptionFields,
-                    ],
-                  },
-                ],
-              },
-            },
-            connectedFormIdAndGroup: {
-              formId: connectedForm?.form_id,
-              formIsForEveryone: connectedForm?.form_is_for_every_member,
-              formIsMember: connectedForm?.form_is_member,
-              formName: "Release Quantity",
             },
             connectedRequestIDList,
           },

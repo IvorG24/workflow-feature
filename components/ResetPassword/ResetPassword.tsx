@@ -49,7 +49,7 @@ const ResetPasswordPage = () => {
 
       const { error } = await resetPassword(supabaseClient, data.password);
 
-      if (error?.toLowerCase().includes("old password")) {
+      if (error?.message?.toLowerCase().includes("old password")) {
         notifications.show({
           message: "New password should be different from the old password.",
           color: "red",

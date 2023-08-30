@@ -33,7 +33,9 @@ import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
+import AdminGroup from "./TeamGroup/AdminGroup";
 import CreateGroup from "./TeamGroup/CreateGroup";
 import GroupList from "./TeamGroup/GroupList";
 import GroupMembers from "./TeamGroup/GroupMembers";
@@ -78,7 +80,7 @@ const TeamPage = ({
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
 
-  const [initialMemberList, setInitialMemberList] = useState(teamMembers);
+  const [initialTeamMemberList, setInitialMemberList] = useState(teamMembers);
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
@@ -105,11 +107,9 @@ const TeamPage = ({
     (member) => member.team_member_user.user_email
   );
 
-  const userRole = teamMemberList.find(
-    (member) => member.team_member_id === teamMember?.team_member_id
-  )?.team_member_role as MemberRoleType;
-
-  const isOwnerOrAdmin = userRole === "ADMIN" || userRole === "OWNER";
+  const userRole = teamMember ? teamMember.team_member_role : null;
+  const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(`${userRole}`);
+  const isOwner = userRole === "OWNER";
 
   const updateTeamMethods = useForm<UpdateTeamInfoForm>({
     defaultValues: { teamName: team.team_name, teamLogo: team.team_logo || "" },
@@ -191,7 +191,7 @@ const TeamPage = ({
     setTeamMemberPage(1);
     const { keyword } = data;
     const searchKeyword = lowerCase(keyword);
-    const newMemberList = initialMemberList.filter((member) => {
+    const newMemberList = initialTeamMemberList.filter((member) => {
       const { user_first_name, user_last_name, user_email } =
         member.team_member_user;
 
@@ -218,7 +218,7 @@ const TeamPage = ({
         role,
       });
 
-      const updatedMemberList = initialMemberList.map((member) => {
+      const updatedMemberList = initialTeamMemberList.map((member) => {
         if (member.team_member_id === memberId) {
           return {
             ...member,
@@ -439,6 +439,14 @@ const TeamPage = ({
         />
       </FormProvider>
 
+      {isOwner && (
+        <Box mt="xl">
+          <Paper p="xl" shadow="xs">
+            <AdminGroup teamId={initialTeam.team_id} />
+          </Paper>
+        </Box>
+      )}
+
       <Box mt="xl">
         <Paper p="xl" shadow="xs">
           {!isCreatingGroup ? (
@@ -529,9 +537,11 @@ const TeamPage = ({
         <InviteMember
           isOwnerOrAdmin={isOwnerOrAdmin}
           memberEmailList={memberEmailList}
-          teamMemberList={initialMemberList}
+          teamMemberList={initialTeamMemberList}
         />
       )}
+
+      {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />}
 
       <Space mt={32} />
     </Container>

@@ -1,9 +1,11 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
+import { TeamAdminChoiceType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { Database } from "@/utils/database";
 import {
   AppType,
   MemberRoleType,
   SignerTableRow,
+  TeamTableRow,
   TeamTableUpdate,
   UserTableUpdate,
 } from "@/utils/types";
@@ -236,15 +238,14 @@ export const acceptTeamInvitation = async (
 ) => {
   const { invitationId, teamId, userId } = params;
 
-  const { error } = await supabaseClient
-    .rpc("accept_team_invitation", {
-      invitation_id: invitationId,
-      team_id: teamId,
-      user_id: userId,
-    })
-    .select("*")
-    .single();
+  const { data, error } = await supabaseClient.rpc("accept_team_invitation", {
+    invitation_id: invitationId,
+    team_id: teamId,
+    user_id: userId,
+  });
   if (error) throw error;
+
+  return data as TeamTableRow[];
 };
 
 // Decline team invitation
@@ -308,4 +309,37 @@ export const updateFormDescription = async (
     .update({ form_description: description })
     .eq("form_id", formId);
   if (error) throw error;
+};
+
+// Delete team
+export const deleteTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    teamMemberId: string;
+  }
+) => {
+  const { teamId, teamMemberId } = params;
+
+  const { error } = await supabaseClient.rpc("delete_team", {
+    team_id: teamId,
+    team_member_id: teamMemberId,
+  });
+
+  if (error) throw error;
+};
+
+// Update admin role
+export const updateAdminRole = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamAdminIdList: string[];
+    updateRole: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("update_multiple_admin", {
+    input_data: params,
+  });
+  if (error) throw error;
+  return data as unknown as TeamAdminChoiceType[];
 };
