@@ -2143,6 +2143,30 @@ $$ LANGUAGE plv8;
 
 -- END: Update multiple admin
 
+-- Start: Get team member on load
+
+CREATE FUNCTION get_team_member_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let team_member_data;
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId
+    } = input_data;
+    
+    const member = plv8.execute(`SELECT tmt.* , ( SELECT row_to_json(usert) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE team_member_id='${teamMemberId}';`)[0];
+
+    const groupData = plv8.execute(`SELECT json_build_object( 'data', json_agg(group_json), 'count', COUNT(*) ) AS result FROM ( SELECT tgmt.team_group_member_id , ( SELECT row_to_json(tgt) FROM team_group_table tgt WHERE tgt.team_group_id = tgmt.team_group_id ) AS team_group FROM team_group_member_table tgmt WHERE tgmt.team_member_id='${teamMemberId}' ) AS group_json;`)[0].result;
+
+    const projectData = plv8.execute(`SELECT json_build_object( 'data', json_agg(project_json), 'count', COUNT(*) ) AS result FROM ( SELECT tpmt.team_project_member_id , ( SELECT row_to_json(tpt) FROM team_project_table tpt WHERE tpt.team_project_id = tpmt.team_project_id ) AS team_project FROM team_project_member_table tpmt WHERE tpmt.team_member_id='${teamMemberId}' ) AS project_json;`)[0].result;
+
+    team_member_data = { member: member, groupList: groupData.data, groupCount: groupData.count, projectList: projectData.data, projectCount: projectData.count }
+ });
+ return team_member_data;
+$$ LANGUAGE plv8;
+
+-- END: Get team member on load
 
 ---------- End: FUNCTIONS
 

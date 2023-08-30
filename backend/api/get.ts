@@ -2338,8 +2338,7 @@ export const getSupplier = async (
   return supplierList;
 };
 
-// Get team member on load (getTeamMember, getTeamMemberGroupList,getTeamMemberProjectList )
-
+// Get team member on load
 export const getTeamMemberOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamMemberId: string }
@@ -2347,7 +2346,6 @@ export const getTeamMemberOnLoad = async (
   const { data, error } = await supabaseClient
     .rpc("get_team_member_on_load", { input_data: params })
     .select("*");
-
   if (error) throw error;
 
   return data as unknown as TeamMemberOnLoad;
