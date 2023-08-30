@@ -46,7 +46,7 @@ export const updateUserActiveTeam = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
-    teamId: string;
+    teamId: string | null;
   }
 ) => {
   const { userId, teamId } = params;

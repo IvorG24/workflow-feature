@@ -23,7 +23,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
-      if (!teamId) throw new Error("No team found");
+      if (!teamId) {
+        return {
+          redirect: {
+            destination: "/team/create",
+            permanent: false,
+          },
+        };
+      }
 
       const team = await getTeam(supabaseClient, {
         teamId: teamId,

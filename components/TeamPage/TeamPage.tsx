@@ -4,10 +4,12 @@ import {
   updateTeam,
   updateTeamMemberRole,
   updateTeamOwner,
+  updateUserActiveTeam,
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 
+import { getTeamMember } from "@/backend/api/get";
 import { Database } from "@/utils/database";
 import {
   MemberRoleType,
@@ -28,6 +30,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { lowerCase } from "lodash";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import InviteMember from "./InviteMember";
@@ -70,6 +73,7 @@ const TeamPage = ({
 
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();
+  const router = useRouter();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
@@ -186,19 +190,18 @@ const TeamPage = ({
     setIsUpdatingTeamMembers(true);
     setTeamMemberPage(1);
     const { keyword } = data;
-    console.log(initialMemberList);
-    const newMemberList = initialMemberList.filter(
-      (member) =>
-        lowerCase(member.team_member_user.user_first_name).includes(
-          lowerCase(keyword)
-        ) ||
-        lowerCase(member.team_member_user.user_last_name).includes(
-          lowerCase(keyword)
-        ) ||
-        lowerCase(member.team_member_user.user_email).includes(
-          lowerCase(keyword)
-        )
-    );
+    const searchKeyword = lowerCase(keyword);
+    const newMemberList = initialMemberList.filter((member) => {
+      const { user_first_name, user_last_name, user_email } =
+        member.team_member_user;
+
+      const memberDetails = lowerCase(
+        `${user_first_name} ${user_last_name} ${user_email}`
+      );
+      const isMemberMatch = memberDetails.includes(searchKeyword);
+
+      return isMemberMatch;
+    });
     setTeamMemberList(newMemberList);
     setIsUpdatingTeamMembers(false);
   };
@@ -322,28 +325,59 @@ const TeamPage = ({
   };
 
   useEffect(() => {
-    const channel = supabaseClient
-      .channel("realtime teamMembers")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "team_member_table",
-          filter: `team_member_team_id=eq.${team.team_id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "UPDATE") {
-            console.log(payload);
-            if (payload.new.team_member_is_disabled) {
-              const removeMemberFromList = teamMemberList.filter(
-                (member) => member.team_member_id !== payload.new.team_member_id
-              );
+    const channel = supabaseClient.channel("realtime teamMembers").on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "team_member_table",
+        filter: `team_member_team_id=eq.${team.team_id}`,
+      },
+      async (payload) => {
+        if (payload.eventType === "UPDATE") {
+          if (payload.new.team_member_is_disabled) {
+            const removeMemberFromList = teamMemberList.filter(
+              (member) => member.team_member_id !== payload.new.team_member_id
+            );
 
-              setTeamMemberList(removeMemberFromList);
-              return;
+            setTeamMemberList(removeMemberFromList);
+
+            if (payload.new.team_member_id === teamMember?.team_member_id) {
+              const updatedTeamList = teamList.filter(
+                (teamItem) => teamItem.team_id !== team.team_id
+              );
+              setTeamList(updatedTeamList);
+
+              if (updatedTeamList.length > 0) {
+                setActiveTeam(updatedTeamList[0]);
+                await updateUserActiveTeam(supabaseClient, {
+                  userId: `${teamMember?.team_member_user_id}`,
+                  teamId: updatedTeamList[0].team_id,
+                });
+              } else {
+                await updateUserActiveTeam(supabaseClient, {
+                  userId: `${teamMember?.team_member_user_id}`,
+                  teamId: null,
+                });
+              }
+
+              router.reload();
             }
-            const updatedMemberList = teamMemberList.map((member) => {
+          }
+          const updatedMemberList = teamMemberList.map((member) => {
+            if (member.team_member_id === payload.new.team_member_id) {
+              return {
+                ...member,
+                team_member_role: payload.new.team_member_role,
+              };
+            }
+
+            return member;
+          });
+
+          setTeamMemberList(updatedMemberList);
+          setInitialMemberList((prev) =>
+            prev.map((member) => {
               if (member.team_member_id === payload.new.team_member_id) {
                 return {
                   ...member,
@@ -352,26 +386,25 @@ const TeamPage = ({
               }
 
               return member;
-            });
-            setTeamMemberList(updatedMemberList);
-            setInitialMemberList((prev) =>
-              prev.map((member) => {
-                if (member.team_member_id === payload.new.team_member_id) {
-                  return {
-                    ...member,
-                    team_member_role: payload.new.team_member_role,
-                  };
-                }
+            })
+          );
+        } else if (payload.eventType === "INSERT") {
+          const newMemberData = await getTeamMember(supabaseClient, {
+            teamMemberId: payload.new.team_member_id,
+          });
 
-                return member;
-              })
-            );
-          } else if (payload.eventType === "INSERT") {
-            console.log(payload);
-          }
+          setInitialMemberList((prev) => [
+            ...prev,
+            newMemberData as unknown as TeamMemberType,
+          ]);
+
+          setTeamMemberList((prev) => [
+            ...prev,
+            newMemberData as unknown as TeamMemberType,
+          ]);
         }
-      )
-      .subscribe();
+      }
+    );
 
     return () => {
       supabaseClient.removeChannel(channel);
@@ -496,6 +529,7 @@ const TeamPage = ({
         <InviteMember
           isOwnerOrAdmin={isOwnerOrAdmin}
           memberEmailList={memberEmailList}
+          teamMemberList={initialMemberList}
         />
       )}
 

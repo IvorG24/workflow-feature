@@ -2,6 +2,7 @@ import { getTeamInvitation } from "@/backend/api/get";
 import { cancelTeamInvitation, createTeamInvitation } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { TeamMemberType } from "@/utils/types";
 import {
   Box,
   Button,
@@ -27,6 +28,7 @@ import validator from "validator";
 type Props = {
   memberEmailList: string[];
   isOwnerOrAdmin: boolean;
+  teamMemberList: TeamMemberType[];
 };
 
 type EmailListData = { value: string; label: string }[];
@@ -45,7 +47,11 @@ type ResendInviteTimeout = {
   invitation_resend_date_created: Date;
 }[];
 
-const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
+const InviteMember = ({
+  memberEmailList,
+  isOwnerOrAdmin,
+  teamMemberList,
+}: Props) => {
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const supabaseClient = useSupabaseClient();
@@ -181,6 +187,47 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
   useEffect(() => {
     fetchPendingInviteList();
   }, []);
+
+  useEffect(() => {
+    const teamMemberIdList = teamMemberList
+      .map((member) => member.team_member_id)
+      .join(", ");
+
+    const channel = supabaseClient
+      .channel("realtime teamInvitationList")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "invitation_table",
+          filter: `invitation_from_team_member_id=in.(${teamMemberIdList})`,
+        },
+        (payload) => {
+          if (payload.eventType === "UPDATE") {
+            const isInviteAccepted = payload.new.invitation_status;
+            const isInviteDisabled = payload.new.invitation_is_disabled;
+
+            if (isInviteAccepted || isInviteDisabled) {
+              const removeInviteFromPendingList = pendingInviteList.filter(
+                (invite) => invite.invitation_id !== payload.new.invitation_id
+              );
+
+              setPendingInviteList(removeInviteFromPendingList);
+            }
+          }
+
+          if (payload.eventType === "INSERT") {
+            fetchPendingInviteList();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeChannel(channel);
+    };
+  }, [supabaseClient, team.team_id, teamMemberList, pendingInviteList]);
 
   return (
     <Container p={0} mt="xl" pos="relative" fluid>

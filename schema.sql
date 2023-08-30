@@ -2873,7 +2873,28 @@ WITH CHECK (true);
 CREATE POLICY "Allow READ for users based on invitation_to_email" ON "public"."invitation_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
-USING (invitation_to_email = (SELECT user_email FROM user_table WHERE user_id = auth.uid()) OR invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (
+  invitation_to_email = (
+    SELECT user_email 
+    FROM user_table 
+    WHERE user_id = auth.uid())
+  OR EXISTS (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE (
+      SELECT team_member_team_id
+      FROM team_member_table
+      WHERE team_member_id = invitation_from_team_member_id
+      AND team_member_is_disabled = FALSE
+      LIMIT 1
+    ) IN (
+      SELECT team_member_team_id
+      FROM team_member_table
+      WHERE team_member_user_id = auth.uid()
+      AND team_member_role IN ('OWNER', 'ADMIN')
+    )
+  )
+);
 
 CREATE POLICY "Allow UPDATE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
 AS PERMISSIVE FOR UPDATE
