@@ -1,15 +1,7 @@
 // Imports
-import {
-  checkIfTeamHaveFormslyForms,
-  getAllTeamMembers,
-  getFormList,
-  getRequestList,
-  getUserActiveTeamId,
-  getUserTeamMemberData,
-} from "@/backend/api/get";
+import { getRequestListOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
-import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { RequestListItemType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -17,52 +9,12 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user }) => {
     try {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
+      const requestListData = await getRequestListOnLoad(supabaseClient, {
         userId: user.id,
       });
-
-      const teamMember = await getUserTeamMemberData(supabaseClient, {
-        userId: user.id,
-        teamId: teamId,
-      });
-
-      if (!teamId) {
-        return {
-          redirect: {
-            destination: "/team/create",
-            permanent: false,
-          },
-        };
-      }
-
-      const [requestList, teamMemberList, formList, isFormslyTeam] =
-        await Promise.all([
-          getRequestList(supabaseClient, {
-            teamId: teamId,
-            page: 1,
-            limit: DEFAULT_REQUEST_LIST_LIMIT,
-          }),
-          getAllTeamMembers(supabaseClient, {
-            teamId,
-          }),
-          getFormList(supabaseClient, {
-            teamId,
-            app: "REQUEST",
-            memberId: `${teamMember?.team_member_id}`,
-          }),
-          checkIfTeamHaveFormslyForms(supabaseClient, { teamId }),
-        ]);
 
       return {
-        props: {
-          requestList: requestList.data,
-          requestListCount: requestList.count,
-          teamMemberList,
-          formList: formList.map((form) => {
-            return { label: form.form_name, value: form.form_id };
-          }),
-          isFormslyTeam,
-        },
+        props: requestListData,
       };
     } catch (error) {
       console.error(error);

@@ -18,6 +18,7 @@ import {
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
+  RequestListOnLoad,
   RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
@@ -3150,4 +3151,19 @@ export const getSSOTOnLoad = async (
   if (error) throw error;
 
   return data as unknown as SSOTOnLoad;
+};
+
+// Get request list on load
+export const getRequestListOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_request_list_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as RequestListOnLoad;
 };

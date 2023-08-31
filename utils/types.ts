@@ -837,4 +837,12 @@ export type SSOTOnLoad = {
   data: SSOTType[];
   projectNameList: string[];
   itemNameList: string[];
-}
+};
+
+export type RequestListOnLoad = {
+  requestList: RequestListItemType[];
+  requestListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
+  formList: { label: string; value: string }[];
+  isFormslyTeam: boolean;
+};
