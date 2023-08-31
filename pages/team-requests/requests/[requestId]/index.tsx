@@ -1,14 +1,4 @@
-import {
-  getFormIDForRequsition,
-  getFormSigner,
-  getFormslyForm,
-  getFormslyForwardLinkFormId,
-  getRequest,
-  getRequestProjectSigner,
-  getRequisitionPendingQuotationRequestList,
-  getUserActiveTeamId,
-  getUserTeamMemberData,
-} from "@/backend/api/get";
+import { getRequest } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
@@ -40,153 +30,76 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         return {
           props: { request },
         };
-      }
-
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
-      if (!teamId) throw new Error("No team found");
-
-      const teamMember = await getUserTeamMemberData(supabaseClient, {
-        teamId,
-        userId: user.id,
-      });
-
-      const connectedRequestIDList = await getFormslyForwardLinkFormId(
-        supabaseClient,
-        {
-          requestId: request.request_id,
-        }
-      );
-
-      if (request.request_form.form_name === "Requisition") {
-        const connectedForm = await getFormIDForRequsition(supabaseClient, {
-          teamId,
-          memberId: `${teamMember?.team_member_id}`,
-        });
-
-        const canvassRequestList =
-          await getRequisitionPendingQuotationRequestList(supabaseClient, {
-            requestId: request.request_id,
-          });
-
-        const canvassRequest = canvassRequestList.map(
-          (request) => request.request_id
-        );
-
-        return {
-          props: {
-            request,
-            connectedForm,
-            connectedRequestIDList,
-            canvassRequest,
-          },
-        };
-      } else if (request.request_form.form_name === "Quotation") {
-        const connectedForm = await getFormslyForm(supabaseClient, {
-          formName: "Receiving Inspecting Report",
-          teamId,
-          memberId: `${teamMember?.team_member_id}`,
-        });
-
-        return {
-          props: {
-            request,
-            connectedFormIdAndGroup: {
-              formId: connectedForm?.form_id,
-              formIsForEveryone: connectedForm?.form_is_for_every_member,
-              formIsMember: connectedForm?.form_is_member,
-              formName: "Receiving Inspecting Report",
-            },
-            connectedRequestIDList,
-          },
-        };
-      } else if (request.request_form.form_name === "Sourced Item") {
-        const connectedForm = await getFormslyForm(supabaseClient, {
-          formName: "Release Order",
-          teamId,
-          memberId: `${teamMember?.team_member_id}`,
-        });
-
-        const data = await getFormSigner(supabaseClient, {
-          formId: request.request_form.form_id,
-          projectId: `${request.request_project_id}`,
-        });
-
-        const requestProjectSigner = await getRequestProjectSigner(
-          supabaseClient,
+      } else {
+        const { data, error } = await supabaseClient.rpc(
+          "request_page_on_load",
           {
-            requestId: request.request_id,
+            input_data: {
+              requestId: request.request_id,
+              userId: user.id,
+              formName: request.request_form.form_name,
+              formId: request.request_form.form_id,
+              projectId: request.request_project_id,
+            },
           }
         );
+        if (error) throw error;
+        const formattedData = data as Props & {
+          requestSignerData: {
+            team_project_name: string;
+            request_signer_status: string;
+            signer_team_member_id: string;
+          }[];
+        } & { signerData: { signer_id: string }[] };
 
-        const projectSignerStatus = requestProjectSigner.map((signer) => ({
-          signer_project_name:
-            signer.request_signer.signer_team_project.team_project_name,
-          signer_status: signer.request_signer_status,
-          signer_team_member_id: signer.request_signer.signer_team_member_id,
-        }));
+        if (request.request_form.form_name === "Sourced Item") {
+          const projectSignerStatus = formattedData.requestSignerData.map(
+            (signer) => ({
+              signer_project_name: signer.team_project_name,
+              signer_status: signer.request_signer_status,
+              signer_team_member_id: signer.signer_team_member_id,
+            })
+          );
+          const mainSignerIdList = formattedData.signerData.map(
+            (signer) => signer.signer_id
+          );
 
-        const mainSignerIdList = data.map((signer) => signer.signer_id);
-
-        return {
-          props: {
-            request: {
-              ...request,
-              request_signer: request.request_signer.map((requestSigner) => {
-                if (
-                  !mainSignerIdList.includes(
-                    requestSigner.request_signer_signer.signer_id
-                  )
-                ) {
-                  return {
-                    ...requestSigner,
-                    request_signer_signer: {
-                      ...requestSigner.request_signer_signer,
-                      signer_is_primary_signer: false,
-                    },
-                  };
-                } else {
-                  return requestSigner;
-                }
-              }),
+          return {
+            props: {
+              request: {
+                ...request,
+                request_signer: request.request_signer.map((requestSigner) => {
+                  if (
+                    !mainSignerIdList.includes(
+                      requestSigner.request_signer_signer.signer_id
+                    )
+                  ) {
+                    return {
+                      ...requestSigner,
+                      request_signer_signer: {
+                        ...requestSigner.request_signer_signer,
+                        signer_is_primary_signer: false,
+                      },
+                    };
+                  } else {
+                    return requestSigner;
+                  }
+                }),
+              },
+              projectSignerStatus,
+              formattedData,
             },
-            connectedFormIdAndGroup: {
-              formId: connectedForm?.form_id,
-              formIsForEveryone: connectedForm?.form_is_for_every_member,
-              formIsMember: connectedForm?.form_is_member,
-              formName: "Release Order",
+          };
+        } else {
+          return {
+            props: {
+              ...{
+                ...formattedData,
+                request,
+              },
             },
-            connectedRequestIDList,
-            projectSignerStatus,
-          },
-        };
-      } else if (request.request_form.form_name === "Release Order") {
-        const connectedForm = await getFormslyForm(supabaseClient, {
-          formName: "Transfer Receipt",
-          teamId,
-          memberId: `${teamMember?.team_member_id}`,
-        });
-
-        return {
-          props: {
-            request,
-            connectedFormIdAndGroup: {
-              formId: connectedForm?.form_id,
-              formIsForEveryone: connectedForm?.form_is_for_every_member,
-              formIsMember: connectedForm?.form_is_member,
-              formName: "Transfer Receipt",
-            },
-            connectedRequestIDList,
-          },
-        };
-      } else {
-        return {
-          props: {
-            request,
-            connectedRequestIDList,
-          },
-        };
+          };
+        }
       }
     } catch (error) {
       console.error(error);
@@ -223,7 +136,7 @@ const Page = ({
   request,
   connectedFormIdAndGroup,
   connectedRequestIDList,
-  connectedForm,
+  connectedForm = [],
   canvassRequest = [],
   projectSignerStatus,
 }: Props) => {

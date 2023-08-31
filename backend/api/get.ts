@@ -1394,9 +1394,7 @@ export const getFormIDForRequsition = async (
         ) 
       `
     )
-    .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Sourced Item"
-    )
+    .or("form_name.eq.Quotation, form_name.eq.Sourced Item")
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
     .eq("form_is_formsly_form", true);
@@ -1551,7 +1549,6 @@ export const getFormslyForwardLinkFormId = async (
     "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
     "Release Order": [] as ConnectedRequestItemType[],
     "Transfer Receipt": [] as ConnectedRequestItemType[],
-    "Cheque Reference": [] as ConnectedRequestItemType[],
     "Release Quantity": [] as ConnectedRequestItemType[],
   };
 
@@ -1578,9 +1575,6 @@ export const getFormslyForwardLinkFormId = async (
         break;
       case "Transfer Receipt":
         requestList["Transfer Receipt"].push(newFormattedData);
-        break;
-      case "Cheque Reference":
-        requestList["Cheque Reference"].push(newFormattedData);
         break;
       case "Release Quantity":
         requestList["Release Quantity"].push(newFormattedData);
