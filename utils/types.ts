@@ -832,3 +832,9 @@ export type NotificationOnLoad = {
   totalNotificationCount: number;
   tab: "all" | "unread";
 };
+
+export type SSOTOnLoad = {
+  data: SSOTType[];
+  projectNameList: string[];
+  itemNameList: string[];
+}

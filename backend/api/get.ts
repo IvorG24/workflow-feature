@@ -21,6 +21,7 @@ import {
   RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
+  SSOTOnLoad,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
@@ -3134,4 +3135,19 @@ export const getNotificationOnLoad = async (
   if (error) throw error;
 
   return data as unknown as NotificationOnLoad;
+};
+
+// Get notification on load
+export const getSSOTOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ssot_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as SSOTOnLoad;
 };
