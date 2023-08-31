@@ -13,6 +13,7 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  NotificationOnLoad,
   NotificationTableRow,
   RequestByFormType,
   RequestDashboardOverviewData,
@@ -3114,4 +3115,23 @@ export const getTeamOnLoad = async (
   if (error) throw error;
 
   return data as unknown as TeamOnLoad;
+};
+
+// Get notification on load
+export const getNotificationOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    app: AppType;
+    page: number;
+    limit: number;
+    unreadOnly: boolean;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_notification_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as NotificationOnLoad;
 };

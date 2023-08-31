@@ -817,6 +817,7 @@ export type TeamMemberOnLoad = {
   }[];
   projectCount: number;
 };
+
 export type TeamOnLoad = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
@@ -824,4 +825,10 @@ export type TeamOnLoad = {
   teamProjects: TeamProjectTableRow[];
   teamGroupsCount: number;
   teamProjectsCount: number;
+};
+
+export type NotificationOnLoad = {
+  notificationList: NotificationTableRow[];
+  totalNotificationCount: number;
+  tab: "all" | "unread";
 };
