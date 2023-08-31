@@ -215,7 +215,7 @@ const GroupList = ({
 
   useEffect(() => {
     const channel = supabaseClient
-      .channel("realtime teamProjectList")
+      .channel("realtime-team-group")
       .on(
         "postgres_changes",
         {

@@ -325,59 +325,64 @@ const TeamPage = ({
   };
 
   useEffect(() => {
-    const channel = supabaseClient.channel("realtime teamMembers").on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "team_member_table",
-        filter: `team_member_team_id=eq.${team.team_id}`,
-      },
-      async (payload) => {
-        if (payload.eventType === "UPDATE") {
-          if (payload.new.team_member_is_disabled) {
-            const removeMemberFromList = teamMemberList.filter(
-              (member) => member.team_member_id !== payload.new.team_member_id
+    const channel = supabaseClient
+      .channel("realtime-team-members")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "team_member_table",
+          filter: `team_member_team_id=eq.${team.team_id}`,
+        },
+        async (payload) => {
+          if (payload.eventType === "UPDATE") {
+            // if update is removing a member
+            if (payload.new.team_member_is_disabled) {
+              const removeMemberFromList = teamMemberList.filter(
+                (member) => member.team_member_id !== payload.new.team_member_id
+              );
+
+              setTeamMemberList(removeMemberFromList);
+
+              // if removed member is auth user, run updates to redirect user to other teams/homepage
+              if (payload.new.team_member_id === teamMember?.team_member_id) {
+                const updatedTeamList = teamList.filter(
+                  (teamItem) => teamItem.team_id !== team.team_id
+                );
+                setTeamList(updatedTeamList);
+
+                if (updatedTeamList.length > 0) {
+                  setActiveTeam(updatedTeamList[0]);
+                  await updateUserActiveTeam(supabaseClient, {
+                    userId: `${teamMember?.team_member_user_id}`,
+                    teamId: updatedTeamList[0].team_id,
+                  });
+                } else {
+                  await updateUserActiveTeam(supabaseClient, {
+                    userId: `${teamMember?.team_member_user_id}`,
+                    teamId: null,
+                  });
+                }
+
+                router.reload();
+              }
+            }
+
+            setInitialMemberList((prev) =>
+              prev.map((member) => {
+                if (member.team_member_id === payload.new.team_member_id) {
+                  return {
+                    ...member,
+                    team_member_role: payload.new.team_member_role,
+                  };
+                }
+
+                return member;
+              })
             );
 
-            setTeamMemberList(removeMemberFromList);
-
-            if (payload.new.team_member_id === teamMember?.team_member_id) {
-              const updatedTeamList = teamList.filter(
-                (teamItem) => teamItem.team_id !== team.team_id
-              );
-              setTeamList(updatedTeamList);
-
-              if (updatedTeamList.length > 0) {
-                setActiveTeam(updatedTeamList[0]);
-                await updateUserActiveTeam(supabaseClient, {
-                  userId: `${teamMember?.team_member_user_id}`,
-                  teamId: updatedTeamList[0].team_id,
-                });
-              } else {
-                await updateUserActiveTeam(supabaseClient, {
-                  userId: `${teamMember?.team_member_user_id}`,
-                  teamId: null,
-                });
-              }
-
-              router.reload();
-            }
-          }
-          const updatedMemberList = teamMemberList.map((member) => {
-            if (member.team_member_id === payload.new.team_member_id) {
-              return {
-                ...member,
-                team_member_role: payload.new.team_member_role,
-              };
-            }
-
-            return member;
-          });
-
-          setTeamMemberList(updatedMemberList);
-          setInitialMemberList((prev) =>
-            prev.map((member) => {
+            const updatedMemberList = teamMemberList.map((member) => {
               if (member.team_member_id === payload.new.team_member_id) {
                 return {
                   ...member,
@@ -386,25 +391,26 @@ const TeamPage = ({
               }
 
               return member;
-            })
-          );
-        } else if (payload.eventType === "INSERT") {
-          const newMemberData = await getTeamMember(supabaseClient, {
-            teamMemberId: payload.new.team_member_id,
-          });
+            });
+            setTeamMemberList(updatedMemberList);
+          } else if (payload.eventType === "INSERT") {
+            const newMemberData = await getTeamMember(supabaseClient, {
+              teamMemberId: payload.new.team_member_id,
+            });
 
-          setInitialMemberList((prev) => [
-            ...prev,
-            newMemberData as unknown as TeamMemberType,
-          ]);
+            setInitialMemberList((prev) => [
+              ...prev,
+              newMemberData as unknown as TeamMemberType,
+            ]);
 
-          setTeamMemberList((prev) => [
-            ...prev,
-            newMemberData as unknown as TeamMemberType,
-          ]);
+            setTeamMemberList((prev) => [
+              ...prev,
+              newMemberData as unknown as TeamMemberType,
+            ]);
+          }
         }
-      }
-    );
+      )
+      .subscribe();
 
     return () => {
       supabaseClient.removeChannel(channel);

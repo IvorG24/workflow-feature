@@ -40,7 +40,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   useEffect(() => {
     if (!user) return;
     const channel = supabaseClient
-      .channel("realtime notification")
+      .channel("realtime-notification")
       .on(
         "postgres_changes",
         {
@@ -50,6 +50,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
           filter: `notification_user_id=eq.${user.team_member_user_id}`,
         },
         (payload) => {
+          console.log("new notification detected");
           const updatedNotificationList = [
             payload.new as NotificationTableRow,
             ...notificationList,

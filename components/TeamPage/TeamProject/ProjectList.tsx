@@ -231,7 +231,7 @@ const ProjectList = ({
 
   useEffect(() => {
     const channel = supabaseClient
-      .channel("realtime teamProjectList")
+      .channel("realtime-team-project")
       .on(
         "postgres_changes",
         {

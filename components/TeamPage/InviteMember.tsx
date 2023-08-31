@@ -194,7 +194,7 @@ const InviteMember = ({
       .join(", ");
 
     const channel = supabaseClient
-      .channel("realtime teamInvitationList")
+      .channel("realtime-team-invitation")
       .on(
         "postgres_changes",
         {

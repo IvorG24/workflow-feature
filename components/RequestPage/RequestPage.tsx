@@ -488,7 +488,7 @@ const RequestPage = ({
 
   useEffect(() => {
     const channel = supabaseClient
-      .channel("realtime request")
+      .channel("realtime-request")
       .on(
         "postgres_changes",
         {

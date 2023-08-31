@@ -2894,23 +2894,21 @@ TO authenticated
 USING (
   invitation_to_email = (
     SELECT user_email 
-    FROM user_table 
-    WHERE user_id = auth.uid())
+    FROM public.user_table 
+    WHERE user_id = auth.uid()
+  )
   OR EXISTS (
-    SELECT team_member_team_id
-    FROM team_member_table
-    WHERE (
+    SELECT 1
+    FROM public.team_member_table
+    WHERE team_member_team_id = (
       SELECT team_member_team_id
-      FROM team_member_table
+      FROM public.team_member_table
       WHERE team_member_id = invitation_from_team_member_id
       AND team_member_is_disabled = FALSE
       LIMIT 1
-    ) IN (
-      SELECT team_member_team_id
-      FROM team_member_table
-      WHERE team_member_user_id = auth.uid()
-      AND team_member_role IN ('OWNER', 'ADMIN')
     )
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
