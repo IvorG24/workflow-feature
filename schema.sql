@@ -2261,6 +2261,40 @@ $$ LANGUAGE plv8;
 
 -- END: Get notifications on load
 
+-- START: Get ssot on load
+
+CREATE FUNCTION get_ssot_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let ssot_data;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      app,
+      page,
+      limit,
+      unreadOnly
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+
+    const ssotData = plv8.execute(`SELECT get_ssot('{ "activeTeam": "${teamId}", "pageNumber": 1, "rowLimit": 10, "search": "", "requisitionFilter": [], "requisitionFilterCount": 0, "supplierList": [] }');`)[0].get_ssot;
+
+    const itemList = plv8.execute(`SELECT * FROM item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
+
+    const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
+    
+    const itemNameList = itemList.map(item=>item.item_general_name);
+    const projectNameList = projectList.map(project=>project.team_project_name);
+    
+    ssot_data = {data: ssotData, itemNameList, projectNameList}
+ });
+ return ssot_data;
+$$ LANGUAGE plv8;
+
+-- END: Get ssot on load
+
 ---------- End: FUNCTIONS
 
 
