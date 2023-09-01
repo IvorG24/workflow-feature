@@ -2979,6 +2979,60 @@ $$ LANGUAGE plv8;
 
 -- END: Form page on load
 
+-- Start: Build form page on load
+
+CREATE OR REPLACE FUNCTION build_form_page_on_load(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId
+    } = input_data;
+
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    const teamMemberList = plv8.execute(
+      `
+        SELECT
+          team_member_id,
+          team_member_role,
+          user_id,
+          user_first_name,
+          user_last_name
+        FROM team_member_table
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE 
+          team_member_team_id = '${teamId}'
+          AND team_member_is_disabled = false
+          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+        ORDER BY user_first_name, user_last_name ASC
+      `
+    );
+    const groupList = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
+    const formId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+
+    returnData = {
+      teamMemberList: teamMemberList.map(teamMember => {
+        return {   
+          team_member_id: teamMember.team_member_id,
+          team_member_role: teamMember.team_member_role,
+          team_member_user: {
+            user_id: teamMember.user_id,
+            user_first_name: teamMember.user_first_name,
+            user_last_name: teamMember.user_last_name,
+          }
+        }
+      }),
+      groupList,
+      formId
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- END: Build form page on load
+
 ---------- End: FUNCTIONS
 
 
