@@ -803,3 +803,46 @@ export type TeamMemberWithUserDetails = {
     user_email: string;
   };
 }[];
+
+export type TeamMemberOnLoad = {
+  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  groupList: {
+    team_group_member_id: string;
+    team_group: TeamGroupTableRow;
+  }[];
+  groupCount: number;
+  projectList: {
+    team_project_member_id: string;
+    team_project: TeamProjectTableRow;
+  }[];
+  projectCount: number;
+};
+
+export type TeamOnLoad = {
+  team: TeamTableRow;
+  teamMembers: TeamMemberType[];
+  teamGroups: TeamGroupTableRow[];
+  teamProjects: TeamProjectTableRow[];
+  teamGroupsCount: number;
+  teamProjectsCount: number;
+};
+
+export type NotificationOnLoad = {
+  notificationList: NotificationTableRow[];
+  totalNotificationCount: number;
+  tab: "all" | "unread";
+};
+
+export type SSOTOnLoad = {
+  data: SSOTType[];
+  projectNameList: string[];
+  itemNameList: string[];
+};
+
+export type RequestListOnLoad = {
+  requestList: RequestListItemType[];
+  requestListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
+  formList: { label: string; value: string }[];
+  isFormslyTeam: boolean;
+};
