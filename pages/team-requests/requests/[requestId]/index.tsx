@@ -117,6 +117,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           supabaseClient,
           {
             requestId: request.request_id,
+            teamId,
           }
         );
 

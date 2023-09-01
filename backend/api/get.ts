@@ -2939,19 +2939,74 @@ export const getRequestProjectSigner = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
+    teamId: string;
   }
 ) => {
-  const { requestId } = params;
-  const { data, error } = await supabaseClient
-    .from("request_signer_table")
-    .select(
-      "*, request_signer: request_signer_signer_id!inner(*, signer_team_project: signer_team_project_id!inner(team_project_name))"
-    )
-    .eq("request_signer_request_id", requestId)
-    .eq("request_signer.signer_is_disabled", false);
-  if (error) throw error;
+  const { requestId, teamId } = params;
+  let requestProjectSigner = [];
+  const { data: projectList, error: projectListError } = await supabaseClient
+    .from("team_project_table")
+    .select("*")
+    .eq("team_project_team_id", teamId);
+  if (projectListError) throw projectListError;
 
-  return data as unknown as RequestProjectSignerType;
+  const { data: noProjectSigner, error: noProjectSignerError } =
+    await supabaseClient
+      .from("request_signer_table")
+      .select(
+        "*, request_signer: request_signer_signer_id!inner(*, signer_team_project_id)"
+      )
+      .eq("request_signer_request_id", requestId)
+      .eq("request_signer.signer_is_disabled", false)
+      .is("request_signer.signer_team_project_id", null);
+
+  if (noProjectSignerError) throw noProjectSignerError;
+
+  if (noProjectSigner.length > 0) {
+    const signer = noProjectSigner[0];
+    const data = projectList.map((project) => ({
+      ...signer,
+      request_signer: {
+        ...signer.request_signer,
+        signer_team_project: {
+          team_project_name: project.team_project_name,
+        },
+      },
+    }));
+
+    requestProjectSigner = data as unknown as RequestProjectSignerType;
+  } else {
+    const { data: signerData, error } = await supabaseClient
+      .from("request_signer_table")
+      .select(
+        "*, request_signer: request_signer_signer_id!inner(*, signer_team_project: signer_team_project_id!inner(team_project_name))"
+      )
+      .eq("request_signer_request_id", requestId)
+      .eq("request_signer.signer_is_disabled", false);
+    if (error) throw error;
+
+    const signers = signerData as unknown as RequestProjectSignerType;
+
+    const projectsWithSigner = signers.map(
+      (signer) => signer.request_signer.signer_team_project.team_project_name
+    );
+    const projectsWithoutSigner = projectList
+      .map((project) => project.team_project_name)
+      .filter((project) => projectsWithSigner.includes(project));
+
+    const newSigners = projectsWithoutSigner.map((project) => ({
+      ...signers[0],
+      request_signer: {
+        ...signers[0].request_signer,
+        signer_team_project: {
+          team_project_name: project,
+        },
+      },
+    }));
+    requestProjectSigner = [...signers, ...newSigners];
+  }
+
+  return requestProjectSigner;
 };
 
 // Fetch all CSI Code based on division id
