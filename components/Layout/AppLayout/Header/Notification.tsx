@@ -1,7 +1,7 @@
 import { updateNotificationStatus } from "@/backend/api/update";
+import useRealtimeNotificationList from "@/hooks/useRealtimeNotificationList";
 import {
   useNotificationActions,
-  useNotificationList,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
 import { useActiveApp } from "@/stores/useTeamStore";
@@ -52,7 +52,7 @@ const Notification = () => {
   const router = useRouter();
   const { classes } = useStyles();
 
-  const notificationList = useNotificationList();
+  const notificationList = useRealtimeNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
   const activeApp = useActiveApp();
 
