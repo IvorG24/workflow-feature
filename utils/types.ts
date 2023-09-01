@@ -620,7 +620,6 @@ export type TeamGroupForFormType =
   | "Requisition"
   | "Quotation"
   | "Receiving Inspecting Report"
-  | "Cheque Reference"
   | "Audit";
 
 type SSOTRequestOwnerType = {
