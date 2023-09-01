@@ -1,4 +1,4 @@
-import { getNotificationList, getUserActiveTeamId } from "@/backend/api/get";
+import { getNotificationOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import NotificationPage from "@/components/NotificationPage/NotificationPage";
 import { DEFAULT_NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
@@ -12,22 +12,16 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const tab = context.query.tab || "all";
       const page = context.query.page || 1;
 
-      const teamId = await getUserActiveTeamId(supabaseClient, {
+      const notification = await getNotificationOnLoad(supabaseClient, {
+        app: "REQUEST",
+        limit: DEFAULT_NOTIFICATION_LIST_LIMIT,
+        page: Number(page),
         userId: user.id,
+        unreadOnly: tab === "unread",
       });
 
-      const { data: notificationList, count: totalNotificationCount } =
-        await getNotificationList(supabaseClient, {
-          app: "REQUEST",
-          limit: DEFAULT_NOTIFICATION_LIST_LIMIT,
-          page: Number(page),
-          userId: user.id,
-          teamId,
-          unreadOnly: tab === "unread",
-        });
-
       return {
-        props: { notificationList, totalNotificationCount, tab },
+        props: notification,
       };
     } catch (error) {
       console.error(error);

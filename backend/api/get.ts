@@ -13,15 +13,20 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  NotificationOnLoad,
   NotificationTableRow,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
+  RequestListOnLoad,
   RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
+  SSOTOnLoad,
+  TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
+  TeamOnLoad,
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -2331,6 +2336,19 @@ export const getSupplier = async (
   return supplierList;
 };
 
+// Get team member on load
+export const getTeamMemberOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_team_member_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as TeamMemberOnLoad;
+};
+
 // Get team member
 export const getTeamMember = async (
   supabaseClient: SupabaseClient<Database>,
@@ -3080,4 +3098,66 @@ export const getTeamMembersWithMemberRole = async (
     .eq("team_member_role", "MEMBER");
   if (error) throw error;
   return data;
+};
+
+// Get Team on load
+export const getTeamOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { userId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_team_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as TeamOnLoad;
+};
+
+// Get notification on load
+export const getNotificationOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    app: AppType;
+    page: number;
+    limit: number;
+    unreadOnly: boolean;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_notification_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as NotificationOnLoad;
+};
+
+// Get notification on load
+export const getSSOTOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ssot_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as SSOTOnLoad;
+};
+
+// Get request list on load
+export const getRequestListOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_request_list_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as RequestListOnLoad;
 };
