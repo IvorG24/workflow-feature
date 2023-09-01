@@ -9,12 +9,15 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
   async ({ supabaseClient, user }) => {
     try {
-      const { data, error } = await supabaseClient.rpc("form_page_on_load", {
-        input_data: {
-          userId: user.id,
-          limit: DEFAULT_FORM_LIST_LIMIT,
-        },
-      });
+      const { data, error } = await supabaseClient.rpc(
+        "form_list_page_on_load",
+        {
+          input_data: {
+            userId: user.id,
+            limit: DEFAULT_FORM_LIST_LIMIT,
+          },
+        }
+      );
       if (error) throw error;
       const formattedData = data as unknown as Props;
       return {

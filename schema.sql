@@ -2866,9 +2866,9 @@ $$ LANGUAGE plv8;
 
 -- END: Canvass page on load
 
--- Start: Form page on load
+-- Start: Form list page on load
 
-CREATE OR REPLACE FUNCTION form_page_on_load(
+CREATE OR REPLACE FUNCTION form_list_page_on_load(
   input_data JSON
 )
 RETURNS JSON as $$
@@ -2911,7 +2911,7 @@ RETURNS JSON as $$
           AND form_is_disabled = false
           AND form_app = 'REQUEST'
         LIMIT ${limit}
-      `);
+      `)[0].count;
 
     const teamMemberList = plv8.execute(
       `
@@ -2977,7 +2977,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Form page on load
+-- END: Form list page on load
 
 -- Start: Build form page on load
 
@@ -3032,6 +3032,111 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- END: Build form page on load
+
+-- Start: Form page on load
+
+CREATE OR REPLACE FUNCTION form_page_on_load(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      isFormslyForm,
+      formName,
+      limit
+    } = input_data;
+
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+ 
+    const teamMembers = plv8.execute(
+      `
+        SELECT
+          team_member_id,
+          team_member_role,
+          user_id,
+          user_first_name,
+          user_last_name
+        FROM team_member_table
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE 
+          team_member_team_id = '${teamId}'
+          AND team_member_is_disabled = false
+          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+        ORDER BY user_first_name, user_last_name ASC
+      `
+    );
+    const teamMemberList = teamMembers.map(member => {
+      return {
+        team_member_id: member.team_member_id,
+        team_member_role: member.team_member_role,
+        team_member_user: {
+          user_id: member.user_id,
+          user_first_name: member.user_first_name,
+          user_last_name: member.user_last_name,
+        }
+      }
+    })
+
+    const teamGroupList = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
+ 
+    if(isFormslyForm){
+      const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_date_created DESC LIMIT ${limit}`);
+      const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false`)[0].count;
+    
+      if(formName === 'Requisition'){
+        const items = [];
+        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false LIMIT ${limit}`);
+        const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
+
+        itemData.forEach(value => {
+          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}'`);
+          items.push({
+            ...value,
+            item_description: itemDescription
+          })
+        })
+
+        returnData = {
+          items,
+          itemListCount: Number(`${itemListCount}`),
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(`${teamProjectListCount}`),
+        }
+      } else if (formName === 'Quotation'){
+        const suppliers = plv8.execute(`SELECT * FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false ORDER BY supplier_date_created DESC LIMIT ${limit}`);
+        const supplierListCount = plv8.execute(`SELECT COUNT(*) FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false`)[0].count;
+
+        returnData = {
+          teamMemberList,
+          suppliers,
+          supplierListCount: Number(`${supplierListCount}`),
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(`${teamProjectListCount}`)
+        }
+      } else {
+        returnData = {
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(`${teamProjectListCount}`)
+        }
+      }
+    }else{
+      returnData = {
+        teamMemberList, 
+        teamGroupList
+      }
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- END: Form page on load
 
 ---------- End: FUNCTIONS
 
