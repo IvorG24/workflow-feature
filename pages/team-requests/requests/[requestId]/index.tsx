@@ -66,6 +66,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
           return {
             props: {
+              ...formattedData,
               request: {
                 ...request,
                 request_signer: request.request_signer.map((requestSigner) => {
@@ -87,7 +88,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 }),
               },
               projectSignerStatus,
-              formattedData,
             },
           };
         } else {
