@@ -2642,6 +2642,343 @@ $$ LANGUAGE plv8;
 
 -- END: Get request list on load
 
+-- Start: Canvass page on load
+
+CREATE OR REPLACE FUNCTION canvass_page_on_load(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      requestId
+    } = input_data;
+
+    const requestResponseData = plv8.execute(`SELECT request_response_table.*, field_name, field_order FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE request_response_request_id='${requestId}'`);
+
+    const options = {};
+    const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+    requestResponseData.forEach((response) => {
+      if (response.request_response_field_id) {
+        const fieldName = response.field_name;
+        const duplicatableSectionId =
+          response.request_response_duplicatable_section_id ??
+          idForNullDuplicationId;
+
+        if (response.field_order > 4) {
+          if (!options[duplicatableSectionId]) {
+            options[duplicatableSectionId] = {
+              name: "",
+              description: "",
+              quantity: 0,
+              unit: "",
+            };
+          }
+
+          if (fieldName === "General Name") {
+            options[duplicatableSectionId].name = JSON.parse(
+              response.request_response
+            );
+          } else if (fieldName === "Base Unit of Measurement") {
+            options[duplicatableSectionId].unit = JSON.parse(
+              response.request_response
+            );
+          } else if (fieldName === "Quantity") {
+            options[duplicatableSectionId].quantity = Number(
+              response.request_response
+            );
+          } else if (
+            fieldName === "GL Account" ||
+            fieldName === "CSI Code" ||
+            fieldName === "CSI Code Description" ||
+            fieldName === "Division Description" ||
+            fieldName === "Level 2 Major Group Description" ||
+            fieldName === "Level 2 Minor Group Description"
+          ) {
+          } else {
+            options[duplicatableSectionId].description += `${
+              options[duplicatableSectionId].description ? ", " : ""
+            }${fieldName}: ${JSON.parse(response.request_response)}`;
+          }
+        }
+      }
+    });
+
+    const itemOptions = Object.keys(options).map(
+    (item) =>
+      `${options[item].name} (${options[item].quantity} ${options[item].unit}) (${options[item].description})`
+    );
+
+    const canvassRequest = plv8.execute(
+      `
+        SELECT 
+          request_id, 
+          request_formsly_id,
+          request_status,
+          form_name
+        FROM request_response_table
+        INNER JOIN request_table ON request_id = request_response_request_id
+        INNER JOIN form_table ON form_id= request_form_id
+        WHERE
+          request_response='"${requestId}"'
+          AND request_status='PENDING'
+          AND form_name='Quotation'
+      `
+    );
+
+    const additionalChargeFields = [
+      'Delivery Fee',
+      'Bank Charge',
+      'Mobilization Charge',
+      'Demobilization Charge',
+      'Freight Charge',
+      'Hauling Charge',
+      'Handling Charge',
+      'Packing Charge',
+    ];
+
+    const summaryData = {};
+    let summaryAdditionalDetails= [];
+
+    const quotationRequestList = canvassRequest.map(({ request_id, request_formsly_id }) => {
+      const quotationResponseList = plv8.execute(
+        `
+          SELECT 
+            request_response_table.*,
+            field_name,
+            request_id,
+            request_formsly_id
+          FROM request_response_table
+          INNER JOIN field_table ON field_id = request_response_field_id
+          INNER JOIN request_table ON request_id = request_response_request_id
+          WHERE
+            request_response_request_id = '${request_id}'
+            AND field_name IN ('Item', 'Price per Unit', 'Quantity', 'Lead Time', 'Payment Terms', ${additionalChargeFields.map(fee => `'${fee}'`)})
+        `
+      );
+      summaryData[request_formsly_id] = 0;
+      summaryAdditionalDetails.push({
+        quotation_id: request_id,
+        formsly_id: request_formsly_id,
+        lead_time: 0,
+        payment_terms: "",
+      });
+      return quotationResponseList;
+    });
+
+    const canvassData = {};
+    const lowestPricePerItem = {};
+    const requestAdditionalCharge = {};
+    let lowestAdditionalCharge = 999999999;
+
+    itemOptions.forEach((item) => {
+      canvassData[item] = [];
+      lowestPricePerItem[item] = 999999999;
+    });
+
+    quotationRequestList.forEach((request) => {
+      let currentItem = "";
+      let tempAdditionalCharge = 0;
+
+      request.forEach((response) => {
+        if (response.field_name === "Item") {
+          currentItem = JSON.parse(response.request_response);
+          canvassData[currentItem].push({
+            quotationId: response.request_formsly_id,
+            price: 0,
+            quantity: 0,
+          });
+        } else if (
+          response.field_name === "Price per Unit"
+        ) {
+          const price = Number(response.request_response);
+          canvassData[currentItem][canvassData[currentItem].length - 1].price =
+            price;
+          if (price < lowestPricePerItem[currentItem]) {
+            lowestPricePerItem[currentItem] = price;
+          }
+          summaryData[response.request_formsly_id] +=
+            price;
+        } else if (
+          response.field_name === "Payment Terms"
+        ) {
+          summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
+            if (request.quotation_id === response.request_response_request_id)
+              return {
+                ...request,
+                payment_terms: JSON.parse(response.request_response),
+              };
+            else return request;
+          });
+        } else if (response.field_name === "Lead Time") {
+          summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
+            if (request.quotation_id === response.request_response_request_id)
+              return { ...request, lead_time: Number(response.request_response) };
+            else return request;
+          });
+        } else if (response.field_name === "Quantity") {
+          canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
+            Number(response.request_response);
+        } else if (
+          additionalChargeFields.includes(
+            response.field_name
+          )
+        ) {
+          const price = Number(response.request_response);
+          summaryData[response.request_formsly_id] +=
+            price;
+          tempAdditionalCharge += price;
+        }
+      });
+
+      requestAdditionalCharge[
+        request[0].request_formsly_id
+      ] = tempAdditionalCharge;
+      if (tempAdditionalCharge < lowestAdditionalCharge) {
+        lowestAdditionalCharge = tempAdditionalCharge;
+      }
+    });
+
+    const sortedQuotation = Object.entries(summaryData)
+      .sort(([, a], [, b]) => a - b)
+      .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+    const recommendedQuotationId = Object.keys(sortedQuotation)[0];
+    const request_id = canvassRequest.find(
+      (request) => request.request_formsly_id === recommendedQuotationId
+    )?.request_id;
+
+    returnData = {
+      canvassData,
+      lowestPricePerItem,
+      summaryData,
+      summaryAdditionalDetails,
+      lowestQuotation: {
+        id: recommendedQuotationId,
+        request_id: request_id,
+        value: sortedQuotation[recommendedQuotationId],
+      },
+      requestAdditionalCharge,
+      lowestAdditionalCharge,
+    };
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- END: Canvass page on load
+
+-- Start: Form page on load
+
+CREATE OR REPLACE FUNCTION form_page_on_load(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      limit
+    } = input_data;
+
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+
+    const formList = plv8.execute(
+      `
+        SELECT 
+          form_table.*, 
+          team_member_table.*,
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_avatar
+        FROM form_table 
+        INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE
+          team_member_team_id = '${teamId}'
+          AND form_is_disabled = false
+          AND form_app = 'REQUEST'
+        LIMIT ${limit}
+      `);
+
+    const formListCount = plv8.execute(
+      `
+        SELECT COUNT(*)
+        FROM form_table 
+        INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE
+          team_member_team_id = '${teamId}'
+          AND form_is_disabled = false
+          AND form_app = 'REQUEST'
+        LIMIT ${limit}
+      `);
+
+    const teamMemberList = plv8.execute(
+      `
+        SELECT
+          team_member_id,
+          team_member_role,
+          user_id,
+          user_first_name,
+          user_last_name
+        FROM team_member_table
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE
+          team_member_team_id = '${teamId}'
+          AND team_member_is_disabled = false
+      `
+    );
+
+    returnData = {
+      formList: formList.map(form => {
+        return {
+          form_app: form.form_app,
+          form_date_created: form.form_date_created,
+          form_description: form.form_description,
+          form_id: form.form_id,
+          form_is_disabled: form.form_is_disabled,
+          form_is_for_every_member: form.form_is_for_every_member,
+          form_is_formsly_form: form.form_is_formsly_form,
+          form_is_hidden: form.form_is_hidden,
+          form_is_signature_required: form.form_is_signature_required,
+          form_name: form.form_name,
+          form_team_member_id: form.form_team_member_id,
+          form_team_member: {
+            team_member_date_created: form.team_member_date_created,
+            team_member_id: form.team_member_id,
+            team_member_is_disabled: form.team_member_is_disabled,
+            team_member_role: form.team_member_role,
+            team_member_team_id: form.team_member_team_id,
+            team_member_user_id: form.team_member_user_id,
+            team_member_user: {
+              user_id: form.user_id,
+              user_first_name: form.user_first_name,
+              user_last_name: form.user_last_name,
+              user_avatar: form.user_avatar,
+            }
+          }
+        }
+      }),
+      formListCount: Number(`${formListCount}`),
+      teamMemberList: teamMemberList.map(teamMember => {
+        return {
+          team_member_id: teamMember.team_member_id,
+          team_member_role: teamMember.team_member_role,
+          team_member_user: {
+            user_id: teamMember.user_id,
+            user_first_name: teamMember.user_first_name,
+            user_last_name: teamMember.user_last_name,
+          }
+        }
+      }),
+      teamId
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- END: Form page on load
+
 ---------- End: FUNCTIONS
 
 

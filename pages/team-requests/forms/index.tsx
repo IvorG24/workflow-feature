@@ -1,11 +1,7 @@
-import {
-  getAllTeamMembers,
-  getFormListWithFilter,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestFormListPage from "@/components/RequestFormListPage/RequestFormListPage";
-import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/constant";
+import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
+import { DEFAULT_FORM_LIST_LIMIT, FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -13,24 +9,19 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
   async ({ supabaseClient, user }) => {
     try {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
+      const { data, error } = await supabaseClient.rpc("form_page_on_load", {
+        input_data: {
+          userId: user.id,
+          limit: DEFAULT_FORM_LIST_LIMIT,
+        },
       });
-      if (!teamId) throw new Error("No team found");
-
-      const { data, count } = await getFormListWithFilter(supabaseClient, {
-        teamId: teamId,
-        app: "REQUEST",
-        page: 1,
-        limit: DEFAULT_FORM_LIST_LIMIT,
-      });
-
-      const teamMemberList = await getAllTeamMembers(supabaseClient, {
-        teamId,
-      });
-
+      if (error) throw error;
+      const formattedData = data as unknown as Props;
       return {
-        props: { formList: data, formListCount: count, teamMemberList, teamId },
+        props: {
+          ...formattedData,
+          formList: sortFormList(formattedData.formList, FORMSLY_FORM_ORDER),
+        },
       };
     } catch (error) {
       console.error(error);
