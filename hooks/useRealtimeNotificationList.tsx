@@ -37,6 +37,7 @@ const useRealtimeNotificationList = () => {
           const unreadNotification = updatedNotificationList.filter(
             (notification) => !notification.notification_is_read
           );
+          console.log(unreadNotification);
           setUnreadNotification(unreadNotification.length);
         }
       )

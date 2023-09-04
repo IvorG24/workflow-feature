@@ -55,7 +55,6 @@ const Notification = () => {
   const notificationList = useRealtimeNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
   const activeApp = useActiveApp();
-
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
 

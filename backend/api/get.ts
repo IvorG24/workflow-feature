@@ -13,15 +13,20 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  NotificationOnLoad,
   NotificationTableRow,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
+  RequestListOnLoad,
   RequestProjectSignerType,
   RequestResponseTableRow,
   RequestWithResponseType,
+  SSOTOnLoad,
+  TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
+  TeamOnLoad,
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -1394,9 +1399,7 @@ export const getFormIDForRequsition = async (
         ) 
       `
     )
-    .or(
-      "form_name.eq.Quotation, form_name.eq.Cheque Reference, form_name.eq.Sourced Item"
-    )
+    .or("form_name.eq.Quotation, form_name.eq.Sourced Item")
     .eq("form_team_member.team_member_team_id", teamId)
     .eq("form_team_group.team_group.team_group_member.team_member_id", memberId)
     .eq("form_is_formsly_form", true);
@@ -1551,7 +1554,6 @@ export const getFormslyForwardLinkFormId = async (
     "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
     "Release Order": [] as ConnectedRequestItemType[],
     "Transfer Receipt": [] as ConnectedRequestItemType[],
-    "Cheque Reference": [] as ConnectedRequestItemType[],
     "Release Quantity": [] as ConnectedRequestItemType[],
   };
 
@@ -1578,9 +1580,6 @@ export const getFormslyForwardLinkFormId = async (
         break;
       case "Transfer Receipt":
         requestList["Transfer Receipt"].push(newFormattedData);
-        break;
-      case "Cheque Reference":
-        requestList["Cheque Reference"].push(newFormattedData);
         break;
       case "Release Quantity":
         requestList["Release Quantity"].push(newFormattedData);
@@ -2335,6 +2334,19 @@ export const getSupplier = async (
   });
 
   return supplierList;
+};
+
+// Get team member on load
+export const getTeamMemberOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_team_member_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as TeamMemberOnLoad;
 };
 
 // Get team member
@@ -3169,4 +3181,66 @@ export const getMemberUserData = async (
   } else {
     return null;
   }
+};
+
+// Get Team on load
+export const getTeamOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { userId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_team_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as TeamOnLoad;
+};
+
+// Get notification on load
+export const getNotificationOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    app: AppType;
+    page: number;
+    limit: number;
+    unreadOnly: boolean;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_notification_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as NotificationOnLoad;
+};
+
+// Get notification on load
+export const getSSOTOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ssot_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as SSOTOnLoad;
+};
+
+// Get request list on load
+export const getRequestListOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_request_list_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as RequestListOnLoad;
 };

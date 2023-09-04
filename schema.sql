@@ -950,7 +950,7 @@ $$ LANGUAGE plv8;
 -- Start: Get user's active team id
 
 CREATE OR REPLACE FUNCTION get_user_active_team_id(
-    user_id TEXT
+  user_id TEXT
 )
 RETURNS TEXT as $$
   let active_team_id;
@@ -2143,6 +2143,504 @@ $$ LANGUAGE plv8;
 
 -- END: Update multiple admin
 
+-- Start: Request page on load
+
+CREATE OR REPLACE FUNCTION request_page_on_load(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      requestId,
+      userId,
+      formName,
+      formId,
+      projectId
+    } = input_data;
+ 
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    if (!teamId) throw new Error("No team found");
+
+    const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${userId}' AND team_member_team_id='${teamId}'`)[0];
+
+    const connectedRequestIDList = plv8.execute(
+      `
+        SELECT 
+          request_response_request_id,
+          request_formsly_id,
+          form_name
+        FROM request_response_table 
+        INNER JOIN request_table ON request_id=request_response_request_id
+        INNER JOIN form_table ON form_id=request_form_id 
+        WHERE 
+          request_response='"${requestId}"' 
+          AND request_status='APPROVED'
+      `
+    );
+
+    const requestList = {
+      Requisition: [],
+      "Sourced Item": [],
+      "Quotation": [],
+      "Receiving Inspecting Report": [],
+      "Release Order": [],
+      "Transfer Receipt": [],
+      "Release Quantity": [],
+    };
+
+    connectedRequestIDList.forEach((response) => {
+      const newFormattedData = {
+        request_id: response.request_response_request_id,
+        request_formsly_id: response.request_formsly_id,
+      };
+      switch (response.form_name) {
+        case "Requisition":
+          requestList["Requisition"].push(newFormattedData);
+          break;
+        case "Sourced Item":
+          requestList["Sourced Item"].push(newFormattedData);
+          break;
+        case "Quotation":
+          requestList["Quotation"].push(newFormattedData);
+          break;
+        case "Receiving Inspecting Report":
+          requestList["Receiving Inspecting Report"].push(newFormattedData);
+          break;
+        case "Release Order":
+          requestList["Release Order"].push(newFormattedData);
+          break;
+        case "Transfer Receipt":
+          requestList["Transfer Receipt"].push(newFormattedData);
+          break;
+        case "Release Quantity":
+          requestList["Release Quantity"].push(newFormattedData);
+          break;
+      }
+    });
+    
+    if (formName === "Requisition") {
+      const connectedForm = [];
+      const formList = plv8.execute(
+        `SELECT 
+          form_id, 
+          form_name, 
+          form_is_for_every_member,
+          form_team_member_id
+        FROM form_table
+        INNER JOIN team_member_table
+        ON team_member_id = form_team_member_id
+       WHERE 
+        form_is_formsly_form=true
+        AND team_member_team_id='${teamId}'
+        AND (
+          form_name='Quotation' 
+          OR form_name='Sourced Item'
+        )
+      `);
+
+      for(const form of formList){
+        const formTeamGroupList = plv8.execute(
+          `
+            SELECT team_group_id 
+            FROM form_team_group_table 
+            WHERE form_id = '${form.form_id}'
+          `
+        );
+        const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+        const groupMember = plv8.execute(
+          `
+            SELECT team_group_member_id 
+            FROM team_group_member_table 
+            WHERE team_member_id = '${teamMember.team_member_id}' 
+            AND team_group_id IN (${teamGroupIdList})
+          `);
+
+        connectedForm.push({
+          form_id: form.form_id,
+          form_name: form.form_name,
+          form_is_for_every_member: form.form_is_for_every_member,
+          form_is_member: Boolean(groupMember.length),
+        })
+      }
+
+      const canvassData = plv8.execute(
+        `
+          SELECT 
+            request_id,
+            request_formsly_id,
+            request_status,
+            form_name
+          FROM request_response_table
+          INNER JOIN request_table ON request_response_request_id = request_id
+          INNER JOIN form_table ON request_form_id = form_id
+          WHERE
+            request_response = '"${requestId}"'
+            AND request_status = 'PENDING'
+            AND form_name = 'Quotation'
+        `
+      );
+
+      const canvassRequest = canvassData.map(request => request.request_id);
+
+      returnData =  {
+        connectedForm,
+        connectedRequestIDList: requestList,
+        canvassRequest
+      };
+    } else if (formName === "Quotation") {
+      const form = plv8.execute(
+        `SELECT 
+          form_id, 
+          form_is_for_every_member,
+          form_team_member_id
+        FROM form_table
+        INNER JOIN team_member_table
+        ON team_member_id = form_team_member_id
+        WHERE 
+          form_is_formsly_form=true
+          AND team_member_team_id='${teamId}'
+          AND form_name='Receiving Inspecting Report'
+      `)[0];
+
+      const formTeamGroupList = plv8.execute(
+        `
+          SELECT team_group_id 
+          FROM form_team_group_table 
+          WHERE form_id = '${form.form_id}'
+        `
+      );
+      const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+      const groupMember = plv8.execute(
+        `
+          SELECT team_group_member_id 
+          FROM team_group_member_table 
+          WHERE team_member_id = '${teamMember.team_member_id}' 
+          AND team_group_id IN (${teamGroupIdList})
+        `);
+
+      const connectedFormIdAndGroup = {
+        formId: form.form_id,
+        formName: 'Receiving Inspecting Report',
+        formIsForEveryone: form.form_is_for_every_member,
+        formIsMember: Boolean(groupMember.length),
+      };
+    
+      returnData =  {
+        connectedFormIdAndGroup,
+        connectedRequestIDList: requestList
+      };
+    } else if (formName === "Sourced Item") {
+      const form = plv8.execute(
+        `SELECT 
+          form_id, 
+          form_is_for_every_member,
+          form_team_member_id
+        FROM form_table
+        INNER JOIN team_member_table
+        ON team_member_id = form_team_member_id
+        WHERE 
+          form_is_formsly_form=true
+          AND team_member_team_id='${teamId}'
+          AND form_name='Release Order'
+      `)[0];
+
+      const formTeamGroupList = plv8.execute(
+        `
+          SELECT team_group_id 
+          FROM form_team_group_table 
+          WHERE form_id = '${form.form_id}'
+        `
+      );
+      const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+      const groupMember = plv8.execute(
+        `
+          SELECT team_group_member_id 
+          FROM team_group_member_table 
+          WHERE team_member_id = '${teamMember.team_member_id}' 
+          AND team_group_id IN (${teamGroupIdList})
+        `);
+
+      const connectedFormIdAndGroup = {
+        formId: form.form_id,
+        formName: 'Release Order',
+        formIsForEveryone: form.form_is_for_every_member,
+        formIsMember: Boolean(groupMember.length),
+      };
+
+      const signerData = plv8.execute(
+        `
+          SELECT signer_id 
+          FROM signer_table 
+          WHERE 
+            signer_form_id='${formId}' 
+            AND signer_is_disabled=false
+            AND (
+              signer_team_project_id='${projectId}'
+              OR signer_team_project_id IS NULL
+            ) 
+        `
+      );
+
+      const requestSignerData = plv8.execute(
+        `
+          SELECT 
+            request_signer_table.*,
+            signer_table.*,
+            team_project_name
+          FROM request_signer_table
+          INNER JOIN signer_table ON signer_id = request_signer_signer_id
+          INNER JOIN team_project_table ON team_project_id = signer_team_project_id
+          WHERE
+            request_signer_request_id='${requestId}'
+            AND signer_is_disabled=false
+        `
+      );
+    
+      returnData =  {
+        connectedFormIdAndGroup,
+        connectedRequestIDList: requestList,
+        signerData,
+        requestSignerData,
+      };
+    } else if (formName === "Release Order") {
+      const form = plv8.execute(
+        `SELECT 
+          form_id, 
+          form_is_for_every_member,
+          form_team_member_id
+        FROM form_table
+        INNER JOIN team_member_table
+        ON team_member_id = form_team_member_id
+        WHERE 
+          form_is_formsly_form=true
+          AND team_member_team_id='${teamId}'
+          AND form_name='Transfer Receipt'
+      `)[0];
+
+      const formTeamGroupList = plv8.execute(
+        `
+          SELECT team_group_id 
+          FROM form_team_group_table 
+          WHERE form_id = '${form.form_id}'
+        `
+      );
+      const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+      const groupMember = plv8.execute(
+        `
+          SELECT team_group_member_id 
+          FROM team_group_member_table 
+          WHERE team_member_id = '${teamMember.team_member_id}' 
+          AND team_group_id IN (${teamGroupIdList})
+        `);
+
+      const connectedFormIdAndGroup = {
+        formId: form.form_id,
+        formName: 'Transfer Receipt',
+        formIsForEveryone: form.form_is_for_every_member,
+        formIsMember: Boolean(groupMember.length),
+      };
+    
+      returnData =  {
+        connectedFormIdAndGroup,
+        connectedRequestIDList: requestList
+      };
+    } else{
+      returnData =  {
+        connectedRequestIDList: requestList
+      };
+    }
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- END: Request page on load
+
+-- Start: Get team member on load
+
+CREATE FUNCTION get_team_member_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let team_member_data;
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId
+    } = input_data;
+    
+    const member = plv8.execute(`SELECT tmt.* , ( SELECT row_to_json(usert) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE team_member_id='${teamMemberId}';`)[0];
+
+    const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_group_member_table tgmt2 INNER JOIN team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
+
+    let groupList = []
+    let groupCount = 0
+    if(memberGroupToSelect.length > 0){
+      const memberGroupToSelectArray = memberGroupToSelect.map(group=>`'${group.team_group_member_id}'`).join(",")
+
+      groupList = plv8.execute(`SELECT tgmt.team_group_member_id , ( SELECT row_to_json(tgt) FROM team_group_table tgt WHERE tgt.team_group_id = tgmt.team_group_id) AS team_group FROM team_group_member_table tgmt WHERE tgmt.team_member_id='${teamMemberId}' AND tgmt.team_group_member_id IN (${memberGroupToSelectArray});`);
+
+      groupCount = plv8.execute(`SELECT COUNT(*) FROM team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+    }
+    
+    const memberProjectToSelect = plv8.execute(`SELECT tpmt2.team_project_member_id, tpt2.team_project_name FROM team_project_member_table tpmt2 INNER JOIN team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id WHERE tpmt2.team_member_id='${teamMemberId}' ORDER BY tpt2.team_project_name ASC LIMIT 10`);
+
+    let projectList = []
+    let projectCount = 0
+    if(memberProjectToSelect.length > 0){
+      const memberProjectToSelectArray = memberProjectToSelect.map(project=>`'${project.team_project_member_id}'`).join(",")
+
+      projectList = plv8.execute(`SELECT tpmt.team_project_member_id , ( SELECT row_to_json(tpt) FROM team_project_table tpt WHERE tpt.team_project_id = tpmt.team_project_id) AS team_project FROM team_project_member_table tpmt WHERE tpmt.team_member_id='${teamMemberId}' AND tpmt.team_project_member_id IN (${memberProjectToSelectArray});`);
+
+      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+    }
+
+    team_member_data = {member: member, groupList, groupCount:`${groupCount}`, projectList, projectCount: `${projectCount}`}
+ });
+ return team_member_data;
+$$ LANGUAGE plv8;
+
+-- END: Get team member on load
+
+-- START: Get team on load
+
+CREATE FUNCTION get_team_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let team_data;
+  plv8.subtransaction(function(){
+    const {
+      userId
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    
+    const team = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
+
+    const teamMembers = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) AS team_member_user  FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id = usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false AND usert.user_is_disabled=false;`);
+
+    const teamGroups = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
+
+    const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
+
+    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_date_created DESC LIMIT 10;`);
+
+    const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
+
+    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`}
+ });
+ return team_data;
+$$ LANGUAGE plv8;
+
+-- END: Get team on load
+
+-- START: Get notifications on load
+
+CREATE FUNCTION get_notification_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let notification_data;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      app,
+      page,
+      limit,
+      unreadOnly
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+
+    const start = (page - 1) * limit;
+
+    let team_query = '';
+    let unread_query = '';
+    let last_query = ` ORDER BY notification_date_created DESC LIMIT '${limit}' OFFSET '${start}'`;
+
+    if(teamId) team_query = `OR notification_team_id='${teamId}'`;
+    if(unreadOnly) unread_query = 'AND notification_is_read=false';
+
+    const query = (toSelect) => `SELECT ${toSelect} FROM notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ${unread_query}`
+
+    const notificationList = plv8.execute(`${query('*')} ${last_query};`);
+    const totalNotificationCount = plv8.execute(`${query('COUNT(*)')};`)[0].count;
+    
+    const tab = unreadOnly ? "unread" : "all";
+    notification_data = {notificationList, totalNotificationCount: parseInt(totalNotificationCount), tab}
+ });
+ return notification_data;
+$$ LANGUAGE plv8;
+
+-- END: Get notifications on load
+
+-- START: Get ssot on load
+
+CREATE FUNCTION get_ssot_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let ssot_data;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      app,
+      page,
+      limit,
+      unreadOnly
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+
+    const ssotData = plv8.execute(`SELECT get_ssot('{ "activeTeam": "${teamId}", "pageNumber": 1, "rowLimit": 10, "search": "", "requisitionFilter": [], "requisitionFilterCount": 0, "supplierList": [] }');`)[0].get_ssot;
+
+    const itemList = plv8.execute(`SELECT * FROM item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
+
+    const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
+    
+    const itemNameList = itemList.map(item=>item.item_general_name);
+    const projectNameList = projectList.map(project=>project.team_project_name);
+    
+    ssot_data = {data: ssotData, itemNameList, projectNameList}
+ });
+ return ssot_data;
+$$ LANGUAGE plv8;
+
+-- END: Get ssot on load
+
+-- END: Get request list on load
+
+CREATE FUNCTION get_request_list_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let request_data;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    
+    const teamMemberId = plv8.execute(`SELECT team_member_id FROM team_member_table WHERE team_member_user_id='${userId}' AND team_member_team_id='${teamId}';`)[0].team_member_id;
+
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+
+    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
+
+    const formListData = plv8.execute(`SELECT formt.form_name, formt.form_id FROM form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_disabled=false AND formt.form_app='REQUEST';`);
+
+    const formList = formListData.map(form=>({ label: form.form_name, value: form.form_id }));
+    
+    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "form":"", "status":"", "search":"", "sort":"ASC"}');`)[0].fetch_request_list;
+
+    request_data = {teamMemberId,teamMemberList,isFormslyTeam, formList, requestList: requestList.data, requestListCount: requestList.count}
+ });
+ return request_data;
+$$ LANGUAGE plv8;
+
+-- END: Get request list on load
 
 ---------- End: FUNCTIONS
 
