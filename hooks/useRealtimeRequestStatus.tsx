@@ -1,6 +1,7 @@
 import { Database } from "@/utils/database";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import useRouteChange from "./useRouteChange";
 
 const useRealtimeRequestStatus = (
   supabaseClient: SupabaseClient<Database>,
@@ -8,6 +9,10 @@ const useRealtimeRequestStatus = (
 ) => {
   const { requestId, initialRequestStatus } = params;
   const [requestStatus, setRequestStatus] = useState(initialRequestStatus);
+
+  useRouteChange(() => {
+    setRequestStatus(initialRequestStatus);
+  });
 
   useEffect(() => {
     const channel = supabaseClient

@@ -1,3 +1,8 @@
+import useRealtimeNotificationList from "@/hooks/useRealtimeNotificationList";
+import {
+  useNotificationActions,
+  useUnreadNotificationCount,
+} from "@/stores/useNotificationStore";
 import { useActiveApp } from "@/stores/useTeamStore";
 import {
   Box,
@@ -11,7 +16,7 @@ import {
 import { lowerCase } from "lodash";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { MouseEventHandler } from "react";
+import { MouseEventHandler, useEffect } from "react";
 import HeaderMenu from "./HeaderMenu";
 
 type HeaderProps = {
@@ -23,6 +28,16 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   const theme = useMantineTheme();
   const activeApp = useActiveApp();
   const router = useRouter();
+
+  const notificationList = useRealtimeNotificationList();
+  const unreadNotificationCount = useUnreadNotificationCount();
+  const { setNotificationList, setUnreadNotification } =
+    useNotificationActions();
+
+  useEffect(() => {
+    setNotificationList(notificationList);
+    setUnreadNotification(unreadNotificationCount);
+  }, [notificationList, unreadNotificationCount]);
 
   return (
     <MantineHeader height={{ base: 50, md: 70 }} p="md">

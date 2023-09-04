@@ -3,6 +3,7 @@ import { RequestCommentType } from "@/components/RequestPage/RequestCommentList"
 import { Database } from "@/utils/database";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import useRouteChange from "./useRouteChange";
 
 const useRealtimeRequestCommentList = (
   supabaseClient: SupabaseClient<Database>,
@@ -10,6 +11,10 @@ const useRealtimeRequestCommentList = (
 ) => {
   const { requestId, initialCommentList } = params;
   const [commentList, setCommentList] = useState(initialCommentList);
+
+  useRouteChange(() => {
+    setCommentList(initialCommentList);
+  });
 
   useEffect(() => {
     const channel = supabaseClient

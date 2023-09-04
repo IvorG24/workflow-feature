@@ -1,7 +1,7 @@
 import { updateNotificationStatus } from "@/backend/api/update";
-import useRealtimeNotificationList from "@/hooks/useRealtimeNotificationList";
 import {
   useNotificationActions,
+  useNotificationList,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
 import { useActiveApp } from "@/stores/useTeamStore";
@@ -29,7 +29,7 @@ import {
 } from "@tabler/icons-react";
 import { lowerCase } from "lodash";
 import moment from "moment";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 const useStyles = createStyles((theme) => ({
   notification: {
@@ -52,7 +52,7 @@ const Notification = () => {
   const router = useRouter();
   const { classes } = useStyles();
 
-  const notificationList = useRealtimeNotificationList();
+  const notificationList = useNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
   const activeApp = useActiveApp();
   const { setNotificationList, setUnreadNotification } =
@@ -99,7 +99,7 @@ const Notification = () => {
                     notificationId: notification.notification_id,
                   });
                 }
-                await router.push(`${notification.notification_redirect_url}`);
+                router.push(`${notification.notification_redirect_url}`);
               }}
               align="center"
               gap="xs"

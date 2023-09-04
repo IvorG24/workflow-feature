@@ -2,6 +2,7 @@ import { RequestSignerType } from "@/components/RequestPage/RequestSignerSection
 import { Database } from "@/utils/database";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import useRouteChange from "./useRouteChange";
 
 const useRealtimeRequestSignerList = (
   supabaseClient: SupabaseClient<Database>,
@@ -11,6 +12,10 @@ const useRealtimeRequestSignerList = (
   const [requestSignerList, setRequestSignerList] = useState(
     initialRequestSignerList
   );
+
+  useRouteChange(() => {
+    setRequestSignerList(initialRequestSignerList);
+  });
 
   useEffect(() => {
     const channel = supabaseClient
