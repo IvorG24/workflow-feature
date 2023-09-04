@@ -147,7 +147,6 @@ const NotificationPage = ({
 
   useEffect(() => {
     if (router.query.page === "1") {
-      console.log(router.query.page);
       setPageNotificationList(
         storeNotificationList.slice(0, DEFAULT_NOTIFICATION_LIST_LIMIT)
       );

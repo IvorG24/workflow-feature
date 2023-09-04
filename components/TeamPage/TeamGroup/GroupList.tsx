@@ -19,7 +19,7 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
+import { lowerCase, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -239,8 +239,15 @@ const GroupList = ({
           if (payload.eventType === "INSERT") {
             const updatedGroupList = [payload.new, ...groupList];
             setGroupList(updatedGroupList as TeamGroupTableRow[]);
-            setSearchResult(updatedGroupList as TeamGroupTableRow[]);
             setGroupCount(updatedGroupList.length);
+
+            const searchIncludesNewGroup = lowerCase(
+              payload.new.team_group_name
+            ).includes(lowerCase(search));
+
+            if (searchIncludesNewGroup) {
+              setSearchResult(updatedGroupList as TeamGroupTableRow[]);
+            }
           }
         }
       )
@@ -249,7 +256,7 @@ const GroupList = ({
     return () => {
       supabaseClient.removeChannel(channel);
     };
-  }, [supabaseClient, activeTeam.team_id, groupList]);
+  }, [supabaseClient, activeTeam.team_id, groupList, search]);
 
   return (
     <Box>

@@ -19,7 +19,7 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
+import { lowerCase, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -249,15 +249,29 @@ const ProjectList = ({
                   project.team_project_id !== payload.new.team_project_id
               );
               setProjectList(updatedProjectList);
-              setSearchResult(updatedProjectList);
+
+              setSearchResult(
+                updatedProjectList.filter((project) =>
+                  lowerCase(project.team_project_name).includes(
+                    lowerCase(search)
+                  )
+                )
+              );
             }
           }
 
           if (payload.eventType === "INSERT") {
             const updatedProjectList = [payload.new, ...projectList];
             setProjectList(updatedProjectList as TeamProjectTableRow[]);
-            setSearchResult(updatedProjectList as TeamProjectTableRow[]);
             setProjectCount(updatedProjectList.length);
+
+            const searchIncludesNewProject = lowerCase(
+              payload.new.team_project_name
+            ).includes(lowerCase(search));
+
+            if (searchIncludesNewProject) {
+              setSearchResult(updatedProjectList as TeamProjectTableRow[]);
+            }
           }
         }
       )

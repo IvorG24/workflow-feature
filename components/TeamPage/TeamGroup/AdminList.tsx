@@ -2,6 +2,7 @@ import { getTeamAdminListWithFilter } from "@/backend/api/get";
 import { updateAdminRole } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
+import { TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -41,6 +42,7 @@ type Props = {
   setIsAddingAdmin: Dispatch<SetStateAction<boolean>>;
   adminListCount: number;
   setAdminListCount: Dispatch<SetStateAction<number>>;
+  teamMemberList: TeamMemberType[];
 };
 
 const AdminList = ({
@@ -50,6 +52,7 @@ const AdminList = ({
   setIsAddingAdmin,
   adminListCount,
   setAdminListCount,
+  teamMemberList,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
@@ -63,6 +66,16 @@ const AdminList = ({
   useEffect(() => {
     handleFetch("", 1);
   }, []);
+
+  useEffect(() => {
+    const updatedAdminList = teamMemberList.filter(
+      (member) => member.team_member_role === "ADMIN"
+    );
+
+    if (!search) {
+      setAdminList(updatedAdminList);
+    }
+  }, [setAdminList, teamMemberList, search]);
 
   const columnData: DataTableColumn<TeamAdminType>[] = [
     {
