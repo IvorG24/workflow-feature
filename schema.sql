@@ -2153,93 +2153,163 @@ RETURNS JSON as $$
   plv8.subtransaction(function(){
     const {
       requestId,
-      userId,
-      formName,
-      formId,
-      projectId
+      userId
     } = input_data;
- 
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-    if (!teamId) throw new Error("No team found");
 
-    const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${userId}' AND team_member_team_id='${teamId}'`)[0];
+    const request = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
+    if(!request) throw new Error('404');
 
-    const connectedRequestIDList = plv8.execute(
-      `
-        SELECT 
-          request_response_request_id,
-          request_formsly_id,
-          form_name
-        FROM request_response_table 
-        INNER JOIN request_table ON request_id=request_response_request_id
-        INNER JOIN form_table ON form_id=request_form_id 
-        WHERE 
-          request_response='"${requestId}"' 
-          AND request_status='APPROVED'
-      `
-    );
-
-    const requestList = {
-      Requisition: [],
-      "Sourced Item": [],
-      "Quotation": [],
-      "Receiving Inspecting Report": [],
-      "Release Order": [],
-      "Transfer Receipt": [],
-      "Release Quantity": [],
-    };
-
-    connectedRequestIDList.forEach((response) => {
-      const newFormattedData = {
-        request_id: response.request_response_request_id,
-        request_formsly_id: response.request_formsly_id,
+    if (!request.request_form.form_is_formsly_form) {
+      returnData = {
+        request
       };
-      switch (response.form_name) {
-        case "Requisition":
-          requestList["Requisition"].push(newFormattedData);
-          break;
-        case "Sourced Item":
-          requestList["Sourced Item"].push(newFormattedData);
-          break;
-        case "Quotation":
-          requestList["Quotation"].push(newFormattedData);
-          break;
-        case "Receiving Inspecting Report":
-          requestList["Receiving Inspecting Report"].push(newFormattedData);
-          break;
-        case "Release Order":
-          requestList["Release Order"].push(newFormattedData);
-          break;
-        case "Transfer Receipt":
-          requestList["Transfer Receipt"].push(newFormattedData);
-          break;
-        case "Release Quantity":
-          requestList["Release Quantity"].push(newFormattedData);
-          break;
-      }
-    });
-    
-    if (formName === "Requisition") {
-      const connectedForm = [];
-      const formList = plv8.execute(
-        `SELECT 
-          form_id, 
-          form_name, 
-          form_is_for_every_member,
-          form_team_member_id
-        FROM form_table
-        INNER JOIN team_member_table
-        ON team_member_id = form_team_member_id
-       WHERE 
-        form_is_formsly_form=true
-        AND team_member_team_id='${teamId}'
-        AND (
-          form_name='Quotation' 
-          OR form_name='Sourced Item'
-        )
-      `);
+      return;
+    } else {
+      const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+      if (!teamId) throw new Error("No team found");
 
-      for(const form of formList){
+      const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${userId}' AND team_member_team_id='${teamId}'`)[0];
+
+      const connectedRequestIDList = plv8.execute(
+        `
+          SELECT 
+            request_response_request_id,
+            request_formsly_id,
+            form_name
+          FROM request_response_table 
+          INNER JOIN request_table ON request_id=request_response_request_id
+          INNER JOIN form_table ON form_id=request_form_id 
+          WHERE 
+            request_response='"${requestId}"' 
+            AND request_status='APPROVED'
+        `
+      );
+
+      const requestList = {
+        Requisition: [],
+        "Sourced Item": [],
+        "Quotation": [],
+        "Receiving Inspecting Report": [],
+        "Release Order": [],
+        "Transfer Receipt": [],
+        "Release Quantity": [],
+      };
+
+      connectedRequestIDList.forEach((response) => {
+        const newFormattedData = {
+          request_id: response.request_response_request_id,
+          request_formsly_id: response.request_formsly_id,
+        };
+        switch (response.form_name) {
+          case "Requisition":
+            requestList["Requisition"].push(newFormattedData);
+            break;
+          case "Sourced Item":
+            requestList["Sourced Item"].push(newFormattedData);
+            break;
+          case "Quotation":
+            requestList["Quotation"].push(newFormattedData);
+            break;
+          case "Receiving Inspecting Report":
+            requestList["Receiving Inspecting Report"].push(newFormattedData);
+            break;
+          case "Release Order":
+            requestList["Release Order"].push(newFormattedData);
+            break;
+          case "Transfer Receipt":
+            requestList["Transfer Receipt"].push(newFormattedData);
+            break;
+          case "Release Quantity":
+            requestList["Release Quantity"].push(newFormattedData);
+            break;
+        }
+      });
+      
+      if (request.request_form.form_name === "Requisition") {
+        const connectedForm = [];
+        const formList = plv8.execute(
+          `SELECT 
+            form_id, 
+            form_name, 
+            form_is_for_every_member,
+            form_team_member_id
+          FROM form_table
+          INNER JOIN team_member_table
+          ON team_member_id = form_team_member_id
+        WHERE 
+          form_is_formsly_form=true
+          AND team_member_team_id='${teamId}'
+          AND (
+            form_name='Quotation' 
+            OR form_name='Sourced Item'
+          )
+        `);
+
+        for(const form of formList){
+          const formTeamGroupList = plv8.execute(
+            `
+              SELECT team_group_id 
+              FROM form_team_group_table 
+              WHERE form_id = '${form.form_id}'
+            `
+          );
+          const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+          const groupMember = plv8.execute(
+            `
+              SELECT team_group_member_id 
+              FROM team_group_member_table 
+              WHERE team_member_id = '${teamMember.team_member_id}' 
+              AND team_group_id IN (${teamGroupIdList})
+            `);
+
+          connectedForm.push({
+            form_id: form.form_id,
+            form_name: form.form_name,
+            form_is_for_every_member: form.form_is_for_every_member,
+            form_is_member: Boolean(groupMember.length),
+          })
+        }
+
+        const canvassData = plv8.execute(
+          `
+            SELECT 
+              request_id,
+              request_formsly_id,
+              request_status,
+              form_name
+            FROM request_response_table
+            INNER JOIN request_table ON request_response_request_id = request_id
+            INNER JOIN form_table ON request_form_id = form_id
+            WHERE
+              request_response = '"${requestId}"'
+              AND request_status = 'PENDING'
+              AND form_name = 'Quotation'
+          `
+        );
+
+        const canvassRequest = canvassData.map(request => request.request_id);
+
+        returnData =  {
+          connectedForm,
+          connectedRequestIDList: requestList,
+          canvassRequest,
+          request
+        };
+      } else if (request.request_form.form_name === "Quotation") {
+        const form = plv8.execute(
+          `SELECT 
+            form_id, 
+            form_is_for_every_member,
+            form_team_member_id
+          FROM form_table
+          INNER JOIN team_member_table
+          ON team_member_id = form_team_member_id
+          WHERE 
+            form_is_formsly_form=true
+            AND team_member_team_id='${teamId}'
+            AND form_name='Receiving Inspecting Report'
+        `)[0];
+
         const formTeamGroupList = plv8.execute(
           `
             SELECT team_group_id 
@@ -2256,201 +2326,174 @@ RETURNS JSON as $$
             AND team_group_id IN (${teamGroupIdList})
           `);
 
-        connectedForm.push({
-          form_id: form.form_id,
-          form_name: form.form_name,
-          form_is_for_every_member: form.form_is_for_every_member,
-          form_is_member: Boolean(groupMember.length),
-        })
-      }
-
-      const canvassData = plv8.execute(
-        `
-          SELECT 
-            request_id,
-            request_formsly_id,
-            request_status,
-            form_name
-          FROM request_response_table
-          INNER JOIN request_table ON request_response_request_id = request_id
-          INNER JOIN form_table ON request_form_id = form_id
-          WHERE
-            request_response = '"${requestId}"'
-            AND request_status = 'PENDING'
-            AND form_name = 'Quotation'
-        `
-      );
-
-      const canvassRequest = canvassData.map(request => request.request_id);
-
-      returnData =  {
-        connectedForm,
-        connectedRequestIDList: requestList,
-        canvassRequest
-      };
-    } else if (formName === "Quotation") {
-      const form = plv8.execute(
-        `SELECT 
-          form_id, 
-          form_is_for_every_member,
-          form_team_member_id
-        FROM form_table
-        INNER JOIN team_member_table
-        ON team_member_id = form_team_member_id
-        WHERE 
-          form_is_formsly_form=true
-          AND team_member_team_id='${teamId}'
-          AND form_name='Receiving Inspecting Report'
-      `)[0];
-
-      const formTeamGroupList = plv8.execute(
-        `
-          SELECT team_group_id 
-          FROM form_team_group_table 
-          WHERE form_id = '${form.form_id}'
-        `
-      );
-      const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
-      const groupMember = plv8.execute(
-        `
-          SELECT team_group_member_id 
-          FROM team_group_member_table 
-          WHERE team_member_id = '${teamMember.team_member_id}' 
-          AND team_group_id IN (${teamGroupIdList})
-        `);
-
-      const connectedFormIdAndGroup = {
-        formId: form.form_id,
-        formName: 'Receiving Inspecting Report',
-        formIsForEveryone: form.form_is_for_every_member,
-        formIsMember: Boolean(groupMember.length),
-      };
-    
-      returnData =  {
-        connectedFormIdAndGroup,
-        connectedRequestIDList: requestList
-      };
-    } else if (formName === "Sourced Item") {
-      const form = plv8.execute(
-        `SELECT 
-          form_id, 
-          form_is_for_every_member,
-          form_team_member_id
-        FROM form_table
-        INNER JOIN team_member_table
-        ON team_member_id = form_team_member_id
-        WHERE 
-          form_is_formsly_form=true
-          AND team_member_team_id='${teamId}'
-          AND form_name='Release Order'
-      `)[0];
-
-      const formTeamGroupList = plv8.execute(
-        `
-          SELECT team_group_id 
-          FROM form_team_group_table 
-          WHERE form_id = '${form.form_id}'
-        `
-      );
-      const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
-      const groupMember = plv8.execute(
-        `
-          SELECT team_group_member_id 
-          FROM team_group_member_table 
-          WHERE team_member_id = '${teamMember.team_member_id}' 
-          AND team_group_id IN (${teamGroupIdList})
-        `);
-
-      const connectedFormIdAndGroup = {
-        formId: form.form_id,
-        formName: 'Release Order',
-        formIsForEveryone: form.form_is_for_every_member,
-        formIsMember: Boolean(groupMember.length),
-      };
-
-      const signerData = plv8.execute(
-        `
-          SELECT signer_id 
-          FROM signer_table 
+        const connectedFormIdAndGroup = {
+          formId: form.form_id,
+          formName: 'Receiving Inspecting Report',
+          formIsForEveryone: form.form_is_for_every_member,
+          formIsMember: Boolean(groupMember.length),
+        };
+      
+        returnData =  {
+          connectedFormIdAndGroup,
+          connectedRequestIDList: requestList,
+          request
+        };
+      } else if (request.request_form.form_name === "Sourced Item") {
+        const form = plv8.execute(
+          `SELECT 
+            form_id, 
+            form_is_for_every_member,
+            form_team_member_id
+          FROM form_table
+          INNER JOIN team_member_table
+          ON team_member_id = form_team_member_id
           WHERE 
-            signer_form_id='${formId}' 
-            AND signer_is_disabled=false
-            AND (
-              signer_team_project_id='${projectId}'
-              OR signer_team_project_id IS NULL
-            ) 
-        `
-      );
+            form_is_formsly_form=true
+            AND team_member_team_id='${teamId}'
+            AND form_name='Release Order'
+        `)[0];
 
-      const requestSignerData = plv8.execute(
-        `
-          SELECT 
-            request_signer_table.*,
-            signer_table.*,
-            team_project_name
-          FROM request_signer_table
-          INNER JOIN signer_table ON signer_id = request_signer_signer_id
-          INNER JOIN team_project_table ON team_project_id = signer_team_project_id
-          WHERE
-            request_signer_request_id='${requestId}'
-            AND signer_is_disabled=false
-        `
-      );
+        const formTeamGroupList = plv8.execute(
+          `
+            SELECT team_group_id 
+            FROM form_team_group_table 
+            WHERE form_id = '${form.form_id}'
+          `
+        );
+        const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+        const groupMember = plv8.execute(
+          `
+            SELECT team_group_member_id 
+            FROM team_group_member_table 
+            WHERE team_member_id = '${teamMember.team_member_id}' 
+            AND team_group_id IN (${teamGroupIdList})
+          `);
+
+        const connectedFormIdAndGroup = {
+          formId: form.form_id,
+          formName: 'Release Order',
+          formIsForEveryone: form.form_is_for_every_member,
+          formIsMember: Boolean(groupMember.length),
+        };
+
+        const signerData = plv8.execute(
+          `
+            SELECT signer_id 
+            FROM signer_table 
+            WHERE 
+              signer_form_id='${request.request_form.form_id}' 
+              AND signer_is_disabled=false
+              AND (
+                signer_team_project_id='${request.request_project_id}'
+                OR signer_team_project_id IS NULL
+              ) 
+          `
+        );
+
+        const requestSignerData = plv8.execute(
+          `
+            SELECT 
+              request_signer_table.*,
+              signer_table.*,
+              team_project_name
+            FROM request_signer_table
+            INNER JOIN signer_table ON signer_id = request_signer_signer_id
+            INNER JOIN team_project_table ON team_project_id = signer_team_project_id
+            WHERE
+              request_signer_request_id='${requestId}'
+              AND signer_is_disabled=false
+          `
+        );
+
+        const projectSignerStatus = requestSignerData.map(
+            (signer) => ({
+              signer_project_name: signer.team_project_name,
+              signer_status: signer.request_signer_status,
+              signer_team_member_id: signer.signer_team_member_id,
+            })
+          );
+          
+        const mainSignerIdList = signerData.map(
+          (signer) => signer.signer_id
+        );
     
-      returnData =  {
-        connectedFormIdAndGroup,
-        connectedRequestIDList: requestList,
-        signerData,
-        requestSignerData,
-      };
-    } else if (formName === "Release Order") {
-      const form = plv8.execute(
-        `SELECT 
-          form_id, 
-          form_is_for_every_member,
-          form_team_member_id
-        FROM form_table
-        INNER JOIN team_member_table
-        ON team_member_id = form_team_member_id
-        WHERE 
-          form_is_formsly_form=true
-          AND team_member_team_id='${teamId}'
-          AND form_name='Transfer Receipt'
-      `)[0];
+        returnData =  {
+          connectedFormIdAndGroup,
+          connectedRequestIDList: requestList,
+          signerData,
+          requestSignerData,
+          request: {
+            ...request,
+            request_signer: request.request_signer.map((requestSigner) => {
+              if (
+                !mainSignerIdList.includes(
+                  requestSigner.request_signer_signer.signer_id
+                )
+              ) {
+                return {
+                  ...requestSigner,
+                  request_signer_signer: {
+                    ...requestSigner.request_signer_signer,
+                    signer_is_primary_signer: false,
+                  },
+                };
+              } else {
+                return requestSigner;
+              }
+            }),
+          },
+          projectSignerStatus
+        };
+      } else if (request.request_form.form_name === "Release Order") {
+        const form = plv8.execute(
+          `SELECT 
+            form_id, 
+            form_is_for_every_member,
+            form_team_member_id
+          FROM form_table
+          INNER JOIN team_member_table
+          ON team_member_id = form_team_member_id
+          WHERE 
+            form_is_formsly_form=true
+            AND team_member_team_id='${teamId}'
+            AND form_name='Transfer Receipt'
+        `)[0];
 
-      const formTeamGroupList = plv8.execute(
-        `
-          SELECT team_group_id 
-          FROM form_team_group_table 
-          WHERE form_id = '${form.form_id}'
-        `
-      );
-      const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
-      const groupMember = plv8.execute(
-        `
-          SELECT team_group_member_id 
-          FROM team_group_member_table 
-          WHERE team_member_id = '${teamMember.team_member_id}' 
-          AND team_group_id IN (${teamGroupIdList})
-        `);
+        const formTeamGroupList = plv8.execute(
+          `
+            SELECT team_group_id 
+            FROM form_team_group_table 
+            WHERE form_id = '${form.form_id}'
+          `
+        );
+        const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+        const groupMember = plv8.execute(
+          `
+            SELECT team_group_member_id 
+            FROM team_group_member_table 
+            WHERE team_member_id = '${teamMember.team_member_id}' 
+            AND team_group_id IN (${teamGroupIdList})
+          `);
 
-      const connectedFormIdAndGroup = {
-        formId: form.form_id,
-        formName: 'Transfer Receipt',
-        formIsForEveryone: form.form_is_for_every_member,
-        formIsMember: Boolean(groupMember.length),
-      };
-    
-      returnData =  {
-        connectedFormIdAndGroup,
-        connectedRequestIDList: requestList
-      };
-    } else{
-      returnData =  {
-        connectedRequestIDList: requestList
-      };
+        const connectedFormIdAndGroup = {
+          formId: form.form_id,
+          formName: 'Transfer Receipt',
+          formIsForEveryone: form.form_is_for_every_member,
+          formIsMember: Boolean(groupMember.length),
+        };
+      
+        returnData =  {
+          connectedFormIdAndGroup,
+          connectedRequestIDList: requestList,
+          request
+        };
+      } else{
+        returnData =  {
+          connectedRequestIDList: requestList,
+          request
+        };
+      }
     }
-
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -2659,7 +2702,7 @@ RETURNS JSON as $$
     const options = {};
     const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
     requestResponseData.forEach((response) => {
-      if (response_id) {
+      if (response) {
         const fieldName = response.field_name;
         const duplicatableSectionId =
           response.request_response_duplicatable_section_id ??
@@ -4048,7 +4091,7 @@ RETURNS JSON as $$
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
         INNER JOIN form_table ON form_id = request_form_id
-        INNER JOIN team_project_table ON team_project_id = request_project_id
+        LEFT JOIN team_project_table ON team_project_id = request_project_id
         WHERE 
           request_id = '${request_id}'
           AND request_is_disabled = false
@@ -4132,13 +4175,14 @@ RETURNS JSON as $$
             SELECT *
             FROM request_response_table
             WHERE request_response_request_id = '${requestData.request_id}'
+            AND request_response_field_id = '${field.field_id}'
           `
         );
 
         return {
           ...field,
-          field_option: optionData,
-          field_response: requestResponseData
+          field_response: requestResponseData,
+          field_option: optionData
         };
       });
 
@@ -4163,39 +4207,9 @@ RETURNS JSON as $$
       request_date_created: requestData.request_date_created,
       request_status: requestData.request_status,
       request_is_disabled: requestData.request_is_disabled,
+      request_team_member_id: requestData.request_team_member_id,
       request_form_id: requestData.request_form_id,
       request_project_id: requestData.request_project_id,
-      request_team_member: {
-        request_team_member_id: requestData.team_member_team_id,
-        team_member_user: {
-          user_id: requestData.user_id, 
-          user_first_name: requestData.user_first_name, 
-          user_last_name: requestData.user_last_name, 
-          user_username: requestData.user_username, 
-          user_avatar: requestData.user_avatar
-        }
-      },
-      request_form: form,
-      request_signer: requestSignerData.map(requestSigner => {
-        return {
-          request_signer_id: requestSigner.request_signer_id, 
-          request_signer_status: requestSigner.request_signer_status,
-          request_signer_signer: {
-            signer_id: requestSigner.signer_id, 
-            signer_is_primary_signer: requestSigner.signer_is_primary_signer, 
-            signer_action: requestSigner.signer_action, 
-            signer_order: requestSigner.signer_order, 
-            signer_form_id: requestSigner.signer_form_id,
-            signer_team_member:{
-              team_member_id: requestSigner.team_member_id,
-              team_member_user:{
-                user_first_name: requestSigner.user_first_name, 
-                user_last_name: requestSigner.user_last_name
-              }
-            },
-          },
-        }
-      }),
       request_comment: requestCommentData.map(requestComment => {
         return {
           comment_id: requestComment.comment_id, 
@@ -4216,7 +4230,40 @@ RETURNS JSON as $$
           }
         }
       }),
-      request_project: requestData.team_project_name
+      request_form: form,
+      request_team_member: {
+        team_member_team_id: requestData.request_team_member_id,
+        team_member_user: {
+          user_id: requestData.user_id, 
+          user_first_name: requestData.user_first_name, 
+          user_last_name: requestData.user_last_name, 
+          user_username: requestData.user_username, 
+          user_avatar: requestData.user_avatar
+        }
+      },
+      request_signer: requestSignerData.map(requestSigner => {
+        return {
+          request_signer_id: requestSigner.request_signer_id, 
+          request_signer_status: requestSigner.request_signer_status,
+          request_signer_signer: {
+            signer_id: requestSigner.signer_id, 
+            signer_is_primary_signer: requestSigner.signer_is_primary_signer, 
+            signer_action: requestSigner.signer_action, 
+            signer_order: requestSigner.signer_order, 
+            signer_form_id: requestSigner.signer_form_id,
+            signer_team_member:{
+              team_member_id: requestSigner.team_member_id,
+              team_member_user:{
+                user_first_name: requestSigner.user_first_name, 
+                user_last_name: requestSigner.user_last_name
+              }
+            },
+          },
+        }
+      }),
+      request_project: {
+        team_project_name: requestData.team_project_name
+      }
     };
  });
  return returnData;
