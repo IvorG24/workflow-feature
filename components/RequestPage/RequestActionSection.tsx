@@ -1,7 +1,7 @@
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import { Button, Paper, Space, Stack, Text, Title } from "@mantine/core";
-// import { useRouter } from "next/router";
 import { openConfirmModal } from "@mantine/modals";
+import { useRouter } from "next/router";
 
 type Props = {
   isUserOwner: boolean;
@@ -22,6 +22,9 @@ const RequestActionSection = ({
   handleUpdateRequest,
   signer,
 }: Props) => {
+  const router = useRouter();
+  const { requestId } = router.query;
+
   const handleAction = (action: string, color: string) => {
     openConfirmModal({
       title: <Text>Please confirm your action.</Text>,
@@ -77,7 +80,7 @@ const RequestActionSection = ({
           )}
         {isUserOwner && requestStatus === "PENDING" && (
           <>
-            {/* <Button
+            <Button
               variant="outline"
               fullWidth
               onClick={() =>
@@ -85,7 +88,7 @@ const RequestActionSection = ({
               }
             >
               Edit Request
-            </Button> */}
+            </Button>
             <Button
               variant="default"
               fullWidth

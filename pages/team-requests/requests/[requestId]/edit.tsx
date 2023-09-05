@@ -1,25 +1,33 @@
-import { getRequest } from "@/backend/api/get";
+import {
+  getRequest,
+  getUserActiveTeamId,
+  getUserTeamMemberData,
+} from "@/backend/api/get";
+import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
+
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
-import { Paper, Title } from "@mantine/core";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ supabaseClient, context }) => {
+  async ({ supabaseClient, user, context }) => {
     try {
       const request = await getRequest(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
 
-      if (!request) {
-        return {
-          redirect: {
-            destination: "/404",
-            permanent: false,
-          },
-        };
-      }
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+      if (!teamId) throw new Error("No team found");
+
+      // check if the user have access to create request on the form.
+      const teamMember = await getUserTeamMemberData(supabaseClient, {
+        userId: user.id,
+        teamId: teamId,
+      });
+      if (!teamMember) throw new Error("No team member found");
 
       return {
         props: { request },
@@ -44,13 +52,17 @@ const Page = ({ request }: Props) => {
   return (
     <>
       <Meta
-        description="Request Page"
-        url="/team-requests/requests/[requestId]"
+        description="Edit Request Page"
+        url="/team-requests/requests/[requestId]/edit"
       />
-      <Title>Edit Request Page</Title>
-      <Paper p="xl" mt="xl">
+      {/* {form.form_is_formsly_form ? formslyForm() : null} */}
+      {!request.request_form.form_is_formsly_form ? (
+        <EditRequestPage request={request} />
+      ) : null}
+
+      {/* <Paper>
         <pre>{JSON.stringify(request, null, 2)}</pre>
-      </Paper>
+      </Paper> */}
     </>
   );
 };

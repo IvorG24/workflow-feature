@@ -248,6 +248,7 @@ export type RequestWithResponseType = RequestTableRow & {
     form_is_formsly_form: boolean;
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
+        field_section_duplicatable_id?: string;
         field_option: OptionTableRow[];
         field_response: RequestResponseTableRow[];
       } & {
