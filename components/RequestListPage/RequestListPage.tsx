@@ -209,7 +209,7 @@ const RequestListPage = ({
         ) : null}
         <Button
           variant="light"
-          leftIcon={<IconReload />}
+          leftIcon={<IconReload size={16} />}
           onClick={() => handleRefreshRequestList()}
         >
           Refresh
