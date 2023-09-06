@@ -2,6 +2,7 @@ import {
   DuplicateSectionType,
   FormTableRow,
   RequestResponseTableRow,
+  RequestWithResponseType,
   Section,
 } from "../types";
 
@@ -118,4 +119,78 @@ export const sortFormList = (
     // If neither form name is in the reference array, keep their original order
     return 0;
   });
+};
+
+export const generateRequestDuplicateSection = (
+  originalSection: RequestWithResponseType["request_form"]["form_section"][0]
+) => {
+  const fieldResponse: RequestResponseTableRow[] =
+    originalSection.section_field.flatMap((field) => field.field_response);
+
+  const uniqueIdList = fieldResponse.reduce((unique, item) => {
+    const { request_response_duplicatable_section_id } = item;
+    // Check if the item's duplicatable_section_id is already in the unique array
+    const isDuplicate = unique.some((uniqueItem) =>
+      uniqueItem.includes(`${request_response_duplicatable_section_id}`)
+    );
+    // If the item is not a duplicate, add it to the unique array
+    if (!isDuplicate) {
+      unique.push(`${request_response_duplicatable_section_id}`);
+    }
+
+    return unique;
+  }, [] as string[]);
+
+  const duplicateSectionList = uniqueIdList.map((id) => {
+    const duplicateSection: RequestWithResponseType["request_form"]["form_section"][0] =
+      {
+        ...originalSection,
+        section_field: originalSection.section_field.map((field) => ({
+          ...field,
+          field_response: [
+            field.field_response.filter(
+              (response) =>
+                `${response.request_response_duplicatable_section_id}` === id
+            )[0] || null,
+          ],
+        })),
+      };
+    return duplicateSection;
+  });
+
+  return duplicateSectionList;
+};
+
+export const parseRequest = (request: RequestWithResponseType) => {
+  const {
+    request_form: { form_section: originalSectionList },
+  } = request;
+  const sectionWithDuplicateList: RequestWithResponseType["request_form"]["form_section"] =
+    [];
+
+  originalSectionList.forEach((section) => {
+    const hasDuplicates = section.section_field.some((field) =>
+      field.field_response.some(
+        (response) => response.request_response_duplicatable_section_id !== null
+      )
+    );
+    if (section.section_is_duplicatable && hasDuplicates) {
+      const duplicateSection = generateRequestDuplicateSection(section);
+      duplicateSection.forEach((duplicateSection) =>
+        sectionWithDuplicateList.push(duplicateSection)
+      );
+    } else {
+      sectionWithDuplicateList.push(section);
+    }
+  });
+
+  const returnData: RequestWithResponseType = {
+    ...request,
+    request_form: {
+      ...request.request_form,
+      form_section: sectionWithDuplicateList,
+    },
+  };
+
+  return returnData;
 };

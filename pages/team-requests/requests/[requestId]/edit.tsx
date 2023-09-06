@@ -6,6 +6,7 @@ import {
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 
 import Meta from "@/components/Meta/Meta";
+import { parseRequest } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -29,8 +30,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (!teamMember) throw new Error("No team member found");
 
+      const parsedRequest = parseRequest(request);
+
       return {
-        props: { request },
+        props: { request: parsedRequest },
       };
     } catch (error) {
       console.error(error);
@@ -49,6 +52,7 @@ type Props = {
 };
 
 const Page = ({ request }: Props) => {
+  console.log(request);
   return (
     <>
       <Meta

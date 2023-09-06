@@ -22,17 +22,14 @@ export const addCommaToNumber = (number: number) => {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
-export const parseToTwoDigitNumber = (input: string): string => {
-  const parsedNumber = parseInt(input, 10);
-  if (!isNaN(parsedNumber)) return parsedNumber.toString().padStart(2, "0");
-  else return "00";
-};
-
 export const formatTime = (time: string) => {
-  const timeParts = time.split(":");
-  const hours = parseToTwoDigitNumber(timeParts[0]);
-  const minutes = parseToTwoDigitNumber(timeParts[1]);
-  return `${hours}:${minutes}`;
+  const timeParts = parseJSONIfValid(time).split(":");
+  const hours = parseInt(timeParts[0]);
+  const minutes = parseInt(timeParts[1]);
+
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 export const parseJSONIfValid = (jsonString: string) => {
@@ -46,6 +43,6 @@ export const parseJSONIfValid = (jsonString: string) => {
 
 export const convertTimestampToDate = (input: string | Date) => {
   if (input instanceof Date) return input;
-  const date = input ? new Date(input.split("T")[0]) : undefined;
-  return date;
+  const parsedInput = parseJSONIfValid(input);
+  return new Date(parsedInput);
 };

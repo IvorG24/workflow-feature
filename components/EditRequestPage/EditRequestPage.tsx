@@ -144,17 +144,8 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
     }
   };
 
-  const handleRemoveSection = (sectionDuplicatableId: string) => {
-    const sectionMatchIndex = formSections.findIndex(
-      (section) =>
-        section.section_field[0].field_section_duplicatable_id ===
-        sectionDuplicatableId
-    );
-    if (sectionMatchIndex) {
-      removeSection(sectionMatchIndex);
-      return;
-    }
-  };
+  const handleRemoveSection = (sectionMatchIndex: number) =>
+    removeSection(sectionMatchIndex);
 
   useEffect(() => {
     if (localFormState) {
@@ -193,6 +184,10 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
                 .map((sectionItem) => sectionItem.section_id)
                 .lastIndexOf(sectionIdToFind);
 
+              const isRemovable =
+                formSections[idx - 1]?.section_is_duplicatable &&
+                section.section_is_duplicatable;
+
               return (
                 <Box key={section.id}>
                   <RequestFormSection
@@ -201,6 +196,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     formslyFormName={formslyFormName}
+                    isSectionRemovable={isRemovable}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
