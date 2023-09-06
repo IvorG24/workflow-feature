@@ -119,7 +119,10 @@ const NotificationPage = ({
     }
   };
 
-  const handleGetNotificationList = async (page: number) => {
+  const handleGetNotificationList = async (
+    page: number,
+    currentTab?: string
+  ) => {
     try {
       setIsLoading(true);
 
@@ -129,7 +132,7 @@ const NotificationPage = ({
         page: Number(page),
         userId,
         teamId,
-        unreadOnly: tab === "unread",
+        unreadOnly: currentTab === "unread" ?? tab === "unread",
       });
 
       const result = data as NotificationTableRow[];
@@ -166,7 +169,7 @@ const NotificationPage = ({
                 app === "REQUEST" ? `${toLower(app)}s` : toLower(app)
               }/notification?tab=${value}`
             )
-            .then(() => router.reload())
+            .then(() => handleGetNotificationList(1, value as string))
         }
         mt="lg"
       >
