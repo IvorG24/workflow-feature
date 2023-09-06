@@ -17,7 +17,7 @@ import {
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { FormEvent, useEffect } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -80,7 +80,6 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
     defaultValues: { sections: request_form.form_section },
   });
   const {
-    handleSubmit,
     control,
     getValues,
     formState: { isDirty },
@@ -96,17 +95,18 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
     name: "sections",
   });
 
-  const handleCreateRequest = async (data: RequestFormValues) => {
+  const handleEditRequest = (e: FormEvent) => {
     try {
+      e.preventDefault();
       if (!requestorProfile) return;
       if (!teamMember) return;
 
       setIsLoading(true);
+      console.log("data", getValues());
 
-      console.log("data", data);
       removeLocalFormState();
       notifications.show({
-        message: "Request created.",
+        message: "Request Edited.",
         color: "green",
       });
       // router.push(`/team-requests/requests/${request.request_id}`);
@@ -182,7 +182,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
+        <form onSubmit={handleEditRequest}>
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
