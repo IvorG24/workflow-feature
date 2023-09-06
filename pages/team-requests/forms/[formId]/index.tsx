@@ -1,12 +1,4 @@
-import {
-  getAllTeamGroups,
-  getForm,
-  getItemList,
-  getNameList,
-  getTeamAdminList,
-  getTeamProjectList,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
+import { getForm } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
@@ -30,82 +22,18 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
         formId: `${context.query.formId}`,
       });
 
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
+      const { data, error } = await supabaseClient.rpc("form_page_on_load", {
+        input_data: {
+          userId: user.id,
+          isFormslyForm: form.form_is_formsly_form,
+          formName: form.form_name,
+          limit: ROW_PER_PAGE,
+        },
       });
-      if (!teamId) throw new Error("No team found");
-
-      const teamMemberList = await getTeamAdminList(supabaseClient, {
-        teamId,
-      });
-
-      const teamGroupList = await getAllTeamGroups(supabaseClient, {
-        teamId,
-      });
-
-      if (form.form_is_formsly_form) {
-        const { data: teamProjectList, count: teamProjectListCount } =
-          await getTeamProjectList(supabaseClient, {
-            teamId,
-            page: 1,
-            limit: ROW_PER_PAGE,
-          });
-
-        if (form.form_name === "Requisition") {
-          const { data: items, count: itemListCount } = await getItemList(
-            supabaseClient,
-            {
-              teamId: teamId,
-              page: 1,
-              limit: ROW_PER_PAGE,
-            }
-          );
-
-          return {
-            props: {
-              form,
-              items,
-              itemListCount,
-              teamMemberList,
-              teamGroupList,
-              teamProjectList,
-              teamProjectListCount,
-            },
-          };
-        } else if (form.form_name === "Quotation") {
-          const { data: suppliers, count: supplierListCount } =
-            await getNameList(supabaseClient, {
-              table: "supplier",
-              teamId: teamId,
-              page: 1,
-              limit: ROW_PER_PAGE,
-            });
-
-          return {
-            props: {
-              form,
-              teamMemberList,
-              suppliers,
-              supplierListCount,
-              teamGroupList,
-              teamProjectList,
-              teamProjectListCount,
-            },
-          };
-        }
-        return {
-          props: {
-            form,
-            teamMemberList,
-            teamGroupList,
-            teamProjectList,
-            teamProjectListCount,
-          },
-        };
-      }
+      if (error) throw error;
 
       return {
-        props: { form, teamMemberList, teamGroupList },
+        props: { ...(data as unknown as Props), form },
       };
     } catch (error) {
       return {
