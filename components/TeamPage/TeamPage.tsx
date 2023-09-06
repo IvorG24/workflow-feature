@@ -7,7 +7,7 @@ import {
   updateUserActiveTeam,
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
 
 import { getTeamMember } from "@/backend/api/get";
 import { Database } from "@/utils/database";
@@ -75,6 +75,7 @@ const TeamPage = ({
 
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();
+  const { setUserTeamMember } = useUserActions();
   const router = useRouter();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
@@ -107,7 +108,7 @@ const TeamPage = ({
     (member) => member.team_member_user.user_email
   );
 
-  const userRole = teamMember ? teamMember.team_member_role : null;
+  const [userRole, setUserRole] = useState(teamMember?.team_member_role);
   const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(`${userRole}`);
   const isOwner = userRole === "OWNER";
 
@@ -328,6 +329,7 @@ const TeamPage = ({
         },
         async (payload) => {
           if (payload.eventType === "UPDATE") {
+            const updatedMemberRole = payload.new.team_member_role;
             // if update is removing a member
             if (payload.new.team_member_is_disabled) {
               const removeMemberFromList = teamMemberList.filter(
@@ -337,12 +339,25 @@ const TeamPage = ({
               setTeamMemberList(removeMemberFromList);
             }
 
+            // update auth user role
+            if (
+              teamMember &&
+              payload.new.team_member_id === teamMember?.team_member_id
+            ) {
+              const updatedTeamMember = {
+                ...teamMember,
+                team_member_role: updatedMemberRole,
+              };
+              setUserTeamMember(updatedTeamMember);
+              setUserRole(updatedMemberRole);
+            }
+
             setInitialMemberList((prev) =>
               prev.map((member) => {
                 if (member.team_member_id === payload.new.team_member_id) {
                   return {
                     ...member,
-                    team_member_role: payload.new.team_member_role,
+                    team_member_role: updatedMemberRole,
                   };
                 }
 
@@ -355,7 +370,7 @@ const TeamPage = ({
                 if (member.team_member_id === payload.new.team_member_id) {
                   return {
                     ...member,
-                    team_member_role: payload.new.team_member_role,
+                    team_member_role: updatedMemberRole,
                   };
                 }
 
@@ -384,7 +399,13 @@ const TeamPage = ({
     return () => {
       supabaseClient.removeChannel(channel);
     };
-  }, [supabaseClient, team.team_id, teamMemberList]);
+  }, [supabaseClient, team.team_id, teamMemberList, teamMember]);
+
+  useEffect(() => {
+    if (teamMember) {
+      setUserRole(teamMember.team_member_role);
+    }
+  }, [teamMember]);
 
   return (
     <Container>
