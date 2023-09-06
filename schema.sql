@@ -5018,28 +5018,62 @@ WITH CHECK (true);
 CREATE POLICY "Allow READ for users based on invitation_to_email" ON "public"."invitation_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
-USING (invitation_to_email = (SELECT user_email FROM user_table WHERE user_id = auth.uid()) OR invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (
+  invitation_to_email = (
+    SELECT user_email 
+    FROM public.user_table 
+    WHERE user_id = auth.uid()
+  )
+  OR EXISTS (
+    SELECT 1
+    FROM public.team_member_table
+    WHERE team_member_team_id = (
+      SELECT team_member_team_id
+      FROM public.team_member_table
+      WHERE team_member_id = invitation_from_team_member_id
+      AND team_member_is_disabled = FALSE
+      LIMIT 1
+    )
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 CREATE POLICY "Allow UPDATE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
-  invitation_from_team_member_id IN (
-    SELECT team_member_id 
-    FROM team_member_table 
-    WHERE team_member_user_id = auth.uid()
+  EXISTS (
+    SELECT 1
+    FROM public.team_member_table
+    WHERE team_member_team_id = (
+      SELECT team_member_team_id
+      FROM public.team_member_table
+      WHERE team_member_id = invitation_from_team_member_id
+      AND team_member_is_disabled = FALSE
+      LIMIT 1
+    )
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_table 
     WHERE user_id = auth.uid()
   )
 )
-
 WITH CHECK (
-  invitation_from_team_member_id IN (
-    SELECT team_member_id 
-    FROM team_member_table 
-    WHERE team_member_user_id = auth.uid()
+  EXISTS (
+    SELECT 1
+    FROM public.team_member_table
+    WHERE team_member_team_id = (
+      SELECT team_member_team_id
+      FROM public.team_member_table
+      WHERE team_member_id = invitation_from_team_member_id
+      AND team_member_is_disabled = FALSE
+      LIMIT 1
+    )
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_table 
@@ -5573,6 +5607,18 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 CREATE VIEW distinct_division_id AS SELECT DISTINCT csi_code_division_id from csi_code_table;
 
 -------- End: VIEWS
+
+-------- Start: SUBSCRIPTION
+
+DROP PUBLICATION if exists supabase_realtime;
+
+CREATE PUBLICATION supabase_realtime;
+COMMIT;
+
+ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table;
+
+-------- END: SUBSCRIPTION
+
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;

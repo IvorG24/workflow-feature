@@ -29,7 +29,7 @@ import {
 } from "@tabler/icons-react";
 import { lowerCase } from "lodash";
 import moment from "moment";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 const useStyles = createStyles((theme) => ({
   notification: {
@@ -55,7 +55,6 @@ const Notification = () => {
   const notificationList = useNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
   const activeApp = useActiveApp();
-
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
 
@@ -100,7 +99,7 @@ const Notification = () => {
                     notificationId: notification.notification_id,
                   });
                 }
-                await router.push(`${notification.notification_redirect_url}`);
+                router.push(`${notification.notification_redirect_url}`);
               }}
               align="center"
               gap="xs"

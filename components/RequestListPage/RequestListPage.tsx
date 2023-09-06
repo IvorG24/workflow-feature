@@ -25,6 +25,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -149,6 +150,42 @@ const RequestListPage = ({
     }
   };
 
+  const handleRefreshRequestList = async () => {
+    try {
+      setIsFetchingRequestList(true);
+      setActivePage(1);
+
+      const { search, requestorList, formList, status, isAscendingSort } =
+        getValues();
+
+      const params = {
+        teamId: activeTeam.team_id,
+        page: 1,
+        limit: DEFAULT_REQUEST_LIST_LIMIT,
+        requestor:
+          requestorList && requestorList.length > 0 ? requestorList : undefined,
+        form: formList && formList.length > 0 ? formList : undefined,
+        status: status && status.length > 0 ? status : undefined,
+        search: search,
+      };
+      const { data, count } = await getRequestList(supabaseClient, {
+        ...params,
+        sort: isAscendingSort ? "ascending" : "descending",
+      });
+      setRequestList(data);
+      setRequestListCount(count || 0);
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message:
+          "We're having trouble refreshing the page. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingRequestList(false);
+    }
+  };
+
   useEffect(() => {
     handlePagination();
   }, [activePage]);
@@ -170,6 +207,13 @@ const RequestListPage = ({
             SSOT Spreadsheet View
           </Button>
         ) : null}
+        <Button
+          variant="light"
+          leftIcon={<IconReload />}
+          onClick={() => handleRefreshRequestList()}
+        >
+          Refresh
+        </Button>
       </Flex>
       <Space h="sm" />
       <FormProvider {...filterFormMethods}>

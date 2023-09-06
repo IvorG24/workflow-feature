@@ -5,6 +5,9 @@ import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
+import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
+import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
+import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
@@ -28,7 +31,6 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
@@ -59,19 +61,29 @@ const RequisitionRequestPage = ({
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
 
-  const [requestStatus, setRequestStatus] = useState(request.request_status);
-
   const requestor = request.request_team_member.team_member_user;
 
-  const [signerList, setSignerList] = useState(
-    request.request_signer.map((signer) => {
-      return {
-        ...signer.request_signer_signer,
-        request_signer_status:
-          signer.request_signer_status as ReceiverStatusType,
-      };
-    })
-  );
+  const initialRequestSignerList = request.request_signer.map((signer) => {
+    return {
+      ...signer.request_signer_signer,
+      request_signer_status: signer.request_signer_status as ReceiverStatusType,
+    };
+  });
+
+  const requestStatus = useRealtimeRequestStatus(supabaseClient, {
+    requestId: request.request_id,
+    initialRequestStatus: request.request_status,
+  });
+
+  const signerList = useRealtimeRequestSignerList(supabaseClient, {
+    requestId: request.request_id,
+    initialRequestSignerList,
+  });
+
+  const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
+    requestId: request.request_id,
+    initialCommentList: request.request_comment,
+  });
 
   const requestDateCreated = new Date(
     request.request_date_created
@@ -86,19 +98,10 @@ const RequisitionRequestPage = ({
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
-  const isUserPrimarySigner = signerList.find(
-    (signer) =>
-      signer.signer_team_member.team_member_id === teamMember?.team_member_id &&
-      signer.signer_is_primary_signer
-  );
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
-
-  useEffect(() => {
-    setRequestStatus(request.request_status);
-  }, [request.request_status]);
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
@@ -126,31 +129,10 @@ const RequisitionRequestPage = ({
         teamId: request.request_team_member.team_member_team_id,
       });
 
-      if (signer.signer_is_primary_signer) {
-        setRequestStatus(status);
-      }
-
-      setSignerList((prev) =>
-        prev.map((signerItem) => {
-          if (
-            signerItem.signer_team_member.team_member_id ===
-            teamMember.team_member_id
-          ) {
-            return {
-              ...signer,
-              request_signer_status: status,
-            };
-          } else {
-            return signerItem;
-          }
-        })
-      );
-
       notifications.show({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
       });
-      !isUserPrimarySigner && router.reload();
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -170,7 +152,6 @@ const RequisitionRequestPage = ({
         memberId: teamMember.team_member_id,
       });
 
-      setRequestStatus("CANCELED");
       notifications.show({
         message: `Request cancelled.`,
         color: "green",
@@ -192,7 +173,6 @@ const RequisitionRequestPage = ({
         requestId: request.request_id,
       });
 
-      setRequestStatus("DELETED");
       notifications.show({
         message: "Request deleted.",
         color: "green",
@@ -328,7 +308,7 @@ const RequisitionRequestPage = ({
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
         }}
-        requestCommentList={request.request_comment}
+        requestCommentList={requestCommentList}
       />
     </Container>
   );

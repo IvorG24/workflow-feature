@@ -16,7 +16,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const teamData = await getTeamOnLoad(supabaseClient, {
         userId: user.id,
       });
-
       return {
         props: teamData,
       };

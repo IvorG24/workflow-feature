@@ -9,7 +9,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import RequestComment from "./RequestComment";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
-type Comment = RequestWithResponseType["request_comment"][0];
+export type RequestCommentType = RequestWithResponseType["request_comment"][0];
 
 type Props = {
   requestData: {
@@ -17,7 +17,7 @@ type Props = {
     requestOwnerId: string;
     teamId: string;
   };
-  requestCommentList: Comment[];
+  requestCommentList: RequestCommentType[];
 };
 
 const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
@@ -59,7 +59,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
             },
           },
         };
-        setCommentList((prev) => [comment as Comment, ...prev]);
+        setCommentList((prev) => [comment as RequestCommentType, ...prev]);
         if (requestData.requestOwnerId !== user?.user_id) {
           // create notification
           await createNotification(supabaseClient, {
