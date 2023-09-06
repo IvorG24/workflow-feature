@@ -3186,7 +3186,7 @@ export const getMemberUserData = async (
 // Get Team on load
 export const getTeamOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { userId: string }
+  params: { userId: string; teamMemberLimit: number }
 ) => {
   const { data, error } = await supabaseClient
     .rpc("get_team_on_load", { input_data: params })

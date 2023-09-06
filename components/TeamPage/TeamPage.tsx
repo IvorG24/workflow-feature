@@ -10,6 +10,7 @@ import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
 
 import { getTeamMember } from "@/backend/api/get";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   MemberRoleType,
@@ -29,7 +30,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -59,6 +59,7 @@ type Props = {
   teamMembers: TeamMemberType[];
   teamGroups: TeamGroupTableRow[];
   teamProjects: TeamProjectTableRow[];
+  teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;
 };
@@ -68,6 +69,7 @@ const TeamPage = ({
   teamMembers,
   teamGroups,
   teamProjects,
+  teamMembersCount,
   teamGroupsCount,
   teamProjectsCount,
 }: Props) => {
@@ -82,6 +84,7 @@ const TeamPage = ({
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
 
   const [initialTeamMemberList, setInitialMemberList] = useState(teamMembers);
+  const [teamMemberCount, setTeamMemberCount] = useState(teamMembersCount);
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
@@ -188,23 +191,34 @@ const TeamPage = ({
   };
 
   const handleSearchTeamMember = async (data: SearchForm) => {
-    setIsUpdatingTeamMembers(true);
-    setTeamMemberPage(1);
-    const { keyword } = data;
-    const searchKeyword = lowerCase(keyword);
-    const newMemberList = initialTeamMemberList.filter((member) => {
-      const { user_first_name, user_last_name, user_email } =
-        member.team_member_user;
-
-      const memberDetails = lowerCase(
-        `${user_first_name} ${user_last_name} ${user_email}`
+    try {
+      setIsUpdatingTeamMembers(true);
+      setTeamMemberPage(1);
+      const { data: memberData, error } = await supabaseClient.rpc(
+        "get_team_member_with_filter",
+        {
+          input_data: {
+            teamId: team.team_id,
+            page: 1,
+            limit: ROW_PER_PAGE,
+            search: data.keyword,
+          },
+        }
       );
-      const isMemberMatch = memberDetails.includes(searchKeyword);
-
-      return isMemberMatch;
-    });
-    setTeamMemberList(newMemberList);
-    setIsUpdatingTeamMembers(false);
+      const formattedData = memberData as {
+        teamMembers: TeamMemberType[];
+        teamMembersCount: number;
+      };
+      if (error) throw error;
+      setTeamMemberList(formattedData.teamMembers);
+      setTeamMemberCount(formattedData.teamMembersCount || 0);
+      setIsUpdatingTeamMembers(false);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
   };
 
   const handleUpdateMemberRole = async (
@@ -303,17 +317,35 @@ const TeamPage = ({
   };
 
   const handleMemberPageChange = async (page: number) => {
-    setTeamMemberPage(page);
-    setIsUpdatingTeamMembers(true);
-    const keyword = searchTeamMemberMethods.getValues("keyword");
-    const newMemberList = teamMembers.filter(
-      (member) =>
-        member.team_member_user.user_first_name.includes(keyword) ||
-        member.team_member_user.user_last_name.includes(keyword) ||
-        member.team_member_user.user_email.includes(keyword)
-    );
-    setTeamMemberList(newMemberList);
-    setIsUpdatingTeamMembers(false);
+    try {
+      setTeamMemberPage(page);
+      setIsUpdatingTeamMembers(true);
+      const keyword = searchTeamMemberMethods.getValues("keyword");
+      const { data, error } = await supabaseClient.rpc(
+        "get_team_member_with_filter",
+        {
+          input_data: {
+            teamId: team.team_id,
+            page,
+            limit: ROW_PER_PAGE,
+            search: keyword,
+          },
+        }
+      );
+      const formattedData = data as {
+        teamMembers: TeamMemberType[];
+        teamMembersCount: number;
+      };
+      if (error) throw error;
+      setTeamMemberList(formattedData.teamMembers);
+      setTeamMemberCount(formattedData.teamMembersCount || 0);
+      setIsUpdatingTeamMembers(false);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
   };
 
   useEffect(() => {
@@ -425,6 +457,7 @@ const TeamPage = ({
       <FormProvider {...searchTeamMemberMethods}>
         <TeamMemberList
           teamMemberList={teamMemberList}
+          teamMemberCount={teamMemberCount}
           isUpdatingTeamMembers={isUpdatingTeamMembers}
           onSearchTeamMember={handleSearchTeamMember}
           onRemoveFromTeam={handleRemoveFromTeam}
