@@ -155,12 +155,18 @@ const RequestListPage = ({
       setIsFetchingRequestList(true);
       setActivePage(1);
 
-      const { isAscendingSort } = getValues();
+      const { search, requestorList, formList, status, isAscendingSort } =
+        getValues();
 
       const params = {
         teamId: activeTeam.team_id,
         page: 1,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
+        requestor:
+          requestorList && requestorList.length > 0 ? requestorList : undefined,
+        form: formList && formList.length > 0 ? formList : undefined,
+        status: status && status.length > 0 ? status : undefined,
+        search: search,
       };
       const { data, count } = await getRequestList(supabaseClient, {
         ...params,
