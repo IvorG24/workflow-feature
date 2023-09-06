@@ -2697,6 +2697,40 @@ RETURNS JSON as $$
       requestId
     } = input_data;
 
+    const descriptionMatcher = (options, currentItem) => {
+      const regex = /\(([^()]+)\)/g;
+      let returnData = "";
+      for (const option of options) {
+        const currentItemResult = currentItem.match(regex);
+        const currentItemIndex = currentItem.indexOf("(");
+        const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
+        const currentItemDescriptionList =
+          currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
+  
+        const optionIndex = option.indexOf("(");
+        const optionGeneralName = option.slice(0, optionIndex - 1);
+  
+        if (
+          currentItemGeneralName === optionGeneralName &&
+          currentItemDescriptionList
+        ) {
+          let match = true;
+          for (const description of currentItemDescriptionList) {
+            console.log(option, description, option.includes(description));
+            if (!option.includes(description)) {
+              match = false;
+              break;
+            }
+          }
+          if (match) {
+            returnData = option;
+            break;
+          }
+        }
+      }
+      return returnData;
+    };
+
     const requestResponseData = plv8.execute(`SELECT request_response_table.*, field_name, field_order FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE request_response_request_id='${requestId}'`);
 
     const options = {};
@@ -2825,7 +2859,7 @@ RETURNS JSON as $$
 
       request.forEach((response) => {
         if (response.field_name === "Item") {
-          currentItem = JSON.parse(response.request_response);
+          currentItem = descriptionMatcher(itemOptions, JSON.parse(response.request_response));
           canvassData[currentItem].push({
             quotationId: response.request_formsly_id,
             price: 0,
@@ -2906,6 +2940,8 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
+
+
 
 -- END: Canvass page on load
 
