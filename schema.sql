@@ -1243,32 +1243,57 @@ RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        requisitionID,
-        itemFieldList,
-        quantityFieldList
+            requisitionID,
+            itemFieldList,
+            quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${requisitionID}' AND form_table.form_is_formsly_form = true AND (form_table.form_name = 'Quotation' OR form_table.form_name = 'Sourced Item')`);
+        const request = plv8.execute(
+            `
+                SELECT request_response_table.* 
+                FROM request_response_table 
+                INNER JOIN request_table ON request_response_request_id = request_id 
+                INNER JOIN form_table ON request_form_id = form_id 
+                WHERE 
+                    request_status = 'APPROVED'
+                    AND request_response = '${requisitionID}' 
+                    AND form_is_formsly_form = true 
+                    AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
+            `
+        );
         
         let requestResponse = []
-        if(request.length>0) {
-
+        if(request.length > 0) {
             const requestIdList = request.map(
                 (response) => `'${response.request_response_request_id}'`
             ).join(",");
 
-            requestResponse = plv8.execute(`SELECT request_response_table.*, field_name FROM request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE (field_name = 'Quantity' OR field_name = 'Item') AND request_response_request_id IN (${requestIdList});`);
+            requestResponse = plv8.execute(
+                `
+                    SELECT 
+                        request_response_table.*, 
+                        field_name 
+                    FROM request_response_table 
+                    INNER JOIN field_table ON field_id = request_response_field_id 
+                    WHERE 
+                        (
+                            field_name = 'Quantity' 
+                            OR field_name = 'Item'
+                        ) 
+                        AND request_response_request_id IN (${requestIdList})
+                `
+            );
         }
 
         const requestResponseItem = [];
         const requestResponseQuantity = [];
 
         requestResponse.forEach((response) => {
-          if (response.field_name === "Item") {
-            requestResponseItem.push(response);
-          } else if (response.field_name === "Quantity") {
-            requestResponseQuantity.push(response);
-          }
+            if (response.field_name === "Item") {
+                requestResponseItem.push(response);
+            } else if (response.field_name === "Quantity") {
+                requestResponseQuantity.push(response);
+            }
         });
 
         requestResponseItem.push(...itemFieldList);
@@ -1277,18 +1302,51 @@ RETURNS JSON AS $$
         const itemList = [];
         const quantityList = [];
 
+        const descriptionMatcher = (options, currentItem) => {
+            const regex = /\(([^()]+)\)/g;
+            let returnData = "";
+            for (const option of options) {
+              const currentItemResult = currentItem.match(regex);
+              const currentItemIndex = currentItem.indexOf("(");
+              const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
+              const currentItemDescriptionList =
+                currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
+        
+              const optionIndex = option.indexOf("(");
+              const optionGeneralName = option.slice(0, optionIndex - 1);
+        
+              if (
+                currentItemGeneralName === optionGeneralName &&
+                currentItemDescriptionList
+              ) {
+                let match = true;
+                for (const description of currentItemDescriptionList) {
+                  if (!option.includes(description)) {
+                    match = false;
+                    break;
+                  }
+                }
+                if (match) {
+                  returnData = option;
+                  break;
+                }
+              }
+            }
+            return returnData;
+        };
+        
+  
         for (let i = 0; i < requestResponseItem.length; i++) {
-          if (itemList.includes(requestResponseItem[i].request_response)) {
-            const quantityIndex = itemList.indexOf(
-                requestResponseItem[i].request_response
-            );
-            quantityList[quantityIndex] += Number(
-                requestResponseQuantity[i].request_response
-            );
-          } else {
-            itemList.push(requestResponseItem[i].request_response);
-            quantityList.push(Number(requestResponseQuantity[i].request_response));
-          }
+            const currentItem = descriptionMatcher(itemList, requestResponseItem[i].request_response) || requestResponseItem[i].request_response;
+            if (itemList.includes(currentItem)) {
+                const quantityIndex = itemList.indexOf(currentItem);
+                quantityList[quantityIndex] += Number(
+                    requestResponseQuantity[i].request_response
+                );
+            } else {
+                itemList.push(currentItem);
+                quantityList.push(Number(requestResponseQuantity[i].request_response));
+            }
         }
 
         const returnData = [];
@@ -1320,6 +1378,7 @@ RETURNS JSON AS $$
             }
         }
         item_data = returnData;
+        
     });
     return item_data;
 $$ LANGUAGE plv8;
@@ -1335,33 +1394,54 @@ RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        sourcedItemId,
-        itemFieldId,
-        quantityFieldId,
-        itemFieldList,
-        quantityFieldList
+            sourcedItemId,
+            itemFieldId,
+            quantityFieldId,
+            itemFieldList,
+            quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${sourcedItemId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Release Order';`);
+        const request = plv8.execute(
+            `
+                SELECT request_response_table.* 
+                FROM request_response_table 
+                INNER JOIN request_table ON request_response_request_id = request_id
+                INNER JOIN form_table ON request_form_id = form_id 
+                WHERE 
+                    request_table.request_status = 'APPROVED' 
+                    AND request_response = '${sourcedItemId}' 
+                    AND form_is_formsly_form = true 
+                    AND form_name = 'Release Order'
+            `
+        );
         
         let requestResponse = []
-        if(request.length>0) {
-
+        if(request.length > 0) {
             const requestIdList = request.map(
                 (response) => `'${response.request_response_request_id}'`
             ).join(",");
 
-            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+            requestResponse = plv8.execute(
+                `
+                    SELECT * FROM request_response_table 
+                    WHERE 
+                        (
+                            request_response_field_id = '${itemFieldId}' 
+                            OR request_response_field_id = '${quantityFieldId}'
+                        ) 
+                        AND request_response_request_id IN (${requestIdList})
+                `
+            );
         }
 
         const requestResponseItem = [];
         const requestResponseQuantity = [];
 
         requestResponse.forEach((response) => {
-            if (response_id === itemFieldId) {
-            requestResponseItem.push(response);
-            } else if (response_id === quantityFieldId) {
-            requestResponseQuantity.push(response);
+            if (response.request_response_field_id === itemFieldId) {
+              requestResponseItem.push(response);
+            } else if (response.request_response_field_id === quantityFieldId) {
+              requestResponseQuantity.push(response);
             }
         });
 
@@ -1373,15 +1453,11 @@ RETURNS JSON AS $$
 
         for (let i = 0; i < requestResponseItem.length; i++) {
             if (itemList.includes(requestResponseItem[i].request_response)) {
-            const quantityIndex = itemList.indexOf(
-                requestResponseItem[i].request_response
-            );
-            quantityList[quantityIndex] += Number(
-                requestResponseQuantity[i].request_response
-            );
+                const quantityIndex = itemList.indexOf(requestResponseItem[i].request_response);
+                quantityList[quantityIndex] += Number(requestResponseQuantity[i].request_response);
             } else {
-            itemList.push(requestResponseItem[i].request_response);
-            quantityList.push(Number(requestResponseQuantity[i].request_response));
+                itemList.push(requestResponseItem[i].request_response);
+                quantityList.push(Number(requestResponseQuantity[i].request_response));
             }
         }
 
@@ -1398,19 +1474,19 @@ RETURNS JSON AS $$
             const unit = matches[1].replace(/\d+/g, "").trim();
 
             if (quantityList[i] > expectedQuantity) {
-            const quantityMatch = itemList[i].match(/(\d+)/);
-            if (!quantityMatch) return;
+                const quantityMatch = itemList[i].match(/(\d+)/);
+                if (!quantityMatch) return;
 
-            returnData.push(
-                `${JSON.parse(
-                itemList[i].replace(
-                    quantityMatch[1],
-                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                )
-                )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-            );
+                returnData.push(
+                    `${JSON.parse(
+                    itemList[i].replace(
+                        quantityMatch[1],
+                        Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    )
+                    )} exceeds quantity limit by ${(
+                        quantityList[i] - expectedQuantity
+                    ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+                );
             }
         }
         item_data = returnData
@@ -1429,85 +1505,105 @@ RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        quotationId,
-        itemFieldId,
-        quantityFieldId,
-        itemFieldList,
-        quantityFieldList
+            quotationId,
+            itemFieldId,
+            quantityFieldId,
+            itemFieldList,
+            quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${quotationId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Receiving Inspecting Report';`);
+        const request = plv8.execute(
+            `
+                SELECT request_response_table.* 
+                FROM request_response_table 
+                INNER JOIN request_table ON request_response_request_id = request_id 
+                INNER JOIN form_table ON request_form_id = form_id
+                WHERE 
+                    request_status = 'APPROVED' 
+                    AND request_response = '${quotationId}' 
+                    AND form_is_formsly_form = true 
+                    AND form_name = 'Receiving Inspecting Report'
+            `
+        );
         
-        let requestResponse = []
-        if(request.length>0) {
-
+        let requestResponse = [];
+        if(request.length > 0) {
             const requestIdList = request.map(
                 (response) => `'${response.request_response_request_id}'`
             ).join(",");
 
-            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
-        }
+            requestResponse = plv8.execute(
+                `
+                    SELECT * FROM request_response_table 
+                    WHERE 
+                        (
+                            request_response_field_id = '${itemFieldId}' 
+                            OR request_response_field_id = '${quantityFieldId}'
+                        ) 
+                        AND request_response_request_id IN (${requestIdList})
+                    `
+                );
+            const requestResponseItem = [];
+            const requestResponseQuantity = [];
 
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
+            requestResponse.forEach((response) => {
+                if (response.request_response_field_id === itemFieldId) {
+                requestResponseItem.push(response);
+                } else if (response.request_response_field_id === quantityFieldId) {
+                requestResponseQuantity.push(response);
+                }
+            });
 
-        requestResponse.forEach((response) => {
-            if (response_id === itemFieldId) {
-            requestResponseItem.push(response);
-            } else if (response_id === quantityFieldId) {
-            requestResponseQuantity.push(response);
+            requestResponseItem.push(...itemFieldList);
+            requestResponseQuantity.push(...quantityFieldList);
+
+            const itemList = [];
+            const quantityList = [];
+
+            for (let i = 0; i < requestResponseItem.length; i++) {
+                if (itemList.includes(requestResponseItem[i].request_response)) {
+                const quantityIndex = itemList.indexOf(
+                    requestResponseItem[i].request_response
+                );
+                quantityList[quantityIndex] += Number(
+                    requestResponseQuantity[i].request_response
+                );
+                } else {
+                itemList.push(requestResponseItem[i].request_response);
+                quantityList.push(Number(requestResponseQuantity[i].request_response));
+                }
             }
-        });
 
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
+            const returnData = [];
+            const regExp = /\(([^)]+)\)/;
+            for (let i = 0; i < itemList.length; i++) {
+                const matches = regExp.exec(itemList[i]);
+                if (!matches) continue;
 
-        const itemList = [];
-        const quantityList = [];
+                const quantityMatch = matches[1].match(/(\d+)/);
+                if (!quantityMatch) continue;
 
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            if (itemList.includes(requestResponseItem[i].request_response)) {
-            const quantityIndex = itemList.indexOf(
-                requestResponseItem[i].request_response
-            );
-            quantityList[quantityIndex] += Number(
-                requestResponseQuantity[i].request_response
-            );
-            } else {
-            itemList.push(requestResponseItem[i].request_response);
-            quantityList.push(Number(requestResponseQuantity[i].request_response));
+                const expectedQuantity = Number(quantityMatch[1]);
+                const unit = matches[1].replace(/\d+/g, "").trim();
+
+                if (quantityList[i] > expectedQuantity) {
+                const quantityMatch = itemList[i].match(/(\d+)/);
+                if (!quantityMatch) return;
+
+                returnData.push(
+                    `${JSON.parse(
+                    itemList[i].replace(
+                        quantityMatch[1],
+                        Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    )
+                    )} exceeds quantity limit by ${(
+                    quantityList[i] - expectedQuantity
+                    ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+                );
+                }
             }
+            item_data = returnData
         }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-            const quantityMatch = itemList[i].match(/(\d+)/);
-            if (!quantityMatch) return;
-
-            returnData.push(
-                `${JSON.parse(
-                itemList[i].replace(
-                    quantityMatch[1],
-                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                )
-                )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-            );
-            }
-        }
-        item_data = returnData
     });
     return item_data;
 $$ LANGUAGE plv8;
@@ -1521,32 +1617,53 @@ RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-        releaseOrderItemId,
-        itemFieldId,
-        quantityFieldId,
-        itemFieldList,
-        quantityFieldList
+          releaseOrderItemId,
+          itemFieldId,
+          quantityFieldId,
+          itemFieldList,
+          quantityFieldList
         } = input_data;
 
-        const request = plv8.execute(`SELECT request_response_table.* FROM request_response_table JOIN request_table ON request_response_table.request_response_request_id = request_table.request_id AND request_table.request_status = 'APPROVED' AND request_table.request_form_id IS NOT NULL JOIN form_table ON request_table.request_form_id = form_table.form_id WHERE request_response_table.request_response = '${releaseOrderItemId}' AND form_table.form_is_formsly_form = true AND form_table.form_name = 'Transfer Receipt';`);
+        const request = plv8.execute(
+          `
+            SELECT request_response_table.* 
+            FROM request_response_table 
+            INNER JOIN request_table ON request_response_request_id = request_id 
+            INNER JOIN form_table ON request_form_id = form_id 
+            WHERE 
+              request_response_table.request_response = '${releaseOrderItemId}' 
+              AND request_table.request_status = 'APPROVED' 
+              AND form_table.form_is_formsly_form = true 
+              AND form_table.form_name = 'Transfer Receipt'
+          `
+        );
         
         let requestResponse = []
-        if(request.length>0) {
-
+        if(request.length > 0) {
             const requestIdList = request.map(
                 (response) => `'${response.request_response_request_id}'`
             ).join(",");
-
-            requestResponse = plv8.execute(`SELECT * FROM request_response_table WHERE (request_response_field_id = '${itemFieldId}' OR request_response_field_id = '${quantityFieldId}') AND request_response_request_id IN (${requestIdList});`);
+            requestResponse = plv8.execute(
+              `
+                SELECT * 
+                FROM request_response_table
+                WHERE 
+                  (
+                    request_response_field_id = '${itemFieldId}' 
+                    OR request_response_field_id = '${quantityFieldId}'
+                  ) 
+                AND request_response_request_id IN (${requestIdList})
+            `
+          );
         }
 
         const requestResponseItem = [];
         const requestResponseQuantity = [];
 
         requestResponse.forEach((response) => {
-            if (response_id === itemFieldId) {
+            if (response.request_response_field_id === itemFieldId) {
             requestResponseItem.push(response);
-            } else if (response_id === quantityFieldId) {
+            } else if (response.request_response_field_id === quantityFieldId) {
             requestResponseQuantity.push(response);
             }
         });
@@ -2833,7 +2950,6 @@ RETURNS JSON as $$
         ) {
           let match = true;
           for (const description of currentItemDescriptionList) {
-            console.log(option, description, option.includes(description));
             if (!option.includes(description)) {
               match = false;
               break;
