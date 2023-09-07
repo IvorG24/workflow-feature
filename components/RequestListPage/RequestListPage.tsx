@@ -175,7 +175,6 @@ const RequestListPage = ({
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (error) {
-      console.log(error);
       notifications.show({
         message:
           "We're having trouble refreshing the page. Please try again later.",
@@ -199,7 +198,6 @@ const RequestListPage = ({
         </Box>
         {isFormslyTeam ? (
           <Button
-            variant="light"
             onClick={() => router.push("/team-requests/spreadsheet-view")}
             sx={{ flex: 1 }}
             maw={300}
