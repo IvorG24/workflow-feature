@@ -2,7 +2,28 @@ INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name,
 ('beb2d52c-77d5-49a9-a175-637152c44424', 'johndoe', 'John', 'Doe', 'johndoe@gmail.com', 'Graphic Designer', '9586325781', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('dd689b20-8293-4b8a-b9c6-9a5cc63f659c', 'janedoe', 'Jane', 'Doe', 'janedoe@gmail.com', 'Sales Management', '9563268975', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 ('930de3a6-181d-449e-8890-0aa055947d80', 'loremipsum', 'Lorem', 'Ipsum', 'loremipsum@gmail.com', 'Software Engineer', '9571523487', 'a5a28977-6956-45c1-a624-b9e90911502e'),
-('eaf09887-9686-4faf-8a13-d51fba94eb39', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
+('eaf09887-9686-4faf-8a13-d51fba94eb39', 'dolorsit', 'Dolor', 'Sit', 'dolorsit@gmail.com', 'Data Entry Clerk', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+
+('71dfd658-3bd1-44c0-97e2-d69c4f040190', 'lacyfrancis', 'Lacy', 'Francis', 'lacyfrancis@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('077dd853-2ec0-491f-a386-e5cf52f06f45', 'armandwest', 'Armand', 'West', 'armandwest@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('5418c77a-b792-4b09-8718-251351cb35f4', 'marlonpace', 'Marlon', 'Pace', 'marlonpace@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('1122d9ad-1593-4641-9ef7-dae7befc3923', 'allysonatkins', 'Allyson', 'Atkins', 'allysonatkins@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('0b66ea46-7180-4b0d-904a-f84a26ccc8e1', 'willievasquez', 'Willie', 'Vazquez', 'willievasquez@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('c959eea5-f050-4c80-b57d-8248950564ea', 'walkercollier', 'Walker', 'Collier', 'walkercollier@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('0f2444b6-09c3-4d2e-9af9-e0b717d3c775', 'jeramyvillanueva', 'Jeramy', 'Villanueva', 'jeramyvillanueva@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('47eb79f1-2504-47f9-a038-699b6c4a3a81', 'darenmendex', 'Daren', 'Mendez', 'darenmendex@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('033833d0-4ba3-4755-97c0-3ad4cf82acbc', 'linosullivan', 'Lino ', 'Sullivan', 'linosullivan@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('1f5f1819-128f-458d-b9c7-fe7bd2f539df', 'guykoch', 'Guy', 'Koch', 'guykoch@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('007740ff-c688-4878-8888-59d6d3f1e680', 'efrainarcher', 'Efrain', 'Archer', 'efrainarcher@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('0bef2824-2c3a-4e6a-a4b8-06a5e9b8c0ac', 'normancuevas', 'Norman', 'Cuevas', 'normancuevas@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('6536af6c-352e-43c2-accd-6124c26597dc', 'daltonhodge', 'Dalton', 'Hodge', 'daltonhodge@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('106c7713-a638-457e-a0d8-300d7700e7a5', 'jacquelynwarner', 'Jacquelyn', 'Warner', 'jacquelynwarner@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('34d5fca4-4e09-465c-8000-ee595976e5f5', 'trentonoliver', 'Trenton', 'Oliver', 'trentonoliver@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('0f99ec3d-737f-4c0d-aad4-06a6bda3d733', 'israelpierce', 'Isreal', 'Pierce', 'israelpierce@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('9053c57f-3982-405b-90ca-3d0ce9ca0a5d', 'lacyglass', 'Lacy', 'Glass', 'lacyglass@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('6c35707a-0da8-459c-8679-d23167027a8a', 'abrahamstark', 'Abraham', 'Stark', 'abrahamstark@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('de3b4e7a-5203-4c4b-97a9-9f7fa3b14b64', 'phoebewhitehead', 'Phoebe', 'Whitehead', 'phoebewhitehead@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+('e45676a5-361e-4d6f-a773-d69f9815fea1', 'laurelpatrick', 'Laurel', 'Patrick', 'laurelpatrick@gmail.com', 'Test User', '9856325789', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO team_table (team_id, team_name, team_user_id) VALUES
 ('a5a28977-6956-45c1-a624-b9e90911502e', 'Sta Clara', 'beb2d52c-77d5-49a9-a175-637152c44424'),
@@ -15,7 +36,28 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '930de3a6-181d-449e-8890-0aa055947d80'),
 ('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'eaf09887-9686-4faf-8a13-d51fba94eb39'),
 ('cb06905e-e64b-4bfe-9f03-ee36dba0c809', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', 'beb2d52c-77d5-49a9-a175-637152c44424'),
-('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', 'beb2d52c-77d5-49a9-a175-637152c44424');
+('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', 'beb2d52c-77d5-49a9-a175-637152c44424'),
+
+('be8b542b-0168-4523-9703-f90527fdd333', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '71dfd658-3bd1-44c0-97e2-d69c4f040190'),
+('1416e54d-d5a4-41ea-abfe-f2ef1a2a9757', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '077dd853-2ec0-491f-a386-e5cf52f06f45'),
+('1831b8cf-40a9-4462-8399-2dc165170ed6', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '5418c77a-b792-4b09-8718-251351cb35f4'),
+('4cee27c5-6c91-4d3b-a2e5-ac4e11579759', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '1122d9ad-1593-4641-9ef7-dae7befc3923'),
+('08da2098-a7f3-4078-9501-2f3960edaf60', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '0b66ea46-7180-4b0d-904a-f84a26ccc8e1'),
+('e00a4fe6-e9d7-4d53-897f-35c60c03f1f0', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'c959eea5-f050-4c80-b57d-8248950564ea'),
+('e245d73d-f47c-4094-a75e-111cb50f30c9', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '0f2444b6-09c3-4d2e-9af9-e0b717d3c775'),
+('e299f357-374a-414c-8062-b6b84d4dd279', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '47eb79f1-2504-47f9-a038-699b6c4a3a81'),
+('b14e1a52-0d1e-4170-b0a6-75c418d80cd4', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '033833d0-4ba3-4755-97c0-3ad4cf82acbc'),
+('2012e290-d92d-44bd-9672-6f84fd8e9919', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '1f5f1819-128f-458d-b9c7-fe7bd2f539df'),
+('9f6bf572-d829-4379-a9b7-afb38223e177', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '007740ff-c688-4878-8888-59d6d3f1e680'),
+('70ac8036-5b2f-4b1b-a9ef-e1d72f2850b2', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '0bef2824-2c3a-4e6a-a4b8-06a5e9b8c0ac'),
+('bbb47a79-b122-4648-9187-7301df6afc4c', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '6536af6c-352e-43c2-accd-6124c26597dc'),
+('19a61839-9fc1-4c50-ba19-ee020e3762fb', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', '106c7713-a638-457e-a0d8-300d7700e7a5'),
+('42afe5d8-f945-43ed-9c87-1d0b07414e5c', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '34d5fca4-4e09-465c-8000-ee595976e5f5'),
+('5b18e1b1-d781-4e7f-ad14-2ef437298ebc', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '0f99ec3d-737f-4c0d-aad4-06a6bda3d733'),
+('58c2cbb4-cc80-4632-b210-81723e4f7851', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '9053c57f-3982-405b-90ca-3d0ce9ca0a5d'),
+('971c53b1-0c7d-4398-a4c4-cd3f1fe2d02e', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', '6c35707a-0da8-459c-8679-d23167027a8a'),
+('46b33619-519e-4722-b1f7-170da8565e79', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'de3b4e7a-5203-4c4b-97a9-9f7fa3b14b64'),
+('aa165aa0-c210-4486-b075-c8eb4c2e2233', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'e45676a5-361e-4d6f-a773-d69f9815fea1');
 
 INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
 ('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition 

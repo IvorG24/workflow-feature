@@ -2547,21 +2547,61 @@ $$ LANGUAGE plv8;
 
 -- START: Get team on load
 
-CREATE FUNCTION get_team_on_load(
+CREATE OR REPLACE FUNCTION get_team_on_load(
     input_data JSON
 )
 RETURNS JSON AS $$
   let team_data;
   plv8.subtransaction(function(){
     const {
-      userId
+      userId,
+      teamMemberLimit
     } = input_data;
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     
     const team = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
 
-    const teamMembers = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) AS team_member_user  FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id = usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false AND usert.user_is_disabled=false;`);
+    const teamMembers = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+        ORDER BY
+          CASE tmt.team_member_role
+              WHEN 'OWNER' THEN 1
+              WHEN 'ADMIN' THEN 2
+              WHEN 'MEMBER' THEN 3
+          END ASC,
+          usert.user_first_name ASC,
+          usert.user_last_name ASC
+        LIMIT ${teamMemberLimit}
+      `
+    );
+
+    const teamMembersCount = plv8.execute(
+      `
+        SELECT COUNT(*)
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+      `
+    )[0].count;
 
     const teamGroups = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
 
@@ -2571,12 +2611,89 @@ RETURNS JSON AS $$
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
-    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`}
+    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`, teamMembersCount: Number(teamMembersCount)}
  });
  return team_data;
 $$ LANGUAGE plv8;
 
 -- END: Get team on load
+
+-- START: Get team members with filter
+
+CREATE OR REPLACE FUNCTION get_team_member_with_filter(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let team_data;
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      search
+    } = input_data;
+
+    const start = (page - 1) * limit;
+    
+    const teamMembers = plv8.execute(
+      `
+        SELECT 
+          tmt.team_member_id, 
+          tmt.team_member_role, 
+          json_build_object( 
+            'user_id', usert.user_id, 
+            'user_first_name', usert.user_first_name, 
+            'user_last_name', usert.user_last_name, 
+            'user_avatar', usert.user_avatar, 
+            'user_email', usert.user_email 
+          ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+          ${search && `AND (
+            usert.user_first_name ILIKE '%${search}%'
+            OR usert.user_last_name ILIKE '%${search}%'
+            OR usert.user_email ILIKE '%${search}%'
+          )`}
+        ORDER BY
+          CASE tmt.team_member_role
+              WHEN 'OWNER' THEN 1
+              WHEN 'ADMIN' THEN 2
+              WHEN 'MEMBER' THEN 3
+          END ASC,
+          usert.user_first_name ASC,
+          usert.user_last_name ASC
+        OFFSET ${start}
+        LIMIT ${limit}
+      `
+    );
+
+    const teamMembersCount = plv8.execute(
+      `
+        SELECT COUNT(*)
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+          ${search && `AND (
+            usert.user_first_name ILIKE '%${search}%'
+            OR usert.user_last_name ILIKE '%${search}%'
+            OR usert.user_email ILIKE '%${search}%'
+          )`}
+      `
+    )[0].count;
+
+    team_data = { teamMembers, teamMembersCount: Number(teamMembersCount) }
+ });
+ return team_data;
+$$ LANGUAGE plv8;
+
+-- END: Get team members with filter
 
 -- START: Get notifications on load
 
