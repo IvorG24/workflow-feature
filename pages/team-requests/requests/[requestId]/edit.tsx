@@ -14,7 +14,7 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const request = await getRequest(supabaseClient, {
+      const requestData = await getRequest(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
 
@@ -30,10 +30,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (!teamMember) throw new Error("No team member found");
 
-      const parsedRequest = parseRequest(request);
+      const request = parseRequest(requestData);
 
       return {
-        props: { request: parsedRequest },
+        props: { request },
       };
     } catch (error) {
       console.error(error);

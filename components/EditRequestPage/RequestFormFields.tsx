@@ -146,7 +146,7 @@ const RequestFormFields = ({
                     {...inputProps}
                     error={fieldError}
                     withAsterisk={field.field_is_required}
-                    value={`${linkToDisplay || value}`}
+                    value={`${linkToDisplay || value}` || undefined}
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
                   />
@@ -175,7 +175,7 @@ const RequestFormFields = ({
             render={({ field: inputField }) => (
               <TextInput
                 {...inputField}
-                value={parseJSONIfValid(inputField.value)}
+                value={parseJSONIfValid(inputField.value) || undefined}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
@@ -192,7 +192,7 @@ const RequestFormFields = ({
             render={({ field: inputField }) => (
               <TextInput
                 {...inputField}
-                value={parseJSONIfValid(inputField.value)}
+                value={parseJSONIfValid(inputField.value) || undefined}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
@@ -292,7 +292,7 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => {
               return (
                 <Select
-                  value={parseJSONIfValid(value)}
+                  value={parseJSONIfValid(value) || undefined}
                   onChange={(value) => {
                     const prevValue = getValues(
                       `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`
@@ -369,7 +369,7 @@ const RequestFormFields = ({
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`}
             render={({ field: { value, onChange } }) => (
               <MultiSelect
-                value={parseJSONIfValid(value) as string[]}
+                value={(parseJSONIfValid(value) as string[]) || undefined}
                 onChange={(value) => onChange(value)}
                 data={multiselectOption}
                 withAsterisk={field.field_is_required}
@@ -451,7 +451,7 @@ const RequestFormFields = ({
                   }
                   sx={{ width: "100%" }}
                 />
-                {field.value ? (
+                {parseJSONIfValid(field.value) ? (
                   <Tooltip
                     label="Open last saved file in new tab"
                     openDelay={200}
