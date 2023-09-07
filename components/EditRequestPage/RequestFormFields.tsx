@@ -407,7 +407,6 @@ const RequestFormFields = ({
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`}
             render={({ field }) => {
-              console.log(formatTime(field.value) || undefined);
               return (
                 <TimeInput
                   {...inputProps}

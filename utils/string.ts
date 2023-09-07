@@ -46,5 +46,6 @@ export const parseJSONIfValid = (jsonString: string) => {
 export const convertTimestampToDate = (input: string | Date) => {
   if (input instanceof Date) return input;
   const parsedInput = parseJSONIfValid(input);
+  if (!parsedInput) return undefined;
   return new Date(parsedInput);
 };
