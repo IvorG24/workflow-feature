@@ -122,7 +122,8 @@ export const sortFormList = (
 };
 
 export const generateRequestDuplicateSection = (
-  originalSection: RequestWithResponseType["request_form"]["form_section"][0]
+  originalSection: RequestWithResponseType["request_form"]["form_section"][0],
+  formslyForm: boolean
 ) => {
   const fieldResponse: RequestResponseTableRow[] =
     originalSection.section_field.flatMap((field) => field.field_response);
@@ -141,7 +142,7 @@ export const generateRequestDuplicateSection = (
     return unique;
   }, [] as string[]);
 
-  const duplicateSectionList = uniqueIdList.map((id) => {
+  const duplicateSectionList = uniqueIdList.map((id, idx) => {
     const duplicateSection: RequestWithResponseType["request_form"]["form_section"][0] =
       {
         ...originalSection,
@@ -151,19 +152,32 @@ export const generateRequestDuplicateSection = (
             field.field_response.filter(
               (response) =>
                 `${response.request_response_duplicatable_section_id}` === id
-            )[0] || null,
+            )[idx] || null,
           ],
         })),
       };
     return duplicateSection;
   });
 
-  return duplicateSectionList;
+  let sectionWithDuplicateList: RequestWithResponseType["request_form"]["form_section"] =
+    [];
+  if (formslyForm) {
+    sectionWithDuplicateList = duplicateSectionList.map((section) => ({
+      ...section,
+      section_field: section.section_field.filter(
+        (field) => field.field_response[0] !== null
+      ),
+    }));
+  } else {
+    sectionWithDuplicateList = duplicateSectionList;
+  }
+
+  return sectionWithDuplicateList;
 };
 
 export const parseRequest = (request: RequestWithResponseType) => {
   const {
-    request_form: { form_section: originalSectionList },
+    request_form: { form_section: originalSectionList, form_is_formsly_form },
   } = request;
   const sectionWithDuplicateList: RequestWithResponseType["request_form"]["form_section"] =
     [];
@@ -175,7 +189,10 @@ export const parseRequest = (request: RequestWithResponseType) => {
       )
     );
     if (section.section_is_duplicatable && hasDuplicates) {
-      const duplicateSection = generateRequestDuplicateSection(section);
+      const duplicateSection = generateRequestDuplicateSection(
+        section,
+        form_is_formsly_form
+      );
       duplicateSection.forEach((duplicateSection) =>
         sectionWithDuplicateList.push(duplicateSection)
       );
