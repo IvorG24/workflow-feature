@@ -1,3 +1,4 @@
+import { TeamMemberType } from "@/utils/types";
 import { Box } from "@mantine/core";
 import { useState } from "react";
 import AddTeamAdmin from "./AddTeamAdmin";
@@ -29,9 +30,10 @@ export type TeamAdminChoiceType = {
 
 type Props = {
   teamId: string;
+  teamMemberList: TeamMemberType[];
 };
 
-const AdminGroup = ({ teamId }: Props) => {
+const AdminGroup = ({ teamId, teamMemberList }: Props) => {
   const [adminList, setAdminList] = useState<TeamAdminType[]>([]);
   const [adminListCount, setAdminListCount] = useState(0);
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
@@ -46,6 +48,7 @@ const AdminGroup = ({ teamId }: Props) => {
           setIsAddingAdmin={setIsAddingAdmin}
           adminListCount={adminListCount}
           setAdminListCount={setAdminListCount}
+          teamMemberList={teamMemberList}
         />
       ) : null}
       {isAddingAdmin ? (

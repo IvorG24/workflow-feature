@@ -313,6 +313,7 @@ export type RequestWithResponseType = RequestTableRow & {
 export type TeamMemberType = {
   team_member_id: string;
   team_member_role: MemberRoleType;
+  team_member_date_created: string;
   team_member_user: {
     user_id: string;
     user_first_name: string;

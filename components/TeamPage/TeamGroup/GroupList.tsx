@@ -19,9 +19,9 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
+import { lowerCase, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -76,6 +76,7 @@ const GroupList = ({
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [searchResult, setSearchResult] = useState(groupList);
 
   const headerCheckboxKey = uniqueId();
 
@@ -114,6 +115,7 @@ const GroupList = ({
       });
       setGroupList(data as TeamGroupTableRow[]);
       setGroupCount(Number(count));
+      setSearchResult(data as TeamGroupTableRow[]);
     } catch {
       notifications.show({
         message: "Error on fetching group list",
@@ -134,6 +136,7 @@ const GroupList = ({
         }
       });
       setGroupList(updatedGroupList);
+      setSearchResult(updatedGroupList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
@@ -150,6 +153,7 @@ const GroupList = ({
     } catch {
       setGroupList(savedRecord);
       setCheckList(saveCheckList);
+      setSearchResult(savedRecord);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -208,6 +212,51 @@ const GroupList = ({
       ),
     },
   ];
+
+  useEffect(() => {
+    const channel = supabaseClient
+      .channel("realtime-team-group")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "team_group_table",
+          filter: `team_group_team_id=eq.${activeTeam.team_id}`,
+        },
+        async (payload) => {
+          if (payload.eventType === "UPDATE") {
+            const isGroupDisabled = payload.new.team_group_is_disabled;
+            if (isGroupDisabled) {
+              const updatedGroupList = groupList.filter(
+                (group) => group.team_group_id !== payload.new.team_group_id
+              );
+              setGroupList(updatedGroupList);
+              setSearchResult(updatedGroupList);
+            }
+          }
+
+          if (payload.eventType === "INSERT") {
+            const updatedGroupList = [payload.new, ...groupList];
+            setGroupList(updatedGroupList as TeamGroupTableRow[]);
+            setGroupCount(updatedGroupList.length);
+
+            const searchIncludesNewGroup = lowerCase(
+              payload.new.team_group_name
+            ).includes(lowerCase(search));
+
+            if (searchIncludesNewGroup) {
+              setSearchResult(updatedGroupList as TeamGroupTableRow[]);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeChannel(channel);
+    };
+  }, [supabaseClient, activeTeam.team_id, groupList, search]);
 
   return (
     <Box>
@@ -285,7 +334,7 @@ const GroupList = ({
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={groupList}
+        records={searchResult}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={groupCount}
         recordsPerPage={ROW_PER_PAGE}

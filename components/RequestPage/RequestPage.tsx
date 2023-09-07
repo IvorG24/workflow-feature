@@ -6,6 +6,10 @@ import {
   checkTransferReceiptItemQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
+import useRealtimeProjectRequestSignerList from "@/hooks/useRealtimeRequestProjectSignerList";
+import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
+import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
@@ -32,7 +36,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
@@ -75,21 +79,43 @@ const RequestPage = ({
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
 
-  const [requestStatus, setRequestStatus] = useState(request.request_status);
-  const [signerList, setSignerList] = useState(
-    request.request_signer.map((signer) => {
-      return {
-        ...signer.request_signer_signer,
-        request_signer_status:
-          signer.request_signer_status as ReceiverStatusType,
-      };
-    })
-  );
-  const [projectSignerStatus, setProjectSignerStatus] = useState(
-    initialProjectSignerStatus || []
-  );
-
   const requestor = request.request_team_member.team_member_user;
+
+  const initialRequestSignerList = request.request_signer.map((signer) => {
+    return {
+      ...signer.request_signer_signer,
+      request_signer_status: signer.request_signer_status as ReceiverStatusType,
+    };
+  });
+
+  const requestStatus = useRealtimeRequestStatus(supabaseClient, {
+    requestId: request.request_id,
+    initialRequestStatus: request.request_status,
+  });
+
+  const signerList = useRealtimeRequestSignerList(supabaseClient, {
+    requestId: request.request_id,
+    initialRequestSignerList,
+  });
+
+  const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
+    requestId: request.request_id,
+    initialCommentList: request.request_comment,
+  });
+
+  const isSourcedItemForm =
+    request.request_form.form_name === "Sourced Item" &&
+    request.request_form.form_is_formsly_form;
+
+  const projectSignerStatus = useRealtimeProjectRequestSignerList(
+    supabaseClient,
+    {
+      requestId: request.request_id,
+      initialRequestProjectSignerList: initialProjectSignerStatus || [],
+      requestSignerList: signerList,
+      isSourcedItemForm,
+    }
+  );
 
   const requestDateCreated = new Date(
     request.request_date_created
@@ -109,10 +135,6 @@ const RequestPage = ({
 
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
-
-  useEffect(() => {
-    setRequestStatus(request.request_status);
-  }, [request.request_status]);
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
@@ -340,44 +362,6 @@ const RequestPage = ({
         teamId: request.request_team_member.team_member_team_id,
       });
 
-      if (signer.signer_is_primary_signer) {
-        setRequestStatus(status);
-      } else {
-        router.reload();
-      }
-
-      setSignerList((prev) =>
-        prev.map((signerItem) => {
-          if (
-            signerItem.signer_team_member.team_member_id ===
-            teamMember.team_member_id
-          ) {
-            return {
-              ...signer,
-              request_signer_status: status,
-            };
-          } else {
-            return signerItem;
-          }
-        })
-      );
-
-      if (
-        request.request_form.form_name === "Sourced Item" &&
-        request.request_form.form_is_formsly_form
-      ) {
-        setProjectSignerStatus((signers) => {
-          return signers.map((signer) => {
-            if (signer.signer_team_member_id === teamMember.team_member_id) {
-              return {
-                ...signer,
-                signer_status: status,
-              };
-            } else return signer;
-          });
-        });
-      }
-
       notifications.show({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
@@ -400,8 +384,6 @@ const RequestPage = ({
         requestId: request.request_id,
         memberId: teamMember.team_member_id,
       });
-
-      setRequestStatus("CANCELED");
       notifications.show({
         message: "Request canceled",
         color: "green",
@@ -422,8 +404,6 @@ const RequestPage = ({
       await deleteRequest(supabaseClient, {
         requestId: request.request_id,
       });
-
-      setRequestStatus("DELETED");
       notifications.show({
         message: "Request deleted.",
         color: "green",
@@ -650,7 +630,7 @@ const RequestPage = ({
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
         }}
-        requestCommentList={request.request_comment}
+        requestCommentList={requestCommentList}
       />
     </Container>
   );

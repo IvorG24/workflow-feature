@@ -1,6 +1,7 @@
 import { getTeamOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TeamPage from "@/components/TeamPage/TeamPage";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
   TeamGroupTableRow,
@@ -15,6 +16,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
     try {
       const teamData = await getTeamOnLoad(supabaseClient, {
         userId: user.id,
+        teamMemberLimit: ROW_PER_PAGE,
       });
 
       return {
@@ -37,6 +39,7 @@ type Props = {
   teamMembers: TeamMemberType[];
   teamGroups: TeamGroupTableRow[];
   teamProjects: TeamProjectTableRow[];
+  teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;
 };
@@ -46,6 +49,7 @@ const Page = ({
   teamMembers,
   teamGroups,
   teamProjects,
+  teamMembersCount,
   teamGroupsCount,
   teamProjectsCount,
 }: Props) => {
@@ -57,6 +61,7 @@ const Page = ({
         teamMembers={teamMembers}
         teamGroups={teamGroups}
         teamProjects={teamProjects}
+        teamMembersCount={teamMembersCount}
         teamGroupsCount={teamGroupsCount}
         teamProjectsCount={teamProjectsCount}
       />

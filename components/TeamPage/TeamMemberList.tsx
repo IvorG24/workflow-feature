@@ -1,4 +1,4 @@
-import { DEFAULT_TEAM_MEMBER_LIST_LIMIT } from "@/utils/constant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { MemberRoleType, TeamMemberType } from "@/utils/types";
 import {
@@ -16,7 +16,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
-import { lowerCase, startCase } from "lodash";
+import { ceil, lowerCase, startCase } from "lodash";
 import { useFormContext } from "react-hook-form";
 import TeamMemberMenu from "./TeamMemberMenu";
 import { SearchForm } from "./TeamPage";
@@ -30,8 +30,8 @@ type Props = {
   onTransferOwnership: (ownerId: string, memberId: string) => void;
   page: number;
   handlePageChange: (page: number) => void;
+  teamMemberCount: number;
 };
-
 const TeamMemberList = ({
   teamMemberList,
   isUpdatingTeamMembers,
@@ -41,71 +41,45 @@ const TeamMemberList = ({
   onTransferOwnership,
   page,
   handlePageChange,
+  teamMemberCount,
 }: Props) => {
-  const totalPage = Math.ceil(
-    teamMemberList.length / DEFAULT_TEAM_MEMBER_LIST_LIMIT
-  );
   const { register, handleSubmit } = useFormContext<SearchForm>();
 
-  const sortByRole = (members: TeamMemberType[]): TeamMemberType[] => {
-    const roleOrder: Record<string, number> = {
-      OWNER: 1,
-      ADMIN: 2,
-      MEMBER: 3,
-    };
+  const rows = teamMemberList.map((member) => {
+    const { team_member_role: role, team_member_user: user } = member;
+    const fullname = `${user.user_first_name} ${user.user_last_name}`;
+    return (
+      <tr key={user.user_id}>
+        <td>
+          <Group>
+            <Avatar
+              color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
+              src={user.user_avatar}
+              alt="Member avatar"
+              size={24}
+              radius={12}
+            >
+              {startCase(user.user_first_name[0])}
+              {startCase(user.user_last_name[0])}
+            </Avatar>
 
-    return members.sort((a, b) => {
-      const roleA = roleOrder[a.team_member_role] || Infinity;
-      const roleB = roleOrder[b.team_member_role] || Infinity;
+            <Text>{startCase(fullname)}</Text>
+          </Group>
+        </td>
 
-      if (roleA === roleB) {
-        return a.team_member_user.user_first_name.localeCompare(
-          b.team_member_user.user_first_name
-        );
-      }
+        <td>{startCase(lowerCase(role))}</td>
 
-      return roleA - roleB;
-    });
-  };
-
-  const start = (page - 1) * DEFAULT_TEAM_MEMBER_LIST_LIMIT;
-  const rows = sortByRole(teamMemberList)
-    .slice(start, start + DEFAULT_TEAM_MEMBER_LIST_LIMIT)
-    .map((member) => {
-      const { team_member_role: role, team_member_user: user } = member;
-      const fullname = `${user.user_first_name} ${user.user_last_name}`;
-      return (
-        <tr key={user.user_id}>
-          <td>
-            <Group>
-              <Avatar
-                color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
-                src={user.user_avatar}
-                alt="Member avatar"
-                size={24}
-                radius={12}
-              >
-                {startCase(user.user_first_name[0])}
-                {startCase(user.user_last_name[0])}
-              </Avatar>
-
-              <Text>{startCase(fullname)}</Text>
-            </Group>
-          </td>
-
-          <td>{startCase(lowerCase(role))}</td>
-
-          <td>
-            <TeamMemberMenu
-              member={member}
-              onUpdateMemberRole={onUpdateMemberRole}
-              onRemoveFromTeam={onRemoveFromTeam}
-              onTransferOwnership={onTransferOwnership}
-            />
-          </td>
-        </tr>
-      );
-    });
+        <td>
+          <TeamMemberMenu
+            member={member}
+            onUpdateMemberRole={onUpdateMemberRole}
+            onRemoveFromTeam={onRemoveFromTeam}
+            onTransferOwnership={onTransferOwnership}
+          />
+        </td>
+      </tr>
+    );
+  });
 
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
@@ -150,7 +124,7 @@ const TeamMemberList = ({
           <Pagination
             value={page}
             onChange={handlePageChange}
-            total={totalPage}
+            total={ceil(teamMemberCount / ROW_PER_PAGE)}
             size="sm"
             sx={{ alignSelf: "flex-end" }}
           />
