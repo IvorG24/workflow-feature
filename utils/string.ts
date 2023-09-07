@@ -23,7 +23,9 @@ export const addCommaToNumber = (number: number) => {
 };
 
 export const formatTime = (time: string) => {
-  const timeParts = parseJSONIfValid(time).split(":");
+  const parsedTime = parseJSONIfValid(time);
+  if (!parsedTime) return parsedTime;
+  const timeParts = parsedTime.split(":");
   const hours = parseInt(timeParts[0]);
   const minutes = parseInt(timeParts[1]);
 

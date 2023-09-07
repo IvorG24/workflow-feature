@@ -208,7 +208,7 @@ const RequestFormFields = ({
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`}
             render={({ field: { value, onChange } }) => (
               <NumberInput
-                value={Number(value) as number}
+                value={(Number(value) as number) || undefined}
                 onChange={(value) => {
                   onChange(value);
                   if (field.field_name === "Quantity" && rirFormMethods) {
@@ -406,24 +406,27 @@ const RequestFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`}
-            render={({ field }) => (
-              <TimeInput
-                {...inputProps}
-                value={formatTime(field.value)}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                ref={timeInputRef}
-                error={fieldError}
-                rightSection={
-                  <ActionIcon
-                    onClick={() => timeInputRef.current?.showPicker()}
-                  >
-                    <IconClock size="1rem" stroke={1.5} />
-                  </ActionIcon>
-                }
-                icon={<IconClock size={16} />}
-              />
-            )}
+            render={({ field }) => {
+              console.log(formatTime(field.value) || undefined);
+              return (
+                <TimeInput
+                  {...inputProps}
+                  value={formatTime(field.value)}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  ref={timeInputRef}
+                  error={fieldError}
+                  rightSection={
+                    <ActionIcon
+                      onClick={() => timeInputRef.current?.showPicker()}
+                    >
+                      <IconClock size="1rem" stroke={1.5} />
+                    </ActionIcon>
+                  }
+                  icon={<IconClock size={16} />}
+                />
+              );
+            }}
             rules={{ ...fieldRules }}
           />
         );
