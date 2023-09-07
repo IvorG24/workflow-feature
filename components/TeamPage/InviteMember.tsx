@@ -2,6 +2,7 @@ import { getTeamInvitation } from "@/backend/api/get";
 import { cancelTeamInvitation, createTeamInvitation } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { JWT_SECRET_KEY } from "@/utils/constant";
 import { TeamMemberType } from "@/utils/types";
 import {
   Box,
@@ -21,6 +22,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconMailPlus, IconUsersPlus } from "@tabler/icons-react";
 import axios from "axios";
+import jwt from "jsonwebtoken";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import validator from "validator";
@@ -62,7 +64,7 @@ const InviteMember = ({
     []
   );
   const [isResendingInvite, setIsResendingInvite] = useState(false);
-  const [resendInviteTimeout, setResendInviteTimeout] =
+  const [resendInviteTimeoutList, setResendInviteTimeoutList] =
     useLocalStorage<ResendInviteTimeout>({
       key: "formsly-resend-invite-timeout",
       defaultValue: [],
@@ -99,16 +101,13 @@ const InviteMember = ({
   // send email invite notification
   const sendEmailInvite = async (emailList: string[]) => {
     const subject = `You have been invited to join ${team.team_name} on Formsly.`;
-    const html = `<p>Hi,</p>
-    <p>Please click the link below to accept the invitation.</p>
-    &nbsp;
-    <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/sign-in">${process.env.NEXT_PUBLIC_SITE_URL}/sign-in</a></p>
-    &nbsp;
-    <p>Thank you,</p>
-    <p>Formsly Team</p>`;
 
     for (const email of emailList) {
       try {
+        const inviteToken = generateEmailInviteToken(email);
+        const inviteUrl = `${window.location.origin}/api/team-invite?token=${inviteToken}`;
+        const html = generateEmailHtml(inviteUrl);
+
         const response = await axios.post("/api/send-email", {
           to: email,
           subject,
@@ -116,12 +115,35 @@ const InviteMember = ({
         });
         return response.data;
       } catch (error) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
+        console.log(error);
       }
     }
+  };
+
+  const generateEmailInviteToken = (email: string) => {
+    const inviteParameter = {
+      teamId: team.team_id,
+      teamName: team.team_name,
+      invitedEmail: email,
+    };
+
+    const jwtInviteToken = jwt.sign(inviteParameter, JWT_SECRET_KEY, {
+      expiresIn: "48h",
+    });
+
+    return jwtInviteToken;
+  };
+
+  const generateEmailHtml = (inviteUrl: string) => {
+    const html = `<p>Hi,</p>
+    <p>Please click the link below to accept the invitation. This invite is only valid for 48 hours.</p>
+    &nbsp;
+    <p><a href="${inviteUrl}">Join ${team.team_name} on Formsly.io</a></p>
+    &nbsp;
+    <p>Thank you,</p>
+    <p>Formsly Team</p>`;
+
+    return html;
   };
 
   const handleResendInvite = async (email: string) => {
@@ -133,15 +155,30 @@ const InviteMember = ({
         invitation_email: email,
         invitation_resend_date_created: dateNow,
       };
-      setResendInviteTimeout((prev) => {
-        const isExisting = prev.find(
-          (invite) => invite.invitation_email === email
+
+      const isResendInviteExisting = resendInviteTimeoutList.find(
+        (resendInvite) => resendInvite.invitation_email === email
+      );
+
+      if (isResendInviteExisting) {
+        setResendInviteTimeoutList((prev) =>
+          prev.map((resendInvite) => {
+            if (resendInvite.invitation_email === email) {
+              return resendInviteWithDateCreated;
+            }
+
+            return resendInvite;
+          })
         );
-        if (!isExisting) {
-          prev.push(resendInviteWithDateCreated);
-        }
-        return prev;
-      });
+      } else {
+        const updatedResentInviteTimeout = [
+          ...resendInviteTimeoutList,
+          resendInviteWithDateCreated,
+        ];
+
+        setResendInviteTimeoutList(updatedResentInviteTimeout);
+      }
+
       notifications.show({
         message: "Invitation resent",
         color: "green",
@@ -320,11 +357,12 @@ const InviteMember = ({
               <LoadingOverlay visible={isResendingInvite} />
               {pendingInviteList.map((invite) => {
                 const resendDateCreated =
-                  resendInviteTimeout.find(
+                  resendInviteTimeoutList.find(
                     (resendInvite) =>
                       resendInvite.invitation_email ===
                       invite.invitation_to_email
                   )?.invitation_resend_date_created || null;
+
                 const dateNow = new Date();
                 const isResendDisabled = resendDateCreated
                   ? !(moment(dateNow).diff(resendDateCreated, "minutes") > 1)

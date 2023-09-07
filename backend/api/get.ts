@@ -3244,3 +3244,53 @@ export const getRequestListOnLoad = async (
 
   return data as unknown as RequestListOnLoad;
 };
+
+export const getInvitationId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    userEmail: string;
+  }
+) => {
+  const { teamId, userEmail } = params;
+
+  const { data, error } = await supabaseClient
+    .from("invitation_table")
+    .select(
+      `
+      invitation_id,
+      team_member: invitation_from_team_member_id!inner(
+        team_member_team_id
+      )
+    `
+    )
+    .eq("team_member.team_member_team_id", teamId)
+    .eq("invitation_is_disabled", false)
+    .eq("invitation_to_email", userEmail)
+    .eq("invitation_status", "PENDING")
+    .limit(1)
+    .single();
+  if (error) throw error;
+  return data.invitation_id;
+};
+
+export const getUserPendingInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userEmail: string;
+  }
+) => {
+  const { userEmail } = params;
+
+  const { data, error } = await supabaseClient
+    .from("invitation_table")
+    .select("*")
+    .eq("invitation_is_disabled", false)
+    .eq("invitation_to_email", userEmail)
+    .eq("invitation_status", "PENDING")
+    .limit(1)
+    .single();
+  if (error) throw error;
+
+  return data;
+};
