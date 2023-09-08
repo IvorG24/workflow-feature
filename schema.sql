@@ -701,7 +701,7 @@ RETURNS JSON AS $$
     let request_formsly_id = 'NULL';
     if(isFormslyForm===true) {
       const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
-      const newCount = (Number(requestCount) + 1).toString(36).toUpperCase();
+      const newCount = (Number(requestCount) + 1).toString(16).toUpperCase();
       const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
       
       let endId = '';
@@ -1940,7 +1940,7 @@ RETURNS JSON AS $$
       AND team_project_code ILIKE '%' || $2 || '%';
     `, [teamProjectTeamId, teamProjectInitials])[0].count + 1n;
 
-    const teamProjectCode = teamProjectInitials + projectInitialCount.toString(36).toUpperCase();
+    const teamProjectCode = teamProjectInitials + projectInitialCount.toString(16).toUpperCase();
 
     team_project_data = plv8.execute(`INSERT INTO team_project_table (team_project_name, team_project_code, team_project_team_id) VALUES ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}') RETURNING *;`)[0];
 
