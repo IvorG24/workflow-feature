@@ -7,6 +7,7 @@ import {
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
+  Alert,
   Box,
   Button,
   Container,
@@ -25,7 +26,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconReload } from "@tabler/icons-react";
+import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -175,7 +176,6 @@ const RequestListPage = ({
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (error) {
-      console.log(error);
       notifications.show({
         message:
           "We're having trouble refreshing the page. Please try again later.",
@@ -199,7 +199,6 @@ const RequestListPage = ({
         </Box>
         {isFormslyTeam ? (
           <Button
-            variant="light"
             onClick={() => router.push("/team-requests/spreadsheet-view")}
             sx={{ flex: 1 }}
             maw={300}
@@ -284,8 +283,14 @@ const RequestListPage = ({
             </ScrollArea>
           </Paper>
         ) : (
-          <Text align="center" size={24} weight="bolder" color="dark.1">
-            No request/s found
+          <Text align="center" size={24} weight="bolder" color="dimmed">
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              color="orange"
+              mt="xs"
+            >
+              No request/s found.
+            </Alert>
           </Text>
         )}
       </Box>
