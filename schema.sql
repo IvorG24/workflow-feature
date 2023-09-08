@@ -57,7 +57,7 @@ CREATE TABLE user_table (
 CREATE TABLE team_table (
   team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  team_name VARCHAR(4000) UNIQUE NOT NULL,
+  team_name VARCHAR(4000) NOT NULL,
   team_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
   team_logo VARCHAR(4000),
