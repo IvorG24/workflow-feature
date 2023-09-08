@@ -2275,7 +2275,7 @@ RETURNS JSON as $$
 
     const request = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
     if(!request) throw new Error('404');
-
+    
     if (!request.request_form.form_is_formsly_form) {
       returnData = {
         request
@@ -2286,7 +2286,7 @@ RETURNS JSON as $$
       if (!teamId) throw new Error("No team found");
 
       const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${userId}' AND team_member_team_id='${teamId}'`)[0];
-
+      
       const connectedRequestIDList = plv8.execute(
         `
           SELECT 
@@ -2341,7 +2341,7 @@ RETURNS JSON as $$
             break;
         }
       });
-      
+
       if (request.request_form.form_name === "Requisition") {
         const connectedForm = [];
         const formList = plv8.execute(
@@ -2370,15 +2370,17 @@ RETURNS JSON as $$
               WHERE form_id = '${form.form_id}'
             `
           );
+          
           const teamGroupIdList = formTeamGroupList.map(teamGroupId => `'${teamGroupId.team_group_id}'`);
+
           const groupMember = plv8.execute(
             `
               SELECT team_group_member_id 
               FROM team_group_member_table 
               WHERE team_member_id = '${teamMember.team_member_id}' 
-              AND team_group_id IN (${teamGroupIdList})
+              ${teamGroupIdList.length !== 0 ? `AND team_group_id IN (${teamGroupIdList})` : ''}
             `);
-
+      
           connectedForm.push({
             form_id: form.form_id,
             form_name: form.form_name,
@@ -2386,7 +2388,7 @@ RETURNS JSON as $$
             form_is_member: Boolean(groupMember.length),
           })
         }
-
+       
         const canvassData = plv8.execute(
           `
             SELECT 
@@ -2440,7 +2442,7 @@ RETURNS JSON as $$
             SELECT team_group_member_id 
             FROM team_group_member_table 
             WHERE team_member_id = '${teamMember.team_member_id}' 
-            AND team_group_id IN (${teamGroupIdList})
+            ${teamGroupIdList.length !== 0 ? `AND team_group_id IN (${teamGroupIdList})` : ''}
           `);
 
         const connectedFormIdAndGroup = {
@@ -2483,7 +2485,7 @@ RETURNS JSON as $$
             SELECT team_group_member_id 
             FROM team_group_member_table 
             WHERE team_member_id = '${teamMember.team_member_id}' 
-            AND team_group_id IN (${teamGroupIdList})
+            ${teamGroupIdList.length !== 0 ? `AND team_group_id IN (${teamGroupIdList})` : ''}
           `);
 
         const connectedFormIdAndGroup = {
@@ -2589,7 +2591,7 @@ RETURNS JSON as $$
             SELECT team_group_member_id 
             FROM team_group_member_table 
             WHERE team_member_id = '${teamMember.team_member_id}' 
-            AND team_group_id IN (${teamGroupIdList})
+            ${teamGroupIdList.length !== 0 ? `AND team_group_id IN (${teamGroupIdList})` : ''}
           `);
 
         const connectedFormIdAndGroup = {
