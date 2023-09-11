@@ -28,7 +28,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { RequestFormValues } from "../EditRequestPage/EditRequestPage";
@@ -217,27 +217,27 @@ const EditRequisitionRequestPage = ({
   const handleRemoveSection = (sectionMatchIndex: number) =>
     removeSection(sectionMatchIndex);
 
-  useEffect(() => {
-    const newFields = request_form.form_section[1].section_field.map(
-      (field) => {
-        if (field.field_name === "General Name") {
-          return {
-            ...field,
-            field_option: itemOptions,
-          };
-        } else {
-          return field;
-        }
-      }
-    );
-    replaceSection([
-      request_form.form_section[0],
-      {
-        ...request_form.form_section[1],
-        section_field: newFields,
-      },
-    ]);
-  }, [request_form, replaceSection, requestFormMethods, itemOptions]);
+  // useEffect(() => {
+  //   const newFields = request_form.form_section[1].section_field.map(
+  //     (field) => {
+  //       if (field.field_name === "General Name") {
+  //         return {
+  //           ...field,
+  //           field_option: itemOptions,
+  //         };
+  //       } else {
+  //         return field;
+  //       }
+  //     }
+  //   );
+  //   replaceSection([
+  //     request_form.form_section[0],
+  //     {
+  //       ...request_form.form_section[1],
+  //       section_field: newFields,
+  //     },
+  //   ]);
+  // }, [request_form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleGeneralNameChange = async (
     index: number,

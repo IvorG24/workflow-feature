@@ -1,5 +1,6 @@
 import {
-  getRequest,
+  getCSICodeOptionsForItems,
+  getItem,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -7,17 +8,24 @@ import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
 
 import Meta from "@/components/Meta/Meta";
-import { parseRequest } from "@/utils/arrayFunctions/arrayFunctions";
+import {
+  parseItemSection,
+  parseRequest,
+} from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { parseJSONIfValid } from "@/utils/string";
 import { OptionTableRow, RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const requestData = await getRequest(supabaseClient, {
-        requestId: `${context.query.requestId}`,
-      });
+      const { data: requestData, error: requestDataError } =
+        await supabaseClient.rpc("get_request", {
+          request_id: `${context.query.requestId}`,
+        });
+      if (requestDataError) throw requestDataError;
+      const request = requestData as RequestWithResponseType;
 
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
@@ -30,9 +38,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         teamId: teamId,
       });
       if (!teamMember) throw new Error("No team member found");
-
-      const request = parseRequest(requestData);
-      const { request_form: form } = request;
 
       const { data: itemList, error: itemListError } = await supabaseClient
         .from("item_table")
@@ -76,45 +81,99 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       });
 
-      if (form.form_is_formsly_form) {
-        // Requisition Form
-        if (form.form_name === "Requisition") {
-          return {
-            props: {
-              request: {
-                ...request,
-                request_form: {
-                  ...form,
-                  form_section: [
-                    {
-                      ...form.form_section[0],
-                      section_field: [
-                        {
-                          ...form.form_section[0].section_field[0],
-                          field_option: projectOptions,
-                        },
-                        ...form.form_section[0].section_field.slice(1),
-                      ],
-                    },
-                    {
-                      ...form.form_section[1],
-                      section_field: [
-                        ...form.form_section[1].section_field.slice(0, 4),
-                      ],
-                    },
-                  ],
-                },
-              },
-              itemOptions,
-              projectOptions,
-            },
-          };
-        }
-      } else {
+      const parsedRequest = parseRequest(request);
+
+      const { request_form: form } = parsedRequest;
+
+      if (!form.form_is_formsly_form)
         return {
-          props: { request },
+          props: { request: parsedRequest },
+        };
+
+      // Requisition Form
+      if (form.form_name === "Requisition") {
+        const sectionWithDuplicateList = form.form_section
+          .slice(1)
+          .map((section) => parseItemSection(section));
+
+        const itemSectionList = (await Promise.all(
+          sectionWithDuplicateList.map(async (section) => {
+            const itemName = parseJSONIfValid(
+              section.section_field[0].field_response[0].request_response
+            );
+            const item = await getItem(supabaseClient, {
+              teamId,
+              itemName,
+            });
+
+            const csiCodeList = await getCSICodeOptionsForItems(
+              supabaseClient,
+              {
+                divisionId: item.item_division_id,
+              }
+            );
+            const csiCodeOptions = csiCodeList.map((csiCode, index) => {
+              return {
+                option_description: null,
+                option_field_id: form.form_section[0].section_field[0].field_id,
+                option_id: csiCode.csi_code_id,
+                option_order: index,
+                option_value: csiCode.csi_code_level_three_description,
+              };
+            });
+
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_option: itemOptions,
+                },
+                ...section.section_field.slice(1, 4),
+                {
+                  ...section.section_field[4],
+                  field_option: csiCodeOptions,
+                },
+                ...section.section_field.slice(5),
+              ],
+            };
+          })
+        )) as RequestWithResponseType["request_form"]["form_section"];
+
+        const formattedRequest: RequestWithResponseType = {
+          ...parsedRequest,
+          request_form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              ...itemSectionList,
+            ],
+          },
+        };
+
+        return {
+          props: {
+            request: formattedRequest,
+            itemOptions,
+            projectOptions,
+          },
         };
       }
+
+      return {
+        props: {
+          request: parsedRequest,
+        },
+      };
     } catch (error) {
       console.error(error);
       return {
@@ -131,10 +190,14 @@ type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
   projectOptions?: OptionTableRow[];
+  sourceProjectList?: Record<string, string>;
+  requestProjectId: string;
+  requestingProject?: string;
 };
 
 const Page = ({ request, itemOptions = [], projectOptions = [] }: Props) => {
   const { request_form: form } = request;
+  console.log(request);
 
   const formslyForm = () => {
     switch (form.form_name) {

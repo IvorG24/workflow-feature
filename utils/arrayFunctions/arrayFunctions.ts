@@ -184,10 +184,6 @@ export const parseRequest = (request: RequestWithResponseType) => {
     }
   });
 
-  if (request.request_form.form_is_formsly_form) {
-    console.log(sectionWithDuplicateList);
-  }
-
   const returnData: RequestWithResponseType = {
     ...request,
     request_form: {
@@ -197,4 +193,18 @@ export const parseRequest = (request: RequestWithResponseType) => {
   };
 
   return returnData;
+};
+
+export const parseItemSection = (originalSection: Section) => {
+  const fieldWithResponse = originalSection.section_field.filter(
+    (field) =>
+      field.field_response.length > 0 && field.field_response[0] !== null
+  );
+
+  const section: Section = {
+    ...originalSection,
+    section_field: fieldWithResponse,
+  };
+
+  return section;
 };
