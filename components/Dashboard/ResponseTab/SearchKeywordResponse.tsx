@@ -51,7 +51,7 @@ const SearchKeywordResponse = ({ selectedForm }: Props) => {
         keyword: data.search,
       });
       const reducedSearchData = searchResponseReducer(
-        searchData as SearchKeywordResponseType[]
+        searchData as unknown as SearchKeywordResponseType[]
       );
       setSearchKeywordResponse(reducedSearchData);
     } catch (error) {

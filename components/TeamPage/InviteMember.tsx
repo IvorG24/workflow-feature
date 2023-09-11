@@ -218,7 +218,7 @@ const InviteMember = ({
       teamId: team.team_id,
       status: "PENDING",
     });
-    setPendingInviteList(data as PendingInvite[]);
+    setPendingInviteList(data as unknown as PendingInvite[]);
   };
 
   useEffect(() => {

@@ -840,7 +840,7 @@ export const getItem = async (
     .single();
   if (error) throw error;
 
-  return data as ItemWithDescriptionAndField;
+  return data as unknown as ItemWithDescriptionAndField;
 };
 
 // check if Requisition form can be activated
@@ -927,7 +927,7 @@ export const getTeamMemberList = async (
   const { data, error } = await query;
   if (error) throw error;
 
-  return data as TeamMemberType[];
+  return data as unknown as TeamMemberType[];
 };
 
 // Get invitation
@@ -1279,7 +1279,7 @@ export const getRequestListByForm = async (
   const { data, error, count } = await query;
   if (error) throw error;
 
-  const requestList = data as RequestByFormType[];
+  const requestList = data as unknown as RequestByFormType[];
 
   return { data: requestList, count };
 };
@@ -3177,7 +3177,7 @@ export const getMemberUserData = async (
 
   if (data) {
     const commentTeamMember = data[0];
-    return commentTeamMember as RequestWithResponseType["request_comment"][0]["comment_team_member"];
+    return commentTeamMember as unknown as RequestWithResponseType["request_comment"][0]["comment_team_member"];
   } else {
     return null;
   }

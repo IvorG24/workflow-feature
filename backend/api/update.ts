@@ -20,7 +20,7 @@ export const updateTeam = async (
   const { data, error } = await supabaseClient
     .from("team_table")
     .update(params)
-    .eq("team_id", params.team_id)
+    .eq("team_id", `${params.team_id}`)
     .select()
     .single();
   if (error) throw error;
@@ -67,7 +67,7 @@ export const udpateUser = async (
   const { error } = await supabaseClient
     .from("user_table")
     .update(params)
-    .eq("user_id", params.user_id);
+    .eq("user_id", `${params.user_id}`);
   if (error) throw error;
 };
 
