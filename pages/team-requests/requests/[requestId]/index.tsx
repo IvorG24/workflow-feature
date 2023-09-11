@@ -18,12 +18,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           userId: user.id,
         },
       });
+
       if (error) throw error;
       return {
         props: data as Props,
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
+      console.error(e);
       return {
         redirect: {
           destination: "/500",

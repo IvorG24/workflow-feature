@@ -18,6 +18,7 @@ import {
   FormStatusType,
   ReceiverStatusType,
   RequestProjectSignerStatusType,
+  RequestResponseTableRow,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -161,12 +162,33 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
 
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[2].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
+
           const warningItemList = await checkRequisitionQuantity(
             supabaseClient,
             {
               requisitionID,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[2].field_response,
+              itemFieldList,
+              quantityFieldList,
             }
           );
 
@@ -198,13 +220,33 @@ const RequestPage = ({
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[1];
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
 
           const warningItemList = await checkRequisitionQuantity(
             supabaseClient,
             {
               requisitionID,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
+              itemFieldList,
+              quantityFieldList,
             }
           );
 
@@ -238,13 +280,33 @@ const RequestPage = ({
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
 
           const warningItemList = await checkRIRItemQuantity(supabaseClient, {
             quotationId,
             itemFieldId: itemSection.section_field[0].field_id,
             quantityFieldId: itemSection.section_field[1].field_id,
-            itemFieldList: itemSection.section_field[0].field_response,
-            quantityFieldList: itemSection.section_field[1].field_response,
+            itemFieldList,
+            quantityFieldList,
           });
 
           if (warningItemList && warningItemList.length !== 0) {
@@ -276,12 +338,33 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[1];
 
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
+
           const warningItemList = await checkROItemQuantity(supabaseClient, {
             sourcedItemId,
             itemFieldId: itemSection.section_field[0].field_id,
             quantityFieldId: itemSection.section_field[1].field_id,
-            itemFieldList: itemSection.section_field[0].field_response,
-            quantityFieldList: itemSection.section_field[1].field_response,
+            itemFieldList,
+            quantityFieldList,
           });
 
           if (warningItemList && warningItemList.length !== 0) {
@@ -313,14 +396,35 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
+
           const warningItemList = await checkTransferReceiptItemQuantity(
             supabaseClient,
             {
               releaseOrderItemId,
               itemFieldId: itemSection.section_field[0].field_id,
               quantityFieldId: itemSection.section_field[1].field_id,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
+              itemFieldList,
+              quantityFieldList,
             }
           );
 
@@ -366,7 +470,7 @@ const RequestPage = ({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
       });
-    } catch (error) {
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
