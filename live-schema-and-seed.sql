@@ -1281,6 +1281,7 @@ RETURNS JSON AS $$
                             OR field_name = 'Item'
                         ) 
                         AND request_response_request_id IN (${requestIdList})
+                    ORDER BY request_response_duplicatable_section_id ASC
                 `
             );
         }
@@ -1430,6 +1431,7 @@ RETURNS JSON AS $$
                             OR request_response_field_id = '${quantityFieldId}'
                         ) 
                         AND request_response_request_id IN (${requestIdList})
+                    ORDER BY request_response_duplicatable_section_id ASC
                 `
             );
         }
@@ -1541,6 +1543,7 @@ RETURNS JSON AS $$
                             OR request_response_field_id = '${quantityFieldId}'
                         ) 
                         AND request_response_request_id IN (${requestIdList})
+                    ORDER BY request_response_duplicatable_section_id ASC
                     `
                 );
             const requestResponseItem = [];
@@ -1653,6 +1656,7 @@ RETURNS JSON AS $$
                     OR request_response_field_id = '${quantityFieldId}'
                   ) 
                 AND request_response_request_id IN (${requestIdList})
+                ORDER BY request_response_duplicatable_section_id ASC
             `
           );
         }
