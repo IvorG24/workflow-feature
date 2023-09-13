@@ -3268,10 +3268,11 @@ export const getInvitationId = async (
     .eq("invitation_is_disabled", false)
     .eq("invitation_to_email", userEmail)
     .eq("invitation_status", "PENDING")
-    .limit(1)
-    .single();
+    .maybeSingle();
+
   if (error) throw error;
-  return data.invitation_id;
+
+  return data ? data.invitation_id : null;
 };
 
 export const getUserPendingInvitation = async (
@@ -3288,8 +3289,8 @@ export const getUserPendingInvitation = async (
     .eq("invitation_is_disabled", false)
     .eq("invitation_to_email", userEmail)
     .eq("invitation_status", "PENDING")
-    .limit(1)
-    .single();
+    .maybeSingle();
+
   if (error) throw error;
 
   return data;
