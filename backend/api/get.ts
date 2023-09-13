@@ -3025,14 +3025,14 @@ export const getRequestProjectSigner = async (
 export const getCSICodeOptionsForItems = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    divisionId: string;
+    divisionIdList: string[];
   }
 ) => {
-  const { divisionId } = params;
+  const { divisionIdList } = params;
   const { data, error } = await supabaseClient
     .from("csi_code_table")
     .select("*")
-    .eq("csi_code_division_id", divisionId);
+    .in("csi_code_division_id", divisionIdList);
   if (error) throw error;
 
   return data as CSICodeTableRow[];
@@ -3061,8 +3061,8 @@ export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
-    .from("distinct_division_id")
-    .select("csi_code_division_id")
+    .from("distinct_division")
+    .select("csi_code_division_id, csi_code_division_description")
     .order("csi_code_division_id", { ascending: true });
   if (error) throw error;
 

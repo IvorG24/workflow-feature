@@ -257,7 +257,7 @@ const CreateRequisitionRequestPage = ({
       });
 
       const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-        divisionId: item.item_division_id,
+        divisionIdList: item.item_division_id_list,
       });
 
       const generalField = [

@@ -248,7 +248,7 @@ CREATE TABLE item_table(
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
-  item_division_id VARCHAR(4000) NOT NULL,
+  item_division_id_list VARCHAR(4000)[] NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
@@ -822,13 +822,13 @@ RETURNS JSON AS $$
         item_unit,
         item_gl_account,
         item_team_id,
-        item_division_id
+        item_division_id_list
       },
       itemDescription
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_division_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_division_id}') RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_division_id_list) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}',ARRAY[${item_division_id_list}]) RETURNING *;`)[0];
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
 
@@ -5879,7 +5879,7 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 
 ---------- Start: VIEWS
 
-CREATE VIEW distinct_division_id AS SELECT DISTINCT csi_code_division_id from csi_code_table;
+CREATE VIEW distinct_division AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 
 -------- End: VIEWS
 
