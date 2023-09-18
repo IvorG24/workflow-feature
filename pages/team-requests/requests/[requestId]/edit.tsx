@@ -24,6 +24,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         await supabaseClient.rpc("get_request", {
           request_id: `${context.query.requestId}`,
         });
+
+      console.log(requestData);
       if (requestDataError) throw requestDataError;
       const request = requestData as RequestWithResponseType;
 
@@ -109,7 +111,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             const csiCodeList = await getCSICodeOptionsForItems(
               supabaseClient,
               {
-                divisionId: item.item_division_id,
+                divisionIdList: item.item_division_id_list,
               }
             );
             const csiCodeOptions = csiCodeList.map((csiCode, index) => {
@@ -121,6 +123,37 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                 option_value: csiCode.csi_code_level_three_description,
               };
             });
+
+            const descriptionList = section.section_field.slice(5);
+            const newFieldsWithOptions = item.item_description.map(
+              (description) => {
+                const options = description.item_description_field.map(
+                  (options, optionIndex) => {
+                    return {
+                      option_description: null,
+                      option_field_id: description.item_field.field_id,
+                      option_id: options.item_description_field_id,
+                      option_order: optionIndex + 1,
+                      option_value: `${options.item_description_field_value}${
+                        options.item_description_field_uom
+                          ? ` ${options.item_description_field_uom}`
+                          : ""
+                      }`,
+                    };
+                  }
+                );
+
+                const field = descriptionList.find(
+                  (refDescription) =>
+                    refDescription.field_id === description.item_field.field_id
+                );
+
+                return {
+                  ...field,
+                  field_option: options,
+                };
+              }
+            );
 
             return {
               ...section,
@@ -134,7 +167,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   ...section.section_field[4],
                   field_option: csiCodeOptions,
                 },
-                ...section.section_field.slice(5),
+                ...newFieldsWithOptions,
               ],
             };
           })
