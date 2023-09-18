@@ -4,7 +4,6 @@ import {
   updateTeam,
   updateTeamMemberRole,
   updateTeamOwner,
-  updateUserActiveTeam,
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
@@ -30,7 +29,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
@@ -78,7 +76,6 @@ const TeamPage = ({
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();
   const { setUserTeamMember } = useUserActions();
-  const router = useRouter();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
@@ -278,29 +275,6 @@ const TeamPage = ({
         rowId: [memberId],
         table: "team_member",
       });
-
-      // if removed member is auth user, run updates to redirect user to other teams/homepage
-      if (memberId === teamMember?.team_member_id) {
-        const updatedTeamList = teamList.filter(
-          (teamItem) => teamItem.team_id !== team.team_id
-        );
-        setTeamList(updatedTeamList);
-
-        if (updatedTeamList.length > 0) {
-          setActiveTeam(updatedTeamList[0]);
-          await updateUserActiveTeam(supabaseClient, {
-            userId: `${teamMember?.team_member_user_id}`,
-            teamId: updatedTeamList[0].team_id,
-          });
-        } else {
-          await updateUserActiveTeam(supabaseClient, {
-            userId: `${teamMember?.team_member_user_id}`,
-            teamId: null,
-          });
-        }
-
-        router.reload();
-      }
 
       notifications.show({
         message: "Team member removed.",

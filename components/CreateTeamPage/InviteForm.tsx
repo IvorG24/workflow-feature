@@ -1,5 +1,10 @@
 import { createTeamInvitation } from "@/backend/api/post";
-import { InvitationTableRow, TeamMemberTableRow } from "@/utils/types";
+import { JWT_SECRET_KEY } from "@/utils/constant";
+import {
+  InvitationTableRow,
+  TeamMemberTableRow,
+  TeamTableRow,
+} from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -24,6 +29,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import axios from "axios";
+import jwt from "jsonwebtoken";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import validator from "validator";
@@ -37,10 +43,10 @@ type FormValues = {
 type Props = {
   changeStep: Dispatch<SetStateAction<number>>;
   ownerData: TeamMemberTableRow;
-  teamName: string | undefined;
+  team: TeamTableRow;
 };
 
-const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
+const InviteForm = ({ changeStep, ownerData, team }: Props) => {
   const supabaseClient = useSupabaseClient();
   const [isSendingInvites, setIsSendingInvites] = useState(false);
   const [invitationList, setInvitationList] = useState<InvitationTableRow[]>(
@@ -63,14 +69,14 @@ const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
 
   const handleSendInvite = async (data: FormValues) => {
     try {
-      if (!teamName) return;
+      if (!team.team_name) return;
 
       setIsSendingInvites(true);
       const emailList = data.invites.map((invite) => invite.email);
       const invitationData = await createTeamInvitation(supabaseClient, {
         emailList,
         teamMemberId: ownerData.team_member_id,
-        teamName: teamName,
+        teamName: team.team_name,
       });
 
       await sendEmailInvite(emailList);
@@ -93,19 +99,16 @@ const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
     }
   };
 
-  // send email invite to unregistered users
+  // send email invite notification
   const sendEmailInvite = async (emailList: string[]) => {
-    const subject = `You have been invited to join ${teamName} on Formsly.`;
-    const html = `<p>Hi,</p>
-      <p>Please click the link below to accept the invitation.</p>
-      &nbsp;
-      <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/sign-in">${process.env.NEXT_PUBLIC_SITE_URL}/sign-in</a></p>
-      &nbsp;
-      <p>Thank you,</p>
-      <p>Formsly Team</p>`;
+    const subject = `You have been invited to join ${team.team_name} on Formsly.`;
 
     for (const email of emailList) {
       try {
+        const inviteToken = generateEmailInviteToken(email);
+        const inviteUrl = `${window.location.origin}/api/team-invite?token=${inviteToken}`;
+        const html = generateEmailHtml(inviteUrl);
+
         const response = await axios.post("/api/send-email", {
           to: email,
           subject,
@@ -113,12 +116,35 @@ const InviteForm = ({ changeStep, ownerData, teamName }: Props) => {
         });
         return response.data;
       } catch (error) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
+        console.log(error);
       }
     }
+  };
+
+  const generateEmailInviteToken = (email: string) => {
+    const inviteParameter = {
+      teamId: team.team_id,
+      teamName: team.team_name,
+      invitedEmail: email,
+    };
+
+    const jwtInviteToken = jwt.sign(inviteParameter, JWT_SECRET_KEY, {
+      expiresIn: "48h",
+    });
+
+    return jwtInviteToken;
+  };
+
+  const generateEmailHtml = (inviteUrl: string) => {
+    const html = `<p>Hi,</p>
+  <p>Please click the link below to accept the invitation. This invite is only valid for 48 hours.</p>
+  &nbsp;
+  <p><a href="${inviteUrl}">Join ${team.team_name} on Formsly.io</a></p>
+  &nbsp;
+  <p>Thank you,</p>
+  <p>Formsly Team</p>`;
+
+    return html;
   };
 
   const handleRemoveInvite = (index: number) => {

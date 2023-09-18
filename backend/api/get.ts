@@ -840,7 +840,7 @@ export const getItem = async (
     .single();
   if (error) throw error;
 
-  return data as ItemWithDescriptionAndField;
+  return data as unknown as ItemWithDescriptionAndField;
 };
 
 // check if Requisition form can be activated
@@ -927,7 +927,7 @@ export const getTeamMemberList = async (
   const { data, error } = await query;
   if (error) throw error;
 
-  return data as TeamMemberType[];
+  return data as unknown as TeamMemberType[];
 };
 
 // Get invitation
@@ -1279,7 +1279,7 @@ export const getRequestListByForm = async (
   const { data, error, count } = await query;
   if (error) throw error;
 
-  const requestList = data as RequestByFormType[];
+  const requestList = data as unknown as RequestByFormType[];
 
   return { data: requestList, count };
 };
@@ -3025,14 +3025,14 @@ export const getRequestProjectSigner = async (
 export const getCSICodeOptionsForItems = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    divisionId: string;
+    divisionIdList: string[];
   }
 ) => {
-  const { divisionId } = params;
+  const { divisionIdList } = params;
   const { data, error } = await supabaseClient
     .from("csi_code_table")
     .select("*")
-    .eq("csi_code_division_id", divisionId);
+    .in("csi_code_division_id", divisionIdList);
   if (error) throw error;
 
   return data as CSICodeTableRow[];
@@ -3061,8 +3061,8 @@ export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
-    .from("distinct_division_id")
-    .select("csi_code_division_id")
+    .from("distinct_division")
+    .select("csi_code_division_id, csi_code_division_description")
     .order("csi_code_division_id", { ascending: true });
   if (error) throw error;
 
@@ -3177,7 +3177,7 @@ export const getMemberUserData = async (
 
   if (data) {
     const commentTeamMember = data[0];
-    return commentTeamMember as RequestWithResponseType["request_comment"][0]["comment_team_member"];
+    return commentTeamMember as unknown as RequestWithResponseType["request_comment"][0]["comment_team_member"];
   } else {
     return null;
   }
@@ -3243,4 +3243,55 @@ export const getRequestListOnLoad = async (
   if (error) throw error;
 
   return data as unknown as RequestListOnLoad;
+};
+
+export const getInvitationId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    userEmail: string;
+  }
+) => {
+  const { teamId, userEmail } = params;
+
+  const { data, error } = await supabaseClient
+    .from("invitation_table")
+    .select(
+      `
+      invitation_id,
+      team_member: invitation_from_team_member_id!inner(
+        team_member_team_id
+      )
+    `
+    )
+    .eq("team_member.team_member_team_id", teamId)
+    .eq("invitation_is_disabled", false)
+    .eq("invitation_to_email", userEmail)
+    .eq("invitation_status", "PENDING")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data ? data.invitation_id : null;
+};
+
+export const getUserPendingInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userEmail: string;
+  }
+) => {
+  const { userEmail } = params;
+
+  const { data, error } = await supabaseClient
+    .from("invitation_table")
+    .select("*")
+    .eq("invitation_is_disabled", false)
+    .eq("invitation_to_email", userEmail)
+    .eq("invitation_status", "PENDING")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
 };

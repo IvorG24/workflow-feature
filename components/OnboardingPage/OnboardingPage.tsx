@@ -1,4 +1,4 @@
-import { checkUsername } from "@/backend/api/get";
+import { checkUsername, getUserPendingInvitation } from "@/backend/api/get";
 import { createUser, uploadImage } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { mobileNumberFormatter } from "@/utils/styling";
@@ -70,7 +70,18 @@ const OnboardingPage = ({ user }: Props) => {
         user_avatar: imageUrl,
       });
 
-      await router.push("/team/create");
+      const pendingInvitation = await getUserPendingInvitation(supabaseClient, {
+        userEmail: data.user_email,
+      });
+
+      if (pendingInvitation) {
+        await router.push(
+          `/team/invitation/${pendingInvitation.invitation_id}`
+        );
+      } else {
+        await router.push("/team/create");
+      }
+
       notifications.show({
         message: "Profile completed.",
         color: "green",

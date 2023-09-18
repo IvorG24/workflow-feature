@@ -11,6 +11,7 @@ import {
   Divider,
   Flex,
   LoadingOverlay,
+  MultiSelect,
   Select,
   Stack,
   TextInput,
@@ -53,7 +54,7 @@ const CreateItem = ({
           setDivisionIdOption(
             option.map((divisionId) => {
               return {
-                label: `${divisionId.csi_code_division_id}`,
+                label: `${divisionId.csi_code_division_description}`,
                 value: `${divisionId.csi_code_division_id}`,
               };
             })
@@ -101,7 +102,7 @@ const CreateItem = ({
           item_unit: data.unit,
           item_gl_account: toUpper(data.glAccount),
           item_team_id: activeTeam.team_id,
-          item_division_id: data.divisionId,
+          item_division_id_list: data.division,
         },
         formId: formId,
       });
@@ -216,22 +217,22 @@ const CreateItem = ({
             />
             <Controller
               control={control}
-              name="divisionId"
+              name="division"
               render={({ field: { value, onChange } }) => (
-                <Select
-                  value={value as string}
+                <MultiSelect
+                  value={value as string[]}
                   onChange={onChange}
                   data={divisionIdOption}
                   withAsterisk
-                  error={formState.errors.divisionId?.message}
+                  error={formState.errors.division?.message}
                   searchable
                   clearable
-                  label="Division ID"
+                  label="Division"
                 />
               )}
               rules={{
                 required: {
-                  message: "Division ID is required",
+                  message: "Division is required",
                   value: true,
                 },
               }}

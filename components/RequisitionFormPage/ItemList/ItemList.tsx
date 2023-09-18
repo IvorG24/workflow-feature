@@ -353,16 +353,16 @@ const ItemList = ({
             ),
           },
           {
-            accessor: "item_division_id",
+            accessor: "item_division_id_list",
             title: "Division",
-            render: ({ item_division_id, item_id }) => (
+            render: ({ item_division_id_list, item_id }) => (
               <Text
                 className={classes.clickableColumn}
                 onClick={() => {
                   handleColumnClick(item_id);
                 }}
               >
-                {item_division_id}
+                {item_division_id_list.join(", ")}
               </Text>
             ),
           },
