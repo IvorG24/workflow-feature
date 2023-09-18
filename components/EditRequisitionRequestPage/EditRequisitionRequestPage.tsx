@@ -20,6 +20,7 @@ import {
   Box,
   Button,
   Container,
+  Flex,
   LoadingOverlay,
   Space,
   Stack,
@@ -82,12 +83,17 @@ const EditRequisitionRequestPage = ({
   const requestFormMethods = useForm<RequestFormValues>({
     defaultValues: { sections: request_form.form_section },
   });
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const {
+    handleSubmit,
+    control,
+    getValues,
+    reset,
+    formState: { isDirty },
+  } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
     remove: removeSection,
-    replace: replaceSection,
     update: updateSection,
   } = useFieldArray({
     control,
@@ -217,28 +223,6 @@ const EditRequisitionRequestPage = ({
   const handleRemoveSection = (sectionMatchIndex: number) =>
     removeSection(sectionMatchIndex);
 
-  // useEffect(() => {
-  //   const newFields = request_form.form_section[1].section_field.map(
-  //     (field) => {
-  //       if (field.field_name === "General Name") {
-  //         return {
-  //           ...field,
-  //           field_option: itemOptions,
-  //         };
-  //       } else {
-  //         return field;
-  //       }
-  //     }
-  //   );
-  //   replaceSection([
-  //     request_form.form_section[0],
-  //     {
-  //       ...request_form.form_section[1],
-  //       section_field: newFields,
-  //     },
-  //   ]);
-  // }, [request_form, replaceSection, requestFormMethods, itemOptions]);
-
   const handleGeneralNameChange = async (
     index: number,
     value: string | null
@@ -252,7 +236,7 @@ const EditRequisitionRequestPage = ({
       });
 
       const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-        divisionId: item.item_division_id,
+        divisionIdList: item.item_division_id_list,
       });
 
       const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
@@ -301,10 +285,20 @@ const EditRequisitionRequestPage = ({
               };
             }),
           },
-          ...newSection.section_field.slice(5, 9).map((field) => {
+          ...newSection.section_field.slice(5, 9).map((field, fieldIdx) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  request_response: "",
+                  request_response_duplicatable_section_id:
+                    newSection.section_id,
+                  request_response_field_id:
+                    newSection.section_field[5 + fieldIdx].field_id,
+                  request_response_id: uuidv4(),
+                  request_response_request_id: request.request_id,
+                },
+              ],
             };
           }),
         ];
@@ -342,22 +336,43 @@ const EditRequisitionRequestPage = ({
             return {
               ...field,
               field_section_duplicatable_id: duplicatableSectionId,
+              request_response: [
+                {
+                  request_response: "",
+                  request_response_duplicatable_section_id:
+                    field.field_section_duplicatable_id,
+                  request_response_field_id: field.field_id,
+                  request_response_id: uuidv4(),
+                  request_response_request_id: request.request_id,
+                },
+              ],
             };
           }),
           ...newFields,
-        ],
+        ] as RequestWithResponseType["request_form"]["form_section"][0]["section_field"],
       });
     } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 3),
-        ...newSection.section_field.slice(3, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
+      const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+        [
+          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(3, 9).map((field) => {
+            return {
+              ...field,
+              field_response: [
+                {
+                  request_response: "",
+                  request_response_duplicatable_section_id:
+                    field.field_section_duplicatable_id || null,
+                  request_response_field_id: field.field_id,
+                  request_response_id:
+                    field.field_response[0].request_response_id,
+                  request_response_request_id: request.request_id,
+                },
+              ],
+              field_option: [],
+            };
+          }),
+        ];
       updateSection(index, {
         ...newSection,
         section_field: generalField,
@@ -375,35 +390,71 @@ const EditRequisitionRequestPage = ({
         ...newSection.section_field.slice(0, 5),
         {
           ...newSection.section_field[5],
-          field_response: csiCode?.csi_code_section,
+          field_response: [
+            {
+              request_response: csiCode?.csi_code_section,
+              request_response_duplicatable_section_id: newSection.section_id,
+              request_response_field_id: newSection.section_field[5].field_id,
+              request_response_id: uuidv4(),
+              request_response_request_id: request.request_id,
+            },
+          ],
         },
         {
           ...newSection.section_field[6],
-          field_response: csiCode?.csi_code_division_description,
+          field_response: [
+            {
+              request_response: csiCode?.csi_code_division_description,
+              request_response_duplicatable_section_id: newSection.section_id,
+              request_response_field_id: newSection.section_field[6].field_id,
+              request_response_id: uuidv4(),
+              request_response_request_id: request.request_id,
+            },
+          ],
         },
         {
           ...newSection.section_field[7],
-          field_response: csiCode?.csi_code_level_two_major_group_description,
+          field_response: [
+            {
+              request_response:
+                csiCode?.csi_code_level_two_major_group_description,
+              request_response_duplicatable_section_id: newSection.section_id,
+              request_response_field_id: newSection.section_field[7].field_id,
+              request_response_id: uuidv4(),
+              request_response_request_id: request.request_id,
+            },
+          ],
         },
         {
           ...newSection.section_field[8],
-          field_response: csiCode?.csi_code_level_two_minor_group_description,
+          field_response: [
+            {
+              request_response:
+                csiCode?.csi_code_level_two_minor_group_description,
+              request_response_duplicatable_section_id: newSection.section_id,
+              request_response_field_id: newSection.section_field[8].field_id,
+              request_response_id: uuidv4(),
+              request_response_request_id: request.request_id,
+            },
+          ],
         },
 
         ...newSection.section_field.slice(9),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-      updateSection(index, {
-        ...newSection,
-        section_field: [
+      const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+        [
           ...generalField.map((field) => {
             return {
               ...field,
               field_section_duplicatable_id: duplicatableSectionId,
             };
           }),
-        ],
+        ];
+
+      updateSection(index, {
+        ...newSection,
+        section_field: newFields,
       });
     } else {
       const generalField = [
@@ -411,7 +462,16 @@ const EditRequisitionRequestPage = ({
         ...newSection.section_field.slice(4, 9).map((field) => {
           return {
             ...field,
-            field_response: "",
+            field_response: [
+              {
+                request_response: "",
+                request_response_duplicatable_section_id:
+                  field.field_section_duplicatable_id || null,
+                request_response_field_id: field.field_id,
+                request_response_id: uuidv4(),
+                request_response_request_id: request.request_id,
+              },
+            ],
           };
         }),
         ...newSection.section_field.slice(9),
@@ -512,7 +572,16 @@ const EditRequisitionRequestPage = ({
               <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
               <RequestFormSigner signerList={signerList} />
             </Box>
-            <Button type="submit">Submit</Button>
+            <Flex direction="column" gap="sm">
+              {isDirty && (
+                <Button variant="outline" color="red" onClick={() => reset()}>
+                  Reset
+                </Button>
+              )}
+              <Button type="submit" disabled={!isDirty}>
+                Submit
+              </Button>
+            </Flex>
           </Stack>
         </form>
       </FormProvider>

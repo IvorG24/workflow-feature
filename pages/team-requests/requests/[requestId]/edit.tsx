@@ -1,6 +1,10 @@
 import {
   getCSICodeOptionsForItems,
   getItem,
+  getItemResponseForQuotation,
+  getProjectSignerWithTeamMember,
+  getRequest,
+  getRequestProjectIdAndName,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -24,8 +28,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         await supabaseClient.rpc("get_request", {
           request_id: `${context.query.requestId}`,
         });
-
-      console.log(requestData);
       if (requestDataError) throw requestDataError;
       const request = requestData as RequestWithResponseType;
 
@@ -41,25 +43,18 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
       if (!teamMember) throw new Error("No team member found");
 
-      const { data: itemList, error: itemListError } = await supabaseClient
-        .from("item_table")
-        .select("*, item_description: item_description_table(*)")
-        .eq("item_team_id", teamId)
-        .eq("item_is_disabled", false)
-        .eq("item_is_available", true)
-        .order("item_general_name", { ascending: true });
-      if (itemListError) throw itemListError;
-
-      const itemOptions = itemList.map((item, index) => {
-        return {
-          option_description: null,
-          option_field_id:
-            request.request_form.form_section[1].section_field[0].field_id,
-          option_id: item.item_id,
-          option_order: index,
-          option_value: item.item_general_name,
-        };
-      });
+      let requestProjectId = "";
+      if (context.query.requisitionId) {
+        const request = await getRequest(supabaseClient, {
+          requestId: `${context.query.requisitionId}`,
+        });
+        requestProjectId = `${request.request_project_id}`;
+      } else if (context.query.withdrawalSlipId) {
+        const request = await getRequest(supabaseClient, {
+          requestId: `${context.query.withdrawalSlipId}`,
+        });
+        requestProjectId = `${request.request_project_id}`;
+      }
 
       const { data: projectList, error: projectListError } =
         await supabaseClient
@@ -94,6 +89,26 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       // Requisition Form
       if (form.form_name === "Requisition") {
+        const { data: itemList, error: itemListError } = await supabaseClient
+          .from("item_table")
+          .select("*, item_description: item_description_table(*)")
+          .eq("item_team_id", teamId)
+          .eq("item_is_disabled", false)
+          .eq("item_is_available", true)
+          .order("item_general_name", { ascending: true });
+        if (itemListError) throw itemListError;
+
+        const itemOptions = itemList.map((item, index) => {
+          return {
+            option_description: null,
+            option_field_id:
+              request.request_form.form_section[1].section_field[0].field_id,
+            option_id: item.item_id,
+            option_order: index,
+            option_value: item.item_general_name,
+          };
+        });
+
         const sectionWithDuplicateList = form.form_section
           .slice(1)
           .map((section) => parseItemSection(section));
@@ -167,6 +182,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   ...section.section_field[4],
                   field_option: csiCodeOptions,
                 },
+                ...section.section_field.slice(5, 9),
                 ...newFieldsWithOptions,
               ],
             };
@@ -198,6 +214,80 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             request: formattedRequest,
             itemOptions,
             projectOptions,
+          },
+        };
+      }
+
+      const project = await getRequestProjectIdAndName(supabaseClient, {
+        requestId: `${
+          context.query.requisitionId
+            ? context.query.requisitionId
+            : context.query.withdrawalSlipId
+        }`,
+      });
+
+      if (!project) throw new Error();
+      const formattedProject = project as unknown as {
+        team_project_id: string;
+        team_project_name: string;
+      };
+
+      const projectSigner = await getProjectSignerWithTeamMember(
+        supabaseClient,
+        {
+          formId: form.form_id,
+          projectId: `${formattedProject.team_project_id}`,
+        }
+      );
+      // Sourced Item
+      if (form.form_name === "Sourced Item") {
+        const items = await getItemResponseForQuotation(supabaseClient, {
+          requestId: `${context.query.requisitionId}`,
+        });
+
+        const itemOptions = Object.keys(items).map((item, index) => {
+          const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
+
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+
+        const formattedRequest: RequestWithResponseType = {
+          ...parsedRequest,
+          request_form: {
+            ...form,
+            form_section: [
+              form.form_section[0],
+              {
+                ...form.form_section[1],
+                section_field: [
+                  ...form.form_section[1].section_field.slice(0, 2),
+                  {
+                    ...form.form_section[1].section_field[2],
+                    field_option: projectOptions.filter(
+                      (project) =>
+                        project.option_description !== requestProjectId
+                    ),
+                  },
+                ],
+              },
+            ],
+          },
+          request_signer:
+            projectSigner.length !== 0 ? [] : request.request_signer,
+        };
+
+        return {
+          props: {
+            request: formattedRequest,
+            itemOptions,
+            requestProjectId,
+            requestingProject: formattedProject.team_project_name,
           },
         };
       }
