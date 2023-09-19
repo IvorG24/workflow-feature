@@ -3,13 +3,12 @@ import {
   getItem,
   getItemResponseForQuotation,
   getProjectSignerWithTeamMember,
-  getRequest,
-  getRequestProjectIdAndName,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
+import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
 
 import Meta from "@/components/Meta/Meta";
 import {
@@ -28,6 +27,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         await supabaseClient.rpc("get_request", {
           request_id: `${context.query.requestId}`,
         });
+
       if (requestDataError) throw requestDataError;
       const request = requestData as RequestWithResponseType;
 
@@ -42,19 +42,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         teamId: teamId,
       });
       if (!teamMember) throw new Error("No team member found");
-
-      let requestProjectId = "";
-      if (context.query.requisitionId) {
-        const request = await getRequest(supabaseClient, {
-          requestId: `${context.query.requisitionId}`,
-        });
-        requestProjectId = `${request.request_project_id}`;
-      } else if (context.query.withdrawalSlipId) {
-        const request = await getRequest(supabaseClient, {
-          requestId: `${context.query.withdrawalSlipId}`,
-        });
-        requestProjectId = `${request.request_project_id}`;
-      }
 
       const { data: projectList, error: projectListError } =
         await supabaseClient
@@ -79,7 +66,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       });
 
       const parsedRequest = parseRequest(request);
-
       const { request_form: form } = parsedRequest;
 
       if (!form.form_is_formsly_form)
@@ -218,36 +204,48 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
-      const project = await getRequestProjectIdAndName(supabaseClient, {
-        requestId: `${
-          context.query.requisitionId
-            ? context.query.requisitionId
-            : context.query.withdrawalSlipId
-        }`,
-      });
-
-      if (!project) throw new Error();
-      const formattedProject = project as unknown as {
-        team_project_id: string;
-        team_project_name: string;
-      };
-
       const projectSigner = await getProjectSignerWithTeamMember(
         supabaseClient,
         {
           formId: form.form_id,
-          projectId: `${formattedProject.team_project_id}`,
+          projectId: `${request.request_project_id}`,
         }
       );
+      const projectSignerList = projectSigner.map((signer) => ({
+        request_signer_id: signer.signer_id,
+        request_signer_status: "PENDING",
+        request_signer_request_id: request.request_id,
+        request_signer_signer_id: signer.signer_id,
+        request_signer_signer: {
+          signer_id: signer.signer_id,
+          signer_is_primary_signer: signer.signer_is_primary_signer,
+          signer_action: signer.signer_action,
+          signer_order: signer.signer_order,
+          signer_form_id: request.request_form_id,
+          signer_team_member: {
+            team_member_id: signer.signer_team_member.team_member_id,
+            team_member_user: {
+              user_first_name:
+                signer.signer_team_member.team_member_user.user_first_name,
+              user_last_name:
+                signer.signer_team_member.team_member_user.user_last_name,
+            },
+          },
+        },
+      }));
+
       // Sourced Item
       if (form.form_name === "Sourced Item") {
+        const requisitionId = form.form_section[0].section_field.find(
+          (field) => field.field_name === "Requisition ID"
+        )?.field_response[0].request_response;
+
         const items = await getItemResponseForQuotation(supabaseClient, {
-          requestId: `${context.query.requisitionId}`,
+          requestId: parseJSONIfValid(`${requisitionId}`),
         });
 
         const itemOptions = Object.keys(items).map((item, index) => {
           const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
-
           return {
             option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
@@ -257,37 +255,47 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           };
         });
 
+        const itemSectionWithProjectOptions = form.form_section
+          .slice(1)
+          .map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: itemOptions,
+              },
+              section.section_field[1],
+              {
+                ...section.section_field[2],
+                field_option: projectOptions.filter(
+                  (project) =>
+                    project.option_description !== request.request_project_id
+                ),
+              },
+            ],
+          }));
+
         const formattedRequest: RequestWithResponseType = {
           ...parsedRequest,
           request_form: {
-            ...form,
+            ...parsedRequest.request_form,
             form_section: [
-              form.form_section[0],
-              {
-                ...form.form_section[1],
-                section_field: [
-                  ...form.form_section[1].section_field.slice(0, 2),
-                  {
-                    ...form.form_section[1].section_field[2],
-                    field_option: projectOptions.filter(
-                      (project) =>
-                        project.option_description !== requestProjectId
-                    ),
-                  },
-                ],
-              },
+              parsedRequest.request_form.form_section[0],
+              ...itemSectionWithProjectOptions,
             ],
           },
           request_signer:
-            projectSigner.length !== 0 ? [] : request.request_signer,
+            projectSigner.length !== 0
+              ? projectSignerList
+              : parsedRequest.request_signer,
         };
 
         return {
           props: {
             request: formattedRequest,
             itemOptions,
-            requestProjectId,
-            requestingProject: formattedProject.team_project_name,
+            requestProjectId: request.request_project_id,
+            requestingProject: request.request_project.team_project_name,
           },
         };
       }
@@ -318,7 +326,13 @@ type Props = {
   requestingProject?: string;
 };
 
-const Page = ({ request, itemOptions = [], projectOptions = [] }: Props) => {
+const Page = ({
+  request,
+  itemOptions,
+  requestProjectId = "",
+  projectOptions = [],
+  requestingProject = "",
+}: Props) => {
   const { request_form: form } = request;
   console.log(request);
 
@@ -330,6 +344,15 @@ const Page = ({ request, itemOptions = [], projectOptions = [] }: Props) => {
             request={request}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
+          />
+        );
+      case "Sourced Item":
+        return (
+          <EditSourcedItemRequestPage
+            request={request}
+            itemOptions={itemOptions}
+            requestProjectId={requestProjectId}
+            requestingProject={requestingProject}
           />
         );
     }

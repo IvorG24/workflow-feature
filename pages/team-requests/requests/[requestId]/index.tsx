@@ -18,6 +18,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           userId: user.id,
         },
       });
+      console.log(data);
 
       if (error) throw error;
       return {

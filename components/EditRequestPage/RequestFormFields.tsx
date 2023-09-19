@@ -119,10 +119,10 @@ const RequestFormFields = ({
       );
       if (requestId) {
         const fetchedValue = await getRequestFormslyId(supabaseClient, {
-          requestId: requestId as string,
+          requestId: parseJSONIfValid(requestId),
         });
         if (fetchedValue) {
-          setLinkToDisplay(fetchedValue);
+          setLinkToDisplay(parseJSONIfValid(fetchedValue));
         }
       }
     };
@@ -146,7 +146,9 @@ const RequestFormFields = ({
                     {...inputProps}
                     error={fieldError}
                     withAsterisk={field.field_is_required}
-                    value={`${linkToDisplay || value}` || undefined}
+                    value={
+                      `${linkToDisplay || parseJSONIfValid(value)}` || undefined
+                    }
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
                   />
@@ -156,7 +158,10 @@ const RequestFormFields = ({
                     variant="light"
                     color="blue"
                     onClick={() =>
-                      window.open(requestPath(`${value}`), "_blank")
+                      window.open(
+                        requestPath(`${parseJSONIfValid(value)}`),
+                        "_blank"
+                      )
                     }
                   >
                     <IconExternalLink />

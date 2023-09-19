@@ -2862,7 +2862,7 @@ export const getProjectSignerWithTeamMember = async (
 
   if (error) throw error;
 
-  return data;
+  return data as FormType["form_signer"];
 };
 
 // Fetch request project id
