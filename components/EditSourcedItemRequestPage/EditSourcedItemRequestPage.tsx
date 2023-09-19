@@ -19,6 +19,7 @@ import {
   Box,
   Button,
   Container,
+  Flex,
   List,
   LoadingOverlay,
   Space,
@@ -94,7 +95,13 @@ const EditSourcedItemRequestPage = ({
     defaultValues: { sections: request_form.form_section },
   });
 
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const {
+    handleSubmit,
+    control,
+    getValues,
+    reset,
+    formState: { isDirty },
+  } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -403,9 +410,16 @@ const EditSourcedItemRequestPage = ({
               <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
               <RequestFormSigner signerList={signerList} />
             </Box>
-            <Button type="submit" disabled={isFetchingSigner}>
-              Submit
-            </Button>
+            <Flex direction="column" gap="sm">
+              {isDirty && (
+                <Button variant="outline" color="red" onClick={() => reset()}>
+                  Reset
+                </Button>
+              )}
+              <Button type="submit" disabled={!isDirty}>
+                Submit
+              </Button>
+            </Flex>
           </Stack>
         </form>
       </FormProvider>
