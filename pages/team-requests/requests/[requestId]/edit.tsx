@@ -2,10 +2,12 @@ import {
   getCSICodeOptionsForItems,
   getItem,
   getItemResponseForQuotation,
+  getItemResponseForRO,
   getProjectSignerWithTeamMember,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
+import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
@@ -18,6 +20,7 @@ import {
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { parseJSONIfValid } from "@/utils/string";
 import { OptionTableRow, RequestWithResponseType } from "@/utils/types";
+import { trim } from "lodash";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -300,6 +303,115 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
+      // Release Order
+      if (form.form_name === "Release Order") {
+        const sourcedItemId =
+          form.form_section[0].section_field.slice(-1)[0].field_response[0]
+            .request_response;
+
+        const items = await getItemResponseForRO(supabaseClient, {
+          requestId: parseJSONIfValid(sourcedItemId),
+        });
+
+        const sourceProjectList: {
+          [key: string]: string;
+        } = {};
+
+        const regex = /\(([^()]+)\)/g;
+        const itemList = Object.keys(items);
+        const newOptionList = itemList.map((item, index) => {
+          const itemName = items[item].item;
+          const quantity = items[item].quantity;
+          const sourceProject = items[item].sourceProject;
+
+          const matches = regex.exec(itemName);
+          const unit = matches && matches[1].replace(/\d+/g, "").trim();
+
+          const replace = items[item].item.match(regex);
+          if (!replace) return;
+          sourceProjectList[itemName] = items[item].sourceProject;
+
+          const value = `${itemName.replace(
+            replace[0],
+            `(${quantity} ${unit}) (${sourceProject})`
+          )} `;
+
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        ) as unknown as OptionTableRow[];
+
+        const usedItem = parsedRequest.request_form.form_section
+          .slice(1)
+          .map((section) =>
+            trim(
+              parseJSONIfValid(
+                section.section_field[0].field_response[0].request_response
+              )
+            )
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(trim(option.option_value))
+        );
+        const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
+          parsedRequest.request_form.form_section.slice(1).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      parseJSONIfValid(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+        console.log(itemSectionWithOptions);
+
+        const formattedRequest: RequestWithResponseType = {
+          ...parsedRequest,
+          request_form: {
+            ...parsedRequest.request_form,
+            form_section: [
+              parsedRequest.request_form.form_section[0],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSigner.length !== 0
+              ? projectSignerList
+              : parsedRequest.request_signer,
+        };
+
+        return {
+          props: {
+            request: formattedRequest,
+            itemOptions: unusedItemOption,
+            originalItemOptions: itemOptions,
+            sourceProjectList,
+            requestProjectId: request.request_project_id,
+            requestingProject: request.request_project.team_project_name,
+          },
+        };
+      }
+
       return {
         props: {
           request: parsedRequest,
@@ -320,6 +432,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
+  originalItemOptions: OptionTableRow[];
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
@@ -329,9 +442,11 @@ type Props = {
 const Page = ({
   request,
   itemOptions,
+  originalItemOptions = [],
   requestProjectId = "",
   projectOptions = [],
   requestingProject = "",
+  sourceProjectList = {},
 }: Props) => {
   const { request_form: form } = request;
   console.log(request);
@@ -351,6 +466,17 @@ const Page = ({
           <EditSourcedItemRequestPage
             request={request}
             itemOptions={itemOptions}
+            requestProjectId={requestProjectId}
+            requestingProject={requestingProject}
+          />
+        );
+      case "Release Order":
+        return (
+          <EditReleaseOrderPage
+            request={request}
+            itemOptions={itemOptions}
+            originalItemOptions={originalItemOptions}
+            sourceProjectList={sourceProjectList}
             requestProjectId={requestProjectId}
             requestingProject={requestingProject}
           />
