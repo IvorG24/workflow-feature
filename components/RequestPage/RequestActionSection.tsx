@@ -50,7 +50,6 @@ const RequestActionSection = ({
 
   const canSignerTakeAction =
     isUserSigner &&
-    requestStatus === "PENDING" &&
     signer?.request_signer_status === "PENDING";
 
   return (
