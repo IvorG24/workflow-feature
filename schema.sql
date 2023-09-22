@@ -2916,7 +2916,7 @@ RETURNS JSON AS $$
 
     const formList = formListData.map(form=>({ label: form.form_name, value: form.form_id }));
     
-    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "form":"", "status":"", "search":"", "sort":"ASC"}');`)[0].fetch_request_list;
+    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "form":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
 
     request_data = {teamMemberId,teamMemberList,isFormslyTeam, formList, requestList: requestList.data, requestListCount: requestList.count}
  });
