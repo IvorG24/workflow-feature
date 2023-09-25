@@ -29,6 +29,7 @@ import {
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
+  IconHelpCircle,
   IconLogout,
   IconMoonStars,
   IconSun,
@@ -160,10 +161,20 @@ const HeaderMenu = () => {
           >
             {`${startCase(colorScheme === "dark" ? "light" : "dark")} Mode`}
           </Menu.Item>
+
           {/* <Menu.Label>App</Menu.Label>
           <Menu.Item onClick={handleSwitchApp} icon={<IconSwitch2 size={16} />}>
             Switch App
           </Menu.Item> */}
+
+          <Menu.Label>Support</Menu.Label>
+          <Menu.Item
+            icon={<IconHelpCircle size={16} />}
+            onClick={() => router.push("/help")}
+          >
+            Help
+          </Menu.Item>
+
           <Divider mt="sm" />
           <Menu.Item
             icon={<IconLogout size={14} />}
