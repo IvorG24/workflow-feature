@@ -2407,6 +2407,7 @@ RETURNS JSON as $$
               request_response = '"${requestId}"'
               AND request_status = 'PENDING'
               AND form_name = 'Quotation'
+            ORDER BY request_formsly_id DESC
           `
         );
 
@@ -3039,6 +3040,7 @@ RETURNS JSON as $$
           request_response='"${requestId}"'
           AND request_status='PENDING'
           AND form_name='Quotation'
+        ORDER BY request_formsly_id DESC
       `
     );
 
