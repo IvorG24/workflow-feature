@@ -143,6 +143,13 @@ export type TeamProjectTableInsert =
 export type TeamProjectTableUpdate =
   Database["public"]["Tables"]["team_project_table"]["Update"];
 
+export type CSICodeTableRow =
+  Database["public"]["Tables"]["csi_code_table"]["Row"];
+export type CSICodeTableInsert =
+  Database["public"]["Tables"]["csi_code_table"]["Insert"];
+export type CSICodeTableUpdate =
+  Database["public"]["Tables"]["csi_code_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -305,6 +312,7 @@ export type RequestWithResponseType = RequestTableRow & {
 export type TeamMemberType = {
   team_member_id: string;
   team_member_role: MemberRoleType;
+  team_member_date_created: string;
   team_member_user: {
     user_id: string;
     user_first_name: string;
@@ -442,15 +450,16 @@ export type ItemWithDescriptionType = ItemTableRow & {
 
 export type ItemForm = {
   generalName: string;
-  descriptions: { description: string }[];
+  descriptions: { description: string; withUoM: boolean }[];
   unit: string;
   isAvailable: boolean;
-
   glAccount: string;
+  division: string[];
 };
 
 export type ItemDescriptionFieldForm = {
   value: string;
+  unitOfMeasurement: string;
   isAvailable: boolean;
 };
 export type SectionWithField = {
@@ -612,7 +621,6 @@ export type TeamGroupForFormType =
   | "Requisition"
   | "Quotation"
   | "Receiving Inspecting Report"
-  | "Cheque Reference"
   | "Audit";
 
 type SSOTRequestOwnerType = {
@@ -795,3 +803,46 @@ export type TeamMemberWithUserDetails = {
     user_email: string;
   };
 }[];
+
+export type TeamMemberOnLoad = {
+  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  groupList: {
+    team_group_member_id: string;
+    team_group: TeamGroupTableRow;
+  }[];
+  groupCount: number;
+  projectList: {
+    team_project_member_id: string;
+    team_project: TeamProjectTableRow;
+  }[];
+  projectCount: number;
+};
+
+export type TeamOnLoad = {
+  team: TeamTableRow;
+  teamMembers: TeamMemberType[];
+  teamGroups: TeamGroupTableRow[];
+  teamProjects: TeamProjectTableRow[];
+  teamGroupsCount: number;
+  teamProjectsCount: number;
+};
+
+export type NotificationOnLoad = {
+  notificationList: NotificationTableRow[];
+  totalNotificationCount: number;
+  tab: "all" | "unread";
+};
+
+export type SSOTOnLoad = {
+  data: SSOTType[];
+  projectNameList: string[];
+  itemNameList: string[];
+};
+
+export type RequestListOnLoad = {
+  requestList: RequestListItemType[];
+  requestListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
+  formList: { label: string; value: string }[];
+  isFormslyTeam: boolean;
+};

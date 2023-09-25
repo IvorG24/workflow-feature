@@ -1,4 +1,3 @@
-import { getCanvassData } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
@@ -13,6 +12,11 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, context }) => {
     try {
+      const { data, error } = await supabaseClient.rpc("canvass_page_on_load", {
+        input_data: { requestId: context.query.requestId },
+      });
+      if (error) throw error;
+
       const {
         canvassData,
         lowestPricePerItem,
@@ -21,9 +25,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         lowestQuotation,
         requestAdditionalCharge,
         lowestAdditionalCharge,
-      } = await getCanvassData(supabaseClient, {
-        requestId: `${context.query.requestId}`,
-      });
+      } = data as unknown as Props;
 
       if (
         isEmpty(summaryData) ||
@@ -46,7 +48,9 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       };
     } catch (error) {
       console.error(error);
+
       return {
+        props: {},
         redirect: {
           destination: "/500",
           permanent: false,

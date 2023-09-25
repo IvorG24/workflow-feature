@@ -15,10 +15,13 @@ import {
 } from "@tabler/icons-react";
 import { toUpper } from "lodash";
 
-type Props = {
-  signerList: (RequestWithResponseType["request_signer"][0]["request_signer_signer"] & {
+export type RequestSignerType =
+  RequestWithResponseType["request_signer"][0]["request_signer_signer"] & {
     request_signer_status: ReceiverStatusType;
-  })[];
+  };
+
+type Props = {
+  signerList: RequestSignerType[];
 };
 
 const RequestSignerSection = ({ signerList }: Props) => {

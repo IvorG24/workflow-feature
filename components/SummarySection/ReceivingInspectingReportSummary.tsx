@@ -1,6 +1,6 @@
 import { addCommaToNumber, regExp } from "@/utils/string";
 import { DuplicateSectionType } from "@/utils/types";
-import { Paper, ScrollArea, Table, Title } from "@mantine/core";
+import { Paper, ScrollArea, Table, Text, Title } from "@mantine/core";
 
 type Props = {
   summaryData: DuplicateSectionType[];
@@ -33,7 +33,7 @@ const ReceivingInspectingReportSummary = ({ summaryData }: Props) => {
             <tr>
               <th>Item</th>
               <th>Quantity</th>
-              <th>Unit</th>
+              <th>Base Unit of Measurement</th>
               <th>Receiving Status</th>
             </tr>
           </thead>
@@ -61,9 +61,22 @@ const ReceivingInspectingReportSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[2].field_response?.request_response}`
               );
 
+              const parsedItem = JSON.parse(item);
+              const closingIndex = parsedItem.indexOf(")");
+              const newItem = parsedItem.slice(0, closingIndex + 1);
+              const description = parsedItem
+                .slice(closingIndex + 3, parsedItem.length - 1)
+                .split(", ")
+                .join("\n");
+
               return (
                 <tr key={index}>
-                  <td>{JSON.parse(item)}</td>
+                  <td>
+                    <Text fw={700}>{newItem}</Text>
+                    <pre style={{ marginTop: 10 }}>
+                      <Text>{description}</Text>
+                    </pre>
+                  </td>
                   <td>{addCommaToNumber(parsedQuantity)}</td>
                   <td>{unit}</td>
                   <td>{status}</td>

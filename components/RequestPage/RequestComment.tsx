@@ -27,7 +27,7 @@ import {
 } from "@tabler/icons-react";
 import { capitalize } from "lodash";
 import moment from "moment";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
@@ -45,9 +45,11 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const [commentContent, setCommentContent] = useState(comment.comment_content);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isEditingComment, setIsEditingComment] = useState(false);
-  const [isCommentEdited, setIsCommentEdited] = useState(false);
+  const [isCommentEdited, setIsCommentEdited] = useState(
+    comment.comment_is_edited
+  );
+  const commenter = comment.comment_team_member.team_member_user;
 
-  const { team_member_user: commenter } = comment.comment_team_member;
   const isUserOwner =
     comment.comment_team_member_id === teamMember?.team_member_id;
 
@@ -143,6 +145,11 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return <IconFolderCancel size={16} />;
     }
   };
+
+  useEffect(() => {
+    setCommentContent(comment.comment_content);
+    setIsCommentEdited(comment.comment_is_edited);
+  }, [comment.comment_content, comment.comment_is_edited]);
 
   return (
     <Box pos="relative" mt="sm">

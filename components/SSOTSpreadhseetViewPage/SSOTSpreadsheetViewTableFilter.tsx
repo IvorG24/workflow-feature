@@ -1,3 +1,4 @@
+import { SSOTTableData } from "@/hooks/useSSOTTableFilter";
 import {
   Accordion,
   Box,
@@ -10,104 +11,34 @@ import {
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { IconColumns3, IconEye, IconEyeOff } from "@tabler/icons-react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { ShowColumnList } from "./SSOTSpreadhseetViewPage";
+import { startCase } from "lodash";
+import { useEffect, useState } from "react";
 
 type Props = {
-  requisitionTableColumnList: string[];
-  quotationTableColumnList: string[];
-  rirTableColumnList: string[];
-  sourcedItemTableColumnList: string[];
-  releaseOrderTableColumnList: string[];
-  transferReceiptTableColumnList: string[];
-  chequeReferenceTableColumnList: string[];
-  showRequisitionTable: boolean;
-  setShowRequisitionTable: Dispatch<SetStateAction<boolean>>;
-  showQuotationTable: boolean;
-  setShowQuotationTable: Dispatch<SetStateAction<boolean>>;
-  showSourcedItemTable: boolean;
-  setShowSourcedItemTable: Dispatch<SetStateAction<boolean>>;
-  showRIRTable: boolean;
-  setShowRIRTable: Dispatch<SetStateAction<boolean>>;
-  showReleaseOrderTable: boolean;
-  setShowReleaseOrderTable: Dispatch<SetStateAction<boolean>>;
-  showTransferReceiptTable: boolean;
-  setShowTransferReceiptTable: Dispatch<SetStateAction<boolean>>;
-  showChequeReferenceTable: boolean;
-  setShowChequeReferenceTable: Dispatch<SetStateAction<boolean>>;
-  showRequisitionColumnList: ShowColumnList;
-  setShowRequisitionColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showQuotationColumnList: ShowColumnList;
-  setShowQuotationColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showSourcedItemColumnList: ShowColumnList;
-  setShowSourcedItemColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showRIRColumnList: ShowColumnList;
-  setShowRIRColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showReleaseOrderColumnList: ShowColumnList;
-  setShowReleaseOrderColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showTransferReceiptColumnList: ShowColumnList;
-  setShowTransferReceiptColumnList: Dispatch<SetStateAction<ShowColumnList>>;
-  showChequeReferenceColumnList: ShowColumnList;
-  setShowChequeReferenceColumnList: Dispatch<SetStateAction<ShowColumnList>>;
+  tables: {
+    [key: string]: SSOTTableData;
+  };
 };
 
+function convertToTitleCase(input: string): string {
+  return input
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function convertToHyphenCase(input: string): string {
+  return input
+    .replace(/([a-z])([A-Z])/g, "$1-$2")
+    .replace(/[_\s]+/g, "-")
+    .toLowerCase();
+}
+
 const SSOTSpreadsheetViewTableFilter = (props: Props) => {
-  const {
-    requisitionTableColumnList,
-    quotationTableColumnList,
-    rirTableColumnList,
-    sourcedItemTableColumnList,
-    releaseOrderTableColumnList,
-    transferReceiptTableColumnList,
-    chequeReferenceTableColumnList,
-    showRequisitionTable,
-    setShowRequisitionTable,
-    showRequisitionColumnList,
-    setShowRequisitionColumnList,
-    showQuotationTable,
-    setShowQuotationTable,
-    showSourcedItemTable,
-    setShowSourcedItemTable,
-    showQuotationColumnList,
-    setShowQuotationColumnList,
-    showRIRTable,
-    setShowRIRTable,
-    showReleaseOrderTable,
-    setShowReleaseOrderTable,
-    showTransferReceiptTable,
-    setShowTransferReceiptTable,
-    showChequeReferenceTable,
-    setShowChequeReferenceTable,
-    showRIRColumnList,
-    setShowRIRColumnList,
-    showSourcedItemColumnList,
-    setShowSourcedItemColumnList,
-    showReleaseOrderColumnList,
-    setShowReleaseOrderColumnList,
-    showTransferReceiptColumnList,
-    setShowTransferReceiptColumnList,
-    showChequeReferenceColumnList,
-    setShowChequeReferenceColumnList,
-  } = props;
   const switchInputProps = { color: "green" };
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
   const [accordionValue, setAccordionValue] = useState("requisition-table");
-  const defaultFilterSettings = {
-    showRequisitionTable,
-    showQuotationTable,
-    showRIRTable,
-    showSourcedItemTable,
-    showReleaseOrderTable,
-    showTransferReceiptTable,
-    showChequeReferenceTable,
-    showRequisitionColumnList,
-    showQuotationColumnList,
-    showRIRColumnList,
-    showSourcedItemColumnList,
-    showReleaseOrderColumnList,
-    showTransferReceiptColumnList,
-    showChequeReferenceColumnList,
-  };
+  const defaultFilterSettings = props.tables;
   const [
     localFilterSettings,
     setLocalFilterSettings,
@@ -118,22 +49,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
   });
 
   const handleSaveFilterSettingsToLocalStorage = () => {
-    setLocalFilterSettings({
-      showRequisitionTable,
-      showQuotationTable,
-      showRIRTable,
-      showSourcedItemTable,
-      showReleaseOrderTable,
-      showTransferReceiptTable,
-      showChequeReferenceTable,
-      showRequisitionColumnList,
-      showQuotationColumnList,
-      showRIRColumnList,
-      showSourcedItemColumnList,
-      showReleaseOrderColumnList,
-      showTransferReceiptColumnList,
-      showChequeReferenceColumnList,
-    });
+    setLocalFilterSettings(props.tables);
     setShowFilterColumnModal(false);
     return;
   };
@@ -158,48 +74,100 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
     return true;
   };
 
-  useEffect(() => {
-    const {
-      showRequisitionTable,
-      showQuotationTable,
-      showRIRTable,
-      showSourcedItemTable,
-      showReleaseOrderTable,
-      showTransferReceiptTable,
-      showChequeReferenceTable,
-      showRequisitionColumnList,
-      showQuotationColumnList,
-      showRIRColumnList,
-      showSourcedItemColumnList,
-      showReleaseOrderColumnList,
-      showTransferReceiptColumnList,
-      showChequeReferenceColumnList,
-    } = localFilterSettings;
+  const renderTableFilter = (tables: Props["tables"]) => {
+    return (
+      <Accordion
+        w="100%"
+        value={accordionValue}
+        onChange={(value: string) => setAccordionValue(value)}
+      >
+        {Object.entries(tables).map(([tableName, tableData]) => {
+          const parentTableName = tableName.replace(/ItemTable$/, "Table");
+          const parentTable = tables[parentTableName];
+          const isTableDisabled =
+            tableName.includes("Item") && parentTable
+              ? !parentTable.show
+              : false;
 
+          return (
+            <Accordion.Item
+              key={tableName}
+              value={convertToHyphenCase(tableName)}
+            >
+              <Accordion.Control>{startCase(tableName)}</Accordion.Control>
+              <Accordion.Panel>
+                <Box w="100%" p="sm">
+                  <Group mb="sm" position="apart">
+                    <Text weight={600}>{startCase(tableName)}</Text>
+                    <Switch
+                      checked={tableData.show}
+                      onChange={(e) =>
+                        tableData.setShow(e.currentTarget.checked)
+                      }
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                      disabled={isTableDisabled}
+                      {...switchInputProps}
+                      styles={{ track: { cursor: "pointer" } }}
+                    />
+                  </Group>
+                  <Flex gap="sm" direction="column">
+                    {renderColumnListFilter(
+                      tableData,
+                      parentTable ? !parentTable.show : false || !tableData.show
+                    )}
+                  </Flex>
+                </Box>
+              </Accordion.Panel>
+            </Accordion.Item>
+          );
+        })}
+      </Accordion>
+    );
+  };
+
+  const renderColumnListFilter = (
+    tableData: SSOTTableData,
+    isSwitchDisabled?: boolean
+  ) => {
+    const columns = tableData.columnList;
+    return Object.keys(columns).map((columnKey, index) => {
+      const propName = columnKey.toLowerCase().replace(/\s+/g, "_");
+      return (
+        <Group key={index} position="apart">
+          <Text>{convertToTitleCase(columnKey)}</Text>
+          <Switch
+            checked={tableData.columnList[propName]}
+            onChange={(e) =>
+              tableData.setColumnList((prev) => ({
+                ...prev,
+                [propName]: e.currentTarget.checked,
+              }))
+            }
+            onLabel={<IconEye size="1rem" stroke={2.5} />}
+            offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+            disabled={isSwitchDisabled ? isSwitchDisabled : false}
+            {...switchInputProps}
+            styles={{ track: { cursor: "pointer" } }}
+          />
+        </Group>
+      );
+    });
+  };
+
+  useEffect(() => {
+    const localSettings = localFilterSettings;
     if (
-      !checkIfDefaultAndLocalHasSameProps(
-        defaultFilterSettings,
-        localFilterSettings
-      )
+      !checkIfDefaultAndLocalHasSameProps(defaultFilterSettings, localSettings)
     ) {
       resetLocalFilterSettings();
       return;
     }
 
-    setShowRequisitionTable(showRequisitionTable);
-    setShowQuotationTable(showQuotationTable);
-    setShowSourcedItemTable(showSourcedItemTable);
-    setShowRIRTable(showRIRTable);
-    setShowReleaseOrderTable(showReleaseOrderTable);
-    setShowTransferReceiptTable(showTransferReceiptTable);
-    setShowChequeReferenceTable(showChequeReferenceTable);
-    setShowRequisitionColumnList(showRequisitionColumnList);
-    setShowQuotationColumnList(showQuotationColumnList);
-    setShowRIRColumnList(showRIRColumnList);
-    setShowSourcedItemColumnList(showSourcedItemColumnList);
-    setShowReleaseOrderColumnList(showReleaseOrderColumnList);
-    setShowTransferReceiptColumnList(showTransferReceiptColumnList);
-    setShowChequeReferenceColumnList(showChequeReferenceColumnList);
+    Object.entries(localSettings).forEach(([tableName, tableData]) => {
+      props.tables[tableName].setShow(tableData.show);
+      props.tables[tableName].setColumnList(tableData.columnList);
+    });
   }, [localFilterSettings]);
 
   return (
@@ -217,7 +185,8 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
           wrap="wrap"
           w="100%"
         >
-          <Accordion
+          {renderTableFilter(props.tables)}
+          {/* <Accordion
             w="100%"
             value={accordionValue}
             onChange={(value: string) => setAccordionValue(value)}
@@ -229,9 +198,9 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                   <Group mb="sm" position="apart">
                     <Text weight={600}>Requisition Table</Text>
                     <Switch
-                      checked={showRequisitionTable}
+                      checked={requisitionTable.show}
                       onChange={(e) =>
-                        setShowRequisitionTable(e.currentTarget.checked)
+                        requisitionTable.setShow(e.currentTarget.checked)
                       }
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
@@ -240,30 +209,37 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                     />
                   </Group>
                   <Flex gap="sm" direction="column">
-                    {requisitionTableColumnList.map((column, index) => {
-                      const propName = column
-                        .toLowerCase()
-                        .replace(/\s+/g, "_");
-                      return (
-                        <Group key={index} position="apart">
-                          <Text>{column}</Text>
-                          <Switch
-                            checked={showRequisitionColumnList[propName]}
-                            onChange={(e) =>
-                              setShowRequisitionColumnList((prev) => ({
-                                ...prev,
-                                [propName]: e.currentTarget.checked,
-                              }))
-                            }
-                            onLabel={<IconEye size="1rem" stroke={2.5} />}
-                            offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                            disabled={!showRequisitionTable}
-                            {...switchInputProps}
-                            styles={{ track: { cursor: "pointer" } }}
-                          />
-                        </Group>
-                      );
-                    })}
+                    {renderColumnListFilter(
+                      requisitionTable,
+                      !requisitionTable.show
+                    )}
+                  </Flex>
+                </Box>
+              </Accordion.Panel>
+            </Accordion.Item>
+            <Accordion.Item value="requisition-item-table">
+              <Accordion.Control>Requisition Item Table</Accordion.Control>
+              <Accordion.Panel>
+                <Box w="100%" p="sm">
+                  <Group mb="sm" position="apart">
+                    <Text weight={600}>Item Description Table</Text>
+                    <Switch
+                      checked={requisitionItemTable.show}
+                      onChange={(e) =>
+                        requisitionItemTable.setShow(e.currentTarget.checked)
+                      }
+                      onLabel={<IconEye size="1rem" stroke={2.5} />}
+                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
+                      disabled={!requisitionTable.show}
+                      {...switchInputProps}
+                      styles={{ track: { cursor: "pointer" } }}
+                    />
+                  </Group>
+                  <Flex gap="sm" direction="column">
+                    {renderTableFilter(
+                      requisitionItemTable,
+                      !requisitionTable.show || !requisitionItemTable.show
+                    )}
                   </Flex>
                 </Box>
               </Accordion.Panel>
@@ -510,55 +486,7 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                 </Box>
               </Accordion.Panel>
             </Accordion.Item>
-            <Accordion.Item value="cheque-reference-table">
-              <Accordion.Control>Cheque Reference Table</Accordion.Control>
-              <Accordion.Panel>
-                <Box w="100%" p="sm">
-                  <Group mb="sm" position="apart">
-                    <Text weight={600}>Cheque Reference Table</Text>
-                    <Switch
-                      checked={showChequeReferenceTable}
-                      onChange={(e) =>
-                        setShowChequeReferenceTable(e.currentTarget.checked)
-                      }
-                      onLabel={<IconEye size="1rem" stroke={2.5} />}
-                      offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                      {...switchInputProps}
-                      styles={{ track: { cursor: "pointer" } }}
-                    />
-                  </Group>
-                  <Flex gap="sm" direction="column">
-                    {chequeReferenceTableColumnList.map((column, index) => {
-                      const propName = column
-                        .toLowerCase()
-                        .replace(/\s+/g, "_");
-                      return (
-                        <Group key={index} position="apart">
-                          <Flex maw={150} wrap="wrap">
-                            <Text>{column}</Text>
-                          </Flex>
-                          <Switch
-                            checked={showChequeReferenceColumnList[propName]}
-                            onChange={(e) =>
-                              setShowChequeReferenceColumnList((prev) => ({
-                                ...prev,
-                                [propName]: e.currentTarget.checked,
-                              }))
-                            }
-                            onLabel={<IconEye size="1rem" stroke={2.5} />}
-                            offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                            disabled={!showChequeReferenceTable}
-                            {...switchInputProps}
-                            styles={{ track: { cursor: "pointer" } }}
-                          />
-                        </Group>
-                      );
-                    })}
-                  </Flex>
-                </Box>
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
+          </Accordion> */}
         </Flex>
       </Drawer>
 

@@ -7,6 +7,7 @@ import {
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
+  Alert,
   Box,
   Button,
   Container,
@@ -25,6 +26,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -149,6 +151,41 @@ const RequestListPage = ({
     }
   };
 
+  const handleRefreshRequestList = async () => {
+    try {
+      setIsFetchingRequestList(true);
+      setActivePage(1);
+
+      const { search, requestorList, formList, status, isAscendingSort } =
+        getValues();
+
+      const params = {
+        teamId: activeTeam.team_id,
+        page: 1,
+        limit: DEFAULT_REQUEST_LIST_LIMIT,
+        requestor:
+          requestorList && requestorList.length > 0 ? requestorList : undefined,
+        form: formList && formList.length > 0 ? formList : undefined,
+        status: status && status.length > 0 ? status : undefined,
+        search: search,
+      };
+      const { data, count } = await getRequestList(supabaseClient, {
+        ...params,
+        sort: isAscendingSort ? "ascending" : "descending",
+      });
+      setRequestList(data);
+      setRequestListCount(count || 0);
+    } catch (error) {
+      notifications.show({
+        message:
+          "We're having trouble refreshing the page. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingRequestList(false);
+    }
+  };
+
   useEffect(() => {
     handlePagination();
   }, [activePage]);
@@ -162,7 +199,6 @@ const RequestListPage = ({
         </Box>
         {isFormslyTeam ? (
           <Button
-            variant="light"
             onClick={() => router.push("/team-requests/spreadsheet-view")}
             sx={{ flex: 1 }}
             maw={300}
@@ -170,6 +206,13 @@ const RequestListPage = ({
             SSOT Spreadsheet View
           </Button>
         ) : null}
+        <Button
+          variant="light"
+          leftIcon={<IconReload size={16} />}
+          onClick={() => handleRefreshRequestList()}
+        >
+          Refresh
+        </Button>
       </Flex>
       <Space h="sm" />
       <FormProvider {...filterFormMethods}>
@@ -240,8 +283,14 @@ const RequestListPage = ({
             </ScrollArea>
           </Paper>
         ) : (
-          <Text align="center" size={24} weight="bolder" color="dark.1">
-            No request/s found
+          <Text align="center" size={24} weight="bolder" color="dimmed">
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              color="orange"
+              mt="xs"
+            >
+              No request/s found.
+            </Alert>
           </Text>
         )}
       </Box>

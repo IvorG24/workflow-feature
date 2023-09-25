@@ -47,7 +47,7 @@ const QuotationSummary = ({ summaryData, additionalChargeData }: Props) => {
               <th>Item</th>
               <th>Price per Unit</th>
               <th>Quantity</th>
-              <th>Unit</th>
+              <th>Base Unit of Measurement</th>
               <th>Total Price</th>
             </tr>
           </thead>
@@ -78,9 +78,22 @@ const QuotationSummary = ({ summaryData, additionalChargeData }: Props) => {
               const totalPrice = parsedQuantity * price;
               totalItemPrice += totalPrice;
 
+              const parsedItem = JSON.parse(item);
+              const closingIndex = parsedItem.indexOf(")");
+              const newItem = parsedItem.slice(0, closingIndex + 1);
+              const description = parsedItem
+                .slice(closingIndex + 3, parsedItem.length - 1)
+                .split(", ")
+                .join("\n");
+
               return (
                 <tr key={index}>
-                  <td>{JSON.parse(item)}</td>
+                  <td>
+                    <Text fw={700}>{newItem}</Text>
+                    <pre style={{ marginTop: 10 }}>
+                      <Text>{description}</Text>
+                    </pre>
+                  </td>
                   <td>₱ {addCommaToNumber(price)}</td>
                   <td>{addCommaToNumber(parsedQuantity)}</td>
                   <td>{unit}</td>

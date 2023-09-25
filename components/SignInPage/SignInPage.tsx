@@ -1,5 +1,7 @@
+import { getInvitationId } from "@/backend/api/get";
 import { checkIfEmailExists, signInUser } from "@/backend/api/post";
-import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
+import { JwtPayload } from "@/pages/api/team-invite";
+import { DEFAULT_LANDING_PAGE, JWT_SECRET_KEY } from "@/utils/constant";
 import {
   Anchor,
   Box,
@@ -17,6 +19,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import jwt from "jsonwebtoken";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -62,7 +65,22 @@ const SignInPage = () => {
         email: data.email,
       });
       if (isUserOnboarded) {
-        router.push(DEFAULT_LANDING_PAGE);
+        const { inviteToken } = router.query;
+
+        if (inviteToken) {
+          const decodedToken = jwt.verify(
+            `${inviteToken}`,
+            JWT_SECRET_KEY
+          ) as JwtPayload;
+          const { teamId, invitedEmail } = decodedToken;
+          const invitationId = await getInvitationId(supabaseClient, {
+            teamId: `${teamId}`,
+            userEmail: `${invitedEmail}`,
+          });
+          router.push(`/team/invitation/${invitationId}`);
+        } else {
+          router.push(DEFAULT_LANDING_PAGE);
+        }
         return;
       }
       router.push("/onboarding");

@@ -1,11 +1,6 @@
-import {
-  getAllItems,
-  getAllTeamProjects,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
+import { getSSOTOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import SSOTSpreadsheetView from "@/components/SSOTSpreadhseetViewPage/SSOTSpreadhseetViewPage";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { SSOTType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -13,50 +8,13 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user }) => {
     try {
-      const activeTeam = await getUserActiveTeamId(supabaseClient, {
+      const ssotData = await getSSOTOnLoad(supabaseClient, {
         userId: user.id,
       });
-      if (activeTeam) {
-        const { data, error } = await supabaseClient.rpc("get_ssot", {
-          input_data: {
-            activeTeam: activeTeam,
-            pageNumber: 1,
-            rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-            search: "",
-            requisitionFilter: [],
-            requisitionFilterCount: 0,
-            supplierList: [],
-          },
-        });
-        if (error) throw error;
 
-        const itemList = await getAllItems(supabaseClient, {
-          teamId: activeTeam,
-        });
-
-        const itemNameList = itemList.map((item) => item.item_general_name);
-
-        const projectNameList = await getAllTeamProjects(supabaseClient, {
-          teamId: activeTeam,
-        });
-
-        return {
-          props: {
-            data,
-            projectNameList: projectNameList.map(
-              (project) => project.team_project_name
-            ),
-            itemNameList,
-          },
-        };
-      } else {
-        return {
-          redirect: {
-            destination: "/404",
-            permanent: false,
-          },
-        };
-      }
+      return {
+        props: ssotData,
+      };
     } catch (error) {
       console.error(error);
       return {

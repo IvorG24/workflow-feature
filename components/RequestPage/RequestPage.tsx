@@ -4,9 +4,12 @@ import {
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
-  checkWithdrawalSlipQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
+import useRealtimeProjectRequestSignerList from "@/hooks/useRealtimeRequestProjectSignerList";
+import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
+import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
@@ -15,6 +18,7 @@ import {
   FormStatusType,
   ReceiverStatusType,
   RequestProjectSignerStatusType,
+  RequestResponseTableRow,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -33,13 +37,11 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
-import ReleaseQuantitySummary from "../SummarySection/ReleaseQuantitySummary";
-import RequisitionSummary from "../SummarySection/RequisitionSummary";
 import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
@@ -78,21 +80,43 @@ const RequestPage = ({
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
 
-  const [requestStatus, setRequestStatus] = useState(request.request_status);
-  const [signerList, setSignerList] = useState(
-    request.request_signer.map((signer) => {
-      return {
-        ...signer.request_signer_signer,
-        request_signer_status:
-          signer.request_signer_status as ReceiverStatusType,
-      };
-    })
-  );
-  const [projectSignerStatus, setProjectSignerStatus] = useState(
-    initialProjectSignerStatus || []
-  );
-
   const requestor = request.request_team_member.team_member_user;
+
+  const initialRequestSignerList = request.request_signer.map((signer) => {
+    return {
+      ...signer.request_signer_signer,
+      request_signer_status: signer.request_signer_status as ReceiverStatusType,
+    };
+  });
+
+  const requestStatus = useRealtimeRequestStatus(supabaseClient, {
+    requestId: request.request_id,
+    initialRequestStatus: request.request_status,
+  });
+
+  const signerList = useRealtimeRequestSignerList(supabaseClient, {
+    requestId: request.request_id,
+    initialRequestSignerList,
+  });
+
+  const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
+    requestId: request.request_id,
+    initialCommentList: request.request_comment,
+  });
+
+  const isSourcedItemForm =
+    request.request_form.form_name === "Sourced Item" &&
+    request.request_form.form_is_formsly_form;
+
+  const projectSignerStatus = useRealtimeProjectRequestSignerList(
+    supabaseClient,
+    {
+      requestId: request.request_id,
+      initialRequestProjectSignerList: initialProjectSignerStatus || [],
+      requestSignerList: signerList,
+      isSourcedItemForm,
+    }
+  );
 
   const requestDateCreated = new Date(
     request.request_date_created
@@ -112,10 +136,6 @@ const RequestPage = ({
 
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
-
-  useEffect(() => {
-    setRequestStatus(request.request_status);
-  }, [request.request_status]);
 
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
@@ -142,12 +162,33 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
 
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[2].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
+
           const warningItemList = await checkRequisitionQuantity(
             supabaseClient,
             {
               requisitionID,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[2].field_response,
+              itemFieldList,
+              quantityFieldList,
             }
           );
 
@@ -179,13 +220,33 @@ const RequestPage = ({
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[1];
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
 
           const warningItemList = await checkRequisitionQuantity(
             supabaseClient,
             {
               requisitionID,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
+              itemFieldList,
+              quantityFieldList,
             }
           );
 
@@ -219,13 +280,33 @@ const RequestPage = ({
             request.request_form.form_section[0].section_field[1]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
 
           const warningItemList = await checkRIRItemQuantity(supabaseClient, {
             quotationId,
             itemFieldId: itemSection.section_field[0].field_id,
             quantityFieldId: itemSection.section_field[1].field_id,
-            itemFieldList: itemSection.section_field[0].field_response,
-            quantityFieldList: itemSection.section_field[1].field_response,
+            itemFieldList,
+            quantityFieldList,
           });
 
           if (warningItemList && warningItemList.length !== 0) {
@@ -257,12 +338,33 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[1];
 
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
+
           const warningItemList = await checkROItemQuantity(supabaseClient, {
             sourcedItemId,
             itemFieldId: itemSection.section_field[0].field_id,
             quantityFieldId: itemSection.section_field[1].field_id,
-            itemFieldList: itemSection.section_field[0].field_response,
-            quantityFieldList: itemSection.section_field[1].field_response,
+            itemFieldList,
+            quantityFieldList,
           });
 
           if (warningItemList && warningItemList.length !== 0) {
@@ -294,14 +396,35 @@ const RequestPage = ({
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[2];
 
+          const duplictableSectionIdList =
+            itemSection.section_field[0].field_response.map(
+              (value) => value.request_response_duplicatable_section_id
+            );
+
+          const itemFieldList: RequestResponseTableRow[] = [];
+          const quantityFieldList: RequestResponseTableRow[] = [];
+
+          duplictableSectionIdList.forEach((duplictableId) => {
+            const item = itemSection.section_field[0].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            const quantity = itemSection.section_field[1].field_response.filter(
+              (value) =>
+                value.request_response_duplicatable_section_id === duplictableId
+            )[0];
+            itemFieldList.push(item);
+            quantityFieldList.push(quantity);
+          });
+
           const warningItemList = await checkTransferReceiptItemQuantity(
             supabaseClient,
             {
               releaseOrderItemId,
               itemFieldId: itemSection.section_field[0].field_id,
               quantityFieldId: itemSection.section_field[1].field_id,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
+              itemFieldList,
+              quantityFieldList,
             }
           );
 
@@ -314,44 +437,6 @@ const RequestPage = ({
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
                     Release Order
-                  </Title>
-                  <List size="sm" mt="md" spacing="xs">
-                    {warningItemList.map((item) => (
-                      <List.Item key={item}>{item}</List.Item>
-                    ))}
-                  </List>
-                  <Button fullWidth onClick={() => modals.closeAll()} mt="md">
-                    Close
-                  </Button>
-                </Box>
-              ),
-            });
-            return;
-          }
-        } else if (request.request_form.form_name === "Release Quantity") {
-          const withdrawalSlipId =
-            request.request_form.form_section[0].section_field[0]
-              .field_response[0].request_response;
-          const itemSection = request.request_form.form_section[2];
-   
-          const warningItemList = await checkWithdrawalSlipQuantity(
-            supabaseClient,
-            {
-              withdrawalSlipId,
-              itemFieldList: itemSection.section_field[0].field_response,
-              quantityFieldList: itemSection.section_field[1].field_response,
-            }
-          );
-
-          if (warningItemList && warningItemList.length !== 0) {
-            modals.open({
-              title: "You cannot approve create this request.",
-              centered: true,
-              children: (
-                <Box maw={390}>
-                  <Title order={5}>
-                    There are items that will exceed the quantity limit of the
-                    Withdrawal Slip
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -381,49 +466,11 @@ const RequestPage = ({
         teamId: request.request_team_member.team_member_team_id,
       });
 
-      if (signer.signer_is_primary_signer) {
-        setRequestStatus(status);
-      } else {
-        router.reload();
-      }
-
-      setSignerList((prev) =>
-        prev.map((signerItem) => {
-          if (
-            signerItem.signer_team_member.team_member_id ===
-            teamMember.team_member_id
-          ) {
-            return {
-              ...signer,
-              request_signer_status: status,
-            };
-          } else {
-            return signerItem;
-          }
-        })
-      );
-
-      if (
-        request.request_form.form_name === "Sourced Item" &&
-        request.request_form.form_is_formsly_form
-      ) {
-        setProjectSignerStatus((signers) => {
-          return signers.map((signer) => {
-            if (signer.signer_team_member_id === teamMember.team_member_id) {
-              return {
-                ...signer,
-                signer_status: status,
-              };
-            } else return signer;
-          });
-        });
-      }
-
       notifications.show({
         message: `Request ${lowerCase(status)}.`,
         color: "green",
       });
-    } catch (error) {
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -441,8 +488,6 @@ const RequestPage = ({
         requestId: request.request_id,
         memberId: teamMember.team_member_id,
       });
-
-      setRequestStatus("CANCELED");
       notifications.show({
         message: "Request canceled",
         color: "green",
@@ -463,8 +508,6 @@ const RequestPage = ({
       await deleteRequest(supabaseClient, {
         requestId: request.request_id,
       });
-
-      setRequestStatus("DELETED");
       notifications.show({
         message: "Request deleted.",
         color: "green",
@@ -497,7 +540,7 @@ const RequestPage = ({
 
   const getDirectory = (formId: string, formName: string) => {
     let directory = `/team-requests/forms/${formId}`;
-    if (["Quotation", "Sourced Item", "Cheque Reference"].includes(formName)) {
+    if (["Quotation", "Sourced Item"].includes(formName)) {
       directory += `/create?requisitionId=${request.request_id}`;
     } else if (formName === "Release Order") {
       directory += `/create?requisitionId=${JSON.parse(
@@ -517,10 +560,8 @@ const RequestPage = ({
         request.request_form.form_section[0].section_field[1].field_response[0]
           .request_response
       )}&releaseOrderId=${request.request_id}`;
-    } else if (formName === "Release Quantity") {
-      directory += `/create?withdrawalSlipId=${request.request_id}`;
     }
-   
+
     return directory;
   };
 
@@ -576,9 +617,6 @@ const RequestPage = ({
               key={section.section_id + idx}
               section={section}
               isFormslyForm={isFormslyForm}
-              isOnlyWithResponse={
-                request.request_form.form_name === "Withdrawal Slip"
-              }
             />
           ))}
         </Stack>
@@ -672,43 +710,11 @@ const RequestPage = ({
           />
         ) : null}
 
-        {request.request_form.form_name === "Withdrawal Slip" &&
-        request.request_form.form_is_formsly_form ? (
-          <RequisitionSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Release Quantity" &&
-        request.request_form.form_is_formsly_form ? (
-          <ReleaseQuantitySummary
-            summaryData={sectionWithDuplicateList
-              .slice(2)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
-        (isUserSigner && isUserSigner.request_signer_status === "PENDING") ? (
+        (isUserSigner &&
+          isUserSigner.request_signer_status === "PENDING" &&
+          requestStatus !== "CANCELED") ? (
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}
@@ -730,7 +736,7 @@ const RequestPage = ({
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
         }}
-        requestCommentList={request.request_comment}
+        requestCommentList={requestCommentList}
       />
     </Container>
   );

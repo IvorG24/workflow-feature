@@ -19,9 +19,9 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
+import { lowerCase, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -76,6 +76,8 @@ const ProjectList = ({
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [searchResult, setSearchResult] =
+    useState<TeamProjectTableRow[]>(projectList);
 
   const headerCheckboxKey = uniqueId();
 
@@ -116,6 +118,7 @@ const ProjectList = ({
       });
       setProjectList(data as TeamProjectTableRow[]);
       setProjectCount(Number(count));
+      setSearchResult(data as TeamProjectTableRow[]);
     } catch {
       notifications.show({
         message: "Error on fetching project list",
@@ -136,6 +139,7 @@ const ProjectList = ({
         }
       });
       setProjectList(updatedProjectList);
+      setSearchResult(updatedProjectList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
@@ -152,6 +156,7 @@ const ProjectList = ({
     } catch {
       setProjectList(savedRecord);
       setCheckList(saveCheckList);
+      setSearchResult(savedRecord);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -223,6 +228,59 @@ const ProjectList = ({
       ),
     },
   ];
+
+  useEffect(() => {
+    const channel = supabaseClient
+      .channel("realtime-team-project")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "team_project_table",
+          filter: `team_project_team_id=eq.${activeTeam.team_id}`,
+        },
+        async (payload) => {
+          if (payload.eventType === "UPDATE") {
+            const isProjectDisabled = payload.new.team_project_is_disabled;
+            if (isProjectDisabled) {
+              const updatedProjectList = projectList.filter(
+                (project) =>
+                  project.team_project_id !== payload.new.team_project_id
+              );
+              setProjectList(updatedProjectList);
+
+              setSearchResult(
+                updatedProjectList.filter((project) =>
+                  lowerCase(project.team_project_name).includes(
+                    lowerCase(search)
+                  )
+                )
+              );
+            }
+          }
+
+          if (payload.eventType === "INSERT") {
+            const updatedProjectList = [payload.new, ...projectList];
+            setProjectList(updatedProjectList as TeamProjectTableRow[]);
+            setProjectCount(updatedProjectList.length);
+
+            const searchIncludesNewProject = lowerCase(
+              payload.new.team_project_name
+            ).includes(lowerCase(search));
+
+            if (searchIncludesNewProject) {
+              setSearchResult(updatedProjectList as TeamProjectTableRow[]);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseClient.removeChannel(channel);
+    };
+  }, [supabaseClient, activeTeam.team_id, projectList]);
 
   return (
     <Box>
@@ -302,7 +360,7 @@ const ProjectList = ({
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={projectList}
+        records={searchResult}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={projectCount}
         recordsPerPage={ROW_PER_PAGE}
