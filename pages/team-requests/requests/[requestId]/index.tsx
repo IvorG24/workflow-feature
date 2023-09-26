@@ -42,6 +42,7 @@ type Props = {
     formIsForEveryone: boolean;
     formIsMember: boolean;
     formName: string;
+    formIsHidden: boolean;
   };
   connectedRequestIDList: ConnectedRequestIdList;
   connectedForm: {

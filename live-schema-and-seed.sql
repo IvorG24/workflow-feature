@@ -2458,6 +2458,7 @@ RETURNS JSON as $$
           formName: 'Receiving Inspecting Report',
           formIsForEveryone: form.form_is_for_every_member,
           formIsMember: Boolean(groupMember.length),
+          formIsHidden: form.form_is_hidden
         };
       
         returnData =  {
@@ -2501,6 +2502,7 @@ RETURNS JSON as $$
           formName: 'Release Order',
           formIsForEveryone: form.form_is_for_every_member,
           formIsMember: Boolean(groupMember.length),
+          formIsHidden: form.form_is_hidden
         };
 
         const signerData = plv8.execute(
@@ -2607,6 +2609,7 @@ RETURNS JSON as $$
           formName: 'Transfer Receipt',
           formIsForEveryone: form.form_is_for_every_member,
           formIsMember: Boolean(groupMember.length),
+          formIsHidden: form.form_is_hidden
         };
       
         returnData =  {
