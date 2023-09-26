@@ -2354,7 +2354,8 @@ RETURNS JSON as $$
             form_id, 
             form_name, 
             form_is_for_every_member,
-            form_team_member_id
+            form_team_member_id,
+            form_is_hidden
           FROM form_table
           INNER JOIN team_member_table
           ON team_member_id = form_team_member_id
@@ -2391,6 +2392,7 @@ RETURNS JSON as $$
             form_name: form.form_name,
             form_is_for_every_member: form.form_is_for_every_member,
             form_is_member: Boolean(groupMember.length),
+            form_is_hidden: form.form_is_hidden
           })
         }
        

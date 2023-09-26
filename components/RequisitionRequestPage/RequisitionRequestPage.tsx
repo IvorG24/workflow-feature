@@ -43,6 +43,7 @@ type Props = {
     form_id: string;
     form_is_for_every_member: boolean;
     form_is_member: boolean;
+    form_is_hidden: boolean;
   }[];
   connectedRequestIDList: ConnectedRequestIdList;
   canvassRequest: string[];
@@ -216,7 +217,10 @@ const RequisitionRequestPage = ({
           {requestStatus === "APPROVED" ? (
             <Group>
               {connectedForm.map((form) => {
-                if (form.form_is_for_every_member || form.form_is_member) {
+                if (
+                  (form.form_is_for_every_member || form.form_is_member) &&
+                  form.form_is_hidden === false
+                ) {
                   return (
                     <Button
                       key={form.form_id}
