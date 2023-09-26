@@ -11,6 +11,7 @@ import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseO
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
+import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTransferReceiptPage";
 
 import Meta from "@/components/Meta/Meta";
 import {
@@ -384,7 +385,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               ...section.section_field.slice(1),
             ],
           }));
-        console.log(itemSectionWithOptions);
 
         const formattedRequest: RequestWithResponseType = {
           ...parsedRequest,
@@ -392,6 +392,114 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             ...parsedRequest.request_form,
             form_section: [
               parsedRequest.request_form.form_section[0],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSigner.length !== 0
+              ? projectSignerList
+              : parsedRequest.request_signer,
+        };
+
+        return {
+          props: {
+            request: formattedRequest,
+            itemOptions: unusedItemOption,
+            originalItemOptions: itemOptions,
+            sourceProjectList,
+            requestProjectId: request.request_project_id,
+            requestingProject: request.request_project.team_project_name,
+          },
+        };
+      }
+
+      // Transfer Receipt
+      if (form.form_name === "Transfer Receipt") {
+        const releaseOrderId =
+          form.form_section[0].section_field.slice(-1)[0].field_response[0]
+            .request_response;
+
+        const items = await getItemResponseForRO(supabaseClient, {
+          requestId: parseJSONIfValid(releaseOrderId),
+        });
+
+        const sourceProjectList: {
+          [key: string]: string;
+        } = {};
+
+        const regex = /\(([^()]+)\)/g;
+        const itemList = Object.keys(items);
+        const newOptionList = itemList.map((item, index) => {
+          const itemName = items[item].item;
+          const quantity = items[item].quantity;
+          const matches = regex.exec(itemName);
+          const unit = matches && matches[1].replace(/\d+/g, "").trim();
+
+          const replace = items[item].item.match(regex);
+          if (!replace) return;
+
+          const value = `${itemName.replace(
+            replace[0],
+            `(${quantity} ${unit})`
+          )} `;
+          sourceProjectList[value] = items[item].sourceProject;
+
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        ) as unknown as OptionTableRow[];
+
+        const usedItem = parsedRequest.request_form.form_section
+          .slice(1)
+          .map((section) =>
+            trim(
+              parseJSONIfValid(
+                section.section_field[0].field_response[0].request_response
+              )
+            )
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(trim(option.option_value))
+        );
+        const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
+          parsedRequest.request_form.form_section.slice(2).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      parseJSONIfValid(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+
+        const formattedRequest: RequestWithResponseType = {
+          ...parsedRequest,
+          request_form: {
+            ...parsedRequest.request_form,
+            form_section: [
+              parsedRequest.request_form.form_section[0],
+              parsedRequest.request_form.form_section[1],
               ...itemSectionWithOptions,
             ],
           },
@@ -474,6 +582,17 @@ const Page = ({
       case "Release Order":
         return (
           <EditReleaseOrderPage
+            request={request}
+            itemOptions={itemOptions}
+            originalItemOptions={originalItemOptions}
+            sourceProjectList={sourceProjectList}
+            requestProjectId={requestProjectId}
+            requestingProject={requestingProject}
+          />
+        );
+      case "Transfer Receipt":
+        return (
+          <EditTransferReceiptPage
             request={request}
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}
