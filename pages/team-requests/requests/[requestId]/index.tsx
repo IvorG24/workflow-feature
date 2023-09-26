@@ -43,6 +43,7 @@ type Props = {
     formIsForEveryone: boolean;
     formIsMember: boolean;
     formName: string;
+    formIsHidden: boolean;
   };
   connectedRequestIDList: ConnectedRequestIdList;
   connectedForm: {
@@ -50,6 +51,7 @@ type Props = {
     form_id: string;
     form_is_for_every_member: boolean;
     form_is_member: boolean;
+    form_is_hidden: boolean;
   }[];
   canvassRequest?: string[];
   projectSignerStatus?: RequestProjectSignerStatusType;

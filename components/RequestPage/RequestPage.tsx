@@ -59,6 +59,7 @@ type Props = {
     formIsForEveryone: boolean;
     formIsMember: boolean;
     formName: string;
+    formIsHidden: boolean;
   };
   connectedRequestIDList?: ConnectedRequestIdList;
   projectSignerStatus?: RequestProjectSignerStatusType;
@@ -580,7 +581,8 @@ const RequestPage = ({
           connectedFormIdAndGroup.formId &&
           (connectedFormIdAndGroup.formIsForEveryone ||
             connectedFormIdAndGroup.formIsMember) &&
-          requestStatus === "APPROVED" ? (
+          requestStatus === "APPROVED" &&
+          connectedFormIdAndGroup.formIsHidden === false ? (
             <Button
               onClick={() => {
                 router.push(
@@ -712,7 +714,9 @@ const RequestPage = ({
 
         {(isUserOwner &&
           (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
-        (isUserSigner && isUserSigner.request_signer_status === "PENDING") ? (
+        (isUserSigner &&
+          isUserSigner.request_signer_status === "PENDING" &&
+          requestStatus !== "CANCELED") ? (
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}

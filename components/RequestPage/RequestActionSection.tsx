@@ -53,8 +53,8 @@ const RequestActionSection = ({
 
   const canSignerTakeAction =
     isUserSigner &&
-    requestStatus === "PENDING" &&
-    signer?.request_signer_status === "PENDING";
+    signer?.request_signer_status === "PENDING" &&
+    requestStatus !== "CANCELED";
 
   return (
     <Paper p="xl" shadow="xs">
