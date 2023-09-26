@@ -200,6 +200,7 @@ CREATE TABLE request_table(
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id VARCHAR(4000) UNIQUE,
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
@@ -218,6 +219,7 @@ CREATE TABLE request_response_table(
 CREATE TABLE request_signer_table(
   request_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  request_signer_status_date_updated TIMESTAMPTZ,
 
   request_signer_request_id UUID REFERENCES request_table(request_id) NOT NULL,
   request_signer_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
@@ -761,14 +763,14 @@ RETURNS VOID AS $$
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
 
-    plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}' WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
+    plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}', request_signer_status_date_updated = NOW() WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
     
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
     
     if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}' WHERE request_id='${requestId}';`);
+      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() WHERE request_id='${requestId}';`);
     }
     
  });
@@ -1065,8 +1067,7 @@ CREATE OR REPLACE FUNCTION cancel_request(
 )
 RETURNS VOID as $$
   plv8.subtransaction(function(){
-
-    plv8.execute(`UPDATE request_table SET request_status='CANCELED' WHERE request_id='${request_id}'`);
+    plv8.execute(`UPDATE request_table SET request_status='CANCELED', request_status_date_updated = NOW() WHERE request_id='${request_id}'`);
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${request_id}', '${member_id}','${comment_type}', '${comment_content}')`);
  });
 $$ LANGUAGE plv8;
