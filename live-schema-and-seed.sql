@@ -2427,7 +2427,8 @@ RETURNS JSON as $$
           `SELECT 
             form_id, 
             form_is_for_every_member,
-            form_team_member_id
+            form_team_member_id,
+            form_is_hidden
           FROM form_table
           INNER JOIN team_member_table
           ON team_member_id = form_team_member_id
@@ -2471,7 +2472,8 @@ RETURNS JSON as $$
           `SELECT 
             form_id, 
             form_is_for_every_member,
-            form_team_member_id
+            form_team_member_id,
+            form_is_hidden
           FROM form_table
           INNER JOIN team_member_table
           ON team_member_id = form_team_member_id
@@ -2578,7 +2580,8 @@ RETURNS JSON as $$
           `SELECT 
             form_id, 
             form_is_for_every_member,
-            form_team_member_id
+            form_team_member_id,
+            form_is_hidden
           FROM form_table
           INNER JOIN team_member_table
           ON team_member_id = form_team_member_id
