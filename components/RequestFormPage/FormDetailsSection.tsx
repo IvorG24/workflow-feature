@@ -3,7 +3,6 @@ import {
   updateFormVisibility,
 } from "@/backend/api/update";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
-import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
@@ -198,34 +197,30 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
         </Text>
       </Group>
       <Group spacing="md" mt="xl">
-        {!form.form_is_formsly_form ||
-        (form.form_is_formsly_form &&
-          !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)) ? (
-          <Switch
-            checked={!isHidden}
-            onChange={async (event) => {
-              if (
-                formVisibilityRestriction &&
-                event.currentTarget.checked === true
-              ) {
-                const result = await formVisibilityRestriction();
-                if (result === true) {
-                  handleToggleVisibility(true);
-                } else {
-                  notifications.show({
-                    message: result,
-                    color: "orange",
-                  });
-                }
+        <Switch
+          checked={!isHidden}
+          onChange={async (event) => {
+            if (
+              formVisibilityRestriction &&
+              event.currentTarget.checked === true
+            ) {
+              const result = await formVisibilityRestriction();
+              if (result === true) {
+                handleToggleVisibility(true);
               } else {
-                handleToggleVisibility(event.currentTarget.checked);
+                notifications.show({
+                  message: result,
+                  color: "orange",
+                });
               }
-            }}
-            label="Form visibility"
-            size="sm"
-            sx={{ label: { cursor: "pointer" } }}
-          />
-        ) : null}
+            } else {
+              handleToggleVisibility(event.currentTarget.checked);
+            }
+          }}
+          label="Form visibility"
+          size="sm"
+          sx={{ label: { cursor: "pointer" } }}
+        />
       </Group>
     </Paper>
   );

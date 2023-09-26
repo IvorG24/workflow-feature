@@ -74,11 +74,11 @@ INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_is_disabled) VALUES
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition', 'formsly premade Requisition form', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, false, false, false),
-('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, true, false, false),
-('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, true, false, false),
-('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, true, false, false),
-('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, true, false, false),
-('8e173d92-c346-4fb5-8ef2-490105e19263', 'Transfer Receipt', 'formsly premade Transfer Receipt form.', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, true, false, false);
+('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, false, false, false),
+('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, false, false, false),
+('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, false, false, false),
+('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, false, false, false),
+('8e173d92-c346-4fb5-8ef2-490105e19263', 'Transfer Receipt', 'formsly premade Transfer Receipt form.', 'REQUEST', '05078711-7d04-4364-b7d8-2962575ff43f', true, false, false, false);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 -- Requisition

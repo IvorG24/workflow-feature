@@ -1,6 +1,7 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { FormTableRow } from "@/utils/types";
 import {
   Anchor,
@@ -81,23 +82,32 @@ const FormList = () => {
         data={formList?.map((form) => form.form_name) as string[]}
       />
       <Navbar.Section grow component={ScrollArea} mx="-xs" px="xs" mt="sm">
-        {formList.map((form) => {
-          const isGroupMember = Boolean(form.form_team_group?.length);
-
-          return !form.form_is_hidden &&
-            (form.form_is_for_every_member || isGroupMember) ? (
-            <NavLink
-              key={form.form_id}
-              label={form.form_name}
-              rightSection={<IconPlus size={14} />}
-              onClick={() =>
-                router.push(
-                  `/team-${lowerCase(activeApp)}s/forms/${form.form_id}/create`
-                )
-              }
-            />
-          ) : null;
-        })}
+        {formList
+          .filter(
+            (form) =>
+              !(
+                form.form_is_formsly_form &&
+                UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)
+              )
+          )
+          .map((form) => {
+            const isGroupMember = Boolean(form.form_team_group?.length);
+            return !form.form_is_hidden &&
+              (form.form_is_for_every_member || isGroupMember) ? (
+              <NavLink
+                key={form.form_id}
+                label={form.form_name}
+                rightSection={<IconPlus size={14} />}
+                onClick={() =>
+                  router.push(
+                    `/team-${lowerCase(activeApp)}s/forms/${
+                      form.form_id
+                    }/create`
+                  )
+                }
+              />
+            ) : null;
+          })}
       </Navbar.Section>
     </>
   );
