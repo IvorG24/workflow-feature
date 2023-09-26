@@ -329,12 +329,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
           const replace = items[item].item.match(regex);
           if (!replace) return;
-          sourceProjectList[itemName] = items[item].sourceProject;
 
           const value = `${itemName.replace(
             replace[0],
             `(${quantity} ${unit}) (${sourceProject})`
           )} `;
+          sourceProjectList[value] = items[item].sourceProject;
 
           return {
             option_description: null,
@@ -344,6 +344,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             option_value: value,
           };
         });
+
         const itemOptions = newOptionList.filter(
           (item) => item?.option_value
         ) as unknown as OptionTableRow[];
