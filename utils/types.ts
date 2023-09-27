@@ -302,6 +302,7 @@ export type RequestWithResponseType = RequestTableRow & {
         user_avatar: string;
       };
     };
+    comment_attachment: CommentAttachmentWithPublicUrl;
   }[];
 } & {
   request_project: {
@@ -846,3 +847,12 @@ export type RequestListOnLoad = {
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
 };
+
+export type CommentAttachmentWithPublicUrl = (AttachmentTableRow & {
+  attachment_public_url: string;
+})[];
+
+export type RequestCommentType =
+  RequestWithResponseType["request_comment"][0] & {
+    comment_attachment: CommentAttachmentWithPublicUrl;
+  };

@@ -4425,6 +4425,7 @@ RETURNS JSON as $$
         INNER JOIN user_table ON user_id = team_member_user_id
         WHERE
           comment_request_id = '${request_id}'
+        ORDER BY comment_date_created DESC
       `
     );
 

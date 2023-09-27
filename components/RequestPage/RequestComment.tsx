@@ -1,14 +1,20 @@
 import { deleteComment } from "@/backend/api/delete";
+import { getCommentAttachment } from "@/backend/api/get";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { getAvatarColor } from "@/utils/styling";
-import { RequestWithResponseType } from "@/utils/types";
+import {
+  CommentAttachmentWithPublicUrl,
+  RequestCommentType,
+} from "@/utils/types";
 import {
   ActionIcon,
   Alert,
   Avatar,
   Box,
+  Card,
   Flex,
+  Group,
   Menu,
   Spoiler,
   Stack,
@@ -21,22 +27,23 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconCheck,
   IconDots,
+  IconDownload,
   IconEdit,
   IconFolderCancel,
   IconX,
 } from "@tabler/icons-react";
 import { capitalize } from "lodash";
 import moment from "moment";
+import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
-type Comment = RequestWithResponseType["request_comment"][0];
-
 type RequestCommentProps = {
-  comment: Comment;
-  setCommentList: Dispatch<SetStateAction<Comment[]>>;
+  comment: RequestCommentType;
+  setCommentList: Dispatch<SetStateAction<RequestCommentType[]>>;
 };
+
 const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const supabaseClient = useSupabaseClient();
 
@@ -48,6 +55,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const [isCommentEdited, setIsCommentEdited] = useState(
     comment.comment_is_edited
   );
+  const [commentAttachmentUrlList, setCommentAttachmentUrlList] =
+    useState<CommentAttachmentWithPublicUrl>(comment.comment_attachment);
   const commenter = comment.comment_team_member.team_member_user;
 
   const isUserOwner =
@@ -76,6 +85,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       setIsEditingComment(false);
     }
   };
+
   const handleDeleteComment = async () => {
     try {
       await deleteComment(supabaseClient, {
@@ -151,6 +161,17 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     setIsCommentEdited(comment.comment_is_edited);
   }, [comment.comment_content, comment.comment_is_edited]);
 
+  useEffect(() => {
+    const fetchCommentAttachmentList = async () => {
+      const commentAttachmentUrlList = await getCommentAttachment(
+        supabaseClient,
+        { commentId: comment.comment_id }
+      );
+      setCommentAttachmentUrlList(commentAttachmentUrlList);
+    };
+    fetchCommentAttachmentList();
+  }, [comment.comment_id, supabaseClient]);
+
   return (
     <Box pos="relative" mt="sm">
       {isEditingComment ? (
@@ -165,6 +186,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
               loading: isSubmittingForm,
               children: "Save",
             }}
+            isEditing={isEditingComment}
           />
         </FormProvider>
       ) : (
@@ -209,62 +231,109 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
             </Flex>
           ) : (
             <>
-              <Flex mt="lg">
-                <Avatar
-                  size={40}
-                  src={commenter.user_avatar}
-                  color={getAvatarColor(
-                    Number(`${commenter.user_id.charCodeAt(0)}`)
-                  )}
-                  radius="xl"
-                >
-                  {capitalize(commenter.user_first_name[0])}
-                  {capitalize(commenter.user_last_name[0])}
-                </Avatar>
-                <Stack spacing={0} ml="md">
-                  <Text size={14}>
-                    {`${commenter.user_first_name} ${commenter.user_last_name}`}
+              <Card p={0} pb="sm">
+                <Flex mt="lg">
+                  <Avatar
+                    size={40}
+                    src={commenter.user_avatar}
+                    color={getAvatarColor(
+                      Number(`${commenter.user_id.charCodeAt(0)}`)
+                    )}
+                    radius="xl"
+                  >
+                    {capitalize(commenter.user_first_name[0])}
+                    {capitalize(commenter.user_last_name[0])}
+                  </Avatar>
+                  <Stack spacing={0} ml="md">
+                    <Text size={14}>
+                      {`${commenter.user_first_name} ${commenter.user_last_name}`}
+                    </Text>
+                    <Text color="dimmed" size={12}>
+                      {commenter.user_username}
+                    </Text>
+                  </Stack>
+                  <Text color="dimmed" size={12} ml="xs">
+                    ({moment(comment.comment_date_created).fromNow()})
                   </Text>
-                  <Text color="dimmed" size={12}>
-                    {commenter.user_username}
-                  </Text>
-                </Stack>
-                <Text color="dimmed" size={12} ml="xs">
-                  ({moment(comment.comment_date_created).fromNow()})
-                </Text>
-                {isUserOwner && (
-                  <Menu shadow="md" width={200} position="bottom-end">
-                    <Menu.Target>
-                      <ActionIcon ml="auto">
-                        <IconDots />
-                      </ActionIcon>
-                    </Menu.Target>
+                  {isUserOwner && (
+                    <Menu shadow="md" width={200} position="bottom-end">
+                      <Menu.Target>
+                        <ActionIcon ml="auto">
+                          <IconDots />
+                        </ActionIcon>
+                      </Menu.Target>
 
-                    <Menu.Dropdown>
-                      <Menu.Item
-                        icon={<IconEdit size={14} />}
-                        onClick={() => setIsEditingComment(true)}
-                      >
-                        Edit
-                      </Menu.Item>
-                      <Menu.Item
-                        icon={<IconX size={14} />}
-                        onClick={openPromptDeleteModal}
-                      >
-                        Delete
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                )}
-              </Flex>
-              <Spoiler maxHeight={120} showLabel="Show more" hideLabel="Hide">
-                <Text size={14}> {commentContent}</Text>
-                <Text color="dimmed" size={12}>
-                  {comment.comment_last_updated || isCommentEdited
-                    ? "(edited)"
-                    : ""}
-                </Text>
-              </Spoiler>
+                      <Menu.Dropdown>
+                        <Menu.Item
+                          icon={<IconEdit size={14} />}
+                          onClick={() => setIsEditingComment(true)}
+                        >
+                          Edit
+                        </Menu.Item>
+                        <Menu.Item
+                          icon={<IconX size={14} />}
+                          onClick={openPromptDeleteModal}
+                        >
+                          Delete
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
+                  )}
+                </Flex>
+                <Spoiler
+                  mt="md"
+                  maxHeight={120}
+                  showLabel="Show more"
+                  hideLabel="Hide"
+                >
+                  <Text size={14}>{commentContent}</Text>
+                  <Text color="dimmed" size={12}>
+                    {comment.comment_last_updated || isCommentEdited
+                      ? "(edited)"
+                      : ""}
+                  </Text>
+                </Spoiler>
+
+                {/* comment attachment */}
+                {commentAttachmentUrlList &&
+                  commentAttachmentUrlList.length > 0 && (
+                    <Stack mt="md" spacing="xs">
+                      {commentAttachmentUrlList.map((attachment) => (
+                        <Link
+                          key={attachment.attachment_id}
+                          href={attachment.attachment_public_url}
+                          target="__blank"
+                          style={{ textDecoration: "none" }}
+                        >
+                          <Card p="xs" withBorder>
+                            <Group position="apart">
+                              <Flex sx={{ flex: 1 }} align="center" gap="sm">
+                                <Avatar
+                                  size="sm"
+                                  color={
+                                    attachment.attachment_name.includes(".pdf")
+                                      ? "cyan"
+                                      : "red"
+                                  }
+                                >
+                                  {attachment.attachment_name.includes(".pdf")
+                                    ? "PDF"
+                                    : "IMG"}
+                                </Avatar>
+                                <Text size="xs">
+                                  {attachment.attachment_name}
+                                </Text>
+                              </Flex>
+                              <ActionIcon size="sm" color="green">
+                                <IconDownload />
+                              </ActionIcon>
+                            </Group>
+                          </Card>
+                        </Link>
+                      ))}
+                    </Stack>
+                  )}
+              </Card>
             </>
           )}
         </Stack>
