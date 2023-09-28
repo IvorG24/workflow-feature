@@ -2,7 +2,7 @@ import { deleteComment } from "@/backend/api/delete";
 import { getCommentAttachment } from "@/backend/api/get";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { getAvatarColor } from "@/utils/styling";
+import { getAvatarColor, shortenFileName } from "@/utils/styling";
 import {
   CommentAttachmentWithPublicUrl,
   RequestCommentType,
@@ -66,6 +66,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const editCommentFormMethods = useForm<CommentFormProps>({
     defaultValues: { comment: comment.comment_content },
   });
+
   const handleEditComment = async (data: CommentFormProps) => {
     try {
       setIsSubmittingForm(true);
@@ -321,7 +322,10 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                                     : "IMG"}
                                 </Avatar>
                                 <Text size="xs">
-                                  {attachment.attachment_name}
+                                  {shortenFileName(
+                                    attachment.attachment_name,
+                                    60
+                                  )}
                                 </Text>
                               </Flex>
                               <ActionIcon size="sm" color="green">

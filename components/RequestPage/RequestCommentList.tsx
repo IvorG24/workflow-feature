@@ -10,7 +10,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { uuid } from "uuidv4";
+import { v4 as uuidv4 } from "uuid";
 import RequestComment from "./RequestComment";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
@@ -45,7 +45,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
 
     try {
       setIsLoading(true);
-      const newCommentId = uuid();
+      const newCommentId = uuidv4();
       // upload attachments
       if (commentAttachment.length > 0) {
         for (const attachment of commentAttachment) {

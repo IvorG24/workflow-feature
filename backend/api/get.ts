@@ -3329,7 +3329,6 @@ export const getCommentAttachment = async (
 
   if (data) {
     const attachmentUrl = await getAttachmentUrls(data);
-
     return attachmentUrl;
   } else {
     return [];

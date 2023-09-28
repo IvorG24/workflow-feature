@@ -31,7 +31,6 @@ export const getStatusToColor = (status: string) => {
       return "red";
     case "canceled":
       return "gray";
-
   }
 };
 export const mobileNumberFormatter = (value: string | undefined) =>
@@ -50,4 +49,24 @@ export const getStatusToColorForCharts = (status: string) => {
     case "canceled":
       return "#868E96";
   }
+};
+
+export const shortenFileName = (fileName: string, maxLength: number) => {
+  if (fileName.length <= maxLength) {
+    return fileName;
+  }
+
+  const extension = fileName.split(".").pop();
+  const fileNameWithoutExtension = fileName.substring(
+    0,
+    fileName.length - Number(extension?.length || 0) - 1
+  );
+
+  const maxCharsForFileName = maxLength - Number(extension?.length || 0) - 2; // Account for the ".." and extension
+  const shortenedFileName = fileNameWithoutExtension.substring(
+    0,
+    maxCharsForFileName
+  );
+
+  return shortenedFileName + ".." + extension;
 };

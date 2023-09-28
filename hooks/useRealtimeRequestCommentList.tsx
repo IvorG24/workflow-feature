@@ -32,7 +32,7 @@ const useRealtimeRequestCommentList = (
           if (payload.eventType === "INSERT") {
             const teamMemberId = payload.new.comment_team_member_id;
             const comment = payload.new;
-            console.log("newcomment");
+
             const isUserExisting = commentList.find(
               (comment) => comment.comment_team_member_id === teamMemberId
             );
