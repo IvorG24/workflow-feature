@@ -110,7 +110,7 @@ const RequestCommentForm = ({
                   color="red"
                   onClick={() => handleRemoveAttachment(attachment.name)}
                 >
-                  <IconX />
+                  <IconX size={16} />
                 </ActionIcon>
               </Flex>
             </Card>
@@ -160,7 +160,7 @@ const RequestCommentForm = ({
         {!isEditing && (
           <FileButton
             onChange={handleFileChange}
-            accept="image/png, image/gif, image/jpeg, image/svg+xml, image/webp, image/avif, application/pdf"
+            // accept="image/png, image/gif, image/jpeg, image/svg+xml, image/webp, image/avif, application/pdf"
             multiple
           >
             {(props) => (

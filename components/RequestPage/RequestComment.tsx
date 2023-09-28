@@ -2,7 +2,12 @@ import { deleteComment } from "@/backend/api/delete";
 import { getCommentAttachment } from "@/backend/api/get";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { getAvatarColor, shortenFileName } from "@/utils/styling";
+import {
+  getAvatarColor,
+  getFileType,
+  getFileTypeColor,
+  shortenFileName,
+} from "@/utils/styling";
 import {
   CommentAttachmentWithPublicUrl,
   RequestCommentType,
@@ -232,7 +237,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
             </Flex>
           ) : (
             <>
-              <Card p={0} pb="sm">
+              <Card p={0} pb="sm" sx={{ cursor: "pointer" }}>
                 <Flex mt="lg">
                   <Avatar
                     size={40}
@@ -300,40 +305,58 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                   commentAttachmentUrlList.length > 0 && (
                     <Stack mt="md" spacing="xs">
                       {commentAttachmentUrlList.map((attachment) => (
-                        <Link
-                          key={attachment.attachment_id}
-                          href={attachment.attachment_public_url}
-                          target="__blank"
-                          style={{ textDecoration: "none" }}
-                        >
-                          <Card p="xs" withBorder>
-                            <Group position="apart">
-                              <Flex sx={{ flex: 1 }} align="center" gap="sm">
-                                <Avatar
-                                  size="sm"
-                                  color={
-                                    attachment.attachment_name.includes(".pdf")
-                                      ? "cyan"
-                                      : "red"
-                                  }
-                                >
-                                  {attachment.attachment_name.includes(".pdf")
-                                    ? "PDF"
-                                    : "IMG"}
-                                </Avatar>
-                                <Text size="xs">
-                                  {shortenFileName(
-                                    attachment.attachment_name,
-                                    60
-                                  )}
-                                </Text>
-                              </Flex>
-                              <ActionIcon size="sm" color="green">
-                                <IconDownload />
+                        <Card p="xs" key={attachment.attachment_id} withBorder>
+                          <Group position="apart">
+                            <Flex
+                              sx={{ flex: 1 }}
+                              align="center"
+                              gap="sm"
+                              onClick={() =>
+                                window.open(
+                                  attachment.attachment_public_url,
+                                  "_blank"
+                                )
+                              }
+                            >
+                              <Avatar
+                                size="sm"
+                                color={getFileTypeColor(
+                                  attachment.attachment_name
+                                )}
+                              >
+                                {getFileType(attachment.attachment_name)}
+                              </Avatar>
+                              <Text c="dark" size="xs">
+                                {shortenFileName(
+                                  attachment.attachment_name,
+                                  60
+                                )}
+                              </Text>
+                            </Flex>
+                            <Link
+                              href={`${
+                                attachment.attachment_public_url
+                              }?download=${encodeURIComponent(
+                                attachment.attachment_name
+                              )}`}
+                            >
+                              <ActionIcon
+                                size="sm"
+                                color="green"
+                                onClick={() =>
+                                  notifications.show({
+                                    title: "File downloaded.",
+                                    message:
+                                      "Please check your Downloads folder.",
+                                    color: "green",
+                                  })
+                                }
+                              >
+                                <IconDownload size={16} />
                               </ActionIcon>
-                            </Group>
-                          </Card>
-                        </Link>
+                            </Link>
+                          </Group>
+                        </Card>
                       ))}
                     </Stack>
                   )}

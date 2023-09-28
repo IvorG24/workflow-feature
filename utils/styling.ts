@@ -1,3 +1,10 @@
+import {
+  documentExtensions,
+  imageExtensions,
+  mediaExtensions,
+  pdfExtensions,
+} from "./constant";
+
 export const defaultMantineColorList = [
   "dark",
   "gray",
@@ -69,4 +76,36 @@ export const shortenFileName = (fileName: string, maxLength: number) => {
   );
 
   return shortenedFileName + ".." + extension;
+};
+
+export const getFileType = (filename: string) => {
+  const extension = filename.toLowerCase().substring(filename.lastIndexOf("."));
+
+  if (imageExtensions.includes(extension)) {
+    return "IMG";
+  } else if (pdfExtensions.includes(extension)) {
+    return "PDF";
+  } else if (documentExtensions.includes(extension)) {
+    return "DOC";
+  } else if (mediaExtensions.includes(extension)) {
+    return "MED"; // All media files are categorized as 'MED'
+  } else {
+    return "UNKNOWN";
+  }
+};
+
+export const getFileTypeColor = (filename: string) => {
+  const extension = filename.toLowerCase().substring(filename.lastIndexOf("."));
+
+  if (imageExtensions.includes(extension)) {
+    return "red";
+  } else if (pdfExtensions.includes(extension)) {
+    return "cyan";
+  } else if (documentExtensions.includes(extension)) {
+    return "grey";
+  } else if (mediaExtensions.includes(extension)) {
+    return "yellow"; // All media files are categorized as 'MED'
+  } else {
+    return "dark";
+  }
 };
