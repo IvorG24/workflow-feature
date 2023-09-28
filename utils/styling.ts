@@ -88,9 +88,9 @@ export const getFileType = (filename: string) => {
   } else if (documentExtensions.includes(extension)) {
     return "DOC";
   } else if (mediaExtensions.includes(extension)) {
-    return "MED"; // All media files are categorized as 'MED'
+    return "MED";
   } else {
-    return "UNKNOWN";
+    return "N/A";
   }
 };
 

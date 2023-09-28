@@ -1108,6 +1108,7 @@ export const documentExtensions = [
   ".rtf",
   ".odt",
   ".csv",
+  ".xlsx",
 ];
 
 // Common audio and video file extensions
