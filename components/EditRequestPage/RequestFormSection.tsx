@@ -1,3 +1,4 @@
+import { OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Group,
@@ -28,6 +29,7 @@ type RequestFormSectionProps = {
       prevValue: string | null
     ) => void;
     supplierSearch?: (value: string) => void;
+    supplierOption: OptionTableRow[];
     isSearching?: boolean;
   };
   rirFormMethods?: {

@@ -52,6 +52,7 @@ type RequestFormFieldsProps = {
       prevValue: string | null
     ) => void;
     supplierSearch?: (value: string) => void;
+    supplierOption: OptionTableRow[];
     isSearching?: boolean;
   };
   rirFormMethods?: {
@@ -266,7 +267,11 @@ const RequestFormFields = ({
         );
 
       case "DROPDOWN":
-        const dropdownOption = field.options.map((option) => {
+        const fieldOption =
+          field.field_name === "Supplier"
+            ? quotationFormMethods?.supplierOption || field.options
+            : field.options;
+        const dropdownOption = fieldOption.map((option) => {
           if (quotationFormMethods) {
             const label = option.option_value;
             const matches = regExp.exec(label);
@@ -303,7 +308,6 @@ const RequestFormFields = ({
                       `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`
                     );
                     onChange(value);
-
                     if (field.field_name === "General Name") {
                       requisitionFormMethods?.onGeneralNameChange(
                         sectionIndex,

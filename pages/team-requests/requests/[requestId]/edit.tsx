@@ -4,9 +4,11 @@ import {
   getItemResponseForQuotation,
   getItemResponseForRO,
   getProjectSignerWithTeamMember,
+  getSupplier,
   getUserActiveTeamId,
   getUserTeamMemberData,
 } from "@/backend/api/get";
+import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
@@ -521,6 +523,118 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
+      // Quotation
+      if (form.form_name === "Quotation") {
+        const requisitionId =
+          form.form_section[0].section_field.slice(-1)[0].field_response[0]
+            .request_response;
+
+        const items = await getItemResponseForQuotation(supabaseClient, {
+          requestId: parseJSONIfValid(requisitionId),
+        });
+
+        const newOptionList = Object.keys(items).map((item, index) => {
+          const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        ) as unknown as OptionTableRow[];
+
+        const usedItem = parsedRequest.request_form.form_section
+          .slice(3)
+          .map((section) =>
+            trim(
+              parseJSONIfValid(
+                section.section_field[0].field_response[0].request_response
+              )
+            )
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(trim(option.option_value))
+        );
+
+        const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
+          parsedRequest.request_form.form_section.slice(3).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      parseJSONIfValid(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+
+        const supplierResponse =
+          parsedRequest.request_form.form_section[1].section_field[0]
+            .field_response[0].request_response;
+
+        const supplierList = await getSupplier(supabaseClient, {
+          supplier: parseJSONIfValid(supplierResponse),
+          teamId: `${teamMember?.team_member_team_id}`,
+          fieldId: form.form_section[1].section_field[0].field_id,
+        });
+
+        const formattedRequest: RequestWithResponseType = {
+          ...parsedRequest,
+          request_form: {
+            ...parsedRequest.request_form,
+            form_section: [
+              parsedRequest.request_form.form_section[0],
+              {
+                ...parsedRequest.request_form.form_section[1],
+                section_field: [
+                  {
+                    ...parsedRequest.request_form.form_section[1]
+                      .section_field[0],
+                    field_option: supplierList,
+                  },
+                  ...parsedRequest.request_form.form_section[1].section_field.slice(
+                    1
+                  ),
+                ],
+              },
+              parsedRequest.request_form.form_section[2],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSigner.length !== 0
+              ? projectSignerList
+              : parsedRequest.request_signer,
+        };
+
+        return {
+          props: {
+            request: formattedRequest,
+            itemOptions: unusedItemOption,
+            originalItemOptions: itemOptions,
+            requestProjectId: request.request_project_id,
+            requestingProject: request.request_project.team_project_name,
+          },
+        };
+      }
+
       return {
         props: {
           request: parsedRequest,
@@ -541,7 +655,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
-  originalItemOptions: OptionTableRow[];
+  originalItemOptions?: OptionTableRow[];
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
@@ -558,7 +672,6 @@ const Page = ({
   sourceProjectList = {},
 }: Props) => {
   const { request_form: form } = request;
-  console.log(request);
 
   const formslyForm = () => {
     switch (form.form_name) {
@@ -597,6 +710,16 @@ const Page = ({
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}
             sourceProjectList={sourceProjectList}
+            requestProjectId={requestProjectId}
+            requestingProject={requestingProject}
+          />
+        );
+      case "Quotation":
+        return (
+          <EditQuotationRequestPage
+            request={request}
+            itemOptions={itemOptions}
+            originalItemOptions={originalItemOptions}
             requestProjectId={requestProjectId}
             requestingProject={requestingProject}
           />
