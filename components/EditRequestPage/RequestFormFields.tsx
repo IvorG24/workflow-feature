@@ -78,12 +78,14 @@ const RequestFormFields = ({
     control,
     formState: { errors },
     getValues,
+    setValue,
   } = useFormContext<RequestFormValues>();
 
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
+  const [prevFileLink, setPrevFileLink] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -128,8 +130,34 @@ const RequestFormFields = ({
       }
     };
 
+    const fetchFile = async () => {
+      try {
+        const fileLink = parseJSONIfValid(
+          getValues(
+            `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`
+          )
+        );
+        setPrevFileLink(fileLink);
+        if (!fileLink) return;
+
+        const response = await fetch(fileLink);
+        const blob = await response.blob();
+        const file = new File([blob], fileLink, { type: blob.type });
+        setValue(
+          `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`,
+          file as never
+        );
+      } catch (error) {
+        console.error("Error downloading file:", error);
+      }
+    };
+
     if (field.field_type === "LINK") {
       fetchLinkToDisplay();
+    }
+
+    if (field.field_type === "FILE") {
+      fetchFile();
     }
   }, []);
 
@@ -449,6 +477,10 @@ const RequestFormFields = ({
                 <FileInput
                   {...inputProps}
                   icon={<IconFile size={16} />}
+                  defaultValue={field.value}
+                  value={
+                    typeof field.value === "string" ? undefined : field.value
+                  }
                   clearable
                   multiple={false}
                   onChange={field.onChange}
@@ -458,7 +490,7 @@ const RequestFormFields = ({
                       ? "application/pdf"
                       : undefined
                   }
-                  sx={{ width: "100%" }}
+                  sx={{ width: prevFileLink ? "96%" : "100%" }}
                 />
                 {parseJSONIfValid(field.value) ? (
                   <Tooltip
@@ -470,9 +502,7 @@ const RequestFormFields = ({
                       p={4}
                       variant="light"
                       color="blue"
-                      onClick={() =>
-                        window.open(parseJSONIfValid(field.value), "_blank")
-                      }
+                      onClick={() => window.open(`${prevFileLink}`, "_blank")}
                     >
                       <IconExternalLink />
                     </ActionIcon>

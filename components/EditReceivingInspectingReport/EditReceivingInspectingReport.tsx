@@ -99,7 +99,7 @@ const EditReceivingInspectingReportPage = ({
     getValues,
     reset,
 
-    formState: { isDirty, errors },
+    formState: { isDirty },
   } = requestFormMethods;
   const {
     fields: formSections,
@@ -111,8 +111,7 @@ const EditReceivingInspectingReportPage = ({
     name: "sections",
   });
 
-  console.log(errors);
-  const handleCreateRequest = async (data: RequestFormValues) => {
+  const handleEditRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -177,7 +176,7 @@ const EditReceivingInspectingReportPage = ({
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
-          title: "You cannot create this request.",
+          title: "You cannot edit this request.",
           centered: true,
           children: (
             <Box maw={390}>
@@ -210,7 +209,7 @@ const EditReceivingInspectingReportPage = ({
         });
 
         notifications.show({
-          message: "Request created.",
+          message: "Request edited.",
           color: "green",
         });
         // router.push(`/team-requests/requests/${request.request_id}`);
@@ -439,7 +438,7 @@ const EditReceivingInspectingReportPage = ({
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
+        <form onSubmit={handleSubmit(handleEditRequest)}>
           <Stack spacing="xl">
             <RequestFormDetails
               formDetails={formDetails}

@@ -111,14 +111,14 @@ const EditSourcedItemRequestPage = ({
     name: "sections",
   });
 
-  const handleCreateRequest = async (data: RequestFormValues) => {
+  const handleEditRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
       setIsLoading(true);
 
       const requisitionID = JSON.stringify(
-        data.sections[0].section_field[0].field_response
+        data.sections[0].section_field[0].field_response[0].request_response
       );
 
       const tempRequestId = uuidv4();
@@ -131,15 +131,20 @@ const EditSourcedItemRequestPage = ({
 
       data.sections.slice(1).forEach((section) => {
         const itemIndex = itemNameList.indexOf(
-          `${section.section_field[0].field_response}`
+          `${section.section_field[0].field_response[0].request_response}`
         );
         if (itemIndex === -1) {
           mergedSection.push(section);
-          itemNameList.push(`${section.section_field[0].field_response}`);
+          itemNameList.push(
+            `${section.section_field[0].field_response[0].request_response}`
+          );
         } else {
           const sum =
-            Number(mergedSection[itemIndex].section_field[1].field_response) +
-            Number(section.section_field[1].field_response);
+            Number(
+              mergedSection[itemIndex].section_field[1].field_response[0]
+                .request_response
+            ) +
+            Number(section.section_field[1].field_response[0].request_response);
           mergedSection[
             itemIndex
           ].section_field[1].field_response[0].request_response = `${sum}`;
@@ -151,7 +156,9 @@ const EditSourcedItemRequestPage = ({
           if (field.field_name === "Item") {
             itemFieldList.push({
               request_response_id: uuidv4(),
-              request_response: JSON.stringify(field.field_response),
+              request_response: JSON.stringify(
+                field.field_response[0].request_response
+              ),
               request_response_duplicatable_section_id: null,
               request_response_field_id: field.field_id,
               request_response_request_id: tempRequestId,
@@ -159,7 +166,9 @@ const EditSourcedItemRequestPage = ({
           } else if (field.field_name === "Quantity") {
             quantityFieldList.push({
               request_response_id: uuidv4(),
-              request_response: JSON.stringify(field.field_response),
+              request_response: JSON.stringify(
+                field.field_response[0].request_response
+              ),
               request_response_duplicatable_section_id: null,
               request_response_field_id: field.field_id,
               request_response_request_id: tempRequestId,
@@ -176,7 +185,7 @@ const EditSourcedItemRequestPage = ({
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
-          title: "You cannot create this request.",
+          title: "You cannot edit this request.",
           centered: true,
           children: (
             <Box maw={390}>
@@ -203,19 +212,23 @@ const EditSourcedItemRequestPage = ({
 
         sectionData.slice(1).forEach((section) => {
           const inputIndex = itemNameListInput.indexOf(
-            `${section.section_field[0].field_response}+${section.section_field[2].field_response}`
+            `${section.section_field[0].field_response[0].request_response}+${section.section_field[2].field_response[0].request_response}`
           );
 
           if (inputIndex === -1) {
             mergedSectionInput.push(section);
             itemNameListInput.push(
-              `${section.section_field[0].field_response}+${section.section_field[2].field_response}`
+              `${section.section_field[0].field_response[0].request_response}+${section.section_field[2].field_response[0].request_response}`
             );
           } else {
             const sum =
               Number(
-                mergedSectionInput[inputIndex].section_field[1].field_response
-              ) + Number(section.section_field[1].field_response);
+                mergedSectionInput[inputIndex].section_field[1]
+                  .field_response[0].request_response
+              ) +
+              Number(
+                section.section_field[1].field_response[0].request_response
+              );
             mergedSectionInput[
               inputIndex
             ].section_field[1].field_response[0].request_response = `${sum}`;
@@ -237,7 +250,7 @@ const EditSourcedItemRequestPage = ({
         });
 
         notifications.show({
-          message: "Request created.",
+          message: "Request edited.",
           color: "green",
         });
         // router.push(`/team-requests/requests/${request.request_id}`);
@@ -363,7 +376,7 @@ const EditSourcedItemRequestPage = ({
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
+        <form onSubmit={handleSubmit(handleEditRequest)}>
           <Stack spacing="xl">
             <RequestFormDetails
               formDetails={formDetails}

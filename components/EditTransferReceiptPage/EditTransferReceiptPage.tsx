@@ -25,7 +25,6 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -56,8 +55,7 @@ const EditTransferReceiptPage = ({
   requestProjectId,
   requestingProject,
 }: Props) => {
-  const router = useRouter();
-  const formId = router.query.formId as string;
+  const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
 
@@ -113,7 +111,7 @@ const EditTransferReceiptPage = ({
     name: "sections",
   });
 
-  const handleCreateRequest = async (data: RequestFormValues) => {
+  const handleEditRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -181,7 +179,7 @@ const EditTransferReceiptPage = ({
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
-          title: "You cannot create this request.",
+          title: "You cannot edit this request.",
           centered: true,
           children: (
             <Box maw={390}>
@@ -214,7 +212,7 @@ const EditTransferReceiptPage = ({
         });
 
         notifications.show({
-          message: "Request created.",
+          message: "Request edited.",
           color: "green",
         });
         // router.push(`/team-requests/requests/${request.request_id}`);
@@ -448,7 +446,7 @@ const EditTransferReceiptPage = ({
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
+        <form onSubmit={handleSubmit(handleEditRequest)}>
           <Stack spacing="xl">
             <RequestFormDetails
               formDetails={formDetails}

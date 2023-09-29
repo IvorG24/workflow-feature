@@ -110,7 +110,7 @@ const EditReleaseOrderPage = ({
     name: "sections",
   });
 
-  const handleCreateRequest = async (data: RequestFormValues) => {
+  const handleEditRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -135,7 +135,7 @@ const EditReleaseOrderPage = ({
       }
 
       const sourcedItemId = JSON.stringify(
-        data.sections[0].section_field[1].field_response
+        data.sections[0].section_field[1].field_response[0].request_response
       );
       const itemSection = data.sections[1];
       const tempRequestId = uuidv4();
@@ -148,7 +148,9 @@ const EditReleaseOrderPage = ({
           if (field.field_name === "Item") {
             itemFieldList.push({
               request_response_id: uuidv4(),
-              request_response: JSON.stringify(field.field_response),
+              request_response: JSON.stringify(
+                field.field_response[0].request_response
+              ),
               request_response_duplicatable_section_id: null,
               request_response_field_id: field.field_id,
               request_response_request_id: tempRequestId,
@@ -156,7 +158,9 @@ const EditReleaseOrderPage = ({
           } else if (field.field_name === "Quantity") {
             quantityFieldList.push({
               request_response_id: uuidv4(),
-              request_response: JSON.stringify(field.field_response),
+              request_response: JSON.stringify(
+                field.field_response[0].request_response
+              ),
               request_response_duplicatable_section_id: null,
               request_response_field_id: field.field_id,
               request_response_request_id: tempRequestId,
@@ -175,7 +179,7 @@ const EditReleaseOrderPage = ({
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
-          title: "You cannot create this request.",
+          title: "You cannot edit this request.",
           centered: true,
           children: (
             <Box maw={390}>
@@ -208,7 +212,7 @@ const EditReleaseOrderPage = ({
         });
 
         notifications.show({
-          message: "Request created.",
+          message: "Request edited.",
           color: "green",
         });
         // router.push(`/team-requests/requests/${request.request_id}`);
@@ -443,7 +447,7 @@ const EditReleaseOrderPage = ({
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
+        <form onSubmit={handleSubmit(handleEditRequest)}>
           <Stack spacing="xl">
             <RequestFormDetails
               formDetails={formDetails}

@@ -25,7 +25,6 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -54,8 +53,7 @@ const EditQuotationRequestPage = ({
   requestProjectId,
   requestingProject,
 }: Props) => {
-  const router = useRouter();
-  const formId = router.query.formId as string;
+  const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
 
@@ -159,7 +157,7 @@ const EditQuotationRequestPage = ({
 
       if (warningItemList && warningItemList.length !== 0) {
         modals.open({
-          title: "You cannot create this request.",
+          title: "You cannot edit this request.",
           centered: true,
           children: (
             <Box maw={390}>
@@ -191,7 +189,7 @@ const EditQuotationRequestPage = ({
           projectId: requestProjectId,
         });
         notifications.show({
-          message: "Request created.",
+          message: "Request edited.",
           color: "green",
         });
         // router.push(`/team-requests/requests/${request.request_id}`);
@@ -453,11 +451,7 @@ const EditQuotationRequestPage = ({
                   Reset
                 </Button>
               )}
-              <Button
-                type="submit"
-                onClick={() => handleEditRequest()}
-                disabled={!isDirty}
-              >
+              <Button type="submit" disabled={!isDirty}>
                 Submit
               </Button>
             </Flex>
