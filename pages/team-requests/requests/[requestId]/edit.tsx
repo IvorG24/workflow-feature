@@ -1,4 +1,5 @@
 import {
+  checkIfRequestIsPending,
   getCSICodeOptionsForItems,
   getItem,
   getItemResponseForQuotation,
@@ -31,6 +32,11 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
+      const isPending = await checkIfRequestIsPending(supabaseClient, {
+        requestId: `${context.query.requestId}`,
+      });
+      if (!isPending) throw new Error("Request can't be edited");
+
       const { data: requestData, error: requestDataError } =
         await supabaseClient.rpc("get_request", {
           request_id: `${context.query.requestId}`,
