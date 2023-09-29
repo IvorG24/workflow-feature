@@ -52,7 +52,7 @@ type RequestFormFieldsProps = {
       prevValue: string | null
     ) => void;
     supplierSearch?: (value: string) => void;
-    supplierOption: OptionTableRow[];
+    supplierOption?: OptionTableRow[];
     isSearching?: boolean;
   };
   rirFormMethods?: {
@@ -486,9 +486,10 @@ const RequestFormFields = ({
                 fileSize: (value) => {
                   if (!value) return true;
                   const formattedValue = value as File;
-                  return formattedValue.size <= MAX_FILE_SIZE
-                    ? true
-                    : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
+                  return formattedValue.size !== undefined
+                    ? formattedValue.size <= MAX_FILE_SIZE ||
+                        `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`
+                    : true;
                 },
               },
             }}

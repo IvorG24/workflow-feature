@@ -2,6 +2,7 @@ import {
   getCSICodeOptionsForItems,
   getItem,
   getItemResponseForQuotation,
+  getItemResponseForRIR,
   getItemResponseForRO,
   getProjectSignerWithTeamMember,
   getSupplier,
@@ -9,6 +10,7 @@ import {
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
+import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
@@ -634,6 +636,106 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         };
       }
+      // Receiving Inspecting Report
+      if (form.form_name === "Receiving Inspecting Report") {
+        const quotationId =
+          form.form_section[0].section_field.slice(-1)[0].field_response[0]
+            .request_response;
+
+        const items = await getItemResponseForRIR(supabaseClient, {
+          requestId: parseJSONIfValid(quotationId),
+        });
+
+        const sourceProjectList: {
+          [key: string]: string;
+        } = {};
+
+        const regex = /\(([^()]+)\)/g;
+        const itemList = Object.keys(items);
+        const newOptionList = itemList.map((item, index) => {
+          const itemName = items[item].item;
+          const quantity = items[item].quantity;
+          const replace = items[item].item.match(regex);
+          if (!replace) return;
+          const value = `${itemName.replace(replace[0], `(${quantity})`)} `;
+
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: trim(value),
+          };
+        });
+
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        ) as unknown as OptionTableRow[];
+
+        const usedItem = parsedRequest.request_form.form_section
+          .slice(1)
+          .map((section) =>
+            trim(
+              parseJSONIfValid(
+                section.section_field[0].field_response[0].request_response
+              )
+            )
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(trim(option.option_value))
+        );
+        const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
+          parsedRequest.request_form.form_section.slice(2).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      parseJSONIfValid(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+
+        const formattedRequest: RequestWithResponseType = {
+          ...parsedRequest,
+          request_form: {
+            ...parsedRequest.request_form,
+            form_section: [
+              parsedRequest.request_form.form_section[0],
+              parsedRequest.request_form.form_section[1],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSigner.length !== 0
+              ? projectSignerList
+              : parsedRequest.request_signer,
+        };
+        console.log(formattedRequest);
+
+        return {
+          props: {
+            request: formattedRequest,
+            itemOptions: unusedItemOption,
+            originalItemOptions: itemOptions,
+            sourceProjectList,
+            requestProjectId: request.request_project_id,
+            requestingProject: request.request_project.team_project_name,
+          },
+        };
+      }
 
       return {
         props: {
@@ -717,6 +819,16 @@ const Page = ({
       case "Quotation":
         return (
           <EditQuotationRequestPage
+            request={request}
+            itemOptions={itemOptions}
+            originalItemOptions={originalItemOptions}
+            requestProjectId={requestProjectId}
+            requestingProject={requestingProject}
+          />
+        );
+      case "Receiving Inspecting Report":
+        return (
+          <EditReceivingInspectingReportPage
             request={request}
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}

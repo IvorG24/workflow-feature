@@ -29,7 +29,7 @@ type RequestFormSectionProps = {
       prevValue: string | null
     ) => void;
     supplierSearch?: (value: string) => void;
-    supplierOption: OptionTableRow[];
+    supplierOption?: OptionTableRow[];
     isSearching?: boolean;
   };
   rirFormMethods?: {
