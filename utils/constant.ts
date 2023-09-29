@@ -1086,3 +1086,37 @@ export const FORMSLY_FORM_ORDER = [
 
 export const JWT_SECRET_KEY =
   "6B03E2CAE99D0C9DEE49BAC2E6B0427E5BE90C34222E845A624904C1CA84D48A";
+
+// Common image file extensions
+export const imageExtensions = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".bmp",
+  ".svg",
+];
+
+// Common PDF file extensions
+export const pdfExtensions = [".pdf"];
+
+// Common document file extensions
+export const documentExtensions = [
+  ".doc",
+  ".docx",
+  ".txt",
+  ".rtf",
+  ".odt",
+  ".csv",
+  ".xlsx",
+];
+
+// Common audio and video file extensions
+export const mediaExtensions = [
+  ".mp4",
+  ".mp3",
+  ".wav",
+  ".ogg",
+  ".flac",
+  ".avi",
+];

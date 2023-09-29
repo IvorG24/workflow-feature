@@ -35,11 +35,17 @@ export const deleteComment = async (
   params: { commentId: string }
 ) => {
   const { commentId } = params;
-  const { error } = await supabaseClient
+  const { error: deleteCommentError } = await supabaseClient
     .from("comment_table")
     .update({ comment_is_disabled: true })
     .eq("comment_id", commentId);
-  if (error) throw error;
+  if (deleteCommentError) throw deleteCommentError;
+
+  const { error: deleteAttachmentError } = await supabaseClient
+    .from("attachment_table")
+    .update({ attachment_is_disabled: true })
+    .like("attachment_value", `%${commentId}%`);
+  if (deleteAttachmentError) throw deleteAttachmentError;
 };
 
 // Delete row

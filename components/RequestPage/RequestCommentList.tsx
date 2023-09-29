@@ -1,15 +1,18 @@
-import { createComment, createNotification } from "@/backend/api/post";
+import {
+  createAttachment,
+  createComment,
+  createNotification,
+} from "@/backend/api/post";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { RequestWithResponseType } from "@/utils/types";
+import { RequestCommentType } from "@/utils/types";
 import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import RequestComment from "./RequestComment";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
-
-export type RequestCommentType = RequestWithResponseType["request_comment"][0];
 
 type Props = {
   requestData: {
@@ -24,10 +27,10 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const userProfile = useUserProfile();
   const teamMember = useUserTeamMember();
   const supabaseClient = useSupabaseClient();
-
   const user = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [commentList, setCommentList] = useState(requestCommentList);
+  const [commentAttachment, setCommentAttachment] = useState<File[]>([]);
 
   useEffect(() => {
     setCommentList(requestCommentList);
@@ -42,24 +45,32 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
 
     try {
       setIsLoading(true);
-      const { data: newComment, error } = await createComment(supabaseClient, {
+      const newCommentId = uuidv4();
+      // upload attachments
+      if (commentAttachment.length > 0) {
+        for (const attachment of commentAttachment) {
+          await createAttachment(supabaseClient, {
+            file: attachment,
+            attachmentData: {
+              attachment_bucket: "COMMENT_ATTACHMENTS",
+              attachment_name: attachment.name,
+              attachment_value: `${newCommentId}-${attachment.name}`,
+            },
+          });
+        }
+        setCommentAttachment([]);
+      }
+      const { error } = await createComment(supabaseClient, {
         comment_request_id: requestData.requestId,
         comment_team_member_id: teamMember.team_member_id,
         comment_type: "REQUEST_COMMENT",
         comment_content: data.comment,
+        comment_id: newCommentId,
       });
+
       if (error) throw error;
 
       if (!error) {
-        const comment = {
-          ...newComment,
-          comment_team_member: {
-            team_member_user: {
-              ...userProfile,
-            },
-          },
-        };
-        setCommentList((prev) => [comment as RequestCommentType, ...prev]);
         if (requestData.requestOwnerId !== user?.user_id) {
           // create notification
           await createNotification(supabaseClient, {
@@ -107,6 +118,9 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
               loading: isLoading,
               children: "Comment",
             }}
+            isSubmittingForm={isLoading}
+            commentAttachment={commentAttachment}
+            setCommentAttachment={setCommentAttachment}
           />
         </FormProvider>
 

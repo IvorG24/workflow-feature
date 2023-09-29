@@ -17,6 +17,7 @@ import {
   ConnectedRequestIdList,
   FormStatusType,
   ReceiverStatusType,
+  RequestCommentType,
   RequestProjectSignerStatusType,
   RequestResponseTableRow,
   RequestWithResponseType,
@@ -102,7 +103,7 @@ const RequestPage = ({
 
   const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
     requestId: request.request_id,
-    initialCommentList: request.request_comment,
+    initialCommentList: request.request_comment as RequestCommentType[],
   });
 
   const isSourcedItemForm =
