@@ -125,7 +125,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
           <Title order={4} color="dimmed">
             Comments
           </Title>
-          {user && <RequestCommentAttachmentList commentList={commentList} />}
+          <RequestCommentAttachmentList commentList={commentList} />
         </Group>
 
         {user && (
