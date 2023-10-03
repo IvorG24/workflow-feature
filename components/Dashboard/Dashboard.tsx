@@ -1,5 +1,6 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import {
   Alert,
   Box,
@@ -70,10 +71,17 @@ const Dashboard = () => {
   //   setIsRequsitionForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
   // }, [isFormslyForm, selectedFormName]);
 
-  const formData = formList.map((form) => ({
-    value: form.form_id,
-    label: form.form_name,
-  }));
+  const formData = formList
+    .filter(
+      (form) =>
+        (form.form_is_formsly_form &&
+          !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)) ||
+        !form.form_is_formsly_form
+    )
+    .map((form) => ({
+      value: form.form_id,
+      label: form.form_name,
+    }));
   useEffect(() => {
     if (formData.length > 0) {
       setSelectedForm(formData[2].value);

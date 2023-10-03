@@ -116,7 +116,7 @@ const InviteForm = ({ changeStep, ownerData, team }: Props) => {
         });
         return response.data;
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
   };

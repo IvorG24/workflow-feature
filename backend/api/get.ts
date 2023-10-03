@@ -5,6 +5,7 @@ import { regExp } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
+  AttachmentTableRow,
   CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
   CanvassType,
@@ -3294,4 +3295,69 @@ export const getUserPendingInvitation = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getCommentAttachment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    commentId: string;
+  }
+) => {
+  const { commentId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("attachment_table")
+    .select("*")
+    .like("attachment_value", `%${commentId}%`)
+    .eq("attachment_is_disabled", false);
+
+  if (error) throw error;
+
+  const getAttachmentUrls = async (data: AttachmentTableRow[]) => {
+    const attachmentUrls = await Promise.all(
+      data.map(async (attachment) => {
+        const attachment_public_url = supabaseClient.storage
+          .from(attachment.attachment_bucket)
+          .getPublicUrl(`${attachment.attachment_value}`).data.publicUrl;
+
+        return { ...attachment, attachment_public_url };
+      })
+    );
+
+    return attachmentUrls;
+  };
+
+  if (data) {
+    const attachmentUrl = await getAttachmentUrls(data);
+    return attachmentUrl;
+  } else {
+    return [];
+  }
+};
+
+// Check if jira id is unique
+export const checkIfJiraIDIsUnique = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldId: string;
+    value: string;
+  }
+) => {
+  const { fieldId, value } = params;
+
+  const { count, error } = await supabaseClient
+    .from("request_response_table")
+    .select(
+      "*, request_response_request:request_response_request_id!inner(*)",
+      {
+        count: "exact",
+      }
+    )
+    .eq("request_response_request.request_status", "APPROVED")
+    .eq("request_response", `"${value}"`)
+    .eq("request_response_field_id", fieldId);
+
+  if (error) throw error;
+
+  return Boolean(count);
 };

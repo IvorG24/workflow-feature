@@ -58,7 +58,7 @@ const FormList = () => {
                 router.push(`/team-${lowerCase(activeApp)}s/forms`)
               }
             >
-              View All ({forms.length})
+              View All ({forms.length - UNHIDEABLE_FORMLY_FORMS.length})
             </Anchor>
           </Text>
           <Button
