@@ -4998,9 +4998,8 @@ DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_ta
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
 
 --- ATTACHMENT_TABLE
-CREATE POLICY "Allow CRUD for authenticated users only" ON "public"."attachment_table"
+CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
 AS PERMISSIVE FOR ALL
-TO authenticated
 USING (true);
 
 --- FIELD_TABLE
