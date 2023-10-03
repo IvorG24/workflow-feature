@@ -27,6 +27,13 @@ const TABS = ["overview"];
 //   "Receiving Inspecting Report",
 //   "Quotation",
 // ];
+const DAYSDATA = [
+  { value: "7", label: "Last 7 days" },
+  { value: "14", label: "Last 14 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 90 days" },
+  { value: "0", label: "Custom" },
+];
 
 const Dashboard = () => {
   const formList = useFormList();
@@ -36,6 +43,7 @@ const Dashboard = () => {
     router.query.formId !== undefined ? `${router.query.formId}` : null;
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
+  const [selectedDays, setSelectedDays] = useState<string | null>(null);
   const previousActiveTeamId = usePrevious(activeTeam.team_id);
   // const [isRequsitionForm, setIsRequsitionForm] = useState(false);
 
@@ -46,10 +54,10 @@ const Dashboard = () => {
     day: 1,
   }).toDate();
 
-  const [dateFilter, setDateFilter] = useState<[Date | null, Date | null]>([
-    firstDayOfCurrentYear,
-    currentDate,
-  ]);
+  const [startDateFilter, setStartDateFilter] = useState<Date | null>(
+    firstDayOfCurrentYear
+  );
+  const [endDateFilter, setEndDateFilter] = useState<Date | null>(currentDate);
 
   //check if selected form is formsly form
   // const isFormslyForm =
@@ -62,12 +70,32 @@ const Dashboard = () => {
   //   setIsRequsitionForm(isFormslyForm && SPECIAL_FORMS.includes(selectedFormName));
   // }, [isFormslyForm, selectedFormName]);
 
+  const formData = formList.map((form) => ({
+    value: form.form_id,
+    label: form.form_name,
+  }));
+  useEffect(() => {
+    if (formData.length > 0) {
+      setSelectedForm(formData[2].value);
+    }
+  }, [formData]);
+
   useEffect(() => {
     if (previousActiveTeamId !== activeTeam.team_id) {
       setSelectedForm(null);
     }
   }, [activeTeam.team_id]);
 
+  useEffect(() => {
+    if (selectedDays && Number(selectedDays) > 0) {
+      const currDate = new Date();
+      const startDate = new Date(currentDate);
+      startDate.setDate(currDate.getDate() - 7);
+
+      setStartDateFilter(startDate);
+      setEndDateFilter(currDate);
+    }
+  }, [selectedDays]);
   const renderTabs = (tab: string) => {
     switch (tab) {
       case "overview":
@@ -82,7 +110,12 @@ const Dashboard = () => {
                 Please select a form to generate data.
               </Alert>
             )}
-            <Overview dateFilter={dateFilter} selectedForm={selectedForm} />
+            <Overview
+              selectedDays={selectedDays}
+              startDateFilter={startDateFilter}
+              endDateFilter={endDateFilter}
+              selectedForm={selectedForm}
+            />
           </>
         );
 
@@ -107,21 +140,10 @@ const Dashboard = () => {
       <Stack>
         <Group position="apart">
           <Title order={2}>Dashboard</Title>
-          <DatePickerInput
-            type="range"
-            placeholder="Select a start and end date"
-            value={dateFilter}
-            onChange={setDateFilter}
-            icon={<IconCalendarEvent />}
-            dropdownType="popover"
-            minDate={new Date("2023-01-01")}
-            maxDate={currentDate}
-            allowSingleDateInRange
-            w={300}
-          />
         </Group>
         <Flex
           justify="space-between"
+          align="flex-end"
           rowGap="sm"
           wrap="wrap"
           direction={{ base: "column-reverse", sm: "row" }}
@@ -131,18 +153,49 @@ const Dashboard = () => {
             onChange={setSelectedTab}
             data={TABS.map((tab) => ({ value: tab, label: startCase(tab) }))}
           />
+          <Group>
+            <Select
+              label="Form"
+              placeholder="Select a Form"
+              data={formData}
+              value={selectedForm}
+              onChange={setSelectedForm}
+              searchable
+            />
+            <Select
+              label="Date Created"
+              placeholder="Select days"
+              data={DAYSDATA}
+              value={selectedDays}
+              onChange={setSelectedDays}
+              searchable
+            />
 
-          <Select
-            w={300}
-            placeholder="Select a Form"
-            data={formList.map((form) => ({
-              value: form.form_id,
-              label: form.form_name,
-            }))}
-            value={selectedForm}
-            onChange={setSelectedForm}
-            searchable
-          />
+            {selectedDays === "0" && (
+              <>
+                <DatePickerInput
+                  label="Start Date"
+                  placeholder="Select a start date"
+                  value={startDateFilter}
+                  onChange={setStartDateFilter}
+                  icon={<IconCalendarEvent />}
+                  dropdownType="popover"
+                  minDate={new Date("2023-01-01")}
+                  maxDate={currentDate}
+                />
+                <DatePickerInput
+                  label="End Date"
+                  placeholder="Select a end date"
+                  value={endDateFilter}
+                  onChange={setEndDateFilter}
+                  icon={<IconCalendarEvent />}
+                  dropdownType="popover"
+                  minDate={new Date("2023-01-01")}
+                  maxDate={currentDate}
+                />
+              </>
+            )}
+          </Group>
         </Flex>
         <Box>{renderTabs(selectedTab)}</Box>
       </Stack>
