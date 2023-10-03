@@ -1,3 +1,4 @@
+import { getCommentAttachment } from "@/backend/api/get";
 import {
   createAttachment,
   createComment,
@@ -5,13 +6,14 @@ import {
 } from "@/backend/api/post";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { RequestCommentType } from "@/utils/types";
-import { Divider, Paper, Space, Stack, Title } from "@mantine/core";
+import { Divider, Group, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import RequestComment from "./RequestComment";
+import RequestCommentAttachmentList from "./RequestCommentAttachmentList";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
 type Props = {
@@ -33,8 +35,24 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const [commentAttachment, setCommentAttachment] = useState<File[]>([]);
 
   useEffect(() => {
-    setCommentList(requestCommentList);
-  }, [requestCommentList]);
+    const fetchCommentAttachmentList = async () => {
+      const commentListWithAttachmentUrl = await Promise.all(
+        requestCommentList.map(async (comment) => {
+          const commentAttachmentUrlList = await getCommentAttachment(
+            supabaseClient,
+            { commentId: comment.comment_id }
+          );
+
+          return {
+            ...comment,
+            comment_attachment: commentAttachmentUrlList,
+          };
+        })
+      );
+      setCommentList(commentListWithAttachmentUrl);
+    };
+    fetchCommentAttachmentList();
+  }, [requestCommentList, supabaseClient]);
 
   // create comment
   const addCommentFormMethods = useForm<CommentFormProps>();
@@ -103,9 +121,12 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   return (
     <Stack>
       <Paper p="xl" shadow="xs" mt="xl">
-        <Title order={4} color="dimmed">
-          Comments
-        </Title>
+        <Group position="apart">
+          <Title order={4} color="dimmed">
+            Comments
+          </Title>
+          <RequestCommentAttachmentList commentList={commentList} />
+        </Group>
         <Space h="xl" />
         <FormProvider {...addCommentFormMethods}>
           <RequestCommentForm

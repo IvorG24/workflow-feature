@@ -1,5 +1,4 @@
 import { deleteComment } from "@/backend/api/delete";
-import { getCommentAttachment } from "@/backend/api/get";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
@@ -8,10 +7,7 @@ import {
   getFileTypeColor,
   shortenFileName,
 } from "@/utils/styling";
-import {
-  CommentAttachmentWithPublicUrl,
-  RequestCommentType,
-} from "@/utils/types";
+import { RequestCommentType } from "@/utils/types";
 import {
   ActionIcon,
   Alert,
@@ -60,8 +56,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const [isCommentEdited, setIsCommentEdited] = useState(
     comment.comment_is_edited
   );
-  const [commentAttachmentUrlList, setCommentAttachmentUrlList] =
-    useState<CommentAttachmentWithPublicUrl>(comment.comment_attachment);
   const commenter = comment.comment_team_member.team_member_user;
 
   const isUserOwner =
@@ -166,17 +160,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     setCommentContent(comment.comment_content);
     setIsCommentEdited(comment.comment_is_edited);
   }, [comment.comment_content, comment.comment_is_edited]);
-
-  useEffect(() => {
-    const fetchCommentAttachmentList = async () => {
-      const commentAttachmentUrlList = await getCommentAttachment(
-        supabaseClient,
-        { commentId: comment.comment_id }
-      );
-      setCommentAttachmentUrlList(commentAttachmentUrlList);
-    };
-    fetchCommentAttachmentList();
-  }, [comment.comment_id, supabaseClient]);
 
   return (
     <Box pos="relative" mt="sm">
@@ -301,10 +284,10 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                 </Spoiler>
 
                 {/* comment attachment */}
-                {commentAttachmentUrlList &&
-                  commentAttachmentUrlList.length > 0 && (
+                {comment.comment_attachment &&
+                  comment.comment_attachment.length > 0 && (
                     <Stack mt="md" spacing="xs">
-                      {commentAttachmentUrlList.map((attachment) => (
+                      {comment.comment_attachment.map((attachment) => (
                         <Card p="xs" key={attachment.attachment_id} withBorder>
                           <Group position="apart">
                             <Flex

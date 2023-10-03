@@ -1,4 +1,8 @@
-import { shortenFileName } from "@/utils/styling";
+import {
+  getFileType,
+  getFileTypeColor,
+  shortenFileName,
+} from "@/utils/styling";
 import {
   ActionIcon,
   Avatar,
@@ -96,10 +100,8 @@ const RequestCommentForm = ({
             <Card key={index} withBorder bg={isOverSize ? "red.3" : "white"}>
               <Flex align="center" gap="sm">
                 <Group sx={{ flex: 1 }}>
-                  <Avatar
-                    color={attachment.type.includes("image") ? "cyan" : "red"}
-                  >
-                    {attachment.type.includes("image") ? "IMG" : "PDF"}
+                  <Avatar size="sm" color={getFileTypeColor(attachment.name)}>
+                    {getFileType(attachment.name)}
                   </Avatar>
                   <Text>{shortenFileName(attachment.name, 60)}</Text>
                   <Text size="xs" c="dimmed">
