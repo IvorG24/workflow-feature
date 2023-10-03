@@ -161,17 +161,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     setIsCommentEdited(comment.comment_is_edited);
   }, [comment.comment_content, comment.comment_is_edited]);
 
-  // useEffect(() => {
-  //   const fetchCommentAttachmentList = async () => {
-  //     const commentAttachmentUrlList = await getCommentAttachment(
-  //       supabaseClient,
-  //       { commentId: comment.comment_id }
-  //     );
-  //     setCommentAttachmentUrlList(commentAttachmentUrlList);
-  //   };
-  //   fetchCommentAttachmentList();
-  // }, [comment.comment_id, supabaseClient]);
-
   return (
     <Box pos="relative" mt="sm">
       {isEditingComment ? (
