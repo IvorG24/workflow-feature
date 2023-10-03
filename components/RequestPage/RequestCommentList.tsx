@@ -147,24 +147,6 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
                 setCommentAttachment={setCommentAttachment}
               />
             </FormProvider>
-            <Space h="xl" />
-            <FormProvider {...addCommentFormMethods}>
-              <RequestCommentForm
-                onSubmit={handleAddComment}
-                textAreaProps={{
-                  placeholder: "Enter your comment here",
-                  disabled: isLoading,
-                }}
-                submitButtonProps={{
-                  loading: isLoading,
-                  children: "Comment",
-                }}
-                isSubmittingForm={isLoading}
-                commentAttachment={commentAttachment}
-                setCommentAttachment={setCommentAttachment}
-              />
-            </FormProvider>
-
             <Divider my="xl" />
           </>
         )}
