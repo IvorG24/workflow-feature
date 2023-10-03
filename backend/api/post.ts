@@ -655,6 +655,6 @@ export const downloadFromStorage = (
   const { data } = supabaseClient.storage.from(bucket).getPublicUrl(filename, {
     download: true,
   });
-  console.log(data.publicUrl);
+
   return data.publicUrl;
 };

@@ -6,12 +6,14 @@ type RequestSectionProps = {
   section: DuplicateSectionType;
   isFormslyForm?: boolean;
   isOnlyWithResponse?: boolean;
+  isAnon?: boolean
 };
 
 const RequestSection = ({
   section,
   isFormslyForm = false,
   isOnlyWithResponse = false,
+  isAnon = false,
 }: RequestSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -36,6 +38,7 @@ const RequestSection = ({
                       options: field.field_option ? field.field_option : [],
                     }}
                     isFormslyForm={isFormslyForm}
+                    isAnon={isAnon}
                   />
                 </Box>
               );
@@ -54,6 +57,7 @@ const RequestSection = ({
                     options: field.field_option ? field.field_option : [],
                   }}
                   isFormslyForm={isFormslyForm}
+                  isAnon={isAnon}
                 />
               </Box>
             );

@@ -43,6 +43,7 @@ import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
+import RequisitionSummary from "../SummarySection/RequisitionSummary";
 import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
@@ -64,6 +65,7 @@ type Props = {
   };
   connectedRequestIDList?: ConnectedRequestIdList;
   projectSignerStatus?: RequestProjectSignerStatusType;
+  isAnon?: boolean
 };
 
 const RequestPage = ({
@@ -72,6 +74,7 @@ const RequestPage = ({
   connectedFormIdAndGroup,
   connectedRequestIDList,
   projectSignerStatus: initialProjectSignerStatus,
+  isAnon = false
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
@@ -620,9 +623,27 @@ const RequestPage = ({
               key={section.section_id + idx}
               section={section}
               isFormslyForm={isFormslyForm}
+              isAnon={isAnon}
             />
           ))}
         </Stack>
+
+        {request.request_form.form_name === "Requisition" &&
+        request.request_form.form_is_formsly_form ? (
+          <RequisitionSummary
+            summaryData={sectionWithDuplicateList
+              .slice(1)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
 
         {request.request_form.form_name === "Quotation" &&
         request.request_form.form_is_formsly_form ? (
@@ -733,14 +754,17 @@ const RequestPage = ({
         <RequestSignerSection signerList={signerList} />
       </Stack>
 
-      <RequestCommentList
-        requestData={{
-          requestId: request.request_id,
-          requestOwnerId: request.request_team_member.team_member_user.user_id,
-          teamId: request.request_team_member.team_member_team_id,
-        }}
-        requestCommentList={requestCommentList}
-      />
+    
+        <RequestCommentList
+          requestData={{
+            requestId: request.request_id,
+            requestOwnerId:
+              request.request_team_member.team_member_user.user_id,
+            teamId: request.request_team_member.team_member_team_id,
+          }}
+          requestCommentList={requestCommentList}
+        />
+   
     </Container>
   );
 };

@@ -1,5 +1,6 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import {
   Alert,
   Box,
@@ -135,10 +136,17 @@ const Dashboard = () => {
           <Select
             w={300}
             placeholder="Select a Form"
-            data={formList.map((form) => ({
-              value: form.form_id,
-              label: form.form_name,
-            }))}
+            data={formList
+              .filter(
+                (form) =>
+                  (form.form_is_formsly_form &&
+                    !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)) ||
+                  !form.form_is_formsly_form
+              )
+              .map((form) => ({
+                value: form.form_id,
+                label: form.form_name,
+              }))}
             value={selectedForm}
             onChange={setSelectedForm}
             searchable
