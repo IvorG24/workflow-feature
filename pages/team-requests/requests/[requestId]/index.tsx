@@ -1,7 +1,7 @@
 import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import {
   ConnectedRequestIdList,
   RequestProjectSignerStatusType,
@@ -9,31 +9,35 @@ import {
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ supabaseClient, user, context }) => {
-    try {
-      const { data, error } = await supabaseClient.rpc("request_page_on_load", {
-        input_data: {
-          requestId: context.query.requestId,
-          userId: user.id,
-        },
-      });
+export const getServerSideProps: GetServerSideProps =
+  withAuthAndOnboardingRequestPage(
+    async ({ supabaseClient, user, context }) => {
+      try {
+        const { data, error } = await supabaseClient.rpc(
+          "request_page_on_load",
+          {
+            input_data: {
+              requestId: context.query.requestId,
+              userId: user.id,
+            },
+          }
+        );
 
-      if (error) throw error;
-      return {
-        props: data as Props,
-      };
-    } catch (e) {
-      console.error(e);
-      return {
-        redirect: {
-          destination: "/500",
-          permanent: false,
-        },
-      };
+        if (error) throw error;
+        return {
+          props: data as Props,
+        };
+      } catch (e) {
+        console.error(e);
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
     }
-  }
-);
+  );
 
 type Props = {
   request: RequestWithResponseType;

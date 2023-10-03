@@ -31,11 +31,13 @@ type RequestReponseProps = {
     options: OptionTableRow[];
   };
   isFormslyForm?: boolean;
+  isAnon?: boolean;
 };
 
 const RequestResponse = ({
   response,
   isFormslyForm = false,
+  isAnon = false,
 }: RequestReponseProps) => {
   const inputProps = {
     variant: "filled",
@@ -73,8 +75,10 @@ const RequestResponse = ({
 
   const renderResponse = (response: RequestReponseProps["response"]) => {
     const parsedValue = response.value === "" ? "" : JSON.parse(response.value);
+    const responseType =
+      response.type === "DROPDOWN" && isAnon ? "TEXT" : response.type;
 
-    switch (response.type) {
+    switch (responseType) {
       case "LINK":
         return (
           <Flex w="100%" align="flex-end" gap="xs">
