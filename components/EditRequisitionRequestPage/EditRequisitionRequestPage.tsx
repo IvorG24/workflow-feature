@@ -1,9 +1,11 @@
 import {
+  checkIfRequestIsPending,
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
+import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -46,7 +48,7 @@ const EditRequisitionRequestPage = ({
   projectOptions,
 }: Props) => {
   const router = useRouter();
-  const formId = router.query.formId as string;
+  const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
@@ -60,7 +62,7 @@ const EditRequisitionRequestPage = ({
         ...signer.signer_team_member,
         team_member_user: {
           ...signer.signer_team_member.team_member_user,
-          user_id: "",
+          user_id: signer.signer_team_member.team_member_user.user_id,
           user_avatar: "",
         },
       },
@@ -151,23 +153,26 @@ const EditRequisitionRequestPage = ({
         sections: [data.sections[0], ...newSections],
       };
 
-      const Response = data.sections[0].section_field[0].field_response[0]
-        .request_response as string;
+      const isPending = await checkIfRequestIsPending(supabaseClient, {
+        requestId: request.request_id,
+      });
 
-      const projectId = data.sections[0].section_field[0].field_option.find(
-        (option) => option.option_value === Response
-      )?.option_id as string;
+      if (!isPending) {
+        notifications.show({
+          message: "Request can't be edited",
+          color: "red",
+        });
+        router.push(`/team-requests/requests/${request.request_id}`);
+        return;
+      }
 
-      console.log({
+      await editRequest(supabaseClient, {
+        requestId: request.request_id,
         requestFormValues: newData,
-        formId,
-        teamMemberId: teamMember.team_member_id,
         signers: signerList,
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: request_form.form_name,
-        isFormslyForm: true,
-        projectId,
       });
 
       notifications.show({
@@ -175,7 +180,7 @@ const EditRequisitionRequestPage = ({
         color: "green",
       });
 
-      // router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

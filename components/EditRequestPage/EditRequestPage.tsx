@@ -1,5 +1,8 @@
+import { checkIfRequestIsPending } from "@/backend/api/get";
+import { editRequest } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { Database } from "@/utils/database";
 import {
   FormType,
   RequestResponseTableRow,
@@ -16,8 +19,9 @@ import {
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { FormEvent, useEffect } from "react";
+import { useEffect } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -43,6 +47,7 @@ type Props = {
 const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
   const router = useRouter();
   const teamMember = useUserTeamMember();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -70,7 +75,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
         ...signer.signer_team_member,
         team_member_user: {
           ...signer.signer_team_member.team_member_user,
-          user_id: "",
+          user_id: signer.signer_team_member.team_member_user.user_id,
           user_avatar: "",
         },
       },
@@ -82,6 +87,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
   const {
     control,
     getValues,
+    handleSubmit,
     formState: { isDirty },
     reset,
   } = requestFormMethods;
@@ -95,22 +101,42 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
     name: "sections",
   });
 
-  const handleEditRequest = (e: FormEvent) => {
+  const handleEditRequest = async (data: RequestFormValues) => {
     try {
-      e.preventDefault();
       if (!requestorProfile) return;
       if (!teamMember) return;
 
       setIsLoading(true);
-      console.log("data", getValues());
+      const isPending = await checkIfRequestIsPending(supabaseClient, {
+        requestId: request.request_id,
+      });
+
+      if (!isPending) {
+        notifications.show({
+          message: "Request can't be edited",
+          color: "red",
+        });
+        router.push(`/team-requests/requests/${request.request_id}`);
+        return;
+      }
+
+      await editRequest(supabaseClient, {
+        requestId: request.request_id,
+        requestFormValues: data,
+        signers: signerList,
+        teamId: teamMember.team_member_team_id,
+        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+        formName: request_form.form_name,
+      });
 
       removeLocalFormState();
       notifications.show({
         message: "Request Edited.",
         color: "green",
       });
-      // router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
+      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -173,7 +199,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleEditRequest}>
+        <form onSubmit={handleSubmit(handleEditRequest)}>
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {

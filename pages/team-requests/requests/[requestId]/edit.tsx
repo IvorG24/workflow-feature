@@ -239,6 +239,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           signer_team_member: {
             team_member_id: signer.signer_team_member.team_member_id,
             team_member_user: {
+              user_id: signer.signer_team_member.team_member_user.user_id,
               user_first_name:
                 signer.signer_team_member.team_member_user.user_first_name,
               user_last_name:
@@ -282,8 +283,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               {
                 ...section.section_field[2],
                 field_option: projectOptions.filter(
-                  (project) =>
-                    project.option_description !== request.request_project_id
+                  (project) => project.option_id !== request.request_project_id
                 ),
               },
             ],
@@ -417,7 +417,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             itemOptions: unusedItemOption,
             originalItemOptions: itemOptions,
             sourceProjectList,
-            requestProjectId: request.request_project_id,
             requestingProject: request.request_project.team_project_name,
           },
         };
@@ -525,7 +524,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             itemOptions: unusedItemOption,
             originalItemOptions: itemOptions,
             sourceProjectList,
-            requestProjectId: request.request_project_id,
             requestingProject: request.request_project.team_project_name,
           },
         };
@@ -729,7 +727,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               ? projectSignerList
               : parsedRequest.request_signer,
         };
-        console.log(formattedRequest);
 
         return {
           props: {
@@ -796,7 +793,6 @@ const Page = ({
           <EditSourcedItemRequestPage
             request={request}
             itemOptions={itemOptions}
-            requestProjectId={requestProjectId}
             requestingProject={requestingProject}
           />
         );
@@ -807,7 +803,6 @@ const Page = ({
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}
             sourceProjectList={sourceProjectList}
-            requestProjectId={requestProjectId}
             requestingProject={requestingProject}
           />
         );
@@ -818,7 +813,6 @@ const Page = ({
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}
             sourceProjectList={sourceProjectList}
-            requestProjectId={requestProjectId}
             requestingProject={requestingProject}
           />
         );

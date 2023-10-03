@@ -1,7 +1,9 @@
 import {
+  checkIfRequestIsPending,
   checkRequisitionQuantity,
   getMultipleProjectSignerWithTeamMember,
 } from "@/backend/api/get";
+import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -9,6 +11,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { areEqual } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
+import { parseJSONIfValid } from "@/utils/string";
 import {
   FormType,
   OptionTableRow,
@@ -30,6 +33,7 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { toUpper } from "lodash";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -46,17 +50,15 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
-  requestProjectId: string;
   requestingProject: string;
 };
 
 const EditSourcedItemRequestPage = ({
   request,
   itemOptions,
-  requestProjectId,
   requestingProject,
 }: Props) => {
-  const formId = request.request_form_id;
+  const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const requestorProfile = useUserProfile();
@@ -74,7 +76,7 @@ const EditSourcedItemRequestPage = ({
         ...signer.signer_team_member,
         team_member_user: {
           ...signer.signer_team_member.team_member_user,
-          user_id: "",
+          user_id: signer.signer_team_member.team_member_user.user_id,
           user_avatar: "",
         },
       },
@@ -130,14 +132,13 @@ const EditSourcedItemRequestPage = ({
       const itemNameList: string[] = [];
 
       data.sections.slice(1).forEach((section) => {
-        const itemIndex = itemNameList.indexOf(
-          `${section.section_field[0].field_response[0].request_response}`
+        const response = parseJSONIfValid(
+          section.section_field[0].field_response[0].request_response
         );
+        const itemIndex = itemNameList.indexOf(`${response}`);
         if (itemIndex === -1) {
           mergedSection.push(section);
-          itemNameList.push(
-            `${section.section_field[0].field_response[0].request_response}`
-          );
+          itemNameList.push(`${response}`);
         } else {
           const sum =
             Number(
@@ -177,6 +178,9 @@ const EditSourcedItemRequestPage = ({
         });
       });
 
+      console.log(mergedSection);
+      console.log(itemNameList);
+
       const warningItemList = await checkRequisitionQuantity(supabaseClient, {
         requisitionID,
         itemFieldList,
@@ -211,14 +215,21 @@ const EditSourcedItemRequestPage = ({
         const sectionData = getValues("sections");
 
         sectionData.slice(1).forEach((section) => {
+          const firstFieldResponse = parseJSONIfValid(
+            section.section_field[0].field_response[0].request_response
+          );
+          const lastFieldResponse = parseJSONIfValid(
+            section.section_field[2].field_response[0].request_response
+          );
           const inputIndex = itemNameListInput.indexOf(
-            `${section.section_field[0].field_response[0].request_response}+${section.section_field[2].field_response[0].request_response}`
+            `${firstFieldResponse}+${lastFieldResponse}`
           );
 
           if (inputIndex === -1) {
             mergedSectionInput.push(section);
+
             itemNameListInput.push(
-              `${section.section_field[0].field_response[0].request_response}+${section.section_field[2].field_response[0].request_response}`
+              `${firstFieldResponse}+${lastFieldResponse}`
             );
           } else {
             const sum =
@@ -235,25 +246,35 @@ const EditSourcedItemRequestPage = ({
           }
         });
 
-        console.log({
+        const isPending = await checkIfRequestIsPending(supabaseClient, {
+          requestId: request.request_id,
+        });
+
+        if (!isPending) {
+          notifications.show({
+            message: "Request can't be edited",
+            color: "red",
+          });
+          router.push(`/team-requests/requests/${request.request_id}`);
+          return;
+        }
+
+        await editRequest(supabaseClient, {
+          requestId: request.request_id,
           requestFormValues: {
             sections: [data.sections[0], ...mergedSectionInput],
           },
-          formId,
-          teamMemberId: teamMember.team_member_id,
           signers: signerList,
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: request_form.form_name,
-          isFormslyForm: true,
-          projectId: requestProjectId,
         });
 
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        // router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(`/team-requests/requests/${request.request_id}`);
       }
     } catch (e) {
       notifications.show({

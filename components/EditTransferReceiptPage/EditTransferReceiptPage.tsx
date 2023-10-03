@@ -1,4 +1,8 @@
-import { checkTransferReceiptItemQuantity } from "@/backend/api/get";
+import {
+  checkIfRequestIsPending,
+  checkTransferReceiptItemQuantity,
+} from "@/backend/api/get";
+import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -25,6 +29,7 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -43,7 +48,6 @@ type Props = {
   itemOptions: OptionTableRow[];
   originalItemOptions: OptionTableRow[];
   sourceProjectList: Record<string, string>;
-  requestProjectId: string;
   requestingProject: string;
 };
 
@@ -52,10 +56,9 @@ const EditTransferReceiptPage = ({
   itemOptions,
   originalItemOptions,
   sourceProjectList,
-  requestProjectId,
   requestingProject,
 }: Props) => {
-  const formId = request.request_form_id;
+  const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
 
@@ -83,7 +86,7 @@ const EditTransferReceiptPage = ({
         ...signer.signer_team_member,
         team_member_user: {
           ...signer.signer_team_member.team_member_user,
-          user_id: "",
+          user_id: signer.signer_team_member.team_member_user.user_id,
           user_avatar: "",
         },
       },
@@ -199,23 +202,33 @@ const EditTransferReceiptPage = ({
           ),
         });
       } else {
-        console.log({
+        const isPending = await checkIfRequestIsPending(supabaseClient, {
+          requestId: request.request_id,
+        });
+
+        if (!isPending) {
+          notifications.show({
+            message: "Request can't be edited",
+            color: "red",
+          });
+          router.push(`/team-requests/requests/${request.request_id}`);
+          return;
+        }
+
+        await editRequest(supabaseClient, {
+          requestId: request.request_id,
           requestFormValues: data,
-          formId,
-          teamMemberId: teamMember.team_member_id,
           signers: signerList,
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
-          isFormslyForm: true,
-          projectId: requestProjectId,
         });
 
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        // router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(`/team-requests/requests/${request.request_id}`);
       }
     } catch (e) {
       notifications.show({
@@ -247,11 +260,15 @@ const EditTransferReceiptPage = ({
     );
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
+      console.log(sectionDuplicatableId);
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
         (field) => ({
           ...field,
           field_response: field.field_response.map((response) => ({
-            ...response,
+            request_response_field_id: response.request_response_field_id,
+            request_response_id: response.request_response_id,
+            request_response_request_id: response.request_response_request_id,
+            request_response_duplicatable_section_id: sectionDuplicatableId,
             request_response: "",
           })),
           field_section_duplicatable_id: sectionDuplicatableId,
@@ -260,6 +277,7 @@ const EditTransferReceiptPage = ({
           }),
         })
       );
+      console.log(duplicatedFieldsWithDuplicatableId);
       const newSection = {
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,

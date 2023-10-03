@@ -1,4 +1,7 @@
-import { checkRIRItemQuantity } from "@/backend/api/get";
+import {
+  checkIfRequestIsPending,
+  checkRIRItemQuantity,
+} from "@/backend/api/get";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -82,7 +85,7 @@ const EditReceivingInspectingReportPage = ({
         ...signer.signer_team_member,
         team_member_user: {
           ...signer.signer_team_member.team_member_user,
-          user_id: "",
+          user_id: signer.signer_team_member.team_member_user.user_id,
           user_avatar: "",
         },
       },
@@ -196,6 +199,19 @@ const EditReceivingInspectingReportPage = ({
           ),
         });
       } else {
+        const isPending = await checkIfRequestIsPending(supabaseClient, {
+          requestId: request.request_id,
+        });
+
+        if (!isPending) {
+          notifications.show({
+            message: "Request can't be edited",
+            color: "red",
+          });
+          router.push(`/team-requests/requests/${request.request_id}`);
+          return;
+        }
+
         console.log({
           requestFormValues: data,
           formId,

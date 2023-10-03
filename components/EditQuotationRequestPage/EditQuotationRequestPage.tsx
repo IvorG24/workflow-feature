@@ -1,4 +1,8 @@
-import { checkRequisitionQuantity, getSupplier } from "@/backend/api/get";
+import {
+  checkIfRequestIsPending,
+  checkRequisitionQuantity,
+  getSupplier,
+} from "@/backend/api/get";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -25,6 +29,7 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -53,6 +58,7 @@ const EditQuotationRequestPage = ({
   requestProjectId,
   requestingProject,
 }: Props) => {
+  const router = useRouter();
   const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -77,7 +83,7 @@ const EditQuotationRequestPage = ({
         ...signer.signer_team_member,
         team_member_user: {
           ...signer.signer_team_member.team_member_user,
-          user_id: "",
+          user_id: signer.signer_team_member.team_member_user.user_id,
           user_avatar: "",
         },
       },
@@ -177,6 +183,19 @@ const EditQuotationRequestPage = ({
           ),
         });
       } else {
+        const isPending = await checkIfRequestIsPending(supabaseClient, {
+          requestId: request.request_id,
+        });
+
+        if (!isPending) {
+          notifications.show({
+            message: "Request can't be edited",
+            color: "red",
+          });
+          router.push(`/team-requests/requests/${request.request_id}`);
+          return;
+        }
+
         console.log({
           requestFormValues: formSections,
           formId,
