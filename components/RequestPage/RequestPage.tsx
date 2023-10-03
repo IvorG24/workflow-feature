@@ -754,7 +754,7 @@ const RequestPage = ({
         <RequestSignerSection signerList={signerList} />
       </Stack>
 
-      {user && (
+    
         <RequestCommentList
           requestData={{
             requestId: request.request_id,
@@ -764,7 +764,7 @@ const RequestPage = ({
           }}
           requestCommentList={requestCommentList}
         />
-      )}
+   
     </Container>
   );
 };
