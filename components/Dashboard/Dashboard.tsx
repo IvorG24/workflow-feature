@@ -83,8 +83,16 @@ const Dashboard = () => {
       label: form.form_name,
     }));
   useEffect(() => {
-    if (formData.length > 0) {
-      setSelectedForm(formData[2].value);
+    if (formData.length) {
+      const requisitionIndex = formData
+        .map((form) => form.label)
+        .indexOf("Requisition");
+      if (requisitionIndex !== -1) {
+        console.log(formData[requisitionIndex], requisitionIndex);
+        setSelectedForm(formData[requisitionIndex].value);
+      } else {
+        setSelectedForm(formData[0].value ?? null);
+      }
     }
   }, [formData]);
 
