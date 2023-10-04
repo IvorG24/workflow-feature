@@ -17,7 +17,6 @@ import { usePrevious } from "@mantine/hooks";
 import { IconAlertCircle, IconCalendarEvent } from "@tabler/icons-react";
 import { startCase } from "lodash";
 import moment from "moment";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
 
@@ -38,7 +37,6 @@ const DAYSDATA = [
 
 const Dashboard = () => {
   const formList = useFormList();
-  const router = useRouter();
   const activeTeam = useActiveTeam();
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
