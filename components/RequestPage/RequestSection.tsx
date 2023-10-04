@@ -6,7 +6,7 @@ type RequestSectionProps = {
   section: DuplicateSectionType;
   isFormslyForm?: boolean;
   isOnlyWithResponse?: boolean;
-  isAnon?: boolean
+  isAnon?: boolean;
 };
 
 const RequestSection = ({

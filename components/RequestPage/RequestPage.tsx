@@ -65,7 +65,7 @@ type Props = {
   };
   connectedRequestIDList?: ConnectedRequestIdList;
   projectSignerStatus?: RequestProjectSignerStatusType;
-  isAnon?: boolean
+  isAnon?: boolean;
 };
 
 const RequestPage = ({
@@ -74,7 +74,7 @@ const RequestPage = ({
   connectedFormIdAndGroup,
   connectedRequestIDList,
   projectSignerStatus: initialProjectSignerStatus,
-  isAnon = false
+  isAnon = false,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
@@ -624,6 +624,9 @@ const RequestPage = ({
               section={section}
               isFormslyForm={isFormslyForm}
               isAnon={isAnon}
+              isOnlyWithResponse={
+                request.request_form.form_name === "Requisition"
+              }
             />
           ))}
         </Stack>
@@ -754,17 +757,14 @@ const RequestPage = ({
         <RequestSignerSection signerList={signerList} />
       </Stack>
 
-    
-        <RequestCommentList
-          requestData={{
-            requestId: request.request_id,
-            requestOwnerId:
-              request.request_team_member.team_member_user.user_id,
-            teamId: request.request_team_member.team_member_team_id,
-          }}
-          requestCommentList={requestCommentList}
-        />
-   
+      <RequestCommentList
+        requestData={{
+          requestId: request.request_id,
+          requestOwnerId: request.request_team_member.team_member_user.user_id,
+          teamId: request.request_team_member.team_member_team_id,
+        }}
+        requestCommentList={requestCommentList}
+      />
     </Container>
   );
 };

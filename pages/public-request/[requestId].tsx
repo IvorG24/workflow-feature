@@ -41,7 +41,11 @@ const Page = ({ request }: Props) => {
         url="/team-requests/requests/[requestId]"
       />
       <Space h="xl" />
-      <RequestPage request={request} isAnon={true}/>
+      <RequestPage
+        request={request}
+        isAnon={true}
+        isFormslyForm={request.request_form.form_is_formsly_form}
+      />
       <Space h="xl" />
     </>
   );
