@@ -993,7 +993,6 @@ export const ITEM_PURPOSE_CHOICES = [
 ];
 
 export const ITEM_UNIT_CHOICES = [
-  "Base Unit",
   "Meter",
   "Inch",
   "Second",
