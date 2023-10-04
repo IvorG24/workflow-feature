@@ -40,10 +40,8 @@ const Dashboard = () => {
   const formList = useFormList();
   const router = useRouter();
   const activeTeam = useActiveTeam();
-  const routerFormId =
-    router.query.formId !== undefined ? `${router.query.formId}` : null;
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [selectedForm, setSelectedForm] = useState<string | null>(routerFormId);
+  const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState<string | null>(null);
   const previousActiveTeamId = usePrevious(activeTeam.team_id);
   // const [isRequsitionForm, setIsRequsitionForm] = useState(false);
@@ -87,6 +85,7 @@ const Dashboard = () => {
       const requisitionIndex = formData
         .map((form) => form.label)
         .indexOf("Requisition");
+
       if (requisitionIndex !== -1) {
         setSelectedForm(formData[requisitionIndex].value);
       } else {
@@ -96,7 +95,7 @@ const Dashboard = () => {
   }, [formData]);
 
   useEffect(() => {
-    if (previousActiveTeamId !== activeTeam.team_id) {
+    if (previousActiveTeamId && previousActiveTeamId !== activeTeam.team_id) {
       setSelectedForm(null);
     }
   }, [activeTeam.team_id]);
