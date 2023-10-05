@@ -1,8 +1,10 @@
+import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
 import { Box, Space } from "@mantine/core";
 import {
   IconCirclePlus,
   IconDashboard,
+  IconFile,
   IconMessage2,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -15,6 +17,25 @@ const ReviewAppNavLink = () => {
 
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
+  const forms = useFormList();
+
+  const requisitionForm = forms.filter(
+    (form) => form.form_is_formsly_form && form.form_name === "Requisition"
+  )[0];
+
+  const tempCreateRequest = [
+    {
+      label: "Create Request",
+      icon: (
+        <Box ml="sm" py={5} mt={3}>
+          <IconFile {...defaultIconProps} />
+        </Box>
+      ),
+      href: requisitionForm
+        ? `/team-requests/forms/${requisitionForm.form_id}/create`
+        : "",
+    },
+  ];
 
   const overviewSection = [
     {
@@ -72,6 +93,10 @@ const ReviewAppNavLink = () => {
 
   return (
     <>
+      {requisitionForm && (
+        <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
+      )}
+
       {!isEmpty(activeTeam) ? (
         <NavLinkSection
           label={"Overview"}
