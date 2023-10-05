@@ -6181,13 +6181,13 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO public;
 
 INSERT INTO user_table (user_id, user_username, user_first_name, user_last_name, user_email, user_active_team_id) VALUES
-('beb2d52c-77d5-49a9-a175-637152c44424', 'albertlinao', 'Albert', 'Linao', 'johndoe@gmail.com', 'a5a28977-6956-45c1-a624-b9e90911502e');
+('5b4ba109-ee91-44fa-a514-1652b57d3c5f', 'albertlinao', 'Albert', 'Linao', 'albert.linao@staclara.com.ph', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 INSERT INTO team_table (team_id, team_name, team_user_id) VALUES
-('a5a28977-6956-45c1-a624-b9e90911502e', 'SCIC', 'beb2d52c-77d5-49a9-a175-637152c44424');
+('a5a28977-6956-45c1-a624-b9e90911502e', 'SCIC', '5b4ba109-ee91-44fa-a514-1652b57d3c5f');
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id) VALUES
-('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'beb2d52c-77d5-49a9-a175-637152c44424');
+('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '5b4ba109-ee91-44fa-a514-1652b57d3c5f');
 
 INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
 ('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition 
