@@ -17,9 +17,10 @@ import { useEffect, useState } from "react";
 import { MonthlyRequestDataTypeWithTotal } from "./Overview";
 
 type RequestStatisticsProps = {
+  startDateFilter: Date | null;
+  endDateFilter: Date | null;
   monthlyChartData: MonthlyRequestDataTypeWithTotal["data"];
   totalRequestCount: number;
-  dateFilter: [Date | null, Date | null];
 };
 
 const statusList = ["pending", "approved", "rejected"];
@@ -27,7 +28,8 @@ const statusList = ["pending", "approved", "rejected"];
 const RequestStatistics = ({
   monthlyChartData,
   totalRequestCount,
-  dateFilter,
+  startDateFilter,
+  endDateFilter,
 }: RequestStatisticsProps) => {
   const [chartData, setChartData] = useState(monthlyChartData);
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
@@ -67,8 +69,8 @@ const RequestStatistics = ({
     setChartData(newChartData);
   };
 
-  const startDate = moment(dateFilter[0]).format("MMM DD, YYYY");
-  const endDate = moment(dateFilter[1]).format("MMM DD, YYYY");
+  const startDate = moment(startDateFilter).format("MMM DD, YYYY");
+  const endDate = moment(endDateFilter).format("MMM DD, YYYY");
   const xAxisChartLabel =
     startDate === endDate ? startDate : `${startDate} - ${endDate}`;
 

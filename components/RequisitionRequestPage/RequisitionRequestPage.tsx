@@ -17,20 +17,11 @@ import {
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
-import {
-  Button,
-  Container,
-  Flex,
-  Group,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { lowerCase } from "lodash";
-import { useRouter } from "next/router";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
@@ -51,12 +42,12 @@ type Props = {
 
 const RequisitionRequestPage = ({
   request,
-  connectedForm,
+  // connectedForm,
   connectedRequestIDList,
   canvassRequest,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
-  const router = useRouter();
+  // const router = useRouter();
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -214,7 +205,7 @@ const RequisitionRequestPage = ({
             request={request}
             sectionWithDuplicateList={sectionWithDuplicateList}
           />
-          {requestStatus === "APPROVED" ? (
+          {/* {requestStatus === "APPROVED" ? (
             <Group>
               {connectedForm.map((form) => {
                 if (
@@ -237,7 +228,7 @@ const RequisitionRequestPage = ({
                 }
               })}
             </Group>
-          ) : null}
+          ) : null} */}
         </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
@@ -308,6 +299,7 @@ const RequisitionRequestPage = ({
 
         <RequestSignerSection signerList={signerList} />
       </Stack>
+
       <RequestCommentList
         requestData={{
           requestId: request.request_id,

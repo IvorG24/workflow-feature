@@ -50,6 +50,7 @@ const CreateItem = ({
     const fetchDivisionOption = async () => {
       try {
         const option = await getItemDivisionOption(supabaseClient);
+
         option &&
           setDivisionIdOption(
             option.map((divisionId) => {
@@ -102,7 +103,7 @@ const CreateItem = ({
           item_unit: data.unit,
           item_gl_account: toUpper(data.glAccount),
           item_team_id: activeTeam.team_id,
-          item_division_id_list: data.division,
+          item_division_id_list: data.division.map((id) => `'${id}'`),
         },
         formId: formId,
       });
@@ -116,7 +117,7 @@ const CreateItem = ({
         color: "green",
       });
       setIsCreatingItem(false);
-    } catch (e) {
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

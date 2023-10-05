@@ -2,6 +2,7 @@
 import { getRequestListOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { RequestListItemType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -48,7 +49,9 @@ const Page = ({
       <Meta description="Request List Page" url="/team-requests/requests" />
       <RequestListPage
         teamMemberList={teamMemberList}
-        formList={formList}
+        formList={formList.filter(
+          (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.label)
+        )}
         isFormslyTeam={isFormslyTeam}
         requestList={requestList}
         requestListCount={requestListCount}
