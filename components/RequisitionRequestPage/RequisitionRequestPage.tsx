@@ -104,7 +104,6 @@ const RequisitionRequestPage = ({
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 
-  console.log(originalSectionList);
   const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       setIsLoading(true);

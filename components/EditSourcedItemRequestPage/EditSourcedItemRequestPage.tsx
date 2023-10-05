@@ -178,9 +178,6 @@ const EditSourcedItemRequestPage = ({
         });
       });
 
-      console.log(mergedSection);
-      console.log(itemNameList);
-
       const warningItemList = await checkRequisitionQuantity(supabaseClient, {
         requisitionID,
         itemFieldList,
@@ -302,11 +299,21 @@ const EditSourcedItemRequestPage = ({
               ...field,
               field_option: itemOptions,
               field_section_duplicatable_id: sectionDuplicatableId,
+              field_response: field.field_response.map((response) => ({
+                ...response,
+                request_response_duplicatable_section_id: sectionDuplicatableId,
+                request_response: "",
+              })),
             };
           } else {
             return {
               ...field,
               field_section_duplicatable_id: sectionDuplicatableId,
+              field_response: field.field_response.map((response) => ({
+                ...response,
+                request_response_duplicatable_section_id: sectionDuplicatableId,
+                request_response: "",
+              })),
             };
           }
         }

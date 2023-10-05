@@ -308,7 +308,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           props: {
             request: formattedRequest,
             itemOptions,
-            requestProjectId: request.request_project_id,
             requestingProject: request.request_project.team_project_name,
           },
         };
@@ -635,7 +634,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             request: formattedRequest,
             itemOptions: unusedItemOption,
             originalItemOptions: itemOptions,
-            requestProjectId: request.request_project_id,
             requestingProject: request.request_project.team_project_name,
           },
         };
@@ -734,7 +732,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             itemOptions: unusedItemOption,
             originalItemOptions: itemOptions,
             sourceProjectList,
-            requestProjectId: request.request_project_id,
             requestingProject: request.request_project.team_project_name,
           },
         };
@@ -763,7 +760,6 @@ type Props = {
   originalItemOptions?: OptionTableRow[];
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
-  requestProjectId: string;
   requestingProject?: string;
 };
 
@@ -771,7 +767,6 @@ const Page = ({
   request,
   itemOptions,
   originalItemOptions = [],
-  requestProjectId = "",
   projectOptions = [],
   requestingProject = "",
   sourceProjectList = {},
@@ -822,7 +817,6 @@ const Page = ({
             request={request}
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}
-            requestProjectId={requestProjectId}
             requestingProject={requestingProject}
           />
         );
@@ -832,7 +826,6 @@ const Page = ({
             request={request}
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}
-            requestProjectId={requestProjectId}
             requestingProject={requestingProject}
           />
         );

@@ -166,6 +166,7 @@ const EditRequisitionRequestPage = ({
         return;
       }
 
+      console.log(newData);
       await editRequest(supabaseClient, {
         requestId: request.request_id,
         requestFormValues: newData,
@@ -205,12 +206,22 @@ const EditRequisitionRequestPage = ({
           if (field.field_name === "General Name") {
             return {
               ...field,
+              field_response: field.field_response.map((response) => ({
+                ...response,
+                request_response_duplicatable_section_id: sectionDuplicatableId,
+                request_response: "",
+              })),
               field_section_duplicatable_id: sectionDuplicatableId,
               field_option: itemOptions,
             };
           } else {
             return {
               ...field,
+              field_response: field.field_response.map((response) => ({
+                ...response,
+                request_response_duplicatable_section_id: sectionDuplicatableId,
+                request_response: "",
+              })),
               field_section_duplicatable_id: sectionDuplicatableId,
             };
           }

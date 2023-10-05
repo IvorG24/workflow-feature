@@ -7,6 +7,7 @@ type Props = {
 };
 
 const RequisitionSummary = ({ summaryData }: Props) => {
+  console.log(summaryData);
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">

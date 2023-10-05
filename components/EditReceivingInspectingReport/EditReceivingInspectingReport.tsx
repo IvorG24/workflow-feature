@@ -2,6 +2,7 @@ import {
   checkIfRequestIsPending,
   checkRIRItemQuantity,
 } from "@/backend/api/get";
+import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -45,7 +46,6 @@ type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
   originalItemOptions: OptionTableRow[];
-  requestProjectId: string;
   requestingProject: string;
 };
 
@@ -53,11 +53,9 @@ const EditReceivingInspectingReportPage = ({
   request,
   itemOptions,
   originalItemOptions,
-  requestProjectId,
   requestingProject,
 }: Props) => {
   const router = useRouter();
-  const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
 
@@ -212,23 +210,20 @@ const EditReceivingInspectingReportPage = ({
           return;
         }
 
-        console.log({
+        await editRequest(supabaseClient, {
+          requestId: request.request_id,
           requestFormValues: data,
-          formId,
-          teamMemberId: teamMember.team_member_id,
           signers: signerList,
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
-          isFormslyForm: true,
-          projectId: requestProjectId,
         });
 
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        // router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(`/team-requests/requests/${request.request_id}`);
       }
     } catch (e) {
       console.error(e);

@@ -158,7 +158,6 @@ export const generateRequestDuplicateSection = (
     return duplicateSection;
   });
 
-  console.log(duplicateSectionList);
   return duplicateSectionList;
 };
 

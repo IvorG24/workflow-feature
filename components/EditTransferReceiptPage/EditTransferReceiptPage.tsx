@@ -260,14 +260,11 @@ const EditTransferReceiptPage = ({
     );
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
-      console.log(sectionDuplicatableId);
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
         (field) => ({
           ...field,
           field_response: field.field_response.map((response) => ({
-            request_response_field_id: response.request_response_field_id,
-            request_response_id: response.request_response_id,
-            request_response_request_id: response.request_response_request_id,
+            ...response,
             request_response_duplicatable_section_id: sectionDuplicatableId,
             request_response: "",
           })),
@@ -277,7 +274,6 @@ const EditTransferReceiptPage = ({
           }),
         })
       );
-      console.log(duplicatedFieldsWithDuplicatableId);
       const newSection = {
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,

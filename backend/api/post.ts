@@ -546,7 +546,8 @@ export const editRequest = async (
         const response = {
           request_response: JSON.stringify(trimmedResponse),
           request_response_duplicatable_section_id:
-            field.field_section_duplicatable_id ?? null,
+            field.field_response[0].request_response_duplicatable_section_id ??
+            null,
           request_response_field_id: field.field_id,
           request_response_request_id: requestId,
         };

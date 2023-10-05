@@ -3,6 +3,7 @@ import {
   checkRequisitionQuantity,
   getSupplier,
 } from "@/backend/api/get";
+import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -47,7 +48,6 @@ type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
   originalItemOptions: OptionTableRow[];
-  requestProjectId: string;
   requestingProject: string;
 };
 
@@ -55,11 +55,9 @@ const EditQuotationRequestPage = ({
   request,
   itemOptions,
   originalItemOptions,
-  requestProjectId,
   requestingProject,
 }: Props) => {
   const router = useRouter();
-  const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
 
@@ -117,7 +115,7 @@ const EditQuotationRequestPage = ({
     name: "sections",
   });
 
-  const handleEditRequest = async () => {
+  const handleEditRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -196,22 +194,20 @@ const EditQuotationRequestPage = ({
           return;
         }
 
-        console.log({
-          requestFormValues: formSections,
-          formId,
-          teamMemberId: teamMember.team_member_id,
+        await editRequest(supabaseClient, {
+          requestId: request.request_id,
+          requestFormValues: data,
           signers: signerList,
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
-          isFormslyForm: true,
-          projectId: requestProjectId,
         });
+
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        // router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(`/team-requests/requests/${request.request_id}`);
       }
     } catch {
       notifications.show({
@@ -248,6 +244,7 @@ const EditQuotationRequestPage = ({
           ...field,
           field_response: field.field_response.map((response) => ({
             ...response,
+            request_response_duplicatable_section_id: sectionDuplicatableId,
             request_response: "",
           })),
           field_section_duplicatable_id: sectionDuplicatableId,

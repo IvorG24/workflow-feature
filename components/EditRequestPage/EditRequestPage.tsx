@@ -136,7 +136,6 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
       });
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
