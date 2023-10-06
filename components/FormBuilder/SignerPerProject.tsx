@@ -1,10 +1,10 @@
 import { updateFormSigner } from "@/backend/api/update";
 import { Database } from "@/utils/database";
+import { isEmpty, isEqual } from "@/utils/functions";
 import { TeamMemberWithUserType } from "@/utils/types";
 import { Button, Center, CloseButton, Flex, Space, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { isEmpty, isEqual } from "lodash";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SignerSection, { RequestSigner } from "./SignerSection";

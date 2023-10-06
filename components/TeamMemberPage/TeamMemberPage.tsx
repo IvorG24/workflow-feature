@@ -17,7 +17,6 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { toUpper } from "lodash";
 import MemberGroup from "./MemberGroup";
 import MemberProject from "./MemberProject";
 
@@ -59,8 +58,8 @@ const TeamMemberPage = ({
               )}
               radius={150}
             >
-              {toUpper(member.team_member_user.user_first_name[0])}
-              {toUpper(member.team_member_user.user_last_name[0])}
+              {member.team_member_user.user_first_name[0].toUpperCase()}
+              {member.team_member_user.user_last_name[0].toUpperCase()}
             </Avatar>
           </Flex>
 

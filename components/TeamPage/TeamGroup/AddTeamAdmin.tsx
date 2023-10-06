@@ -1,6 +1,7 @@
 import { getTeamMembersWithMemberRole } from "@/backend/api/get";
 import { updateAdminRole } from "@/backend/api/update";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import {
   Avatar,
@@ -21,7 +22,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { startCase } from "lodash";
 import {
   Dispatch,
   SetStateAction,
@@ -179,7 +179,7 @@ const AddTeamAdmin = ({
         teamAdminIdList: data.admins,
         updateRole: "ADMIN",
       });
-    
+
       setAdminList((prev) => {
         prev.unshift(...newAdminList);
         return prev;

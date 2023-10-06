@@ -1,3 +1,4 @@
+import { startCase } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import {
   Avatar,
@@ -13,7 +14,6 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconShieldCheckFilled } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import { RequestorAndSignerDataType } from "./Overview";
 
 const useStyles = createStyles(() => ({

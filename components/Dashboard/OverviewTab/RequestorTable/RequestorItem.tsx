@@ -1,3 +1,4 @@
+import { startCase } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import {
   Avatar,
@@ -8,7 +9,6 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import { startCase } from "lodash";
 import { RequestorAndSignerDataType } from "../Overview";
 
 type RequestorItemProps = {

@@ -22,9 +22,9 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { capitalize, toLower } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { startCase } from "utils/string";
 import NotificationList from "./NotificationList";
 
 type Props = {
@@ -158,7 +158,7 @@ const NotificationPage = ({
 
   return (
     <Container p={0}>
-      <Title order={2}>{capitalize(app)} Notifications </Title>
+      <Title order={2}>{startCase(app)} Notifications </Title>
 
       <Tabs
         defaultValue={tab}
@@ -166,7 +166,7 @@ const NotificationPage = ({
           router
             .replace(
               `/team-${
-                app === "REQUEST" ? `${toLower(app)}s` : toLower(app)
+                app === "REQUEST" ? `${app.toLowerCase()}s` : app.toLowerCase()
               }/notification?tab=${value}`
             )
             .then(() => handleGetNotificationList(1, value as string))
@@ -202,7 +202,7 @@ const NotificationPage = ({
           setActivePage(value);
           await router.push(
             `/team-${
-              app === "REQUEST" ? `${toLower(app)}s` : toLower(app)
+              app === "REQUEST" ? `${app.toLowerCase()}s` : app.toLowerCase()
             }/notification?tab=${tab}&page=${value}`
           );
           await handleGetNotificationList(value);

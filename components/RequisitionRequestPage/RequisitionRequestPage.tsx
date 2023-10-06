@@ -21,7 +21,6 @@ import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { lowerCase } from "lodash";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
@@ -122,7 +121,7 @@ const RequisitionRequestPage = ({
       });
 
       notifications.show({
-        message: `Request ${lowerCase(status)}.`,
+        message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
     } catch (error) {

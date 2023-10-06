@@ -1,5 +1,6 @@
 import { insertProjectMember } from "@/backend/api/post";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamProjectTableRow } from "@/utils/types";
 import {
@@ -21,7 +22,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { startCase } from "lodash";
 import { Dispatch, SetStateAction, forwardRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { SelecteItemType } from "../CreateTeamProject";
@@ -64,8 +64,10 @@ const Value = ({
             )}
             radius="xl"
           >
-            {startCase(member.team_member_user.user_first_name[0])}
-            {startCase(member.team_member_user.user_last_name[0])}
+            {startCase(
+              member.team_member_user.user_first_name[0] +
+                member.team_member_user.user_last_name[0]
+            )}
           </Avatar>
         </Box>
         <Box sx={{ lineHeight: 1, fontSize: rem(12) }}>{label}</Box>
@@ -92,8 +94,10 @@ const SelectItem = forwardRef<HTMLDivElement, SelecteItemType>(
             Number(`${member.team_member_user.user_id.charCodeAt(0)}`)
           )}
         >
-          {startCase(member.team_member_user.user_first_name[0])}
-          {startCase(member.team_member_user.user_last_name[0])}
+          {startCase(
+            member.team_member_user.user_first_name[0] +
+              member.team_member_user.user_last_name[0]
+          )}
         </Avatar>
 
         <div>

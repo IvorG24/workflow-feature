@@ -6,6 +6,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { InvitationWithTeam, TeamTableRow } from "@/utils/types";
 import {
@@ -19,7 +20,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -108,13 +108,11 @@ const TeamInvitationPage = ({ invitation }: Props) => {
                 )
               )}
             >
-              {capitalize(
+              {startCase(
                 invitation.invitation_from_team_member.team_member_team
-                  .team_name[0]
-              )}
-              {capitalize(
-                invitation.invitation_from_team_member.team_member_team
-                  .team_name[1]
+                  .team_name[0] +
+                  invitation.invitation_from_team_member.team_member_team
+                    .team_name[1]
               )}
             </Avatar>
             {status === "PENDING" ? (

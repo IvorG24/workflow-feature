@@ -1,16 +1,16 @@
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { regExp } from "@/utils/string";
+import { regExp, startCase } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
   AttachmentTableRow,
+  CSICodeTableRow,
   CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
-  CSICodeTableRow,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -31,7 +31,6 @@ import {
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { lowerCase, startCase } from "lodash";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import validator from "validator";
@@ -1933,7 +1932,7 @@ export const getRequestStatusCount = async (
       const { count: statusCount } = await getCount(status);
 
       return {
-        label: startCase(lowerCase(status)),
+        label: startCase(status.toLowerCase()),
         value: statusCount || 0,
       };
     })
@@ -1973,7 +1972,7 @@ export const getRequestorData = async (
       const { count: statusCount } = await getRequestCount(status);
 
       return {
-        label: startCase(lowerCase(status)),
+        label: startCase(status.toLowerCase()),
         value: statusCount || 0,
       };
     })
@@ -2010,7 +2009,7 @@ export const getSignerData = async (
       const { count: statusCount } = await getSignedRequestCount(status);
 
       return {
-        label: startCase(lowerCase(status)),
+        label: startCase(status.toLowerCase()),
         value: statusCount || 0,
       };
     })

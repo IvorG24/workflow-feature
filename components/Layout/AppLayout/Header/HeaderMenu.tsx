@@ -17,6 +17,7 @@ import {
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 // import { AppType } from "@/utils/types";
+import { startCase } from "@/utils/string";
 import {
   ActionIcon,
   Avatar,
@@ -35,7 +36,6 @@ import {
   // IconSwitch2,
   IconUserCircle,
 } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import { useRouter } from "next/router";
 import Notification from "./Notification";
 

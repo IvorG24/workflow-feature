@@ -1,3 +1,4 @@
+import { isEmpty } from "@/utils/functions";
 import { requestPath } from "@/utils/string";
 import { ConnectedRequestItemType } from "@/utils/types";
 import {
@@ -11,7 +12,6 @@ import {
   Title,
 } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
-import { isEmpty } from "lodash";
 
 type Props = {
   connectedRequestIDList: { [key: string]: ConnectedRequestItemType[] };

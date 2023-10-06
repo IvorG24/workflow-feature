@@ -1,3 +1,4 @@
+import { startCase } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
@@ -11,7 +12,6 @@ import {
   Title,
 } from "@mantine/core";
 import { IconCalendar } from "@tabler/icons-react";
-import { capitalize, lowerCase } from "lodash";
 
 type Props = {
   request: RequestWithResponseType;
@@ -41,8 +41,9 @@ const RequestDetailsSection = ({
           color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
           radius="xl"
         >
-          {capitalize(requestor.user_first_name[0])}
-          {capitalize(requestor.user_last_name[0])}
+          {startCase(
+            requestor.user_first_name[0] + requestor.user_last_name[0]
+          )}
         </Avatar>
         <Stack spacing={0}>
           <Text>
@@ -60,7 +61,7 @@ const RequestDetailsSection = ({
       </Group>
       <Group spacing="md" mt="xs">
         <Text>Status:</Text>
-        <Badge color={getStatusToColor(lowerCase(requestStatus))}>
+        <Badge color={getStatusToColor(requestStatus.toLowerCase())}>
           {requestStatus}
         </Badge>
       </Group>

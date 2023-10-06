@@ -1,4 +1,5 @@
 import { SSOTTableData } from "@/hooks/useSSOTTableFilter";
+import { startCase } from "@/utils/string";
 import {
   Accordion,
   Box,
@@ -11,7 +12,6 @@ import {
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { IconColumns3, IconEye, IconEyeOff } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import { useEffect, useState } from "react";
 
 type Props = {
