@@ -1,7 +1,6 @@
 import { deleteComment } from "@/backend/api/delete";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { startCase } from "@/utils/string";
 import {
   getAvatarColor,
   getFileType,
@@ -190,9 +189,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                 )}
                 radius="xl"
               >
-                {startCase(
+                {(
                   commenter.user_first_name[0] + commenter.user_last_name[0]
-                )}
+                ).toUpperCase()}
               </Avatar>
 
               <Alert
@@ -231,9 +230,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                     )}
                     radius="xl"
                   >
-                    {startCase(
+                    {(
                       commenter.user_first_name[0] + commenter.user_last_name[0]
-                    )}
+                    ).toUpperCase()}
                   </Avatar>
                   <Stack spacing={0} ml="md">
                     <Text size={14}>
