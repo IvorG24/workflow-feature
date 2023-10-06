@@ -1,7 +1,22 @@
+import { checkIfJiraIDIsUnique } from "@/backend/api/get";
+import { Database } from "@/utils/database";
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
-import { Button, Paper, Space, Stack, Text, Title } from "@mantine/core";
+import {
+  Button,
+  Flex,
+  Paper,
+  Space,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 // import { useRouter } from "next/router";
-import { openConfirmModal } from "@mantine/modals";
+import { modals, openConfirmModal } from "@mantine/modals";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconId } from "@tabler/icons-react";
+import { useForm } from "react-hook-form";
 
 type Props = {
   isUserOwner: boolean;
@@ -9,8 +24,12 @@ type Props = {
   handleCancelRequest: () => void;
   openPromptDeleteModal: () => void;
   isUserSigner: boolean;
-  handleUpdateRequest: (status: "APPROVED" | "REJECTED") => void;
+  handleUpdateRequest: (
+    status: "APPROVED" | "REJECTED",
+    jiraId?: string
+  ) => void;
   signer?: RequestWithResponseType["request_signer"][0];
+  isRf?: boolean;
 };
 
 const RequestActionSection = ({
@@ -21,31 +40,116 @@ const RequestActionSection = ({
   isUserSigner,
   handleUpdateRequest,
   signer,
+  isRf,
 }: Props) => {
-  const handleAction = (action: string, color: string) => {
-    openConfirmModal({
-      title: <Text>Please confirm your action.</Text>,
-      children: (
-        <Text size={14}>Are you sure you want to {action} this request?</Text>
-      ),
-      labels: { confirm: "Confirm", cancel: "Cancel" },
-      centered: true,
-      confirmProps: { color },
+  const supabaseClient = createPagesBrowserClient<Database>();
 
-      onConfirm: () => {
-        switch (action) {
-          case "approve":
-            handleUpdateRequest("APPROVED");
-            break;
-          case "reject":
-            handleUpdateRequest("REJECTED");
-            break;
-          case "cancel":
-            handleCancelRequest();
-            break;
-        }
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    formState: { errors },
+  } = useForm<{ jiraId: string }>();
+
+  const handleAction = (action: string, color: string) => {
+    if (isRf && action === "approve") {
+      modals.open({
+        modalId: "approveRf",
+        title: <Text>Please confirm your action.</Text>,
+        children: (
+          <>
+            <Text size={14}>
+              Are you sure you want to {action} this request?
+            </Text>
+            <form
+              onSubmit={handleSubmit((data) => {
+                handleUpdateRequest("APPROVED", data.jiraId);
+                modals.close("approveRf");
+              })}
+            >
+              <TextInput
+                icon={<IconId size={16} />}
+                placeholder="Jira ID"
+                data-autofocus
+                {...register("jiraId", {
+                  validate: {
+                    required: (value) => {
+                      if (!value) {
+                        notifications.show({
+                          message: "Jira ID is required.",
+                          color: "red",
+                        });
+                        return "Jira ID is required.";
+                      } else {
+                        return true;
+                      }
+                    },
+                    checkIfUnique: async (value) => {
+                      if (
+                        await checkIfJiraIDIsUnique(supabaseClient, {
+                          value: value,
+                        })
+                      ) {
+                        notifications.show({
+                          message: "Jira ID already exists.",
+                          color: "red",
+                        });
+                        return "Jira ID already exists.";
+                      } else {
+                        return true;
+                      }
+                    },
+                  },
+                })}
+                error={errors.jiraId?.message}
+              />
+              <Flex mt="md" align="center" justify="flex-end" gap="sm">
+                <Button
+                  variant="default"
+                  color="dimmed"
+                  onClick={() => {
+                    setValue("jiraId", "");
+                    setError("jiraId", { message: "" });
+                    modals.close("approveRf");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" color="green">
+                  Approve
+                </Button>
+              </Flex>
+            </form>
+          </>
+        ),
+        centered: true,
+      });
+    } else {
+      openConfirmModal({
+        title: <Text>Please confirm your action.</Text>,
+        children: (
+          <Text size={14}>Are you sure you want to {action} this request?</Text>
+        ),
+        labels: { confirm: "Confirm", cancel: "Cancel" },
+        centered: true,
+        confirmProps: { color },
+
+        onConfirm: () => {
+          switch (action) {
+            case "approve":
+              handleUpdateRequest("APPROVED");
+              break;
+            case "reject":
+              handleUpdateRequest("REJECTED");
+              break;
+            case "cancel":
+              handleCancelRequest();
+              break;
+          }
+        },
+      });
+    }
   };
 
   const canSignerTakeAction =

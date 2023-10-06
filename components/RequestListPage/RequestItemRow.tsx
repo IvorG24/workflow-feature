@@ -59,8 +59,32 @@ const RequestItemRow = ({ request }: Props) => {
           </CopyButton>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={3}>
-        <Text>{request.request_form.form_name}</Text>
+      <Grid.Col span={2}>
+        <Flex justify="space-between">
+          <Text truncate maw={150}>
+            {request.request_jira_id}
+          </Text>
+          {request.request_jira_id && (
+            <CopyButton value={request.request_jira_id}>
+              {({ copied, copy }) => (
+                <Tooltip
+                  label={copied ? "Copied" : "Copy jira id"}
+                  onClick={copy}
+                >
+                  <ActionIcon>
+                    <IconCopy size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+            </CopyButton>
+          )}
+        </Flex>
+      </Grid.Col>
+
+      <Grid.Col span={2}>
+        <Tooltip label={request.request_form.form_name} openDelay={2000}>
+          <Text truncate>{request.request_form.form_name}</Text>
+        </Tooltip>
       </Grid.Col>
       <Grid.Col span={1}>
         <Badge

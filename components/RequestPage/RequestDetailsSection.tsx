@@ -70,6 +70,12 @@ const RequestDetailsSection = ({
           <Text>{request.request_project.team_project_name}</Text>
         </Group>
       )}
+      {request.request_jira_id && (
+        <Group spacing="md" mt="xl">
+          <Title order={5}>Jira ID:</Title>
+          <Text>{request.request_jira_id}</Text>
+        </Group>
+      )}
     </Paper>
   );
 };

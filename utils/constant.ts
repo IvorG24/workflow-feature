@@ -1127,7 +1127,6 @@ export const REQUISITION_FIELDS_ORDER = [
   "Type",
   "Date Needed",
   "Purpose",
-  "Jira ID",
 ];
 
 export const FORMSLY_FORM_ORDER = [

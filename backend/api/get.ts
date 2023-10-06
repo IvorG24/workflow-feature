@@ -3339,23 +3339,18 @@ export const getCommentAttachment = async (
 export const checkIfJiraIDIsUnique = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    fieldId: string;
     value: string;
   }
 ) => {
-  const { fieldId, value } = params;
+  const { value } = params;
 
   const { count, error } = await supabaseClient
-    .from("request_response_table")
-    .select(
-      "*, request_response_request:request_response_request_id!inner(*)",
-      {
-        count: "exact",
-      }
-    )
-    .eq("request_response_request.request_status", "APPROVED")
-    .eq("request_response", `"${value}"`)
-    .eq("request_response_field_id", fieldId);
+    .from("request_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("request_status", "APPROVED")
+    .eq("request_jira_id", value);
 
   if (error) throw error;
 
