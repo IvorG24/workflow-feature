@@ -132,7 +132,7 @@ const HeaderMenu = () => {
               src={userAvatar}
               color={getAvatarColor(Number(`${user?.user_id.charCodeAt(0)}`))}
             >
-              {userInitials.toUpperCase()}
+              {userInitials}
             </Avatar>
           </ActionIcon>
         </Menu.Target>
