@@ -399,6 +399,7 @@ plv8.subtransaction(function(){
         SELECT * FROM (
           SELECT 
             request_table.request_id, 
+            request_table.request_jira_id,
             request_table.request_formsly_id,
             request_table.request_date_created, 
             request_table.request_team_member_id, 
@@ -420,11 +421,9 @@ plv8.subtransaction(function(){
     );
         
   }else{
-    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_table.request_jira_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
   }
 
-  
-  
   ssot_data = requisition_requests.map((requisition) => {
     // Requisition request response
     const requisition_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${requisition.request_id}'`);
@@ -630,13 +629,12 @@ plv8.subtransaction(function(){
           sourced_item_ro_request: ro_list
         }
       });
-    }
-
-    
+    } 
 
     return {
       requisition_request_id: requisition.request_id,
       requisition_request_formsly_id: requisition.request_formsly_id,
+      requisition_request_jira_id: requisition.request_jira_id,
       requisition_request_date_created: requisition.request_date_created,
       requisition_request_response: requisition_response_fields,
       requisition_request_owner: requisition_team_member,
