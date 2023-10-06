@@ -4,7 +4,6 @@ import {
 } from "@/backend/api/update";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { Database } from "@/utils/database";
-import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
 import {
@@ -182,7 +181,9 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
           )}
           radius="xl"
         >
-          {startCase(creator.user_first_name[0] + creator.user_last_name[0])}
+          {(
+            creator.user_first_name[0] + creator.user_last_name[0]
+          ).toUpperCase()}
         </Avatar>
         <Stack spacing={0}>
           <Text>{`${creator.user_first_name} ${creator.user_last_name}`}</Text>

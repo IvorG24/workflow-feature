@@ -1,6 +1,5 @@
 import { insertProjectMember } from "@/backend/api/post";
 import { Database } from "@/utils/database";
-import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamProjectTableRow } from "@/utils/types";
 import {
@@ -64,10 +63,10 @@ const Value = ({
             )}
             radius="xl"
           >
-            {startCase(
+            {(
               member.team_member_user.user_first_name[0] +
-                member.team_member_user.user_last_name[0]
-            )}
+              member.team_member_user.user_last_name[0]
+            ).toUpperCase()}
           </Avatar>
         </Box>
         <Box sx={{ lineHeight: 1, fontSize: rem(12) }}>{label}</Box>
@@ -94,10 +93,10 @@ const SelectItem = forwardRef<HTMLDivElement, SelecteItemType>(
             Number(`${member.team_member_user.user_id.charCodeAt(0)}`)
           )}
         >
-          {startCase(
+          {(
             member.team_member_user.user_first_name[0] +
-              member.team_member_user.user_last_name[0]
-          )}
+            member.team_member_user.user_last_name[0]
+          ).toUpperCase()}
         </Avatar>
 
         <div>

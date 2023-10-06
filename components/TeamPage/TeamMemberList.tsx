@@ -60,8 +60,7 @@ const TeamMemberList = ({
               size={24}
               radius={12}
             >
-              {startCase(user.user_first_name[0])}
-              {startCase(user.user_last_name[0])}
+              {(user.user_first_name[0] + user.user_last_name[0]).toUpperCase()}
             </Avatar>
 
             <Text>{startCase(fullname)}</Text>

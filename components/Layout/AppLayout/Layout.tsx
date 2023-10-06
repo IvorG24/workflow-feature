@@ -12,7 +12,6 @@ import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { startCase } from "@/utils/string";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -120,7 +119,7 @@ const Layout = ({ children }: LayoutProps) => {
         // set user avatar and initials
         setUserAvatar(user.user_avatar);
         setUserInitials(
-          `${startCase(user.user_first_name[0] + user.user_last_name[0])}`
+          (user.user_first_name[0] + user.user_last_name[0]).toUpperCase()
         );
 
         // fetch notification list
