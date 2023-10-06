@@ -1,4 +1,3 @@
-import { startCase } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
@@ -41,9 +40,9 @@ const RequestDetailsSection = ({
           color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
           radius="xl"
         >
-          {startCase(
+          {(
             requestor.user_first_name[0] + requestor.user_last_name[0]
-          )}
+          ).toUpperCase()}
         </Avatar>
         <Stack spacing={0}>
           <Text>
