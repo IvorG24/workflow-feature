@@ -6,7 +6,6 @@ import {
 import { udpateUser } from "@/backend/api/update";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { startCase } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -125,7 +124,7 @@ const UserSettingsPage = ({ user }: Props) => {
       });
 
       setUserInitials(
-        `${startCase(data.user_first_name[0] + data.user_last_name[0])}`
+        (data.user_first_name[0] + data.user_last_name[0]).toUpperCase()
       );
 
       notifications.show({

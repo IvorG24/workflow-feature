@@ -29,7 +29,6 @@ import {
   IconSearch,
   IconTrash,
 } from "@tabler/icons-react";
-import { startCase } from "cypress/types/lodash";
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useForm, useFormContext } from "react-hook-form";
@@ -93,10 +92,10 @@ const TeamProjectList = ({
             radius="xl"
             size={30}
           >
-            {startCase(
+            {(
               member.team_member_user.user_first_name[0] +
-                member.team_member_user.user_last_name[0]
-            )}
+              member.team_member_user.user_last_name[0]
+            ).toUpperCase()}
           </Avatar>
         </Tooltip>
       );

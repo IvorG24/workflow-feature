@@ -1,4 +1,3 @@
-import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { ReceiverStatusType, RequestListItemType } from "@/utils/types";
 import { Avatar, Tooltip, createStyles } from "@mantine/core";
@@ -51,9 +50,11 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
                         ]
                       : ""
                   }
-                >{`${startCase(
-                  user.user_first_name[0] + user.user_last_name[0]
-                )}`}</Avatar>
+                >
+                  {(
+                    user.user_first_name[0] + user.user_last_name[0]
+                  ).toUpperCase()}
+                </Avatar>
               </Tooltip>
             );
           }

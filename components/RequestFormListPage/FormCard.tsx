@@ -1,4 +1,3 @@
-import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { FormWithOwnerType } from "@/utils/types";
 import {
@@ -126,12 +125,10 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
                   )
                 )}
               >
-                {startCase(
-                  form.form_team_member.team_member_user.user_first_name[0]
-                )}
-                {startCase(
+                {(
+                  form.form_team_member.team_member_user.user_first_name[0] +
                   form.form_team_member.team_member_user.user_last_name[1]
-                )}
+                ).toUpperCase()}
               </Avatar>
             </Tooltip>
             <Tooltip
