@@ -249,7 +249,10 @@ const RequestListPage = ({
                     <Grid.Col span={2}>
                       <Text weight={600}>Request ID</Text>
                     </Grid.Col>
-                    <Grid.Col span={3}>
+                    <Grid.Col span={2}>
+                      <Text weight={600}>Jira ID</Text>
+                    </Grid.Col>
+                    <Grid.Col span={2}>
                       <Text weight={600}>Form Name</Text>
                     </Grid.Col>
                     <Grid.Col span={1}>

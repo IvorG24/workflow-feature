@@ -2,6 +2,7 @@ import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
 import { isEmpty } from "@/utils/functions";
 import { startCase } from "@/utils/string";
+import { FormTableRow } from "@/utils/types";
 import { Box, Space } from "@mantine/core";
 import {
   IconCirclePlus,
@@ -20,9 +21,12 @@ const ReviewAppNavLink = () => {
   const activeTeam = useActiveTeam();
   const forms = useFormList();
 
-  const requisitionForm = forms.filter(
+  const rfForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Requisition"
   )[0];
+  const requisitionForm = rfForm as unknown as FormTableRow & {
+    form_team_group: string[];
+  };
 
   const tempCreateRequest = [
     {
@@ -94,9 +98,11 @@ const ReviewAppNavLink = () => {
 
   return (
     <>
-      {requisitionForm && (
+      {requisitionForm &&
+      requisitionForm.form_is_hidden === false &&
+      requisitionForm.form_team_group.length ? (
         <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
-      )}
+      ) : null}
 
       {!isEmpty(activeTeam) ? (
         <NavLinkSection

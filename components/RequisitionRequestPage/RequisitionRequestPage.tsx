@@ -94,7 +94,10 @@ const RequisitionRequestPage = ({
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 
-  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
+  const handleUpdateRequest = async (
+    status: "APPROVED" | "REJECTED",
+    jiraId?: string
+  ) => {
     try {
       setIsLoading(true);
       const signer = isUserSigner;
@@ -118,6 +121,7 @@ const RequisitionRequestPage = ({
         formName: request.request_form.form_name,
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
+        jiraId,
       });
 
       notifications.show({
@@ -293,6 +297,7 @@ const RequisitionRequestPage = ({
             signer={
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }
+            isRf
           />
         ) : null}
 

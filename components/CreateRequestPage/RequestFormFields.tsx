@@ -1,4 +1,4 @@
-import { checkIfJiraIDIsUnique, getRequestFormslyId } from "@/backend/api/get";
+import { getRequestFormslyId } from "@/backend/api/get";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { addCommaToNumber, regExp, requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
@@ -169,24 +169,6 @@ const RequestFormFields = ({
               `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
               {
                 ...fieldRules,
-                validate: {
-                  checkIfUnique: async (value) => {
-                    if (field.field_name === "Jira ID") {
-                      if (
-                        await checkIfJiraIDIsUnique(supabaseClient, {
-                          fieldId: field.field_id,
-                          value: `${value}`,
-                        })
-                      ) {
-                        return "Jira ID must be unique";
-                      } else {
-                        return true;
-                      }
-                    } else {
-                      return true;
-                    }
-                  },
-                },
               }
             )}
             error={fieldError}
