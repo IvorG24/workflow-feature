@@ -1,5 +1,6 @@
 import { insertGroupMember } from "@/backend/api/post";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamGroupTableRow } from "@/utils/types";
 import {
@@ -21,7 +22,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { startCase } from "lodash";
 import { Dispatch, SetStateAction, forwardRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { SelecteItemType } from "../CreateTeamProject";

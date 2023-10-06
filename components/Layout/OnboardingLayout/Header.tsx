@@ -15,7 +15,6 @@ import {
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconMoonStars, IconSun } from "@tabler/icons-react";
-import { lowerCase } from "lodash";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { MouseEventHandler } from "react";
@@ -60,7 +59,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
           <Group>
             <UnstyledButton onClick={() => router.push("/")}>
               <Image
-                src={`/logo-request-${lowerCase(theme.colorScheme)}.svg`}
+                src={`/logo-request-${theme.colorScheme.toLowerCase()}.svg`}
                 width={127}
                 height={45}
                 alt="Formsly Logo"

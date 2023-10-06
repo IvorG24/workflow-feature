@@ -2,6 +2,7 @@ import { deleteRow } from "@/backend/api/delete";
 import { getTeamProjectList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { generateRandomId } from "@/utils/functions";
 import { TeamProjectTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -19,7 +20,6 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { lowerCase, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -79,7 +79,7 @@ const ProjectList = ({
   const [searchResult, setSearchResult] =
     useState<TeamProjectTableRow[]>(projectList);
 
-  const headerCheckboxKey = uniqueId();
+  const headerCheckboxKey = generateRandomId();
 
   const handleCheckRow = (projectId: string) => {
     if (checkList.includes(projectId)) {
@@ -252,9 +252,9 @@ const ProjectList = ({
 
               setSearchResult(
                 updatedProjectList.filter((project) =>
-                  lowerCase(project.team_project_name).includes(
-                    lowerCase(search)
-                  )
+                  project.team_project_name
+                    .toLowerCase()
+                    .includes(search.toLowerCase())
                 )
               );
             }
@@ -265,9 +265,9 @@ const ProjectList = ({
             setProjectList(updatedProjectList as TeamProjectTableRow[]);
             setProjectCount(updatedProjectList.length);
 
-            const searchIncludesNewProject = lowerCase(
-              payload.new.team_project_name
-            ).includes(lowerCase(search));
+            const searchIncludesNewProject = payload.new.team_project_name
+              .toLowerCase()
+              .includes(search.toLowerCase());
 
             if (searchIncludesNewProject) {
               setSearchResult(updatedProjectList as TeamProjectTableRow[]);

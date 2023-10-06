@@ -1,3 +1,4 @@
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamMemberType } from "@/utils/types";
 import {
@@ -15,7 +16,6 @@ import {
   TextInput,
   rem,
 } from "@mantine/core";
-import { startCase } from "lodash";
 import { Dispatch, SetStateAction, forwardRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 

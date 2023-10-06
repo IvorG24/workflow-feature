@@ -15,7 +15,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { toUpper } from "lodash";
 import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
@@ -67,7 +66,7 @@ const CreateProject = ({
 
   const onSubmit = async (data: ProjectForm) => {
     try {
-      const projectName = toUpper(data.projectName.trim());
+      const projectName = data.projectName.trim().toUpperCase();
       const projectInitials = generateProjectInitials(projectName);
       if (
         await checkIfTeamProjectExists(supabaseClient, {

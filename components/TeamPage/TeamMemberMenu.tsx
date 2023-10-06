@@ -1,4 +1,5 @@
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { startCase } from "@/utils/string";
 import { MemberRoleType, TeamMemberType } from "@/utils/types";
 import { ActionIcon, Menu, Text } from "@mantine/core";
 import { openConfirmModal } from "@mantine/modals";
@@ -10,7 +11,6 @@ import {
   IconUserShare,
   IconUserUp,
 } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import { useRouter } from "next/router";
 
 type Props = {

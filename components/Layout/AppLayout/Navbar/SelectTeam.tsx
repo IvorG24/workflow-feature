@@ -16,11 +16,12 @@ import {
 import { useUserActions, useUserProfile } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { isEmpty } from "@/utils/functions";
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { isEmpty, lowerCase, startCase } from "lodash";
 import { useRouter } from "next/router";
 import { forwardRef } from "react";
 
@@ -130,7 +131,7 @@ const SelectTeam = () => {
       setUnreadNotification(unreadNotificationCount || 0);
     }
 
-    await router.push(`/team-${lowerCase(activeApp)}s/dashboard`);
+    await router.push(`/team-${activeApp.toLowerCase()}s/dashboard`);
 
     setIsLoading(false);
   };

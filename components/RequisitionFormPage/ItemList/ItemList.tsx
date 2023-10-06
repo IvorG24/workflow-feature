@@ -3,6 +3,7 @@ import { getItemList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { generateRandomId } from "@/utils/functions";
 import {
   ItemDescriptionTableRow,
   ItemWithDescriptionType,
@@ -24,7 +25,6 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 
@@ -76,7 +76,7 @@ const ItemList = ({
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
 
-  const headerCheckboxKey = uniqueId();
+  const headerCheckboxKey = generateRandomId();
 
   const handleCheckRow = (itemId: string) => {
     if (checkList.includes(itemId)) {

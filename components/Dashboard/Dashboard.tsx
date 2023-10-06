@@ -1,6 +1,7 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
+import { startCase } from "@/utils/string";
 import {
   Alert,
   Box,
@@ -15,7 +16,6 @@ import {
 import { DatePickerInput } from "@mantine/dates";
 import { usePrevious } from "@mantine/hooks";
 import { IconAlertCircle, IconCalendarEvent } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";

@@ -6,12 +6,12 @@ import {
 import { udpateUser } from "@/backend/api/update";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
-import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -125,9 +125,7 @@ const UserSettingsPage = ({ user }: Props) => {
       });
 
       setUserInitials(
-        `${capitalize(data.user_first_name[0])}${capitalize(
-          data.user_last_name[0]
-        )}`
+        `${startCase(data.user_first_name[0] + data.user_last_name[0])}`
       );
 
       notifications.show({

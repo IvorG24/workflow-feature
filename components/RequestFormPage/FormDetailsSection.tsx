@@ -4,6 +4,7 @@ import {
 } from "@/backend/api/update";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
 import {
@@ -24,7 +25,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCalendar } from "@tabler/icons-react";
-import { capitalize } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -182,8 +182,7 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
           )}
           radius="xl"
         >
-          {capitalize(creator.user_first_name[0])}
-          {capitalize(creator.user_last_name[0])}
+          {startCase(creator.user_first_name[0] + creator.user_last_name[0])}
         </Avatar>
         <Stack spacing={0}>
           <Text>{`${creator.user_first_name} ${creator.user_last_name}`}</Text>

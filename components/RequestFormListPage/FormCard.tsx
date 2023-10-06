@@ -1,3 +1,4 @@
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { FormWithOwnerType } from "@/utils/types";
 import {
@@ -22,7 +23,6 @@ import {
   IconEyeOff,
   IconTrash,
 } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { MouseEventHandler } from "react";
