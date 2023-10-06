@@ -186,7 +186,6 @@ const requisitionTableColumnList = [
   "Type",
   "Date Needed",
   "Purpose",
-  "Jira ID",
 ];
 
 const requisitionItemTableColumnList = [
@@ -1925,9 +1924,6 @@ const SSOTSpreadsheetView = ({
                       )}
                       {requisitionTable.columnList["purpose"] && (
                         <th className={classes.long}>Purpose</th>
-                      )}
-                      {requisitionTable.columnList["jira_id"] && (
-                        <th className={classes.long}>Jira ID</th>
                       )}
                       {requisitionItemTable.show && <th>Item</th>}
                     </>

@@ -203,6 +203,7 @@ CREATE TABLE request_table(
   request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  request_jira_id VARCHAR(4000),
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
@@ -759,6 +760,7 @@ RETURNS VOID AS $$
       requestAction,
       memberId,
       teamId,
+      jiraId
     } = input_data;
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -770,7 +772,7 @@ RETURNS VOID AS $$
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
     
     if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() WHERE request_id='${requestId}';`);
+      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW(), ${jiraId ? `request_jira_id = '${jiraId}'` : ""} WHERE request_id='${requestId}';`);
     }
     
  });
@@ -850,7 +852,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description.description,
         field_type: "DROPDOWN",
-        field_order: 15,
+        field_order: 14,
         field_section_id: section_id,
         field_is_required: true,
       });
@@ -1757,6 +1759,7 @@ RETURNS JSON AS $$
             request_date_created, 
             request_status,
             request_team_member_id,
+            request_jira_id,
             request_form_id
           FROM request_table
           INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
@@ -1843,6 +1846,7 @@ RETURNS JSON AS $$
           request_formsly_id: request.request_formsly_id,
           request_date_created: request.request_date_created, 
           request_status: request.request_status, 
+          request_jira_id: request.request_jira_id,
           request_team_member: {
             team_member_team_id: request.request_team_member_id,
             team_member_user: {
@@ -4543,6 +4547,7 @@ RETURNS JSON as $$
       request_team_member_id: requestData.request_team_member_id,
       request_form_id: requestData.request_form_id,
       request_project_id: requestData.request_project_id,
+      request_jira_id: requestData.request_jira_id,
       request_comment: requestCommentData.map(requestComment => {
         return {
           comment_id: requestComment.comment_id, 
@@ -6252,17 +6257,16 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('c08820a5-592a-4bf9-9528-97b7ee7be94b', 'Purpose', 'TEXT', 4, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
-('fc0fe006-57db-4022-b154-1018b7b52f6b', 'Jira ID', 'TEXT', 5, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 
-('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Base Unit of Measurement', 'TEXT', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('a6266f0b-1339-4c50-910e-9bae73031df0', 'CSI Code Description', 'DROPDOWN', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
-('0c9831e7-dc18-4aaf-87f7-2e7bcbc53eae', 'CSI Code', 'TEXT', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('64bb5899-bad4-4fe4-bc08-60dce9923f57', 'Division Description', 'TEXT', 12, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('8fdb158b-bed5-4eac-a6dc-bc69275f1ac7', 'Level 2 Major Group Description', 'TEXT', 13, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('b69182a9-dc96-472b-aa31-b1f2f92ec78b', 'Level 2 Minor Group Description', 'TEXT', 14, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('b2c899e8-4ac7-4019-819e-d6ebcae71f41', 'General Name', 'DROPDOWN', 5, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('c3efa89d-8297-4920-8c3e-d9dee61fdf13', 'Base Unit of Measurement', 'TEXT', 6, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('d78145e8-ba83-4fa8-907f-db66fd3cae0d', 'Quantity', 'NUMBER', 7, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('440d9a37-656a-4237-be3b-c434f512eaa9', 'GL Account', 'TEXT', 8, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('a6266f0b-1339-4c50-910e-9bae73031df0', 'CSI Code Description', 'DROPDOWN', 9, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, false),
+('0c9831e7-dc18-4aaf-87f7-2e7bcbc53eae', 'CSI Code', 'TEXT', 10, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('64bb5899-bad4-4fe4-bc08-60dce9923f57', 'Division Description', 'TEXT', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('8fdb158b-bed5-4eac-a6dc-bc69275f1ac7', 'Level 2 Major Group Description', 'TEXT', 12, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+('b69182a9-dc96-472b-aa31-b1f2f92ec78b', 'Level 2 Minor Group Description', 'TEXT', 13, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 
 -- Sourced Item 
 ('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),

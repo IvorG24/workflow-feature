@@ -59,6 +59,9 @@ const RequestItemRow = ({ request }: Props) => {
           </CopyButton>
         </Flex>
       </Grid.Col>
+      <Grid.Col span={1}>
+        <Text>{request.request_jira_id}</Text>
+      </Grid.Col>
       <Grid.Col span={3}>
         <Text>{request.request_form.form_name}</Text>
       </Grid.Col>
