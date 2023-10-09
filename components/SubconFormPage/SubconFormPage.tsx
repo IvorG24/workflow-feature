@@ -34,7 +34,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { isEmpty, isEqual } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -43,6 +42,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { isEmpty, isEqual } from "@/utils/functions";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import GroupSection from "../FormBuilder/GroupSection";
