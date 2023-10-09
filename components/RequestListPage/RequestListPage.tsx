@@ -30,6 +30,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
@@ -93,7 +94,7 @@ const RequestListPage = ({
   );
 
   const filterFormMethods = useForm<FilterFormValues>({
-    defaultValues: { isAscendingSort: false },
+    defaultValues: localFilter,
     mode: "onChange",
   });
 
@@ -117,15 +118,6 @@ const RequestListPage = ({
         return;
       }
 
-      setLocalFilter({
-        search: search,
-        requestorList: requestorList,
-        approverList: approverList,
-        formList: formList,
-        status: status,
-        isAscendingSort: isAscendingSort,
-      });
-
       setActivePage(1);
       setIsFetchingRequestList(true);
       setRequestList([]);
@@ -142,6 +134,7 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         search: search,
       };
+
       const { data, count } = await getRequestList(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
@@ -207,6 +200,11 @@ const RequestListPage = ({
       handleFilterForms();
     }
   }, [activeTeam.team_id]);
+
+  useBeforeunload(() => {
+    const filterValues = getValues();
+    setLocalFilter(filterValues as RequestListLocalFilter);
+  });
 
   return (
     <Container maw={1300} h="100%">

@@ -93,7 +93,7 @@ const RequestListFilter = ({
     const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
-      if (value.length === 0 && filterMatch.length === 0) return;
+      // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterForms();
     }
     setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
@@ -111,7 +111,6 @@ const RequestListFilter = ({
       <Controller
         control={control}
         name="isAscendingSort"
-        defaultValue={localFilter.isAscendingSort}
         render={({ field: { value } }) => {
           return (
             <Tooltip
@@ -153,6 +152,7 @@ const RequestListFilter = ({
       <Controller
         control={control}
         name="formList"
+        defaultValue={localFilter.formList}
         render={({ field: { value, onChange } }) => (
           <MultiSelect
             data={formList}
