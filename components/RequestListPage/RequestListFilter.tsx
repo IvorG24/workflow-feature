@@ -12,15 +12,16 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { FilterFormValues } from "./RequestListPage";
+import { FilterFormValues, RequestListLocalFilter } from "./RequestListPage";
 
 type RequestListFilterProps = {
   // requestList: RequestType[];
   formList: { label: string; value: string }[];
   teamMemberList: TeamMemberWithUserType[];
   handleFilterForms: () => void;
+  localFilter: RequestListLocalFilter;
 };
 
 type FilterSelectedValuesType = {
@@ -35,6 +36,7 @@ const RequestListFilter = ({
   formList,
   teamMemberList,
   handleFilterForms,
+  localFilter,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -97,12 +99,19 @@ const RequestListFilter = ({
     setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
   };
 
+  useEffect(() => {
+    // assign values to filter form localstorage
+    Object.entries(localFilter).forEach(([key, value]) => {
+      setValue(key as keyof FilterFormValues, value);
+    });
+  }, [localFilter, setValue]);
+
   return (
     <Flex gap="sm" wrap="wrap">
       <Controller
         control={control}
         name="isAscendingSort"
-        defaultValue={true}
+        defaultValue={localFilter.isAscendingSort}
         render={({ field: { value } }) => {
           return (
             <Tooltip
