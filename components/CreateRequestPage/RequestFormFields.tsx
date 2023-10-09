@@ -1,5 +1,6 @@
 import { getRequestFormslyId } from "@/backend/api/get";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
+import { addDays } from "@/utils/functions";
 import { addCommaToNumber, regExp, requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
@@ -38,6 +39,12 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
+  subconFormMethods?: {
+    onServiceNameChange: (index: number, value: string | null) => void;
+    onProjectNameChange: (value: string | null) => void;
+    subconSearch?: (value: string) => void;
+    isSearching?: boolean;
+  };
   quotationFormMethods?: {
     onItemChange: (
       index: number,
@@ -61,6 +68,7 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   requisitionFormMethods,
+  subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
@@ -305,6 +313,9 @@ const RequestFormFields = ({
                     sourcedItemFormMethods?.onProjectSiteChange();
                   } else if (field.field_name === "Requesting Project") {
                     requisitionFormMethods?.onProjectNameChange(value);
+                    subconFormMethods?.onProjectNameChange(value);
+                  } else if (field.field_name === "Service Name") {
+                    subconFormMethods?.onServiceNameChange(sectionIndex, value);
                   }
                 }}
                 data={dropdownOption}
@@ -360,6 +371,33 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
+                onSearchChange={(value) => {
+                  if (
+                    subconFormMethods &&
+                    value &&
+                    field.field_name === "Nominated Subcon"
+                  ) {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+
+                    timeoutRef.current = setTimeout(() => {
+                      subconFormMethods.subconSearch &&
+                        subconFormMethods.subconSearch(value);
+                    }, 500);
+                  }
+                }}
+                rightSection={
+                  subconFormMethods &&
+                  subconFormMethods.isSearching &&
+                  field.field_name === "Nominated Subcon" ? (
+                    <Loader size={16} />
+                  ) : null
+                }
+                searchable={
+                  subconFormMethods && field.field_name === "Nominated Subcon"
+                }
+                nothingFound="Nothing found. Try a different keyword"
               />
             )}
             rules={{ ...fieldRules }}
@@ -381,7 +419,13 @@ const RequestFormFields = ({
                   {...inputProps}
                   icon={<IconCalendar size={16} />}
                   error={fieldError}
-                  minDate={formslyFormName ? new Date() : undefined}
+                  minDate={
+                    formslyFormName
+                      ? subconFormMethods
+                        ? addDays(new Date(), 14)
+                        : new Date()
+                      : undefined
+                  }
                 />
               );
             }}

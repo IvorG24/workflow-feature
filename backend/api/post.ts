@@ -17,6 +17,9 @@ import {
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
+  ServiceForm,
+  ServiceScopeChoiceTableInsert,
+  ServiceTableInsert,
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
@@ -657,4 +660,37 @@ export const downloadFromStorage = (
   });
 
   return data.publicUrl;
+};
+
+// Create service
+export const createService = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    serviceData: ServiceTableInsert;
+    scope: ServiceForm["scope"];
+    formId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("create_service", { input_data: params })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// Create item description field
+export const createServiceScopeChoice = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: ServiceScopeChoiceTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("service_scope_choice_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data;
 };

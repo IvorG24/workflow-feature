@@ -3,11 +3,13 @@ import Meta from "@/components/Meta/Meta";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
+import SubconFormPage from "@/components/SubconFormPage/SubconFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrAdmin } from "@/utils/server-side-protections";
 import {
   FormType,
   ItemWithDescriptionType,
+  ServiceWithScopeType,
   SupplierTableRow,
   TeamGroupTableRow,
   TeamMemberWithUserType,
@@ -56,6 +58,8 @@ type Props = {
   supplierListCount?: number;
   teamProjectList?: TeamProjectTableRow[];
   teamProjectListCount?: number;
+  services?: ServiceWithScopeType[];
+  serviceListCount?: number;
 };
 
 const Page = ({
@@ -68,6 +72,8 @@ const Page = ({
   teamGroupList,
   teamProjectList = [],
   teamProjectListCount = 0,
+  services = [],
+  serviceListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -95,7 +101,20 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
           />
         );
-
+      case "Subcon":
+        return (
+          <SubconFormPage
+            services={services}
+            serviceListCount={serviceListCount}
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+            suppliers={suppliers}
+            supplierListCount={supplierListCount}
+          />
+        );
       default:
         return (
           <RequestFormPage

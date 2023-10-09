@@ -24,6 +24,7 @@ import {
   RequestResponseTableRow,
   RequestWithResponseType,
   SSOTOnLoad,
+  ServiceWithScopeAndChoice,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
@@ -852,6 +853,25 @@ export const checkRequisitionFormStatus = async (
 
   const { data, error } = await supabaseClient
     .rpc("check_requisition_form_status", {
+      form_id: formId,
+      team_id: teamId,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data === "true" ? true : (data as string);
+};
+
+// check if Subcon form can be activated
+export const checkSubconFormStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; formId: string }
+) => {
+  const { teamId, formId } = params;
+
+  const { data, error } = await supabaseClient
+    .rpc("check_subcon_form_status", {
       form_id: formId,
       team_id: teamId,
     })
@@ -3334,6 +3354,117 @@ export const getCommentAttachment = async (
   }
 };
 
+// Get service list
+export const getServiceList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; limit: number; page: number; search?: string }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("service_table")
+    .select("*, service_scope: service_scope_table(*)", {
+      count: "exact",
+    })
+    .eq("service_team_id", teamId)
+    .eq("service_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("service_name", `%${search}%`);
+  }
+
+  query.order("service_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// check if service scope already exists
+export const checkServiceScope = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { serviceScope: string; scopeId: string }
+) => {
+  const { serviceScope, scopeId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("service_scope_choice_table")
+    .select("*", { count: "exact", head: true })
+    .eq("service_scope_choice_name", serviceScope)
+    .eq("service_scope_choice_is_disabled", false)
+    .eq("service_scope_choice_service_scope_id", scopeId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get service scope field list
+export const getServiceScopeChoiceList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    scopeId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { scopeId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("service_scope_choice_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("service_scope_choice_service_scope_id", scopeId)
+    .eq("service_scope_choice_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("service_scope_choice_name", `%${search}%`);
+  }
+
+  query.order("service_scope_choice_date_created", { ascending: false });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// check if service name already exists
+export const checkServiceName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { serviceName: string; teamId: string }
+) => {
+  const { serviceName, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("service_table")
+    .select("*", { count: "exact", head: true })
+    .eq("service_name", serviceName)
+    .eq("service_is_disabled", false)
+    .eq("service_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
 // Check if jira id is unique
 export const checkIfJiraIDIsUnique = async (
   supabaseClient: SupabaseClient<Database>,
@@ -3354,4 +3485,36 @@ export const checkIfJiraIDIsUnique = async (
   if (error) throw error;
 
   return Boolean(count);
+};
+
+// get service
+export const getService = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; serviceName: string }
+) => {
+  const { teamId, serviceName } = params;
+
+  const { data, error } = await supabaseClient
+    .from("service_table")
+    .select(
+      "*, service_scope: service_scope_table(*, service_scope_choice: service_scope_choice_table(*), service_field: service_scope_field_id(*))"
+    )
+    .eq("service_team_id", teamId)
+    .eq("service_name", serviceName)
+    .eq("service_is_disabled", false)
+    .eq("service_is_available", true)
+    .eq("service_scope.service_scope_is_disabled", false)
+    .eq("service_scope.service_scope_is_available", true)
+    .eq(
+      "service_scope.service_scope_choice.service_scope_choice_is_disabled",
+      false
+    )
+    .eq(
+      "service_scope.service_scope_choice.service_scope_choice_is_available",
+      true
+    )
+    .single();
+  if (error) throw error;
+
+  return data as unknown as ServiceWithScopeAndChoice;
 };
