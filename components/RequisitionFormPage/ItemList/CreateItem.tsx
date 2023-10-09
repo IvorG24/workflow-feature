@@ -19,7 +19,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { toUpper } from "lodash";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -50,6 +49,7 @@ const CreateItem = ({
     const fetchDivisionOption = async () => {
       try {
         const option = await getItemDivisionOption(supabaseClient);
+
         option &&
           setDivisionIdOption(
             option.map((divisionId) => {
@@ -92,17 +92,17 @@ const CreateItem = ({
       const newItem = await createItem(supabaseClient, {
         itemDescription: data.descriptions.map((description) => {
           return {
-            description: toUpper(description.description),
+            description: description.description.toUpperCase(),
             withUoM: description.withUoM,
           };
         }),
         itemData: {
-          item_general_name: toUpper(data.generalName),
+          item_general_name: data.generalName.toUpperCase(),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
-          item_gl_account: toUpper(data.glAccount),
+          item_gl_account: data.glAccount.toUpperCase(),
           item_team_id: activeTeam.team_id,
-          item_division_id_list: data.division,
+          item_division_id_list: data.division.map((id) => `'${id}'`),
         },
         formId: formId,
       });
@@ -116,7 +116,7 @@ const CreateItem = ({
         color: "green",
       });
       setIsCreatingItem(false);
-    } catch (e) {
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -150,7 +150,7 @@ const CreateItem = ({
                 validate: {
                   duplicate: async (value) => {
                     const isExisting = await checkItemName(supabaseClient, {
-                      itemName: toUpper(value),
+                      itemName: value.toUpperCase(),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? "Item already exists" : true;

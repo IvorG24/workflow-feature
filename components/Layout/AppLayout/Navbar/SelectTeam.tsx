@@ -16,11 +16,11 @@ import {
 import { useUserActions, useUserProfile } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { isEmpty } from "@/utils/functions";
 import { getAvatarColor } from "@/utils/styling";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { isEmpty, lowerCase, startCase } from "lodash";
 import { useRouter } from "next/router";
 import { forwardRef } from "react";
 
@@ -39,8 +39,7 @@ const SelectItem = forwardRef<HTMLDivElement, TeamSelectItem>(
           src={team.team_logo}
           color={getAvatarColor(Number(`${value.charCodeAt(0)}`))}
         >
-          {startCase(label[0])}
-          {startCase(label[1])}
+          {(label[0] + label[1]).toUpperCase()}
         </Avatar>
 
         <div>
@@ -130,7 +129,7 @@ const SelectTeam = () => {
       setUnreadNotification(unreadNotificationCount || 0);
     }
 
-    await router.push(`/team-${lowerCase(activeApp)}s/dashboard`);
+    await router.push(`/team-${activeApp.toLowerCase()}s/dashboard`);
 
     setIsLoading(false);
   };
@@ -172,8 +171,7 @@ const SelectTeam = () => {
               Number(`${activeTeam.team_id.charCodeAt(0)}`)
             )}
           >
-            {startCase(activeTeam.team_name[0])}
-            {startCase(activeTeam.team_name[1])}
+            {(activeTeam.team_name[0] + activeTeam.team_name[1]).toUpperCase()}
           </Avatar>
         }
       />

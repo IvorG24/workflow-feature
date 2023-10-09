@@ -203,6 +203,7 @@ CREATE TABLE request_table(
   request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  request_jira_id VARCHAR(4000),
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
@@ -398,6 +399,7 @@ plv8.subtransaction(function(){
         SELECT * FROM (
           SELECT 
             request_table.request_id, 
+            request_table.request_jira_id,
             request_table.request_formsly_id,
             request_table.request_date_created, 
             request_table.request_team_member_id, 
@@ -410,7 +412,7 @@ plv8.subtransaction(function(){
             AND (
               ${[...(orCondition ? [`${orCondition}`] : []), ...(supplierCondition ? [`${supplierCondition}`] : [])].join(' AND ')}
             )
-          ORDER BY request_table.request_date_created DESC
+          ORDER BY request_table.request_status_date_updated DESC
         ) AS a 
         WHERE a.RowNumber = ${requisitionFilterCount ? requisitionFilterCount : 1}
         OFFSET ${rowStart} 
@@ -419,11 +421,9 @@ plv8.subtransaction(function(){
     );
         
   }else{
-    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_table.request_jira_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
   }
 
-  
-  
   ssot_data = requisition_requests.map((requisition) => {
     // Requisition request response
     const requisition_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${requisition.request_id}'`);
@@ -453,7 +453,7 @@ plv8.subtransaction(function(){
         quotation_condition += `request_id='${quotation.request_id}' OR `;
       });
 
-      const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+      const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
       quotation_list = quotation_requests.map(quotation => {
         // Quotation request response
         const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
@@ -480,7 +480,7 @@ plv8.subtransaction(function(){
             rir_condition += `request_id='${rir.request_id}' OR `;
           });
 
-          const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+          const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
           rir_list = rir_requests.map(rir => {
             // rir request response
             const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
@@ -527,7 +527,7 @@ plv8.subtransaction(function(){
         sourced_item_condition += `request_id='${sourced_item.request_id}' OR `;
       });
 
-      const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+      const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
       sourced_item_list = sourced_item_requests.map(sourced_item => {
         // Sourced Item request response
         const sourced_item_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${sourced_item.request_id}'`);
@@ -554,7 +554,7 @@ plv8.subtransaction(function(){
             ro_condition += `request_id='${ro.request_id}' OR `;
           });
 
-          const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+          const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
           ro_list = ro_requests.map(ro => {
             // ro request response
             const ro_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${ro.request_id}'`);
@@ -581,7 +581,7 @@ plv8.subtransaction(function(){
                 transfer_receipt_condition += `request_id='${transfer_receipt.request_id}' OR `;
               });
 
-              const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+              const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
               transfer_receipt_list = transfer_receipt_requests.map(transfer_receipt => {
                 // transfer_receipt request response
                 const transfer_receipt_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${transfer_receipt.request_id}'`);
@@ -629,13 +629,12 @@ plv8.subtransaction(function(){
           sourced_item_ro_request: ro_list
         }
       });
-    }
-
-    
+    } 
 
     return {
       requisition_request_id: requisition.request_id,
       requisition_request_formsly_id: requisition.request_formsly_id,
+      requisition_request_jira_id: requisition.request_jira_id,
       requisition_request_date_created: requisition.request_date_created,
       requisition_request_response: requisition_response_fields,
       requisition_request_owner: requisition_team_member,
@@ -757,7 +756,7 @@ RETURNS JSON AS $$
       notificationValues
     } = input_data;
 
-    request_data = plv8.execute(`UPDATE request_table SET request_status_date_updated=NOW() WHERE request_id='${requestId}' RETURNING *;`)[0];
+    request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
 
     plv8.execute(`DELETE FROM request_response_table WHERE request_response_request_id='${requestId}';`);
 
@@ -792,6 +791,7 @@ RETURNS VOID AS $$
       requestAction,
       memberId,
       teamId,
+      jiraId
     } = input_data;
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -803,7 +803,7 @@ RETURNS VOID AS $$
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
     
     if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() WHERE request_id='${requestId}';`);
+      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} WHERE request_id='${requestId}';`);
     }
     
  });
@@ -1790,6 +1790,7 @@ RETURNS JSON AS $$
             request_date_created, 
             request_status,
             request_team_member_id,
+            request_jira_id,
             request_form_id
           FROM request_table
           INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
@@ -1876,6 +1877,7 @@ RETURNS JSON AS $$
           request_formsly_id: request.request_formsly_id,
           request_date_created: request.request_date_created, 
           request_status: request.request_status, 
+          request_jira_id: request.request_jira_id,
           request_team_member: {
             team_member_team_id: request.request_team_member_id,
             team_member_user: {
@@ -4459,6 +4461,7 @@ RETURNS JSON as $$
         INNER JOIN user_table ON user_id = team_member_user_id
         WHERE
           comment_request_id = '${request_id}'
+        ORDER BY comment_date_created DESC
       `
     );
 
@@ -4471,54 +4474,100 @@ RETURNS JSON as $$
       `
     );
 
-    const section = sectionData.map(section => {
-      const fieldData = plv8.execute(
-        `
-          SELECT *
-          FROM field_table
-          WHERE field_section_id = '${section.section_id}'
-          ORDER BY field_order ASC
-        `
-      );
-      const fieldWithOptionAndResponse = fieldData.map(field => {
-        const optionData = plv8.execute(
+    const formSection = [];
+    if(requestData.form_name === "Requisition"){
+      sectionData.map(section => {
+        const fieldData = plv8.execute(
           `
             SELECT *
-            FROM option_table
-            WHERE option_field_id = '${field.field_id}'
-            ORDER BY option_order ASC
+            FROM field_table
+            WHERE field_section_id = '${section.section_id}'
+            ORDER BY field_order ASC
           `
         );
+        const fieldWithOptionAndResponse = [];
+        fieldData.forEach(field => {
+          const requestResponseData = plv8.execute(
+            `
+              SELECT *
+              FROM request_response_table
+              WHERE request_response_request_id = '${requestData.request_id}'
+              AND request_response_field_id = '${field.field_id}'
+            `
+          );
 
-        const requestResponseData = plv8.execute(
-          `
-            SELECT *
-            FROM request_response_table
-            WHERE request_response_request_id = '${requestData.request_id}'
-            AND request_response_field_id = '${field.field_id}'
-          `
-        );
-
-        return {
-          ...field,
-          field_response: requestResponseData,
-          field_option: optionData
-        };
+          if(requestResponseData.length !== 0){
+            const optionData = plv8.execute(
+              `
+                SELECT *
+                FROM option_table
+                WHERE option_field_id = '${field.field_id}'
+                ORDER BY option_order ASC
+              `
+            );
+            
+            fieldWithOptionAndResponse.push({
+              ...field,
+              field_response: requestResponseData,
+              field_option: optionData
+            })
+          }
+        });
+        formSection.push({
+          ...section,
+          section_field: fieldWithOptionAndResponse,
+        }) 
       });
+    }else{
+      sectionData.map(section => {
+        const fieldData = plv8.execute(
+          `
+            SELECT *
+            FROM field_table
+            WHERE field_section_id = '${section.section_id}'
+            ORDER BY field_order ASC
+          `
+        );
+        const fieldWithOptionAndResponse = fieldData.map(field => {
+          const optionData = plv8.execute(
+            `
+              SELECT *
+              FROM option_table
+              WHERE option_field_id = '${field.field_id}'
+              ORDER BY option_order ASC
+            `
+          );
 
+          const requestResponseData = plv8.execute(
+            `
+              SELECT *
+              FROM request_response_table
+              WHERE request_response_request_id = '${requestData.request_id}'
+              AND request_response_field_id = '${field.field_id}'
+            `
+          );
 
-      return {
-        ...section,
-        section_field: fieldWithOptionAndResponse,
-      }
-    });
+          return {
+            ...field,
+            field_response: requestResponseData,
+            field_option: optionData
+          };
+        });
+
+        formSection.push({
+          ...section,
+          section_field: fieldWithOptionAndResponse,
+        }) 
+      });
+    }
+    
  
     const form = {
       form_id: requestData.form_id,
       form_name: requestData.form_name,
       form_description: requestData.form_description,
       form_is_formsly_form: requestData.form_is_formsly_form,
-      form_section: section,
+      form_section: formSection,
     };
 
     returnData = {
@@ -4530,6 +4579,7 @@ RETURNS JSON as $$
       request_team_member_id: requestData.request_team_member_id,
       request_form_id: requestData.request_form_id,
       request_project_id: requestData.request_project_id,
+      request_jira_id: requestData.request_jira_id,
       request_comment: requestCommentData.map(requestComment => {
         return {
           comment_id: requestComment.comment_id, 
@@ -4611,7 +4661,7 @@ RETURNS JSON as $$
     const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const transfer_receipt_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
-    const requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_date_created DESC`);
+    const requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC`);
     
     ssot_data = requisition_requests.map((requisition) => {
       // Requisition request response
@@ -4642,7 +4692,7 @@ RETURNS JSON as $$
           quotation_condition += `request_id='${quotation.request_id}' OR `;
         });
 
-        const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
         quotation_list = quotation_requests.map(quotation => {
           // Quotation request response
           const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
@@ -4669,7 +4719,7 @@ RETURNS JSON as $$
               rir_condition += `request_id='${rir.request_id}' OR `;
             });
 
-            const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+            const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
             rir_list = rir_requests.map(rir => {
               // rir request response
               const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
@@ -4716,7 +4766,7 @@ RETURNS JSON as $$
           sourced_item_condition += `request_id='${sourced_item.request_id}' OR `;
         });
 
-        const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+        const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
         sourced_item_list = sourced_item_requests.map(sourced_item => {
           // Sourced Item request response
           const sourced_item_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${sourced_item.request_id}'`);
@@ -4743,7 +4793,7 @@ RETURNS JSON as $$
               ro_condition += `request_id='${ro.request_id}' OR `;
             });
 
-            const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+            const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
             ro_list = ro_requests.map(ro => {
               // ro request response
               const ro_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${ro.request_id}'`);
@@ -4770,7 +4820,7 @@ RETURNS JSON as $$
                   transfer_receipt_condition += `request_id='${transfer_receipt.request_id}' OR `;
                 });
 
-                const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_date_created DESC`);
+                const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
                 transfer_receipt_list = transfer_receipt_requests.map(transfer_receipt => {
                   // transfer_receipt request response
                   const transfer_receipt_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${transfer_receipt.request_id}'`);
@@ -4871,62 +4921,62 @@ ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users only" ON attachment_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON team_member_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON field_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON field_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON field_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON field_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON field_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON form_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON item_description_field_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_field_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON item_description_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON item_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON option_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON option_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON option_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON option_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON option_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON section_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON section_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON section_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON section_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON section_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON signer_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON signer_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON signer_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON signer_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON signer_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON supplier_table;
-DROP POLICY IF EXISTS "Allow READ access for authenticated users" ON supplier_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON supplier_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON supplier_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON supplier_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON comment_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON comment_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON comment_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on team_member_id" ON comment_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on team_member_id" ON comment_table;
 
@@ -4941,12 +4991,12 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own notifications
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own notifications" ON notification_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_response_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON request_response_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_response_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_response_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_response_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON request_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_table;
 
@@ -4956,7 +5006,7 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON tea
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON user_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_table;
 
@@ -4981,14 +5031,13 @@ DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_me
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_member_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_project_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
 
 --- ATTACHMENT_TABLE
-CREATE POLICY "Allow CRUD for authenticated users only" ON "public"."attachment_table"
+CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
 AS PERMISSIVE FOR ALL
-TO authenticated
 USING (true);
 
 --- FIELD_TABLE
@@ -5010,9 +5059,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."field_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."field_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
@@ -5068,9 +5116,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."form_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."form_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
@@ -5122,9 +5169,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_description_field_table"
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
@@ -5175,9 +5221,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_description_table"
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
@@ -5224,9 +5269,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."item_table"
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
@@ -5272,9 +5316,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."option_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."option_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
@@ -5326,9 +5369,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."request_signer_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
@@ -5383,9 +5425,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."section_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."section_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
@@ -5440,9 +5481,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."signer_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."signer_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
@@ -5492,9 +5532,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."supplier_table"
+CREATE POLICY "Allow READ access for anon users" ON "public"."supplier_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
@@ -5527,9 +5566,8 @@ AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for authenticated users" ON "public"."team_member_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."team_member_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
@@ -5560,9 +5598,8 @@ AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users" ON "public"."comment_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."comment_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users based on team_member_id" ON "public"."comment_table"
@@ -5681,9 +5718,8 @@ AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users" ON "public"."request_response_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."request_response_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users on own request response"
@@ -5734,9 +5770,8 @@ AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users" ON "public"."request_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."request_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users on own requests" ON "public"."request_table"
@@ -5814,9 +5849,8 @@ AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users" ON "public"."user_table"
+CREATE POLICY "Allow READ for anon users" ON "public"."user_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "public"."user_table"
@@ -6109,18 +6143,9 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_project_table"
+CREATE POLICY "Allow READ for anon" ON "public"."team_project_table"
 AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT tm.team_member_team_id
-    FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
-    WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
-  ) 
-);
+USING (true);
 
 CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_table"
 AS PERMISSIVE FOR UPDATE

@@ -1,12 +1,12 @@
 import Meta from "@/components/Meta/Meta";
 import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
+import { isEmpty } from "@/utils/functions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
   CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
   CanvassType,
 } from "@/utils/types";
-import { isEmpty } from "lodash";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(

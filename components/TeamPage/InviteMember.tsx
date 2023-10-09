@@ -21,7 +21,6 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconMailPlus, IconUsersPlus } from "@tabler/icons-react";
-import axios from "axios";
 import jwt from "jsonwebtoken";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -108,14 +107,22 @@ const InviteMember = ({
         const inviteUrl = `${window.location.origin}/api/team-invite?token=${inviteToken}`;
         const html = generateEmailHtml(inviteUrl);
 
-        const response = await axios.post("/api/send-email", {
-          to: email,
-          subject,
-          html,
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: email,
+            subject,
+            html,
+          }),
         });
-        return response.data;
+
+        const responseData = await response.json();
+        return responseData;
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
   };

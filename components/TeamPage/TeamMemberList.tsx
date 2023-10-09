@@ -1,4 +1,6 @@
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { customMathCeil } from "@/utils/functions";
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { MemberRoleType, TeamMemberType } from "@/utils/types";
 import {
@@ -16,7 +18,6 @@ import {
   TextInput,
 } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
-import { ceil, lowerCase, startCase } from "lodash";
 import { useFormContext } from "react-hook-form";
 import TeamMemberMenu from "./TeamMemberMenu";
 import { SearchForm } from "./TeamPage";
@@ -59,15 +60,14 @@ const TeamMemberList = ({
               size={24}
               radius={12}
             >
-              {startCase(user.user_first_name[0])}
-              {startCase(user.user_last_name[0])}
+              {(user.user_first_name[0] + user.user_last_name[0]).toUpperCase()}
             </Avatar>
 
             <Text>{startCase(fullname)}</Text>
           </Group>
         </td>
 
-        <td>{startCase(lowerCase(role))}</td>
+        <td>{startCase(role.toLowerCase())}</td>
 
         <td>
           <TeamMemberMenu
@@ -124,7 +124,7 @@ const TeamMemberList = ({
           <Pagination
             value={page}
             onChange={handlePageChange}
-            total={ceil(teamMemberCount / ROW_PER_PAGE)}
+            total={customMathCeil(teamMemberCount / ROW_PER_PAGE)}
             size="sm"
             sx={{ alignSelf: "flex-end" }}
           />

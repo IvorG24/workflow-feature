@@ -177,3 +177,62 @@ export const withOwnerOrAdmin = <P extends { [key: string]: any }>(
     }
   };
 };
+
+export const withAuthAndOnboardingRequestPage = <
+  P extends { [key: string]: any }
+>(
+  getServerSidePropsFunc: (params: {
+    context: GetServerSidePropsContext;
+    supabaseClient: SupabaseClient<Database>;
+    user: User;
+  }) => Promise<GetServerSidePropsResult<P>>
+): GetServerSideProps<P> => {
+  return async (
+    context: GetServerSidePropsContext
+  ): Promise<GetServerSidePropsResult<P>> => {
+    const supabaseClient = createPagesServerClient(context);
+
+    try {
+      // * 1. Check if user is authenticated
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!session) {
+        return {
+          redirect: {
+            destination: `/public-request/${context.query.requestId}`,
+            permanent: false,
+          },
+        };
+      }
+      if (!session?.user?.email) throw new Error("No email in session");
+
+      // * 2. Check if user is onboarded
+      if (
+        !(await checkIfEmailExists(supabaseClient, {
+          email: session.user.email,
+        }))
+      ) {
+        return {
+          redirect: {
+            destination: "/onboarding",
+            permanent: false,
+          },
+        };
+      }
+
+      const user = session.user;
+
+      return getServerSidePropsFunc({ context, supabaseClient, user });
+    } catch (error) {
+      console.error(error);
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
+  };
+};

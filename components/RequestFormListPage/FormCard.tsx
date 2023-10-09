@@ -22,7 +22,6 @@ import {
   IconEyeOff,
   IconTrash,
 } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { MouseEventHandler } from "react";
@@ -126,12 +125,10 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
                   )
                 )}
               >
-                {startCase(
-                  form.form_team_member.team_member_user.user_first_name[0]
-                )}
-                {startCase(
+                {(
+                  form.form_team_member.team_member_user.user_first_name[0] +
                   form.form_team_member.team_member_user.user_last_name[1]
-                )}
+                ).toUpperCase()}
               </Avatar>
             </Tooltip>
             <Tooltip

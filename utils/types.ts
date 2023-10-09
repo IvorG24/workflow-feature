@@ -304,6 +304,7 @@ export type RequestWithResponseType = RequestTableRow & {
         user_avatar: string;
       };
     };
+    comment_attachment: CommentAttachmentWithPublicUrl;
   }[];
 } & {
   request_project: {
@@ -639,6 +640,7 @@ export type SSOTResponseType = {
 
 export type SSOTType = {
   requisition_request_formsly_id: string;
+  requisition_request_jira_id: string;
   requisition_request_id: string;
   requisition_request_date_created: string;
   requisition_request_owner: SSOTRequestOwnerType;
@@ -751,6 +753,7 @@ export type RequestListItemType = {
   request_formsly_id: string;
   request_date_created: string;
   request_status: string;
+  request_jira_id?: string;
   request_team_member: {
     team_member_team_id: string;
     team_member_user: {
@@ -848,6 +851,15 @@ export type RequestListOnLoad = {
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
 };
+
+export type CommentAttachmentWithPublicUrl = (AttachmentTableRow & {
+  attachment_public_url: string;
+})[];
+
+export type RequestCommentType =
+  RequestWithResponseType["request_comment"][0] & {
+    comment_attachment: CommentAttachmentWithPublicUrl;
+  };
 
 export type RequestPageOnLoad = {
   request: RequestWithResponseType;

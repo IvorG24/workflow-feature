@@ -1,6 +1,6 @@
-import { getMemberUserData } from "@/backend/api/get";
-import { RequestCommentType } from "@/components/RequestPage/RequestCommentList";
+import { getCommentAttachment, getMemberUserData } from "@/backend/api/get";
 import { Database } from "@/utils/database";
+import { RequestCommentType } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import useRouteChange from "./useRouteChange";
@@ -32,13 +32,23 @@ const useRealtimeRequestCommentList = (
           if (payload.eventType === "INSERT") {
             const teamMemberId = payload.new.comment_team_member_id;
             const comment = payload.new;
+
             const isUserExisting = commentList.find(
               (comment) => comment.comment_team_member_id === teamMemberId
+            );
+
+            const commentAttachmentUrlList = await getCommentAttachment(
+              supabaseClient,
+              { commentId: comment.comment_id }
             );
             // if user has already commented, re-use user data
             if (isUserExisting) {
               const { comment_team_member } = isUserExisting;
-              const newComment = { ...comment, comment_team_member };
+              const newComment = {
+                ...comment,
+                comment_team_member,
+                comment_attachment: commentAttachmentUrlList,
+              };
               setCommentList((prev) => [
                 newComment as RequestCommentType,
                 ...prev,
@@ -50,7 +60,11 @@ const useRealtimeRequestCommentList = (
               );
 
               if (comment_team_member) {
-                const newComment = { ...comment, comment_team_member };
+                const newComment = {
+                  ...comment,
+                  comment_team_member,
+                  comment_attachment: commentAttachmentUrlList,
+                };
                 setCommentList((prev) => [
                   newComment as RequestCommentType,
                   ...prev,

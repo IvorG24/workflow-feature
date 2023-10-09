@@ -13,7 +13,7 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
-import { lowerCase } from "lodash";
+
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { MouseEventHandler, useEffect } from "react";
@@ -63,13 +63,11 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
         {activeApp ? (
           <UnstyledButton
             onClick={() =>
-              router.push(`/team-${lowerCase(activeApp)}s/dashboard`)
+              router.push(`/team-${activeApp.toLowerCase()}s/dashboard`)
             }
           >
             <Image
-              src={`/logo-${lowerCase(activeApp)}-${lowerCase(
-                theme.colorScheme
-              )}.svg`}
+              src={`/logo-${activeApp.toLowerCase()}-${theme.colorScheme.toLowerCase()}.svg`}
               width={127}
               height={45}
               alt="Formsly Logo"

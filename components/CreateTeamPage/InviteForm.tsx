@@ -28,7 +28,6 @@ import {
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
-import axios from "axios";
 import jwt from "jsonwebtoken";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
@@ -109,14 +108,22 @@ const InviteForm = ({ changeStep, ownerData, team }: Props) => {
         const inviteUrl = `${window.location.origin}/api/team-invite?token=${inviteToken}`;
         const html = generateEmailHtml(inviteUrl);
 
-        const response = await axios.post("/api/send-email", {
-          to: email,
-          subject,
-          html,
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: email,
+            subject,
+            html,
+          }),
         });
-        return response.data;
+
+        const responseData = await response.json();
+        return responseData;
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
   };

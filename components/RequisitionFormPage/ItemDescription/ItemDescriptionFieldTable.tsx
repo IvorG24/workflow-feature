@@ -2,6 +2,7 @@ import { deleteRow } from "@/backend/api/delete";
 import { getItemDescriptionFieldList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { generateRandomId } from "@/utils/functions";
 import {
   ItemDescriptionFieldTableRow,
   ItemDescriptionTableRow,
@@ -23,7 +24,6 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { uniqueId } from "lodash";
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -64,7 +64,7 @@ const ItemDescriptionFieldTable = ({
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
 
-  const headerCheckboxKey = uniqueId();
+  const headerCheckboxKey = generateRandomId();
 
   useEffect(() => {
     handleFetch("", 1);

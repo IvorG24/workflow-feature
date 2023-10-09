@@ -1,3 +1,4 @@
+import { startCase } from "@/utils/string";
 import { NotificationTableRow } from "@/utils/types";
 import {
   Container,
@@ -17,7 +18,6 @@ import {
   IconMessage2,
   IconMessages,
 } from "@tabler/icons-react";
-import { capitalize, startCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 
@@ -76,11 +76,11 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
 
             <Flex direction="column" w="100%">
               <Tooltip
-                label={capitalize(notification.notification_content)}
+                label={startCase(notification.notification_content)}
                 openDelay={2000}
               >
                 <Text size="sm" lineClamp={2}>
-                  {capitalize(notification.notification_content)}
+                  {startCase(notification.notification_content)}
                 </Text>
               </Tooltip>
               <Flex justify="space-between" w="100%">

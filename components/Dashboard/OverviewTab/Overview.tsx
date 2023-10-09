@@ -36,11 +36,18 @@ export type MonthlyRequestDataTypeWithTotal = {
 };
 
 type OverviewProps = {
-  dateFilter: [Date | null, Date | null];
+  startDateFilter: Date | null;
+  endDateFilter: Date | null;
   selectedForm: string | null;
+  selectedDays: string | null;
 };
 
-const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
+const Overview = ({
+  startDateFilter,
+  endDateFilter,
+  selectedForm,
+  selectedDays,
+}: OverviewProps) => {
   const activeTeam = useActiveTeam();
   const formList = useFormList();
   const supabaseClient = useSupabaseClient();
@@ -73,9 +80,9 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
   }, [activeTeam.team_id]);
 
   useEffect(() => {
-    if (!dateFilter[0] || !dateFilter[1]) return;
+    if (!startDateFilter || !endDateFilter) return;
     const fetchOverviewData = async (selectedForm: string, teamId: string) => {
-      dateFilter[1]?.setHours(23, 59, 59, 999);
+      endDateFilter?.setHours(23, 59, 59, 999);
 
       try {
         setIsFetchingData(true);
@@ -83,8 +90,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
         const { data: requestStatusCountData, totalCount } =
           await getRequestStatusCount(supabaseClient, {
             formId: selectedForm,
-            startDate: moment(dateFilter[0]).format(),
-            endDate: moment(dateFilter[1]).format(),
+            startDate: moment(startDateFilter).format(),
+            endDate: moment(endDateFilter).format(),
             teamId: teamId,
           });
 
@@ -96,8 +103,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
           supabaseClient,
           {
             formId: selectedForm,
-            startDate: moment(dateFilter[0]).format(),
-            endDate: moment(dateFilter[1]).format(),
+            startDate: moment(startDateFilter).format(),
+            endDate: moment(endDateFilter).format(),
             teamId: teamId,
           }
         );
@@ -119,8 +126,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
             const requestData = await getRequestorData(supabaseClient, {
               formId: selectedForm,
               teamMemberId: member.team_member_id,
-              startDate: moment(dateFilter[0]).format(),
-              endDate: moment(dateFilter[1]).format(),
+              startDate: moment(startDateFilter).format(),
+              endDate: moment(endDateFilter).format(),
             });
 
             const totalRequestCount = requestData.reduce(
@@ -147,8 +154,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
             const signedRequestData = await getSignerData(supabaseClient, {
               formId: selectedForm,
               teamMemberId: member.team_member_id,
-              startDate: moment(dateFilter[0]).format(),
-              endDate: moment(dateFilter[1]).format(),
+              startDate: moment(startDateFilter).format(),
+              endDate: moment(endDateFilter).format(),
             });
 
             const totalRequestCount = signedRequestData.reduce(
@@ -179,7 +186,14 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
     if (selectedForm && activeTeam.team_id) {
       fetchOverviewData(selectedForm, activeTeam.team_id);
     }
-  }, [selectedForm, dateFilter, activeTeam.team_id, teamMemberList]);
+  }, [
+    selectedDays,
+    selectedForm,
+    startDateFilter,
+    endDateFilter,
+    activeTeam.team_id,
+    teamMemberList,
+  ]);
 
   return (
     <Stack w="100%" align="center" pos="relative">
@@ -220,7 +234,8 @@ const Overview = ({ dateFilter, selectedForm }: OverviewProps) => {
           <RequestStatistics
             monthlyChartData={monthlyChartData}
             totalRequestCount={totalRequestCount}
-            dateFilter={dateFilter}
+            startDateFilter={startDateFilter}
+            endDateFilter={endDateFilter}
           />
         </Box>
       </Flex>

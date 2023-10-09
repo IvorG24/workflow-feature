@@ -1,3 +1,4 @@
+import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamMemberType } from "@/utils/types";
 import {
@@ -9,7 +10,6 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { startCase, upperCase } from "lodash";
 
 type Props = {
   revieweeList: TeamMemberType[];
@@ -29,8 +29,8 @@ const RevieweeList = ({ revieweeList, ...props }: Props) => {
                 Number(`${reviewee.team_member_id.charCodeAt(0)}`)
               )}
             >
-              {upperCase(reviewee.team_member_user.user_first_name[0])}
-              {upperCase(reviewee.team_member_user.user_last_name[1])}
+              {reviewee.team_member_user.user_first_name[0].toUpperCase()}
+              {reviewee.team_member_user.user_last_name[1].toUpperCase()}
             </Avatar>
             <Flex direction="column">
               <Text lineClamp={1}>{`${startCase(

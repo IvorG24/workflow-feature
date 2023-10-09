@@ -17,6 +17,7 @@ import {
   ConnectedRequestIdList,
   FormStatusType,
   ReceiverStatusType,
+  RequestCommentType,
   RequestProjectSignerStatusType,
   RequestResponseTableRow,
   RequestWithResponseType,
@@ -35,13 +36,13 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useRef } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
+import RequisitionSummary from "../SummarySection/RequisitionSummary";
 import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
@@ -63,6 +64,7 @@ type Props = {
   };
   connectedRequestIDList?: ConnectedRequestIdList;
   projectSignerStatus?: RequestProjectSignerStatusType;
+  isAnon?: boolean;
 };
 
 const RequestPage = ({
@@ -71,6 +73,7 @@ const RequestPage = ({
   connectedFormIdAndGroup,
   connectedRequestIDList,
   projectSignerStatus: initialProjectSignerStatus,
+  isAnon = false,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
@@ -102,7 +105,7 @@ const RequestPage = ({
 
   const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
     requestId: request.request_id,
-    initialCommentList: request.request_comment,
+    initialCommentList: request.request_comment as RequestCommentType[],
   });
 
   const isSourcedItemForm =
@@ -468,10 +471,11 @@ const RequestPage = ({
       });
 
       notifications.show({
-        message: `Request ${lowerCase(status)}.`,
+        message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
-    } catch {
+    } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -619,9 +623,30 @@ const RequestPage = ({
               key={section.section_id + idx}
               section={section}
               isFormslyForm={isFormslyForm}
+              isAnon={isAnon}
+              isOnlyWithResponse={
+                request.request_form.form_name === "Requisition"
+              }
             />
           ))}
         </Stack>
+
+        {request.request_form.form_name === "Requisition" &&
+        request.request_form.form_is_formsly_form ? (
+          <RequisitionSummary
+            summaryData={sectionWithDuplicateList
+              .slice(1)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
 
         {request.request_form.form_name === "Quotation" &&
         request.request_form.form_is_formsly_form ? (

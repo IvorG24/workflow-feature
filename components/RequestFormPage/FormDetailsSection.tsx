@@ -24,7 +24,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCalendar } from "@tabler/icons-react";
-import { capitalize } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -182,8 +181,9 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
           )}
           radius="xl"
         >
-          {capitalize(creator.user_first_name[0])}
-          {capitalize(creator.user_last_name[0])}
+          {(
+            creator.user_first_name[0] + creator.user_last_name[0]
+          ).toUpperCase()}
         </Avatar>
         <Stack spacing={0}>
           <Text>{`${creator.user_first_name} ${creator.user_last_name}`}</Text>

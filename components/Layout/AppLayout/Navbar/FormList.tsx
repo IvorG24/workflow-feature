@@ -14,7 +14,6 @@ import {
   Text,
 } from "@mantine/core";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
-import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -55,17 +54,17 @@ const FormList = () => {
           <Text mb={4} size="xs" weight={400}>
             <Anchor
               onClick={() =>
-                router.push(`/team-${lowerCase(activeApp)}s/forms`)
+                router.push(`/team-${activeApp.toLowerCase()}s/forms`)
               }
             >
-              View All ({forms.length})
+              View All ({forms.length - UNHIDEABLE_FORMLY_FORMS.length})
             </Anchor>
           </Text>
           <Button
             variant="light"
             size="xs"
             onClick={() =>
-              router.push(`/team-${lowerCase(activeApp)}s/forms/build`)
+              router.push(`/team-${activeApp.toLowerCase()}s/forms/build`)
             }
           >
             Build Form
@@ -100,7 +99,7 @@ const FormList = () => {
                 rightSection={<IconPlus size={14} />}
                 onClick={() =>
                   router.push(
-                    `/team-${lowerCase(activeApp)}s/forms/${
+                    `/team-${activeApp.toLowerCase()}s/forms/${
                       form.form_id
                     }/create`
                   )

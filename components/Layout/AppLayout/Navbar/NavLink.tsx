@@ -1,12 +1,16 @@
+import { useFormList } from "@/stores/useFormStore";
 import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
+import { isEmpty } from "@/utils/functions";
+import { startCase } from "@/utils/string";
+import { FormTableRow } from "@/utils/types";
 import { Box, Space } from "@mantine/core";
 import {
   IconCirclePlus,
   IconDashboard,
+  IconFile,
   IconMessage2,
   IconUsersGroup,
 } from "@tabler/icons-react";
-import { capitalize, isEmpty, lowerCase } from "lodash";
 import NavLinkSection from "./NavLinkSection";
 
 const ReviewAppNavLink = () => {
@@ -15,6 +19,28 @@ const ReviewAppNavLink = () => {
 
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
+  const forms = useFormList();
+
+  const rfForm = forms.filter(
+    (form) => form.form_is_formsly_form && form.form_name === "Requisition"
+  )[0];
+  const requisitionForm = rfForm as unknown as FormTableRow & {
+    form_team_group: string[];
+  };
+
+  const tempCreateRequest = [
+    {
+      label: "Create Request",
+      icon: (
+        <Box ml="sm" py={5} mt={3}>
+          <IconFile {...defaultIconProps} />
+        </Box>
+      ),
+      href: requisitionForm
+        ? `/team-requests/forms/${requisitionForm.form_id}/create`
+        : "",
+    },
+  ];
 
   const overviewSection = [
     {
@@ -24,16 +50,16 @@ const ReviewAppNavLink = () => {
           <IconDashboard {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${lowerCase(activeApp)}s/dashboard`,
+      href: `/team-${activeApp.toLowerCase()}s/dashboard`,
     },
     {
-      label: `${capitalize(activeApp)}`,
+      label: `${startCase(activeApp)}`,
       icon: (
         <Box ml="sm" py={5} mt={3}>
           <IconMessage2 {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${lowerCase(activeApp)}s/${lowerCase(activeApp)}s`,
+      href: `/team-${activeApp.toLowerCase()}s/${activeApp.toLowerCase()}s`,
     },
   ];
 
@@ -72,6 +98,12 @@ const ReviewAppNavLink = () => {
 
   return (
     <>
+      {requisitionForm &&
+      requisitionForm.form_is_hidden === false &&
+      requisitionForm.form_team_group.length ? (
+        <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
+      ) : null}
+
       {!isEmpty(activeTeam) ? (
         <NavLinkSection
           label={"Overview"}

@@ -1,6 +1,7 @@
 import { getTeamAdminListWithFilter } from "@/backend/api/get";
 import { updateAdminRole } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { generateRandomId } from "@/utils/functions";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamMemberType } from "@/utils/types";
 import {
@@ -19,7 +20,6 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { toUpper, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { TeamAdminType } from "./AdminGroup";
@@ -56,7 +56,7 @@ const AdminList = ({
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
-  const headerCheckboxKey = uniqueId();
+  const headerCheckboxKey = generateRandomId();
 
   const [checkList, setCheckList] = useState<string[]>([]);
   const [activePage, setActivePage] = useState(1);
@@ -116,8 +116,10 @@ const AdminList = ({
             )}
             radius="xl"
           >
-            {toUpper(team_member_user.user_first_name[0])}
-            {toUpper(team_member_user.user_last_name[0])}
+            {(
+              team_member_user.user_first_name[0] +
+              team_member_user.user_last_name[0]
+            ).toUpperCase()}
           </Avatar>
           <Text>
             {team_member_user.user_first_name} {team_member_user.user_last_name}

@@ -1,15 +1,16 @@
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { regExp } from "@/utils/string";
+import { regExp, startCase } from "@/utils/string";
 import {
   AppType,
   AttachmentBucketType,
+  AttachmentTableRow,
+  CSICodeTableRow,
   CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
-  CSICodeTableRow,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -30,7 +31,6 @@ import {
   TeamTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { lowerCase, startCase } from "lodash";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import validator from "validator";
@@ -1952,7 +1952,7 @@ export const getRequestStatusCount = async (
       const { count: statusCount } = await getCount(status);
 
       return {
-        label: startCase(lowerCase(status)),
+        label: startCase(status.toLowerCase()),
         value: statusCount || 0,
       };
     })
@@ -1992,7 +1992,7 @@ export const getRequestorData = async (
       const { count: statusCount } = await getRequestCount(status);
 
       return {
-        label: startCase(lowerCase(status)),
+        label: startCase(status.toLowerCase()),
         value: statusCount || 0,
       };
     })
@@ -2029,7 +2029,7 @@ export const getSignerData = async (
       const { count: statusCount } = await getSignedRequestCount(status);
 
       return {
-        label: startCase(lowerCase(status)),
+        label: startCase(status.toLowerCase()),
         value: statusCount || 0,
       };
     })
@@ -3314,4 +3314,64 @@ export const getUserPendingInvitation = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getCommentAttachment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    commentId: string;
+  }
+) => {
+  const { commentId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("attachment_table")
+    .select("*")
+    .like("attachment_value", `%${commentId}%`)
+    .eq("attachment_is_disabled", false);
+
+  if (error) throw error;
+
+  const getAttachmentUrls = async (data: AttachmentTableRow[]) => {
+    const attachmentUrls = await Promise.all(
+      data.map(async (attachment) => {
+        const attachment_public_url = supabaseClient.storage
+          .from(attachment.attachment_bucket)
+          .getPublicUrl(`${attachment.attachment_value}`).data.publicUrl;
+
+        return { ...attachment, attachment_public_url };
+      })
+    );
+
+    return attachmentUrls;
+  };
+
+  if (data) {
+    const attachmentUrl = await getAttachmentUrls(data);
+    return attachmentUrl;
+  } else {
+    return [];
+  }
+};
+
+// Check if jira id is unique
+export const checkIfJiraIDIsUnique = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    value: string;
+  }
+) => {
+  const { value } = params;
+
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("request_status", "APPROVED")
+    .eq("request_jira_id", value);
+
+  if (error) throw error;
+
+  return Boolean(count);
 };

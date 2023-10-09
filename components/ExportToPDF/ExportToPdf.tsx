@@ -1,9 +1,9 @@
 "use client";
 
+import { startCase } from "@/utils/string";
 import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
 import { Button } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
-import { lowerCase, startCase } from "lodash";
 import moment from "moment";
 import PdfDocument from "./PdfDocument";
 
@@ -65,7 +65,7 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
     },
     {
       label: "Request status:",
-      value: `${startCase(lowerCase(request.request_status))}`,
+      value: `${startCase(request.request_status.toLowerCase())}`,
     },
   ];
 

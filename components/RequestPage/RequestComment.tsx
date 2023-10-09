@@ -1,14 +1,21 @@
 import { deleteComment } from "@/backend/api/delete";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { getAvatarColor } from "@/utils/styling";
-import { RequestWithResponseType } from "@/utils/types";
+import {
+  getAvatarColor,
+  getFileType,
+  getFileTypeColor,
+  shortenFileName,
+} from "@/utils/styling";
+import { RequestCommentType } from "@/utils/types";
 import {
   ActionIcon,
   Alert,
   Avatar,
   Box,
+  Card,
   Flex,
+  Group,
   Menu,
   Spoiler,
   Stack,
@@ -21,22 +28,22 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconCheck,
   IconDots,
+  IconDownload,
   IconEdit,
   IconFolderCancel,
   IconX,
 } from "@tabler/icons-react";
-import { capitalize } from "lodash";
 import moment from "moment";
+import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 
-type Comment = RequestWithResponseType["request_comment"][0];
-
 type RequestCommentProps = {
-  comment: Comment;
-  setCommentList: Dispatch<SetStateAction<Comment[]>>;
+  comment: RequestCommentType;
+  setCommentList: Dispatch<SetStateAction<RequestCommentType[]>>;
 };
+
 const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const supabaseClient = useSupabaseClient();
 
@@ -57,6 +64,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
   const editCommentFormMethods = useForm<CommentFormProps>({
     defaultValues: { comment: comment.comment_content },
   });
+
   const handleEditComment = async (data: CommentFormProps) => {
     try {
       setIsSubmittingForm(true);
@@ -76,6 +84,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       setIsEditingComment(false);
     }
   };
+
   const handleDeleteComment = async () => {
     try {
       await deleteComment(supabaseClient, {
@@ -165,6 +174,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
               loading: isSubmittingForm,
               children: "Save",
             }}
+            isEditing={isEditingComment}
           />
         </FormProvider>
       ) : (
@@ -179,8 +189,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                 )}
                 radius="xl"
               >
-                {capitalize(commenter.user_first_name[0])}
-                {capitalize(commenter.user_last_name[0])}
+                {(
+                  commenter.user_first_name[0] + commenter.user_last_name[0]
+                ).toUpperCase()}
               </Avatar>
 
               <Alert
@@ -209,62 +220,131 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
             </Flex>
           ) : (
             <>
-              <Flex mt="lg">
-                <Avatar
-                  size={40}
-                  src={commenter.user_avatar}
-                  color={getAvatarColor(
-                    Number(`${commenter.user_id.charCodeAt(0)}`)
-                  )}
-                  radius="xl"
-                >
-                  {capitalize(commenter.user_first_name[0])}
-                  {capitalize(commenter.user_last_name[0])}
-                </Avatar>
-                <Stack spacing={0} ml="md">
-                  <Text size={14}>
-                    {`${commenter.user_first_name} ${commenter.user_last_name}`}
+              <Card p={0} pb="sm" sx={{ cursor: "pointer" }}>
+                <Flex mt="lg">
+                  <Avatar
+                    size={40}
+                    src={commenter.user_avatar}
+                    color={getAvatarColor(
+                      Number(`${commenter.user_id.charCodeAt(0)}`)
+                    )}
+                    radius="xl"
+                  >
+                    {(
+                      commenter.user_first_name[0] + commenter.user_last_name[0]
+                    ).toUpperCase()}
+                  </Avatar>
+                  <Stack spacing={0} ml="md">
+                    <Text size={14}>
+                      {`${commenter.user_first_name} ${commenter.user_last_name}`}
+                    </Text>
+                    <Text color="dimmed" size={12}>
+                      {commenter.user_username}
+                    </Text>
+                  </Stack>
+                  <Text color="dimmed" size={12} ml="xs">
+                    ({moment(comment.comment_date_created).fromNow()})
                   </Text>
-                  <Text color="dimmed" size={12}>
-                    {commenter.user_username}
-                  </Text>
-                </Stack>
-                <Text color="dimmed" size={12} ml="xs">
-                  ({moment(comment.comment_date_created).fromNow()})
-                </Text>
-                {isUserOwner && (
-                  <Menu shadow="md" width={200} position="bottom-end">
-                    <Menu.Target>
-                      <ActionIcon ml="auto">
-                        <IconDots />
-                      </ActionIcon>
-                    </Menu.Target>
+                  {isUserOwner && (
+                    <Menu shadow="md" width={200} position="bottom-end">
+                      <Menu.Target>
+                        <ActionIcon ml="auto">
+                          <IconDots />
+                        </ActionIcon>
+                      </Menu.Target>
 
-                    <Menu.Dropdown>
-                      <Menu.Item
-                        icon={<IconEdit size={14} />}
-                        onClick={() => setIsEditingComment(true)}
-                      >
-                        Edit
-                      </Menu.Item>
-                      <Menu.Item
-                        icon={<IconX size={14} />}
-                        onClick={openPromptDeleteModal}
-                      >
-                        Delete
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                )}
-              </Flex>
-              <Spoiler maxHeight={120} showLabel="Show more" hideLabel="Hide">
-                <Text size={14}> {commentContent}</Text>
-                <Text color="dimmed" size={12}>
-                  {comment.comment_last_updated || isCommentEdited
-                    ? "(edited)"
-                    : ""}
-                </Text>
-              </Spoiler>
+                      <Menu.Dropdown>
+                        <Menu.Item
+                          icon={<IconEdit size={14} />}
+                          onClick={() => setIsEditingComment(true)}
+                        >
+                          Edit
+                        </Menu.Item>
+                        <Menu.Item
+                          icon={<IconX size={14} />}
+                          onClick={openPromptDeleteModal}
+                        >
+                          Delete
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
+                  )}
+                </Flex>
+                <Spoiler
+                  mt="md"
+                  maxHeight={120}
+                  showLabel="Show more"
+                  hideLabel="Hide"
+                >
+                  <Text size={14}>{commentContent}</Text>
+                  <Text color="dimmed" size={12}>
+                    {comment.comment_last_updated || isCommentEdited
+                      ? "(edited)"
+                      : ""}
+                  </Text>
+                </Spoiler>
+
+                {/* comment attachment */}
+                {comment.comment_attachment &&
+                  comment.comment_attachment.length > 0 && (
+                    <Stack mt="md" spacing="xs">
+                      {comment.comment_attachment.map((attachment) => (
+                        <Card p="xs" key={attachment.attachment_id} withBorder>
+                          <Group position="apart">
+                            <Flex
+                              sx={{ flex: 1 }}
+                              align="center"
+                              gap="sm"
+                              onClick={() =>
+                                window.open(
+                                  attachment.attachment_public_url,
+                                  "_blank"
+                                )
+                              }
+                            >
+                              <Avatar
+                                size="sm"
+                                color={getFileTypeColor(
+                                  attachment.attachment_name
+                                )}
+                              >
+                                {getFileType(attachment.attachment_name)}
+                              </Avatar>
+                              <Text c="dark" size="xs">
+                                {shortenFileName(
+                                  attachment.attachment_name,
+                                  60
+                                )}
+                              </Text>
+                            </Flex>
+                            <Link
+                              href={`${
+                                attachment.attachment_public_url
+                              }?download=${encodeURIComponent(
+                                attachment.attachment_name
+                              )}`}
+                            >
+                              <ActionIcon
+                                size="sm"
+                                color="green"
+                                onClick={() =>
+                                  notifications.show({
+                                    title: "File downloaded.",
+                                    message:
+                                      "Please check your Downloads folder.",
+                                    color: "green",
+                                  })
+                                }
+                              >
+                                <IconDownload size={16} />
+                              </ActionIcon>
+                            </Link>
+                          </Group>
+                        </Card>
+                      ))}
+                    </Stack>
+                  )}
+              </Card>
             </>
           )}
         </Stack>

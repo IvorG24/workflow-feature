@@ -1,19 +1,13 @@
-import { getSupplier } from "@/backend/api/get";
-import { useActiveTeam } from "@/stores/useTeamStore";
-import { Database } from "@/utils/database";
 import {
   Box,
   Button,
   Drawer,
   Group,
-  Loader,
   MultiSelect,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFilter } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -37,17 +31,17 @@ const SSOTSpreadsheetViewFilter = ({
     searchable: true,
     nothingFound: "Nothing found",
   };
-  const supabaseClient = createPagesBrowserClient<Database>();
+  // const supabaseClient = createPagesBrowserClient<Database>();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const team = useActiveTeam();
-  const [isSearching, setIsSearching] = useState(false);
-  const [supplierKeyword, setSupplierKeyword] = useState("");
-  const [supplierOptions, setSupplierOptions] = useState<
-    {
-      label: string;
-      value: string;
-    }[]
-  >([]);
+  // const team = useActiveTeam();
+  // const [isSearching, setIsSearching] = useState(false);
+  // const [supplierKeyword, setSupplierKeyword] = useState("");
+  // const [supplierOptions, setSupplierOptions] = useState<
+  //   {
+  //     label: string;
+  //     value: string;
+  //   }[]
+  // >([]);
 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const {
@@ -73,44 +67,43 @@ const SSOTSpreadsheetViewFilter = ({
     value: item,
   }));
 
-  const { register, control, getValues } =
-    useFormContext<SSOTFilterFormValues>();
+  const { register, control } = useFormContext<SSOTFilterFormValues>();
 
-  const supplierSearch = async (value: string) => {
-    if (!value || value === supplierKeyword) return;
+  // const supplierSearch = async (value: string) => {
+  //   if (!value || value === supplierKeyword) return;
 
-    try {
-      setIsSearching(true);
-      const supplierList = await getSupplier(supabaseClient, {
-        supplier: value,
-        teamId: team.team_id,
-        fieldId: "",
-      });
-      const options = supplierList.map((supplier) => {
-        return {
-          label: supplier.option_value,
-          value: supplier.option_value,
-        };
-      });
-      const keywords = getValues("supplierList");
-      if (keywords) {
-        keywords.forEach((supplier) => {
-          options.push({
-            label: supplier,
-            value: supplier,
-          });
-        });
-      }
-      setSupplierOptions(options);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  //   try {
+  //     setIsSearching(true);
+  //     const supplierList = await getSupplier(supabaseClient, {
+  //       supplier: value,
+  //       teamId: team.team_id,
+  //       fieldId: "",
+  //     });
+  //     const options = supplierList.map((supplier) => {
+  //       return {
+  //         label: supplier.option_value,
+  //         value: supplier.option_value,
+  //       };
+  //     });
+  //     const keywords = getValues("supplierList");
+  //     if (keywords) {
+  //       keywords.forEach((supplier) => {
+  //         options.push({
+  //           label: supplier,
+  //           value: supplier,
+  //         });
+  //       });
+  //     }
+  //     setSupplierOptions(options);
+  //   } catch (e) {
+  //     notifications.show({
+  //       message: "Something went wrong. Please try again later.",
+  //       color: "red",
+  //     });
+  //   } finally {
+  //     setIsSearching(false);
+  //   }
+  // };
 
   return (
     <Box>
@@ -154,7 +147,7 @@ const SSOTSpreadsheetViewFilter = ({
             )}
           />
 
-          <Controller
+          {/* <Controller
             control={control}
             name="supplierList"
             render={({ field: { value, onChange } }) => (
@@ -177,7 +170,7 @@ const SSOTSpreadsheetViewFilter = ({
                 nothingFound="Nothing found. Try a different keyword"
               />
             )}
-          />
+          /> */}
 
           <Button
             color="red"

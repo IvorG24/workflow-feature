@@ -787,3 +787,19 @@ export const cancelTeamInvitation = async (
 
   if (error) throw Error;
 };
+
+export const downloadFromStorage = (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    bucket: string;
+    filename: string;
+  }
+) => {
+  const { bucket, filename } = params;
+
+  const { data } = supabaseClient.storage.from(bucket).getPublicUrl(filename, {
+    download: true,
+  });
+
+  return data.publicUrl;
+};

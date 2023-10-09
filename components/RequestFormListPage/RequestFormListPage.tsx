@@ -4,6 +4,7 @@ import { updateFormVisibility } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
@@ -27,7 +28,6 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import FormCard from "./FormCard";
