@@ -11,7 +11,6 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { upperCase } from "lodash";
 import { Dispatch, SetStateAction } from "react";
 import { useFormContext } from "react-hook-form";
 import UploadAvatar from "../UploadAvatar/UploadAvatar";
@@ -65,7 +64,7 @@ const TeamInfoForm = ({
                 onError={(error: string) =>
                   setError("teamLogo", { message: error })
                 }
-                initials={upperCase(`${team.team_name[0]}${team.team_name[1]}`)}
+                initials={`${team.team_name[0]}${team.team_name[1]}`.toUpperCase()}
                 id={team.team_id}
                 disabled={!isOwnerOrAdmin}
               />

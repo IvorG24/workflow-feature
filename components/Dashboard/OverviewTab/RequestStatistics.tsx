@@ -1,4 +1,5 @@
 import StackedBarChart from "@/components/Chart/StackedBarChart";
+import { startCase } from "@/utils/string";
 import { getStatusToColorForCharts } from "@/utils/styling";
 import {
   Box,
@@ -11,7 +12,6 @@ import {
   Title,
 } from "@mantine/core";
 import { IconChartBar, IconSquareRoundedFilled } from "@tabler/icons-react";
-import { startCase } from "lodash";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { MonthlyRequestDataTypeWithTotal } from "./Overview";

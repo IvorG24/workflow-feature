@@ -638,6 +638,7 @@ export type SSOTResponseType = {
 
 export type SSOTType = {
   requisition_request_formsly_id: string;
+  requisition_request_jira_id: string;
   requisition_request_id: string;
   requisition_request_date_created: string;
   requisition_request_owner: SSOTRequestOwnerType;
@@ -750,6 +751,7 @@ export type RequestListItemType = {
   request_formsly_id: string;
   request_date_created: string;
   request_status: string;
+  request_jira_id?: string;
   request_team_member: {
     team_member_team_id: string;
     team_member_user: {

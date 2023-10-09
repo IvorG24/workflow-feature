@@ -1,7 +1,6 @@
 import { getAvatarColor } from "@/utils/styling";
 import { ReceiverStatusType, RequestListItemType } from "@/utils/types";
 import { Avatar, Tooltip, createStyles } from "@mantine/core";
-import { capitalize, toUpper } from "lodash";
 
 const useStyles = createStyles(() => ({
   PENDING: {
@@ -47,15 +46,15 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
                   className={
                     signer.request_signer_status
                       ? classes[
-                          toUpper(
-                            signer.request_signer_status
-                          ) as ReceiverStatusType
+                          signer.request_signer_status.toUpperCase() as ReceiverStatusType
                         ]
                       : ""
                   }
-                >{`${capitalize(user.user_first_name[0])}${capitalize(
-                  user.user_last_name[0]
-                )}`}</Avatar>
+                >
+                  {(
+                    user.user_first_name[0] + user.user_last_name[0]
+                  ).toUpperCase()}
+                </Avatar>
               </Tooltip>
             );
           }

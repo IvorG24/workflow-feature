@@ -15,7 +15,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { toUpper } from "lodash";
 import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
@@ -45,7 +44,7 @@ const CreateGroup = ({
 
   const onSubmit = async (data: GroupForm) => {
     try {
-      const groupName = toUpper(data.groupName.trim());
+      const groupName = data.groupName.trim().toUpperCase();
       if (
         await checkIfTeamGroupExists(supabaseClient, {
           teamId: activeTeam.team_id,

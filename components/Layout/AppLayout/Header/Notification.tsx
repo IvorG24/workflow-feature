@@ -27,7 +27,6 @@ import {
   IconMessage2,
   IconMessages,
 } from "@tabler/icons-react";
-import { lowerCase } from "lodash";
 import moment from "moment";
 import { useRouter } from "next/navigation";
 
@@ -127,7 +126,7 @@ const Notification = () => {
           variant="subtle"
           compact
           onClick={() =>
-            router.push(`/team-${lowerCase(activeApp)}s/notification`)
+            router.push(`/team-${activeApp.toLowerCase()}s/notification`)
           }
         >
           View all

@@ -1,6 +1,7 @@
 import { removeMemberFromProject } from "@/backend/api/delete";
 import { getTeamProjectMemberList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { generateRandomId } from "@/utils/functions";
 import { getAvatarColor } from "@/utils/styling";
 import { TeamProjectTableRow } from "@/utils/types";
 import {
@@ -20,7 +21,6 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { toUpper, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 import { TeamMemberType } from "./ProjectMembers";
@@ -72,7 +72,7 @@ const MemberList = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const headerCheckboxKey = uniqueId();
+  const headerCheckboxKey = generateRandomId();
 
   const handleCheckRow = (projectMemberId: string) => {
     if (checkList.includes(projectMemberId)) {
@@ -194,8 +194,10 @@ const MemberList = ({
             )}
             radius="xl"
           >
-            {toUpper(team_member.team_member_user.user_first_name[0])}
-            {toUpper(team_member.team_member_user.user_last_name[0])}
+            {(
+              team_member.team_member_user.user_first_name[0] +
+              team_member.team_member_user.user_last_name[0]
+            ).toUpperCase()}
           </Avatar>
           <Text>
             {team_member.team_member_user.user_first_name}{" "}

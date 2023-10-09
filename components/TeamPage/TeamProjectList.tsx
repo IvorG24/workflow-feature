@@ -29,7 +29,6 @@ import {
   IconSearch,
   IconTrash,
 } from "@tabler/icons-react";
-import { capitalize, toUpper } from "lodash";
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useForm, useFormContext } from "react-hook-form";
@@ -93,8 +92,10 @@ const TeamProjectList = ({
             radius="xl"
             size={30}
           >
-            {capitalize(member.team_member_user.user_first_name[0])}
-            {capitalize(member.team_member_user.user_last_name[0])}
+            {(
+              member.team_member_user.user_first_name[0] +
+              member.team_member_user.user_last_name[0]
+            ).toUpperCase()}
           </Avatar>
         </Tooltip>
       );
@@ -138,9 +139,9 @@ const TeamProjectList = ({
     setProjectRecords(
       teamProjectList[projectModal].filter((member) => {
         if (
-          toUpper(
-            `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`
-          ).includes(toUpper(keyword))
+          `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`
+            .toUpperCase()
+            .includes(keyword.toUpperCase())
         ) {
           return member;
         }
@@ -208,9 +209,10 @@ const TeamProjectList = ({
                             radius="xl"
                             size={25}
                           >
-                            {`${toUpper(
-                              team_member_user.user_first_name[0]
-                            )}${toUpper(team_member_user.user_last_name[0])}`}
+                            {`${(
+                              team_member_user.user_first_name[0] +
+                              team_member_user.user_last_name[0]
+                            ).toUpperCase()}`}
                           </Avatar>
                           <Text>
                             {`${team_member_user.user_first_name} ${team_member_user.user_last_name}`}

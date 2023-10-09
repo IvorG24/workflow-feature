@@ -1,7 +1,7 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { isEmpty } from "@/utils/functions";
 import { TeamMemberTableRow, TeamTableRow } from "@/utils/types";
 import { Container, Stepper, Text, Title } from "@mantine/core";
-import { isEmpty } from "lodash";
 import { useState } from "react";
 import CreateTeamForm from "./CreateTeamForm";
 import InviteForm from "./InviteForm";

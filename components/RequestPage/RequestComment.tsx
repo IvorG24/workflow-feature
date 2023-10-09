@@ -33,7 +33,6 @@ import {
   IconFolderCancel,
   IconX,
 } from "@tabler/icons-react";
-import { capitalize } from "lodash";
 import moment from "moment";
 import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -190,8 +189,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                 )}
                 radius="xl"
               >
-                {capitalize(commenter.user_first_name[0])}
-                {capitalize(commenter.user_last_name[0])}
+                {(
+                  commenter.user_first_name[0] + commenter.user_last_name[0]
+                ).toUpperCase()}
               </Avatar>
 
               <Alert
@@ -230,8 +230,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                     )}
                     radius="xl"
                   >
-                    {capitalize(commenter.user_first_name[0])}
-                    {capitalize(commenter.user_last_name[0])}
+                    {(
+                      commenter.user_first_name[0] + commenter.user_last_name[0]
+                    ).toUpperCase()}
                   </Avatar>
                   <Stack spacing={0} ml="md">
                     <Text size={14}>

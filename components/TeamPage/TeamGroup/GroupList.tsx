@@ -2,6 +2,7 @@ import { deleteRow } from "@/backend/api/delete";
 import { getTeamGroupList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { generateRandomId } from "@/utils/functions";
 import { TeamGroupTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -19,7 +20,6 @@ import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
-import { lowerCase, uniqueId } from "lodash";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -78,7 +78,7 @@ const GroupList = ({
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState(groupList);
 
-  const headerCheckboxKey = uniqueId();
+  const headerCheckboxKey = generateRandomId();
 
   const handleCheckRow = (groupId: string) => {
     if (checkList.includes(groupId)) {
@@ -241,9 +241,9 @@ const GroupList = ({
             setGroupList(updatedGroupList as TeamGroupTableRow[]);
             setGroupCount(updatedGroupList.length);
 
-            const searchIncludesNewGroup = lowerCase(
-              payload.new.team_group_name
-            ).includes(lowerCase(search));
+            const searchIncludesNewGroup = payload.new.team_group_name
+              .toLowerCase()
+              .includes(search.toLowerCase());
 
             if (searchIncludesNewGroup) {
               setSearchResult(updatedGroupList as TeamGroupTableRow[]);

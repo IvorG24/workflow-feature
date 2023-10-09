@@ -17,13 +17,11 @@ import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
-import { capitalize } from "lodash";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import Header from "./Header/Header";
 import Navbar from "./Navbar/Navbar";
-
 type LayoutProps = {
   children: React.ReactNode;
 };
@@ -121,9 +119,7 @@ const Layout = ({ children }: LayoutProps) => {
         // set user avatar and initials
         setUserAvatar(user.user_avatar);
         setUserInitials(
-          `${capitalize(user.user_first_name[0])}${capitalize(
-            user.user_last_name[0]
-          )}`
+          (user.user_first_name[0] + user.user_last_name[0]).toUpperCase()
         );
 
         // fetch notification list

@@ -9,7 +9,6 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconPhoto, IconUpload } from "@tabler/icons-react";
-import { upperCase } from "lodash";
 
 import { useRef, useState } from "react";
 
@@ -90,7 +89,7 @@ const UploadLogo = ({
           color={id ? getAvatarColor(Number(`${id.charCodeAt(0)}`)) : "gray"}
         >
           {initials ? (
-            upperCase(initials)
+            initials.toUpperCase()
           ) : (
             <IconPhoto color="gray" size={size / 2} />
           )}

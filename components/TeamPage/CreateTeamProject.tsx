@@ -15,7 +15,6 @@ import {
   TextInput,
   rem,
 } from "@mantine/core";
-import { startCase } from "lodash";
 import { Dispatch, SetStateAction, forwardRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -40,8 +39,10 @@ const SelectItem = forwardRef<HTMLDivElement, SelecteItemType>(
             Number(`${member.team_member_user.user_id.charCodeAt(0)}`)
           )}
         >
-          {startCase(member.team_member_user.user_first_name[0])}
-          {startCase(member.team_member_user.user_last_name[0])}
+          {(
+            member.team_member_user.user_first_name[0] +
+            member.team_member_user.user_last_name[0]
+          ).toUpperCase()}
         </Avatar>
 
         <div>
@@ -89,8 +90,10 @@ const Value = ({
             )}
             radius="xl"
           >
-            {startCase(member.team_member_user.user_first_name[0])}
-            {startCase(member.team_member_user.user_last_name[0])}
+            {(
+              member.team_member_user.user_first_name[0] +
+              member.team_member_user.user_last_name[0]
+            ).toUpperCase()}
           </Avatar>
         </Box>
         <Box sx={{ lineHeight: 1, fontSize: rem(12) }}>{label}</Box>

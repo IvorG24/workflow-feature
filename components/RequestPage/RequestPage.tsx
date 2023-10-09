@@ -36,7 +36,6 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { lowerCase } from "lodash";
 import { useRouter } from "next/router";
 import { useRef } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
@@ -472,10 +471,11 @@ const RequestPage = ({
       });
 
       notifications.show({
-        message: `Request ${lowerCase(status)}.`,
+        message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
-    } catch {
+    } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

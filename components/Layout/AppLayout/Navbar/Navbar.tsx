@@ -1,7 +1,7 @@
 import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
+import { isEmpty } from "@/utils/functions";
 import { Navbar as MantineNavbar, Skeleton, Stack } from "@mantine/core";
 import { useScrollLock } from "@mantine/hooks";
-import { isEmpty } from "lodash";
 import FormList from "./FormList";
 import NavLink from "./NavLink";
 import SelectTeam from "./SelectTeam";

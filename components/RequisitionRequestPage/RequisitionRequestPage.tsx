@@ -21,7 +21,6 @@ import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { lowerCase } from "lodash";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
@@ -95,7 +94,10 @@ const RequisitionRequestPage = ({
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 
-  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
+  const handleUpdateRequest = async (
+    status: "APPROVED" | "REJECTED",
+    jiraId?: string
+  ) => {
     try {
       setIsLoading(true);
       const signer = isUserSigner;
@@ -119,10 +121,11 @@ const RequisitionRequestPage = ({
         formName: request.request_form.form_name,
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
+        jiraId,
       });
 
       notifications.show({
-        message: `Request ${lowerCase(status)}.`,
+        message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
     } catch (error) {
@@ -294,6 +297,7 @@ const RequisitionRequestPage = ({
             signer={
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }
+            isRf
           />
         ) : null}
 

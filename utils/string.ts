@@ -21,3 +21,10 @@ export const regExp = /\(([^)]+)\)/;
 export const addCommaToNumber = (number: number) => {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
+
+export const startCase = (inputString: string) => {
+  return inputString
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
