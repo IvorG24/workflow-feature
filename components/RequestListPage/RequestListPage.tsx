@@ -120,7 +120,6 @@ const RequestListPage = ({
 
       setActivePage(1);
       setIsFetchingRequestList(true);
-      setRequestList([]);
 
       const params = {
         teamId: activeTeam.team_id,
