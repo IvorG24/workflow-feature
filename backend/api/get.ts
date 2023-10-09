@@ -154,6 +154,7 @@ export const getRequestList = async (
     page: number;
     limit: number;
     requestor?: string[];
+    approver?: string[];
     status?: FormStatusType[];
     form?: string[];
     sort?: "ascending" | "descending";
@@ -165,6 +166,7 @@ export const getRequestList = async (
     page,
     limit,
     requestor,
+    approver,
     status,
     form,
     sort = "descending",
@@ -173,6 +175,9 @@ export const getRequestList = async (
 
   const requestorCondition = requestor
     ?.map((value) => `request_table.request_team_member_id = '${value}'`)
+    .join(" OR ");
+  const approverCondition = approver
+    ?.map((value) => `signer_table.signer_team_member_id = '${value}'`)
     .join(" OR ");
   const statusCondition = status
     ?.map((value) => `request_table.request_status = '${value}'`)
@@ -192,6 +197,7 @@ export const getRequestList = async (
       page: page,
       limit: limit,
       requestor: requestorCondition ? `AND (${requestorCondition})` : "",
+      approver: approverCondition ? `AND (${approverCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",

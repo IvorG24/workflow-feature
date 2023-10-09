@@ -36,6 +36,7 @@ import RequestListFilter from "./RequestListFilter";
 export type FilterFormValues = {
   search: string;
   requestorList: string[];
+  approverList: string[];
   formList: string[];
   status?: FormStatusType[];
   isAscendingSort: boolean;
@@ -80,6 +81,7 @@ const RequestListPage = ({
     {
       search,
       requestorList,
+      approverList,
       formList,
       status,
       isAscendingSort,
@@ -89,12 +91,15 @@ const RequestListPage = ({
       if (!activeTeam.team_id) return;
       setActivePage(1);
       setIsFetchingRequestList(true);
+      setRequestList([]);
       const params = {
         teamId: activeTeam.team_id,
         page: 1,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         requestor:
           requestorList && requestorList.length > 0 ? requestorList : undefined,
+        approver:
+          approverList && approverList.length > 0 ? approverList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
         search: search,
@@ -103,6 +108,7 @@ const RequestListPage = ({
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
+
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
