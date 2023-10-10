@@ -778,6 +778,39 @@ $$ LANGUAGE plv8;
 
 -- End: Create request
 
+-- Start: Edit request
+
+CREATE OR REPLACE FUNCTION edit_request(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let request_data;
+  plv8.subtransaction(function(){
+    const {
+      requestId,
+      responseValues,
+      signerValues,
+      notificationValues
+    } = input_data;
+
+    request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
+
+    plv8.execute(`DELETE FROM request_response_table WHERE request_response_request_id='${requestId}';`);
+
+    plv8.execute(`DELETE FROM request_signer_table WHERE request_signer_request_id='${requestId}';`);
+
+    plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
+
+    plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
+
+    plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+    
+ });
+ return request_data;
+$$ LANGUAGE plv8;
+
+-- End: Edit request
+
 -- Start: Approve or reject request
     
 CREATE OR REPLACE FUNCTION approve_or_reject_request(
@@ -4649,6 +4682,7 @@ RETURNS JSON as $$
           signer_order, 
           signer_form_id,
           team_member_id, 
+          user_id, 
           user_first_name, 
           user_last_name
         FROM request_signer_table
@@ -4842,6 +4876,7 @@ RETURNS JSON as $$
             signer_team_member:{
               team_member_id: requestSigner.team_member_id,
               team_member_user:{
+                user_id: requestSigner.user_id, 
                 user_first_name: requestSigner.user_first_name, 
                 user_last_name: requestSigner.user_last_name
               }

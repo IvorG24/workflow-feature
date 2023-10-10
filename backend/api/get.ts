@@ -1502,6 +1502,26 @@ export const checkRequsitionRequestForReleaseOrder = async (
   return Boolean(count);
 };
 
+// Check if request is pending
+export const checkIfRequestIsPending = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", { count: "exact" })
+    .eq("request_id", requestId)
+    .eq("request_status", "PENDING")
+    .eq("request_is_disabled", false);
+
+  if (error) throw error;
+  return Boolean(count);
+};
+
 // Get response data by keyword
 export const getResponseDataByKeyword = async (
   supabaseClient: SupabaseClient<Database>,
@@ -2888,7 +2908,7 @@ export const getProjectSignerWithTeamMember = async (
 
   if (error) throw error;
 
-  return data;
+  return data as FormType["form_signer"];
 };
 
 // Fetch request project id
