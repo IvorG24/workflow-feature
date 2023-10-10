@@ -1846,6 +1846,7 @@ RETURNS JSON AS $$
         page,
         limit,
         requestor,
+        approver,
         status,
         form,
         sort,
@@ -1856,7 +1857,7 @@ RETURNS JSON AS $$
 
       const request_list = plv8.execute(
         `
-          SELECT 
+          SELECT DISTINCT
             request_table.request_id, 
             request_table.request_formsly_id,
             request_date_created, 
@@ -1867,10 +1868,13 @@ RETURNS JSON AS $$
           FROM request_table
           INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
           INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+          INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
           WHERE team_member_table.team_member_team_id = '${teamId}'
           AND request_is_disabled = false
           AND form_table.form_is_disabled = false
           ${requestor}
+          ${approver}
           ${status}
           ${form}
           ${search}
@@ -1881,14 +1885,17 @@ RETURNS JSON AS $$
 
       const request_count = plv8.execute(
         `
-          SELECT COUNT(*)
+          SELECT DISTINCT COUNT(*)
           FROM request_table
           INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
           INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+          INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
           WHERE team_member_table.team_member_team_id = '${teamId}'
           AND request_is_disabled = false
           AND form_table.form_is_disabled = false
           ${requestor}
+          ${approver}
           ${status}
           ${form}
           ${search}
@@ -3033,7 +3040,7 @@ RETURNS JSON AS $$
 
     const formList = formListData.map(form=>({ label: form.form_name, value: form.form_id }));
     
-    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "form":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
+    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "approver":"", "form":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
 
     request_data = {teamMemberId,teamMemberList,isFormslyTeam, formList, requestList: requestList.data, requestListCount: requestList.count}
  });

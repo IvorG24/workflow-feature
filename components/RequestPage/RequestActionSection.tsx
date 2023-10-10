@@ -30,6 +30,7 @@ type Props = {
   ) => void;
   signer?: RequestWithResponseType["request_signer"][0];
   isRf?: boolean;
+  isUserPrimarySigner?: boolean;
 };
 
 const RequestActionSection = ({
@@ -41,6 +42,7 @@ const RequestActionSection = ({
   handleUpdateRequest,
   signer,
   isRf,
+  isUserPrimarySigner,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
@@ -53,7 +55,7 @@ const RequestActionSection = ({
   } = useForm<{ jiraId: string }>();
 
   const handleAction = (action: string, color: string) => {
-    if (isRf && action === "approve") {
+    if (isRf && action === "approve" && isUserPrimarySigner) {
       modals.open({
         modalId: "approveRf",
         title: <Text>Please confirm your action.</Text>,
