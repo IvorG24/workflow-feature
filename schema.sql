@@ -790,10 +790,15 @@ RETURNS JSON AS $$
       requestId,
       responseValues,
       signerValues,
-      notificationValues
+      notificationValues,
+      projectId
     } = input_data;
 
-    request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
+    if(projectId){
+      request_data = plv8.execute(`UPDATE request_table SET request_project_id='${projectId}' WHERE request_id='${requestId}';`)[0];
+    }else{
+      request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
+    }
 
     plv8.execute(`DELETE FROM request_response_table WHERE request_response_request_id='${requestId}';`);
 
