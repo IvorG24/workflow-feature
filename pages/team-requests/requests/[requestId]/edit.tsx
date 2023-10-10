@@ -26,7 +26,6 @@ import {
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { parseJSONIfValid } from "@/utils/string";
 import { OptionTableRow, RequestWithResponseType } from "@/utils/types";
-import { trim } from "lodash";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -364,16 +363,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         const usedItem = parsedRequest.request_form.form_section
           .slice(1)
           .map((section) =>
-            trim(
-              parseJSONIfValid(
-                section.section_field[0].field_response[0].request_response
-              )
-            )
+            `${parseJSONIfValid(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
           )
           .flat();
 
         const unusedItemOption = itemOptions.filter(
-          (option) => !usedItem.includes(trim(option.option_value))
+          (option) => !usedItem.includes(option.option_value.trim())
         );
         const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
           parsedRequest.request_form.form_section.slice(1).map((section) => ({
@@ -470,16 +467,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         const usedItem = parsedRequest.request_form.form_section
           .slice(1)
           .map((section) =>
-            trim(
-              parseJSONIfValid(
-                section.section_field[0].field_response[0].request_response
-              )
-            )
+            `${parseJSONIfValid(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
           )
           .flat();
 
         const unusedItemOption = itemOptions.filter(
-          (option) => !usedItem.includes(trim(option.option_value))
+          (option) => !usedItem.includes(option.option_value.trim())
         );
         const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
           parsedRequest.request_form.form_section.slice(2).map((section) => ({
@@ -558,16 +553,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         const usedItem = parsedRequest.request_form.form_section
           .slice(3)
           .map((section) =>
-            trim(
-              parseJSONIfValid(
-                section.section_field[0].field_response[0].request_response
-              )
-            )
+            `${parseJSONIfValid(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
           )
           .flat();
 
         const unusedItemOption = itemOptions.filter(
-          (option) => !usedItem.includes(trim(option.option_value))
+          (option) => !usedItem.includes(option.option_value.trim())
         );
 
         const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
@@ -668,7 +661,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
-            option_value: trim(value),
+            option_value: value.trim(),
           };
         });
 
@@ -679,16 +672,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         const usedItem = parsedRequest.request_form.form_section
           .slice(1)
           .map((section) =>
-            trim(
-              parseJSONIfValid(
-                section.section_field[0].field_response[0].request_response
-              )
-            )
+            `${parseJSONIfValid(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
           )
           .flat();
 
         const unusedItemOption = itemOptions.filter(
-          (option) => !usedItem.includes(trim(option.option_value))
+          (option) => !usedItem.includes(option.option_value.trim())
         );
         const itemSectionWithOptions: RequestWithResponseType["request_form"]["form_section"] =
           parsedRequest.request_form.form_section.slice(2).map((section) => ({

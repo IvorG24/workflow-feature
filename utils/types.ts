@@ -150,6 +150,27 @@ export type CSICodeTableInsert =
 export type CSICodeTableUpdate =
   Database["public"]["Tables"]["csi_code_table"]["Update"];
 
+export type ServiceTableRow =
+  Database["public"]["Tables"]["service_table"]["Row"];
+export type ServiceTableInsert =
+  Database["public"]["Tables"]["service_table"]["Insert"];
+export type ServiceTableUpdate =
+  Database["public"]["Tables"]["service_table"]["Update"];
+
+export type ServiceScopeTableRow =
+  Database["public"]["Tables"]["service_scope_table"]["Row"];
+export type ServiceScopeTableInsert =
+  Database["public"]["Tables"]["service_scope_table"]["Insert"];
+export type ServiceScopeTableUpdate =
+  Database["public"]["Tables"]["service_scope_table"]["Update"];
+
+export type ServiceScopeChoiceTableRow =
+  Database["public"]["Tables"]["service_scope_choice_table"]["Row"];
+export type ServiceScopeChoiceTableInsert =
+  Database["public"]["Tables"]["service_scope_choice_table"]["Insert"];
+export type ServiceScopeChoiceTableUpdate =
+  Database["public"]["Tables"]["service_scope_choice_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -451,6 +472,10 @@ export type ItemWithDescriptionType = ItemTableRow & {
   item_description: ItemDescriptionTableRow[];
 };
 
+export type ServiceWithScopeType = ServiceTableRow & {
+  service_scope: ServiceScopeTableRow[];
+};
+
 export type ItemForm = {
   generalName: string;
   descriptions: { description: string; withUoM: boolean }[];
@@ -458,6 +483,23 @@ export type ItemForm = {
   isAvailable: boolean;
   glAccount: string;
   division: string[];
+};
+
+export type ServiceForm = {
+  name: string;
+  scope: { name: string; type: FieldType; isWithOther: boolean }[];
+  isAvailable: boolean;
+};
+export type ServiceScopeChoiceForm = {
+  name: string;
+  isAvailable: boolean;
+};
+
+export type ServiceWithScopeAndChoice = ServiceTableRow & {
+  service_scope: (ServiceScopeChoiceTableRow & {
+    service_scope_choice: ServiceScopeChoiceTableRow[];
+    service_field: FieldTableRow;
+  })[];
 };
 
 export type ItemDescriptionFieldForm = {

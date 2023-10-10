@@ -44,6 +44,7 @@ import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspect
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
 import RequisitionSummary from "../SummarySection/RequisitionSummary";
 import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
+import SubconSummary from "../SummarySection/SubconSummary";
 import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
 import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
@@ -474,8 +475,7 @@ const RequestPage = ({
         message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
-    } catch (e) {
-      console.log(e);
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -625,7 +625,8 @@ const RequestPage = ({
               isFormslyForm={isFormslyForm}
               isAnon={isAnon}
               isOnlyWithResponse={
-                request.request_form.form_name === "Requisition"
+                request.request_form.form_name === "Requisition" ||
+                request.request_form.form_name === "Subcon"
               }
             />
           ))}
@@ -634,6 +635,23 @@ const RequestPage = ({
         {request.request_form.form_name === "Requisition" &&
         request.request_form.form_is_formsly_form ? (
           <RequisitionSummary
+            summaryData={sectionWithDuplicateList
+              .slice(1)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        ) : null}
+
+        {request.request_form.form_name === "Subcon" &&
+        request.request_form.form_is_formsly_form ? (
+          <SubconSummary
             summaryData={sectionWithDuplicateList
               .slice(1)
               .sort((a, b) =>

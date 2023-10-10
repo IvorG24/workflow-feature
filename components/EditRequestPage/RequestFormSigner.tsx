@@ -9,7 +9,6 @@ import {
   Title,
 } from "@mantine/core";
 import { IconCircleDashed } from "@tabler/icons-react";
-import { toUpper } from "lodash";
 
 type Props = {
   signerList: FormType["form_signer"];
@@ -34,7 +33,7 @@ const RequestFormSigner = ({ signerList }: Props) => {
               </ThemeIcon>
               <Text size="sm">
                 {signerStatusMessage(
-                  toUpper(signer.signer_action),
+                  signer.signer_action.toUpperCase(),
                   `${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name}`
                 )}
               </Text>

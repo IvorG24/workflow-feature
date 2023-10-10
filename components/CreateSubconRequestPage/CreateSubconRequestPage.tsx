@@ -1,8 +1,7 @@
 import {
-  getCSICode,
-  getCSICodeOptionsForItems,
-  getItem,
   getProjectSignerWithTeamMember,
+  getService,
+  getSupplier,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -47,13 +46,13 @@ export type FieldWithResponseArray = Field & {
 
 type Props = {
   form: FormType;
-  itemOptions: OptionTableRow[];
+  serviceOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
 };
 
-const CreateRequisitionRequestPage = ({
+const CreateSubconRequestPage = ({
   form,
-  itemOptions,
+  serviceOptions,
   projectOptions,
 }: Props) => {
   const router = useRouter();
@@ -69,6 +68,7 @@ const CreateRequisitionRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -81,7 +81,7 @@ const CreateRequisitionRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -100,49 +100,6 @@ const CreateRequisitionRequestPage = ({
 
       setIsLoading(true);
 
-      const toBeCheckedSections = data.sections.slice(1);
-      const newSections: RequestFormValues["sections"] = [];
-      toBeCheckedSections.forEach((section) => {
-        // if new section if empty
-        if (newSections.length === 0) {
-          newSections.push(section);
-        } else {
-          let uniqueItem = true;
-          newSections.forEach((newSection) => {
-            // if section general name is equal
-            if (
-              newSection.section_field[0].field_response ===
-              section.section_field[0].field_response
-            ) {
-              let uniqueField = false;
-              // loop on every field except name and quantity
-              for (let i = 5; i < newSection.section_field.length; i++) {
-                if (
-                  newSection.section_field[i].field_response !==
-                  section.section_field[i].field_response
-                ) {
-                  uniqueField = true;
-                  break;
-                }
-              }
-              if (!uniqueField) {
-                newSection.section_field[2].field_response =
-                  Number(newSection.section_field[2].field_response) +
-                  Number(section.section_field[2].field_response);
-                uniqueItem = false;
-              }
-            }
-          });
-          if (uniqueItem) {
-            newSections.push(section);
-          }
-        }
-      });
-
-      const newData = {
-        sections: [data.sections[0], ...newSections],
-      };
-
       const response = data.sections[0].section_field[0]
         .field_response as string;
 
@@ -151,7 +108,7 @@ const CreateRequisitionRequestPage = ({
       )?.option_id as string;
 
       const request = await createRequest(supabaseClient, {
-        requestFormValues: newData,
+        requestFormValues: data,
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,
@@ -180,7 +137,7 @@ const CreateRequisitionRequestPage = ({
 
   const handleDuplicateSection = (sectionId: string) => {
     const sectionLastIndex = formSections
-      .map((sectionItem) => sectionItem.section_id)
+      .map((sectionService) => sectionService.section_id)
       .lastIndexOf(sectionId);
     const sectionMatch = form.form_section.find(
       (section) => section.section_id === sectionId
@@ -189,11 +146,11 @@ const CreateRequisitionRequestPage = ({
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
         (field) => {
-          if (field.field_name === "General Name") {
+          if (field.field_name === "Service Name") {
             return {
               ...field,
               field_section_duplicatable_id: sectionDuplicatableId,
-              field_option: itemOptions,
+              field_option: serviceOptions,
             };
           } else {
             return {
@@ -226,10 +183,10 @@ const CreateRequisitionRequestPage = ({
 
   useEffect(() => {
     const newFields = form.form_section[1].section_field.map((field) => {
-      if (field.field_name === "General Name") {
+      if (field.field_name === "Service Name") {
         return {
           ...field,
-          field_option: itemOptions,
+          field_option: serviceOptions,
         };
       } else {
         return field;
@@ -242,80 +199,41 @@ const CreateRequisitionRequestPage = ({
         section_field: newFields,
       },
     ]);
-  }, [form, replaceSection, requestFormMethods, itemOptions]);
+  }, [form, replaceSection, requestFormMethods, serviceOptions]);
 
-  const handleGeneralNameChange = async (
+  const handleServiceNameChange = async (
     index: number,
     value: string | null
   ) => {
     const newSection = getValues(`sections.${index}`);
 
     if (value) {
-      const item = await getItem(supabaseClient, {
+      const service = await getService(supabaseClient, {
         teamId: team.team_id,
-        itemName: value,
+        serviceName: value,
       });
-
-      const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-        divisionIdList: item.item_division_id_list,
-      });
-
       const generalField = [
         {
           ...newSection.section_field[0],
         },
-        {
-          ...newSection.section_field[1],
-          field_response: item.item_unit,
-        },
-        {
-          ...newSection.section_field[2],
-        },
-        {
-          ...newSection.section_field[3],
-          field_response: item.item_gl_account,
-        },
-        {
-          ...newSection.section_field[4],
-          field_response: "",
-          field_option: csiCodeList.map((csiCode, index) => {
-            return {
-              option_description: null,
-              option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: csiCode.csi_code_id,
-              option_order: index,
-              option_value: csiCode.csi_code_level_three_description,
-            };
-          }),
-        },
-        ...newSection.section_field.slice(5, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
-      const newFields = item.item_description.map((description) => {
-        const options = description.item_description_field.map(
+      const newFields = service.service_scope.map((scope) => {
+        const options = scope.service_scope_choice.map(
           (options, optionIndex) => {
             return {
               option_description: null,
-              option_field_id: description.item_field.field_id,
-              option_id: options.item_description_field_id,
+              option_field_id: scope.service_field.field_id,
+              option_id: options.service_scope_choice_id,
               option_order: optionIndex + 1,
-              option_value: `${options.item_description_field_value}${
-                options.item_description_field_uom
-                  ? ` ${options.item_description_field_uom}`
-                  : ""
-              }`,
+              option_value: options.service_scope_choice_name,
             };
           }
         );
 
         return {
-          ...description.item_field,
+          ...scope.service_field,
           field_section_duplicatable_id: duplicatableSectionId,
           field_option: options,
           field_response: "",
@@ -335,74 +253,7 @@ const CreateRequisitionRequestPage = ({
         ],
       });
     } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 3),
-        ...newSection.section_field.slice(3, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    }
-  };
-
-  const handleCSICodeChange = async (index: number, value: string | null) => {
-    const newSection = getValues(`sections.${index}`);
-
-    if (value) {
-      const csiCode = await getCSICode(supabaseClient, { csiCode: value });
-
-      const generalField = [
-        ...newSection.section_field.slice(0, 5),
-        {
-          ...newSection.section_field[5],
-          field_response: csiCode?.csi_code_section,
-        },
-        {
-          ...newSection.section_field[6],
-          field_response: csiCode?.csi_code_division_description,
-        },
-        {
-          ...newSection.section_field[7],
-          field_response: csiCode?.csi_code_level_two_major_group_description,
-        },
-        {
-          ...newSection.section_field[8],
-          field_response: csiCode?.csi_code_level_two_minor_group_description,
-        },
-
-        ...newSection.section_field.slice(9),
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-      updateSection(index, {
-        ...newSection,
-        section_field: [
-          ...generalField.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
-            };
-          }),
-        ],
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 4),
-        ...newSection.section_field.slice(4, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
+      const generalField = [newSection.section_field[0]];
       updateSection(index, {
         ...newSection,
         section_field: generalField,
@@ -450,6 +301,41 @@ const CreateRequisitionRequestPage = ({
     }
   };
 
+  const subconSearch = async (value: string) => {
+    if (
+      !value ||
+      value === getValues("sections.1.section_field.0.field_response")
+    )
+      return;
+
+    try {
+      setIsSearching(true);
+      const supplierList = await getSupplier(supabaseClient, {
+        supplier: value,
+        teamId: `${teamMember?.team_member_team_id}`,
+        fieldId: form.form_section[1].section_field[0].field_id,
+      });
+      const prevChosenSupplier = getValues(
+        `sections.0.section_field.5.field_response`
+      ) as string[];
+      const prevSupplierList = getValues(
+        `sections.0.section_field.5.field_option`
+      ).filter((option) => prevChosenSupplier.includes(option.option_value));
+
+      setValue(`sections.0.section_field.5.field_option`, [
+        ...prevSupplierList,
+        ...supplierList,
+      ]);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -463,7 +349,7 @@ const CreateRequisitionRequestPage = ({
             {formSections.map((section, idx) => {
               const sectionIdToFind = section.section_id;
               const sectionLastIndex = getValues("sections")
-                .map((sectionItem) => sectionItem.section_id)
+                .map((sectionService) => sectionService.section_id)
                 .lastIndexOf(sectionIdToFind);
 
               return (
@@ -473,12 +359,13 @@ const CreateRequisitionRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    requisitionFormMethods={{
-                      onGeneralNameChange: handleGeneralNameChange,
+                    formslyFormName="Subcon"
+                    subconFormMethods={{
+                      onServiceNameChange: handleServiceNameChange,
                       onProjectNameChange: handleProjectNameChange,
-                      onCSICodeChange: handleCSICodeChange,
+                      subconSearch: subconSearch,
+                      isSearching: isSearching,
                     }}
-                    formslyFormName="Requisition"
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -508,4 +395,4 @@ const CreateRequisitionRequestPage = ({
   );
 };
 
-export default CreateRequisitionRequestPage;
+export default CreateSubconRequestPage;

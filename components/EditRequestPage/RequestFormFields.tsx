@@ -30,7 +30,6 @@ import {
   IconFile,
   IconLink,
 } from "@tabler/icons-react";
-import { toLower } from "lodash";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { RequestFormValues } from "./EditRequestPage";
@@ -281,7 +280,7 @@ const RequestFormFields = ({
               const isBoolean = typeof value === "boolean";
               const checked = isBoolean
                 ? value
-                : toLower(parseJSONIfValid(value)) === "true";
+                : parseJSONIfValid(value).toLowerCase() === "true";
               return (
                 <Switch
                   checked={checked}

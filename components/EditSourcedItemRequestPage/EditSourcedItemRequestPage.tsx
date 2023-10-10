@@ -32,7 +32,6 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { toUpper } from "lodash";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -380,7 +379,7 @@ const EditSourcedItemRequestPage = ({
         finalSigners.push({
           ...signer,
           signer_is_primary_signer: false,
-          signer_action: toUpper(signer.signer_action),
+          signer_action: signer.signer_action.toUpperCase(),
         } as FormType["form_signer"][0]);
       }
     });
