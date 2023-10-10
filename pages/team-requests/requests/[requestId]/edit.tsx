@@ -43,7 +43,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
       if (requestDataError) throw requestDataError;
       const request = requestData as RequestWithResponseType;
-
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
@@ -81,15 +80,16 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const parsedRequest = parseRequest(request);
       const { request_form: form } = parsedRequest;
 
-      const projectSigner = await getProjectSignerWithTeamMember(
-        supabaseClient,
-        {
-          formId: form.form_id,
-          projectId: `${request.request_project_id}`,
-        }
-      );
-      const projectSignerList: RequestWithResponseType["request_signer"] =
-        projectSigner.map((signer) => ({
+      let projectSignerList: RequestWithResponseType["request_signer"] = [];
+      if (request.request_project_id) {
+        const projectSigner = await getProjectSignerWithTeamMember(
+          supabaseClient,
+          {
+            formId: form.form_id,
+            projectId: `${request.request_project_id}`,
+          }
+        );
+        projectSignerList = projectSigner.map((signer) => ({
           request_signer_id: signer.signer_id,
           request_signer_status: "PENDING",
           request_signer_request_id: request.request_id,
@@ -113,6 +113,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             },
           },
         }));
+      }
 
       if (!form.form_is_formsly_form)
         return {
@@ -240,7 +241,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             ],
           },
           request_signer:
-            projectSigner.length !== 0
+            projectSignerList.length !== 0
               ? projectSignerList
               : parsedRequest.request_signer,
         };
@@ -304,7 +305,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             ],
           },
           request_signer:
-            projectSigner.length !== 0
+            projectSignerList.length !== 0
               ? projectSignerList
               : parsedRequest.request_signer,
         };
@@ -408,7 +409,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             ],
           },
           request_signer:
-            projectSigner.length !== 0
+            projectSignerList.length !== 0
               ? projectSignerList
               : parsedRequest.request_signer,
         };
@@ -513,7 +514,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             ],
           },
           request_signer:
-            projectSigner.length !== 0
+            projectSignerList.length !== 0
               ? projectSignerList
               : parsedRequest.request_signer,
         };
@@ -623,7 +624,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             ],
           },
           request_signer:
-            projectSigner.length !== 0
+            projectSignerList.length !== 0
               ? projectSignerList
               : parsedRequest.request_signer,
         };
@@ -718,7 +719,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             ],
           },
           request_signer:
-            projectSigner.length !== 0
+            projectSignerList.length !== 0
               ? projectSignerList
               : parsedRequest.request_signer,
         };

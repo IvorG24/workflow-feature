@@ -157,6 +157,11 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
         (field) => ({
           ...field,
+          field_response: field.field_response.map((response) => ({
+            ...response,
+            request_response_duplicatable_section_id: sectionDuplicatableId,
+            request_response: "",
+          })),
           field_section_duplicatable_id: sectionDuplicatableId,
         })
       );
