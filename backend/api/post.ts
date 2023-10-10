@@ -4,6 +4,7 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { parseJSONIfValid } from "@/utils/string";
 import {
   AttachmentBucketType,
   AttachmentTableInsert,
@@ -17,6 +18,10 @@ import {
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
+  RequestWithResponseType,
+  ServiceForm,
+  ServiceScopeChoiceTableInsert,
+  ServiceTableInsert,
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
@@ -476,6 +481,151 @@ export const createRequest = async (
   return data as RequestTableRow;
 };
 
+// Edit request
+export const editRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    requestFormValues: {
+      sections: RequestWithResponseType["request_form"]["form_section"];
+    };
+    signers: FormType["form_signer"];
+    teamId: string;
+    requesterName: string;
+    formName: string;
+    projectId?: string | null;
+  }
+) => {
+  const {
+    requestId,
+    requestFormValues,
+    signers,
+    teamId,
+    requesterName,
+    formName,
+    projectId,
+  } = params;
+
+  // get request response
+  const requestResponseInput: RequestResponseTableInsert[] = [];
+  for (const section of requestFormValues.sections) {
+    for (const field of section.section_field) {
+      let responseValue = field?.field_response[0]?.request_response as unknown;
+      if (
+        typeof responseValue === "boolean" ||
+        responseValue ||
+        field.field_type === "SWITCH" ||
+        (field.field_type === "NUMBER" && responseValue === 0)
+      ) {
+        if (field.field_type === "FILE") {
+          const fileResponse = responseValue as File;
+          const uploadId = `${field.field_id}${
+            field.field_section_duplicatable_id
+              ? `_${field.field_section_duplicatable_id}`
+              : ""
+          }`;
+          if (fileResponse["type"].split("/")[0] === "image") {
+            responseValue = await uploadImage(supabaseClient, {
+              id: uploadId,
+              image: fileResponse,
+              bucket: "REQUEST_ATTACHMENTS",
+            });
+          } else {
+            responseValue = await uploadFile(supabaseClient, {
+              id: uploadId,
+              file: fileResponse,
+              bucket: "REQUEST_ATTACHMENTS",
+            });
+          }
+        } else if (field.field_type === "SWITCH" && !field.field_response) {
+          responseValue = false;
+        }
+        const parsedResponse = parseJSONIfValid(`${responseValue}`);
+        const trimmedResponse =
+          parsedResponse.length >= 2 &&
+          parsedResponse[0] === '"' &&
+          parsedResponse[parsedResponse.length - 1] === '"'
+            ? parsedResponse.slice(1, -1)
+            : parsedResponse;
+
+        const response = {
+          request_response: JSON.stringify(trimmedResponse),
+          request_response_duplicatable_section_id:
+            field.field_response[0].request_response_duplicatable_section_id ??
+            null,
+          request_response_field_id: field.field_id,
+          request_response_request_id: requestId,
+        };
+        requestResponseInput.push(response);
+      }
+    }
+  }
+
+  // get request signers
+  const requestSignerInput: RequestSignerTableInsert[] = [];
+
+  // get signer notification
+  const requestSignerNotificationInput: NotificationTableInsert[] = [];
+
+  signers.forEach((signer) => {
+    requestSignerInput.push({
+      request_signer_signer_id: signer.signer_id,
+      request_signer_request_id: requestId,
+    });
+    requestSignerNotificationInput.push({
+      notification_app: "REQUEST",
+      notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
+      notification_redirect_url: `/team-requests/requests/${requestId}`,
+      notification_team_id: teamId,
+      notification_type: "REQUEST",
+      notification_user_id: signer.signer_team_member.team_member_user.user_id,
+    });
+  });
+
+  const responseValues = requestResponseInput
+    .map(
+      (response) =>
+        `('${response.request_response}',${
+          response.request_response_duplicatable_section_id
+            ? `'${response.request_response_duplicatable_section_id}'`
+            : "NULL"
+        },'${response.request_response_field_id}','${
+          response.request_response_request_id
+        }')`
+    )
+    .join(",");
+
+  const signerValues = requestSignerInput
+    .map(
+      (signer) =>
+        `('${signer.request_signer_signer_id}','${signer.request_signer_request_id}')`
+    )
+    .join(",");
+
+  const notificationValues = requestSignerNotificationInput
+    .map(
+      (notification) =>
+        `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+    )
+    .join(",");
+
+  const { data, error } = await supabaseClient
+    .rpc("edit_request", {
+      input_data: {
+        requestId,
+        responseValues,
+        signerValues,
+        notificationValues,
+        projectId,
+      },
+    })
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data as RequestTableRow;
+};
+
 // Create formsly premade forms
 export const createFormslyPremadeForms = async (
   supabaseClient: SupabaseClient<Database>,
@@ -657,4 +807,37 @@ export const downloadFromStorage = (
   });
 
   return data.publicUrl;
+};
+
+// Create service
+export const createService = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    serviceData: ServiceTableInsert;
+    scope: ServiceForm["scope"];
+    formId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("create_service", { input_data: params })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// Create item description field
+export const createServiceScopeChoice = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: ServiceScopeChoiceTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("service_scope_choice_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data;
 };

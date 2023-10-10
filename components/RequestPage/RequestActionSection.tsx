@@ -16,6 +16,7 @@ import { modals, openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconId } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 
 type Props = {
@@ -30,6 +31,8 @@ type Props = {
   ) => void;
   signer?: RequestWithResponseType["request_signer"][0];
   isRf?: boolean;
+  isUserPrimarySigner?: boolean;
+  isEditable?: boolean;
 };
 
 const RequestActionSection = ({
@@ -41,8 +44,11 @@ const RequestActionSection = ({
   handleUpdateRequest,
   signer,
   isRf,
+  isUserPrimarySigner,
+  isEditable,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
 
   const {
     register,
@@ -53,7 +59,7 @@ const RequestActionSection = ({
   } = useForm<{ jiraId: string }>();
 
   const handleAction = (action: string, color: string) => {
-    if (isRf && action === "approve") {
+    if (isRf && action === "approve" && isUserPrimarySigner) {
       modals.open({
         modalId: "approveRf",
         title: <Text>Please confirm your action.</Text>,
@@ -182,17 +188,19 @@ const RequestActionSection = ({
             </Button>
           </>
         )}
-        {isUserOwner && requestStatus === "PENDING" && (
+        {isUserOwner && requestStatus === "PENDING" && isEditable && (
           <>
-            {/* <Button
+            <Button
               variant="outline"
               fullWidth
               onClick={() =>
-                router.push(`/team-requests/requests/${requestId}/edit`)
+                router.push(
+                  `/team-requests/requests/${router.query.requestId}/edit`
+                )
               }
             >
               Edit Request
-            </Button> */}
+            </Button>
             <Button
               variant="default"
               fullWidth

@@ -155,10 +155,17 @@ const RequestResponse = ({
           />
         );
       case "MULTISELECT":
-        const multiselectOption = response.options.map((option) => ({
+        let multiselectOption = response.options.map((option) => ({
           value: option.option_value,
           label: option.option_value,
         }));
+
+        if (isFormslyForm) {
+          multiselectOption = parsedValue.map((value: string) => ({
+            value: value,
+            label: value,
+          }));
+        }
 
         return (
           <MultiSelect

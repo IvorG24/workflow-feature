@@ -28,3 +28,31 @@ export const startCase = (inputString: string) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 };
+
+export const formatTime = (time: string) => {
+  const parsedTime = parseJSONIfValid(time);
+  if (!parsedTime) return parsedTime;
+  const timeParts = parsedTime.split(":");
+  const hours = parseInt(timeParts[0]);
+  const minutes = parseInt(timeParts[1]);
+
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+};
+
+export const parseJSONIfValid = (jsonString: string) => {
+  try {
+    const jsonObject = JSON.parse(jsonString);
+    return jsonObject;
+  } catch (error) {
+    return jsonString;
+  }
+};
+
+export const convertTimestampToDate = (input: string | Date) => {
+  if (input instanceof Date) return input;
+  const parsedInput = parseJSONIfValid(input);
+  if (!parsedInput) return undefined;
+  return new Date(parsedInput);
+};

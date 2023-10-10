@@ -1,3 +1,4 @@
+import { OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Group,
@@ -8,23 +9,18 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
-import { Section } from "./CreateRequestPage";
+import { Section } from "./EditRequestPage";
 import RequestFormFields from "./RequestFormFields";
 
 type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
-  onRemoveSection?: (sectionDuplicatableId: string) => void;
+  onRemoveSection?: (index: number) => void;
+  isSectionRemovable?: boolean;
   requisitionFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
-  };
-  subconFormMethods?: {
-    onServiceNameChange: (index: number, value: string | null) => void;
-    onProjectNameChange: (value: string | null) => void;
-    subconSearch?: (value: string) => void;
-    isSearching?: boolean;
   };
   quotationFormMethods?: {
     onItemChange: (
@@ -33,6 +29,7 @@ type RequestFormSectionProps = {
       prevValue: string | null
     ) => void;
     supplierSearch?: (value: string) => void;
+    supplierOption?: OptionTableRow[];
     isSearching?: boolean;
   };
   rirFormMethods?: {
@@ -48,27 +45,23 @@ const RequestFormSection = ({
   section,
   sectionIndex,
   onRemoveSection,
+  isSectionRemovable,
   requisitionFormMethods,
-  subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
 }: RequestFormSectionProps) => {
-  const sectionDuplicatableId =
-    section.section_field[0].field_section_duplicatable_id;
   return (
     <Paper p="xl" shadow="xs">
       <Group position="apart">
         <Title order={4} color="dimmed">
           {section.section_name}
         </Title>
-        {sectionDuplicatableId && (
+        {isSectionRemovable && (
           <Tooltip label="Remove Section">
             <ActionIcon
-              onClick={() =>
-                onRemoveSection && onRemoveSection(sectionDuplicatableId)
-              }
+              onClick={() => onRemoveSection && onRemoveSection(sectionIndex)}
               variant="light"
               color="red"
             >
@@ -89,7 +82,6 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             requisitionFormMethods={requisitionFormMethods}
-            subconFormMethods={subconFormMethods}
             quotationFormMethods={quotationFormMethods}
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}

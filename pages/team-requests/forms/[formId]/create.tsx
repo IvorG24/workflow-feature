@@ -4,6 +4,7 @@ import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateRe
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
+import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
 import CreateTransferReceiptPage from "@/components/CreateTransferReceiptPage/CreateTransferReceiptPage";
 
 import Meta from "@/components/Meta/Meta";
@@ -51,6 +52,7 @@ type Props = {
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
   requestingProject?: string;
+  serviceOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -60,6 +62,7 @@ const Page = ({
   requestProjectId = "",
   projectOptions = [],
   requestingProject = "",
+  serviceOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -68,6 +71,14 @@ const Page = ({
           <CreateRequisitionRequestPage
             form={form}
             itemOptions={itemOptions}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Subcon":
+        return (
+          <CreateSubconRequestPage
+            form={form}
+            serviceOptions={serviceOptions}
             projectOptions={projectOptions}
           />
         );

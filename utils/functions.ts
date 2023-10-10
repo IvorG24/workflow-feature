@@ -70,3 +70,8 @@ export const customMathCeil = (number: number, precision = 0) => {
   const multiplier = 10 ** precision;
   return Math.ceil(number * multiplier) / multiplier;
 };
+
+export const addDays = (date: Date, days: number) => {
+  date.setDate(date.getDate() + days);
+  return date;
+};

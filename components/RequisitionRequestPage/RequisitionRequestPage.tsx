@@ -298,6 +298,16 @@ const RequisitionRequestPage = ({
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }
             isRf
+            isUserPrimarySigner={
+              isUserSigner
+                ? Boolean(isUserSigner.signer_is_primary_signer)
+                : false
+            }
+            isEditable={
+              signerList
+                .map((signer) => signer.request_signer_status)
+                .filter((status) => status === "APPROVED").length === 0
+            }
           />
         ) : null}
 

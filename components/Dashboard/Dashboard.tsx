@@ -102,7 +102,7 @@ const Dashboard = () => {
     if (selectedDays && Number(selectedDays) > 0) {
       const currDate = new Date();
       const startDate = new Date(currentDate);
-      startDate.setDate(currDate.getDate() - 7);
+      startDate.setDate(currDate.getDate() - Number(selectedDays));
 
       setStartDateFilter(startDate);
       setEndDateFilter(currDate);
