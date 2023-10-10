@@ -295,6 +295,43 @@ CREATE TABLE supplier_table(
 
 -- End: Quotation Form
 
+-- Start: Subcon Form
+
+CREATE TABLE service_table(
+  service_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  service_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  service_name VARCHAR(4000) NOT NULL,
+
+  service_team_id UUID REFERENCES team_table(team_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE service_scope_table(
+  service_scope_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_scope_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_scope_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  service_scope_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  service_scope_name VARCHAR(4000) NOT NULL,
+  service_scope_type VARCHAR(4000) NOT NULL,
+  service_scope_is_with_other BOOLEAN NOT NULL,
+
+  service_scope_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
+  service_scope_service_id UUID REFERENCES service_table(service_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE service_scope_choice_table(
+  service_scope_choice_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_scope_choice_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_scope_choice_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  service_scope_choice_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  service_scope_choice_name VARCHAR(4000) NOT NULL,
+
+  service_scope_choice_service_scope_id UUID REFERENCES service_scope_table(service_scope_id) ON DELETE CASCADE NOT NULL
+);
+
+-- End: Subcon Form
+
 CREATE TABLE csi_code_table(
   csi_code_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   csi_code_section VARCHAR(4000) NOT NULL,
@@ -838,7 +875,7 @@ RETURNS JSON AS $$
     const fieldInput= [];
 
     itemDescription.forEach((description) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4
+      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
       itemDescriptionInput.push({
         item_description_label: description.description,
         item_description_item_id: item_result.item_id,
@@ -879,6 +916,74 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Create item
+
+-- Start: Create service
+
+CREATE OR REPLACE FUNCTION create_service(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let item_data;
+  plv8.subtransaction(function(){
+    const {
+      formId,
+      serviceData: {
+        service_name,
+        service_is_available,
+        service_team_id,
+      },
+      scope
+    } = input_data;
+
+    
+    const service_result = plv8.execute(`INSERT INTO service_table (service_name,service_is_available,service_team_id) VALUES ('${service_name}','${service_is_available}','${service_team_id}') RETURNING *;`)[0];
+
+    const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Service';`)[0];
+
+    const serviceScopeInput = [];
+    const fieldInput = [];
+
+    scope.forEach((scope) => {
+      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      
+      fieldInput.push({
+        field_id: fieldId,
+        field_name: scope.name,
+        field_type: scope.type,
+        field_order: 8,
+        field_section_id: section_id,
+        field_is_required: false,
+      });
+      serviceScopeInput.push({
+        service_scope_name: scope.name,
+        service_scope_type: scope.type,
+        service_scope_is_with_other: scope.isWithOther,
+        service_scope_service_id: service_result.service_id,
+        service_scope_field_id: fieldId
+      });
+    });
+
+    const fieldValues = fieldInput
+      .map((field) =>
+        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+      )
+      .join(",");
+    const serviceScopeValues = serviceScopeInput
+      .map((scope) =>
+        `('${scope.service_scope_name}','${scope.service_scope_type}','${scope.service_scope_is_with_other}','${scope.service_scope_service_id}','${scope.service_scope_field_id}')`
+      )
+      .join(",");
+
+    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
+    const service_scope = plv8.execute(`INSERT INTO service_scope_table (service_scope_name,service_scope_type,service_scope_is_with_other,service_scope_service_id,service_scope_field_id) VALUES ${serviceScopeValues} RETURNING *;`);
+
+    item_data = {...service_result, service_scope: service_scope}
+
+ });
+ return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Create service
 
 -- Start: Create team invitation
 
@@ -1001,6 +1106,35 @@ RETURNS Text as $$
 $$ LANGUAGE plv8;
 
 -- End: check if Requisition form can be activated
+
+-- Start: check if Subcon form can be activated
+
+CREATE OR REPLACE FUNCTION check_subcon_form_status(
+    team_id TEXT,
+    form_id TEXT
+)
+RETURNS Text as $$
+  let return_data;
+  plv8.subtransaction(function(){
+
+
+    const service_count = plv8.execute(`SELECT COUNT(*) FROM service_table WHERE service_team_id='${team_id}' AND service_is_available='true' AND service_is_disabled='false'`)[0];
+
+    const signer_count = plv8.execute(`SELECT COUNT(*) FROM signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
+
+    if (!service_count.count) {
+      return_data = "There must be at least one available service";
+    } else if (!signer_count) {
+      return_data = "You need to add a primary signer first";
+    } else {
+      return_data = "true"
+    }
+ });
+
+ return return_data;
+$$ LANGUAGE plv8;
+
+-- End: check if Subcon form can be activated
 
 -- Start: Transfer ownership 
 
@@ -2290,7 +2424,7 @@ RETURNS JSON as $$
     const request = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
     if(!request) throw new Error('404');
     
-    if (!request.request_form.form_is_formsly_form) {
+    if (!request.request_form.form_is_formsly_form || (request.request_form.form_is_formsly_form && request.form_name === "Subcon")) {
       returnData = {
         request
       };
@@ -3456,6 +3590,32 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`)
         }
+      } else if (formName === 'Subcon'){
+        const services = [];
+        const serviceData = plv8.execute(`SELECT * FROM service_table WHERE service_team_id = '${teamId}' AND service_is_disabled = false LIMIT ${limit}`);
+        const serviceListCount = plv8.execute(`SELECT COUNT(*) FROM service_table WHERE service_team_id = '${teamId}' AND service_is_disabled = false`)[0].count;
+
+        serviceData.forEach(value => {
+          const serviceScope = plv8.execute(`SELECT * FROM service_scope_table WHERE service_scope_service_id = '${value.service_id}'`);
+          services.push({
+            ...value,
+            service_scope: serviceScope
+          })
+        });
+
+        const suppliers = plv8.execute(`SELECT * FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false ORDER BY supplier_date_created DESC LIMIT ${limit}`);
+        const supplierListCount = plv8.execute(`SELECT COUNT(*) FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false`)[0].count;
+
+        returnData = {
+          services,
+          serviceListCount: Number(`${serviceListCount}`),
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(`${teamProjectListCount}`),
+          suppliers,
+          supplierListCount: Number(`${supplierListCount}`),
+        }
       } else {
         returnData = {
           teamMemberList,
@@ -3741,6 +3901,91 @@ RETURNS JSON as $$
             ],
           },
           itemOptions,
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "Subcon") {
+        const serviceData = plv8.execute(
+          `
+            SELECT *
+            FROM service_table
+            WHERE
+              service_team_id = '${teamId}'
+              AND service_is_disabled = false
+              AND service_is_available = true
+              ORDER BY service_name ASC
+          `
+        );
+
+        const services = serviceData.map(service => {
+           const serviceScopeData = plv8.execute(
+            `
+              SELECT *
+              FROM service_scope_table
+              WHERE
+                service_scope_service_id = '${service.service_id}'
+            `
+          );
+          return {
+            ...service,
+            service_scope: serviceScopeData
+          }
+        });
+
+        const serviceOptions = services.map((service, index) => {
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: service.service_id,
+            option_order: index,
+            option_value: service.service_name,
+          };
+        });
+
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_description: null,
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  form.form_section[1].section_field[0],
+                ],
+              },
+            ],
+          },
+          serviceOptions,
           projectOptions,
         }
         return;
@@ -4448,7 +4693,7 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_name === "Requisition"){
+    if(requestData.form_name === "Requisition" || requestData.form_name === "Subcon") {
       sectionData.map(section => {
         const fieldData = plv8.execute(
           `
@@ -4491,7 +4736,7 @@ RETURNS JSON as $$
           section_field: fieldWithOptionAndResponse,
         }) 
       });
-    }else{
+    } else {
       sectionData.map(section => {
         const fieldData = plv8.execute(
           `
@@ -4890,14 +5135,14 @@ ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 
 
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users only" ON attachment_table;
+DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON field_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON field_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON field_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON field_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON field_table;
@@ -5013,23 +5258,10 @@ AS PERMISSIVE FOR ALL
 USING (true);
 
 --- FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (
-  (
-    SELECT tt.team_member_team_id
-    FROM section_table AS st
-    JOIN form_table AS fot ON st.section_form_id = fot.form_id
-    JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
-    WHERE st.section_id = field_section_id
-  ) IN (
-    SELECT team_member_team_id
-    FROM team_member_table
-    WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
-  )
-);
+WITH CHECK (true);
 
 CREATE POLICY "Allow READ for anon users" ON "public"."field_table"
 AS PERMISSIVE FOR SELECT

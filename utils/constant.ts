@@ -63,6 +63,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const receivingInspectingReportFormId = uuidv4();
   const releaseOrderFormId = uuidv4();
   const transferReceiptFormId = uuidv4();
+  const subconFormId = uuidv4();
 
   // section ids
   const requisitionMainSectionId = uuidv4();
@@ -81,11 +82,14 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
   const transferReceiptIdSectionId = uuidv4();
   const transferReceiptQuantityCheckSectionId = uuidv4();
   const transferReceiptItemSectionId = uuidv4();
+  const subconMainSectionId = uuidv4();
+  const subconServiceSectionId = uuidv4();
 
   // field ids
   const requisitionTypeFieldId = uuidv4();
   const quotationRequestSendMethodId = uuidv4();
   const quotationPaymentTermsId = uuidv4();
+  const subconTypeId = uuidv4();
 
   const formData = {
     requisition: {
@@ -893,6 +897,101 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
         },
       ],
     },
+    subcon: {
+      form: {
+        form_id: subconFormId,
+        form_name: "Subcon",
+        form_description: "formsly premade Subcon form",
+        form_app: "REQUEST",
+        form_is_formsly_form: true,
+        form_is_hidden: true,
+        form_team_member_id: teamMemberId,
+        form_is_disabled: false,
+      },
+      section: [
+        {
+          section_id: subconMainSectionId,
+          section_name: "Main",
+          section_order: 1,
+          section_is_duplicatable: false,
+          section_form_id: subconFormId,
+        },
+        {
+          section_id: subconServiceSectionId,
+          section_name: "Service",
+          section_order: 2,
+          section_is_duplicatable: true,
+          section_form_id: subconFormId,
+        },
+      ],
+      field: [
+        {
+          field_name: "Requesting Project",
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_section_id: subconMainSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Date Needed",
+          field_type: "DATE",
+          field_order: 2,
+          field_section_id: subconMainSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Purpose",
+          field_type: "TEXT",
+          field_order: 3,
+          field_section_id: subconMainSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Description of Work",
+          field_type: "TEXT",
+          field_order: 5,
+          field_section_id: subconMainSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Nominated Subcon",
+          field_type: "MULTISELECT",
+          field_order: 6,
+          field_section_id: subconMainSectionId,
+          field_is_required: false,
+          field_is_read_only: false,
+        },
+        {
+          field_name: "Service Name",
+          field_type: "DROPDOWN",
+          field_order: 7,
+          field_section_id: subconServiceSectionId,
+          field_is_required: true,
+          field_is_read_only: false,
+        },
+      ],
+      option: [
+        {
+          option_value: "Supply and Installation / Supply and Application",
+          option_order: 1,
+          option_field_id: subconTypeId,
+        },
+        {
+          option_value: "Installation / Application Works / Fabrication only",
+          option_order: 2,
+          option_field_id: subconTypeId,
+        },
+        {
+          option_value: "Supply and Fabrication",
+          option_order: 3,
+          option_field_id: subconTypeId,
+        },
+      ],
+    },
   };
 
   const fieldsWithId = [
@@ -923,6 +1022,15 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       field_is_required: true,
       field_is_read_only: false,
     },
+    {
+      field_id: subconTypeId,
+      field_name: "Type",
+      field_type: "DROPDOWN",
+      field_order: 4,
+      field_section_id: subconMainSectionId,
+      field_is_required: true,
+      field_is_read_only: false,
+    },
   ];
 
   const {
@@ -932,6 +1040,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
     receivingInspectingReport,
     releaseOrder,
     transferReceipt,
+    subcon,
   } = formData;
 
   return {
@@ -942,6 +1051,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       receivingInspectingReport.form,
       releaseOrder.form,
       transferReceipt.form,
+      subcon.form,
     ],
     sections: [
       ...requisition.section,
@@ -950,6 +1060,7 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...receivingInspectingReport.section,
       ...releaseOrder.section,
       ...transferReceipt.section,
+      ...subcon.section,
     ],
     fieldsWithoutId: [
       ...requisition.field,
@@ -958,9 +1069,10 @@ export const formslyPremadeFormsData = (teamMemberId: string) => {
       ...receivingInspectingReport.field,
       ...releaseOrder.field,
       ...transferReceipt.field,
+      ...subcon.field,
     ],
     fieldWithId: fieldsWithId,
-    options: [...requisition.option, ...quotation.option],
+    options: [...requisition.option, ...quotation.option, ...subcon.option],
   };
 };
 
