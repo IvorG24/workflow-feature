@@ -607,7 +607,6 @@ export const editRequest = async (
     )
     .join(",");
 
-  // edit request
   const { data, error } = await supabaseClient
     .rpc("edit_request", {
       input_data: {

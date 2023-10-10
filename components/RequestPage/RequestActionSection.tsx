@@ -32,6 +32,7 @@ type Props = {
   signer?: RequestWithResponseType["request_signer"][0];
   isRf?: boolean;
   isUserPrimarySigner?: boolean;
+  isEditable?: boolean;
 };
 
 const RequestActionSection = ({
@@ -44,6 +45,7 @@ const RequestActionSection = ({
   signer,
   isRf,
   isUserPrimarySigner,
+  isEditable,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -186,7 +188,7 @@ const RequestActionSection = ({
             </Button>
           </>
         )}
-        {isUserOwner && requestStatus === "PENDING" && (
+        {isUserOwner && requestStatus === "PENDING" && isEditable && (
           <>
             <Button
               variant="outline"

@@ -81,6 +81,39 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const parsedRequest = parseRequest(request);
       const { request_form: form } = parsedRequest;
 
+      const projectSigner = await getProjectSignerWithTeamMember(
+        supabaseClient,
+        {
+          formId: form.form_id,
+          projectId: `${request.request_project_id}`,
+        }
+      );
+      const projectSignerList: RequestWithResponseType["request_signer"] =
+        projectSigner.map((signer) => ({
+          request_signer_id: signer.signer_id,
+          request_signer_status: "PENDING",
+          request_signer_request_id: request.request_id,
+          request_signer_signer_id: signer.signer_id,
+          request_signer_status_date_updated: "",
+          request_signer_signer: {
+            signer_id: signer.signer_id,
+            signer_is_primary_signer: signer.signer_is_primary_signer,
+            signer_action: signer.signer_action,
+            signer_order: signer.signer_order,
+            signer_form_id: request.request_form_id,
+            signer_team_member: {
+              team_member_id: signer.signer_team_member.team_member_id,
+              team_member_user: {
+                user_id: signer.signer_team_member.team_member_user.user_id,
+                user_first_name:
+                  signer.signer_team_member.team_member_user.user_first_name,
+                user_last_name:
+                  signer.signer_team_member.team_member_user.user_last_name,
+              },
+            },
+          },
+        }));
+
       if (!form.form_is_formsly_form)
         return {
           props: { request: parsedRequest },
@@ -206,6 +239,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               ...itemSectionList,
             ],
           },
+          request_signer:
+            projectSigner.length !== 0
+              ? projectSignerList
+              : parsedRequest.request_signer,
         };
 
         return {
@@ -216,39 +253,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         };
       }
-
-      const projectSigner = await getProjectSignerWithTeamMember(
-        supabaseClient,
-        {
-          formId: form.form_id,
-          projectId: `${request.request_project_id}`,
-        }
-      );
-      const projectSignerList: RequestWithResponseType["request_signer"] =
-        projectSigner.map((signer) => ({
-          request_signer_id: signer.signer_id,
-          request_signer_status: "PENDING",
-          request_signer_request_id: request.request_id,
-          request_signer_signer_id: signer.signer_id,
-          request_signer_status_date_updated: "",
-          request_signer_signer: {
-            signer_id: signer.signer_id,
-            signer_is_primary_signer: signer.signer_is_primary_signer,
-            signer_action: signer.signer_action,
-            signer_order: signer.signer_order,
-            signer_form_id: request.request_form_id,
-            signer_team_member: {
-              team_member_id: signer.signer_team_member.team_member_id,
-              team_member_user: {
-                user_id: signer.signer_team_member.team_member_user.user_id,
-                user_first_name:
-                  signer.signer_team_member.team_member_user.user_first_name,
-                user_last_name:
-                  signer.signer_team_member.team_member_user.user_last_name,
-              },
-            },
-          },
-        }));
 
       // Sourced Item
       if (form.form_name === "Sourced Item") {

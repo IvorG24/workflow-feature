@@ -770,6 +770,11 @@ const RequestPage = ({
             signer={
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }
+            isEditable={
+              signerList
+                .map((signer) => signer.request_signer_status)
+                .filter((status) => status === "APPROVED").length === 0
+            }
           />
         ) : null}
         <RequestSignerSection signerList={signerList} />
