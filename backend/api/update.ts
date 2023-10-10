@@ -108,6 +108,7 @@ export const approveOrRejectRequest = async (
     input_data: { ...params },
   });
 
+  console.log(error);
   if (error) throw error;
 };
 

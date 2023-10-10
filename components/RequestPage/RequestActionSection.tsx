@@ -16,6 +16,7 @@ import { modals, openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconId } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 
 type Props = {
@@ -45,6 +46,7 @@ const RequestActionSection = ({
   isUserPrimarySigner,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
 
   const {
     register,
@@ -186,15 +188,17 @@ const RequestActionSection = ({
         )}
         {isUserOwner && requestStatus === "PENDING" && (
           <>
-            {/* <Button
+            <Button
               variant="outline"
               fullWidth
               onClick={() =>
-                router.push(`/team-requests/requests/${requestId}/edit`)
+                router.push(
+                  `/team-requests/requests/${router.query.requestId}/edit`
+                )
               }
             >
               Edit Request
-            </Button> */}
+            </Button>
             <Button
               variant="default"
               fullWidth

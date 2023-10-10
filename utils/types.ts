@@ -269,6 +269,7 @@ export type RequestWithResponseType = RequestTableRow & {
     form_is_formsly_form: boolean;
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
+        field_section_duplicatable_id?: string;
         field_option: OptionTableRow[];
         field_response: RequestResponseTableRow[];
       } & {
@@ -299,6 +300,7 @@ export type RequestWithResponseType = RequestTableRow & {
       signer_team_member: {
         team_member_id: string;
         team_member_user: {
+          user_id: string;
           user_first_name: string;
           user_last_name: string;
         };
@@ -900,3 +902,22 @@ export type RequestCommentType =
   RequestWithResponseType["request_comment"][0] & {
     comment_attachment: CommentAttachmentWithPublicUrl;
   };
+
+export type RequestPageOnLoad = {
+  request: RequestWithResponseType;
+  connectedFormIdAndGroup: {
+    formId: string;
+    formIsForEveryone: boolean;
+    formIsMember: boolean;
+    formName: string;
+  };
+  connectedRequestIDList: ConnectedRequestIdList;
+  connectedForm: {
+    form_name: string;
+    form_id: string;
+    form_is_for_every_member: boolean;
+    form_is_member: boolean;
+  }[];
+  canvassRequest?: string[];
+  projectSignerStatus?: RequestProjectSignerStatusType;
+};
