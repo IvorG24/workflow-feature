@@ -298,6 +298,11 @@ const RequisitionRequestPage = ({
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }
             isRf
+            isUserPrimarySigner={
+              isUserSigner
+                ? Boolean(isUserSigner.signer_is_primary_signer)
+                : false
+            }
           />
         ) : null}
 
