@@ -24,11 +24,13 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
@@ -36,10 +38,19 @@ import RequestListFilter from "./RequestListFilter";
 export type FilterFormValues = {
   search: string;
   requestorList: string[];
+  approverList: string[];
   formList: string[];
   status?: FormStatusType[];
   isAscendingSort: boolean;
-  isFormslyTeam: boolean;
+};
+
+export type RequestListLocalFilter = {
+  search: string;
+  requestorList: string[];
+  approverList: string[];
+  formList: string[];
+  status: FormStatusType[] | undefined;
+  isAscendingSort: boolean;
 };
 
 type Props = {
@@ -64,13 +75,26 @@ const RequestListPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] =
     useState<RequestListItemType[]>(initialRequestList);
+  const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
+    {
+      key: "formsly-request-list-filter",
+      defaultValue: {
+        search: "",
+        requestorList: [],
+        approverList: [],
+        formList: [],
+        status: undefined,
+        isAscendingSort: false,
+      },
+    }
+  );
 
   const [requestListCount, setRequestListCount] = useState(
     initialRequestListCount
   );
 
   const filterFormMethods = useForm<FilterFormValues>({
-    defaultValues: { isAscendingSort: false },
+    defaultValues: localFilter,
     mode: "onChange",
   });
 
@@ -80,25 +104,36 @@ const RequestListPage = ({
     {
       search,
       requestorList,
+      approverList,
       formList,
       status,
       isAscendingSort,
     }: FilterFormValues = getValues()
   ) => {
     try {
-      if (!activeTeam.team_id) return;
+      if (!activeTeam.team_id) {
+        console.warn(
+          "RequestListPage handleFilterFormsError: active team_id not found"
+        );
+        return;
+      }
+
       setActivePage(1);
       setIsFetchingRequestList(true);
+
       const params = {
         teamId: activeTeam.team_id,
         page: 1,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         requestor:
           requestorList && requestorList.length > 0 ? requestorList : undefined,
+        approver:
+          approverList && approverList.length > 0 ? approverList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
         search: search,
       };
+
       const { data, count } = await getRequestList(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
@@ -151,44 +186,24 @@ const RequestListPage = ({
     }
   };
 
-  const handleRefreshRequestList = async () => {
-    try {
-      setIsFetchingRequestList(true);
-      setActivePage(1);
-
-      const { search, requestorList, formList, status, isAscendingSort } =
-        getValues();
-
-      const params = {
-        teamId: activeTeam.team_id,
-        page: 1,
-        limit: DEFAULT_REQUEST_LIST_LIMIT,
-        requestor:
-          requestorList && requestorList.length > 0 ? requestorList : undefined,
-        form: formList && formList.length > 0 ? formList : undefined,
-        status: status && status.length > 0 ? status : undefined,
-        search: search,
-      };
-      const { data, count } = await getRequestList(supabaseClient, {
-        ...params,
-        sort: isAscendingSort ? "ascending" : "descending",
-      });
-      setRequestList(data);
-      setRequestListCount(count || 0);
-    } catch (error) {
-      notifications.show({
-        message:
-          "We're having trouble refreshing the page. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingRequestList(false);
-    }
-  };
-
   useEffect(() => {
     handlePagination();
   }, [activePage]);
+
+  useEffect(() => {
+    const localStorageFilter = localStorage.getItem(
+      "formsly-request-list-filter"
+    );
+
+    if (localStorageFilter) {
+      handleFilterForms();
+    }
+  }, [activeTeam.team_id]);
+
+  useBeforeunload(() => {
+    const filterValues = getValues();
+    setLocalFilter(filterValues as RequestListLocalFilter);
+  });
 
   return (
     <Container maw={1300} h="100%">
@@ -209,7 +224,7 @@ const RequestListPage = ({
         <Button
           variant="light"
           leftIcon={<IconReload size={16} />}
-          onClick={() => handleRefreshRequestList()}
+          onClick={() => handleFilterForms()}
         >
           Refresh
         </Button>
@@ -221,6 +236,7 @@ const RequestListPage = ({
             teamMemberList={teamMemberList}
             handleFilterForms={handleFilterForms}
             formList={formList}
+            localFilter={localFilter}
           />
         </form>
       </FormProvider>

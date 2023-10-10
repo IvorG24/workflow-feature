@@ -12,21 +12,23 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { FilterFormValues } from "./RequestListPage";
+import { FilterFormValues, RequestListLocalFilter } from "./RequestListPage";
 
 type RequestListFilterProps = {
   // requestList: RequestType[];
   formList: { label: string; value: string }[];
   teamMemberList: TeamMemberWithUserType[];
   handleFilterForms: () => void;
+  localFilter: RequestListLocalFilter;
 };
 
 type FilterSelectedValuesType = {
   formFilter: string[];
   statusFilter: string[];
   requestorFilter: string[];
+  approverFilter: string[];
 };
 
 const RequestListFilter = ({
@@ -34,6 +36,7 @@ const RequestListFilter = ({
   formList,
   teamMemberList,
   handleFilterForms,
+  localFilter,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -44,6 +47,7 @@ const RequestListFilter = ({
     nothingFound: "Nothing found",
   };
   const { ref: requestorRef, focused: requestorRefFocused } = useFocusWithin();
+  const { ref: approverRef, focused: approverRefFocused } = useFocusWithin();
   const { ref: formRef, focused: formRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const [filterSelectedValues, setFilterSelectedValues] =
@@ -51,6 +55,7 @@ const RequestListFilter = ({
       formFilter: [],
       statusFilter: [],
       requestorFilter: [],
+      approverFilter: [],
     });
 
   const memberList = teamMemberList.map((member) => ({
@@ -88,18 +93,24 @@ const RequestListFilter = ({
     const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
-      if (value.length === 0 && filterMatch.length === 0) return;
+      // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterForms();
     }
     setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
   };
 
+  useEffect(() => {
+    // assign values to filter form localstorage
+    Object.entries(localFilter).forEach(([key, value]) => {
+      setValue(key as keyof FilterFormValues, value);
+    });
+  }, [localFilter, setValue]);
+
   return (
-    <Flex justify="space-between" gap="sm" wrap="wrap">
+    <Flex gap="sm" wrap="wrap">
       <Controller
         control={control}
         name="isAscendingSort"
-        defaultValue={true}
         render={({ field: { value } }) => {
           return (
             <Tooltip
@@ -133,13 +144,15 @@ const RequestListFilter = ({
           </ActionIcon>
         }
         {...register("search")}
-        sx={{ flex: 1 }}
+        sx={{ flex: 2 }}
         miw={250}
-        maw={300}
+        maw={320}
       />
+
       <Controller
         control={control}
         name="formList"
+        defaultValue={localFilter.formList}
         render={({ field: { value, onChange } }) => (
           <MultiSelect
             data={formList}
@@ -154,7 +167,30 @@ const RequestListFilter = ({
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
-            maw={300}
+            maw={320}
+          />
+        )}
+      />
+      <Controller
+        control={control}
+        name="status"
+        render={({ field: { value, onChange } }) => (
+          <MultiSelect
+            data={statusList}
+            placeholder="Status"
+            ref={statusRef}
+            value={value}
+            onChange={(value) => {
+              onChange(value);
+              if (!statusRefFocused) handleFilterChange("statusFilter", value);
+            }}
+            onDropdownClose={() =>
+              handleFilterChange("statusFilter", value as string[])
+            }
+            {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={320}
           />
         )}
       />
@@ -177,31 +213,30 @@ const RequestListFilter = ({
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
-            maw={300}
+            maw={320}
           />
         )}
       />
 
       <Controller
         control={control}
-        name="status"
+        name="approverList"
         render={({ field: { value, onChange } }) => (
           <MultiSelect
-            data={statusList}
-            placeholder="Status"
-            ref={statusRef}
+            placeholder="Approver"
+            ref={approverRef}
+            data={memberList}
             value={value}
             onChange={(value) => {
               onChange(value);
-              if (!statusRefFocused) handleFilterChange("statusFilter", value);
+              if (!approverRefFocused)
+                handleFilterChange("approverFilter", value);
             }}
-            onDropdownClose={() =>
-              handleFilterChange("statusFilter", value as string[])
-            }
+            onDropdownClose={() => handleFilterChange("approverFilter", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
-            maw={300}
+            maw={320}
           />
         )}
       />
