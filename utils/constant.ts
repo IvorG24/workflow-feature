@@ -19,6 +19,7 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Release Order",
   "Sourced Item",
   "Transfer Receipt",
+  "Subcon",
 ];
 
 export const UUID_EXP =
