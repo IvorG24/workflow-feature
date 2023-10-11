@@ -493,7 +493,6 @@ export const editRequest = async (
     teamId: string;
     requesterName: string;
     formName: string;
-    projectId?: string | null;
   }
 ) => {
   const {
@@ -503,7 +502,6 @@ export const editRequest = async (
     teamId,
     requesterName,
     formName,
-    projectId,
   } = params;
 
   // get request response
@@ -621,7 +619,6 @@ export const editRequest = async (
         responseValues,
         signerValues,
         notificationValues,
-        projectId,
       },
     })
     .select()

@@ -108,12 +108,17 @@ const RequestFormFields = ({
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
       ?.message;
 
+  const readOnly =
+    field.field_name === "Requesting Project" &&
+    ["Requisition", "Subcon"].includes(formslyFormName)
+      ? true
+      : field.field_is_read_only;
   const inputProps = {
     label: field.field_name,
     description: field.field_description,
     required: field.field_is_required,
-    readOnly: field.field_is_read_only,
-    variant: field.field_is_read_only ? "filled" : "default",
+    readOnly: readOnly,
+    variant: readOnly ? "filled" : "default",
     error: fieldError,
   };
 

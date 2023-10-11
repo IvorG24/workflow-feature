@@ -52,7 +52,6 @@ const EditSubconRequestPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
-  const [projectId, setProjectId] = useState(request.request_project_id);
 
   const [subconOption, setSubconOption] = useState<OptionTableRow[]>(
     request.request_form.form_section[0].section_field[5].field_option
@@ -135,7 +134,6 @@ const EditSubconRequestPage = ({
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
-        projectId: projectId,
       });
 
       notifications.show({
@@ -265,7 +263,6 @@ const EditSubconRequestPage = ({
           (option) => option.option_value === value
         )?.option_id;
         if (projectId) {
-          setProjectId(projectId);
           const data = await getProjectSignerWithTeamMember(supabaseClient, {
             projectId,
             formId,
