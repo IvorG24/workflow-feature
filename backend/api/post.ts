@@ -541,15 +541,20 @@ export const editRequest = async (
           responseValue = false;
         }
         const parsedResponse = parseJSONIfValid(`${responseValue}`);
-        const trimmedResponse =
-          parsedResponse.length >= 2 &&
-          parsedResponse[0] === '"' &&
-          parsedResponse[parsedResponse.length - 1] === '"'
-            ? parsedResponse.slice(1, -1)
-            : parsedResponse;
+
+        if (field.field_type === "MULTISELECT") {
+          if (typeof responseValue === "string") responseValue = parsedResponse;
+        } else {
+          responseValue =
+            parsedResponse.length >= 2 &&
+            parsedResponse[0] === '"' &&
+            parsedResponse[parsedResponse.length - 1] === '"'
+              ? parsedResponse.slice(1, -1)
+              : parsedResponse;
+        }
 
         const response = {
-          request_response: JSON.stringify(trimmedResponse),
+          request_response: JSON.stringify(responseValue),
           request_response_duplicatable_section_id:
             field.field_response[0].request_response_duplicatable_section_id ??
             null,

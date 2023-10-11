@@ -1,5 +1,6 @@
 import { getRequestFormslyId } from "@/backend/api/get";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
+import { addDays } from "@/utils/functions";
 import {
   addCommaToNumber,
   convertTimestampToDate,
@@ -45,6 +46,13 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
+  subconFormMethods?: {
+    onServiceNameChange: (index: number, value: string | null) => void;
+    onProjectNameChange: (value: string | null) => void;
+    subconSearch?: (value: string) => void;
+    subconOption?: OptionTableRow[];
+    isSearching?: boolean;
+  };
   quotationFormMethods?: {
     onItemChange: (
       index: number,
@@ -69,6 +77,7 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   requisitionFormMethods,
+  subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
@@ -162,6 +171,8 @@ const RequestFormFields = ({
   }, []);
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
+    let fieldOption = field.options;
+
     switch (field.field_type) {
       case "LINK":
         return (
@@ -280,7 +291,7 @@ const RequestFormFields = ({
               const isBoolean = typeof value === "boolean";
               const checked = isBoolean
                 ? value
-                : parseJSONIfValid(value).toLowerCase() === "true";
+                : `${parseJSONIfValid(value)}`.toLowerCase() === "true";
               return (
                 <Switch
                   checked={checked}
@@ -297,10 +308,9 @@ const RequestFormFields = ({
         );
 
       case "DROPDOWN":
-        const fieldOption =
-          field.field_name === "Supplier"
-            ? quotationFormMethods?.supplierOption || field.options
-            : field.options;
+        if (field.field_name === "Supplier" && formslyFormName === "Quotation")
+          fieldOption = quotationFormMethods?.supplierOption || field.options;
+
         const dropdownOption = fieldOption.map((option) => {
           if (quotationFormMethods) {
             const label = option.option_value;
@@ -358,6 +368,12 @@ const RequestFormFields = ({
                       sourcedItemFormMethods?.onProjectSiteChange();
                     } else if (field.field_name === "Requesting Project") {
                       requisitionFormMethods?.onProjectNameChange(value);
+                      subconFormMethods?.onProjectNameChange(value);
+                    } else if (field.field_name === "Service Name") {
+                      subconFormMethods?.onServiceNameChange(
+                        sectionIndex,
+                        value
+                      );
                     }
                   }}
                   data={dropdownOption}
@@ -398,7 +414,12 @@ const RequestFormFields = ({
         );
 
       case "MULTISELECT":
-        const multiselectOption = field.options.map((option) => ({
+        if (
+          field.field_name === "Nominated Subcon" &&
+          formslyFormName === "Subcon"
+        )
+          fieldOption = subconFormMethods?.subconOption || field.options;
+        const multiselectOption = fieldOption.map((option) => ({
           value: option.option_value,
           label: option.option_value,
         }));
@@ -414,6 +435,33 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
+                onSearchChange={(value) => {
+                  if (
+                    subconFormMethods &&
+                    value &&
+                    field.field_name === "Nominated Subcon"
+                  ) {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+
+                    timeoutRef.current = setTimeout(() => {
+                      subconFormMethods.subconSearch &&
+                        subconFormMethods.subconSearch(value);
+                    }, 500);
+                  }
+                }}
+                rightSection={
+                  subconFormMethods &&
+                  subconFormMethods.isSearching &&
+                  field.field_name === "Nominated Subcon" ? (
+                    <Loader size={16} />
+                  ) : null
+                }
+                searchable={
+                  subconFormMethods && field.field_name === "Nominated Subcon"
+                }
+                nothingFound="Nothing found. Try a different keyword"
               />
             )}
             rules={{ ...fieldRules }}
@@ -433,7 +481,13 @@ const RequestFormFields = ({
                 {...inputProps}
                 icon={<IconCalendar size={16} />}
                 error={fieldError}
-                minDate={formslyFormName ? new Date() : undefined}
+                minDate={
+                  formslyFormName
+                    ? subconFormMethods
+                      ? addDays(new Date(), 14)
+                      : new Date()
+                    : undefined
+                }
               />
             )}
             rules={{ ...fieldRules }}
