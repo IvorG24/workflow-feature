@@ -738,7 +738,12 @@ RETURNS JSON AS $$
 
     let request_formsly_id = 'NULL';
     if(isFormslyForm===true) {
-      const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      let requestCount = 0
+      if(formName==='Requisition' || formName==='Subcon') {
+        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table rt INNER JOIN form_table ft ON rt.request_form_id = ft.form_id  WHERE ft.form_name=ANY(ARRAY['Requisition','Subcon']) AND rt.request_project_id='${projectId}';`)[0].count;
+      }else{
+        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      }
       const newCount = (Number(requestCount) + 1).toString(16).toUpperCase();
       const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
       
@@ -791,14 +796,9 @@ RETURNS JSON AS $$
       responseValues,
       signerValues,
       notificationValues,
-      projectId
     } = input_data;
 
-    if(projectId){
-      request_data = plv8.execute(`UPDATE request_table SET request_project_id='${projectId}' WHERE request_id='${requestId}';`)[0];
-    }else{
-      request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
-    }
+    request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
 
     plv8.execute(`DELETE FROM request_response_table WHERE request_response_request_id='${requestId}';`);
 
