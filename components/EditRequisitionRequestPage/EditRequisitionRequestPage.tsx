@@ -53,7 +53,6 @@ const EditRequisitionRequestPage = ({
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
 
-  const [projectId, setProjectId] = useState(request.request_project_id)
   const initialSignerList: FormType["form_signer"] = request.request_signer
     .map((signer) => signer.request_signer_signer)
     .map((signer) => ({
@@ -174,7 +173,6 @@ const EditRequisitionRequestPage = ({
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: request_form.form_name,
-        projectId: projectId
       });
 
       notifications.show({
@@ -505,7 +503,6 @@ const EditRequisitionRequestPage = ({
           });
           if (data.length !== 0) {
             setSignerList(data as unknown as FormType["form_signer"]);
-            setProjectId(projectId)
           } else {
             resetSigner();
           }
