@@ -45,7 +45,10 @@ const RequestStatistics = ({
     }
     setSelectedFilter(updatedFilter);
 
-    const newChartData = monthlyChartData.map((d) => {
+    const temp: MonthlyRequestDataTypeWithTotal["data"] = JSON.parse(
+      JSON.stringify(monthlyChartData)
+    );
+    const newChartData = temp.map((d) => {
       updatedFilter.forEach((filter) => {
         // update status
         switch (filter) {
