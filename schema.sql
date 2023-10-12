@@ -4732,13 +4732,16 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_name === "Requisition" || requestData.form_name === "Subcon") {
-      sectionData.map(section => {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Requisition" || requestData.form_name === "Subcon")) {
+      sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
-            SELECT *
+            SELECT DISTINCT field_table.*
             FROM field_table
-            WHERE field_section_id = '${section.section_id}'
+            INNER JOIN request_response_table ON request_response_field_id = field_id
+            WHERE 
+              field_section_id = '${section.section_id}'
+              AND request_response_request_id = '${requestData.request_id}'
             ORDER BY field_order ASC
           `
         );
@@ -4752,31 +4755,28 @@ RETURNS JSON as $$
               AND request_response_field_id = '${field.field_id}'
             `
           );
-
-          if(requestResponseData.length !== 0){
-            const optionData = plv8.execute(
-              `
-                SELECT *
-                FROM option_table
-                WHERE option_field_id = '${field.field_id}'
-                ORDER BY option_order ASC
-              `
-            );
-            
-            fieldWithOptionAndResponse.push({
-              ...field,
-              field_response: requestResponseData,
-              field_option: optionData
-            })
-          }
+          const optionData = plv8.execute(
+            `
+              SELECT *
+              FROM option_table
+              WHERE option_field_id = '${field.field_id}'
+              ORDER BY option_order ASC
+            `
+          );
+          fieldWithOptionAndResponse.push({
+            ...field,
+            field_response: requestResponseData,
+            field_option: optionData
+          });
         });
+
         formSection.push({
           ...section,
           section_field: fieldWithOptionAndResponse,
         }) 
       });
     } else {
-      sectionData.map(section => {
+      sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
             SELECT *
