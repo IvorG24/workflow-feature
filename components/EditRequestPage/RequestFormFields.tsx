@@ -332,7 +332,7 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => {
               return (
                 <Select
-                  value={parseJSONIfValid(value) || undefined}
+                  value={`${parseJSONIfValid(value)}` || undefined}
                   onChange={(value) => {
                     const prevValue = getValues(
                       `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`
