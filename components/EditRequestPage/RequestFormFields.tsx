@@ -1,5 +1,6 @@
 import { getRequestFormslyId } from "@/backend/api/get";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
+import { addDays } from "@/utils/functions";
 import {
   addCommaToNumber,
   convertTimestampToDate,
@@ -45,6 +46,13 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
+  subconFormMethods?: {
+    onServiceNameChange: (index: number, value: string | null) => void;
+    onProjectNameChange: (value: string | null) => void;
+    subconSearch?: (value: string) => void;
+    subconOption?: OptionTableRow[];
+    isSearching?: boolean;
+  };
   quotationFormMethods?: {
     onItemChange: (
       index: number,
@@ -69,6 +77,7 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   requisitionFormMethods,
+  subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
@@ -99,12 +108,17 @@ const RequestFormFields = ({
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
       ?.message;
 
+  const readOnly =
+    field.field_name === "Requesting Project" &&
+    ["Requisition", "Subcon"].includes(formslyFormName)
+      ? true
+      : field.field_is_read_only;
   const inputProps = {
     label: field.field_name,
     description: field.field_description,
     required: field.field_is_required,
-    readOnly: field.field_is_read_only,
-    variant: field.field_is_read_only ? "filled" : "default",
+    readOnly: readOnly,
+    variant: readOnly ? "filled" : "default",
     error: fieldError,
   };
 
@@ -162,6 +176,8 @@ const RequestFormFields = ({
   }, []);
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
+    let fieldOption = field.options;
+
     switch (field.field_type) {
       case "LINK":
         return (
@@ -280,7 +296,7 @@ const RequestFormFields = ({
               const isBoolean = typeof value === "boolean";
               const checked = isBoolean
                 ? value
-                : parseJSONIfValid(value).toLowerCase() === "true";
+                : `${parseJSONIfValid(value)}`.toLowerCase() === "true";
               return (
                 <Switch
                   checked={checked}
@@ -297,10 +313,9 @@ const RequestFormFields = ({
         );
 
       case "DROPDOWN":
-        const fieldOption =
-          field.field_name === "Supplier"
-            ? quotationFormMethods?.supplierOption || field.options
-            : field.options;
+        if (field.field_name === "Supplier" && formslyFormName === "Quotation")
+          fieldOption = quotationFormMethods?.supplierOption || field.options;
+
         const dropdownOption = fieldOption.map((option) => {
           if (quotationFormMethods) {
             const label = option.option_value;
@@ -332,7 +347,7 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => {
               return (
                 <Select
-                  value={parseJSONIfValid(value) || undefined}
+                  value={`${parseJSONIfValid(value)}` || undefined}
                   onChange={(value) => {
                     const prevValue = getValues(
                       `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`
@@ -358,6 +373,12 @@ const RequestFormFields = ({
                       sourcedItemFormMethods?.onProjectSiteChange();
                     } else if (field.field_name === "Requesting Project") {
                       requisitionFormMethods?.onProjectNameChange(value);
+                      subconFormMethods?.onProjectNameChange(value);
+                    } else if (field.field_name === "Service Name") {
+                      subconFormMethods?.onServiceNameChange(
+                        sectionIndex,
+                        value
+                      );
                     }
                   }}
                   data={dropdownOption}
@@ -398,7 +419,12 @@ const RequestFormFields = ({
         );
 
       case "MULTISELECT":
-        const multiselectOption = field.options.map((option) => ({
+        if (
+          field.field_name === "Nominated Subcon" &&
+          formslyFormName === "Subcon"
+        )
+          fieldOption = subconFormMethods?.subconOption || field.options;
+        const multiselectOption = fieldOption.map((option) => ({
           value: option.option_value,
           label: option.option_value,
         }));
@@ -414,6 +440,33 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
+                onSearchChange={(value) => {
+                  if (
+                    subconFormMethods &&
+                    value &&
+                    field.field_name === "Nominated Subcon"
+                  ) {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+
+                    timeoutRef.current = setTimeout(() => {
+                      subconFormMethods.subconSearch &&
+                        subconFormMethods.subconSearch(value);
+                    }, 500);
+                  }
+                }}
+                rightSection={
+                  subconFormMethods &&
+                  subconFormMethods.isSearching &&
+                  field.field_name === "Nominated Subcon" ? (
+                    <Loader size={16} />
+                  ) : null
+                }
+                searchable={
+                  subconFormMethods && field.field_name === "Nominated Subcon"
+                }
+                nothingFound="Nothing found. Try a different keyword"
               />
             )}
             rules={{ ...fieldRules }}
@@ -433,7 +486,13 @@ const RequestFormFields = ({
                 {...inputProps}
                 icon={<IconCalendar size={16} />}
                 error={fieldError}
-                minDate={formslyFormName ? new Date() : undefined}
+                minDate={
+                  formslyFormName
+                    ? subconFormMethods
+                      ? addDays(new Date(), 14)
+                      : new Date()
+                    : undefined
+                }
               />
             )}
             rules={{ ...fieldRules }}

@@ -6,6 +6,7 @@ import {
   getItemResponseForRIR,
   getItemResponseForRO,
   getProjectSignerWithTeamMember,
+  getService,
   getSupplier,
   getUserActiveTeamId,
   getUserTeamMemberData,
@@ -16,6 +17,7 @@ import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseO
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
+import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
 import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTransferReceiptPage";
 
 import Meta from "@/components/Meta/Meta";
@@ -250,6 +252,131 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           props: {
             request: formattedRequest,
             itemOptions,
+            projectOptions,
+          },
+        };
+      }
+
+      // Subcon Form
+      if (form.form_name === "Subcon") {
+        const { data: serviceList, error: serviceListError } =
+          await supabaseClient
+            .from("service_table")
+            .select("*,service_scope: service_scope_table(*)")
+            .eq("service_team_id", teamId)
+            .eq("service_is_disabled", false)
+            .eq("service_is_available", true)
+            .order("service_name", { ascending: true });
+        if (serviceListError) throw serviceListError;
+
+        const serviceOptions = serviceList.map((service, index) => {
+          return {
+            option_description: null,
+            option_field_id:
+              request.request_form.form_section[1].section_field[0].field_id,
+            option_id: service.service_id,
+            option_order: index,
+            option_value: service.service_name,
+          };
+        });
+
+        const subconResponse = parseJSONIfValid(
+          parsedRequest.request_form.form_section[0].section_field[5]
+            .field_response[0].request_response
+        ) as unknown as string[];
+
+        const supplierOptions = subconResponse.map((response, responseIdx) => ({
+          option_description: null,
+          option_field_id: `${responseIdx}`,
+          option_id: `${responseIdx}`,
+          option_order: responseIdx,
+          option_value: response,
+        }));
+
+        const sectionWithDuplicateList = form.form_section
+          .slice(1)
+          .map((section) => parseItemSection(section));
+
+        const serviceSectionList = (await Promise.all(
+          sectionWithDuplicateList.map(async (section) => {
+            const serviceName = parseJSONIfValid(
+              section.section_field[0].field_response[0].request_response
+            );
+            const service = await getService(supabaseClient, {
+              teamId,
+              serviceName,
+            });
+
+            const descriptionList = section.section_field.slice(1);
+            const newFieldsWithOptions = service.service_scope.map((scope) => {
+              const options = scope.service_scope_choice.map(
+                (options, optionIndex) => {
+                  return {
+                    option_description: null,
+                    option_field_id: scope.service_field.field_id,
+                    option_id: options.service_scope_choice_id,
+                    option_order: optionIndex + 1,
+                    option_value: options.service_scope_choice_name,
+                  };
+                }
+              );
+
+              const field = descriptionList.find(
+                (refDescription) =>
+                  refDescription.field_id === scope.service_field.field_id
+              );
+
+              return {
+                ...field,
+                field_option: options,
+              };
+            });
+
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_option: serviceOptions,
+                },
+                ...newFieldsWithOptions,
+              ],
+            };
+          })
+        )) as RequestWithResponseType["request_form"]["form_section"];
+
+        const formattedRequest: RequestWithResponseType = {
+          ...parsedRequest,
+          request_form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1, 5),
+                  {
+                    ...form.form_section[0].section_field[5],
+                    field_option: supplierOptions,
+                  },
+                ],
+              },
+              ...serviceSectionList,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : parsedRequest.request_signer,
+        };
+
+        return {
+          props: {
+            request: formattedRequest,
+            serviceOptions,
             projectOptions,
           },
         };
@@ -755,6 +882,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
+  serviceOptions: OptionTableRow[];
   originalItemOptions?: OptionTableRow[];
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
@@ -764,13 +892,13 @@ type Props = {
 const Page = ({
   request,
   itemOptions,
+  serviceOptions = [],
   originalItemOptions = [],
   projectOptions = [],
   requestingProject = "",
   sourceProjectList = {},
 }: Props) => {
   const { request_form: form } = request;
-
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
@@ -778,6 +906,14 @@ const Page = ({
           <EditRequisitionRequestPage
             request={request}
             itemOptions={itemOptions}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Subcon":
+        return (
+          <EditSubconRequestPage
+            request={request}
+            serviceOptions={serviceOptions}
             projectOptions={projectOptions}
           />
         );
@@ -840,10 +976,6 @@ const Page = ({
       {!form.form_is_formsly_form ? (
         <EditRequestPage request={request} />
       ) : null}
-
-      {/* <Paper>
-        <pre>{JSON.stringify(request, null, 2)}</pre>
-      </Paper> */}
     </>
   );
 };

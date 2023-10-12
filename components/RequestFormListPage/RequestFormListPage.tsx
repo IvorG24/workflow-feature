@@ -1,7 +1,7 @@
 import { deleteForm } from "@/backend/api/delete";
 import { getFormListWithFilter } from "@/backend/api/get";
 import { updateFormVisibility } from "@/backend/api/update";
-import { useFormActions } from "@/stores/useFormStore";
+import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { startCase } from "@/utils/string";
@@ -57,6 +57,8 @@ const RequestFormListPage = ({
   teamId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+
+  const forms = useFormList();
 
   const [formList, setFormList] =
     useState<FormWithOwnerType[]>(initialFormList);
@@ -130,8 +132,13 @@ const RequestFormListPage = ({
         return { ...form, form_is_hidden: !isHidden };
       });
 
+      const newFormForNav = forms.map((form) => {
+        if (form.form_id !== id) return form;
+        return { ...form, form_is_hidden: !isHidden };
+      });
+
       setFormList(newForm);
-      storeSetFormList(newForm);
+      storeSetFormList(newFormForNav);
 
       notifications.show({
         message: "Form visibility updated.",
@@ -152,8 +159,9 @@ const RequestFormListPage = ({
       });
 
       const newFormList = formList.filter((form) => form.form_id !== id);
+      const newFormForNav = forms.filter((form) => form.form_id !== id);
       setFormList(newFormList);
-      storeSetFormList(newFormList);
+      storeSetFormList(newFormForNav);
 
       notifications.show({
         message: "Form deleted.",

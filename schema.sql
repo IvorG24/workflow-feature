@@ -738,7 +738,12 @@ RETURNS JSON AS $$
 
     let request_formsly_id = 'NULL';
     if(isFormslyForm===true) {
-      const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      let requestCount = 0
+      if(formName==='Requisition' || formName==='Subcon') {
+        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table rt INNER JOIN form_table ft ON rt.request_form_id = ft.form_id  WHERE ft.form_name=ANY(ARRAY['Requisition','Subcon']) AND rt.request_project_id='${projectId}';`)[0].count;
+      }else{
+        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      }
       const newCount = (Number(requestCount) + 1).toString(16).toUpperCase();
       const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
       
@@ -791,14 +796,9 @@ RETURNS JSON AS $$
       responseValues,
       signerValues,
       notificationValues,
-      projectId
     } = input_data;
 
-    if(projectId){
-      request_data = plv8.execute(`UPDATE request_table SET request_project_id='${projectId}' WHERE request_id='${requestId}';`)[0];
-    }else{
-      request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
-    }
+    request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
 
     plv8.execute(`DELETE FROM request_response_table WHERE request_response_request_id='${requestId}';`);
 
@@ -4732,13 +4732,16 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_name === "Requisition" || requestData.form_name === "Subcon") {
-      sectionData.map(section => {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Requisition" || requestData.form_name === "Subcon")) {
+      sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
-            SELECT *
+            SELECT DISTINCT field_table.*
             FROM field_table
-            WHERE field_section_id = '${section.section_id}'
+            INNER JOIN request_response_table ON request_response_field_id = field_id
+            WHERE 
+              field_section_id = '${section.section_id}'
+              AND request_response_request_id = '${requestData.request_id}'
             ORDER BY field_order ASC
           `
         );
@@ -4752,31 +4755,28 @@ RETURNS JSON as $$
               AND request_response_field_id = '${field.field_id}'
             `
           );
-
-          if(requestResponseData.length !== 0){
-            const optionData = plv8.execute(
-              `
-                SELECT *
-                FROM option_table
-                WHERE option_field_id = '${field.field_id}'
-                ORDER BY option_order ASC
-              `
-            );
-            
-            fieldWithOptionAndResponse.push({
-              ...field,
-              field_response: requestResponseData,
-              field_option: optionData
-            })
-          }
+          const optionData = plv8.execute(
+            `
+              SELECT *
+              FROM option_table
+              WHERE option_field_id = '${field.field_id}'
+              ORDER BY option_order ASC
+            `
+          );
+          fieldWithOptionAndResponse.push({
+            ...field,
+            field_response: requestResponseData,
+            field_option: optionData
+          });
         });
+
         formSection.push({
           ...section,
           section_field: fieldWithOptionAndResponse,
         }) 
       });
     } else {
-      sectionData.map(section => {
+      sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
             SELECT *

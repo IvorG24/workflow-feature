@@ -22,6 +22,13 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
+  subconFormMethods?: {
+    onServiceNameChange: (index: number, value: string | null) => void;
+    onProjectNameChange: (value: string | null) => void;
+    subconSearch?: (value: string) => void;
+    subconOption?: OptionTableRow[];
+    isSearching?: boolean;
+  };
   quotationFormMethods?: {
     onItemChange: (
       index: number,
@@ -47,6 +54,7 @@ const RequestFormSection = ({
   onRemoveSection,
   isSectionRemovable,
   requisitionFormMethods,
+  subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
@@ -82,6 +90,7 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             requisitionFormMethods={requisitionFormMethods}
+            subconFormMethods={subconFormMethods}
             quotationFormMethods={quotationFormMethods}
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}

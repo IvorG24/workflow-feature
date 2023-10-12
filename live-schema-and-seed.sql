@@ -738,7 +738,12 @@ RETURNS JSON AS $$
 
     let request_formsly_id = 'NULL';
     if(isFormslyForm===true) {
-      const requestCount = plv8.execute(`SELECT COUNT(*) FROM REQUEST_TABLE WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      let requestCount = 0
+      if(formName==='Requisition' || formName==='Subcon') {
+        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table rt INNER JOIN form_table ft ON rt.request_form_id = ft.form_id  WHERE ft.form_name=ANY(ARRAY['Requisition','Subcon']) AND rt.request_project_id='${projectId}';`)[0].count;
+      }else{
+        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
+      }
       const newCount = (Number(requestCount) + 1).toString(16).toUpperCase();
       const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
       
@@ -791,14 +796,9 @@ RETURNS JSON AS $$
       responseValues,
       signerValues,
       notificationValues,
-      projectId
     } = input_data;
 
-    if(projectId){
-      request_data = plv8.execute(`UPDATE request_table SET request_project_id='${projectId}' WHERE request_id='${requestId}';`)[0];
-    }else{
-      request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
-    }
+    request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
 
     plv8.execute(`DELETE FROM request_response_table WHERE request_response_request_id='${requestId}';`);
 
@@ -1144,6 +1144,35 @@ RETURNS Text as $$
 $$ LANGUAGE plv8;
 
 -- End: check if Requisition form can be activated
+
+-- Start: check if Subcon form can be activated
+
+CREATE OR REPLACE FUNCTION check_subcon_form_status(
+    team_id TEXT,
+    form_id TEXT
+)
+RETURNS Text as $$
+  let return_data;
+  plv8.subtransaction(function(){
+
+
+    const service_count = plv8.execute(`SELECT COUNT(*) FROM service_table WHERE service_team_id='${team_id}' AND service_is_available='true' AND service_is_disabled='false'`)[0];
+
+    const signer_count = plv8.execute(`SELECT COUNT(*) FROM signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
+
+    if (!service_count.count) {
+      return_data = "There must be at least one available service";
+    } else if (!signer_count) {
+      return_data = "You need to add a primary signer first";
+    } else {
+      return_data = "true"
+    }
+ });
+
+ return return_data;
+$$ LANGUAGE plv8;
+
+-- End: check if Subcon form can be activated
 
 -- Start: Transfer ownership 
 
@@ -4703,13 +4732,16 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_name === "Requisition" || requestData.form_name === "Subcon") {
-      sectionData.map(section => {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Requisition" || requestData.form_name === "Subcon")) {
+      sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
-            SELECT *
+            SELECT DISTINCT field_table.*
             FROM field_table
-            WHERE field_section_id = '${section.section_id}'
+            INNER JOIN request_response_table ON request_response_field_id = field_id
+            WHERE 
+              field_section_id = '${section.section_id}'
+              AND request_response_request_id = '${requestData.request_id}'
             ORDER BY field_order ASC
           `
         );
@@ -4723,31 +4755,28 @@ RETURNS JSON as $$
               AND request_response_field_id = '${field.field_id}'
             `
           );
-
-          if(requestResponseData.length !== 0){
-            const optionData = plv8.execute(
-              `
-                SELECT *
-                FROM option_table
-                WHERE option_field_id = '${field.field_id}'
-                ORDER BY option_order ASC
-              `
-            );
-            
-            fieldWithOptionAndResponse.push({
-              ...field,
-              field_response: requestResponseData,
-              field_option: optionData
-            })
-          }
+          const optionData = plv8.execute(
+            `
+              SELECT *
+              FROM option_table
+              WHERE option_field_id = '${field.field_id}'
+              ORDER BY option_order ASC
+            `
+          );
+          fieldWithOptionAndResponse.push({
+            ...field,
+            field_response: requestResponseData,
+            field_option: optionData
+          });
         });
+
         formSection.push({
           ...section,
           section_field: fieldWithOptionAndResponse,
         }) 
       });
     } else {
-      sectionData.map(section => {
+      sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
             SELECT *
@@ -5146,14 +5175,14 @@ ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 
 
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users only" ON attachment_table;
+DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON field_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON field_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON field_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON field_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON field_table;
@@ -5269,23 +5298,10 @@ AS PERMISSIVE FOR ALL
 USING (true);
 
 --- FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
-WITH CHECK (
-  (
-    SELECT tt.team_member_team_id
-    FROM section_table AS st
-    JOIN form_table AS fot ON st.section_form_id = fot.form_id
-    JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
-    WHERE st.section_id = field_section_id
-  ) IN (
-    SELECT team_member_team_id
-    FROM team_member_table
-    WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
-  )
-);
+WITH CHECK (true);
 
 CREATE POLICY "Allow READ for anon users" ON "public"."field_table"
 AS PERMISSIVE FOR SELECT
@@ -10437,3 +10453,532 @@ RETURNS VOID AS $$
 $$ LANGUAGE plv8;
 SELECT supplier_seed();
 DROP FUNCTION IF EXISTS supplier_seed;
+
+DROP FUNCTION IF EXISTS service_seed;
+CREATE FUNCTION service_seed()
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+
+    const serviceData = [
+        {
+            serviceName: "Earthworks",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Package 1 - Supply of labor, materials, consumables, tools & equipment, supervision", 
+                        "Package 2 - Rental of equipment including Operator & Fuel", 
+                        "Package 3 - Rental of equipment only", 
+                        "Package 4 - Supply of labor and services"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "DROPDOWN",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Excavation", 
+                        "Geotechnical Investigation", 
+                        "Soil Poisoning", 
+                        "Sodding", 
+                        "Field Density Test", 
+                        "Clearing and Grubbing"
+                    ]
+                }
+            ]
+        },
+        {
+            serviceName: "Civil",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Package 1 - Supply of labor, materials, consumables, tools & equipment, supervision", 
+                        "Package 2 - Supply of labor and consumable", 
+                        "Package 3 - Supply of labor and services", 
+                        "Package 4 - Testing & Commissioning"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Rebar", 
+                        "Formworks", 
+                        "Concreting", 
+                        "Concrete Piles", 
+                        "Foundation Works", 
+                        "Pile Driving", 
+                        "Precast", 
+                        "Pile Driving", 
+                        "Precast", 
+                        "Mold for Column"
+                    ]
+                }
+            ]
+        },
+        {
+            serviceName: "Structural",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Package 1 - Fabrication, Delivery, & Installation", 
+                        "Package 2 - Installation only", 
+                        "Package 3 - Fabrication & Delivery only", 
+                        "Package 4 - Testing & Commissioning"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Rebar", 
+                        "Formworks", 
+                        "Concreting", 
+                        "Concrete Piles", 
+                        "Foundation Works", 
+                        "Pile Driving", 
+                        "Precast", 
+                        "Pile Driving", 
+                        "Precast", 
+                        "Mold for Column"
+                    ]
+                }
+            ]
+        },
+        {
+            serviceName: "Architectural",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Package 1 - Supply of labor, materials, consumables, tools & equipment, supervision", 
+                        "Package 2 - Supply of labor and consumable", 
+                        "Package 3 - Supply of labor and services", 
+                        "Package 4 - Testing & Commissioning"
+                    ]
+                },
+                {
+                    scopeName: "Waterproofing",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Torch Membrane", 
+                        "Capillary Membrane", 
+                        "Polyurethane", 
+                        "Cementitious Coating", 
+                        "EPDM Rubber", 
+                        "Thermoplastic", 
+                        "Bituminous Membrane"
+                    ]
+                },
+                {
+                    scopeName: "Paints",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Painting", 
+                    ]
+                },
+                {
+                    scopeName: "Masonry",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "CHB Laying", 
+                        "AAC Block Installation", 
+                        "Plastering", 
+                        "Zoccalo", 
+                        "Drywalls", 
+                        "Concrete Topping"
+                    ]
+                },
+                {
+                    scopeName: "Ceiling",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Flat Ceiling", 
+                        "Cove Ceiling", 
+                        "Shadow-lined Ceiling", 
+                        "High Ceiling"
+                    ]
+                },
+                {
+                    scopeName: "Doors",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Wooden", 
+                        "Glass", 
+                        "Aluminum", 
+                        "Steel"
+                    ]
+                },
+                {
+                    scopeName: "Windows",
+                    scopeType: "TEXT",
+                    isWithOther: false,
+                    scopeChoices: []
+                },
+                {
+                    scopeName: "Finishing",
+                    scopeType: "DROPDOWN",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Partition"
+                    ]
+                },
+                {
+                    scopeName: "Facade",
+                    scopeType: "TEXT",
+                    isWithOther: false,
+                    scopeChoices: []
+                },
+                {
+                    scopeName: "Misc. Steel",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Railings",
+                        "Grills"
+                    ]
+                },
+                {
+                    scopeName: "Roofing",
+                    scopeType: "TEXT",
+                    isWithOther: false,
+                    scopeChoices: []
+                },
+            ]
+        },
+        {
+            serviceName: "Mechanical",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Supply", 
+                        "Installation", 
+                        "Materials & Delivery", 
+                        "Fabrication", 
+                        "Consumable", 
+                        "Tools & Equipment", 
+                        "Supervision", 
+                        "Testing & Commissioning", 
+                        "Cleaning"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "DROPDOWN",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Penstock", 
+                        "Surge Tank", 
+                        "Generator", 
+                        "Mechanical Ventilation & Air Conditioning (MVAC) System", 
+                        "Air Conditioning Unit", 
+                        "General Mechanical"
+                    ]
+                }
+            ]
+        },
+        {
+            serviceName: "Electrical",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Supply", 
+                        "Installation", 
+                        "Materials & Delivery", 
+                        "Fabrication", 
+                        "Consumable", 
+                        "Tools & Equipment", 
+                        "Supervision", 
+                        "Testing & Commissioning", 
+                        "Erection"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "DROPDOWN",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Transmission Line", 
+                        "Telephone System", 
+                        "Fire Alarm Detection System", 
+                        "Gen. Electrical"
+                    ]
+                },
+            ]
+        },
+        {
+            serviceName: "Fire Protection",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Supply", 
+                        "Installation", 
+                        "Materials & Delivery", 
+                        "Fabrication", 
+                        "Consumable", 
+                        "Tools & Equipment", 
+                        "Supervision", 
+                        "Testing & Commissioning"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "DROPDOWN",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Fire Protection System",
+                    ]
+                },
+                {
+                    scopeName: "Pump",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Fire Pump",
+                        "Jockey Pump"
+                    ]
+                },
+            ]
+        },
+        {
+            serviceName: "Plumbing",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Supply", 
+                        "Installation", 
+                        "Materials & Delivery", 
+                        "Fabrication", 
+                        "Consumable", 
+                        "Tools & Equipment", 
+                        "Supervision", 
+                        "Testing & Commissioning"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "DROPDOWN",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Gen. Plumbing & Sanitary", 
+                    ]
+                },
+            ]
+        },
+        {
+            serviceName: "Electro-Mechanical",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Supply", 
+                        "Installation", 
+                        "Materials & Delivery", 
+                        "Fabrication", 
+                        "Consumable", 
+                        "Tools & Equipment", 
+                        "Supervision", 
+                        "Testing & Commissioning"
+                    ]
+                },
+                {
+                    scopeName: "Scope of Work",
+                    scopeType: "DROPDOWN",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Electro-Mechanical System", 
+                    ]
+                },
+            ]
+        },
+        {
+            serviceName: "Infrastructure",
+            field: [
+                {
+                    scopeName: "Inclusion",
+                    scopeType: "MULTISELECT",
+                    isWithOther: true,
+                    scopeChoices: [
+                        "Supply", 
+                        "Installation", 
+                        "Materials & Delivery", 
+                        "Fabrication", 
+                        "Consumable", 
+                        "Tools & Equipment", 
+                        "Supervision", 
+                        "Testing & Commissioning", 
+                        "Erection", 
+                        "Drilling and Blasting"
+                    ]
+                },
+                {
+                    scopeName: "Bridges",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Beam Bridges", 
+                        "Cable Bridges", 
+                        "Arch Bridges", 
+                        "Pipe Bridges"
+                    ]
+                },
+                {
+                    scopeName: "Roadways",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Lighting Post", 
+                        "Steel Tower", 
+                        "Access Road"
+                    ]
+                },
+                {
+                    scopeName: "Power and Energy",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Electric Power Plant", 
+                        "Nuclear Power Plant", 
+                        "Hydro-Electric Power Plant", 
+                        "Wind Power Plant", 
+                        "Solar Power Plant"
+                    ]
+                },
+                {
+                    scopeName: "Railways",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Railway lines", 
+                        "Trains", 
+                        "Tunnels"
+                    ]
+                },
+                {
+                    scopeName: "Water",
+                    scopeType: "MULTISELECT",
+                    isWithOther: false,
+                    scopeChoices: [
+                        "Dam", 
+                        "Wells", 
+                        "Main Water Line", 
+                        "Pumping Station", 
+                        "Treatment Plants", 
+                        "Septic tanks", 
+                        "Storm Water Drain"
+                    ]
+                },
+                {
+                    scopeName: "Riprap",
+                    scopeType: "TEXT",
+                    isWithOther: false,
+                    scopeChoices: []
+                },
+                {
+                    scopeName: "Slope Protection",
+                    scopeType: "TEXT",
+                    isWithOther: false,
+                    scopeChoices: []
+                },
+                {
+                    scopeName: "Tree Cutting",
+                    scopeType: "TEXT",
+                    isWithOther: false,
+                    scopeChoices: []
+                },
+            ]
+        },
+    ]
+    const TEAM_ID = "a5a28977-6956-45c1-a624-b9e90911502e";
+    const SECTION_ID = "afd6fecd-e619-41ca-b9d2-cc1e96d4dce2";
+
+    let serviceInput = [];
+    let fieldInput = [];
+    let serviceScopeInput = [];
+    let serviceScopeChoiceInput = [];
+
+    serviceData.forEach((service) => {
+        const serviceId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+
+        serviceInput.push({
+            service_id: serviceId,
+            service_name: service.serviceName,
+            service_team_id: TEAM_ID
+        });
+
+        service.field.forEach(field => {
+            const serviceScopeId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+            const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+
+            fieldInput.push({
+                field_id: fieldId,
+                field_name: field.scopeName,
+                field_type: field.scopeType,
+                field_order: 8,
+                field_section_id: SECTION_ID,
+            })
+
+            serviceScopeInput.push({
+                service_scope_id: serviceScopeId,
+                service_scope_name: field.scopeName,
+                service_scope_type: field.scopeType,
+                service_scope_is_with_other: field.isWithOther,
+                service_scope_service_id: serviceId,
+                service_scope_field_id: fieldId
+            });
+
+            if(field.scopeChoices.length !== 0){
+                field.scopeChoices.forEach(choice => {
+                    serviceScopeChoiceInput.push({
+                        service_scope_choice_name: choice,
+                        service_scope_choice_service_scope_id: serviceScopeId
+                    })
+                });
+            }
+        });
+    });
+
+    const service_input = serviceInput.map((service) => `('${service.service_id}', '${service.service_name}', '${service.service_team_id}')`).join(',');
+    const field_input = fieldInput.map((field) => `('${field.field_id}', '${field.field_name}', '${field.field_type}', '${field.field_order}', '${field.field_section_id}')`).join(',');
+    const service_scope_input = serviceScopeInput.map((serviceScope) => `('${serviceScope.service_scope_id}', '${serviceScope.service_scope_name}', '${serviceScope.service_scope_type}', '${serviceScope.service_scope_is_with_other}', '${serviceScope.service_scope_service_id}', '${serviceScope.service_scope_field_id}')`).join(',');
+    const service_scope_choice_input = serviceScopeChoiceInput.map((choice) => `('${choice.service_scope_choice_name}', '${choice.service_scope_choice_service_scope_id}')`).join(',');
+
+    plv8.execute(`INSERT INTO service_table (service_id, service_name, service_team_id) VALUES ${service_input}`);
+    plv8.execute(`INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id) VALUES ${field_input}`);
+    plv8.execute(`INSERT INTO service_scope_table (service_scope_id, service_scope_name, service_scope_type, service_scope_is_with_other, service_scope_service_id, service_scope_field_id) VALUES ${service_scope_input}`);
+    plv8.execute(`INSERT INTO service_scope_choice_table (service_scope_choice_name, service_scope_choice_service_scope_id) VALUES ${service_scope_choice_input}`);
+  })
+$$ LANGUAGE plv8;
+SELECT service_seed();
+DROP FUNCTION IF EXISTS service_seed;

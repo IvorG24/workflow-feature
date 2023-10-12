@@ -84,6 +84,7 @@ const Dashboard = () => {
         .map((form) => form.label)
         .indexOf("Requisition");
 
+      if (selectedForm) return;
       if (requisitionIndex !== -1) {
         setSelectedForm(formData[requisitionIndex].value);
       } else {
