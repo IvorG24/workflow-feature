@@ -1287,3 +1287,21 @@ export const mediaExtensions = [
   ".flac",
   ".avi",
 ];
+
+export const GL_ACCOUNT_CHOICES = [
+  "Formworks Accessories",
+  "Construction Materials",
+  "Spare Parts & Supplies",
+  "Uniform and Safety Paraphernalia",
+  "Fuel, Oil, Lubricants",
+  "Office Supplies & Stationeries",
+  "Miscellaneous Supplies",
+  "Fixed Asset - Construction Equipment, Machinery and Tools",
+  "Fixed Asset - Transportation Equipment",
+  "Fixed Asset - Office Machine and Equipment",
+  "Fixed Asset - Low Value Asset >50k",
+  "Minor Equipment, Furniture and Tools <50k",
+  "Computer Software",
+  "Temporary Facility",
+  "Bidding",
+];

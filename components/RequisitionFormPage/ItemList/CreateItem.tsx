@@ -1,7 +1,7 @@
 import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ITEM_UNIT_CHOICES } from "@/utils/constant";
+import { GL_ACCOUNT_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -100,7 +100,7 @@ const CreateItem = ({
           item_general_name: data.generalName.toUpperCase(),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
-          item_gl_account: data.glAccount.toUpperCase(),
+          item_gl_account: data.glAccount,
           item_team_id: activeTeam.team_id,
           item_division_id_list: data.division.map((id) => `'${id}'`),
         },
@@ -193,25 +193,25 @@ const CreateItem = ({
                 },
               }}
             />
-            <TextInput
-              {...register("glAccount", {
-                required: { message: "GL Account is required", value: true },
-                minLength: {
-                  message: "GL Account must have atleast 3 characters",
-                  value: 3,
-                },
-                maxLength: {
-                  message: "GL Account must be shorter than 500 characters",
-                  value: 500,
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="GL Account"
-              error={formState.errors.glAccount?.message}
-              sx={{
-                input: {
-                  textTransform: "uppercase",
+            <Controller
+              control={control}
+              name="glAccount"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value as string}
+                  onChange={onChange}
+                  data={GL_ACCOUNT_CHOICES}
+                  withAsterisk
+                  error={formState.errors.glAccount?.message}
+                  searchable
+                  clearable
+                  label="GL Account"
+                />
+              )}
+              rules={{
+                required: {
+                  message: "GL Account is required",
+                  value: true,
                 },
               }}
             />
