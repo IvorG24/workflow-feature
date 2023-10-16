@@ -1,4 +1,4 @@
-import { checkIfJiraIDIsUnique } from "@/backend/api/get";
+import { checkIfJiraIDIsUnique, checkIfNavIdIsUnique } from "@/backend/api/get";
 import { Database } from "@/utils/database";
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
@@ -27,7 +27,8 @@ type Props = {
   isUserSigner: boolean;
   handleUpdateRequest: (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string
+    jiraId?: string,
+    navId?: string
   ) => void;
   signer?: RequestWithResponseType["request_signer"][0];
   isRf?: boolean;
@@ -56,7 +57,7 @@ const RequestActionSection = ({
     setValue,
     setError,
     formState: { errors },
-  } = useForm<{ jiraId: string }>();
+  } = useForm<{ jiraId: string; navId: string }>();
 
   const handleAction = (action: string, color: string) => {
     if (isRf && action === "approve" && isUserPrimarySigner) {
@@ -70,46 +71,84 @@ const RequestActionSection = ({
             </Text>
             <form
               onSubmit={handleSubmit((data) => {
-                handleUpdateRequest("APPROVED", data.jiraId);
+                handleUpdateRequest("APPROVED", data.jiraId, data.navId);
                 modals.close("approveRf");
               })}
             >
-              <TextInput
-                icon={<IconId size={16} />}
-                placeholder="Jira ID"
-                data-autofocus
-                {...register("jiraId", {
-                  validate: {
-                    required: (value) => {
-                      if (!value) {
-                        notifications.show({
-                          message: "Jira ID is required.",
-                          color: "red",
-                        });
-                        return "Jira ID is required.";
-                      } else {
-                        return true;
-                      }
+              <Stack spacing="xs" mt="xl">
+                <TextInput
+                  icon={<IconId size={16} />}
+                  placeholder="Jira ID"
+                  data-autofocus
+                  {...register("jiraId", {
+                    validate: {
+                      required: (value) => {
+                        if (!value) {
+                          notifications.show({
+                            message: "Jira ID is required.",
+                            color: "red",
+                          });
+                          return "Jira ID is required.";
+                        } else {
+                          return true;
+                        }
+                      },
+                      checkIfUnique: async (value) => {
+                        if (
+                          await checkIfJiraIDIsUnique(supabaseClient, {
+                            value: value,
+                          })
+                        ) {
+                          notifications.show({
+                            message: "Jira ID already exists.",
+                            color: "red",
+                          });
+                          return "Jira ID already exists.";
+                        } else {
+                          return true;
+                        }
+                      },
                     },
-                    checkIfUnique: async (value) => {
-                      if (
-                        await checkIfJiraIDIsUnique(supabaseClient, {
-                          value: value,
-                        })
-                      ) {
-                        notifications.show({
-                          message: "Jira ID already exists.",
-                          color: "red",
-                        });
-                        return "Jira ID already exists.";
-                      } else {
-                        return true;
-                      }
+                  })}
+                  error={errors.jiraId?.message}
+                />
+                <TextInput
+                  icon={<IconId size={16} />}
+                  placeholder="Nav ID"
+                  data-autofocus
+                  {...register("navId", {
+                    validate: {
+                      required: (value) => {
+                        if (!value) {
+                          notifications.show({
+                            message: "Nav ID is required.",
+                            color: "red",
+                          });
+                          return "Nav ID is required.";
+                        } else {
+                          return true;
+                        }
+                      },
+                      checkIfUnique: async (value) => {
+                        if (
+                          await checkIfNavIdIsUnique(supabaseClient, {
+                            value: value,
+                          })
+                        ) {
+                          notifications.show({
+                            message: "Nav ID already exists.",
+                            color: "red",
+                          });
+                          return "Nav ID already exists.";
+                        } else {
+                          return true;
+                        }
+                      },
                     },
-                  },
-                })}
-                error={errors.jiraId?.message}
-              />
+                  })}
+                  error={errors.jiraId?.message}
+                />
+              </Stack>
               <Flex mt="md" align="center" justify="flex-end" gap="sm">
                 <Button
                   variant="default"
