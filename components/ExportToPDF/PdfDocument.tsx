@@ -64,6 +64,7 @@ type FieldType = {
 type Props = {
   requestDetails: FieldType[];
   requestorDetails: FieldType[];
+  requestIDs: FieldType[];
   requestItems: {
     title: string;
     fields: FieldType[];
@@ -73,6 +74,7 @@ type Props = {
 const PdfDocument = ({
   requestDetails,
   requestorDetails,
+  requestIDs,
   requestItems,
 }: Props) => (
   <Document>
@@ -98,6 +100,20 @@ const PdfDocument = ({
           ))}
         </View>
       </View>
+      <View style={[styles.header, { marginTop: "12px" }]}>
+        <View style={styles.column}>
+          {requestIDs.map((detail, index) => (
+            <View
+              key={index}
+              style={{ ...styles.columnItem, alignItems: "flex-start" }}
+            >
+              <Text>{detail.label}</Text>
+              <Text style={{ fontWeight: 600 }}>{detail.value}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
       {requestItems.map((item, index) => (
         <View key={index} wrap={false}>
           <View style={styles.divider} />

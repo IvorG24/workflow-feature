@@ -3513,6 +3513,28 @@ export const checkIfJiraIDIsUnique = async (
   return Boolean(count);
 };
 
+// Check if nav id is unique
+export const checkIfNavIdIsUnique = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    value: string;
+  }
+) => {
+  const { value } = params;
+
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("request_status", "APPROVED")
+    .eq("request_nav_id", value);
+
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
 // get service
 export const getService = async (
   supabaseClient: SupabaseClient<Database>,

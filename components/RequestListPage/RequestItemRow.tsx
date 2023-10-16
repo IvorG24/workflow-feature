@@ -40,7 +40,7 @@ const RequestItemRow = ({ request }: Props) => {
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
-      <Grid.Col span={2}>
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             {requestId}
@@ -48,7 +48,11 @@ const RequestItemRow = ({ request }: Props) => {
           <CopyButton value={requestId}>
             {({ copied, copy }) => (
               <Tooltip
-                label={copied ? "Copied" : "Copy request id"}
+                label={
+                  copied
+                    ? "Copied"
+                    : `Copy ${request.request_formsly_id ?? request.request_id}`
+                }
                 onClick={copy}
               >
                 <ActionIcon>
@@ -59,7 +63,7 @@ const RequestItemRow = ({ request }: Props) => {
           </CopyButton>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={2}>
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             {request.request_jira_id}
@@ -68,7 +72,28 @@ const RequestItemRow = ({ request }: Props) => {
             <CopyButton value={request.request_jira_id}>
               {({ copied, copy }) => (
                 <Tooltip
-                  label={copied ? "Copied" : "Copy jira id"}
+                  label={copied ? "Copied" : `Copy ${request.request_jira_id}`}
+                  onClick={copy}
+                >
+                  <ActionIcon>
+                    <IconCopy size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+            </CopyButton>
+          )}
+        </Flex>
+      </Grid.Col>
+      <Grid.Col span={1}>
+        <Flex justify="space-between">
+          <Text truncate maw={150}>
+            {request.request_nav_id}
+          </Text>
+          {request.request_nav_id && (
+            <CopyButton value={request.request_nav_id}>
+              {({ copied, copy }) => (
+                <Tooltip
+                  label={copied ? "Copied" : `Copy ${request.request_nav_id}`}
                   onClick={copy}
                 >
                   <ActionIcon>

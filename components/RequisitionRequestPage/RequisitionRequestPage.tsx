@@ -96,7 +96,8 @@ const RequisitionRequestPage = ({
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string
+    jiraId?: string,
+    navId?: string
   ) => {
     try {
       setIsLoading(true);
@@ -122,6 +123,7 @@ const RequisitionRequestPage = ({
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
+        navId
       });
 
       notifications.show({
