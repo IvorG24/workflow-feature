@@ -204,6 +204,7 @@ CREATE TABLE request_table(
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   request_jira_id VARCHAR(4000),
+  request_nav_id VARCHAR(4000),
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
@@ -437,6 +438,7 @@ plv8.subtransaction(function(){
           SELECT 
             request_table.request_id, 
             request_table.request_jira_id,
+            request_table.request_nav_id,
             request_table.request_formsly_id,
             request_table.request_date_created, 
             request_table.request_team_member_id, 
@@ -458,7 +460,7 @@ plv8.subtransaction(function(){
     );
         
   }else{
-    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_table.request_jira_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_table.request_jira_id, request_table.request_nav_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
   }
 
   ssot_data = requisition_requests.map((requisition) => {
@@ -672,6 +674,7 @@ plv8.subtransaction(function(){
       requisition_request_id: requisition.request_id,
       requisition_request_formsly_id: requisition.request_formsly_id,
       requisition_request_jira_id: requisition.request_jira_id,
+      requisition_request_nav_id: requisition.request_nav_id,
       requisition_request_date_created: requisition.request_date_created,
       requisition_request_response: requisition_response_fields,
       requisition_request_owner: requisition_team_member,
@@ -833,7 +836,8 @@ RETURNS VOID AS $$
       requestAction,
       memberId,
       teamId,
-      jiraId
+      jiraId,
+      navId
     } = input_data;
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -845,7 +849,7 @@ RETURNS VOID AS $$
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
     
     if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} WHERE request_id='${requestId}';`);
+      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraId ? `, request_nav_id = '${navId}'` : ""} WHERE request_id='${requestId}';`);
     }
     
  });
@@ -1931,6 +1935,7 @@ RETURNS JSON AS $$
             request_status,
             request_team_member_id,
             request_jira_id,
+            request_nav_id,
             request_form_id
           FROM request_table
           INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
@@ -2024,6 +2029,7 @@ RETURNS JSON AS $$
           request_date_created: request.request_date_created, 
           request_status: request.request_status, 
           request_jira_id: request.request_jira_id,
+          request_nav_id: request.request_nav_id,
           request_team_member: {
             team_member_team_id: request.request_team_member_id,
             team_member_user: {
@@ -4837,6 +4843,7 @@ RETURNS JSON as $$
       request_form_id: requestData.request_form_id,
       request_project_id: requestData.request_project_id,
       request_jira_id: requestData.request_jira_id,
+      request_nav_id: requestData.request_nav_id,
       request_comment: requestCommentData.map(requestComment => {
         return {
           comment_id: requestComment.comment_id, 
