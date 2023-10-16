@@ -168,14 +168,17 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
             >
               List View
             </Menu.Item>
-            <Menu.Item
-              component="a"
-              href={instanceTable.url ? instanceTable.url : "#"}
-              download={`${pdfFileName}-table-view`}
-              icon={<IconTable size={16} />}
-            >
-              Table View
-            </Menu.Item>
+            {request.request_form.form_is_formsly_form &&
+              request.request_form.form_name === "Requisition" && (
+                <Menu.Item
+                  component="a"
+                  href={instanceTable.url ? instanceTable.url : "#"}
+                  download={`${pdfFileName}-table-view`}
+                  icon={<IconTable size={16} />}
+                >
+                  Table View
+                </Menu.Item>
+              )}
           </Menu.Dropdown>
         </Menu>
       ) : null}
