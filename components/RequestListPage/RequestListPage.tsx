@@ -262,11 +262,14 @@ const RequestListPage = ({
                   })}
                 >
                   <Grid m={0} px="sm" justify="space-between">
-                    <Grid.Col span={2}>
+                    <Grid.Col span={1}>
                       <Text weight={600}>Request ID</Text>
                     </Grid.Col>
-                    <Grid.Col span={2}>
+                    <Grid.Col span={1}>
                       <Text weight={600}>Jira ID</Text>
+                    </Grid.Col>
+                    <Grid.Col span={1}>
+                      <Text weight={600}>Nav ID</Text>
                     </Grid.Col>
                     <Grid.Col span={2}>
                       <Text weight={600}>Form Name</Text>

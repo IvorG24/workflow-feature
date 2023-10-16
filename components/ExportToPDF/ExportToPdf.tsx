@@ -2,10 +2,12 @@
 
 import { startCase } from "@/utils/string";
 import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
-import { Button } from "@mantine/core";
+import { Button, Menu } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
+import { IconList, IconTable } from "@tabler/icons-react";
 import moment from "moment";
 import PdfDocument from "./PdfDocument";
+import PdfDocumentTableVersion from "./PdfDocumentTableVersion";
 
 type Props = {
   request: RequestWithResponseType;
@@ -69,6 +71,33 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
     },
   ];
 
+  const requestIDs = [
+    ...(request.request_formsly_id
+      ? [
+          {
+            label: "Formsly ID:",
+            value: `${request.request_formsly_id}`,
+          },
+        ]
+      : []),
+    ...(request.request_jira_id
+      ? [
+          {
+            label: "Jira ID:",
+            value: `${request.request_jira_id}`,
+          },
+        ]
+      : []),
+    ...(request.request_nav_id
+      ? [
+          {
+            label: "Nav ID:",
+            value: `${request.request_nav_id}`,
+          },
+        ]
+      : []),
+  ];
+
   const requestItems = sectionWithDuplicateList.map((section) => {
     const title = section.section_name;
     const fieldWithResponse = section.section_field.filter(
@@ -105,6 +134,18 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
       <PdfDocument
         requestDetails={requestDetails}
         requestorDetails={requestorDetails}
+        requestIDs={requestIDs}
+        requestItems={requestItems}
+      />
+    ),
+  });
+
+  const [instanceTable] = usePDF({
+    document: (
+      <PdfDocumentTableVersion
+        requestDetails={requestDetails}
+        requestorDetails={requestorDetails}
+        requestIDs={requestIDs}
         requestItems={requestItems}
       />
     ),
@@ -113,15 +154,30 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
   return (
     <>
       {!instance.loading ? (
-        <Button
-          variant="light"
-          component="a"
-          href={instance.url ? instance.url : "#"}
-          download={pdfFileName}
-          sx={{ flex: 1 }}
-        >
-          Export to PDF
-        </Button>
+        <Menu width={200} shadow="md">
+          <Menu.Target>
+            <Button variant="light">Export to PDF</Button>
+          </Menu.Target>
+
+          <Menu.Dropdown>
+            <Menu.Item
+              component="a"
+              href={instance.url ? instance.url : "#"}
+              download={`${pdfFileName}-list-view`}
+              icon={<IconList size={16} />}
+            >
+              List View
+            </Menu.Item>
+            <Menu.Item
+              component="a"
+              href={instanceTable.url ? instanceTable.url : "#"}
+              download={`${pdfFileName}-table-view`}
+              icon={<IconTable size={16} />}
+            >
+              Table View
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       ) : null}
     </>
   );

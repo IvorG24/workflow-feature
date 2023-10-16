@@ -116,7 +116,6 @@ const CreateItemDescriptionField = ({
                 w="100%"
                 label="Value"
                 error={formState.errors.value?.message}
-                type={isWithUoM ? "number" : "text"}
               />
               {isWithUoM && (
                 <Controller
