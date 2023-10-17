@@ -1,5 +1,5 @@
-import { TicketListItemType } from "@/pages/team-requests/tickets";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { TicketType } from "@/utils/types";
 import {
   Button,
   Container,
@@ -19,7 +19,7 @@ import TicketDetailSection from "./TicketDetailSection";
 import TicketResponseSection from "./TicketResponseSection";
 
 type Props = {
-  ticket: TicketListItemType;
+  ticket: TicketType;
   commentList: TicketCommentType[];
 };
 

@@ -1,5 +1,6 @@
-import { TicketListItemType } from "@/pages/team-requests/tickets";
+import { toTitleCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
+import { TicketType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -13,7 +14,7 @@ import moment from "moment";
 import { getTicketStatusColor } from "../TicketListPage/TicketListItem";
 
 type Props = {
-  ticket: TicketListItemType;
+  ticket: TicketType;
   currentTicketStatus: string;
 };
 
@@ -25,18 +26,19 @@ const TicketDetailSection = ({ ticket, currentTicketStatus }: Props) => {
       <Group spacing={8}>
         <Avatar
           size="sm"
-          src={requester.user.user_avatar}
+          src={requester.team_member_user.user_avatar}
           color={getAvatarColor(
             Number(`${requester.team_member_id.charCodeAt(0)}`)
           )}
           radius="xl"
         >
           {(
-            requester.user.user_first_name[0] + requester.user.user_last_name[0]
+            requester.team_member_user.user_first_name[0] +
+            requester.team_member_user.user_last_name[0]
           ).toUpperCase()}
         </Avatar>
         <Text>
-          {`${requester.user.user_first_name} ${requester.user.user_last_name} opened this ticket on `}
+          {`${requester.team_member_user.user_first_name} ${requester.team_member_user.user_last_name} opened this ticket on `}
           <Text span weight={600}>
             {moment(ticket.ticket_date_created).format("MMM DD, YYYY")}
           </Text>
@@ -45,7 +47,7 @@ const TicketDetailSection = ({ ticket, currentTicketStatus }: Props) => {
       <Divider />
       <Stack spacing={4}>
         <Text>Category</Text>
-        <Text weight={600}>{ticket.ticket_category}</Text>
+        <Text weight={600}>{toTitleCase(ticket.ticket_category)}</Text>
       </Stack>
       <Stack spacing={4}>
         <Text>Status</Text>

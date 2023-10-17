@@ -5226,9 +5226,63 @@ RETURNS JSON as $$
       description,
     } = input_data;
 
-    const ticketData = plv8.execute(`INSERT INTO ticket_table (ticket_category, ticket_title, ticket_description, ticket_approver_team_member_id) VALUES ('${category}','${title}','${description}','${requester}') RETURNING *;`)[0];
+    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_category, ticket_title, ticket_description, ticket_requester_team_member_id) VALUES ('${category}','${title}','${description}','${requester}') RETURNING *;`)[0];
 
-    returnData= {ticketData}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket
+
+-- Start: Get ticket on load
+
+CREATE OR REPLACE FUNCTION get_ticket_on_load(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      ticketId
+    } = input_data;
+
+    const ticket = plv8.execute(`SELECT *  FROM ticket_table WHERE ticket_id='${ticketId}';`)[0];
+
+    const requester = plv8.execute(`SELECT jsonb_build_object(
+          'team_member_id', tm.team_member_id,
+          'team_member_role', tm.team_member_role,
+          'team_member_user', jsonb_build_object(
+              'user_id', u.user_id,
+              'user_first_name', u.user_first_name,
+              'user_last_name', u.user_last_name,
+              'user_email', u.user_email,
+              'user_avatar', u.user_avatar
+          )
+      ) AS member
+      FROM team_member_table tm
+      JOIN user_table u ON tm.team_member_user_id = u.user_id
+      WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
+
+    let approver = null
+    if(ticket.ticket_approver_team_member_id !== null){
+      approver = plv8.execute(`SELECT jsonb_build_object(
+          'team_member_id', tm.team_member_id,
+          'team_member_role', tm.team_member_role,
+          'team_member_user', jsonb_build_object(
+              'user_id', u.user_id,
+              'user_first_name', u.user_first_name,
+              'user_last_name', u.user_last_name,
+              'user_email', u.user_email,
+              'user_avatar', u.user_avatar
+          )
+      ) AS member
+      FROM team_member_table tm
+      JOIN user_table u ON tm.team_member_user_id = u.user_id
+      WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
+    }
+
+    returnData = {ticket: {...ticket, ticket_requester: requester.member, ticket_approver: approver ? approver.member : null}}
+
 
  });
  return returnData;

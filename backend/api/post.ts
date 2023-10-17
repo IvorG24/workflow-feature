@@ -2,7 +2,6 @@ import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestP
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/GroupMembers";
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
-import { TicketListItemType } from "@/pages/team-requests/tickets";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { parseJSONIfValid } from "@/utils/string";
@@ -28,6 +27,7 @@ import {
   TeamMemberTableInsert,
   TeamProjectTableRow,
   TeamTableInsert,
+  TicketTableRow,
   UserTableInsert,
   UserTableRow,
 } from "@/utils/types";
@@ -856,31 +856,19 @@ export const createTicket = async (
   }
 ) => {
   const { requester, category, title, description } = params;
-  console.log(params);
 
   const { data, error } = await supabaseClient
-    .from("ticket_table")
-    .insert({
-      ticket_category: category.toUpperCase(),
-      ticket_title: title,
-      ticket_description: description,
-      ticket_approver_team_member_id: requester,
+    .rpc("create_ticket", {
+      input_data: {
+        requester,
+        category: category.toUpperCase(),
+        title,
+        description,
+      },
     })
-    .select("*")
+    .select()
     .single();
-  // const { data, error } = await supabaseClient
-  //   .rpc("create_ticket", {
-  //     input_data: {
-  //       requester,
-  //       category: category.toUpperCase(),
-  //       title,
-  //       description,
-  //     },
-  //   })
-  //   .select()
-  //   .single();
 
-  console.log(error);
   if (error) throw error;
-  return data as TicketListItemType;
+  return data as TicketTableRow;
 };

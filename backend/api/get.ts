@@ -31,6 +31,7 @@ import {
   TeamMemberWithUserDetails,
   TeamOnLoad,
   TeamTableRow,
+  TicketPageOnLoad,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -3584,4 +3585,22 @@ export const getCreateTicketOnLoad = async (
 
   if (error) throw error;
   return data as CreateTicketPageOnLoad;
+};
+
+// Get ticket on load
+export const getTicketOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ticket_on_load", {
+      input_data: params,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as TicketPageOnLoad;
 };

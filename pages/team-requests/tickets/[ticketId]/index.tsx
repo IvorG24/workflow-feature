@@ -1,9 +1,10 @@
+import { getTicketOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import { TicketCommentType } from "@/components/TicketPage.tsx/TicketCommentSection";
 import TicketPage from "@/components/TicketPage.tsx/TicketPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
+import { TicketType } from "@/utils/types";
 import { GetServerSideProps } from "next";
-import { TEMP_TICKET_LIST, TicketListItemType } from "..";
 
 export const TEMP_TICKET_COMMENT_LIST = [
   {
@@ -225,11 +226,12 @@ export const TEMP_TICKET_COMMENT_ATTACHMENT_LIST = [
 ];
 
 export const getServerSideProps: GetServerSideProps =
-  withAuthAndOnboardingRequestPage(async ({ context }) => {
+  withAuthAndOnboardingRequestPage(async ({ context, supabaseClient }) => {
     try {
-      const ticket = TEMP_TICKET_LIST.find(
-        (ticket) => ticket.ticket_id === context.query.ticketId
-      );
+      const { ticket } = await getTicketOnLoad(supabaseClient, {
+        ticketId: `${context.query.ticketId}`,
+      });
+
       const commentList = TEMP_TICKET_COMMENT_LIST.sort((a, b) => {
         const date1 = new Date(a.ticket_comment_date_created);
         const date2 = new Date(b.ticket_comment_date_created);
@@ -242,8 +244,6 @@ export const getServerSideProps: GetServerSideProps =
           return 0;
         }
       });
-
-      if (!ticket) throw Error;
 
       return {
         props: {
@@ -263,7 +263,7 @@ export const getServerSideProps: GetServerSideProps =
   });
 
 type Props = {
-  ticket: TicketListItemType;
+  ticket: TicketType;
   commentList: TicketCommentType[];
 };
 

@@ -54,10 +54,9 @@ const CreateTicketPage = ({ member }: Props) => {
         ...data,
         requester: `${member?.team_member_id}`,
       });
-      console.log(ticket);
 
       notifications.show({
-        message: "Request created.",
+        message: "Ticket created.",
         color: "green",
       });
       router.push(`/team-requests/tickets/${ticket.ticket_id}`);

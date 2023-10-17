@@ -171,6 +171,13 @@ export type ServiceScopeChoiceTableInsert =
 export type ServiceScopeChoiceTableUpdate =
   Database["public"]["Tables"]["service_scope_choice_table"]["Update"];
 
+export type TicketTableRow =
+  Database["public"]["Tables"]["ticket_table"]["Row"];
+export type TicketTableInsert =
+  Database["public"]["Tables"]["ticket_table"]["Insert"];
+export type TicketTableUpdate =
+  Database["public"]["Tables"]["ticket_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -937,3 +944,10 @@ export type CreateTicketPageOnLoad = {
     };
   };
 };
+
+export type TicketType = {
+  ticket_requester: CreateTicketPageOnLoad["member"];
+  ticket_approver: CreateTicketPageOnLoad["member"] | null;
+} & TicketTableRow;
+
+export type TicketPageOnLoad = { ticket: TicketType };
