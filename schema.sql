@@ -5312,7 +5312,6 @@ $$ LANGUAGE plv8;
 
 -- End: Create ticket
 
-
 -- Start: Assign ticket
 
 CREATE OR REPLACE FUNCTION assign_ticket(
@@ -5335,13 +5334,94 @@ RETURNS JSON as $$
     const hasApprover = ticket.ticket_approver_team_member_id !== null
     if (hasApprover) throw new Error("Ticket already have approver");
     
-    returnData = plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+    const updatedTicket = plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
 
+    const requester = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_id='${updatedTicket.ticket_requester_team_member_id}' 
+      `
+    )[0];
+
+    const approver = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_id='${teamMemberId}' 
+      `
+    )[0];
+
+    returnData = {...updatedTicket, ticket_requester: requester, ticket_approver: approver}
  });
  return returnData;
 $$ LANGUAGE plv8;
 
 -- End: Assign ticket
+
+-- Start: Edit ticket response
+
+CREATE OR REPLACE FUNCTION edit_ticket_response(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      ticketId,
+      title,
+      description
+    } = input_data;
+
+    returnData = plv8.execute(`UPDATE ticket_table SET ticket_title='${title}', ticket_description='${description}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Edit ticket response
+
+-- Start: Update ticket status
+
+CREATE OR REPLACE FUNCTION update_ticket_status(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+     ticketId,
+     status,
+     rejectionMessage
+    } = input_data;
+
+    returnData = plv8.execute(`UPDATE ticket_table SET ticket_status='${status.toUpperCase()}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Edit ticket response
 
 ---------- End: FUNCTIONS
 

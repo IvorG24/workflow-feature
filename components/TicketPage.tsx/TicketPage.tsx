@@ -1,4 +1,4 @@
-import { assignTicket } from "@/backend/api/post";
+import { assignTicket } from "@/backend/api/update";
 import { Database } from "@/utils/database";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
@@ -30,12 +30,7 @@ const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [currentCommentList, setCurrentCommentList] = useState(commentList);
   const [ticket, setTicket] = useState(initialTicket);
-  const [currentTicketStatus, setCurrentTicketStatus] = useState(
-    ticket.ticket_status
-  );
-  const [showTicketActionSection, setShowTicketActionSection] = useState(
-    ticket.ticket_approver_team_member_id === user.team_member_id
-  );
+  const [isEditingResponse, setIsEditingResponse] = useState(false);
 
   const handleAssignTicketToUser = async () => {
     try {
@@ -44,13 +39,8 @@ const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
         teamMemberId: user.team_member_id,
         ticketId: ticket.ticket_id,
       });
-      setTicket((ticket) => ({
-        ...updatedTicket,
-        ticket_approver: ticket.ticket_approver,
-        ticket_requester: user,
-      }));
-      setCurrentTicketStatus("UNDER REVIEW");
-      setShowTicketActionSection(true);
+
+      setTicket(updatedTicket);
       const newComment = {
         ticket_comment_id: "78f78689-a898-47f5-bf3c-a3469c8eb34f",
         ticket_comment_content: `${currentUserFullName} is reviewing this ticket`,
@@ -82,7 +72,7 @@ const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
     <Container>
       <Paper p="md" withBorder>
         <Stack>
-          {currentTicketStatus === "PENDING" &&
+          {ticket.ticket_status === "PENDING" &&
             ticket.ticket_approver_team_member_id === null &&
             ticket.ticket_requester_team_member_id !== user.team_member_id &&
             (user.team_member_role === "ADMIN" ||
@@ -93,27 +83,27 @@ const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
                 </Button>
               </Tooltip>
             )}
-          <TicketDetailSection
-            ticket={ticket}
-            currentTicketStatus={currentTicketStatus}
-          />
+          <TicketDetailSection ticket={ticket} />
 
           <Divider mt="md" />
           <TicketResponseSection
             title={ticket.ticket_title}
             description={ticket.ticket_description}
-            ticketStatus={currentTicketStatus}
-            setShowTicketActionSection={setShowTicketActionSection}
+            ticketStatus={ticket.ticket_status}
+            user={user}
             isApprover={
               ticket.ticket_approver_team_member_id === user.team_member_id
             }
+            setTicket={setTicket}
+            isEditingResponse={isEditingResponse}
+            setIsEditingResponse={setIsEditingResponse}
           />
-          {showTicketActionSection && (
+          {ticket.ticket_status === "UNDER REVIEW" && !isEditingResponse && (
             <>
               <Divider mt="md" />
               <TicketActionSection
                 ticketId={ticket.ticket_id}
-                ticketStatus={currentTicketStatus}
+                setTicket={setTicket}
               />
               <Divider mt="xl" />
             </>

@@ -1,7 +1,10 @@
-import { useUserTeamMember } from "@/stores/useUserStore";
+import { editTicketResponse } from "@/backend/api/update";
+import { Database } from "@/utils/database";
+import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
   Box,
   Button,
+  Flex,
   Group,
   Stack,
   Text,
@@ -9,15 +12,20 @@ import {
   Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { Dispatch, SetStateAction, useState } from "react";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
+import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
 type Props = {
   title: string;
   description: string;
   ticketStatus: string;
-  setShowTicketActionSection: Dispatch<SetStateAction<boolean>>;
+  setTicket: Dispatch<SetStateAction<TicketType>>;
+  user: CreateTicketPageOnLoad["member"];
   isApprover: boolean;
+  setIsEditingResponse: Dispatch<SetStateAction<boolean>>;
+  isEditingResponse: boolean;
 };
 
 type TicketResponseFormValues = {
@@ -29,14 +37,16 @@ const TicketResponseSection = ({
   title,
   description,
   ticketStatus,
-  setShowTicketActionSection,
+  user,
   isApprover,
+  setTicket,
+  isEditingResponse,
+  setIsEditingResponse,
 }: Props) => {
-  const currentUser = useUserTeamMember();
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
   const canUserEditResponse =
-    ["ADMIN", "OWNER"].includes(currentUser?.team_member_role || "") &&
-    isApprover;
-  const [allowFormEdit, setAllowFormEdit] = useState(false);
+    ["ADMIN", "OWNER"].includes(user.team_member_role || "") && isApprover;
 
   const {
     handleSubmit,
@@ -46,9 +56,19 @@ const TicketResponseSection = ({
     defaultValues: { title, description },
   });
 
-  const handleEditResponse = (data: TicketResponseFormValues) => {
+  const handleEditResponse = async (data: TicketResponseFormValues) => {
     try {
-      // 1. update ticket
+      await editTicketResponse(supabaseClient, {
+        ...data,
+        ticketId: `${router.query.ticketId}`,
+      });
+      setTicket((ticket) => ({
+        ...ticket,
+        ticket_title: data.title,
+        ticket_description: data.description,
+      }));
+
+      // 1. update ticket (done)
       // 2. add comment explaining the changes made by admin. only comment the changes that occured
       // 3. example
       //    3.A. [Admin] has made the following changes on the ticket
@@ -56,16 +76,13 @@ const TicketResponseSection = ({
       //         [Old Description] -> [New Description]
       //    3.B. [Admin] has made the following changes on the ticket
       //         [Old Description] -> [New Description]
-      console.log(data);
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
-      setAllowFormEdit(false);
-      setShowTicketActionSection(false);
+      setIsEditingResponse(false);
     }
   };
 
@@ -74,7 +91,7 @@ const TicketResponseSection = ({
       <Group position="apart">
         <Group spacing={8}>
           <Text weight={600}>Request Details</Text>
-          {allowFormEdit && (
+          {isEditingResponse && (
             <Text size="xs" color="blue">
               (Edit Mode)
             </Text>
@@ -82,15 +99,14 @@ const TicketResponseSection = ({
         </Group>
         {canUserEditResponse &&
           ticketStatus === "UNDER REVIEW" &&
-          (allowFormEdit ? (
+          (isEditingResponse ? (
             <Button
               sx={{ alignSelf: "flex-end" }}
               w={100}
               size="sm"
               variant="default"
               onClick={() => {
-                setAllowFormEdit(false);
-                setShowTicketActionSection(true);
+                setIsEditingResponse(false);
               }}
             >
               Cancel
@@ -102,8 +118,7 @@ const TicketResponseSection = ({
               size="sm"
               color="orange"
               onClick={() => {
-                setAllowFormEdit(true);
-                setShowTicketActionSection(false);
+                setIsEditingResponse(true);
               }}
             >
               Override
@@ -111,7 +126,7 @@ const TicketResponseSection = ({
           ))}
       </Group>
 
-      {allowFormEdit ? (
+      {isEditingResponse ? (
         <form onSubmit={handleSubmit(handleEditResponse)}>
           <Stack>
             <TextInput
@@ -121,7 +136,7 @@ const TicketResponseSection = ({
                 required: "This field is required",
               })}
               error={errors.title?.message}
-              readOnly={!allowFormEdit}
+              readOnly={!isEditingResponse}
             />
 
             <Textarea
@@ -130,9 +145,9 @@ const TicketResponseSection = ({
                 required: "This field is required",
               })}
               error={errors.description?.message}
-              readOnly={!allowFormEdit}
+              readOnly={!isEditingResponse}
             />
-            {allowFormEdit ? (
+            {isEditingResponse ? (
               <Button type="submit" size="md">
                 Save Changes
               </Button>
@@ -152,7 +167,12 @@ const TicketResponseSection = ({
             <Text size={14} weight={600}>
               Description
             </Text>
-            <Text>{description}</Text>
+
+            <Flex direction="column">
+              {description.split("\n").map((line, id) => (
+                <Text key={id}>{line}</Text>
+              ))}
+            </Flex>
           </Box>
         </Stack>
       )}

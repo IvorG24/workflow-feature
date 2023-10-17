@@ -1,25 +1,54 @@
+import { updateTicketStatus } from "@/backend/api/update";
+import { Database } from "@/utils/database";
+import { TicketType } from "@/utils/types";
 import { Button, Flex, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 
 type Props = {
-  ticketStatus: string;
   ticketId: string;
+  setTicket: Dispatch<SetStateAction<TicketType>>;
 };
 
-const TicketStatusAction = ({ ticketStatus, ticketId }: Props) => {
+const TicketStatusAction = ({ ticketId, setTicket }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
   const rejectTicketFormMethods = useForm<{ rejectionMessage: string }>({
     defaultValues: { rejectionMessage: "" },
   });
 
-  const handleUpdateTicketStatus = (
+  const handleUpdateTicketStatus = async (
     status: string,
-    rejectionMessage?: string
+    rejectionMessage: string | null
   ) => {
     // 1. update ticket status
     // 2. add rejection message as comment to the ticket
     //   2.A. [Approver] rejected this request with note: [rejectionMessage]
-    console.log("Update status:", ticketId, status, rejectionMessage);
+    try {
+      const data = await updateTicketStatus(supabaseClient, {
+        ticketId,
+        status,
+        rejectionMessage,
+      });
+
+      setTicket((ticket) => ({ ...ticket, ticket_status: data.ticket_status }));
+
+      // 1. update ticket (done)
+      // 2. add comment explaining the changes made by admin. only comment the changes that occured
+      // 3. example
+      //    3.A. [Admin] has made the following changes on the ticket
+      //         [Old Title] -> [New Title]
+      //         [Old Description] -> [New Description]
+      //    3.B. [Admin] has made the following changes on the ticket
+      //         [Old Description] -> [New Description]
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
   };
 
   const handleRejectTicketAction = () =>
@@ -30,8 +59,12 @@ const TicketStatusAction = ({ ticketStatus, ticketId }: Props) => {
       children: (
         <>
           <form
-            onSubmit={rejectTicketFormMethods.handleSubmit((data) => {
-              handleUpdateTicketStatus("INCORRECT", data.rejectionMessage);
+            onSubmit={rejectTicketFormMethods.handleSubmit(async (data) => {
+              await handleUpdateTicketStatus(
+                "INCORRECT",
+                data.rejectionMessage
+              );
+              modals.close("rejectTicket");
             })}
           >
             <TextInput
@@ -61,29 +94,25 @@ const TicketStatusAction = ({ ticketStatus, ticketId }: Props) => {
 
   return (
     <>
-      {ticketStatus === "UNDER REVIEW" && (
-        <>
-          <Text weight={600}>Ticket Action</Text>
-          <Flex gap="xl" wrap="wrap">
-            <Button
-              sx={{ flex: 1 }}
-              size="md"
-              color="red"
-              onClick={handleRejectTicketAction}
-            >
-              Reject
-            </Button>
-            <Button
-              sx={{ flex: 1 }}
-              size="md"
-              color="green"
-              onClick={() => handleUpdateTicketStatus("CLOSED")}
-            >
-              Close
-            </Button>
-          </Flex>
-        </>
-      )}
+      <Text weight={600}>Ticket Action</Text>
+      <Flex gap="xl" wrap="wrap">
+        <Button
+          sx={{ flex: 1 }}
+          size="md"
+          color="red"
+          onClick={handleRejectTicketAction}
+        >
+          Reject
+        </Button>
+        <Button
+          sx={{ flex: 1 }}
+          size="md"
+          color="green"
+          onClick={() => handleUpdateTicketStatus("CLOSED", null)}
+        >
+          Close
+        </Button>
+      </Flex>
     </>
   );
 };

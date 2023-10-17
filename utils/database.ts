@@ -1488,6 +1488,18 @@ export type Database = {
         };
         Returns: Json;
       };
+      edit_ticket_response: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      update_ticket_status: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

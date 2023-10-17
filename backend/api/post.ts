@@ -872,21 +872,3 @@ export const createTicket = async (
   if (error) throw error;
   return data as TicketTableRow;
 };
-
-// Assign ticket
-export const assignTicket = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    ticketId: string;
-    teamMemberId: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("assign_ticket", {
-      input_data: params,
-    })
-    .select()
-    .single();
-  if (error) throw error;
-  return data as TicketTableRow;
-};
