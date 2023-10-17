@@ -432,16 +432,16 @@ export const createRequest = async (
   });
 
   const responseValues = requestResponseInput
-    .map(
-      (response) =>
-        `('${response.request_response}',${
-          response.request_response_duplicatable_section_id
-            ? `'${response.request_response_duplicatable_section_id}'`
-            : "NULL"
-        },'${response.request_response_field_id}','${
-          response.request_response_request_id
-        }')`
-    )
+    .map((response) => {
+      const escapedResponse = response.request_response.replace(/'/g, "''");
+      return `('${escapedResponse}',${
+        response.request_response_duplicatable_section_id
+          ? `'${response.request_response_duplicatable_section_id}'`
+          : "NULL"
+      },'${response.request_response_field_id}','${
+        response.request_response_request_id
+      }')`;
+    })
     .join(",");
 
   const signerValues = requestSignerInput
