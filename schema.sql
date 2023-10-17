@@ -346,6 +346,23 @@ CREATE TABLE csi_code_table(
   csi_code_level_three_description VARCHAR(4000) NOT NULL
 );
 
+-- Start: Ticket
+
+CREATE TABLE ticket_table(
+  ticket_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_title VARCHAR(4000) NOT NULL,
+  ticket_description VARCHAR(4000) NOT NULL,
+  ticket_category VARCHAR(4000) NOT NULL,
+  ticket_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  ticket_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ticket_status_date_updated TIMESTAMPTZ,
+  
+  ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+-- END: Ticket
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -5152,6 +5169,74 @@ $$ LANGUAGE plv8;
 
 -- End: Get all approved requisition json
 
+-- Start: Create ticket on load
+
+CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+
+    const member = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+          AND usert.user_id='${userId}';
+      `
+    )[0];
+
+    returnData = { member }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- Start: Create ticket on load
+
+-- Start: Create ticket
+
+CREATE OR REPLACE FUNCTION create_ticket(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      requester,
+      category,
+      title,
+      description,
+    } = input_data;
+
+    const ticketData = plv8.execute(`INSERT INTO ticket_table (ticket_category, ticket_title, ticket_description, ticket_approver_team_member_id) VALUES ('${category}','${title}','${description}','${requester}') RETURNING *;`)[0];
+
+    returnData= {ticketData}
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket
+
+
 ---------- End: FUNCTIONS
 
 
@@ -5180,6 +5265,7 @@ ALTER TABLE team_group_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
@@ -5298,6 +5384,10 @@ DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_ta
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -6435,6 +6525,22 @@ USING (
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
+
+
+--- TICKET_TABLE
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."ticket_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+WITH CHECK (true);
 
 -------- End: POLICIES
 

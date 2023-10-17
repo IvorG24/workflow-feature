@@ -1,18 +1,20 @@
 import CreateTicketPage from "@/components/CreateTicketPage/CreateTicketPage";
 
+import { getCreateTicketOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { TeamMemberType } from "@/utils/types";
+import { CreateTicketPageOnLoad } from "@/utils/types";
 import { GetServerSideProps } from "next";
-import { TEMP_TEAM_MEMBER_LIST } from ".";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async () => {
+  async ({ supabaseClient, user }) => {
     try {
-      const teamMemberData = TEMP_TEAM_MEMBER_LIST[0];
+      const { member } = await getCreateTicketOnLoad(supabaseClient, {
+        userId: `${user.id}`,
+      });
 
       return {
-        props: { teamMemberData },
+        props: { member },
       };
     } catch (error) {
       console.error(error);
@@ -26,11 +28,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   }
 );
 
-type Props = {
-  teamMemberData: TeamMemberType;
-};
-
-const Page = (props: Props) => {
+const Page = ({ member }: CreateTicketPageOnLoad) => {
   return (
     <>
       <Meta
@@ -38,7 +36,7 @@ const Page = (props: Props) => {
         url="/team-requests/tickets/create"
       />
 
-      <CreateTicketPage {...props} />
+      <CreateTicketPage member={member} />
     </>
   );
 };

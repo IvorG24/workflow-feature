@@ -11,6 +11,7 @@ import {
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
+  CreateTicketPageOnLoad,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -3565,4 +3566,22 @@ export const getService = async (
   if (error) throw error;
 
   return data as unknown as ServiceWithScopeAndChoice;
+};
+
+// Get create ticket on load
+export const getCreateTicketOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_create_ticket_on_load", {
+      input_data: params,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as CreateTicketPageOnLoad;
 };
