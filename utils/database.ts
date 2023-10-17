@@ -1482,6 +1482,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      assign_ticket: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

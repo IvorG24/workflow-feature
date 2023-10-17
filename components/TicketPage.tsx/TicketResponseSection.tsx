@@ -81,7 +81,7 @@ const TicketResponseSection = ({
           )}
         </Group>
         {canUserEditResponse &&
-          ticketStatus === "PENDING" &&
+          ticketStatus === "UNDER REVIEW" &&
           (allowFormEdit ? (
             <Button
               sx={{ alignSelf: "flex-end" }}

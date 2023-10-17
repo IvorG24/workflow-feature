@@ -5313,6 +5313,36 @@ $$ LANGUAGE plv8;
 -- End: Create ticket
 
 
+-- Start: Assign ticket
+
+CREATE OR REPLACE FUNCTION assign_ticket(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      ticketId,
+      teamMemberId
+    } = input_data;
+
+    const ticket = plv8.execute(`SELECT ticket_approver_team_member_id FROM ticket_table WHERE ticket_id='${ticketId}'`)[0];
+    const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
+
+    const isAdmin = member.team_member_role === 'ADMIN' || member.team_member_role === 'OWNER'
+    if (!isAdmin) throw new Error("User is not an Admin");
+
+    const hasApprover = ticket.ticket_approver_team_member_id !== null
+    if (hasApprover) throw new Error("Ticket already have approver");
+    
+    returnData = plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Assign ticket
+
 ---------- End: FUNCTIONS
 
 
@@ -6616,6 +6646,7 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
+USING(true)
 WITH CHECK (true);
 
 -------- End: POLICIES

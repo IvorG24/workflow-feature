@@ -61,7 +61,7 @@ const TicketStatusAction = ({ ticketStatus, ticketId }: Props) => {
 
   return (
     <>
-      {ticketStatus === "PENDING" && (
+      {ticketStatus === "UNDER REVIEW" && (
         <>
           <Text weight={600}>Ticket Action</Text>
           <Flex gap="xl" wrap="wrap">

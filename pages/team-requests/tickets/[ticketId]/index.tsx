@@ -272,7 +272,6 @@ type Props = {
 };
 
 const Page = ({ ticket, user, commentList }: Props) => {
-  console.log(user);
   return (
     <>
       <Meta description="Ticket Page" url="/team-requests/tickets/[ticketId]" />

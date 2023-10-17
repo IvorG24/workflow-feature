@@ -1,4 +1,5 @@
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { assignTicket } from "@/backend/api/post";
+import { Database } from "@/utils/database";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
   Button,
@@ -9,6 +10,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import moment from "moment";
 import { useState } from "react";
 import TicketActionSection from "./TicketActionSection";
@@ -24,10 +26,10 @@ type Props = {
   commentList: TicketCommentType[];
 };
 
-const TicketPage = ({ ticket, user, commentList }: Props) => {
-  const currentUserProfile = useUserProfile();
-  const currentUserTeamMember = useUserTeamMember();
+const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
   const [currentCommentList, setCurrentCommentList] = useState(commentList);
+  const [ticket, setTicket] = useState(initialTicket);
   const [currentTicketStatus, setCurrentTicketStatus] = useState(
     ticket.ticket_status
   );
@@ -35,12 +37,20 @@ const TicketPage = ({ ticket, user, commentList }: Props) => {
     ticket.ticket_approver_team_member_id === user.team_member_id
   );
 
-  const handleAssignTicketToUser = () => {
+  const handleAssignTicketToUser = async () => {
     try {
-      if (!currentUserProfile || !currentUserTeamMember) return;
-      const currentUserFullName = `${currentUserProfile.user_first_name} ${currentUserProfile.user_last_name}`;
+      const currentUserFullName = `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`;
+      const updatedTicket = await assignTicket(supabaseClient, {
+        teamMemberId: user.team_member_id,
+        ticketId: ticket.ticket_id,
+      });
+      setTicket((ticket) => ({
+        ...updatedTicket,
+        ticket_approver: ticket.ticket_approver,
+        ticket_requester: user,
+      }));
       setCurrentTicketStatus("UNDER REVIEW");
-
+      setShowTicketActionSection(true);
       const newComment = {
         ticket_comment_id: "78f78689-a898-47f5-bf3c-a3469c8eb34f",
         ticket_comment_content: `${currentUserFullName} is reviewing this ticket`,
@@ -49,16 +59,15 @@ const TicketPage = ({ ticket, user, commentList }: Props) => {
         ticket_comment_date_created: `${moment()}`,
         ticket_comment_type: "ACTION_UNDER_REVIEW",
         ticket_comment_team_member: {
-          team_member_id: currentUserTeamMember.team_member_id,
+          team_member_id: user.team_member_id,
           user: {
-            user_id: currentUserProfile.user_id,
-            user_first_name: currentUserProfile.user_first_name,
-            user_last_name: currentUserProfile.user_last_name,
-            user_avatar: `${currentUserProfile.user_avatar}`,
+            user_id: user.team_member_user.user_id,
+            user_first_name: user.team_member_user.user_first_name,
+            user_last_name: user.team_member_user.user_last_name,
+            user_avatar: `${user.team_member_user.user_avatar}`,
           },
         },
       };
-      console.log(Date.now());
       // add new comment
       setCurrentCommentList((prev) => [...prev, newComment]);
     } catch (error) {
@@ -75,6 +84,7 @@ const TicketPage = ({ ticket, user, commentList }: Props) => {
         <Stack>
           {currentTicketStatus === "PENDING" &&
             ticket.ticket_approver_team_member_id === null &&
+            ticket.ticket_requester_team_member_id !== user.team_member_id &&
             (user.team_member_role === "ADMIN" ||
               user.team_member_role === "OWNER") && (
               <Tooltip label="You will be assigned to review this ticket.">

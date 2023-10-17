@@ -20,6 +20,7 @@ type Props = {
 
 const TicketDetailSection = ({ ticket, currentTicketStatus }: Props) => {
   const requester = ticket.ticket_requester;
+  const approver = ticket.ticket_approver;
   return (
     <Stack>
       <Title order={3}>Ticket Request</Title>
@@ -44,6 +45,31 @@ const TicketDetailSection = ({ ticket, currentTicketStatus }: Props) => {
           </Text>
         </Text>
       </Group>
+      {approver && (
+        <Group spacing={8}>
+          <Avatar
+            size="sm"
+            src={approver.team_member_user.user_avatar}
+            color={getAvatarColor(
+              Number(`${approver.team_member_id.charCodeAt(0)}`)
+            )}
+            radius="xl"
+          >
+            {(
+              approver.team_member_user.user_first_name[0] +
+              approver.team_member_user.user_last_name[0]
+            ).toUpperCase()}
+          </Avatar>
+          <Text>
+            {`${approver.team_member_user.user_first_name} ${
+              approver.team_member_user.user_last_name
+            } reviewed this ticket and marked as '${ticket.ticket_status.toLowerCase()}' on `}
+            <Text span weight={600}>
+              {moment(ticket.ticket_status_date_updated).format("MMM DD, YYYY")}
+            </Text>
+          </Text>
+        </Group>
+      )}
       <Divider />
       <Stack spacing={4}>
         <Text>Category</Text>
