@@ -14,9 +14,10 @@ import { getTicketStatusColor } from "../TicketListPage/TicketListItem";
 
 type Props = {
   ticket: TicketListItemType;
+  currentTicketStatus: string;
 };
 
-const TicketDetailSection = ({ ticket }: Props) => {
+const TicketDetailSection = ({ ticket, currentTicketStatus }: Props) => {
   const requester = ticket.ticket_requester;
   return (
     <Stack>
@@ -51,9 +52,9 @@ const TicketDetailSection = ({ ticket }: Props) => {
         <Badge
           w="fit-content"
           size="lg"
-          color={getTicketStatusColor(ticket.ticket_status)}
+          color={getTicketStatusColor(currentTicketStatus)}
         >
-          {ticket.ticket_status}
+          {currentTicketStatus}
         </Badge>
       </Stack>
     </Stack>
