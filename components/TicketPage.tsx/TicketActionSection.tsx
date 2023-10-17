@@ -45,7 +45,7 @@ const TicketStatusAction = ({ ticketStatus, ticketId }: Props) => {
                 variant="default"
                 color="dimmed"
                 onClick={() => {
-                  modals.close("approveRf");
+                  modals.close("rejectTicket");
                 }}
               >
                 Cancel
