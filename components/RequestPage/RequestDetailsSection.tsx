@@ -62,7 +62,7 @@ const RequestDetailsSection = ({
         otpID,
       });
       notifications.show({
-        message: "Updated Otp ID.",
+        message: "Updated OTP ID.",
         color: "green",
       });
       setOtpID(otpID);
@@ -136,7 +136,7 @@ const RequestDetailsSection = ({
         !`${router.pathname}`.includes("public-request") &&
         isPrimarySigner && (
           <Group spacing="md" mt="xl">
-            <Title order={5}>Otp ID:</Title>
+            <Title order={5}>OTP ID:</Title>
             {otpID ? (
               <Text>{otpID}</Text>
             ) : (
@@ -151,13 +151,13 @@ const RequestDetailsSection = ({
           <TextInput
             mt="xl"
             icon={<IconId size={16} />}
-            placeholder="Otp ID"
+            placeholder="OTP ID"
             data-autofocus
             {...register("otpID", {
               validate: {
                 required: (value) => {
                   if (!value) {
-                    return "Otp ID is required.";
+                    return "OTP ID is required.";
                   } else {
                     return true;
                   }
@@ -168,7 +168,7 @@ const RequestDetailsSection = ({
                       value: value,
                     })
                   ) {
-                    return "Otp ID already exists.";
+                    return "OTP ID already exists.";
                   } else {
                     return true;
                   }
