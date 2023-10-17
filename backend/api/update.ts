@@ -102,7 +102,6 @@ export const approveOrRejectRequest = async (
     memberId: string;
     teamId: string;
     jiraId?: string;
-    navId?: string;
   }
 ) => {
   const { error } = await supabaseClient.rpc("approve_or_reject_request", {
@@ -344,4 +343,20 @@ export const updateAdminRole = async (
   });
   if (error) throw error;
   return data as unknown as TeamAdminChoiceType[];
+};
+
+// Update OTP ID
+export const updateOtpId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestID: string;
+    otpID: string;
+  }
+) => {
+  const { requestID, otpID } = params;
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({ request_otp_id: otpID })
+    .eq("request_id", requestID);
+  if (error) throw error;
 };

@@ -87,13 +87,13 @@ const RequestItemRow = ({ request }: Props) => {
       <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
-            {request.request_nav_id}
+            {request.request_otp_id}
           </Text>
-          {request.request_nav_id && (
-            <CopyButton value={request.request_nav_id}>
+          {request.request_otp_id && (
+            <CopyButton value={request.request_otp_id}>
               {({ copied, copy }) => (
                 <Tooltip
-                  label={copied ? "Copied" : `Copy ${request.request_nav_id}`}
+                  label={copied ? "Copied" : `Copy ${request.request_otp_id}`}
                   onClick={copy}
                 >
                   <ActionIcon>

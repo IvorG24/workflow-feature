@@ -3513,8 +3513,8 @@ export const checkIfJiraIDIsUnique = async (
   return Boolean(count);
 };
 
-// Check if nav id is unique
-export const checkIfNavIdIsUnique = async (
+// Check if otp id is unique
+export const checkIfOtpIdIsUnique = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     value: string;
@@ -3528,7 +3528,7 @@ export const checkIfNavIdIsUnique = async (
       count: "exact",
     })
     .eq("request_status", "APPROVED")
-    .eq("request_nav_id", value);
+    .eq("request_otp_id", value);
 
   if (error) throw error;
 

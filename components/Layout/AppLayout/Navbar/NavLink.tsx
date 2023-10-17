@@ -8,7 +8,7 @@ import {
   IconCirclePlus,
   IconDashboard,
   IconFile,
-  IconMessage2,
+  IconFiles,
   IconUsersGroup,
 } from "@tabler/icons-react";
 import NavLinkSection from "./NavLinkSection";
@@ -53,10 +53,10 @@ const ReviewAppNavLink = () => {
       href: `/team-${activeApp.toLowerCase()}s/dashboard`,
     },
     {
-      label: `${startCase(activeApp)}`,
+      label: `${startCase(activeApp)} List`,
       icon: (
         <Box ml="sm" py={5} mt={3}>
-          <IconMessage2 {...defaultIconProps} />
+          <IconFiles {...defaultIconProps} />
         </Box>
       ),
       href: `/team-${activeApp.toLowerCase()}s/${activeApp.toLowerCase()}s`,
