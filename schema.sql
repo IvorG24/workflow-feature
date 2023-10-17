@@ -836,8 +836,7 @@ RETURNS VOID AS $$
       requestAction,
       memberId,
       teamId,
-      jiraId,
-      navId
+      jiraId
     } = input_data;
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -849,7 +848,7 @@ RETURNS VOID AS $$
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
     
     if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraId ? `, request_nav_id = '${navId}'` : ""} WHERE request_id='${requestId}';`);
+      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} WHERE request_id='${requestId}';`);
     }
     
  });
