@@ -7,6 +7,7 @@ import {
 } from "@/utils/styling";
 import {
   ActionIcon,
+  Alert,
   Avatar,
   Card,
   Flex,
@@ -41,9 +42,47 @@ const TicketComment = ({ comment }: Props) => {
     []
   );
 
+  const commentActionTypeList = [
+    "ACTION_CLOSED",
+    "ACTION_UNDER_REVIEW",
+    "ACTION_INCORRECT",
+    "ACTION_OVERRIDE",
+  ];
+
+  const commentActionList = [
+    {
+      type: "ACTION_UNDER_REVIEW",
+      title: "Under Review",
+      color: "orange",
+    },
+    {
+      type: "ACTION_CLOSED",
+      title: "Closed",
+      color: "green",
+    },
+    {
+      type: "ACTION_INCORRECT",
+      title: "Incorrect",
+      color: "red",
+    },
+    {
+      type: "ACTION_OVERRIDE",
+      title: "Override",
+      color: "orange",
+    },
+  ];
+
+  const hasCommentActionType = commentActionTypeList.includes(
+    `${comment.ticket_comment_type}`
+  );
+
+  const commentActionType = commentActionList.find(
+    (action) => action.type === comment.ticket_comment_type
+  );
+
   useEffect(() => {
     // reference: RequestCommentList Line 37 - 55
-    const fetchCommentAttachment = async () => {
+    const fetchCommentAttachment = () => {
       const commentAttachmentList = TEMP_TICKET_COMMENT_ATTACHMENT_LIST.filter(
         (attachment) =>
           attachment.attachment_value.includes(comment.ticket_comment_id)
@@ -58,33 +97,70 @@ const TicketComment = ({ comment }: Props) => {
 
   return (
     <Card p={0} w="100%" sx={{ cursor: "pointer" }}>
-      <Flex gap="sm">
-        <Avatar
-          size={40}
-          radius="xl"
-          src={commenter.user.user_avatar}
-          color={getAvatarColor(
-            Number(`${commenter.team_member_id.charCodeAt(0)}`)
-          )}
-        >
-          {(
-            commenter.user.user_first_name[0] + commenter.user.user_last_name[0]
-          ).toUpperCase()}
-        </Avatar>
-        <Stack spacing={4}>
-          <Group>
-            <Text size={14}>
-              {`${commenter.user.user_first_name} ${commenter.user.user_last_name}`}
-            </Text>
-            <Text size={14}>
-              {moment(comment.ticket_comment_date_created).format(
-                "MMM DD, YYYY"
-              )}
-            </Text>
-          </Group>
-          <Text>{comment.ticket_comment_content}</Text>
-        </Stack>
-      </Flex>
+      {hasCommentActionType ? (
+        <Flex align="center" gap="sm" mt="lg">
+          <Avatar
+            size={40}
+            src={commenter.user.user_avatar}
+            color={getAvatarColor(
+              Number(`${commenter.user.user_id.charCodeAt(0)}`)
+            )}
+            radius="xl"
+          >
+            {(
+              commenter.user.user_first_name[0] +
+              commenter.user.user_last_name[0]
+            ).toUpperCase()}
+          </Avatar>
+
+          <Alert
+            w="100%"
+            color={commentActionType?.color}
+            title={commentActionType?.title}
+          >
+            <Flex align="center" gap="md">
+              <Stack m={0} p={0} spacing={0}>
+                <Text>
+                  {comment.ticket_comment_content} on{" "}
+                  {new Date(comment.ticket_comment_date_created).toDateString()}
+                </Text>
+                <Text color="dimmed" size={12}>
+                  {moment(comment.ticket_comment_date_created).fromNow()}
+                </Text>
+              </Stack>
+            </Flex>
+          </Alert>
+        </Flex>
+      ) : (
+        <Flex gap="sm">
+          <Avatar
+            size={40}
+            radius="xl"
+            src={commenter.user.user_avatar}
+            color={getAvatarColor(
+              Number(`${commenter.team_member_id.charCodeAt(0)}`)
+            )}
+          >
+            {(
+              commenter.user.user_first_name[0] +
+              commenter.user.user_last_name[0]
+            ).toUpperCase()}
+          </Avatar>
+          <Stack spacing={4}>
+            <Group>
+              <Text size={14}>
+                {`${commenter.user.user_first_name} ${commenter.user.user_last_name}`}
+              </Text>
+              <Text size={14}>
+                {moment(comment.ticket_comment_date_created).format(
+                  "MMM DD, YYYY"
+                )}
+              </Text>
+            </Group>
+            <Text>{comment.ticket_comment_content}</Text>
+          </Stack>
+        </Flex>
+      )}
       {attachmentList && attachmentList.length > 0 && (
         <Stack mt="sm" spacing="xs">
           {attachmentList.map((attachment) => (

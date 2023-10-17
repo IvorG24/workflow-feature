@@ -30,6 +30,7 @@ export type TicketCommentType = {
   ticket_comment_is_edited: boolean;
   ticket_comment_is_disabled: boolean;
   ticket_comment_date_created: string;
+  ticket_comment_type?: string;
   ticket_comment_team_member: {
     team_member_id: string;
     user: {

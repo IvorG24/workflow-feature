@@ -37,6 +37,9 @@ export const getTicketStatusColor = (status: string) => {
     case "INCORRECT":
       return "red";
 
+    case "UNDER REVIEW":
+      return "orange";
+
     default:
       break;
   }
