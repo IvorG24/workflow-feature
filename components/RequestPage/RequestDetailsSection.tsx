@@ -132,7 +132,7 @@ const RequestDetailsSection = ({
       )}
       {isFormslyRequisitionRequest &&
         !isAddingNavID &&
-        request.request_status === "APPROVED" &&
+        requestStatus === "APPROVED" &&
         !`${router.pathname}`.includes("public-request") &&
         isPrimarySigner && (
           <Group spacing="md" mt="xl">
