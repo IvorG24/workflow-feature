@@ -141,7 +141,7 @@ const RequestDetailsSection = ({
               <Text>{otpID}</Text>
             ) : (
               <Button variant="light" onClick={() => setIsAddingOtpID(true)}>
-                Add Otp ID
+                Add OTP ID
               </Button>
             )}
           </Group>
