@@ -1,5 +1,5 @@
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { TicketType } from "@/utils/types";
+import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
   Button,
   Container,
@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TicketActionSection from "./TicketActionSection";
 import TicketCommentSection, {
   TicketCommentType,
@@ -20,17 +20,20 @@ import TicketResponseSection from "./TicketResponseSection";
 
 type Props = {
   ticket: TicketType;
+  user: CreateTicketPageOnLoad["member"];
   commentList: TicketCommentType[];
 };
 
-const TicketPage = ({ ticket, commentList }: Props) => {
+const TicketPage = ({ ticket, user, commentList }: Props) => {
   const currentUserProfile = useUserProfile();
   const currentUserTeamMember = useUserTeamMember();
   const [currentCommentList, setCurrentCommentList] = useState(commentList);
   const [currentTicketStatus, setCurrentTicketStatus] = useState(
     ticket.ticket_status
   );
-  const [showTicketActionSection, setShowTicketActionSection] = useState(false);
+  const [showTicketActionSection, setShowTicketActionSection] = useState(
+    ticket.ticket_approver_team_member_id === user.team_member_id
+  );
 
   const handleAssignTicketToUser = () => {
     try {
@@ -66,25 +69,20 @@ const TicketPage = ({ ticket, commentList }: Props) => {
     }
   };
 
-  useEffect(() => {
-    if (currentUserTeamMember) {
-      setShowTicketActionSection(
-        ["OWNER", "ADMIN"].includes(`${currentUserTeamMember.team_member_role}`)
-      );
-    }
-  }, [currentUserTeamMember]);
-
   return (
     <Container>
       <Paper p="md" withBorder>
         <Stack>
-          {currentTicketStatus === "PENDING" && (
-            <Tooltip label="You will be assigned to review this ticket.">
-              <Button size="md" onClick={handleAssignTicketToUser}>
-                Assign To Me
-              </Button>
-            </Tooltip>
-          )}
+          {currentTicketStatus === "PENDING" &&
+            ticket.ticket_approver_team_member_id === null &&
+            (user.team_member_role === "ADMIN" ||
+              user.team_member_role === "OWNER") && (
+              <Tooltip label="You will be assigned to review this ticket.">
+                <Button size="md" onClick={handleAssignTicketToUser}>
+                  Assign To Me
+                </Button>
+              </Tooltip>
+            )}
           <TicketDetailSection
             ticket={ticket}
             currentTicketStatus={currentTicketStatus}
@@ -96,6 +94,9 @@ const TicketPage = ({ ticket, commentList }: Props) => {
             description={ticket.ticket_description}
             ticketStatus={currentTicketStatus}
             setShowTicketActionSection={setShowTicketActionSection}
+            isApprover={
+              ticket.ticket_approver_team_member_id === user.team_member_id
+            }
           />
           {showTicketActionSection && (
             <>

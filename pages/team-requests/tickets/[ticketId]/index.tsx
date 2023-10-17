@@ -3,7 +3,7 @@ import Meta from "@/components/Meta/Meta";
 import { TicketCommentType } from "@/components/TicketPage.tsx/TicketCommentSection";
 import TicketPage from "@/components/TicketPage.tsx/TicketPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
-import { TicketType } from "@/utils/types";
+import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const TEMP_TICKET_COMMENT_LIST = [
@@ -226,52 +226,57 @@ export const TEMP_TICKET_COMMENT_ATTACHMENT_LIST = [
 ];
 
 export const getServerSideProps: GetServerSideProps =
-  withAuthAndOnboardingRequestPage(async ({ context, supabaseClient }) => {
-    try {
-      const { ticket } = await getTicketOnLoad(supabaseClient, {
-        ticketId: `${context.query.ticketId}`,
-      });
+  withAuthAndOnboardingRequestPage(
+    async ({ context, supabaseClient, user }) => {
+      try {
+        const data = await getTicketOnLoad(supabaseClient, {
+          ticketId: `${context.query.ticketId}`,
+          userId: user.id,
+        });
 
-      const commentList = TEMP_TICKET_COMMENT_LIST.sort((a, b) => {
-        const date1 = new Date(a.ticket_comment_date_created);
-        const date2 = new Date(b.ticket_comment_date_created);
+        const commentList = TEMP_TICKET_COMMENT_LIST.sort((a, b) => {
+          const date1 = new Date(a.ticket_comment_date_created);
+          const date2 = new Date(b.ticket_comment_date_created);
 
-        if (date1 < date2) {
-          return -1;
-        } else if (date1 > date2) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
+          if (date1 < date2) {
+            return -1;
+          } else if (date1 > date2) {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
 
-      return {
-        props: {
-          ticket,
-          commentList,
-        },
-      };
-    } catch (e) {
-      console.error(e);
-      return {
-        redirect: {
-          destination: "/500",
-          permanent: false,
-        },
-      };
+        return {
+          props: {
+            ...data,
+            commentList,
+          },
+        };
+      } catch (e) {
+        console.error(e);
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
     }
-  });
+  );
 
 type Props = {
   ticket: TicketType;
+  user: CreateTicketPageOnLoad["member"];
   commentList: TicketCommentType[];
 };
 
-const Page = ({ ticket, commentList }: Props) => {
+const Page = ({ ticket, user, commentList }: Props) => {
+  console.log(user);
   return (
     <>
       <Meta description="Ticket Page" url="/team-requests/tickets/[ticketId]" />
-      <TicketPage ticket={ticket} commentList={commentList} />
+      <TicketPage ticket={ticket} user={user} commentList={commentList} />
     </>
   );
 };

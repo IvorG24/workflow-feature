@@ -17,6 +17,7 @@ type Props = {
   description: string;
   ticketStatus: string;
   setShowTicketActionSection: Dispatch<SetStateAction<boolean>>;
+  isApprover: boolean;
 };
 
 type TicketResponseFormValues = {
@@ -29,11 +30,12 @@ const TicketResponseSection = ({
   description,
   ticketStatus,
   setShowTicketActionSection,
+  isApprover,
 }: Props) => {
   const currentUser = useUserTeamMember();
-  const canUserEditResponse = ["ADMIN", "OWNER"].includes(
-    currentUser?.team_member_role || ""
-  );
+  const canUserEditResponse =
+    ["ADMIN", "OWNER"].includes(currentUser?.team_member_role || "") &&
+    isApprover;
   const [allowFormEdit, setAllowFormEdit] = useState(false);
 
   const {

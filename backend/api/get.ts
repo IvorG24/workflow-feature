@@ -3592,6 +3592,7 @@ export const getTicketOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     ticketId: string;
+    userId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -3602,5 +3603,6 @@ export const getTicketOnLoad = async (
     .single();
 
   if (error) throw error;
+  console.log(data);
   return data as TicketPageOnLoad;
 };

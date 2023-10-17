@@ -934,7 +934,7 @@ export type RequestPageOnLoad = {
 export type CreateTicketPageOnLoad = {
   member: {
     team_member_id: string;
-    team_member_role: string;
+    team_member_role: MemberRoleType;
     team_member_user: {
       user_id: string;
       user_first_name: string;
@@ -950,4 +950,7 @@ export type TicketType = {
   ticket_approver: CreateTicketPageOnLoad["member"] | null;
 } & TicketTableRow;
 
-export type TicketPageOnLoad = { ticket: TicketType };
+export type TicketPageOnLoad = {
+  ticket: TicketType;
+  user: CreateTicketPageOnLoad["member"];
+};
