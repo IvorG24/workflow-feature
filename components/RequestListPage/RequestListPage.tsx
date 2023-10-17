@@ -269,7 +269,7 @@ const RequestListPage = ({
                       <Text weight={600}>Jira ID</Text>
                     </Grid.Col>
                     <Grid.Col span={1}>
-                      <Text weight={600}>Nav ID</Text>
+                      <Text weight={600}>OTP ID</Text>
                     </Grid.Col>
                     <Grid.Col span={2}>
                       <Text weight={600}>Form Name</Text>

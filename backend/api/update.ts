@@ -345,18 +345,18 @@ export const updateAdminRole = async (
   return data as unknown as TeamAdminChoiceType[];
 };
 
-// Update nav ID
-export const updateNavId = async (
+// Update OTP ID
+export const updateOtpId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestID: string;
-    navID: string;
+    otpID: string;
   }
 ) => {
-  const { requestID, navID } = params;
+  const { requestID, otpID } = params;
   const { error } = await supabaseClient
     .from("request_table")
-    .update({ request_nav_id: navID })
+    .update({ request_otp_id: otpID })
     .eq("request_id", requestID);
   if (error) throw error;
 };

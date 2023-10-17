@@ -1,5 +1,5 @@
-import { checkIfNavIdIsUnique } from "@/backend/api/get";
-import { updateNavId } from "@/backend/api/update";
+import { checkIfOtpIdIsUnique } from "@/backend/api/get";
+import { updateOtpId } from "@/backend/api/update";
 import { Database } from "@/utils/database";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
@@ -46,27 +46,27 @@ const RequestDetailsSection = ({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<{ navID: string }>({});
+  } = useForm<{ otpID: string }>({});
 
-  const [isAddingNavID, setIsAddingNavID] = useState(false);
-  const [navID, setNavID] = useState(request.request_nav_id);
+  const [isAddingOtpID, setIsAddingOtpID] = useState(false);
+  const [otpID, setOtpID] = useState(request.request_otp_id);
 
   const isFormslyRequisitionRequest =
     request.request_form.form_is_formsly_form &&
     request.request_form.form_name === "Requisition";
 
-  const handleUpdateNavID = async ({ navID }: { navID: string }) => {
+  const handleUpdateOtpID = async ({ otpID }: { otpID: string }) => {
     try {
-      await updateNavId(supabaseClient, {
+      await updateOtpId(supabaseClient, {
         requestID: request.request_id,
-        navID,
+        otpID,
       });
       notifications.show({
-        message: "Updated Nav ID.",
+        message: "Updated Otp ID.",
         color: "green",
       });
-      setNavID(navID);
-      setIsAddingNavID(false);
+      setOtpID(otpID);
+      setIsAddingOtpID(false);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -131,57 +131,57 @@ const RequestDetailsSection = ({
         </Group>
       )}
       {isFormslyRequisitionRequest &&
-        !isAddingNavID &&
+        !isAddingOtpID &&
         requestStatus === "APPROVED" &&
         !`${router.pathname}`.includes("public-request") &&
         isPrimarySigner && (
           <Group spacing="md" mt="xl">
-            <Title order={5}>Nav ID:</Title>
-            {navID ? (
-              <Text>{navID}</Text>
+            <Title order={5}>Otp ID:</Title>
+            {otpID ? (
+              <Text>{otpID}</Text>
             ) : (
-              <Button variant="light" onClick={() => setIsAddingNavID(true)}>
-                Add Nav ID
+              <Button variant="light" onClick={() => setIsAddingOtpID(true)}>
+                Add Otp ID
               </Button>
             )}
           </Group>
         )}
-      {isAddingNavID && (
-        <form onSubmit={handleSubmit(handleUpdateNavID)}>
+      {isAddingOtpID && (
+        <form onSubmit={handleSubmit(handleUpdateOtpID)}>
           <TextInput
             mt="xl"
             icon={<IconId size={16} />}
-            placeholder="Nav ID"
+            placeholder="Otp ID"
             data-autofocus
-            {...register("navID", {
+            {...register("otpID", {
               validate: {
                 required: (value) => {
                   if (!value) {
-                    return "Nav ID is required.";
+                    return "Otp ID is required.";
                   } else {
                     return true;
                   }
                 },
                 checkIfUnique: async (value) => {
                   if (
-                    await checkIfNavIdIsUnique(supabaseClient, {
+                    await checkIfOtpIdIsUnique(supabaseClient, {
                       value: value,
                     })
                   ) {
-                    return "Nav ID already exists.";
+                    return "Otp ID already exists.";
                   } else {
                     return true;
                   }
                 },
               },
             })}
-            error={errors.navID?.message}
+            error={errors.otpID?.message}
           />
           <Group spacing="xs" mt="xs" position="right">
             <Button
               disabled={isSubmitting}
               variant="light"
-              onClick={() => setIsAddingNavID(false)}
+              onClick={() => setIsAddingOtpID(false)}
             >
               Cancel
             </Button>
