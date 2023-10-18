@@ -2,6 +2,7 @@ import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestListItemType } from "@/utils/types";
 import {
   ActionIcon,
+  Anchor,
   Avatar,
   Badge,
   CopyButton,
@@ -43,8 +44,14 @@ const RequestItemRow = ({ request }: Props) => {
       <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
-            {requestId}
+            <Anchor
+              href={`/team-requests/requests/${request.request_id}`}
+              target="_blank"
+            >
+              {requestId}
+            </Anchor>
           </Text>
+
           <CopyButton value={requestId}>
             {({ copied, copy }) => (
               <Tooltip
@@ -66,7 +73,9 @@ const RequestItemRow = ({ request }: Props) => {
       <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
-            {request.request_jira_id}
+            <Anchor href={request.request_jira_link} target="_blank">
+              {request.request_jira_id}
+            </Anchor>
           </Text>
           {request.request_jira_id && (
             <CopyButton value={request.request_jira_id}>

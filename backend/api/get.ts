@@ -3513,6 +3513,28 @@ export const checkIfJiraIDIsUnique = async (
   return Boolean(count);
 };
 
+// Check if jira link is unique
+export const checkIfJiraLinkIsUnique = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    value: string;
+  }
+) => {
+  const { value } = params;
+
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", {
+      count: "exact",
+    })
+    .eq("request_status", "APPROVED")
+    .eq("request_jira_link", value);
+
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
 // Check if otp id is unique
 export const checkIfOtpIdIsUnique = async (
   supabaseClient: SupabaseClient<Database>,
