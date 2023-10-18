@@ -178,6 +178,13 @@ export type TicketTableInsert =
 export type TicketTableUpdate =
   Database["public"]["Tables"]["ticket_table"]["Update"];
 
+export type TicketCommentTableRow =
+  Database["public"]["Tables"]["ticket_comment_table"]["Row"];
+export type TicketCommentTableInsert =
+  Database["public"]["Tables"]["ticket_comment_table"]["Insert"];
+export type TicketCommentTableUpdate =
+  Database["public"]["Tables"]["ticket_comment_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -948,9 +955,35 @@ export type CreateTicketPageOnLoad = {
 export type TicketType = {
   ticket_requester: CreateTicketPageOnLoad["member"];
   ticket_approver: CreateTicketPageOnLoad["member"] | null;
+  ticket_comment: {
+    ticket_comment_id: string;
+    ticket_comment_content: string;
+    ticket_comment_is_disabled: boolean;
+    ticket_comment_is_edited: boolean;
+    ticket_comment_type: string;
+    ticket_comment_date_created: string;
+    ticket_comment_last_updated: string | null;
+    ticket_comment_ticket_id: string;
+    ticket_comment_team_member_id: string;
+    ticket_comment_team_member: {
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_username: string;
+        user_avatar: string | null;
+      };
+    };
+    ticket_comment_attachment: CommentAttachmentWithPublicUrl;
+  }[];
 } & TicketTableRow;
 
 export type TicketPageOnLoad = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
 };
+
+export type TicketCommentType =
+  RequestWithResponseType["request_comment"][0] & {
+    comment_attachment: CommentAttachmentWithPublicUrl;
+  };

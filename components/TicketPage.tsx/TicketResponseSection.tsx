@@ -1,4 +1,6 @@
+import { createNotification, createTicketComment } from "@/backend/api/post";
 import { editTicketResponse } from "@/backend/api/update";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
@@ -16,11 +18,10 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 
 type Props = {
-  title: string;
-  description: string;
-  ticketStatus: string;
+  ticket: TicketType;
   setTicket: Dispatch<SetStateAction<TicketType>>;
   user: CreateTicketPageOnLoad["member"];
   isApprover: boolean;
@@ -34,9 +35,7 @@ type TicketResponseFormValues = {
 };
 
 const TicketResponseSection = ({
-  title,
-  description,
-  ticketStatus,
+  ticket,
   user,
   isApprover,
   setTicket,
@@ -45,6 +44,7 @@ const TicketResponseSection = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const teamMember = useUserTeamMember();
   const canUserEditResponse =
     ["ADMIN", "OWNER"].includes(user.team_member_role || "") && isApprover;
 
@@ -53,29 +53,56 @@ const TicketResponseSection = ({
     register,
     formState: { errors },
   } = useForm<TicketResponseFormValues>({
-    defaultValues: { title, description },
+    defaultValues: {
+      title: ticket.ticket_title,
+      description: ticket.ticket_description,
+    },
   });
 
   const handleEditResponse = async (data: TicketResponseFormValues) => {
+    if (!teamMember) return;
     try {
       await editTicketResponse(supabaseClient, {
         ...data,
         ticketId: `${router.query.ticketId}`,
       });
+
+      const newCommentId = uuidv4();
+
+      let ticketChanges = "";
+      if (ticket.ticket_title !== data.title)
+        ticketChanges = `\tTitle: ${ticket.ticket_title} -> ${data.title}`;
+      if (ticket.ticket_description !== data.description)
+        ticketChanges += `\n\tDescription: ${ticket.ticket_description} -> ${data.description}`;
+
+      const { error } = await createTicketComment(supabaseClient, {
+        ticket_comment_id: newCommentId,
+        ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} has made the following changes on the ticket\n${ticketChanges}`,
+        ticket_comment_type: "ACTION_OVERRIDE",
+        ticket_comment_team_member_id: user.team_member_id,
+        ticket_comment_ticket_id: ticket.ticket_id,
+      });
+      if (error) throw error;
+
+      if (!error) {
+        if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} overrode your ticket`,
+            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          });
+        }
+      }
+
       setTicket((ticket) => ({
         ...ticket,
         ticket_title: data.title,
         ticket_description: data.description,
       }));
-
-      // 1. update ticket (done)
-      // 2. add comment explaining the changes made by admin. only comment the changes that occured
-      // 3. example
-      //    3.A. [Admin] has made the following changes on the ticket
-      //         [Old Title] -> [New Title]
-      //         [Old Description] -> [New Description]
-      //    3.B. [Admin] has made the following changes on the ticket
-      //         [Old Description] -> [New Description]
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -98,7 +125,7 @@ const TicketResponseSection = ({
           )}
         </Group>
         {canUserEditResponse &&
-          ticketStatus === "UNDER REVIEW" &&
+          ticket.ticket_status === "UNDER REVIEW" &&
           (isEditingResponse ? (
             <Button
               sx={{ alignSelf: "flex-end" }}
@@ -160,7 +187,7 @@ const TicketResponseSection = ({
             <Text size={14} weight={600}>
               Title
             </Text>
-            <Text>{title}</Text>
+            <Text>{ticket.ticket_title}</Text>
           </Box>
 
           <Box>
@@ -169,7 +196,7 @@ const TicketResponseSection = ({
             </Text>
 
             <Flex direction="column">
-              {description.split("\n").map((line, id) => (
+              {ticket.ticket_description.split("\n").map((line, id) => (
                 <Text key={id}>{line}</Text>
               ))}
             </Flex>

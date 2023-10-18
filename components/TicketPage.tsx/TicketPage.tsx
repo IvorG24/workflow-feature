@@ -1,4 +1,7 @@
+import { createNotification, createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
+import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
@@ -11,55 +14,63 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import moment from "moment";
 import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import TicketActionSection from "./TicketActionSection";
-import TicketCommentSection, {
-  TicketCommentType,
-} from "./TicketCommentSection";
+import TicketCommentSection from "./TicketCommentSection";
 import TicketDetailSection from "./TicketDetailSection";
 import TicketResponseSection from "./TicketResponseSection";
 
 type Props = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
-  commentList: TicketCommentType[];
 };
 
-const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
+const TicketPage = ({ ticket: initialTicket, user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const [currentCommentList, setCurrentCommentList] = useState(commentList);
+  const teamMember = useUserTeamMember();
   const [ticket, setTicket] = useState(initialTicket);
   const [isEditingResponse, setIsEditingResponse] = useState(false);
 
+  const requestCommentList = useRealtimeTicketCommentList(supabaseClient, {
+    ticketId: ticket.ticket_id,
+    initialCommentList: ticket.ticket_comment,
+  });
+
   const handleAssignTicketToUser = async () => {
+    if (!teamMember) return;
     try {
       const currentUserFullName = `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`;
       const updatedTicket = await assignTicket(supabaseClient, {
         teamMemberId: user.team_member_id,
         ticketId: ticket.ticket_id,
       });
-
       setTicket(updatedTicket);
-      const newComment = {
-        ticket_comment_id: "78f78689-a898-47f5-bf3c-a3469c8eb34f",
+
+      const newCommentId = uuidv4();
+      const { error } = await createTicketComment(supabaseClient, {
+        ticket_comment_id: newCommentId,
         ticket_comment_content: `${currentUserFullName} is reviewing this ticket`,
-        ticket_comment_is_edited: false,
-        ticket_comment_is_disabled: false,
-        ticket_comment_date_created: `${moment()}`,
         ticket_comment_type: "ACTION_UNDER_REVIEW",
-        ticket_comment_team_member: {
-          team_member_id: user.team_member_id,
-          user: {
-            user_id: user.team_member_user.user_id,
-            user_first_name: user.team_member_user.user_first_name,
-            user_last_name: user.team_member_user.user_last_name,
-            user_avatar: `${user.team_member_user.user_avatar}`,
-          },
-        },
-      };
-      // add new comment
-      setCurrentCommentList((prev) => [...prev, newComment]);
+        ticket_comment_team_member_id: user.team_member_id,
+        ticket_comment_ticket_id: ticket.ticket_id,
+      });
+      if (error) throw error;
+
+      if (!error) {
+        if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
+          // create notification
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `An admin, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
+            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          });
+        }
+      }
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -87,9 +98,7 @@ const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
 
           <Divider mt="md" />
           <TicketResponseSection
-            title={ticket.ticket_title}
-            description={ticket.ticket_description}
-            ticketStatus={ticket.ticket_status}
+            ticket={ticket}
             user={user}
             isApprover={
               ticket.ticket_approver_team_member_id === user.team_member_id
@@ -98,18 +107,24 @@ const TicketPage = ({ ticket: initialTicket, user, commentList }: Props) => {
             isEditingResponse={isEditingResponse}
             setIsEditingResponse={setIsEditingResponse}
           />
-          {ticket.ticket_status === "UNDER REVIEW" && !isEditingResponse && (
-            <>
-              <Divider mt="md" />
-              <TicketActionSection
-                ticketId={ticket.ticket_id}
-                setTicket={setTicket}
-              />
-              <Divider mt="xl" />
-            </>
-          )}
+          {ticket.ticket_status === "UNDER REVIEW" &&
+            !isEditingResponse &&
+            ticket.ticket_requester_team_member_id !== user.team_member_id && (
+              <>
+                <Divider mt="md" />
+                <TicketActionSection
+                  ticket={ticket}
+                  setTicket={setTicket}
+                  user={user}
+                />
+                <Divider mt="xl" />
+              </>
+            )}
 
-          <TicketCommentSection commentList={currentCommentList} />
+          <TicketCommentSection
+            ticket={ticket}
+            commentList={requestCommentList}
+          />
         </Stack>
       </Paper>
     </Container>

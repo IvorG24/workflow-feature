@@ -357,11 +357,28 @@ CREATE TABLE ticket_table(
   ticket_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   ticket_status_date_updated TIMESTAMPTZ,
   
-  ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
   ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
 -- END: Ticket
+
+-- Start: Ticket comment
+
+CREATE TABLE ticket_comment_table(
+  ticket_comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_comment_content VARCHAR(4000) NOT NULL,
+  ticket_comment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  ticket_comment_is_edited BOOLEAN DEFAULT FALSE NOT NULL,
+  ticket_comment_type VARCHAR(4000) NOT NULL,
+  ticket_comment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ticket_comment_last_updated TIMESTAMPTZ,
+
+  ticket_comment_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
+  ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+);
+
+-- END: Ticket comment
 
 ---------- End: TABLES
 
@@ -5305,7 +5322,63 @@ RETURNS JSON as $$
       `
     )[0];
 
-    returnData = {ticket: {...ticket, ticket_requester: requester.member, ticket_approver: approver ? approver.member : null}, user: member}
+    const ticketCommentData = plv8.execute(
+      `
+        SELECT
+          ticket_comment_id, 
+          ticket_comment_content, 
+          ticket_comment_is_disabled,
+          ticket_comment_is_edited,
+          ticket_comment_type,
+          ticket_comment_date_created,
+          ticket_comment_last_updated,
+          ticket_comment_ticket_id,
+          ticket_comment_team_member_id,
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_username, 
+          user_avatar
+        FROM ticket_comment_table 
+        INNER JOIN team_member_table ON team_member_id = ticket_comment_team_member_id
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE
+          ticket_comment_ticket_id = '${ticketId}'
+        ORDER BY ticket_comment_date_created DESC
+      `
+    );
+
+    returnData = {
+      ticket: {
+        ...ticket,
+        ticket_requester: requester.member,
+        ticket_approver: approver ? approver.member : null, 
+        ticket_comment: ticketCommentData.map(ticketComment => {
+          return {
+            ticket_comment_id: ticketComment.ticket_comment_id, 
+            ticket_comment_content: ticketComment.ticket_comment_content, 
+            ticket_comment_is_disabled: ticketComment.ticket_comment_is_disabled,
+            ticket_comment_is_edited: ticketComment.ticket_comment_is_edited,
+            ticket_comment_type: ticketComment.ticket_comment_type,
+            ticket_comment_date_created: ticketComment.ticket_comment_date_created,
+            ticket_comment_last_updated: ticketComment.ticket_comment_last_updated,
+            ticket_comment_ticket_id: ticketComment.ticket_comment_ticket_id,
+            ticket_comment_team_member_id: ticketComment.ticket_comment_team_member_id,
+            ticket_comment_attachment: [],
+            ticket_comment_team_member: {
+              team_member_user: {
+                user_id: ticketComment.user_id, 
+                user_first_name: ticketComment.user_first_name, 
+                user_last_name: ticketComment.user_last_name, 
+                user_username: ticketComment.user_username, 
+                user_avatar: ticketComment.user_avatar
+              }
+            }
+          }
+        }
+      )},
+    user: member
+    }
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -5452,6 +5525,7 @@ ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
@@ -5574,6 +5648,12 @@ DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_ta
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_comment_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_comment_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_comment_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_comment_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -6712,8 +6792,8 @@ USING (
   )
 );
 
-
 --- TICKET_TABLE
+
 CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
@@ -6728,6 +6808,45 @@ AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "public"."ticket_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  ticket_requester_team_member_id IN (
+    SELECT team_member_id  
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  )
+);
+
+--- TICKET_COMMENT_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  ticket_comment_team_member_id IN (
+    SELECT team_member_id  
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  )
+);
 
 -------- End: POLICIES
 
@@ -6751,7 +6870,7 @@ DROP PUBLICATION if exists supabase_realtime;
 CREATE PUBLICATION supabase_realtime;
 COMMIT;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table;
+ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table ;
 
 -------- END: SUBSCRIPTION
 

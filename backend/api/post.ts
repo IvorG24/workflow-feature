@@ -27,6 +27,7 @@ import {
   TeamMemberTableInsert,
   TeamProjectTableRow,
   TeamTableInsert,
+  TicketCommentTableInsert,
   TicketTableRow,
   UserTableInsert,
   UserTableRow,
@@ -871,4 +872,19 @@ export const createTicket = async (
 
   if (error) throw error;
   return data as TicketTableRow;
+};
+
+// Create ticket comment
+export const createTicketComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TicketCommentTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("ticket_comment_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return { data, error };
 };

@@ -1,10 +1,12 @@
-import { TEMP_TICKET_COMMENT_ATTACHMENT_LIST } from "@/pages/team-requests/tickets/[ticketId]";
+import { getCommentAttachment } from "@/backend/api/get";
+import { Database } from "@/utils/database";
 import {
   getAvatarColor,
   getFileType,
   getFileTypeColor,
   shortenFileName,
 } from "@/utils/styling";
+import { TicketType } from "@/utils/types";
 import {
   ActionIcon,
   Alert,
@@ -16,14 +18,14 @@ import {
   Text,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconDownload } from "@tabler/icons-react";
 import moment from "moment";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { TicketCommentType } from "./TicketCommentSection";
 
 type Props = {
-  comment: TicketCommentType;
+  comment: TicketType["ticket_comment"][0];
 };
 
 type CommentAttachmentType = {
@@ -37,9 +39,10 @@ type CommentAttachmentType = {
 };
 
 const TicketComment = ({ comment }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
   const commenter = comment.ticket_comment_team_member;
   const [attachmentList, setAttachmentList] = useState<CommentAttachmentType[]>(
-    []
+    comment.ticket_comment_attachment
   );
 
   const commentActionTypeList = [
@@ -81,19 +84,17 @@ const TicketComment = ({ comment }: Props) => {
   );
 
   useEffect(() => {
-    // reference: RequestCommentList Line 37 - 55
-    const fetchCommentAttachment = () => {
-      const commentAttachmentList = TEMP_TICKET_COMMENT_ATTACHMENT_LIST.filter(
-        (attachment) =>
-          attachment.attachment_value.includes(comment.ticket_comment_id)
-      );
+    const fetchCommentAttachment = async () => {
+      const commentAttachmentList = await getCommentAttachment(supabaseClient, {
+        commentId: comment.ticket_comment_id,
+      });
 
       if (commentAttachmentList) {
         setAttachmentList(commentAttachmentList);
       }
     };
     fetchCommentAttachment();
-  }, [comment]);
+  }, [comment, supabaseClient]);
 
   return (
     <Card p={0} w="100%" sx={{ cursor: "pointer" }}>
@@ -101,15 +102,15 @@ const TicketComment = ({ comment }: Props) => {
         <Flex align="center" gap="sm" mt="lg">
           <Avatar
             size={40}
-            src={commenter.user.user_avatar}
+            src={commenter.team_member_user.user_avatar}
             color={getAvatarColor(
-              Number(`${commenter.user.user_id.charCodeAt(0)}`)
+              Number(`${commenter.team_member_user.user_id.charCodeAt(0)}`)
             )}
             radius="xl"
           >
             {(
-              commenter.user.user_first_name[0] +
-              commenter.user.user_last_name[0]
+              commenter.team_member_user.user_first_name[0] +
+              commenter.team_member_user.user_last_name[0]
             ).toUpperCase()}
           </Avatar>
 
@@ -121,7 +122,16 @@ const TicketComment = ({ comment }: Props) => {
             <Flex align="center" gap="md">
               <Stack m={0} p={0} spacing={0}>
                 <Text>
-                  {comment.ticket_comment_content} on{" "}
+                  <Flex direction="column">
+                    {comment.ticket_comment_content
+                      .split("\n")
+                      .map((line, id) => (
+                        <Text span key={id}>
+                          {line}
+                        </Text>
+                      ))}
+                  </Flex>{" "}
+                  on{" "}
                   {new Date(comment.ticket_comment_date_created).toDateString()}
                 </Text>
                 <Text color="dimmed" size={12}>
@@ -136,20 +146,20 @@ const TicketComment = ({ comment }: Props) => {
           <Avatar
             size={40}
             radius="xl"
-            src={commenter.user.user_avatar}
+            src={commenter.team_member_user.user_avatar}
             color={getAvatarColor(
-              Number(`${commenter.team_member_id.charCodeAt(0)}`)
+              Number(`${commenter.team_member_user.user_id.charCodeAt(0)}`)
             )}
           >
             {(
-              commenter.user.user_first_name[0] +
-              commenter.user.user_last_name[0]
+              commenter.team_member_user.user_first_name[0] +
+              commenter.team_member_user.user_last_name[0]
             ).toUpperCase()}
           </Avatar>
           <Stack spacing={4}>
             <Group>
               <Text size={14}>
-                {`${commenter.user.user_first_name} ${commenter.user.user_last_name}`}
+                {`${commenter.team_member_user.user_first_name} ${commenter.team_member_user.user_last_name}`}
               </Text>
               <Text size={14}>
                 {moment(comment.ticket_comment_date_created).format(
@@ -157,7 +167,11 @@ const TicketComment = ({ comment }: Props) => {
                 )}
               </Text>
             </Group>
-            <Text>{comment.ticket_comment_content}</Text>
+            <Flex direction="column">
+              {comment.ticket_comment_content.split("\n").map((line, id) => (
+                <Text key={id}>{line}</Text>
+              ))}
+            </Flex>
           </Stack>
         </Flex>
       )}

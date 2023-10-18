@@ -1,9 +1,16 @@
-import { useUserProfile } from "@/stores/useUserStore";
+import {
+  createAttachment,
+  createNotification,
+  createTicketComment,
+} from "@/backend/api/post";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { Database } from "@/utils/database";
 import {
   getFileType,
   getFileTypeColor,
   shortenFileName,
 } from "@/utils/styling";
+import { TicketType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -19,9 +26,11 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import TicketComment from "./TicketComment";
 
 export type TicketCommentType = {
@@ -43,10 +52,14 @@ export type TicketCommentType = {
 };
 
 type Props = {
-  commentList: TicketCommentType[];
+  ticket: TicketType;
+  commentList: TicketType["ticket_comment"];
 };
 
-const TicketCommentSection = ({ commentList }: Props) => {
+const TicketCommentSection = ({ ticket, commentList }: Props) => {
+  const userProfile = useUserProfile();
+  const teamMember = useUserTeamMember();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const attachmentMaxFileSize = 5242880;
   const currentUser = useUserProfile();
   const [commentAttachment, setCommentAttachment] = useState<File[]>([]);
@@ -59,14 +72,61 @@ const TicketCommentSection = ({ commentList }: Props) => {
     formState: { errors },
     setError,
     clearErrors,
+    reset,
   } = useForm<{ comment: string }>();
 
-  const handleAddComment = (data: { comment: string }) => {
-    // can refer to: RequestCommentList Line 60 - 120
+  const handleAddComment = async (data: { comment: string }) => {
     try {
+      if (!userProfile) return;
+      if (!teamMember) return;
       setIsSubmittingForm(true);
-      console.log(data);
-      console.log({ comment_attachment: commentAttachment });
+      const newCommentId = uuidv4();
+      // upload attachments
+      if (commentAttachment.length > 0) {
+        for (const attachment of commentAttachment) {
+          await createAttachment(supabaseClient, {
+            file: attachment,
+            attachmentData: {
+              attachment_bucket: "COMMENT_ATTACHMENTS",
+              attachment_name: attachment.name,
+              attachment_value: `${newCommentId}-${attachment.name}`,
+            },
+          });
+        }
+        setCommentAttachment([]);
+      }
+      const { error } = await createTicketComment(supabaseClient, {
+        ticket_comment_id: newCommentId,
+        ticket_comment_content: data.comment,
+        ticket_comment_type: "ACTION_COMMENT",
+        ticket_comment_team_member_id: teamMember?.team_member_id,
+        ticket_comment_ticket_id: ticket.ticket_id,
+      });
+      if (error) throw error;
+
+      if (!error) {
+        if (
+          ticket.ticket_requester_team_member_id !== teamMember.team_member_id
+        ) {
+          // create notification
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `${`${userProfile.user_first_name} ${userProfile.user_last_name}`} commented on your request`,
+            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          });
+        }
+        notifications.show({
+          message: "Comment created.",
+          color: "green",
+        });
+        // reset comment form
+        reset();
+        return;
+      }
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

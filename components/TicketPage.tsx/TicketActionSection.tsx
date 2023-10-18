@@ -1,53 +1,88 @@
+import { createNotification, createTicketComment } from "@/backend/api/post";
 import { updateTicketStatus } from "@/backend/api/update";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { TicketType } from "@/utils/types";
+import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import { Button, Flex, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 
 type Props = {
-  ticketId: string;
+  ticket: TicketType;
   setTicket: Dispatch<SetStateAction<TicketType>>;
+  user: CreateTicketPageOnLoad["member"];
 };
 
-const TicketStatusAction = ({ ticketId, setTicket }: Props) => {
+const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const teamMember = useUserTeamMember();
   const rejectTicketFormMethods = useForm<{ rejectionMessage: string }>({
     defaultValues: { rejectionMessage: "" },
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleUpdateTicketStatus = async (
     status: string,
     rejectionMessage: string | null
   ) => {
-    // 1. update ticket status
-    // 2. add rejection message as comment to the ticket
-    //   2.A. [Approver] rejected this request with note: [rejectionMessage]
+    if (!teamMember) return;
     try {
+      setIsLoading(true);
       const data = await updateTicketStatus(supabaseClient, {
-        ticketId,
+        ticketId: ticket.ticket_id,
         status,
         rejectionMessage,
       });
 
-      setTicket((ticket) => ({ ...ticket, ticket_status: data.ticket_status }));
+      const newCommentId = uuidv4();
+      let commentContent = "";
+      let notificationContent = "";
 
-      // 1. update ticket (done)
-      // 2. add comment explaining the changes made by admin. only comment the changes that occured
-      // 3. example
-      //    3.A. [Admin] has made the following changes on the ticket
-      //         [Old Title] -> [New Title]
-      //         [Old Description] -> [New Description]
-      //    3.B. [Admin] has made the following changes on the ticket
-      //         [Old Description] -> [New Description]
+      if (status === "INCORRECT" && rejectionMessage) {
+        commentContent = `rejected this ticket with note: ${rejectionMessage}`;
+        notificationContent = `rejected this ticket`;
+      }
+      if (status === "CLOSED") {
+        commentContent = `closed this ticket`;
+        notificationContent = `closed this ticket`;
+      }
+
+      const { error } = await createTicketComment(supabaseClient, {
+        ticket_comment_id: newCommentId,
+        ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} ${commentContent}`,
+        ticket_comment_type: `ACTION_${status}`,
+        ticket_comment_team_member_id: user.team_member_id,
+        ticket_comment_ticket_id: ticket.ticket_id,
+      });
+      if (error) throw error;
+
+      if (!error) {
+        if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
+          // create notification
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} ${notificationContent} on your request`,
+            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          });
+        }
+      }
+
+      setTicket((ticket) => ({ ...ticket, ticket_status: data.ticket_status }));
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,10 +115,11 @@ const TicketStatusAction = ({ ticketId, setTicket }: Props) => {
                 onClick={() => {
                   modals.close("rejectTicket");
                 }}
+                disabled={isLoading}
               >
                 Cancel
               </Button>
-              <Button type="submit" color="red">
+              <Button type="submit" color="red" loading={isLoading}>
                 Reject
               </Button>
             </Flex>
@@ -101,6 +137,7 @@ const TicketStatusAction = ({ ticketId, setTicket }: Props) => {
           size="md"
           color="red"
           onClick={handleRejectTicketAction}
+          loading={isLoading}
         >
           Reject
         </Button>
@@ -108,6 +145,7 @@ const TicketStatusAction = ({ ticketId, setTicket }: Props) => {
           sx={{ flex: 1 }}
           size="md"
           color="green"
+          loading={isLoading}
           onClick={() => handleUpdateTicketStatus("CLOSED", null)}
         >
           Close

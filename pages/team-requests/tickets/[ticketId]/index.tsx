@@ -1,6 +1,5 @@
 import { getTicketOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import { TicketCommentType } from "@/components/TicketPage.tsx/TicketCommentSection";
 import TicketPage from "@/components/TicketPage.tsx/TicketPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
@@ -234,23 +233,9 @@ export const getServerSideProps: GetServerSideProps =
           userId: user.id,
         });
 
-        const commentList = TEMP_TICKET_COMMENT_LIST.sort((a, b) => {
-          const date1 = new Date(a.ticket_comment_date_created);
-          const date2 = new Date(b.ticket_comment_date_created);
-
-          if (date1 < date2) {
-            return -1;
-          } else if (date1 > date2) {
-            return 1;
-          } else {
-            return 0;
-          }
-        });
-
         return {
           props: {
             ...data,
-            commentList,
           },
         };
       } catch (e) {
@@ -268,14 +253,13 @@ export const getServerSideProps: GetServerSideProps =
 type Props = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
-  commentList: TicketCommentType[];
 };
 
-const Page = ({ ticket, user, commentList }: Props) => {
+const Page = ({ ticket, user }: Props) => {
   return (
     <>
       <Meta description="Ticket Page" url="/team-requests/tickets/[ticketId]" />
-      <TicketPage ticket={ticket} user={user} commentList={commentList} />
+      <TicketPage ticket={ticket} user={user} />
     </>
   );
 };

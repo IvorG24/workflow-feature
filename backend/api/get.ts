@@ -32,6 +32,7 @@ import {
   TeamOnLoad,
   TeamTableRow,
   TicketPageOnLoad,
+  TicketType,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -3603,6 +3604,34 @@ export const getTicketOnLoad = async (
     .single();
 
   if (error) throw error;
-  console.log(data);
   return data as TicketPageOnLoad;
+};
+
+// Get ticket member user data
+export const getTicketMemberUserData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `team_member_user: team_member_user_id!inner(
+        user_id, 
+        user_first_name, 
+        user_last_name, 
+        user_username, 
+        user_avatar
+      )`
+    )
+    .eq("team_member_id", params.teamMemberId)
+    .limit(1);
+
+  if (data) {
+    const commentTeamMember = data[0];
+    return commentTeamMember as unknown as TicketType["ticket_comment"][0]["ticket_comment_team_member"];
+  } else {
+    return null;
+  }
 };
