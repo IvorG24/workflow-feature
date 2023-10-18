@@ -34,7 +34,7 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
             return (
               <Tooltip
                 key={signer.request_signer_id}
-                label={`${user.user_first_name} ${user.user_last_name}`}
+                label={`${user.user_first_name} ${user.user_last_name} - ${signer.request_signer_status}`}
                 withArrow
               >
                 <Avatar
@@ -68,7 +68,7 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
               return (
                 <div
                   key={signer.request_signer_id}
-                >{`${user.user_first_name} ${user.user_last_name}`}</div>
+                >{`${user.user_first_name} ${user.user_last_name} - ${signer.request_signer_status}`}</div>
               );
             })}
           >
