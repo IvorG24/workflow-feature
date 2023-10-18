@@ -41,14 +41,17 @@ const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
       const newCommentId = uuidv4();
       let commentContent = "";
       let notificationContent = "";
+      let notificationType = "REQUEST";
 
       if (status === "INCORRECT" && rejectionMessage) {
         commentContent = `rejected this ticket with note: ${rejectionMessage}`;
-        notificationContent = `rejected this ticket`;
+        notificationContent = `rejected your ticket`;
+        notificationType = "REJECT";
       }
       if (status === "CLOSED") {
         commentContent = `closed this ticket`;
-        notificationContent = `closed this ticket`;
+        notificationContent = `closed your ticket`;
+        notificationType = "APPROVE";
       }
 
       const { error } = await createTicketComment(supabaseClient, {
@@ -65,8 +68,8 @@ const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
           // create notification
           await createNotification(supabaseClient, {
             notification_app: "REQUEST",
-            notification_type: "COMMENT",
-            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} ${notificationContent} on your request`,
+            notification_type: notificationType,
+            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} ${notificationContent}`,
             notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
             notification_user_id:
               ticket.ticket_requester.team_member_user.user_id,
