@@ -26,7 +26,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import TicketListFilter from "./TicketListFilter";
 import TicketListItem from "./TicketListItem";
@@ -129,6 +129,57 @@ const TicketListPage = ({
       setIsFetchingTicketList(false);
     }
   };
+
+  const handlePagination = async () => {
+    try {
+      setIsFetchingTicketList(true);
+      if (!activeTeam.team_id) return;
+
+      const {
+        search,
+        requesterList,
+        categoryList,
+        approverList,
+        status,
+        isAscendingSort,
+      } = getValues();
+
+      const params = {
+        teamId: activeTeam.team_id,
+        page: activePage,
+        limit: DEFAULT_TICKET_LIST_LIMIT,
+        requester:
+          requesterList && requesterList.length > 0 ? requesterList : undefined,
+        approver:
+          approverList && approverList.length > 0 ? approverList : undefined,
+        category:
+          categoryList && categoryList.length > 0 ? categoryList : undefined,
+        status:
+          status && status.length > 0
+            ? (status as TicketStatusType[])
+            : undefined,
+        search: search,
+        sort: isAscendingSort
+          ? "ascending"
+          : ("descending" as "ascending" | "descending"),
+      };
+
+      const { data, count } = await getTicketList(supabaseClient, params);
+      setTicketList(data);
+      setTicketListCount(count || 0);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingTicketList(false);
+    }
+  };
+
+  useEffect(() => {
+    handlePagination();
+  }, [activePage]);
 
   return (
     <Container maw={1300} h="100%">
