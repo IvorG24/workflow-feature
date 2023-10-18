@@ -88,11 +88,11 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
           },
         ]
       : []),
-    ...(request.request_nav_id
+    ...(request.request_otp_id
       ? [
           {
-            label: "Nav ID:",
-            value: `${request.request_nav_id}`,
+            label: "OTP ID:",
+            value: `${request.request_otp_id}`,
           },
         ]
       : []),

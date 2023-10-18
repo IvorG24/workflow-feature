@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRightWidth: 0,
     borderBottomWidth: 0,
+    borderColor: "#DEE2E6",
   },
   tableRow: {
     flexDirection: "row",
@@ -70,14 +71,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderLeftWidth: 0,
     borderTopWidth: 0,
+    borderColor: "#DEE2E6",
   },
   tableCell: {
-    margin: 2,
-    fontSize: 10,
+    margin: 5,
+    fontSize: 8,
   },
   tableHeader: {
-    margin: 2,
-    fontSize: 10,
+    margin: 5,
+    fontSize: 8,
     fontWeight: "bold",
   },
   "General Name": {
@@ -193,7 +195,7 @@ const PdfDocumentTableVersion = ({
             Item
           </Text>
           <View style={styles.table}>
-            <View style={styles.tableRow}>
+            <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
               <View style={[styles.tableCol, styles["General Name"]]}>
                 <Text style={styles.tableHeader}>Item</Text>
               </View>

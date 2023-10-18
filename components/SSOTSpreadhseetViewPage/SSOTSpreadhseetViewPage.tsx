@@ -181,7 +181,7 @@ export type ShowColumnList = { [key: string]: boolean };
 const requisitionTableColumnList = [
   "Requisition ID",
   "Jira ID",
-  "Nav ID",
+  "OTP ID",
   "Date Created",
   "Operations/Engineering",
   "Requesting Project",
@@ -1590,8 +1590,8 @@ const SSOTSpreadsheetView = ({
               {requisitionTable.columnList["jira_id"] && (
                 <td>{request.requisition_request_jira_id}</td>
               )}
-              {requisitionTable.columnList["nav_id"] && (
-                <td>{request.requisition_request_nav_id}</td>
+              {requisitionTable.columnList["otp_id"] && (
+                <td>{request.requisition_request_otp_id}</td>
               )}
               {requisitionTable.columnList["date_created"] && (
                 <td>
@@ -1914,8 +1914,8 @@ const SSOTSpreadsheetView = ({
                       {requisitionTable.columnList["jira_id"] && (
                         <th className={classes.long}>Jira ID</th>
                       )}
-                      {requisitionTable.columnList["nav_id"] && (
-                        <th className={classes.long}>Nav ID</th>
+                      {requisitionTable.columnList["otp_id"] && (
+                        <th className={classes.long}>OTP ID</th>
                       )}
                       {requisitionTable.columnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>

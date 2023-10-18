@@ -1,22 +1,34 @@
+import { checkIfOtpIdIsUnique } from "@/backend/api/get";
+import { updateOtpId } from "@/backend/api/update";
+import { Database } from "@/utils/database";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
   Avatar,
   Badge,
+  Button,
   Flex,
   Group,
   Paper,
   Stack,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
-import { IconCalendar } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconCalendar, IconId } from "@tabler/icons-react";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 type Props = {
   request: RequestWithResponseType;
   requestor: RequestWithResponseType["request_team_member"]["team_member_user"];
   requestDateCreated: string;
   requestStatus: string;
+  isPrimarySigner?: boolean;
+  requestJiraID?: string | null;
 };
 
 const RequestDetailsSection = ({
@@ -24,7 +36,45 @@ const RequestDetailsSection = ({
   requestor,
   requestDateCreated,
   requestStatus,
+  isPrimarySigner,
+  requestJiraID,
 }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<{ otpID: string }>({});
+
+  const [isAddingOtpID, setIsAddingOtpID] = useState(false);
+  const [otpID, setOtpID] = useState(request.request_otp_id);
+
+  const isFormslyRequisitionRequest =
+    request.request_form.form_is_formsly_form &&
+    request.request_form.form_name === "Requisition";
+
+  const handleUpdateOtpID = async ({ otpID }: { otpID: string }) => {
+    try {
+      await updateOtpId(supabaseClient, {
+        requestID: request.request_id,
+        otpID,
+      });
+      notifications.show({
+        message: "Updated OTP ID.",
+        color: "green",
+      });
+      setOtpID(otpID);
+      setIsAddingOtpID(false);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <Paper p="xl" shadow="xs">
       <Title order={2}>{request.request_form.form_name}</Title>
@@ -74,17 +124,72 @@ const RequestDetailsSection = ({
           <Text>{request.request_project.team_project_name}</Text>
         </Group>
       )}
-      {request.request_jira_id && (
+      {requestJiraID && (
         <Group spacing="md" mt="xl">
           <Title order={5}>Jira ID:</Title>
-          <Text>{request.request_jira_id}</Text>
+          <Text>{requestJiraID}</Text>
         </Group>
       )}
-      {request.request_nav_id && (
-        <Group spacing="md" mt="xl">
-          <Title order={5}>Nav ID:</Title>
-          <Text>{request.request_nav_id}</Text>
-        </Group>
+      {isFormslyRequisitionRequest &&
+        !isAddingOtpID &&
+        requestStatus === "APPROVED" &&
+        !`${router.pathname}`.includes("public-request") &&
+        isPrimarySigner && (
+          <Group spacing="md" mt="xl">
+            <Title order={5}>OTP ID:</Title>
+            {otpID ? (
+              <Text>{otpID}</Text>
+            ) : (
+              <Button variant="light" onClick={() => setIsAddingOtpID(true)}>
+                Add OTP ID
+              </Button>
+            )}
+          </Group>
+        )}
+      {isAddingOtpID && (
+        <form onSubmit={handleSubmit(handleUpdateOtpID)}>
+          <TextInput
+            mt="xl"
+            icon={<IconId size={16} />}
+            placeholder="OTP ID"
+            data-autofocus
+            {...register("otpID", {
+              validate: {
+                required: (value) => {
+                  if (!value) {
+                    return "OTP ID is required.";
+                  } else {
+                    return true;
+                  }
+                },
+                checkIfUnique: async (value) => {
+                  if (
+                    await checkIfOtpIdIsUnique(supabaseClient, {
+                      value: value,
+                    })
+                  ) {
+                    return "OTP ID already exists.";
+                  } else {
+                    return true;
+                  }
+                },
+              },
+            })}
+            error={errors.otpID?.message}
+          />
+          <Group spacing="xs" mt="xs" position="right">
+            <Button
+              disabled={isSubmitting}
+              variant="light"
+              onClick={() => setIsAddingOtpID(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={isSubmitting}>
+              Submit
+            </Button>
+          </Group>
+        </form>
       )}
     </Paper>
   );
