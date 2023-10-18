@@ -16,6 +16,7 @@ import {
   Group,
   Stack,
   Text,
+  TypographyStylesProvider,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -71,7 +72,7 @@ const TicketComment = ({ comment }: Props) => {
     {
       type: "ACTION_OVERRIDE",
       title: "Override",
-      color: "orange",
+      color: "yellow",
     },
   ];
 
@@ -99,7 +100,7 @@ const TicketComment = ({ comment }: Props) => {
   return (
     <Card p={0} w="100%" sx={{ cursor: "pointer" }}>
       {hasCommentActionType ? (
-        <Flex align="center" gap="sm" mt="lg">
+        <Flex align="top" gap="sm" mt="lg">
           <Avatar
             size={40}
             src={commenter.team_member_user.user_avatar}
@@ -122,20 +123,29 @@ const TicketComment = ({ comment }: Props) => {
             <Flex align="center" gap="md">
               <Stack m={0} p={0} spacing={0}>
                 <Text>
-                  <Flex direction="column">
-                    {comment.ticket_comment_content
-                      .split("\n")
-                      .map((line, id) => (
-                        <Text span key={id}>
-                          {line}
-                        </Text>
-                      ))}
-                  </Flex>{" "}
-                  on{" "}
-                  {new Date(comment.ticket_comment_date_created).toDateString()}
+                  {comment.ticket_comment_type === "ACTION_OVERRIDE" ? (
+                    <TypographyStylesProvider>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: comment.ticket_comment_content,
+                        }}
+                      />
+                    </TypographyStylesProvider>
+                  ) : (
+                    <Flex direction="column">
+                      {comment.ticket_comment_content
+                        .split("\n")
+                        .map((line, id) => (
+                          <Text span key={id}>
+                            {line}
+                          </Text>
+                        ))}
+                    </Flex>
+                  )}
                 </Text>
                 <Text color="dimmed" size={12}>
-                  {moment(comment.ticket_comment_date_created).fromNow()}
+                  {moment(comment.ticket_comment_date_created).fromNow()},{" "}
+                  {new Date(comment.ticket_comment_date_created).toDateString()}
                 </Text>
               </Stack>
             </Flex>

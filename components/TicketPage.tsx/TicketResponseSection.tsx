@@ -71,13 +71,39 @@ const TicketResponseSection = ({
 
       let ticketChanges = "";
       if (ticket.ticket_title !== data.title)
-        ticketChanges = `\tTitle: ${ticket.ticket_title} -> ${data.title}`;
+        ticketChanges = `<p>The <strong>title</strong> has been changed.
+                        <br>
+                        <br>
+                        <strong>From:</strong> 
+                        <br>
+                        ${ticket.ticket_title}
+                        <br>
+                        <br>
+                        <strong>To:</strong> 
+                        <br>
+                        ${data.title}</p>`;
+
+      const addHorizontalLine =
+        ticket.ticket_title !== data.title ? "<hr>" : "";
+
       if (ticket.ticket_description !== data.description)
-        ticketChanges += `\n\tDescription: ${ticket.ticket_description} -> ${data.description}`;
+        ticketChanges += `
+                          ${addHorizontalLine}
+                          <p>The <strong>description</strong> has been changed.
+                          <br>
+                          <br>
+                          <strong>From:</strong>
+                          <br>
+                          ${ticket.ticket_description}
+                          <br>
+                          <br>
+                          <strong>To:</strong>
+                          <br>
+                          ${data.description}</p>`;
 
       const { error } = await createTicketComment(supabaseClient, {
         ticket_comment_id: newCommentId,
-        ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} has made the following changes on the ticket\n${ticketChanges}`,
+        ticket_comment_content: `<p>${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} has made the following changes on the ticket.</p>\n${ticketChanges}`,
         ticket_comment_type: "ACTION_OVERRIDE",
         ticket_comment_team_member_id: user.team_member_id,
         ticket_comment_ticket_id: ticket.ticket_id,
@@ -143,7 +169,7 @@ const TicketResponseSection = ({
               sx={{ alignSelf: "flex-end" }}
               w={100}
               size="sm"
-              color="orange"
+              color="yellow"
               onClick={() => {
                 setIsEditingResponse(true);
               }}
