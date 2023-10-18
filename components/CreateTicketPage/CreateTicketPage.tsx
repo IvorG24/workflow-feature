@@ -1,5 +1,7 @@
+import { createTicket } from "@/backend/api/post";
+import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
-import { TeamMemberType } from "@/utils/types";
+import { CreateTicketPageOnLoad } from "@/utils/types";
 import {
   Avatar,
   Button,
@@ -14,13 +16,13 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import moment from "moment";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { TEMP_DEFAULT_TICKET_CATEGORY_LIST } from "../TicketListPage/TicketListPage";
-
-type Props = {
-  teamMemberData: TeamMemberType;
-};
 
 type CreateTicketFormValues = {
   title: string;
@@ -28,7 +30,15 @@ type CreateTicketFormValues = {
   description: string;
 };
 
-const CreateTicketPage = ({ teamMemberData }: Props) => {
+type Props = {
+  member: CreateTicketPageOnLoad["member"];
+};
+
+const CreateTicketPage = ({ member }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     handleSubmit,
     register,
@@ -36,8 +46,28 @@ const CreateTicketPage = ({ teamMemberData }: Props) => {
     control,
   } = useForm<CreateTicketFormValues>();
 
-  const handleCreateTicket = (data: CreateTicketFormValues) => {
-    console.log(data);
+  const handleCreateTicket = async (data: CreateTicketFormValues) => {
+    try {
+      setIsLoading(true);
+
+      const ticket = await createTicket(supabaseClient, {
+        ...data,
+        requester: `${member?.team_member_id}`,
+      });
+
+      notifications.show({
+        message: "Ticket created.",
+        color: "green",
+      });
+      router.push(`/team-requests/tickets/${ticket.ticket_id}`);
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,19 +83,19 @@ const CreateTicketPage = ({ teamMemberData }: Props) => {
               <Group spacing={8}>
                 <Avatar
                   size="sm"
-                  src={teamMemberData.team_member_user.user_avatar}
+                  src={member?.team_member_user?.user_avatar || ""}
                   color={getAvatarColor(
-                    Number(`${teamMemberData.team_member_id.charCodeAt(0)}`)
+                    Number(`${member.team_member_id.charCodeAt(0)}`)
                   )}
                   radius="xl"
                 >
                   {(
-                    teamMemberData.team_member_user.user_first_name[0] +
-                    teamMemberData.team_member_user.user_last_name[0]
+                    member.team_member_user.user_first_name[0] +
+                    member.team_member_user.user_last_name[0]
                   ).toUpperCase()}
                 </Avatar>
                 <Text>
-                  {`${teamMemberData.team_member_user.user_first_name} ${teamMemberData.team_member_user.user_last_name}`}
+                  {`${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`}
                 </Text>
               </Group>
             </Stack>
@@ -90,6 +120,7 @@ const CreateTicketPage = ({ teamMemberData }: Props) => {
                     data={TEMP_DEFAULT_TICKET_CATEGORY_LIST}
                     clearable
                     error={error?.message}
+                    readOnly={isLoading}
                   />
                 )}
                 rules={{ required: "This field is required" }}
@@ -100,6 +131,7 @@ const CreateTicketPage = ({ teamMemberData }: Props) => {
                   required: "This field is required",
                 })}
                 error={errors.title?.message}
+                readOnly={isLoading}
               />
               <Textarea
                 label="Description"
@@ -109,8 +141,9 @@ const CreateTicketPage = ({ teamMemberData }: Props) => {
                   required: "This field is required",
                 })}
                 error={errors.description?.message}
+                readOnly={isLoading}
               />
-              <Button type="submit" size="md">
+              <Button type="submit" size="md" loading={isLoading}>
                 Submit
               </Button>
             </Stack>

@@ -1,7 +1,12 @@
+import { createNotification, createTicketComment } from "@/backend/api/post";
+import { editTicketResponse } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { Database } from "@/utils/database";
+import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
   Box,
   Button,
+  Flex,
   Group,
   Stack,
   Text,
@@ -9,14 +14,19 @@ import {
   Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { Dispatch, SetStateAction, useState } from "react";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
+import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 
 type Props = {
-  title: string;
-  description: string;
-  ticketStatus: string;
-  setShowTicketActionSection: Dispatch<SetStateAction<boolean>>;
+  ticket: TicketType;
+  setTicket: Dispatch<SetStateAction<TicketType>>;
+  user: CreateTicketPageOnLoad["member"];
+  isApprover: boolean;
+  setIsEditingResponse: Dispatch<SetStateAction<boolean>>;
+  isEditingResponse: boolean;
 };
 
 type TicketResponseFormValues = {
@@ -25,45 +35,81 @@ type TicketResponseFormValues = {
 };
 
 const TicketResponseSection = ({
-  title,
-  description,
-  ticketStatus,
-  setShowTicketActionSection,
+  ticket,
+  user,
+  isApprover,
+  setTicket,
+  isEditingResponse,
+  setIsEditingResponse,
 }: Props) => {
-  const currentUser = useUserTeamMember();
-  const canUserEditResponse = ["ADMIN", "OWNER"].includes(
-    currentUser?.team_member_role || ""
-  );
-  const [allowFormEdit, setAllowFormEdit] = useState(false);
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
+  const teamMember = useUserTeamMember();
+  const canUserEditResponse =
+    ["ADMIN", "OWNER"].includes(user.team_member_role || "") && isApprover;
 
   const {
     handleSubmit,
     register,
     formState: { errors },
   } = useForm<TicketResponseFormValues>({
-    defaultValues: { title, description },
+    defaultValues: {
+      title: ticket.ticket_title,
+      description: ticket.ticket_description,
+    },
   });
 
-  const handleEditResponse = (data: TicketResponseFormValues) => {
+  const handleEditResponse = async (data: TicketResponseFormValues) => {
+    if (!teamMember) return;
     try {
-      // 1. update ticket
-      // 2. add comment explaining the changes made by admin. only comment the changes that occured
-      // 3. example
-      //    3.A. [Admin] has made the following changes on the ticket
-      //         [Old Title] -> [New Title]
-      //         [Old Description] -> [New Description]
-      //    3.B. [Admin] has made the following changes on the ticket
-      //         [Old Description] -> [New Description]
-      console.log(data);
+      await editTicketResponse(supabaseClient, {
+        ...data,
+        ticketId: `${router.query.ticketId}`,
+      });
+
+      const newCommentId = uuidv4();
+
+      let ticketChanges = "";
+      if (ticket.ticket_title !== data.title)
+        ticketChanges = `\tTitle: ${ticket.ticket_title} -> ${data.title}`;
+      if (ticket.ticket_description !== data.description)
+        ticketChanges += `\n\tDescription: ${ticket.ticket_description} -> ${data.description}`;
+
+      const { error } = await createTicketComment(supabaseClient, {
+        ticket_comment_id: newCommentId,
+        ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} has made the following changes on the ticket\n${ticketChanges}`,
+        ticket_comment_type: "ACTION_OVERRIDE",
+        ticket_comment_team_member_id: user.team_member_id,
+        ticket_comment_ticket_id: ticket.ticket_id,
+      });
+      if (error) throw error;
+
+      if (!error) {
+        if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} overrode your ticket`,
+            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          });
+        }
+      }
+
+      setTicket((ticket) => ({
+        ...ticket,
+        ticket_title: data.title,
+        ticket_description: data.description,
+      }));
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
-      setAllowFormEdit(false);
-      setShowTicketActionSection(false);
+      setIsEditingResponse(false);
     }
   };
 
@@ -72,23 +118,22 @@ const TicketResponseSection = ({
       <Group position="apart">
         <Group spacing={8}>
           <Text weight={600}>Request Details</Text>
-          {allowFormEdit && (
+          {isEditingResponse && (
             <Text size="xs" color="blue">
               (Edit Mode)
             </Text>
           )}
         </Group>
         {canUserEditResponse &&
-          ticketStatus === "PENDING" &&
-          (allowFormEdit ? (
+          ticket.ticket_status === "UNDER REVIEW" &&
+          (isEditingResponse ? (
             <Button
               sx={{ alignSelf: "flex-end" }}
               w={100}
               size="sm"
               variant="default"
               onClick={() => {
-                setAllowFormEdit(false);
-                setShowTicketActionSection(true);
+                setIsEditingResponse(false);
               }}
             >
               Cancel
@@ -100,8 +145,7 @@ const TicketResponseSection = ({
               size="sm"
               color="orange"
               onClick={() => {
-                setAllowFormEdit(true);
-                setShowTicketActionSection(false);
+                setIsEditingResponse(true);
               }}
             >
               Override
@@ -109,7 +153,7 @@ const TicketResponseSection = ({
           ))}
       </Group>
 
-      {allowFormEdit ? (
+      {isEditingResponse ? (
         <form onSubmit={handleSubmit(handleEditResponse)}>
           <Stack>
             <TextInput
@@ -119,7 +163,7 @@ const TicketResponseSection = ({
                 required: "This field is required",
               })}
               error={errors.title?.message}
-              readOnly={!allowFormEdit}
+              readOnly={!isEditingResponse}
             />
 
             <Textarea
@@ -128,9 +172,9 @@ const TicketResponseSection = ({
                 required: "This field is required",
               })}
               error={errors.description?.message}
-              readOnly={!allowFormEdit}
+              readOnly={!isEditingResponse}
             />
-            {allowFormEdit ? (
+            {isEditingResponse ? (
               <Button type="submit" size="md">
                 Save Changes
               </Button>
@@ -143,14 +187,19 @@ const TicketResponseSection = ({
             <Text size={14} weight={600}>
               Title
             </Text>
-            <Text>{title}</Text>
+            <Text>{ticket.ticket_title}</Text>
           </Box>
 
           <Box>
             <Text size={14} weight={600}>
               Description
             </Text>
-            <Text>{description}</Text>
+
+            <Flex direction="column">
+              {ticket.ticket_description.split("\n").map((line, id) => (
+                <Text key={id}>{line}</Text>
+              ))}
+            </Flex>
           </Box>
         </Stack>
       )}

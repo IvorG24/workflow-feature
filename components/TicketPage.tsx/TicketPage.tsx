@@ -1,5 +1,9 @@
-import { TicketListItemType } from "@/pages/team-requests/tickets";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { createNotification, createTicketComment } from "@/backend/api/post";
+import { assignTicket } from "@/backend/api/update";
+import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
+import { useUserTeamMember } from "@/stores/useUserStore";
+import { Database } from "@/utils/database";
+import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
   Button,
   Container,
@@ -9,55 +13,64 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import moment from "moment";
-import { useEffect, useState } from "react";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import TicketActionSection from "./TicketActionSection";
-import TicketCommentSection, {
-  TicketCommentType,
-} from "./TicketCommentSection";
+import TicketCommentSection from "./TicketCommentSection";
 import TicketDetailSection from "./TicketDetailSection";
 import TicketResponseSection from "./TicketResponseSection";
 
 type Props = {
-  ticket: TicketListItemType;
-  commentList: TicketCommentType[];
+  ticket: TicketType;
+  user: CreateTicketPageOnLoad["member"];
 };
 
-const TicketPage = ({ ticket, commentList }: Props) => {
-  const currentUserProfile = useUserProfile();
-  const currentUserTeamMember = useUserTeamMember();
-  const [currentCommentList, setCurrentCommentList] = useState(commentList);
-  const [currentTicketStatus, setCurrentTicketStatus] = useState(
-    ticket.ticket_status
-  );
-  const [showTicketActionSection, setShowTicketActionSection] = useState(false);
+const TicketPage = ({ ticket: initialTicket, user }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const teamMember = useUserTeamMember();
+  const [ticket, setTicket] = useState(initialTicket);
+  const [isEditingResponse, setIsEditingResponse] = useState(false);
 
-  const handleAssignTicketToUser = () => {
+  const requestCommentList = useRealtimeTicketCommentList(supabaseClient, {
+    ticketId: ticket.ticket_id,
+    initialCommentList: ticket.ticket_comment,
+  });
+
+  const handleAssignTicketToUser = async () => {
+    if (!teamMember) return;
     try {
-      if (!currentUserProfile || !currentUserTeamMember) return;
-      const currentUserFullName = `${currentUserProfile.user_first_name} ${currentUserProfile.user_last_name}`;
-      setCurrentTicketStatus("UNDER REVIEW");
+      const currentUserFullName = `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`;
+      const updatedTicket = await assignTicket(supabaseClient, {
+        teamMemberId: user.team_member_id,
+        ticketId: ticket.ticket_id,
+      });
+      setTicket(updatedTicket);
 
-      const newComment = {
-        ticket_comment_id: "78f78689-a898-47f5-bf3c-a3469c8eb34f",
+      const newCommentId = uuidv4();
+      const { error } = await createTicketComment(supabaseClient, {
+        ticket_comment_id: newCommentId,
         ticket_comment_content: `${currentUserFullName} is reviewing this ticket`,
-        ticket_comment_is_edited: false,
-        ticket_comment_is_disabled: false,
-        ticket_comment_date_created: `${moment()}`,
         ticket_comment_type: "ACTION_UNDER_REVIEW",
-        ticket_comment_team_member: {
-          team_member_id: currentUserTeamMember.team_member_id,
-          user: {
-            user_id: currentUserProfile.user_id,
-            user_first_name: currentUserProfile.user_first_name,
-            user_last_name: currentUserProfile.user_last_name,
-            user_avatar: `${currentUserProfile.user_avatar}`,
-          },
-        },
-      };
-      console.log(Date.now());
-      // add new comment
-      setCurrentCommentList((prev) => [...prev, newComment]);
+        ticket_comment_team_member_id: user.team_member_id,
+        ticket_comment_ticket_id: ticket.ticket_id,
+      });
+      if (error) throw error;
+
+      if (!error) {
+        if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
+          // create notification
+          await createNotification(supabaseClient, {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `An admin, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
+            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          });
+        }
+      }
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -66,49 +79,52 @@ const TicketPage = ({ ticket, commentList }: Props) => {
     }
   };
 
-  useEffect(() => {
-    if (currentUserTeamMember) {
-      setShowTicketActionSection(
-        ["OWNER", "ADMIN"].includes(`${currentUserTeamMember.team_member_role}`)
-      );
-    }
-  }, [currentUserTeamMember]);
-
   return (
     <Container>
       <Paper p="md" withBorder>
         <Stack>
-          {currentTicketStatus === "PENDING" && (
-            <Tooltip label="You will be assigned to review this ticket.">
-              <Button size="md" onClick={handleAssignTicketToUser}>
-                Assign To Me
-              </Button>
-            </Tooltip>
-          )}
-          <TicketDetailSection
-            ticket={ticket}
-            currentTicketStatus={currentTicketStatus}
-          />
+          {ticket.ticket_status === "PENDING" &&
+            ticket.ticket_approver_team_member_id === null &&
+            ticket.ticket_requester_team_member_id !== user.team_member_id &&
+            (user.team_member_role === "ADMIN" ||
+              user.team_member_role === "OWNER") && (
+              <Tooltip label="You will be assigned to review this ticket.">
+                <Button size="md" onClick={handleAssignTicketToUser}>
+                  Assign To Me
+                </Button>
+              </Tooltip>
+            )}
+          <TicketDetailSection ticket={ticket} />
 
           <Divider mt="md" />
           <TicketResponseSection
-            title={ticket.ticket_title}
-            description={ticket.ticket_description}
-            ticketStatus={currentTicketStatus}
-            setShowTicketActionSection={setShowTicketActionSection}
+            ticket={ticket}
+            user={user}
+            isApprover={
+              ticket.ticket_approver_team_member_id === user.team_member_id
+            }
+            setTicket={setTicket}
+            isEditingResponse={isEditingResponse}
+            setIsEditingResponse={setIsEditingResponse}
           />
-          {showTicketActionSection && (
-            <>
-              <Divider mt="md" />
-              <TicketActionSection
-                ticketId={ticket.ticket_id}
-                ticketStatus={currentTicketStatus}
-              />
-              <Divider mt="xl" />
-            </>
-          )}
+          {ticket.ticket_status === "UNDER REVIEW" &&
+            !isEditingResponse &&
+            ticket.ticket_requester_team_member_id !== user.team_member_id && (
+              <>
+                <Divider mt="md" />
+                <TicketActionSection
+                  ticket={ticket}
+                  setTicket={setTicket}
+                  user={user}
+                />
+                <Divider mt="xl" />
+              </>
+            )}
 
-          <TicketCommentSection commentList={currentCommentList} />
+          <TicketCommentSection
+            ticket={ticket}
+            commentList={requestCommentList}
+          />
         </Stack>
       </Paper>
     </Container>

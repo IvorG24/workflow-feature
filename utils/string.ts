@@ -56,3 +56,9 @@ export const convertTimestampToDate = (input: string | Date) => {
   if (!parsedInput) return undefined;
   return new Date(parsedInput);
 };
+
+export const toTitleCase = (input: string) => {
+  return input.toLowerCase().replace(/(?:^|\s)\w/g, function (match) {
+    return match.toUpperCase();
+  });
+};

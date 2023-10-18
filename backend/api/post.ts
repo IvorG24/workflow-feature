@@ -27,6 +27,8 @@ import {
   TeamMemberTableInsert,
   TeamProjectTableRow,
   TeamTableInsert,
+  TicketCommentTableInsert,
+  TicketTableRow,
   UserTableInsert,
   UserTableRow,
 } from "@/utils/types";
@@ -842,4 +844,47 @@ export const createServiceScopeChoice = async (
   if (error) throw error;
 
   return data;
+};
+
+// Create ticket
+export const createTicket = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requester: string;
+    category: string;
+    title: string;
+    description: string;
+  }
+) => {
+  const { requester, category, title, description } = params;
+
+  const { data, error } = await supabaseClient
+    .rpc("create_ticket", {
+      input_data: {
+        requester,
+        category: category.toUpperCase(),
+        title,
+        description,
+      },
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as TicketTableRow;
+};
+
+// Create ticket comment
+export const createTicketComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TicketCommentTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("ticket_comment_table")
+    .insert(params)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return { data, error };
 };

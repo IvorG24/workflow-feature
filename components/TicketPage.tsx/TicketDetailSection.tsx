@@ -1,5 +1,6 @@
-import { TicketListItemType } from "@/pages/team-requests/tickets";
+import { toTitleCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
+import { TicketType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -13,48 +14,74 @@ import moment from "moment";
 import { getTicketStatusColor } from "../TicketListPage/TicketListItem";
 
 type Props = {
-  ticket: TicketListItemType;
-  currentTicketStatus: string;
+  ticket: TicketType;
 };
 
-const TicketDetailSection = ({ ticket, currentTicketStatus }: Props) => {
+const TicketDetailSection = ({ ticket }: Props) => {
   const requester = ticket.ticket_requester;
+  const approver = ticket.ticket_approver;
   return (
     <Stack>
       <Title order={3}>Ticket Request</Title>
       <Group spacing={8}>
         <Avatar
           size="sm"
-          src={requester.user.user_avatar}
+          src={requester.team_member_user.user_avatar}
           color={getAvatarColor(
             Number(`${requester.team_member_id.charCodeAt(0)}`)
           )}
           radius="xl"
         >
           {(
-            requester.user.user_first_name[0] + requester.user.user_last_name[0]
+            requester.team_member_user.user_first_name[0] +
+            requester.team_member_user.user_last_name[0]
           ).toUpperCase()}
         </Avatar>
         <Text>
-          {`${requester.user.user_first_name} ${requester.user.user_last_name} opened this ticket on `}
+          {`${requester.team_member_user.user_first_name} ${requester.team_member_user.user_last_name} opened this ticket on `}
           <Text span weight={600}>
             {moment(ticket.ticket_date_created).format("MMM DD, YYYY")}
           </Text>
         </Text>
       </Group>
+      {approver && (
+        <Group spacing={8}>
+          <Avatar
+            size="sm"
+            src={approver.team_member_user.user_avatar}
+            color={getAvatarColor(
+              Number(`${approver.team_member_id.charCodeAt(0)}`)
+            )}
+            radius="xl"
+          >
+            {(
+              approver.team_member_user.user_first_name[0] +
+              approver.team_member_user.user_last_name[0]
+            ).toUpperCase()}
+          </Avatar>
+          <Text>
+            {`${approver.team_member_user.user_first_name} ${
+              approver.team_member_user.user_last_name
+            } reviewed this ticket and marked as '${ticket.ticket_status.toLowerCase()}' on `}
+            <Text span weight={600}>
+              {moment(ticket.ticket_status_date_updated).format("MMM DD, YYYY")}
+            </Text>
+          </Text>
+        </Group>
+      )}
       <Divider />
       <Stack spacing={4}>
         <Text>Category</Text>
-        <Text weight={600}>{ticket.ticket_category}</Text>
+        <Text weight={600}>{toTitleCase(ticket.ticket_category)}</Text>
       </Stack>
       <Stack spacing={4}>
         <Text>Status</Text>
         <Badge
           w="fit-content"
           size="lg"
-          color={getTicketStatusColor(currentTicketStatus)}
+          color={getTicketStatusColor(ticket.ticket_status)}
         >
-          {currentTicketStatus}
+          {ticket.ticket_status}
         </Badge>
       </Stack>
     </Stack>

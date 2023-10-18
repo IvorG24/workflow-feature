@@ -1,9 +1,9 @@
+import { getTicketOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import { TicketCommentType } from "@/components/TicketPage.tsx/TicketCommentSection";
 import TicketPage from "@/components/TicketPage.tsx/TicketPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
+import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import { GetServerSideProps } from "next";
-import { TEMP_TICKET_LIST, TicketListItemType } from "..";
 
 export const TEMP_TICKET_COMMENT_LIST = [
   {
@@ -225,53 +225,41 @@ export const TEMP_TICKET_COMMENT_ATTACHMENT_LIST = [
 ];
 
 export const getServerSideProps: GetServerSideProps =
-  withAuthAndOnboardingRequestPage(async ({ context }) => {
-    try {
-      const ticket = TEMP_TICKET_LIST.find(
-        (ticket) => ticket.ticket_id === context.query.ticketId
-      );
-      const commentList = TEMP_TICKET_COMMENT_LIST.sort((a, b) => {
-        const date1 = new Date(a.ticket_comment_date_created);
-        const date2 = new Date(b.ticket_comment_date_created);
+  withAuthAndOnboardingRequestPage(
+    async ({ context, supabaseClient, user }) => {
+      try {
+        const data = await getTicketOnLoad(supabaseClient, {
+          ticketId: `${context.query.ticketId}`,
+          userId: user.id,
+        });
 
-        if (date1 < date2) {
-          return -1;
-        } else if (date1 > date2) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
-
-      if (!ticket) throw Error;
-
-      return {
-        props: {
-          ticket,
-          commentList,
-        },
-      };
-    } catch (e) {
-      console.error(e);
-      return {
-        redirect: {
-          destination: "/500",
-          permanent: false,
-        },
-      };
+        return {
+          props: {
+            ...data,
+          },
+        };
+      } catch (e) {
+        console.error(e);
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
     }
-  });
+  );
 
 type Props = {
-  ticket: TicketListItemType;
-  commentList: TicketCommentType[];
+  ticket: TicketType;
+  user: CreateTicketPageOnLoad["member"];
 };
 
-const Page = ({ ticket, commentList }: Props) => {
+const Page = ({ ticket, user }: Props) => {
   return (
     <>
       <Meta description="Ticket Page" url="/team-requests/tickets/[ticketId]" />
-      <TicketPage ticket={ticket} commentList={commentList} />
+      <TicketPage ticket={ticket} user={user} />
     </>
   );
 };
