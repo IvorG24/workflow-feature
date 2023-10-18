@@ -1,5 +1,12 @@
-import { TicketListItemType } from "@/pages/team-requests/tickets";
-import { TeamMemberWithUserType } from "@/utils/types";
+import { getTicketList } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { DEFAULT_TICKET_LIST_LIMIT } from "@/utils/constant";
+import { Database } from "@/utils/database";
+import {
+  TeamMemberWithUserType,
+  TicketListType,
+  TicketStatusType,
+} from "@/utils/types";
 import {
   Alert,
   Box,
@@ -17,6 +24,7 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -33,7 +41,8 @@ export type FilterFormValues = {
 };
 
 type Props = {
-  ticketList: TicketListItemType[];
+  ticketList: TicketListType;
+  ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
 };
 
@@ -42,12 +51,18 @@ export const TEMP_DEFAULT_TICKET_CATEGORY_LIST = ["Item Request", "General"];
 
 const TicketListPage = ({
   ticketList: inititalTicketList,
+  ticketListCount: inititalTicketListCount,
   teamMemberList,
 }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
+  const activeTeam = useActiveTeam();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingTicketList, setIsFetchingTicketList] = useState(false);
-  const [ticketList, setTicketList] = useState(inititalTicketList);
-
+  const [ticketList, setTicketList] =
+    useState<TicketListType>(inititalTicketList);
+  const [ticketListCount, setTicketListCount] = useState(
+    inititalTicketListCount
+  );
   const filterFormMethods = useForm<FilterFormValues>({
     defaultValues: {
       search: "",
@@ -74,16 +89,37 @@ const TicketListPage = ({
   ) => {
     try {
       setIsFetchingTicketList(true);
-      console.log(
-        search,
-        requesterList,
-        approverList,
-        categoryList,
-        status,
-        isAscendingSort
-      );
+      if (!activeTeam.team_id) {
+        console.warn(
+          "RequestListPage handleFilterFormsError: active team_id not found"
+        );
+        return;
+      }
+      setActivePage(1);
+      const params = {
+        teamId: activeTeam.team_id,
+        page: 1,
+        limit: DEFAULT_TICKET_LIST_LIMIT,
+        requester:
+          requesterList && requesterList.length > 0 ? requesterList : undefined,
+        approver:
+          approverList && approverList.length > 0 ? approverList : undefined,
+        category:
+          categoryList && categoryList.length > 0 ? categoryList : undefined,
+        status:
+          status && status.length > 0
+            ? (status as TicketStatusType[])
+            : undefined,
+        search: search,
+        sort: isAscendingSort
+          ? "ascending"
+          : ("descending" as "ascending" | "descending"),
+      };
 
-      setTicketList(ticketList);
+      const { data, count } = await getTicketList(supabaseClient, params);
+
+      setTicketList(data);
+      setTicketListCount(count || 0);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -191,7 +227,7 @@ const TicketListPage = ({
         <Pagination
           value={activePage}
           onChange={setActivePage}
-          total={Math.ceil(ticketList.length / TEMP_DEFAULT_TICKET_LIST_LIMIT)}
+          total={Math.ceil(ticketListCount / TEMP_DEFAULT_TICKET_LIST_LIMIT)}
           mt="xl"
         />
       </Flex>

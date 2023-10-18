@@ -5496,6 +5496,135 @@ $$ LANGUAGE plv8;
 
 -- End: Edit ticket response
 
+-- Start: Fetch ticket list
+
+CREATE OR REPLACE FUNCTION fetch_ticket_list(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let return_value
+    plv8.subtransaction(function(){
+      const {
+        teamId,
+        page,
+        limit,
+        requester,
+        approver,
+        status,
+        sort,
+        category,
+        search,
+      } = input_data;
+
+      const start = (page - 1) * limit;
+
+      const ticket_list = plv8.execute(
+        `
+          SELECT DISTINCT
+            ticket_table.*
+          FROM ticket_table
+          INNER JOIN team_member_table tm ON ticket_table.ticket_requester_team_member_id = tm.team_member_id
+          WHERE tm.team_member_team_id = '${teamId}'
+          ${requester}
+          ${approver}
+          ${status}
+          ${category}
+          ${search}
+          ORDER BY ticket_table.ticket_date_created ${sort} 
+          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+        `
+      );
+
+      const ticket_count = plv8.execute(
+        `
+          SELECT DISTINCT COUNT(*)
+          FROM ticket_table
+          INNER JOIN team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
+          WHERE team_member_table.team_member_team_id = '${teamId}'
+          ${requester}
+          ${approver}
+          ${status}
+          ${category}
+          ${search}
+        `
+      )[0];
+
+      const ticket_data = ticket_list.map(ticket => {
+        const ticket_requester = plv8.execute(
+          `
+            SELECT 
+              team_member_table.team_member_id, 
+              user_table.user_id,
+              user_table.user_first_name,
+              user_table.user_last_name,
+              user_table.user_username,
+              user_table.user_avatar
+            FROM team_member_table
+            INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+            WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
+          `
+        )[0];
+        let ticket_approver = {}
+        if(ticket.ticket_approver_team_member_id){
+          ticket_approver = plv8.execute(
+            `
+              SELECT 
+                team_member_table.team_member_id, 
+                user_table.user_id,
+                user_table.user_first_name,
+                user_table.user_last_name,
+                user_table.user_username,
+                user_table.user_avatar
+              FROM team_member_table
+              INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+              WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
+            `
+          )[0];
+        }
+
+        return {
+          ...ticket,
+          ticket_requester,
+          ticket_approver,
+        }
+      });
+
+      returnData = {
+        data: ticket_data, 
+        count: Number(ticket_count.count)
+      };
+    });
+    return returnData
+$$ LANGUAGE plv8;
+
+-- End: Fetch ticket list
+
+-- Start: Get ticket list on load
+
+CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+    } = input_data;
+    
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+
+    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
+
+    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get ticket list on load
+
 ---------- End: FUNCTIONS
 
 

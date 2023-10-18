@@ -62,13 +62,14 @@ const TicketListFilter = ({
   }));
 
   const statusList = [
-    { value: "CLOSED", label: "Closed" },
     { value: "PENDING", label: "Pending" },
+    { value: "UNDER REVIEW", label: "Under Review" },
     { value: "INCORRECT", label: "Incorrect" },
+    { value: "CLOSED", label: "Closed" },
   ];
 
   const categoryList = initialCategoryList.map((category) => ({
-    value: category,
+    value: category.toUpperCase(),
     label: category,
   }));
 
@@ -119,7 +120,7 @@ const TicketListFilter = ({
         }}
       />
       <TextInput
-        placeholder="Search by request id"
+        placeholder="Search by ticket id"
         rightSection={
           <ActionIcon size="xs" type="submit">
             <IconSearch />

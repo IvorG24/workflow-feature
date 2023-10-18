@@ -198,6 +198,11 @@ export type AttachmentBucketType =
   | "REQUEST_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
+export type TicketStatusType =
+  | "PENDING"
+  | "UNDER REVIEW"
+  | "INCORRECT"
+  | "CLOSED";
 export type FieldType =
   | "TEXT"
   | "TEXTAREA"
@@ -952,6 +957,27 @@ export type CreateTicketPageOnLoad = {
   };
 };
 
+export type TicketListType = [
+  {
+    ticket_requester: {
+      team_member_id: string;
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string | null;
+      user_email: string;
+    };
+    ticket_approver: {
+      team_member_id: string;
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string | null;
+      user_email: string;
+    };
+  } & TicketTableRow
+];
+
 export type TicketType = {
   ticket_requester: CreateTicketPageOnLoad["member"];
   ticket_approver: CreateTicketPageOnLoad["member"] | null;
@@ -987,3 +1013,9 @@ export type TicketCommentType =
   RequestWithResponseType["request_comment"][0] & {
     comment_attachment: CommentAttachmentWithPublicUrl;
   };
+
+export type TicketListOnLoad = {
+  ticketList: TicketListType[];
+  ticketListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
+};

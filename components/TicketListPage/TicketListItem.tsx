@@ -1,5 +1,6 @@
-import { TicketListItemType } from "@/pages/team-requests/tickets";
+import { toTitleCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
+import { TicketListType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -17,7 +18,7 @@ import moment from "moment";
 import { useRouter } from "next/router";
 
 type Props = {
-  ticket: TicketListItemType;
+  ticket: TicketListType[0];
 };
 
 const useStyles = createStyles(() => ({
@@ -50,7 +51,7 @@ const TicketListItem = ({ ticket }: Props) => {
   const router = useRouter();
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
   const requester = ticket.ticket_requester;
-  const approver = ticket.ticket_approver;
+  const approver = ticket.ticket_requester;
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
@@ -82,7 +83,7 @@ const TicketListItem = ({ ticket }: Props) => {
       </Grid.Col>
 
       <Grid.Col span={2}>
-        <Text>{ticket.ticket_category}</Text>
+        <Text>{toTitleCase(ticket.ticket_category)}</Text>
       </Grid.Col>
       <Grid.Col span={1}>
         <Badge
@@ -96,28 +97,34 @@ const TicketListItem = ({ ticket }: Props) => {
       <Grid.Col span="auto" offset={0.5}>
         <Flex px={0} gap={8} wrap="wrap">
           <Avatar
-            src={requester.user.user_avatar}
+            src={requester.user_avatar || null}
             {...defaultAvatarProps}
             color={getAvatarColor(
               Number(`${requester.team_member_id.charCodeAt(0)}`)
             )}
             className={classes.requester}
           ></Avatar>
-          <Text>{`${requester.user.user_first_name} ${requester.user.user_last_name}`}</Text>
+          <Text>{`${requester.user_first_name} ${requester.user_last_name}`}</Text>
         </Flex>
       </Grid.Col>
       <Grid.Col span={1}>
         <Flex px={0} gap={8} wrap="wrap">
-          <Avatar
-            src={approver.user.user_avatar}
-            {...defaultAvatarProps}
-            color={getAvatarColor(
-              Number(`${approver.team_member_id.charCodeAt(0)}`)
-            )}
-            className={classes.requester}
+          <Tooltip
+            key={approver.user_id}
+            label={`${approver.user_first_name} ${approver.user_last_name}`}
+            withArrow
           >
-            {approver.user.user_first_name[0] + approver.user.user_last_name[0]}
-          </Avatar>
+            <Avatar
+              src={approver.user_avatar || null}
+              {...defaultAvatarProps}
+              color={getAvatarColor(
+                Number(`${approver.team_member_id.charCodeAt(0)}`)
+              )}
+              className={classes.requester}
+            >
+              {approver.user_first_name[0] + approver.user_last_name[0]}
+            </Avatar>
+          </Tooltip>
         </Flex>
       </Grid.Col>
       <Grid.Col span="content">

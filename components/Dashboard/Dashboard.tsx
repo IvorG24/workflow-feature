@@ -1,4 +1,3 @@
-import { TEMP_TICKET_LIST } from "@/pages/team-requests/tickets";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
@@ -39,7 +38,11 @@ const DAYSDATA = [
   { value: "0", label: "Custom" },
 ];
 
-const Dashboard = () => {
+type Props = {
+  ticketListCount: number;
+};
+
+const Dashboard = ({ ticketListCount }: Props) => {
   const router = useRouter();
   const formList = useFormList();
   const activeTeam = useActiveTeam();
@@ -159,15 +162,10 @@ const Dashboard = () => {
         <Group position="apart">
           <Title order={2}>Dashboard</Title>
         </Group>
-        {TEMP_TICKET_LIST.filter((ticket) => ticket.ticket_status === "PENDING")
-          .length > 0 && (
+        {ticketListCount > 0 && (
           <Alert variant="light" color="blue" title="Pending Tickets">
             <Group>
-              <Text>{`Your team have (${
-                TEMP_TICKET_LIST.filter(
-                  (ticket) => ticket.ticket_status === "PENDING"
-                ).length
-              }) pending tickets.`}</Text>
+              <Text>{`Your team have (${ticketListCount}) pending tickets.`}</Text>
               <Button
                 size="xs"
                 onClick={() => router.push("/team-requests/tickets")}
