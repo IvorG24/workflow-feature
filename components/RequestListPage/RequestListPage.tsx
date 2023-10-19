@@ -122,6 +122,11 @@ const RequestListPage = ({
           "RequestListPage handleFilterFormsError: active team_id not found"
         );
         return;
+      } else if (!teamMember) {
+        console.warn(
+          "RequestListPage handleFilterFormsError: team member id not found"
+        );
+        return;
       }
 
       setActivePage(1);
@@ -139,7 +144,7 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         search: search,
         isApproversView,
-        teamMemberId: teamMember?.team_member_id,
+        teamMemberId: teamMember.team_member_id,
       };
 
       const { data, count } = await getRequestList(supabaseClient, {
@@ -163,7 +168,7 @@ const RequestListPage = ({
     try {
       setIsFetchingRequestList(true);
       if (!activeTeam.team_id) return;
-
+      if (!teamMember) return;
       const {
         search,
         requestorList,
@@ -183,13 +188,14 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         search: search,
         isApproversView,
-        teamMemberId: teamMember?.team_member_id,
+        teamMemberId: teamMember.team_member_id,
       };
 
       const { data, count } = await getRequestList(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
+
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
@@ -214,7 +220,7 @@ const RequestListPage = ({
     if (localStorageFilter) {
       handleFilterForms();
     }
-  }, [activeTeam.team_id]);
+  }, [activeTeam.team_id, teamMember]);
 
   useBeforeunload(() => {
     const filterValues = getValues();

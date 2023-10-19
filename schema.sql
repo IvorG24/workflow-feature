@@ -2056,7 +2056,7 @@ RETURNS JSON AS $$
             AND signer_team_member_id = '${teamMemberId}'
             AND request_status = 'PENDING'
           `
-        );
+        )[0];
       }
 
       const request_data = request_list.map(request => {
