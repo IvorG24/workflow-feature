@@ -51,7 +51,7 @@ const TicketListItem = ({ ticket }: Props) => {
   const router = useRouter();
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
   const requester = ticket.ticket_requester;
-  const approver = ticket.ticket_requester;
+  const approver = ticket.ticket_approver;
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
