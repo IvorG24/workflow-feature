@@ -210,7 +210,7 @@ const RequestListPage = ({
 
   useEffect(() => {
     handlePagination();
-  }, [activeTeam.team_id, teamMember]);
+  }, [activePage]);
 
   useEffect(() => {
     const localStorageFilter = localStorage.getItem(
@@ -220,7 +220,7 @@ const RequestListPage = ({
     if (localStorageFilter) {
       handleFilterForms();
     }
-  }, [activeTeam.team_id]);
+  }, [activeTeam.team_id, teamMember]);
 
   useBeforeunload(() => {
     const filterValues = getValues();
