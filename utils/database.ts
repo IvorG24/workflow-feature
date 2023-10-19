@@ -569,6 +569,7 @@ export type Database = {
           request_id: string;
           request_is_disabled: boolean;
           request_jira_id: string | null;
+          request_jira_link: string | null;
           request_otp_id: string | null;
           request_project_id: string | null;
           request_status: string;
@@ -582,6 +583,7 @@ export type Database = {
           request_id?: string;
           request_is_disabled?: boolean;
           request_jira_id?: string | null;
+          request_jira_link?: string | null;
           request_otp_id?: string | null;
           request_project_id?: string | null;
           request_status?: string;
@@ -595,6 +597,7 @@ export type Database = {
           request_id?: string;
           request_is_disabled?: boolean;
           request_jira_id?: string | null;
+          request_jira_link?: string | null;
           request_otp_id?: string | null;
           request_project_id?: string | null;
           request_status?: string;

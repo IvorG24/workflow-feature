@@ -3,20 +3,26 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import useRouteChange from "./useRouteChange";
 
-const useRealtimeRequestJiraID = (
+const useRealtimeRequestJira = (
   supabaseClient: SupabaseClient<Database>,
-  params: { requestId: string; initialRequestJiraID: string | null }
+  params: {
+    requestId: string;
+    initialRequestJira: {
+      id: string | null;
+      link: string | null;
+    };
+  }
 ) => {
-  const { requestId, initialRequestJiraID } = params;
-  const [requestJiraID, setRequestJiraID] = useState(initialRequestJiraID);
+  const { requestId, initialRequestJira } = params;
+  const [requestJira, setRequestJira] = useState(initialRequestJira);
 
   useRouteChange(() => {
-    setRequestJiraID(initialRequestJiraID);
+    setRequestJira(initialRequestJira);
   });
 
   useEffect(() => {
     const channel = supabaseClient
-      .channel("realtime request jira id")
+      .channel("realtime request jira")
       .on(
         "postgres_changes",
         {
@@ -26,7 +32,10 @@ const useRealtimeRequestJiraID = (
           filter: `request_id=eq.${requestId}`,
         },
         (payload) => {
-          setRequestJiraID(payload.new.request_jira_id);
+          setRequestJira({
+            id: payload.new.request_jira_id,
+            link: payload.new.request_jira_link,
+          });
         }
       )
       .subscribe();
@@ -36,7 +45,7 @@ const useRealtimeRequestJiraID = (
     };
   }, [supabaseClient, requestId]);
 
-  return requestJiraID;
+  return requestJira;
 };
 
-export default useRealtimeRequestJiraID;
+export default useRealtimeRequestJira;
