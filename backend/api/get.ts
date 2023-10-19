@@ -11,6 +11,7 @@ import {
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
+  CreateTicketPageOnLoad,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -30,6 +31,11 @@ import {
   TeamMemberWithUserDetails,
   TeamOnLoad,
   TeamTableRow,
+  TicketListOnLoad,
+  TicketListType,
+  TicketPageOnLoad,
+  TicketStatusType,
+  TicketType,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -3593,4 +3599,155 @@ export const getService = async (
   if (error) throw error;
 
   return data as unknown as ServiceWithScopeAndChoice;
+};
+
+// Get create ticket on load
+export const getCreateTicketOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_create_ticket_on_load", {
+      input_data: params,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as CreateTicketPageOnLoad;
+};
+
+// Get ticket on load
+export const getTicketOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ticket_on_load", {
+      input_data: params,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as TicketPageOnLoad;
+};
+
+// Get ticket member user data
+export const getTicketMemberUserData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `team_member_user: team_member_user_id!inner(
+        user_id, 
+        user_first_name, 
+        user_last_name, 
+        user_username, 
+        user_avatar
+      )`
+    )
+    .eq("team_member_id", params.teamMemberId)
+    .limit(1);
+
+  if (data) {
+    const commentTeamMember = data[0];
+    return commentTeamMember as unknown as TicketType["ticket_comment"][0]["ticket_comment_team_member"];
+  } else {
+    return null;
+  }
+};
+
+// Get ticket list
+export const getTicketList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    requester?: string[];
+    approver?: string[];
+    status?: TicketStatusType[];
+    category?: string[];
+    sort?: "ascending" | "descending";
+    search?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    requester,
+    approver,
+    status,
+    category,
+    sort = "descending",
+    search = "",
+  } = params;
+
+  const requesterCondition = requester
+    ?.map(
+      (value) => `ticket_table.ticket_requester_team_member_id = '${value}'`
+    )
+    .join(" OR ");
+  const approverCondition = approver
+    ?.map((value) => `ticket_table.ticket_approver_team_member_id = '${value}'`)
+    .join(" OR ");
+  const statusCondition = status
+    ?.map((value) => `ticket_table.ticket_status = '${value}'`)
+    .join(" OR ");
+  const categoryCondition = category
+    ?.map((value) => `ticket_table.ticket_category = '${value}'`)
+    .join(" OR ");
+
+  const searchCondition =
+    search && search?.length > 0 && validator.isUUID(search)
+      ? `ticket_table.ticket_id = '${search}'`
+      : `ticket_table.ticket_id::text LIKE '${search}%'`;
+
+  const { data, error } = await supabaseClient.rpc("fetch_ticket_list", {
+    input_data: {
+      teamId: teamId,
+      page: page,
+      limit: limit,
+      requester: requesterCondition ? `AND (${requesterCondition})` : "",
+      approver: approverCondition ? `AND (${approverCondition})` : "",
+      category: categoryCondition ? `AND (${categoryCondition})` : "",
+      status: statusCondition ? `AND (${statusCondition})` : "",
+      search: searchCondition ? `AND (${searchCondition})` : "",
+      sort: sort === "descending" ? "DESC" : "ASC",
+    },
+  });
+
+  if (error) throw error;
+  const dataFormat = data as unknown as {
+    data: TicketListType;
+    count: number;
+  };
+
+  return { data: dataFormat.data, count: dataFormat.count };
+};
+
+// Get ticket list on load
+export const getTicketListOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ticket_list_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as TicketListOnLoad;
 };
