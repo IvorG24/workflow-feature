@@ -3663,7 +3663,7 @@ export const getTicketList = async (
     status,
     category,
     sort = "descending",
-    search,
+    search = "",
   } = params;
 
   const requesterCondition = requester
