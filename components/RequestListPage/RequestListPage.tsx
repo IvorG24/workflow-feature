@@ -195,6 +195,7 @@ const RequestListPage = ({
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
+
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
