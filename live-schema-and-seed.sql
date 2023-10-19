@@ -1999,7 +1999,7 @@ RETURNS JSON AS $$
 
         request_count = plv8.execute(
           `
-            SELECT DISTINCT COUNT(*)
+            SELECT COUNT(DISTINCT request_id)
             FROM request_table
             INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
             INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
@@ -2044,7 +2044,7 @@ RETURNS JSON AS $$
         );
         request_count = plv8.execute(
           `
-            SELECT DISTINCT COUNT(*)
+            SELECT COUNT(DISTINCT request_id)
             FROM request_table
             INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
             INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
@@ -2056,7 +2056,7 @@ RETURNS JSON AS $$
             AND signer_team_member_id = '${teamMemberId}'
             AND request_status = 'PENDING'
           `
-        );
+        )[0];
       }
 
       const request_data = request_list.map(request => {
