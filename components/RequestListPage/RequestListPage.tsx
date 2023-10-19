@@ -122,6 +122,11 @@ const RequestListPage = ({
           "RequestListPage handleFilterFormsError: active team_id not found"
         );
         return;
+      } else if (!teamMember) {
+        console.warn(
+          "RequestListPage handleFilterFormsError: team member id not found"
+        );
+        return;
       }
 
       setActivePage(1);
@@ -204,7 +209,7 @@ const RequestListPage = ({
 
   useEffect(() => {
     handlePagination();
-  }, [activePage]);
+  }, [activeTeam.team_id, teamMember]);
 
   useEffect(() => {
     const localStorageFilter = localStorage.getItem(
