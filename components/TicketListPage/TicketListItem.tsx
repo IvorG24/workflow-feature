@@ -57,7 +57,20 @@ const TicketListItem = ({ ticket }: Props) => {
     <Grid m={0} px="sm" py={0} justify="space-between">
       <Grid.Col span={2}>
         <Flex justify="space-between">
-          <Text truncate maw={150}>
+          <Text
+            truncate
+            maw={150}
+            component="a"
+            sx={{
+              ":hover": {
+                cursor: "pointer",
+                textDecoration: "underline",
+              },
+            }}
+            onClick={() =>
+              router.push(`/team-requests/tickets/${ticket.ticket_id}`)
+            }
+          >
             {ticket.ticket_id}
           </Text>
           <CopyButton value={ticket.ticket_id}>
