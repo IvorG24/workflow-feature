@@ -1,5 +1,6 @@
 import { getRequestList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import {
   FormStatusType,
@@ -42,6 +43,7 @@ export type FilterFormValues = {
   formList: string[];
   status?: FormStatusType[];
   isAscendingSort: boolean;
+  isApproversView: boolean;
 };
 
 export type RequestListLocalFilter = {
@@ -51,6 +53,7 @@ export type RequestListLocalFilter = {
   formList: string[];
   status: FormStatusType[] | undefined;
   isAscendingSort: boolean;
+  isApproversView: boolean;
 };
 
 type Props = {
@@ -71,6 +74,7 @@ const RequestListPage = ({
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const teamMember = useUserTeamMember();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] =
@@ -85,6 +89,7 @@ const RequestListPage = ({
         formList: [],
         status: undefined,
         isAscendingSort: false,
+        isApproversView: false,
       },
     }
   );
@@ -108,6 +113,7 @@ const RequestListPage = ({
       formList,
       status,
       isAscendingSort,
+      isApproversView,
     }: FilterFormValues = getValues()
   ) => {
     try {
@@ -132,12 +138,15 @@ const RequestListPage = ({
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
         search: search,
+        isApproversView,
+        teamMemberId: teamMember?.team_member_id,
       };
 
       const { data, count } = await getRequestList(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
+
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
@@ -155,8 +164,14 @@ const RequestListPage = ({
       setIsFetchingRequestList(true);
       if (!activeTeam.team_id) return;
 
-      const { search, requestorList, formList, status, isAscendingSort } =
-        getValues();
+      const {
+        search,
+        requestorList,
+        formList,
+        status,
+        isAscendingSort,
+        isApproversView,
+      } = getValues();
 
       const params = {
         teamId: activeTeam.team_id,
@@ -167,13 +182,14 @@ const RequestListPage = ({
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
         search: search,
+        isApproversView,
+        teamMemberId: teamMember?.team_member_id,
       };
 
       const { data, count } = await getRequestList(supabaseClient, {
         ...params,
         sort: isAscendingSort ? "ascending" : "descending",
       });
-
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {

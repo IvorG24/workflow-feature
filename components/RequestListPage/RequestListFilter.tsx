@@ -1,6 +1,7 @@
 import { TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
+  Checkbox,
   Flex,
   MultiSelect,
   TextInput,
@@ -29,6 +30,7 @@ type FilterSelectedValuesType = {
   statusFilter: string[];
   requestorFilter: string[];
   approverFilter: string[];
+  isApproversView: boolean;
 };
 
 const RequestListFilter = ({
@@ -56,6 +58,7 @@ const RequestListFilter = ({
       statusFilter: [],
       requestorFilter: [],
       approverFilter: [],
+      isApproversView: false,
     });
 
   const memberList = teamMemberList.map((member) => ({
@@ -88,15 +91,15 @@ const RequestListFilter = ({
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
-    value: string[] = []
+    value: string[] | boolean = []
   ) => {
     const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
       // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterForms();
+      setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
     }
-    setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
   };
 
   useEffect(() => {
@@ -104,10 +107,11 @@ const RequestListFilter = ({
     Object.entries(localFilter).forEach(([key, value]) => {
       setValue(key as keyof FilterFormValues, value);
     });
+    setFilterSelectedValues(localFilter as unknown as FilterSelectedValuesType);
   }, [localFilter, setValue]);
 
   return (
-    <Flex gap="sm" wrap="wrap">
+    <Flex gap="sm" wrap="wrap" align="center">
       <Controller
         control={control}
         name="isAscendingSort"
@@ -147,6 +151,7 @@ const RequestListFilter = ({
         sx={{ flex: 2 }}
         miw={250}
         maw={320}
+        disabled={filterSelectedValues.isApproversView}
       />
 
       <Controller
@@ -168,6 +173,7 @@ const RequestListFilter = ({
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
+            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
@@ -191,6 +197,7 @@ const RequestListFilter = ({
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
+            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
@@ -214,6 +221,7 @@ const RequestListFilter = ({
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
+            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
@@ -237,9 +245,29 @@ const RequestListFilter = ({
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
+            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
+
+      <Tooltip label="Filter all your pending requests.">
+        <Checkbox
+          label="Approver's View"
+          {...register("isApproversView")}
+          onChange={(e) => {
+            setValue("isApproversView", e.target.checked);
+            handleFilterChange("isApproversView", e.target.checked);
+          }}
+          sx={{
+            label: {
+              cursor: "pointer",
+            },
+            input: {
+              cursor: "pointer",
+            },
+          }}
+        />
+      </Tooltip>
     </Flex>
   );
 };

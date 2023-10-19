@@ -166,6 +166,8 @@ export const getRequestList = async (
     form?: string[];
     sort?: "ascending" | "descending";
     search?: string;
+    isApproversView: boolean;
+    teamMemberId?: string;
   }
 ) => {
   const {
@@ -178,6 +180,8 @@ export const getRequestList = async (
     form,
     sort = "descending",
     search,
+    isApproversView,
+    teamMemberId,
   } = params;
 
   const requestorCondition = requestor
@@ -209,6 +213,8 @@ export const getRequestList = async (
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
+      isApproversView,
+      teamMemberId,
     },
   });
 

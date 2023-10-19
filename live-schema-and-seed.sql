@@ -1957,58 +1957,107 @@ RETURNS JSON AS $$
         form,
         sort,
         search,
+        isApproversView,
+        teamMemberId
       } = input_data;
 
       const start = (page - 1) * limit;
 
-      const request_list = plv8.execute(
-        `
-          SELECT DISTINCT
-            request_table.request_id, 
-            request_table.request_formsly_id,
-            request_date_created, 
-            request_status,
-            request_team_member_id,
-            request_jira_id,
-            request_jira_link,
-            request_otp_id,
-            request_form_id
-          FROM request_table
-          INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
-          INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
-          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-          ${requestor}
-          ${approver}
-          ${status}
-          ${form}
-          ${search}
-          ORDER BY request_table.request_date_created ${sort} 
-          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-        `
-      );
+      let request_list = [];
+      let request_count = 0;
 
-      const request_count = plv8.execute(
-        `
-          SELECT DISTINCT COUNT(*)
-          FROM request_table
-          INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
-          INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
-          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-          ${requestor}
-          ${approver}
-          ${status}
-          ${form}
-          ${search}
-        `
-      )[0];
+      if(!isApproversView) {
+        request_list = plv8.execute(
+          `
+            SELECT DISTINCT
+              request_table.request_id, 
+              request_table.request_formsly_id,
+              request_date_created, 
+              request_status,
+              request_team_member_id,
+              request_jira_id,
+              request_jira_link,
+              request_otp_id,
+              request_form_id
+            FROM request_table
+            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            ${requestor}
+            ${approver}
+            ${status}
+            ${form}
+            ${search}
+            ORDER BY request_table.request_date_created ${sort} 
+            OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+          `
+        );
+
+        request_count = plv8.execute(
+          `
+            SELECT DISTINCT COUNT(*)
+            FROM request_table
+            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            ${requestor}
+            ${approver}
+            ${status}
+            ${form}
+            ${search}
+          `
+        )[0];
+      }else {
+        request_list = plv8.execute(
+          `
+            SELECT DISTINCT
+              request_table.request_id, 
+              request_table.request_formsly_id,
+              request_date_created, 
+              request_status,
+              request_team_member_id,
+              request_jira_id,
+              request_jira_link,
+              request_otp_id,
+              request_form_id
+            FROM request_table
+            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND signer_team_member_id = '${teamMemberId}'
+            AND request_status = 'PENDING'
+            ORDER BY request_table.request_date_created ${sort} 
+            OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+          `
+        );
+        request_count = plv8.execute(
+          `
+            SELECT DISTINCT COUNT(*)
+            FROM request_table
+            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND signer_team_member_id = '${teamMemberId}'
+            AND request_status = 'PENDING'
+          `
+        );
+      }
 
       const request_data = request_list.map(request => {
         const request_team_member = plv8.execute(
