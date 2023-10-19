@@ -3684,7 +3684,7 @@ export const getTicketList = async (
   const searchCondition =
     search && search?.length > 0 && validator.isUUID(search)
       ? `ticket_table.ticket_id = '${search}'`
-      : undefined;
+      : `ticket_table.ticket_id::text LIKE '${search}%'`;
 
   const { data, error } = await supabaseClient.rpc("fetch_ticket_list", {
     input_data: {
@@ -3695,7 +3695,7 @@ export const getTicketList = async (
       approver: approverCondition ? `AND (${approverCondition})` : "",
       category: categoryCondition ? `AND (${categoryCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
-      search: search ? `AND (${searchCondition})` : "",
+      search: searchCondition ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
     },
   });

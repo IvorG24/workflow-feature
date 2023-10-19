@@ -108,24 +108,26 @@ const TicketListItem = ({ ticket }: Props) => {
         </Flex>
       </Grid.Col>
       <Grid.Col span={1}>
-        <Flex px={0} gap={8} wrap="wrap">
-          <Tooltip
-            key={approver.user_id}
-            label={`${approver.user_first_name} ${approver.user_last_name}`}
-            withArrow
-          >
-            <Avatar
-              src={approver.user_avatar || null}
-              {...defaultAvatarProps}
-              color={getAvatarColor(
-                Number(`${approver.team_member_id.charCodeAt(0)}`)
-              )}
-              className={classes.requester}
+        {ticket.ticket_approver_team_member_id && (
+          <Flex px={0} gap={8} wrap="wrap">
+            <Tooltip
+              key={approver.user_id}
+              label={`${approver.user_first_name} ${approver.user_last_name}`}
+              withArrow
             >
-              {approver.user_first_name[0] + approver.user_last_name[0]}
-            </Avatar>
-          </Tooltip>
-        </Flex>
+              <Avatar
+                src={approver.user_avatar || null}
+                {...defaultAvatarProps}
+                color={getAvatarColor(
+                  Number(`${approver.team_member_id.charCodeAt(0)}`)
+                )}
+                className={classes.requester}
+              >
+                {approver.user_first_name[0] + approver.user_last_name[0]}
+              </Avatar>
+            </Tooltip>
+          </Flex>
+        )}
       </Grid.Col>
       <Grid.Col span="content">
         <Text miw={105}>
