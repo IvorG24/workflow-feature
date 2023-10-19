@@ -144,7 +144,7 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         search: search,
         isApproversView,
-        teamMemberId: teamMember?.team_member_id,
+        teamMemberId: teamMember.team_member_id,
       };
 
       const { data, count } = await getRequestList(supabaseClient, {
@@ -188,7 +188,7 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         search: search,
         isApproversView,
-        teamMemberId: teamMember?.team_member_id,
+        teamMemberId: teamMember.team_member_id,
       };
 
       const { data, count } = await getRequestList(supabaseClient, {
