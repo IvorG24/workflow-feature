@@ -6,7 +6,7 @@ import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSectio
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
-import useRealtimeRequestJiraID from "@/hooks/useRealtimeRequestJiraID";
+import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
 import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -62,9 +62,12 @@ const RequisitionRequestPage = ({
     };
   });
 
-  const requestJiraID = useRealtimeRequestJiraID(supabaseClient, {
+  const requestJira = useRealtimeRequestJira(supabaseClient, {
     requestId: request.request_id,
-    initialRequestJiraID: request.request_jira_id,
+    initialRequestJira: {
+      id: request.request_jira_id,
+      link: request.request_jira_link,
+    },
   });
 
   const requestStatus = useRealtimeRequestStatus(supabaseClient, {
@@ -102,7 +105,8 @@ const RequisitionRequestPage = ({
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string
+    jiraId?: string,
+    jiraLink?: string
   ) => {
     try {
       setIsLoading(true);
@@ -128,6 +132,7 @@ const RequisitionRequestPage = ({
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
+        jiraLink,
       });
 
       notifications.show({
@@ -247,7 +252,7 @@ const RequisitionRequestPage = ({
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
-          requestJiraID={requestJiraID}
+          requestJira={requestJira}
         />
 
         {canvassRequest.length !== 0 ? (

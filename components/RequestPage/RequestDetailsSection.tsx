@@ -4,6 +4,7 @@ import { Database } from "@/utils/database";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
+  Anchor,
   Avatar,
   Badge,
   Button,
@@ -28,7 +29,10 @@ type Props = {
   requestDateCreated: string;
   requestStatus: string;
   isPrimarySigner?: boolean;
-  requestJiraID?: string | null;
+  requestJira?: {
+    id: string | null;
+    link: string | null;
+  };
 };
 
 const RequestDetailsSection = ({
@@ -37,7 +41,7 @@ const RequestDetailsSection = ({
   requestDateCreated,
   requestStatus,
   isPrimarySigner,
-  requestJiraID,
+  requestJira,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -124,10 +128,23 @@ const RequestDetailsSection = ({
           <Text>{request.request_project.team_project_name}</Text>
         </Group>
       )}
-      {requestJiraID && (
+      {requestJira?.id && (
         <Group spacing="md" mt="xl">
           <Title order={5}>Jira ID:</Title>
-          <Text>{requestJiraID}</Text>
+          <Text>
+            <Anchor
+              href={
+                requestJira.link
+                  ? requestJira.link?.slice(0, 8) !== "https://"
+                    ? `https://${requestJira.link}`
+                    : requestJira.link
+                  : "#"
+              }
+              target="_blank"
+            >
+              {requestJira.id}
+            </Anchor>
+          </Text>
         </Group>
       )}
       {isFormslyRequisitionRequest &&
