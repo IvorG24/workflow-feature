@@ -56,6 +56,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
 
   // create comment
   const addCommentFormMethods = useForm<CommentFormProps>();
+
   const handleAddComment = async (data: CommentFormProps) => {
     if (!userProfile) return;
     if (!teamMember) return;

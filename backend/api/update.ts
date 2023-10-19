@@ -7,6 +7,8 @@ import {
   SignerTableRow,
   TeamTableRow,
   TeamTableUpdate,
+  TicketTableRow,
+  TicketType,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -360,4 +362,60 @@ export const updateOtpId = async (
     .update({ request_otp_id: otpID })
     .eq("request_id", requestID);
   if (error) throw error;
+};
+
+// Assign ticket
+export const assignTicket = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("assign_ticket", {
+      input_data: params,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as TicketType;
+};
+
+// Edit ticket response
+export const editTicketResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+    title: string;
+    description: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("edit_ticket_response", {
+      input_data: params,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as TicketTableRow;
+};
+
+// update ticket status
+export const updateTicketStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+    status: string;
+    rejectionMessage: string | null;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_ticket_status", {
+      input_data: params,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as TicketTableRow;
 };

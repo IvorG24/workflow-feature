@@ -1,7 +1,6 @@
 import { TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
-  Checkbox,
   Flex,
   MultiSelect,
   TextInput,
@@ -13,33 +12,30 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { FilterFormValues, RequestListLocalFilter } from "./RequestListPage";
+import { FilterFormValues } from "./TicketListPage";
 
-type RequestListFilterProps = {
+type Props = {
   // requestList: RequestType[];
-  formList: { label: string; value: string }[];
+  categoryList: string[];
   teamMemberList: TeamMemberWithUserType[];
-  handleFilterForms: () => void;
-  localFilter: RequestListLocalFilter;
+  handleFilterTicketList: () => void;
 };
 
 type FilterSelectedValuesType = {
-  formFilter: string[];
+  categoryFilter: string[];
   statusFilter: string[];
-  requestorFilter: string[];
+  requesterFilter: string[];
   approverFilter: string[];
-  isApproversView: boolean;
 };
 
-const RequestListFilter = ({
+const TicketListFilter = ({
   // requestList,
-  formList,
+  categoryList: initialCategoryList,
   teamMemberList,
-  handleFilterForms,
-  localFilter,
-}: RequestListFilterProps) => {
+  handleFilterTicketList,
+}: Props) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
     clearable: true,
@@ -50,15 +46,14 @@ const RequestListFilter = ({
   };
   const { ref: requestorRef, focused: requestorRefFocused } = useFocusWithin();
   const { ref: approverRef, focused: approverRefFocused } = useFocusWithin();
-  const { ref: formRef, focused: formRefFocused } = useFocusWithin();
+  const { ref: categoryRef, focused: categoryRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
-      formFilter: [],
+      categoryFilter: [],
       statusFilter: [],
-      requestorFilter: [],
+      requesterFilter: [],
       approverFilter: [],
-      isApproversView: false,
     });
 
   const memberList = teamMemberList.map((member) => ({
@@ -66,52 +61,36 @@ const RequestListFilter = ({
     label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
   }));
 
-  // const initialFormList: { value: string; label: string }[] = [];
-  // const formList = requestList.reduce((uniqueForms, request) => {
-  //   const formName = request.request_form.form_name;
-  //   const uniqueFormNames = uniqueForms.map((form) => form.label);
-  //   if (!uniqueFormNames.includes(formName)) {
-  //     uniqueForms.push({
-  //       value: request.request_form.form_id,
-  //       label: formName,
-  //     });
-  //   }
-  //   return uniqueForms;
-  // }, initialFormList);
-
   const statusList = [
-    { value: "APPROVED", label: "Approved" },
     { value: "PENDING", label: "Pending" },
-    { value: "REJECTED", label: "Rejected" },
-    { value: "CANCELED", label: "Canceled" },
+    { value: "UNDER REVIEW", label: "Under Review" },
+    { value: "INCORRECT", label: "Incorrect" },
+    { value: "CLOSED", label: "Closed" },
   ];
+
+  const categoryList = initialCategoryList.map((category) => ({
+    value: category.toUpperCase(),
+    label: category,
+  }));
 
   const { register, getValues, control, setValue } =
     useFormContext<FilterFormValues>();
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
-    value: string[] | boolean = []
+    value: string[] = []
   ) => {
     const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
       // if (value.length === 0 && filterMatch.length === 0) return;
-      handleFilterForms();
-      setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
+      handleFilterTicketList();
     }
+    setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
   };
 
-  useEffect(() => {
-    // assign values to filter form localstorage
-    Object.entries(localFilter).forEach(([key, value]) => {
-      setValue(key as keyof FilterFormValues, value);
-    });
-    setFilterSelectedValues(localFilter as unknown as FilterSelectedValuesType);
-  }, [localFilter, setValue]);
-
   return (
-    <Flex gap="sm" wrap="wrap" align="center">
+    <Flex gap="sm" wrap="wrap">
       <Controller
         control={control}
         name="isAscendingSort"
@@ -124,7 +103,7 @@ const RequestListFilter = ({
               <ActionIcon
                 onClick={async () => {
                   setValue("isAscendingSort", !getValues("isAscendingSort"));
-                  handleFilterForms();
+                  handleFilterTicketList();
                 }}
                 size={36}
                 color="dark.3"
@@ -141,7 +120,7 @@ const RequestListFilter = ({
         }}
       />
       <TextInput
-        placeholder="Search by request id"
+        placeholder="Search by ticket id"
         rightSection={
           <ActionIcon size="xs" type="submit">
             <IconSearch />
@@ -151,29 +130,27 @@ const RequestListFilter = ({
         sx={{ flex: 2 }}
         miw={250}
         maw={320}
-        disabled={filterSelectedValues.isApproversView}
       />
 
       <Controller
         control={control}
-        name="formList"
-        defaultValue={localFilter.formList}
+        name="categoryList"
         render={({ field: { value, onChange } }) => (
           <MultiSelect
-            data={formList}
-            placeholder="Form"
-            ref={formRef}
+            data={categoryList}
+            placeholder="Category"
+            ref={categoryRef}
             value={value}
             onChange={(value) => {
               onChange(value);
-              if (!formRefFocused) handleFilterChange("formFilter", value);
+              if (!categoryRefFocused)
+                handleFilterChange("categoryFilter", value);
             }}
-            onDropdownClose={() => handleFilterChange("formFilter", value)}
+            onDropdownClose={() => handleFilterChange("categoryFilter", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
-            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
@@ -197,31 +174,29 @@ const RequestListFilter = ({
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
-            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
 
       <Controller
         control={control}
-        name="requestorList"
+        name="requesterList"
         render={({ field: { value, onChange } }) => (
           <MultiSelect
-            placeholder="Requestor"
+            placeholder="Requester"
             ref={requestorRef}
             data={memberList}
             value={value}
             onChange={(value) => {
               onChange(value);
               if (!requestorRefFocused)
-                handleFilterChange("requestorFilter", value);
+                handleFilterChange("requesterFilter", value);
             }}
-            onDropdownClose={() => handleFilterChange("requestorFilter", value)}
+            onDropdownClose={() => handleFilterChange("requesterFilter", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
-            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
@@ -245,31 +220,11 @@ const RequestListFilter = ({
             sx={{ flex: 1 }}
             miw={250}
             maw={320}
-            disabled={filterSelectedValues.isApproversView}
           />
         )}
       />
-
-      <Tooltip label="Filter all your pending requests.">
-        <Checkbox
-          label="Approver's View"
-          {...register("isApproversView")}
-          onChange={(e) => {
-            setValue("isApproversView", e.target.checked);
-            handleFilterChange("isApproversView", e.target.checked);
-          }}
-          sx={{
-            label: {
-              cursor: "pointer",
-            },
-            input: {
-              cursor: "pointer",
-            },
-          }}
-        />
-      </Tooltip>
     </Flex>
   );
 };
 
-export default RequestListFilter;
+export default TicketListFilter;
