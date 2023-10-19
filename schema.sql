@@ -347,6 +347,40 @@ CREATE TABLE csi_code_table(
   csi_code_level_three_description VARCHAR(4000) NOT NULL
 );
 
+-- Start: Ticket
+
+CREATE TABLE ticket_table(
+  ticket_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_title VARCHAR(4000) NOT NULL,
+  ticket_description VARCHAR(4000) NOT NULL,
+  ticket_category VARCHAR(4000) NOT NULL,
+  ticket_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  ticket_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ticket_status_date_updated TIMESTAMPTZ,
+  
+  ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+-- END: Ticket
+
+-- Start: Ticket comment
+
+CREATE TABLE ticket_comment_table(
+  ticket_comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_comment_content VARCHAR(4000) NOT NULL,
+  ticket_comment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  ticket_comment_is_edited BOOLEAN DEFAULT FALSE NOT NULL,
+  ticket_comment_type VARCHAR(4000) NOT NULL,
+  ticket_comment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ticket_comment_last_updated TIMESTAMPTZ,
+
+  ticket_comment_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
+  ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+);
+
+-- END: Ticket comment
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -5205,6 +5239,445 @@ $$ LANGUAGE plv8;
 
 -- End: Get all approved requisition json
 
+-- Start: Create ticket on load
+
+CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+
+    const member = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+          AND usert.user_id='${userId}';
+      `
+    )[0];
+
+    returnData = { member }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- Start: Create ticket on load
+
+-- Start: Create ticket
+
+CREATE OR REPLACE FUNCTION create_ticket(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      requester,
+      category,
+      title,
+      description,
+    } = input_data;
+
+    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_category, ticket_title, ticket_description, ticket_requester_team_member_id) VALUES ('${category}','${title}','${description}','${requester}') RETURNING *;`)[0];
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket
+
+-- Start: Get ticket on load
+
+CREATE OR REPLACE FUNCTION get_ticket_on_load(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      ticketId,
+      userId
+    } = input_data;
+
+    const ticket = plv8.execute(`SELECT *  FROM ticket_table WHERE ticket_id='${ticketId}';`)[0];
+
+    const requester = plv8.execute(`SELECT jsonb_build_object(
+          'team_member_id', tm.team_member_id,
+          'team_member_role', tm.team_member_role,
+          'team_member_user', jsonb_build_object(
+              'user_id', u.user_id,
+              'user_first_name', u.user_first_name,
+              'user_last_name', u.user_last_name,
+              'user_email', u.user_email,
+              'user_avatar', u.user_avatar
+          )
+      ) AS member
+      FROM team_member_table tm
+      JOIN user_table u ON tm.team_member_user_id = u.user_id
+      WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
+
+    let approver = null
+    if(ticket.ticket_approver_team_member_id !== null){
+      approver = plv8.execute(`SELECT jsonb_build_object(
+          'team_member_id', tm.team_member_id,
+          'team_member_role', tm.team_member_role,
+          'team_member_user', jsonb_build_object(
+              'user_id', u.user_id,
+              'user_first_name', u.user_first_name,
+              'user_last_name', u.user_last_name,
+              'user_email', u.user_email,
+              'user_avatar', u.user_avatar
+          )
+      ) AS member
+      FROM team_member_table tm
+      JOIN user_table u ON tm.team_member_user_id = u.user_id
+      WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
+    }
+
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+
+    const member = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+          AND usert.user_id='${userId}';
+      `
+    )[0];
+
+    const ticketCommentData = plv8.execute(
+      `
+        SELECT
+          ticket_comment_id, 
+          ticket_comment_content, 
+          ticket_comment_is_disabled,
+          ticket_comment_is_edited,
+          ticket_comment_type,
+          ticket_comment_date_created,
+          ticket_comment_last_updated,
+          ticket_comment_ticket_id,
+          ticket_comment_team_member_id,
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_username, 
+          user_avatar
+        FROM ticket_comment_table 
+        INNER JOIN team_member_table ON team_member_id = ticket_comment_team_member_id
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE
+          ticket_comment_ticket_id = '${ticketId}'
+        ORDER BY ticket_comment_date_created DESC
+      `
+    );
+
+    returnData = {
+      ticket: {
+        ...ticket,
+        ticket_requester: requester.member,
+        ticket_approver: approver ? approver.member : null, 
+        ticket_comment: ticketCommentData.map(ticketComment => {
+          return {
+            ticket_comment_id: ticketComment.ticket_comment_id, 
+            ticket_comment_content: ticketComment.ticket_comment_content, 
+            ticket_comment_is_disabled: ticketComment.ticket_comment_is_disabled,
+            ticket_comment_is_edited: ticketComment.ticket_comment_is_edited,
+            ticket_comment_type: ticketComment.ticket_comment_type,
+            ticket_comment_date_created: ticketComment.ticket_comment_date_created,
+            ticket_comment_last_updated: ticketComment.ticket_comment_last_updated,
+            ticket_comment_ticket_id: ticketComment.ticket_comment_ticket_id,
+            ticket_comment_team_member_id: ticketComment.ticket_comment_team_member_id,
+            ticket_comment_attachment: [],
+            ticket_comment_team_member: {
+              team_member_user: {
+                user_id: ticketComment.user_id, 
+                user_first_name: ticketComment.user_first_name, 
+                user_last_name: ticketComment.user_last_name, 
+                user_username: ticketComment.user_username, 
+                user_avatar: ticketComment.user_avatar
+              }
+            }
+          }
+        }
+      )},
+    user: member
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket
+
+-- Start: Assign ticket
+
+CREATE OR REPLACE FUNCTION assign_ticket(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      ticketId,
+      teamMemberId
+    } = input_data;
+
+    const ticket = plv8.execute(`SELECT ticket_approver_team_member_id FROM ticket_table WHERE ticket_id='${ticketId}'`)[0];
+    const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
+
+    const isAdmin = member.team_member_role === 'ADMIN' || member.team_member_role === 'OWNER'
+    if (!isAdmin) throw new Error("User is not an Admin");
+
+    const hasApprover = ticket.ticket_approver_team_member_id !== null
+    if (hasApprover) throw new Error("Ticket already have approver");
+    
+    const updatedTicket = plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+
+    const requester = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_id='${updatedTicket.ticket_requester_team_member_id}' 
+      `
+    )[0];
+
+    const approver = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_id='${teamMemberId}' 
+      `
+    )[0];
+
+    returnData = {...updatedTicket, ticket_requester: requester, ticket_approver: approver}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Assign ticket
+
+-- Start: Edit ticket response
+
+CREATE OR REPLACE FUNCTION edit_ticket_response(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      ticketId,
+      title,
+      description
+    } = input_data;
+
+    returnData = plv8.execute(`UPDATE ticket_table SET ticket_title='${title}', ticket_description='${description}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Edit ticket response
+
+-- Start: Update ticket status
+
+CREATE OR REPLACE FUNCTION update_ticket_status(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+     ticketId,
+     status,
+     rejectionMessage
+    } = input_data;
+
+    returnData = plv8.execute(`UPDATE ticket_table SET ticket_status='${status.toUpperCase()}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Edit ticket response
+
+-- Start: Fetch ticket list
+
+CREATE OR REPLACE FUNCTION fetch_ticket_list(
+    input_data JSON
+)
+RETURNS JSON AS $$
+    let return_value
+    plv8.subtransaction(function(){
+      const {
+        teamId,
+        page,
+        limit,
+        requester,
+        approver,
+        status,
+        sort,
+        category,
+        search,
+      } = input_data;
+
+      const start = (page - 1) * limit;
+
+      const ticket_list = plv8.execute(
+        `
+          SELECT DISTINCT
+            ticket_table.*
+          FROM ticket_table
+          INNER JOIN team_member_table tm ON ticket_table.ticket_requester_team_member_id = tm.team_member_id
+          WHERE tm.team_member_team_id = '${teamId}'
+          ${requester}
+          ${approver}
+          ${status}
+          ${category}
+          ${search}
+          ORDER BY ticket_table.ticket_date_created ${sort} 
+          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+        `
+      );
+
+      const ticket_count = plv8.execute(
+        `
+          SELECT DISTINCT COUNT(*)
+          FROM ticket_table
+          INNER JOIN team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
+          WHERE team_member_table.team_member_team_id = '${teamId}'
+          ${requester}
+          ${approver}
+          ${status}
+          ${category}
+          ${search}
+        `
+      )[0];
+
+      const ticket_data = ticket_list.map(ticket => {
+        const ticket_requester = plv8.execute(
+          `
+            SELECT 
+              team_member_table.team_member_id, 
+              user_table.user_id,
+              user_table.user_first_name,
+              user_table.user_last_name,
+              user_table.user_username,
+              user_table.user_avatar
+            FROM team_member_table
+            INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+            WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
+          `
+        )[0];
+        let ticket_approver = {}
+        if(ticket.ticket_approver_team_member_id){
+          ticket_approver = plv8.execute(
+            `
+              SELECT 
+                team_member_table.team_member_id, 
+                user_table.user_id,
+                user_table.user_first_name,
+                user_table.user_last_name,
+                user_table.user_username,
+                user_table.user_avatar
+              FROM team_member_table
+              INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+              WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
+            `
+          )[0];
+        }
+
+        return {
+          ...ticket,
+          ticket_requester,
+          ticket_approver,
+        }
+      });
+
+      returnData = {
+        data: ticket_data, 
+        count: Number(ticket_count.count)
+      };
+    });
+    return returnData
+$$ LANGUAGE plv8;
+
+-- End: Fetch ticket list
+
+-- Start: Get ticket list on load
+
+CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+    } = input_data;
+    
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+
+    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
+
+    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get ticket list on load
+
 ---------- End: FUNCTIONS
 
 
@@ -5233,6 +5706,8 @@ ALTER TABLE team_group_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
@@ -5351,6 +5826,16 @@ DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_ta
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_comment_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_comment_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_comment_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_comment_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -6489,6 +6974,62 @@ USING (
   )
 );
 
+--- TICKET_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."ticket_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "public"."ticket_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  ticket_requester_team_member_id IN (
+    SELECT team_member_id  
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  )
+);
+
+--- TICKET_COMMENT_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "public"."ticket_comment_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  ticket_comment_team_member_id IN (
+    SELECT team_member_id  
+    FROM team_member_table 
+    WHERE team_member_user_id = auth.uid()
+  )
+);
+
 -------- End: POLICIES
 
 ---------- Start: INDEXES
@@ -6511,7 +7052,7 @@ DROP PUBLICATION if exists supabase_realtime;
 CREATE PUBLICATION supabase_realtime;
 COMMIT;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table;
+ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table ;
 
 -------- END: SUBSCRIPTION
 

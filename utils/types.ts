@@ -171,6 +171,20 @@ export type ServiceScopeChoiceTableInsert =
 export type ServiceScopeChoiceTableUpdate =
   Database["public"]["Tables"]["service_scope_choice_table"]["Update"];
 
+export type TicketTableRow =
+  Database["public"]["Tables"]["ticket_table"]["Row"];
+export type TicketTableInsert =
+  Database["public"]["Tables"]["ticket_table"]["Insert"];
+export type TicketTableUpdate =
+  Database["public"]["Tables"]["ticket_table"]["Update"];
+
+export type TicketCommentTableRow =
+  Database["public"]["Tables"]["ticket_comment_table"]["Row"];
+export type TicketCommentTableInsert =
+  Database["public"]["Tables"]["ticket_comment_table"]["Insert"];
+export type TicketCommentTableUpdate =
+  Database["public"]["Tables"]["ticket_comment_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -184,6 +198,11 @@ export type AttachmentBucketType =
   | "REQUEST_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
+export type TicketStatusType =
+  | "PENDING"
+  | "UNDER REVIEW"
+  | "INCORRECT"
+  | "CLOSED";
 export type FieldType =
   | "TEXT"
   | "TEXTAREA"
@@ -923,4 +942,81 @@ export type RequestPageOnLoad = {
   }[];
   canvassRequest?: string[];
   projectSignerStatus?: RequestProjectSignerStatusType;
+};
+
+export type CreateTicketPageOnLoad = {
+  member: {
+    team_member_id: string;
+    team_member_role: MemberRoleType;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string | null;
+      user_email: string;
+    };
+  };
+};
+
+export type TicketListType = [
+  {
+    ticket_requester: {
+      team_member_id: string;
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string | null;
+      user_email: string;
+    };
+    ticket_approver: {
+      team_member_id: string;
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string | null;
+      user_email: string;
+    };
+  } & TicketTableRow
+];
+
+export type TicketType = {
+  ticket_requester: CreateTicketPageOnLoad["member"];
+  ticket_approver: CreateTicketPageOnLoad["member"] | null;
+  ticket_comment: {
+    ticket_comment_id: string;
+    ticket_comment_content: string;
+    ticket_comment_is_disabled: boolean;
+    ticket_comment_is_edited: boolean;
+    ticket_comment_type: string;
+    ticket_comment_date_created: string;
+    ticket_comment_last_updated: string | null;
+    ticket_comment_ticket_id: string;
+    ticket_comment_team_member_id: string;
+    ticket_comment_team_member: {
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_username: string;
+        user_avatar: string | null;
+      };
+    };
+    ticket_comment_attachment: CommentAttachmentWithPublicUrl;
+  }[];
+} & TicketTableRow;
+
+export type TicketPageOnLoad = {
+  ticket: TicketType;
+  user: CreateTicketPageOnLoad["member"];
+};
+
+export type TicketCommentType =
+  RequestWithResponseType["request_comment"][0] & {
+    comment_attachment: CommentAttachmentWithPublicUrl;
+  };
+
+export type TicketListOnLoad = {
+  ticketList: TicketListType[];
+  ticketListCount: number;
+  teamMemberList: TeamMemberWithUserType[];
 };

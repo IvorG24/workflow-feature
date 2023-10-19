@@ -1,4 +1,4 @@
-import { getUserActiveTeamId } from "@/backend/api/get";
+import { getTicketList, getUserActiveTeamId } from "@/backend/api/get";
 import Dashboard from "@/components/Dashboard/Dashboard";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
@@ -20,9 +20,16 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       }
 
+      const { count: ticketListCount } = await getTicketList(supabaseClient, {
+        teamId,
+        limit: 13,
+        page: 1,
+        status: ["PENDING"],
+      });
+
       return {
         props: {
-          noData: "",
+          ticketListCount,
         },
       };
     } catch (error) {
@@ -37,11 +44,15 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   }
 );
 
-const Page = () => {
+type Props = {
+  ticketListCount: number;
+};
+
+const Page = ({ ticketListCount }: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/team-requests/requests" />
-      <Dashboard />
+      <Dashboard ticketListCount={ticketListCount} />
     </>
   );
 };

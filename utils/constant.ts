@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { SectionWithField } from "./types";
 
 export const DEFAULT_REQUEST_LIST_LIMIT = 13;
+export const DEFAULT_TICKET_LIST_LIMIT = 13;
 export const DEFAULT_FORM_LIST_LIMIT = 18;
 export const DEFAULT_TEAM_MEMBER_LIST_LIMIT = 10;
 export const DEFAULT_TEAM_GROUP_LIST_LIMIT = 10;

@@ -9,6 +9,8 @@ import {
   IconDashboard,
   IconFile,
   IconFiles,
+  IconListDetails,
+  IconTicket,
   IconUsersGroup,
 } from "@tabler/icons-react";
 import NavLinkSection from "./NavLinkSection";
@@ -40,6 +42,15 @@ const ReviewAppNavLink = () => {
         ? `/team-requests/forms/${requisitionForm.form_id}/create`
         : "",
     },
+    {
+      label: "Create Ticket",
+      icon: (
+        <Box ml="sm" py={5} mt={3}>
+          <IconTicket {...defaultIconProps} />
+        </Box>
+      ),
+      href: requisitionForm ? `/team-requests/tickets/create` : "",
+    },
   ];
 
   const overviewSection = [
@@ -60,6 +71,15 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/team-${activeApp.toLowerCase()}s/${activeApp.toLowerCase()}s`,
+    },
+    {
+      label: `Ticket List`,
+      icon: (
+        <Box ml="sm" py={5} mt={3}>
+          <IconListDetails {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/team-${activeApp.toLowerCase()}s/tickets`,
     },
   ];
 
