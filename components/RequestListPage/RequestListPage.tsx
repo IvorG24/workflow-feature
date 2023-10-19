@@ -168,7 +168,7 @@ const RequestListPage = ({
     try {
       setIsFetchingRequestList(true);
       if (!activeTeam.team_id) return;
-
+      if (!teamMember) return;
       const {
         search,
         requestorList,
