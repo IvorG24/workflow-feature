@@ -4,6 +4,7 @@ import {
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
+  getFileUrl,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
@@ -37,8 +38,9 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
+import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
@@ -79,8 +81,55 @@ const RequestPage = ({
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
 
+  const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
+    []
+  );
+  const [isFetchingApprover, setIsFetchingApprover] = useState(true);
+
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
+
+  useEffect(() => {
+    try {
+      setIsFetchingApprover(true);
+      const fetchApproverDetails = async () => {
+        const data = await Promise.all(
+          request.request_signer.map(async (signer) => {
+            let signatureUrl: string | null = null;
+            if (
+              signer.request_signer_status === "APPROVED" &&
+              signer.request_signer_signer.signer_team_member.team_member_user
+                .user_signature_attachment_id
+            ) {
+              signatureUrl = await getFileUrl(supabaseClient, {
+                path: signer.request_signer_signer.signer_team_member
+                  .team_member_user.user_signature_attachment_id,
+                bucket: "USER_SIGNATURES",
+              });
+            }
+
+            return {
+              name: `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`,
+              jobDescription:
+                signer.request_signer_signer.signer_team_member.team_member_user
+                  .user_job_title,
+              status: signer.request_signer_status,
+              date: signer.request_signer_status_date_updated,
+              signature: signatureUrl,
+            };
+          })
+        );
+        setApproverDetails(data);
+      };
+      if (request) {
+        fetchApproverDetails();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsFetchingApprover(false);
+    }
+  }, [request]);
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
@@ -577,10 +626,14 @@ const RequestPage = ({
           Request
         </Title>
         <Group>
-          <ExportToPdf
-            request={request}
-            sectionWithDuplicateList={sectionWithDuplicateList}
-          />
+          {!isFetchingApprover && approverDetails.length !== 0 && (
+            <ExportToPdf
+              request={request}
+              sectionWithDuplicateList={sectionWithDuplicateList}
+              approverDetails={approverDetails}
+            />
+          )}
+
           {connectedFormIdAndGroup &&
           connectedFormIdAndGroup.formId &&
           (connectedFormIdAndGroup.formIsForEveryone ||

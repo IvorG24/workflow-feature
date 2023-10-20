@@ -52,7 +52,7 @@ export async function getFileUrl(
   const { path, bucket } = params;
   const { data, error } = await supabaseClient.storage
     .from(bucket)
-    .download(path);
+    .download(`${path}?id=${uuidv4()}`);
   if (error) throw error;
 
   const url = URL.createObjectURL(data);

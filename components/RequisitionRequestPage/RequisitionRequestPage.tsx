@@ -1,4 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
+import { getFileUrl } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -22,6 +23,7 @@ import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
@@ -40,6 +42,14 @@ type Props = {
   canvassRequest: string[];
 };
 
+export type ApproverDetailsType = {
+  name: string;
+  jobDescription: string | null;
+  status: string;
+  date: string | null;
+  signature: string | null;
+};
+
 const RequisitionRequestPage = ({
   request,
   // connectedForm,
@@ -49,9 +59,56 @@ const RequisitionRequestPage = ({
   const supabaseClient = useSupabaseClient();
   // const router = useRouter();
 
+  const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
+    []
+  );
+  const [isFetchingApprover, setIsFetchingApprover] = useState(true);
+
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
+
+  useEffect(() => {
+    try {
+      setIsFetchingApprover(true);
+      const fetchApproverDetails = async () => {
+        const data = await Promise.all(
+          request.request_signer.map(async (signer) => {
+            let signatureUrl: string | null = null;
+            if (
+              signer.request_signer_status === "APPROVED" &&
+              signer.request_signer_signer.signer_team_member.team_member_user
+                .user_signature_attachment_id
+            ) {
+              signatureUrl = await getFileUrl(supabaseClient, {
+                path: signer.request_signer_signer.signer_team_member
+                  .team_member_user.user_signature_attachment_id,
+                bucket: "USER_SIGNATURES",
+              });
+            }
+
+            return {
+              name: `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`,
+              jobDescription:
+                signer.request_signer_signer.signer_team_member.team_member_user
+                  .user_job_title,
+              status: signer.request_signer_status,
+              date: signer.request_signer_status_date_updated,
+              signature: signatureUrl,
+            };
+          })
+        );
+        setApproverDetails(data);
+      };
+      if (request) {
+        fetchApproverDetails();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsFetchingApprover(false);
+    }
+  }, [request]);
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -214,12 +271,14 @@ const RequisitionRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        <Group>
-          <ExportToPdf
-            request={request}
-            sectionWithDuplicateList={sectionWithDuplicateList}
-          />
-          {/* {requestStatus === "APPROVED" ? (
+        {!isFetchingApprover && approverDetails.length !== 0 && (
+          <Group>
+            <ExportToPdf
+              request={request}
+              sectionWithDuplicateList={sectionWithDuplicateList}
+              approverDetails={approverDetails}
+            />
+            {/* {requestStatus === "APPROVED" ? (
             <Group>
               {connectedForm.map((form) => {
                 if (
@@ -243,7 +302,8 @@ const RequisitionRequestPage = ({
               })}
             </Group>
           ) : null} */}
-        </Group>
+          </Group>
+        )}
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection

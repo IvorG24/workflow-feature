@@ -136,9 +136,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   approverColumn: {
-    width: "33%",
-    padding: "0px 10px",
+    width: "50%",
+    padding: 10,
     textAlign: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   icon: {
     width: "12px",
@@ -171,6 +173,8 @@ type Props = {
     name: string;
     status: string;
     date: string | null;
+    jobDescription: string | null;
+    signature: string | null;
   }[];
 };
 
@@ -185,7 +189,7 @@ const PdfDocumentTableVersion = ({
     switch (status) {
       case "APPROVED":
         return (
-          <View style={[styles.badge, styles.approved, styles.approverColumn]}>
+          <View style={[styles.badge, styles.approved]}>
             <View style={styles.flex}>
               <Text>APPROVED</Text>
               <Image src="/check.png" style={styles.icon} />
@@ -194,7 +198,7 @@ const PdfDocumentTableVersion = ({
         );
       case "REJECTED":
         return (
-          <View style={[styles.badge, styles.rejected, styles.approverColumn]}>
+          <View style={[styles.badge, styles.rejected]}>
             <View style={styles.flex}>
               <Text>REJECTED</Text>
               <Image src="/cross.png" style={styles.icon} />
@@ -203,7 +207,7 @@ const PdfDocumentTableVersion = ({
         );
       case "PENDING":
         return (
-          <View style={[styles.badge, styles.pending, styles.approverColumn]}>
+          <View style={[styles.badge, styles.pending]}>
             <View style={styles.flex}>
               <Text>PENDING</Text>
               <Image src="/dot.png" style={styles.icon} />
@@ -331,7 +335,7 @@ const PdfDocumentTableVersion = ({
           </View>
         </Fragment>
 
-        <View wrap={false}>
+        <View>
           <View style={styles.divider} />
           <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
             Approvers
@@ -339,17 +343,29 @@ const PdfDocumentTableVersion = ({
           <View style={styles.column}>
             {approverDetails.map((approver, i) => (
               <View key={i} style={styles.approverContainer}>
-                <Text style={[styles.approverColumn, { textAlign: "left" }]}>
-                  {approver.name}
-                </Text>
+                <View style={[styles.approverColumn]}>
+                  {approver.signature && (
+                    <Image
+                      src={approver.signature}
+                      style={{ height: "50px", width: "75px" }}
+                    />
+                  )}
+                  <Text style={{ fontSize: 12, fontWeight: 600 }}>
+                    {approver.name}
+                  </Text>
+                  <Text style={{ color: "#868E96" }}>
+                    {approver.jobDescription}
+                  </Text>
+                </View>
 
-                {formatStatus(approver.status)}
-
-                <Text style={[styles.approverColumn, { textAlign: "right" }]}>
-                  {approver.date
-                    ? new Date(approver.date).toLocaleDateString()
-                    : ""}
-                </Text>
+                <View style={[styles.approverColumn]}>
+                  {formatStatus(approver.status)}
+                  <Text style={{ marginTop: "6px" }}>
+                    {approver.date
+                      ? new Date(approver.date).toLocaleDateString()
+                      : ""}
+                  </Text>
+                </View>
               </View>
             ))}
           </View>
