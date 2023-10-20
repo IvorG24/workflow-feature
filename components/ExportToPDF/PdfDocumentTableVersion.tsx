@@ -109,6 +109,7 @@ const styles = StyleSheet.create({
     fontSize: "8px",
     fontWeight: "bold",
     border: "solid 1px green",
+    marginTop: 5,
   },
   flex: {
     display: "flex",
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   approverColumn: {
-    width: "50%",
+    width: "100%",
     padding: 10,
     textAlign: "center",
     alignItems: "center",
@@ -342,7 +343,7 @@ const PdfDocumentTableVersion = ({
           </Text>
           <View style={styles.column}>
             {approverDetails.map((approver, i) => (
-              <View key={i} style={styles.approverContainer}>
+              <View key={i} style={styles.approverContainer} wrap={false}>
                 <View style={[styles.approverColumn]}>
                   {approver.signature && (
                     <Image
@@ -356,9 +357,6 @@ const PdfDocumentTableVersion = ({
                   <Text style={{ color: "#868E96" }}>
                     {approver.jobDescription}
                   </Text>
-                </View>
-
-                <View style={[styles.approverColumn]}>
                   {formatStatus(approver.status)}
                   <Text style={{ marginTop: "6px" }}>
                     {approver.date
