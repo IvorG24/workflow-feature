@@ -71,6 +71,16 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
     },
   ];
 
+  const approverDetails = request.request_signer.map((signer) => {
+    const fullName = `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
+
+    return {
+      name: fullName,
+      status: signer.request_signer_status,
+      date: signer.request_signer_status_date_updated,
+    };
+  });
+
   const requestIDs = [
     ...(request.request_formsly_id
       ? [
@@ -136,6 +146,7 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
         requestorDetails={requestorDetails}
         requestIDs={requestIDs}
         requestItems={requestItems}
+        approverDetails={approverDetails}
       />
     ),
   });
@@ -147,6 +158,7 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
         requestorDetails={requestorDetails}
         requestIDs={requestIDs}
         requestItems={requestItems}
+        approverDetails={approverDetails}
       />
     ),
   });

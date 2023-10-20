@@ -4773,6 +4773,7 @@ RETURNS JSON as $$
         SELECT
           request_signer_id, 
           request_signer_status, 
+          request_signer_status_date_updated,
           signer_id, 
           signer_is_primary_signer, 
           signer_action, 
@@ -4966,6 +4967,7 @@ RETURNS JSON as $$
         return {
           request_signer_id: requestSigner.request_signer_id, 
           request_signer_status: requestSigner.request_signer_status,
+          request_signer_status_date_updated: requestSigner.request_signer_status_date_updated,
           request_signer_signer: {
             signer_id: requestSigner.signer_id, 
             signer_is_primary_signer: requestSigner.signer_is_primary_signer, 

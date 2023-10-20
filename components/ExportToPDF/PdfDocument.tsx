@@ -54,6 +54,47 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  badge: {
+    padding: "0px 8px",
+    borderRadius: "16px",
+    fontSize: "8px",
+    fontWeight: "bold",
+    border: "solid 1px green",
+  },
+  flex: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+    padding: 3,
+    flexDirection: "row",
+  },
+  approved: {
+    backgroundColor: "#EBFBEE",
+    color: "#40C094",
+  },
+  rejected: {
+    backgroundColor: "#FFF5F5",
+    color: "#FA5252",
+  },
+  pending: {
+    backgroundColor: "#E7F5FF",
+    color: "#228BE6",
+  },
+  approverContainer: {
+    display: "flex",
+    width: "100%",
+    flexDirection: "row",
+  },
+  approverColumn: {
+    width: "33%",
+    padding: "0px 10px",
+    textAlign: "center",
+  },
+  icon: {
+    width: "12px",
+    height: "12px",
+  },
 });
 
 type FieldType = {
@@ -69,6 +110,45 @@ type Props = {
     title: string;
     fields: FieldType[];
   }[];
+  approverDetails: {
+    name: string;
+    status: string;
+    date: string | null;
+  }[];
+};
+
+const formatStatus = (status: string) => {
+  switch (status) {
+    case "APPROVED":
+      return (
+        <View style={[styles.badge, styles.approved, styles.approverColumn]}>
+          <View style={styles.flex}>
+            <Text>APPROVED</Text>
+            <Image src="/check.png" style={styles.icon} />
+          </View>
+        </View>
+      );
+    case "REJECTED":
+      return (
+        <View style={[styles.badge, styles.rejected, styles.approverColumn]}>
+          <View style={styles.flex}>
+            <Text>REJECTED</Text>
+            <Image src="/cross.png" style={styles.icon} />
+          </View>
+        </View>
+      );
+    case "PENDING":
+      return (
+        <View style={[styles.badge, styles.pending, styles.approverColumn]}>
+          <View style={styles.flex}>
+            <Text>PENDING</Text>
+            <Image src="/dot.png" style={styles.icon} />
+          </View>
+        </View>
+      );
+    default:
+      return <Text style={{ fontWeight: 600 }}></Text>;
+  }
 };
 
 const PdfDocument = ({
@@ -76,6 +156,7 @@ const PdfDocument = ({
   requestorDetails,
   requestIDs,
   requestItems,
+  approverDetails,
 }: Props) => (
   <Document>
     <Page size="A4" style={styles.page}>
@@ -130,6 +211,30 @@ const PdfDocument = ({
           </View>
         </View>
       ))}
+
+      <View wrap={false}>
+        <View style={styles.divider} />
+        <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+          Approvers
+        </Text>
+        <View style={styles.column}>
+          {approverDetails.map((approver, i) => (
+            <View key={i} style={styles.approverContainer}>
+              <Text style={[styles.approverColumn, { textAlign: "left" }]}>
+                {approver.name}
+              </Text>
+
+              {formatStatus(approver.status)}
+
+              <Text style={[styles.approverColumn, { textAlign: "right" }]}>
+                {approver.date
+                  ? new Date(approver.date).toLocaleDateString()
+                  : ""}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
       <Footer />
     </Page>
   </Document>
