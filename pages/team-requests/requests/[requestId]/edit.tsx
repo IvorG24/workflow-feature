@@ -111,6 +111,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   signer.signer_team_member.team_member_user.user_first_name,
                 user_last_name:
                   signer.signer_team_member.team_member_user.user_last_name,
+                user_job_title: "",
+                user_signature_attachment_id: "",
               },
             },
           },

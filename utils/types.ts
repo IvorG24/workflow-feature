@@ -322,6 +322,8 @@ export type RequestWithResponseType = RequestTableRow & {
           user_id: string;
           user_first_name: string;
           user_last_name: string;
+          user_job_title: string | null;
+          user_signature_attachment_id: string | null;
         };
       };
     };

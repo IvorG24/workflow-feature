@@ -4782,11 +4782,14 @@ RETURNS JSON as $$
           team_member_id, 
           user_id, 
           user_first_name, 
-          user_last_name
+          user_last_name,
+          user_job_title,
+          attachment_value
         FROM request_signer_table
         INNER JOIN signer_table ON signer_id = request_signer_signer_id
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
+        LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${request_id}'
       `
     );
@@ -4979,7 +4982,9 @@ RETURNS JSON as $$
               team_member_user:{
                 user_id: requestSigner.user_id, 
                 user_first_name: requestSigner.user_first_name, 
-                user_last_name: requestSigner.user_last_name
+                user_last_name: requestSigner.user_last_name,
+                user_job_title: requestSigner.user_job_title,
+                user_signature_attachment_id: requestSigner.attachment_value
               }
             },
           },

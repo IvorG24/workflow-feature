@@ -6,12 +6,14 @@ import { Button, Menu } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { IconList, IconTable } from "@tabler/icons-react";
 import moment from "moment";
+import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
 import PdfDocument from "./PdfDocument";
 import PdfDocumentTableVersion from "./PdfDocumentTableVersion";
 
 type Props = {
   request: RequestWithResponseType;
   sectionWithDuplicateList: DuplicateSectionType[];
+  approverDetails: ApproverDetailsType[];
 };
 
 Font.register({
@@ -37,7 +39,11 @@ const getReadableDate = (date: string) => {
   return readableDate;
 };
 
-const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
+const ExportToPdf = ({
+  request,
+  sectionWithDuplicateList,
+  approverDetails,
+}: Props) => {
   const requestor = request.request_team_member.team_member_user;
   const requestDateCreated = getReadableDate(request.request_date_created);
 
@@ -70,16 +76,6 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
       value: `${startCase(request.request_status.toLowerCase())}`,
     },
   ];
-
-  const approverDetails = request.request_signer.map((signer) => {
-    const fullName = `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
-
-    return {
-      name: fullName,
-      status: signer.request_signer_status,
-      date: signer.request_signer_status_date_updated,
-    };
-  });
 
   const requestIDs = [
     ...(request.request_formsly_id
@@ -165,7 +161,7 @@ const ExportToPdf = ({ request, sectionWithDuplicateList }: Props) => {
 
   return (
     <>
-      {!instance.loading ? (
+      {!instance.loading && approverDetails.length !== 0 ? (
         <Menu width={200} shadow="md">
           <Menu.Target>
             <Button variant="light">Export to PDF</Button>
