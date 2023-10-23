@@ -66,6 +66,7 @@ const ExportToPdf = ({
     {
       label: "Requested by:",
       value: `${requestor.user_first_name} ${requestor.user_last_name}`,
+      additional: requestor.user_job_title,
     },
     {
       label: "Date requested:",

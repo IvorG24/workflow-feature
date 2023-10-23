@@ -36,6 +36,7 @@ type Props = {
   ) => void;
   signer?: RequestWithResponseType["request_signer"][0];
   isRf?: boolean;
+  isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
   isEditable?: boolean;
 };
@@ -49,6 +50,7 @@ const RequestActionSection = ({
   handleUpdateRequest,
   signer,
   isRf,
+  isCashPurchase,
   isUserPrimarySigner,
   isEditable,
 }: Props) => {
@@ -71,7 +73,12 @@ const RequestActionSection = ({
   };
 
   const handleAction = (action: string, color: string) => {
-    if (isRf && action === "approve" && isUserPrimarySigner) {
+    if (
+      isRf &&
+      action === "approve" &&
+      isUserPrimarySigner &&
+      !isCashPurchase
+    ) {
       modals.open({
         modalId: "approveRf",
         title: <Text>Please confirm your action.</Text>,

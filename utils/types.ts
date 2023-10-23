@@ -305,6 +305,7 @@ export type RequestWithResponseType = RequestTableRow & {
       user_last_name: string;
       user_username: string;
       user_avatar: string;
+      user_job_title: string;
     };
   };
 } & {
