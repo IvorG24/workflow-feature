@@ -63,6 +63,7 @@ const RequisitionRequestPage = ({
     []
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
+  const [isCashPurchase, setIsCashPurchase] = useState(false);
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -102,6 +103,11 @@ const RequisitionRequestPage = ({
       };
       if (request) {
         fetchApproverDetails();
+
+        setIsCashPurchase(
+          `${request.request_form.form_section[0].section_field[1].field_response[0].request_response}` ===
+            `"Cash Purchase - Local Purchase"`
+        );
       }
     } catch (e) {
       console.error(e);
@@ -371,6 +377,7 @@ const RequisitionRequestPage = ({
               isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
             }
             isRf
+            isCashPurchase={isCashPurchase}
             isUserPrimarySigner={
               isUserSigner
                 ? Boolean(isUserSigner.signer_is_primary_signer)

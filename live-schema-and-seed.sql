@@ -4752,6 +4752,7 @@ RETURNS JSON as $$
           user_last_name, 
           user_username, 
           user_avatar,
+          user_job_title,
           form_id, 
           form_name, 
           form_description, 
@@ -4963,7 +4964,8 @@ RETURNS JSON as $$
           user_first_name: requestData.user_first_name, 
           user_last_name: requestData.user_last_name, 
           user_username: requestData.user_username, 
-          user_avatar: requestData.user_avatar
+          user_avatar: requestData.user_avatar,
+          user_job_title: requestData.user_job_title
         }
       },
       request_signer: requestSignerData.map(requestSigner => {
