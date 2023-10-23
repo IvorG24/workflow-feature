@@ -1,6 +1,7 @@
 import {
   checkIfRequestIsPending,
   getCSICodeOptionsForItems,
+  getEditRequestOnLoad,
   getItem,
   getItemResponseForQuotation,
   getItemResponseForRIR,
@@ -21,10 +22,7 @@ import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubcon
 import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTransferReceiptPage";
 
 import Meta from "@/components/Meta/Meta";
-import {
-  parseItemSection,
-  parseRequest,
-} from "@/utils/arrayFunctions/arrayFunctions";
+import { parseItemSection } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { parseJSONIfValid } from "@/utils/string";
 import { OptionTableRow, RequestWithResponseType } from "@/utils/types";
@@ -33,6 +31,11 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
+      const editRequestOnLoad = await getEditRequestOnLoad(supabaseClient, {
+        userId: user.id,
+        requestId: `${context.query.requestId}`,
+      });
+
       const isPending = await checkIfRequestIsPending(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
@@ -79,8 +82,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       });
 
-      const parsedRequest = parseRequest(request);
-      const { request_form: form } = parsedRequest;
+      const parsedRequest = request;
+      const { request_form: form } = editRequestOnLoad.request;
 
       let projectSignerList: RequestWithResponseType["request_signer"] = [];
       if (request.request_project_id) {
@@ -118,6 +121,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         }));
       }
+      // END: added to rpc
 
       if (!form.form_is_formsly_form)
         return {

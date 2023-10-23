@@ -1564,6 +1564,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_edit_request_on_load: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

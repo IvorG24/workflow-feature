@@ -3751,3 +3751,21 @@ export const getTicketListOnLoad = async (
 
   return data as unknown as TicketListOnLoad;
 };
+
+// Get edit request on load
+export const getEditRequestOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_edit_request_on_load", { input_data: params })
+    .select("*");
+  console.log(data);
+  console.log(error);
+  if (error) throw error;
+
+  return data as unknown as { request: RequestWithResponseType };
+};
