@@ -810,7 +810,8 @@ export const getItemDescriptionFieldList = async (
       count: "exact",
     })
     .eq("item_description_field_item_description_id", descriptionId)
-    .eq("item_description_field_is_disabled", false);
+    .eq("item_description_field_is_disabled", false)
+    .order("item_description_field_value", { ascending: true });
 
   if (search) {
     query = query.ilike("item_description_field_value", `%${search}%`);
