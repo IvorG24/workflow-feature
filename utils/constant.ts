@@ -1141,7 +1141,7 @@ export const ITEM_UNIT_CHOICES = [
   "Milliliter",
   "Microliter",
   "Milliampere hours",
-  "Metric Ton",
+  "Ton",
   "Gram",
   "Centigram",
   "Milligram",
