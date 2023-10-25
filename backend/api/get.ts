@@ -1,3 +1,4 @@
+import { EditRequestOnLoadProps } from "@/pages/team-requests/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -3767,5 +3768,5 @@ export const getEditRequestOnLoad = async (
   console.log(error);
   if (error) throw error;
 
-  return data as unknown as { request: RequestWithResponseType };
+  return data as unknown as EditRequestOnLoadProps;
 };

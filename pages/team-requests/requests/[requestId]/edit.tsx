@@ -36,6 +36,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         requestId: `${context.query.requestId}`,
       });
 
+      return {
+        props: {
+          ...editRequestOnLoad,
+        },
+      };
+
       const isPending = await checkIfRequestIsPending(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
@@ -82,7 +88,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         };
       });
 
-      const parsedRequest = request;
+      const parsedRequest = editRequestOnLoad.request;
       const { request_form: form } = editRequestOnLoad.request;
 
       let projectSignerList: RequestWithResponseType["request_signer"] = [];
@@ -121,7 +127,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         }));
       }
-      // END: added to rpc
 
       if (!form.form_is_formsly_form)
         return {
@@ -262,6 +267,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         };
       }
+      // END: added to rpc
 
       // Subcon Form
       if (form.form_name === "Subcon") {
@@ -885,7 +891,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   }
 );
 
-type Props = {
+export type EditRequestOnLoadProps = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
   serviceOptions: OptionTableRow[];
@@ -903,7 +909,7 @@ const Page = ({
   projectOptions = [],
   requestingProject = "",
   sourceProjectList = {},
-}: Props) => {
+}: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
   const formslyForm = () => {
     switch (form.form_name) {

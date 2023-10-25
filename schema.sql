@@ -5827,9 +5827,188 @@ RETURNS JSON AS $$
         }));
       }
 
-      returnData = {  request }
-    }
+      if (form.form_name === "Requisition") {
+        const itemList = plv8.execute(`
+          SELECT * FROM item_table 
+          WHERE item_team_id='${teamId}'
+          AND item_is_disabled = false
+          AND item_is_available = true
+          ORDER BY item_general_name ASC;
+        `);
 
+        const itemOptions = itemList.map((item, index) => {
+          return {
+            option_description: null,
+            option_field_id:
+              request.request_form.form_section[1].section_field[0].field_id,
+            option_id: item.item_id,
+            option_order: index,
+            option_value: item.item_general_name,
+          };
+        });
+
+        const sectionWithDuplicateList = form.form_section
+          .slice(1)
+          .map((section) => {
+            const fieldWithResponse = section.section_field.filter((field) =>
+                field.field_response.length > 0 && field.field_response[0] !== null
+            );
+
+            return {
+              ...section,
+              section_field: fieldWithResponse,
+            }
+          });
+
+        const itemSectionList = sectionWithDuplicateList
+          .map((section) => {
+            const itemName = JSON.parse(
+              section.section_field[0].field_response[0].request_response
+            );
+
+            const item = plv8.execute(`
+              SELECT *
+              FROM item_table 
+              WHERE item_team_id = '${teamId}'
+                AND item_general_name = '${itemName}'
+                AND item_is_disabled = false
+                AND item_is_available = true;
+            `)[0];
+
+            const itemDescriptionList = plv8.execute(`
+              SELECT * 
+              FROM item_description_table
+              WHERE item_description_item_id = '${item.item_id}'
+                AND item_description_is_disabled = false
+                AND item_description_is_available = true;
+            `);
+
+            const itemDescriptionWithField = itemDescriptionList
+              .map((description)=> {
+
+                const itemDescriptionFieldList = plv8.execute(`
+                  SELECT * 
+                  FROM item_description_field_table
+                  WHERE item_description_field_item_description_id = '${description.item_description_id}'
+                    AND item_description_field_is_disabled = false
+                    AND item_description_field_is_available = true;
+                `);
+
+                const field = plv8.execute(`
+                  SELECT * 
+                  FROM field_table
+                  WHERE field_id = '${description.item_description_field_id}';
+                `)[0];
+
+                return {
+                  ...description,
+                  item_description_field: itemDescriptionFieldList,
+                  item_field: field
+                }
+              })
+
+            const itemDivisionIdList = `('${item.item_division_id_list.join("','")}')`
+
+            const csiCodeList = plv8.execute(`
+              SELECT *
+              FROM csi_code_table
+              WHERE csi_code_division_id IN ${itemDivisionIdList};
+            `);
+
+            const csiCodeOptions = csiCodeList.map((csiCode, index) => {
+              return {
+                option_description: null,
+                option_field_id: form.form_section[0].section_field[0].field_id,
+                option_id: csiCode.csi_code_id,
+                option_order: index,
+                option_value: csiCode.csi_code_level_three_description,
+              };
+            });
+
+            const newFieldsWithOptions = itemDescriptionWithField.map(
+              (description) => {
+                const options = description.item_description_field.map(
+                  (options, optionIndex) => {
+                    return {
+                      option_description: null,
+                      option_field_id: description.item_field.field_id,
+                      option_id: options.item_description_field_id,
+                      option_order: optionIndex + 1,
+                      option_value: `${options.item_description_field_value}${
+                        options.item_description_field_uom
+                          ? ` ${options.item_description_field_uom}`
+                          : ""
+                      }`,
+                    };
+                  }
+                );
+
+                const descriptionList = section.section_field.slice(5);
+
+                const field = descriptionList.find(
+                  (refDescription) =>
+                    refDescription.field_id === description.item_field.field_id
+                );
+
+                return {
+                  ...field,
+                  field_option: options,
+                };
+              }
+            );
+            
+
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_option: itemOptions,
+                },
+                ...section.section_field.slice(1, 4),
+                {
+                  ...section.section_field[4],
+                  field_option: csiCodeOptions,
+                },
+                ...section.section_field.slice(5, 9),
+                ...newFieldsWithOptions,
+              ],
+            };
+          });
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              ...itemSectionList,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          itemOptions,
+          projectOptions,
+        }
+      } else {
+        returnData = {request};
+      }
+    }
  });
  return returnData;
 $$ LANGUAGE plv8;
