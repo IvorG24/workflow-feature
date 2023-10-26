@@ -169,14 +169,17 @@ const ExportToPdf = ({
           </Menu.Target>
 
           <Menu.Dropdown>
-            <Menu.Item
-              component="a"
-              href={instance.url ? instance.url : "#"}
-              download={`${pdfFileName}-list-view`}
-              icon={<IconList size={16} />}
-            >
-              List View
-            </Menu.Item>
+            {!request.request_form.form_is_formsly_form && (
+              <Menu.Item
+                component="a"
+                href={instance.url ? instance.url : "#"}
+                download={`${pdfFileName}-list-view`}
+                icon={<IconList size={16} />}
+              >
+                List View
+              </Menu.Item>
+            )}
+
             {request.request_form.form_is_formsly_form &&
               request.request_form.form_name === "Requisition" && (
                 <Menu.Item
