@@ -1234,6 +1234,7 @@ export const ITEM_UNIT_CHOICES = [
   "Centipoise",
   "Kilovolt Ampere",
   "Kilowatt",
+  "Decibel",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
