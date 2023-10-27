@@ -9,7 +9,7 @@ import CreateTransferReceiptPage from "@/components/CreateTransferReceiptPage/Cr
 
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormWithResponseType, OptionTableRow } from "@/utils/types";
+import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -53,6 +53,11 @@ type Props = {
   requestProjectId: string;
   requestingProject?: string;
   serviceOptions?: OptionTableRow[];
+  specialApprover?: {
+    special_approver_id: string;
+    special_approver_item_list: string[];
+    special_approver_signer: FormType["form_signer"][0];
+  }[];
 };
 
 const Page = ({
@@ -63,6 +68,7 @@ const Page = ({
   projectOptions = [],
   requestingProject = "",
   serviceOptions = [],
+  specialApprover = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -72,6 +78,7 @@ const Page = ({
             form={form}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
+            specialApprover={specialApprover}
           />
         );
       case "Subcon":

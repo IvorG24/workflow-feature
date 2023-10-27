@@ -49,12 +49,18 @@ type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
+  specialApprover?: {
+    special_approver_id: string;
+    special_approver_item_list: string[];
+    special_approver_signer: FormType["form_signer"][0];
+  }[];
 };
 
 const CreateRequisitionRequestPage = ({
   form,
   itemOptions,
   projectOptions,
+  specialApprover,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -150,11 +156,38 @@ const CreateRequisitionRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
+      // special approver
+      const additionalSignerList: FormType["form_signer"] = [];
+      const alreadyAddedAdditionalSigner: string[] = [];
+      if (specialApprover && specialApprover.length !== 0) {
+        const generalNameList = newSections.map(
+          (section) => section.section_field[0].field_response
+        );
+        specialApprover.map((approver) => {
+          if (
+            alreadyAddedAdditionalSigner.includes(
+              approver.special_approver_signer.signer_id
+            )
+          )
+            return;
+          if (
+            approver.special_approver_item_list.some((item) =>
+              generalNameList.includes(item)
+            )
+          ) {
+            additionalSignerList.push(approver.special_approver_signer);
+            alreadyAddedAdditionalSigner.push(
+              approver.special_approver_signer.signer_id
+            );
+          }
+        });
+      }
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: newData,
         formId,
         teamMemberId: teamMember.team_member_id,
-        signers: signerList,
+        signers: [...signerList, ...additionalSignerList],
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
