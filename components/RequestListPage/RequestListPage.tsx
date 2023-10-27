@@ -31,7 +31,6 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
@@ -218,14 +217,9 @@ const RequestListPage = ({
     );
 
     if (localStorageFilter) {
-      handleFilterForms();
+      handleFilterForms(localFilter);
     }
-  }, [activeTeam.team_id, teamMember]);
-
-  useBeforeunload(() => {
-    const filterValues = getValues();
-    setLocalFilter(filterValues as RequestListLocalFilter);
-  });
+  }, [activeTeam.team_id, teamMember, localFilter]);
 
   return (
     <Container maw={1300} h="100%">
@@ -259,6 +253,7 @@ const RequestListPage = ({
             handleFilterForms={handleFilterForms}
             formList={formList}
             localFilter={localFilter}
+            setLocalFilter={setLocalFilter}
           />
         </form>
       </FormProvider>

@@ -4,6 +4,7 @@ import { Database } from "@/utils/database";
 import { regExp, startCase } from "@/utils/string";
 import {
   AppType,
+  ApproverUnresolvedRequestListType,
   AttachmentBucketType,
   AttachmentTableRow,
   CSICodeTableRow,
@@ -3751,4 +3752,25 @@ export const getTicketListOnLoad = async (
   if (error) throw error;
 
   return data as unknown as TicketListOnLoad;
+};
+
+// Get ticket list on load
+export const getUnresolvedRequestListPerApprover = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { teamMemberId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_id, request_jira_id, request_status)"
+    )
+    .eq("request_signer.signer_team_member_id", teamMemberId)
+    .in("request_signer_status", ["APPROVED", "PENDING"]);
+
+  if (error) throw error;
+
+  return data as unknown as ApproverUnresolvedRequestListType[];
 };

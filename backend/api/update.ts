@@ -12,6 +12,7 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import moment from "moment";
 import { getCurrentDate } from "./get";
 
 // Update Team
@@ -418,4 +419,36 @@ export const updateTicketStatus = async (
     .single();
   if (error) throw error;
   return data as TicketTableRow;
+};
+
+// reverse request approval
+export const reverseSignerApproval = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestSignerId: string;
+    requestId: string;
+    isPrimarySigner: boolean;
+  }
+) => {
+  const { requestSignerId, requestId, isPrimarySigner } = params;
+  const { error } = await supabaseClient
+    .from("request_signer_table")
+    .update({ request_signer_status: "PENDING" })
+    .eq("request_signer_id", requestSignerId);
+
+  if (error) throw error;
+
+  if (isPrimarySigner) {
+    const { error } = await supabaseClient
+      .from("request_table")
+      .update({
+        request_status: "PENDING",
+        request_status_date_updated: moment(new Date()).format(
+          "YYYY-MM-DD HH:mm:ss.SSSSSSZ"
+        ),
+      })
+      .eq("request_id", requestId);
+
+    if (error) throw error;
+  }
 };

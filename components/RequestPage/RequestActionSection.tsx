@@ -7,6 +7,7 @@ import { isValidUrl } from "@/utils/functions";
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Button,
+  Divider,
   Flex,
   Paper,
   Space,
@@ -56,7 +57,6 @@ const RequestActionSection = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
-
   const {
     register,
     handleSubmit,
@@ -255,8 +255,10 @@ const RequestActionSection = ({
             </Button>
           </>
         )}
+
         {isUserOwner && requestStatus === "PENDING" && isEditable && (
           <>
+            <Divider />
             <Button
               variant="outline"
               fullWidth

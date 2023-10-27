@@ -6,7 +6,11 @@ import {
   checkTransferReceiptItemQuantity,
   getFileUrl,
 } from "@/backend/api/get";
-import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import {
+  approveOrRejectRequest,
+  cancelRequest,
+  reverseSignerApproval,
+} from "@/backend/api/update";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
 import useRealtimeProjectRequestSignerList from "@/hooks/useRealtimeRequestProjectSignerList";
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
@@ -14,6 +18,7 @@ import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { checkIfTimeIsWithinFiveMinutes } from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -52,8 +57,11 @@ import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
+import RequestReverseActionSection from "./RequestReverseActionSection";
 import RequestSection from "./RequestSection";
-import RequestSignerSection from "./RequestSignerSection";
+import RequestSignerSection, {
+  RequestSignerType,
+} from "./RequestSignerSection";
 
 type Props = {
   request: RequestWithResponseType;
@@ -140,6 +148,9 @@ const RequestPage = ({
     return {
       ...signer.request_signer_signer,
       request_signer_status: signer.request_signer_status as ReceiverStatusType,
+      request_signer_status_date_updated:
+        signer.request_signer_status_date_updated,
+      request_signer_id: signer.request_signer_id,
     };
   });
 
@@ -619,6 +630,43 @@ const RequestPage = ({
     return directory;
   };
 
+  const handleReverseApproval = async () => {
+    try {
+      if (!isUserSigner) return;
+
+      await reverseSignerApproval(supabaseClient, {
+        requestSignerId: isUserSigner.request_signer_id,
+        requestId: request.request_id,
+        isPrimarySigner: isUserSigner.signer_is_primary_signer,
+      });
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later",
+        color: "red",
+      });
+    }
+  };
+
+  const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
+    if (!isUserSigner) return;
+
+    const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
+      `${isUserSigner.request_signer_status_date_updated}`
+    );
+    const primarySignerStatusIsPending = signerList.find(
+      (signer) => signer.signer_is_primary_signer
+    )?.request_signer_status;
+    const signerStatusIsPending =
+      isUserSigner.request_signer_status !== "PENDING";
+
+    return (
+      actionIsWithinFiveMinutes &&
+      primarySignerStatusIsPending &&
+      signerStatusIsPending
+    );
+  };
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -830,6 +878,13 @@ const RequestPage = ({
             }
           />
         ) : null}
+
+        {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
+          <RequestReverseActionSection
+            handleReverseApproval={handleReverseApproval}
+          />
+        ) : null}
+
         <RequestSignerSection signerList={signerList} />
       </Stack>
 

@@ -1,4 +1,7 @@
-import { getNotificationList } from "@/backend/api/get";
+import {
+  getNotificationList,
+  getUnresolvedRequestListPerApprover,
+} from "@/backend/api/get";
 import {
   readAllNotification,
   updateNotificationStatus,
@@ -8,14 +11,19 @@ import {
   useNotificationActions,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
-import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { AppType, NotificationTableRow } from "@/utils/types";
+import {
+  AppType,
+  ApproverUnresolvedRequestListType,
+  NotificationTableRow,
+} from "@/utils/types";
 import {
   Center,
   Container,
   Pagination,
+  Paper,
   Tabs,
   Text,
   Title,
@@ -25,6 +33,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { startCase } from "utils/string";
+import ApproverNotification from "./ApproverNotification";
 import NotificationList from "./NotificationList";
 
 type Props = {
@@ -46,6 +55,7 @@ const NotificationPage = ({
   const { userProfile } = useUserStore();
   const userId = userProfile?.user_id || "";
   const teamId = userProfile?.user_active_team_id || "";
+  const userTeamMemberData = useUserTeamMember();
 
   const storeNotificationList = useRealtimeNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
@@ -62,6 +72,8 @@ const NotificationPage = ({
   } = useNotificationActions();
   const [activePage, setActivePage] = useState(initialPage);
   const [isLoading, setIsLoading] = useState(false);
+  const [approverUnresolvedRequestList, setApproverUnresolvedRequestList] =
+    useState<ApproverUnresolvedRequestListType[]>([]);
 
   const handleMarkAllAsRead = async () => {
     setIsLoading(true);
@@ -156,60 +168,82 @@ const NotificationPage = ({
     }
   }, [storeNotificationList, router.query]);
 
+  useEffect(() => {
+    const fetchApproverRequestList = async () => {
+      if (!userTeamMemberData) return;
+      const unresolvedRequestList = await getUnresolvedRequestListPerApprover(
+        supabaseClient,
+        {
+          teamMemberId: userTeamMemberData.team_member_id,
+        }
+      );
+      setApproverUnresolvedRequestList(unresolvedRequestList);
+    };
+    fetchApproverRequestList();
+  }, [supabaseClient, userTeamMemberData]);
+
   return (
     <Container p={0}>
       <Title order={2}>{startCase(app)} Notifications </Title>
+      {approverUnresolvedRequestList.length > 0 && (
+        <ApproverNotification
+          approverUnresolvedRequestList={approverUnresolvedRequestList}
+        />
+      )}
 
-      <Tabs
-        defaultValue={tab}
-        onTabChange={(value) =>
-          router
-            .replace(
+      <Paper p="md">
+        <Tabs
+          defaultValue={tab}
+          onTabChange={(value) =>
+            router
+              .replace(
+                `/team-${
+                  app === "REQUEST"
+                    ? `${app.toLowerCase()}s`
+                    : app.toLowerCase()
+                }/notification?tab=${value}`
+              )
+              .then(() => handleGetNotificationList(1, value as string))
+          }
+        >
+          <Tabs.List>
+            <Tabs.Tab value="all">All</Tabs.Tab>
+            <Tabs.Tab value="unread">Unread</Tabs.Tab>
+          </Tabs.List>
+
+          {pageNotificationList.length > 0 ? (
+            <NotificationList
+              notificationList={pageNotificationList}
+              onMarkAllAsRead={handleMarkAllAsRead}
+              onMarkAsRead={handleMarkAsRead}
+              isLoading={isLoading}
+            />
+          ) : null}
+          {pageNotificationList.length <= 0 ? (
+            <Center mt="xl">
+              <Text c="dimmed">No notifications yet</Text>
+            </Center>
+          ) : null}
+        </Tabs>
+
+        <Pagination
+          value={activePage}
+          total={Math.ceil(
+            totalNotificationCount / DEFAULT_NOTIFICATION_LIST_LIMIT
+          )}
+          onChange={async (value) => {
+            setActivePage(value);
+            await router.push(
               `/team-${
                 app === "REQUEST" ? `${app.toLowerCase()}s` : app.toLowerCase()
-              }/notification?tab=${value}`
-            )
-            .then(() => handleGetNotificationList(1, value as string))
-        }
-        mt="lg"
-      >
-        <Tabs.List>
-          <Tabs.Tab value="all">All</Tabs.Tab>
-          <Tabs.Tab value="unread">Unread</Tabs.Tab>
-        </Tabs.List>
-
-        {pageNotificationList.length > 0 ? (
-          <NotificationList
-            notificationList={pageNotificationList}
-            onMarkAllAsRead={handleMarkAllAsRead}
-            onMarkAsRead={handleMarkAsRead}
-            isLoading={isLoading}
-          />
-        ) : null}
-        {pageNotificationList.length <= 0 ? (
-          <Center mt="xl">
-            <Text c="dimmed">No notifications yet</Text>
-          </Center>
-        ) : null}
-      </Tabs>
-
-      <Pagination
-        value={activePage}
-        total={Math.ceil(
-          totalNotificationCount / DEFAULT_NOTIFICATION_LIST_LIMIT
-        )}
-        onChange={async (value) => {
-          setActivePage(value);
-          await router.push(
-            `/team-${
-              app === "REQUEST" ? `${app.toLowerCase()}s` : app.toLowerCase()
-            }/notification?tab=${tab}&page=${value}`
-          );
-          await handleGetNotificationList(value);
-        }}
-        mt="xl"
-        position="right"
-      />
+              }/notification?tab=${tab}&page=${value}`
+            );
+            await handleGetNotificationList(value);
+          }}
+          mt="xl"
+          position="right"
+        />
+      </Paper>
     </Container>
   );
 };

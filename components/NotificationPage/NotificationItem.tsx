@@ -68,7 +68,7 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
           bg={
             notification.notification_is_read && tab !== "unread"
               ? "transparent"
-              : ""
+              : "#E7F5FF"
           }
         >
           <Flex justify="flex-start" align="center" gap="sm" w="100%">

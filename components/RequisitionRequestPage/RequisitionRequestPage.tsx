@@ -1,11 +1,18 @@
 import { deleteRequest } from "@/backend/api/delete";
 import { getFileUrl } from "@/backend/api/get";
-import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import { createComment } from "@/backend/api/post";
+import {
+  approveOrRejectRequest,
+  cancelRequest,
+  reverseSignerApproval,
+} from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
+import RequestSignerSection, {
+  RequestSignerType,
+} from "@/components/RequestPage/RequestSignerSection";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
 import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
@@ -13,6 +20,7 @@ import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { checkIfTimeIsWithinFiveMinutes } from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -26,6 +34,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
+import RequestReverseActionSection from "../RequestPage/RequestReverseActionSection";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
 import RequisitionSummary from "../SummarySection/RequisitionSummary";
 
@@ -122,6 +131,9 @@ const RequisitionRequestPage = ({
     return {
       ...signer.request_signer_signer,
       request_signer_status: signer.request_signer_status as ReceiverStatusType,
+      request_signer_status_date_updated:
+        signer.request_signer_status_date_updated,
+      request_signer_id: signer.request_signer_id,
     };
   });
 
@@ -271,6 +283,54 @@ const RequisitionRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
+  const handleReverseApproval = async () => {
+    try {
+      if (!isUserSigner) return;
+      setIsLoading(true);
+
+      await reverseSignerApproval(supabaseClient, {
+        requestSignerId: isUserSigner.request_signer_id,
+        requestId: request.request_id,
+        isPrimarySigner: isUserSigner.signer_is_primary_signer,
+      });
+
+      const newComment = {
+        comment_request_id: request.request_id,
+        comment_team_member_id: teamMember?.team_member_id as string,
+        comment_content: `${user?.user_first_name} ${user?.user_last_name} reversed their approval of this request`,
+        comment_type: "ACTION_REVERSED",
+      };
+      await createComment(supabaseClient, { ...newComment });
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
+    if (!isUserSigner) return;
+
+    const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
+      `${isUserSigner.request_signer_status_date_updated}`
+    );
+    const primarySignerStatusIsPending = signerList.find(
+      (signer) => signer.signer_is_primary_signer
+    )?.request_signer_status;
+    const signerStatusIsPending =
+      isUserSigner.request_signer_status !== "PENDING";
+
+    return (
+      actionIsWithinFiveMinutes &&
+      primarySignerStatusIsPending &&
+      signerStatusIsPending
+    );
+  };
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -361,11 +421,9 @@ const RequisitionRequestPage = ({
             )}
         />
 
-        {(isUserOwner &&
-          (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
-        (isUserSigner &&
-          isUserSigner.request_signer_status === "PENDING" &&
-          requestStatus !== "CANCELED") ? (
+        {isUserSigner &&
+        isUserSigner.request_signer_status === "PENDING" &&
+        requestStatus !== "CANCELED" ? (
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}
@@ -388,6 +446,12 @@ const RequisitionRequestPage = ({
                 .map((signer) => signer.request_signer_status)
                 .filter((status) => status === "APPROVED").length === 0
             }
+          />
+        ) : null}
+
+        {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
+          <RequestReverseActionSection
+            handleReverseApproval={handleReverseApproval}
           />
         ) : null}
 
