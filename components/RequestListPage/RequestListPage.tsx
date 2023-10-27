@@ -172,6 +172,7 @@ const RequestListPage = ({
       const {
         search,
         requestorList,
+        approverList,
         formList,
         status,
         isAscendingSort,
@@ -184,6 +185,8 @@ const RequestListPage = ({
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         requestor:
           requestorList && requestorList.length > 0 ? requestorList : undefined,
+        approver:
+          approverList && approverList.length > 0 ? approverList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
         search: search,
