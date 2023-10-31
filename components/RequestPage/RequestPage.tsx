@@ -6,6 +6,7 @@ import {
   checkTransferReceiptItemQuantity,
   getFileUrl,
 } from "@/backend/api/get";
+import { createComment } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
   cancelRequest,
@@ -639,6 +640,14 @@ const RequestPage = ({
         requestId: request.request_id,
         isPrimarySigner: isUserSigner.signer_is_primary_signer,
       });
+
+      const newComment = {
+        comment_request_id: request.request_id,
+        comment_team_member_id: teamMember?.team_member_id as string,
+        comment_content: `${user?.user_first_name} ${user?.user_last_name} reversed their approval of this request`,
+        comment_type: "ACTION_REVERSED",
+      };
+      await createComment(supabaseClient, { ...newComment });
     } catch (error) {
       console.log(error);
       notifications.show({
