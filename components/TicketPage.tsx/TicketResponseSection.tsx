@@ -46,7 +46,7 @@ const TicketResponseSection = ({
   const router = useRouter();
   const teamMember = useUserTeamMember();
   const canUserEditResponse =
-    ["ADMIN", "OWNER"].includes(user.team_member_role || "") && isApprover;
+    ["APPROVER", "OWNER"].includes(user.team_member_role || "") && isApprover;
 
   const {
     handleSubmit,

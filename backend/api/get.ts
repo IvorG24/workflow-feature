@@ -538,8 +538,8 @@ export const getAllTeamMembers = async (
   return data;
 };
 
-// Get team's all admin members
-export const getTeamAdminList = async (
+// Get team's all approver members
+export const getTeamApproverList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
@@ -553,7 +553,7 @@ export const getTeamAdminList = async (
     )
     .eq("team_member_team_id", teamId)
     .eq("team_member_is_disabled", false)
-    .or("team_member_role.eq.ADMIN, team_member_role.eq.OWNER");
+    .or("team_member_role.eq.APPROVER, team_member_role.eq.OWNER");
   if (error) throw error;
 
   const formattedData = data as unknown as {
@@ -1558,8 +1558,8 @@ export const getResponseDataByKeyword = async (
   return data;
 };
 
-// Check user if owner or admin
-export const checkIfOwnerOrAdmin = async (
+// Check user if owner or approver
+export const checkIfOwnerOrApprover = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
@@ -1576,7 +1576,7 @@ export const checkIfOwnerOrAdmin = async (
   if (error) throw error;
   const role = data?.team_member_role;
   if (role === null) return false;
-  return role === "ADMIN" || role === "OWNER";
+  return role === "APPROVER" || role === "OWNER";
 };
 
 // Get all formsly forward link form id
@@ -3126,6 +3126,61 @@ export const getItemDivisionOption = async (
   if (error) throw error;
 
   return data;
+};
+
+// Get team approver list with filter
+export const getTeamApproverListWithFilter = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { teamId, search = "", page, limit } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+        team_member_id,
+        team_member_date_created, 
+        team_member_user: team_member_user_id!inner(
+          user_id, 
+          user_first_name, 
+          user_last_name,
+          user_avatar, 
+          user_email
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("team_member_role", "APPROVER")
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_is_disabled", false);
+
+  if (search) {
+    query = query.or(
+      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
+      { foreignTable: "team_member_user" }
+    );
+  }
+
+  query = query.order("team_member_date_created", {
+    ascending: false,
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
 };
 
 // Get team admin list with filter

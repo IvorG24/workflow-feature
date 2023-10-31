@@ -63,7 +63,7 @@ const TicketPage = ({ ticket: initialTicket, user }: Props) => {
           await createNotification(supabaseClient, {
             notification_app: "REQUEST",
             notification_type: "COMMENT",
-            notification_content: `An admin, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
+            notification_content: `An approver, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
             notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
             notification_user_id:
               ticket.ticket_requester.team_member_user.user_id,
@@ -86,7 +86,7 @@ const TicketPage = ({ ticket: initialTicket, user }: Props) => {
           {ticket.ticket_status === "PENDING" &&
             ticket.ticket_approver_team_member_id === null &&
             ticket.ticket_requester_team_member_id !== user.team_member_id &&
-            (user.team_member_role === "ADMIN" ||
+            (user.team_member_role === "APPROVER" ||
               user.team_member_role === "OWNER") && (
               <Tooltip label="You will be assigned to review this ticket.">
                 <Button size="md" onClick={handleAssignTicketToUser}>
