@@ -6,11 +6,11 @@ import {
   FORMSLY_FORM_ORDER,
   UNHIDEABLE_FORMLY_FORMS,
 } from "@/utils/constant";
-import { withOwnerOrAdmin } from "@/utils/server-side-protections";
+import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
+export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   async ({ supabaseClient, user }) => {
     try {
       const { data, error } = await supabaseClient.rpc(

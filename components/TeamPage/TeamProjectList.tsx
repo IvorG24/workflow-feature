@@ -35,7 +35,7 @@ import { useForm, useFormContext } from "react-hook-form";
 import { SearchForm } from "./TeamPage";
 
 type Props = {
-  isOwnerOrAdmin: boolean;
+  isOwnerOrApprover: boolean;
   teamProjectList: Record<string, TeamMemberType[]>;
   onSearchTeamProject: (data: SearchForm) => void;
   page: number;
@@ -54,7 +54,7 @@ type Props = {
 };
 
 const TeamProjectList = ({
-  isOwnerOrAdmin,
+  isOwnerOrApprover,
   teamProjectList,
   onSearchTeamProject,
   page,
@@ -244,7 +244,7 @@ const TeamProjectList = ({
 
       <Flex align="center" justify="space-between">
         <Text weight={600}>Project Management</Text>
-        {isOwnerOrAdmin ? (
+        {isOwnerOrApprover ? (
           <Button
             compact
             onClick={() => {
@@ -323,7 +323,7 @@ const TeamProjectList = ({
                           >
                             View Project
                           </Menu.Item>
-                          {isOwnerOrAdmin && (
+                          {isOwnerOrApprover && (
                             <>
                               <Menu.Item
                                 icon={<IconEdit size={14} />}

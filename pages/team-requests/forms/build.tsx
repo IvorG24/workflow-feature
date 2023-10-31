@@ -1,10 +1,10 @@
 import BuildRequestFormPage from "@/components/BuildRequestFormPage/BuildRequestFormPage";
 import Meta from "@/components/Meta/Meta";
-import { withOwnerOrAdmin } from "@/utils/server-side-protections";
+import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import { TeamGroupTableRow, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
+export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   async ({ supabaseClient, user }) => {
     try {
       const { data, error } = await supabaseClient.rpc(

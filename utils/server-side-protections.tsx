@@ -1,4 +1,4 @@
-import { checkIfOwnerOrAdmin, getUserActiveTeamId } from "@/backend/api/get";
+import { checkIfOwnerOrApprover, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseClient, User } from "@supabase/supabase-js";
@@ -110,7 +110,7 @@ export const withAuthAndOnboarding = <P extends { [key: string]: any }>(
   };
 };
 
-export const withOwnerOrAdmin = <P extends { [key: string]: any }>(
+export const withOwnerOrApprover = <P extends { [key: string]: any }>(
   getServerSidePropsFunc: (params: {
     context: GetServerSidePropsContext;
     supabaseClient: SupabaseClient<Database>;
@@ -154,16 +154,17 @@ export const withOwnerOrAdmin = <P extends { [key: string]: any }>(
 
       const user = session.user;
 
-      // * 3. Check if user is admin or owner
+      // * 3. Check if user is approver or owner
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
       if (!teamId) throw new Error("No team found");
-      const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
+      const isOwnerOrApprover = await checkIfOwnerOrApprover(supabaseClient, {
         userId: user.id,
         teamId: teamId,
       });
-      if (!isOwnerOrAdmin) throw new Error("User is not an owner or admin");
+      if (!isOwnerOrApprover)
+        throw new Error("User is not an owner or approver");
 
       return getServerSidePropsFunc({ context, supabaseClient, user });
     } catch (error) {
