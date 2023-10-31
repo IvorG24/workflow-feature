@@ -75,7 +75,6 @@ const Page = ({
   services = [],
   serviceListCount = 0,
 }: Props) => {
-  console.log(teamMemberList);
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
