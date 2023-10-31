@@ -5,7 +5,7 @@ import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
 import SubconFormPage from "@/components/SubconFormPage/SubconFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { withOwnerOrAdmin } from "@/utils/server-side-protections";
+import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
   FormType,
   ItemWithDescriptionType,
@@ -17,7 +17,7 @@ import {
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withOwnerOrAdmin(
+export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   async ({ supabaseClient, user, context }) => {
     try {
       const form = await getForm(supabaseClient, {

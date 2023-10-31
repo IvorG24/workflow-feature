@@ -46,7 +46,7 @@ export const helpPageData = [
     <p><strong>If you can't see the Form List in the Navbar, it's likely due to one of these reasons:</strong></p>
     <ol>
         <li>Your team hasn't created any forms yet.</li>
-        <li>You don't have permission to view the forms. If you should have access, contact your team's admin.</li>
+        <li>You don't have permission to view the forms. If you should have access, contact your team's approver.</li>
     </ol>`,
   },
   {
@@ -62,11 +62,11 @@ export const helpPageData = [
         <li>You will see the member menu option where you can view member profile, promote/demote member, remove member, and transfer team ownership.</li>
     </ol>
 
-    <h5>Admin List</h5>
+    <h5>Approver List</h5>
     <ol>
-        <li>This section makes adding and removing admins easier.</li>
-        <li>To add admins, click <strong>Add</strong> found on the upper right corner. Then select the members that you want to promote to the admin role.</li>
-        <li>To delete/demote an admin, click the <strong>checkbox</strong> next to the admin name. Then click <strong>Remove</strong> found on the upper right corner.</li>
+        <li>This section makes adding and removing approvers easier.</li>
+        <li>To add approvers, click <strong>Add</strong> found on the upper right corner. Then select the members that you want to promote to the approver role.</li>
+        <li>To delete/demote an approver, click the <strong>checkbox</strong> next to the approver name. Then click <strong>Remove</strong> found on the upper right corner.</li>
     </ol>
 
     <h5>Team Groups</h5>
@@ -98,7 +98,7 @@ export const helpPageData = [
     id: uuid(),
     title: "How to add items in the Requisition Form",
     content: `
-    <p><strong>Only members with owner and admin roles can add items.</strong></p>
+    <p><strong>Only members with owner and approver roles can add items.</strong></p>
     <ol>
         <li>Go to <a target="__blank" href="https://formsly.io/team-requests/forms">Forms</a> page.</li>
         <li>Once in the forms page, click <strong>Requisition</strong>. You will be redirected to the Requisition Form page.</li>
@@ -135,7 +135,7 @@ export const helpPageData = [
         <li>Go to <a target="__blank" href="https://formsly.io/team-requests/forms">Forms</a> page.</li>
         <li>On the Forms page, choose a form and click the form name.</li>
         <li>Once in the form page, scroll down to find the "Default Signer" section.</li>
-        <li>To add a signer, click <strong>Add a Signer</strong>, select a signer and action, and click <strong>Done</strong>. You can only select admins as form signers.</li>
+        <li>To add a signer, click <strong>Add a Signer</strong>, select a signer and action, and click <strong>Done</strong>. You can only select approvers as form signers.</li>
         <li>To delete a signer, click the red <strong>trash icon</strong> found on the left side of the signer.</li>
         <li>You may also specify a signer per project. To do so, scroll down to find the "Signer Per Project" section. Select a project, and add signers.</li>
     </ol>

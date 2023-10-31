@@ -1235,7 +1235,7 @@ RETURNS VOID  as $$
   plv8.subtransaction(function(){
 
     plv8.execute(`UPDATE team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
-    plv8.execute(`UPDATE team_member_table SET team_member_role='ADMIN' WHERE team_member_id='${owner_id}'`);
+    plv8.execute(`UPDATE team_member_table SET team_member_role='APPROVER' WHERE team_member_id='${owner_id}'`);
  });
 $$ LANGUAGE plv8;
 
@@ -2517,6 +2517,37 @@ $$ LANGUAGE plv8;
 
 -- END: Delete team
 
+-- Start: Update multiple approver
+
+CREATE OR REPLACE FUNCTION update_multiple_approver(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let approverList = [];
+  plv8.subtransaction(function(){
+    const {
+      teamApproverIdList,
+      updateRole
+    } = input_data;
+    teamApproverIdList.forEach(id => {
+      const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
+      const user = plv8.execute(`SELECT * FROM user_table WHERE user_id='${member.team_member_user_id}'`)[0];
+
+      approverList.push({
+        team_member_id: member.team_member_id,
+        team_member_user: {
+          user_id: user.user_id,
+          user_first_name: user.user_first_name,
+          user_last_name: user.user_last_name,
+          user_avatar: user.user_avatar,
+          user_email: user.user_email
+        }
+      });
+    });
+ });
+ return approverList;
+$$ LANGUAGE plv8;
+
 -- Start: Update multiple admin
 
 CREATE OR REPLACE FUNCTION update_multiple_admin(
@@ -2549,6 +2580,8 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- END: Update multiple admin
+
+-- END: Update multiple approver
 
 -- Start: Request page on load
 
@@ -3000,7 +3033,7 @@ RETURNS JSON AS $$
         ORDER BY
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
-              WHEN 'ADMIN' THEN 2
+              WHEN 'APPROVER' THEN 2
               WHEN 'MEMBER' THEN 3
           END ASC,
           usert.user_first_name ASC,
@@ -3079,7 +3112,7 @@ RETURNS JSON AS $$
         ORDER BY
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
-              WHEN 'ADMIN' THEN 2
+              WHEN 'APPROVER' THEN 2
               WHEN 'MEMBER' THEN 3
           END ASC,
           usert.user_first_name ASC,
@@ -3619,7 +3652,7 @@ RETURNS JSON as $$
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
-          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
         ORDER BY user_first_name, user_last_name ASC
       `
     );
@@ -3677,7 +3710,7 @@ RETURNS JSON as $$
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
-          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
         ORDER BY user_first_name, user_last_name ASC
       `
     );
@@ -5521,8 +5554,8 @@ RETURNS JSON as $$
     const ticket = plv8.execute(`SELECT ticket_approver_team_member_id FROM ticket_table WHERE ticket_id='${ticketId}'`)[0];
     const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
 
-    const isAdmin = member.team_member_role === 'ADMIN' || member.team_member_role === 'OWNER'
-    if (!isAdmin) throw new Error("User is not an Admin");
+    const isApprover = member.team_member_role === 'APPROVER' || member.team_member_role === 'OWNER'
+    if (!isApprover) throw new Error("User is not an Approver");
 
     const hasApprover = ticket.ticket_approver_team_member_id !== null
     if (hasApprover) throw new Error("Ticket already have approver");
@@ -5778,60 +5811,60 @@ ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON team_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON team_member_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON field_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON field_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON field_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON form_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON form_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON form_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON form_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON item_description_field_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON item_description_field_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON item_description_field_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON item_description_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON item_description_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON item_description_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON item_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON item_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON item_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON option_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON option_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON option_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON option_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON option_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON option_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON option_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON request_signer_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON request_signer_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON section_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON section_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON section_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON section_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON section_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON section_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON section_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON signer_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON signer_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON signer_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON signer_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON signer_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON signer_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON signer_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON supplier_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or APPROVER role" ON supplier_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON supplier_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON supplier_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON supplier_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON supplier_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or APPROVER role" ON supplier_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON comment_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON comment_table;
@@ -5868,30 +5901,30 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON user_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or APPROVER roles" ON form_team_group_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_team_group_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_team_group_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or APPROVER roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or APPROVER roles" ON form_team_group_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or APPROVER roles" ON team_group_member_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or APPROVER roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or APPROVER roles" ON team_group_member_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or APPROVER roles" ON team_group_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or APPROVER roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or APPROVER roles" ON team_group_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or APPROVER roles" ON team_project_member_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_project_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or APPROVER roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or APPROVER roles" ON team_project_member_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or APPROVER roles" ON team_project_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_project_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or APPROVER roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or APPROVER roles" ON team_project_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_table;
@@ -5918,7 +5951,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."field_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."field_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING ( 
@@ -5932,11 +5965,11 @@ USING (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."field_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING ( 
@@ -5950,12 +5983,12 @@ USING (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- FORM_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."form_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK ( 
@@ -5967,7 +6000,7 @@ WITH CHECK (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -5975,7 +6008,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."form_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."form_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -5987,11 +6020,11 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."form_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6003,12 +6036,12 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- ITEM_DESCRIPTION_FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6020,7 +6053,7 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6028,7 +6061,7 @@ CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_f
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6040,11 +6073,11 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."item_description_field_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6056,12 +6089,12 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- ITEM_DESCRIPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."item_description_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6072,7 +6105,7 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6080,7 +6113,7 @@ CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_t
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."item_description_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6091,11 +6124,11 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."item_description_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6106,12 +6139,12 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- ITEM_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."item_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6120,7 +6153,7 @@ WITH CHECK (
     FROM team_member_table
     WHERE team_member_team_id = item_team_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6128,7 +6161,7 @@ CREATE POLICY "Allow READ access for anon users" ON "public"."item_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."item_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6137,11 +6170,11 @@ USING (
     FROM team_member_table
     WHERE team_member_team_id = item_team_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."item_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6150,12 +6183,12 @@ USING (
     FROM team_member_table
     WHERE team_member_team_id = item_team_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- OPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."option_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6167,7 +6200,7 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6175,7 +6208,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."option_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."option_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6187,11 +6220,11 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."option_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6203,7 +6236,7 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6228,7 +6261,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6241,11 +6274,11 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6258,12 +6291,12 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- SECTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."section_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6276,7 +6309,7 @@ WITH CHECK (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6284,7 +6317,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."section_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."section_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6297,11 +6330,11 @@ USING (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."section_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6314,12 +6347,12 @@ USING (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- SIGNER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6332,7 +6365,7 @@ WITH CHECK (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6340,7 +6373,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."signer_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."signer_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6353,11 +6386,11 @@ USING (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."signer_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6370,12 +6403,12 @@ USING (
     SELECT team_member_team_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
 --- SUPPLIER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or APPROVER role" ON "public"."supplier_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6383,7 +6416,7 @@ WITH CHECK (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6391,7 +6424,7 @@ CREATE POLICY "Allow READ access for anon users" ON "public"."supplier_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."supplier_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6399,11 +6432,11 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."supplier_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6411,7 +6444,7 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6425,7 +6458,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."team_member_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."team_member_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6436,7 +6469,7 @@ USING (
   ) OR team_member_user_id = auth.uid()
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or APPROVER role" ON "public"."team_member_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6494,7 +6527,7 @@ USING (
       LIMIT 1
     )
     AND team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6513,7 +6546,7 @@ USING (
       LIMIT 1
     )
     AND team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_table 
@@ -6532,7 +6565,7 @@ WITH CHECK (
       LIMIT 1
     )
     AND team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_table 
@@ -6645,7 +6678,7 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 )
 WITH CHECK (
@@ -6661,7 +6694,7 @@ WITH CHECK (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6720,7 +6753,7 @@ TO authenticated
 USING (auth.uid() = user_id);
 
 --- FORM_TEAM_GROUP_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+CREATE POLICY "Allow CREATE for OWNER or APPROVER roles" ON "public"."form_team_group_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6730,7 +6763,7 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
@@ -6747,7 +6780,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+CREATE POLICY "Allow UPDATE for OWNER or APPROVER roles" ON "public"."form_team_group_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6757,7 +6790,7 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 )
 WITH CHECK (
@@ -6767,11 +6800,11 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+CREATE POLICY "Allow DELETE for OWNER or APPROVER roles" ON "public"."form_team_group_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6781,12 +6814,12 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
 --- TEAM_GROUP_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+CREATE POLICY "Allow CREATE for OWNER or APPROVER roles" ON "public"."team_group_member_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6796,7 +6829,7 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
@@ -6813,7 +6846,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+CREATE POLICY "Allow UPDATE for OWNER or APPROVER roles" ON "public"."team_group_member_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6823,7 +6856,7 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 )
 WITH CHECK (
@@ -6833,11 +6866,11 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+CREATE POLICY "Allow DELETE for OWNER or APPROVER roles" ON "public"."team_group_member_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6847,12 +6880,12 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
 --- TEAM_GROUP_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+CREATE POLICY "Allow CREATE for OWNER or APPROVER roles" ON "public"."team_group_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6862,7 +6895,7 @@ WITH CHECK (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   ) 
 );
 
@@ -6879,7 +6912,7 @@ USING (
   ) 
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+CREATE POLICY "Allow UPDATE for OWNER or APPROVER roles" ON "public"."team_group_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6889,7 +6922,7 @@ USING (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   ) 
 )
 WITH CHECK (
@@ -6899,11 +6932,11 @@ WITH CHECK (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   ) 
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_table"
+CREATE POLICY "Allow DELETE for OWNER or APPROVER roles" ON "public"."team_group_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6913,12 +6946,12 @@ USING (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   ) 
 );
 
 --- TEAM_PROJECT_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+CREATE POLICY "Allow CREATE for OWNER or APPROVER roles" ON "public"."team_project_member_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6928,7 +6961,7 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
@@ -6945,7 +6978,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+CREATE POLICY "Allow UPDATE for OWNER or APPROVER roles" ON "public"."team_project_member_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6955,7 +6988,7 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 )
 WITH CHECK (
@@ -6965,11 +6998,11 @@ WITH CHECK (
     JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+CREATE POLICY "Allow DELETE for OWNER or APPROVER roles" ON "public"."team_project_member_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6979,12 +7012,12 @@ USING (
     JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
-    AND team_member_role in ('OWNER', 'ADMIN')
+    AND team_member_role in ('OWNER', 'APPROVER')
   )
 );
 
 --- TEAM_PROJECT_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+CREATE POLICY "Allow CREATE for OWNER or APPROVER roles" ON "public"."team_project_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6994,7 +7027,7 @@ WITH CHECK (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   ) 
 );
 
@@ -7002,7 +7035,7 @@ CREATE POLICY "Allow READ for anon" ON "public"."team_project_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+CREATE POLICY "Allow UPDATE for OWNER or APPROVER roles" ON "public"."team_project_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -7012,7 +7045,7 @@ USING (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   ) 
 )
 WITH CHECK (
@@ -7022,11 +7055,11 @@ WITH CHECK (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   ) 
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_table"
+CREATE POLICY "Allow DELETE for OWNER or APPROVER roles" ON "public"."team_project_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -7036,7 +7069,7 @@ USING (
     JOIN user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+    AND tm.team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
