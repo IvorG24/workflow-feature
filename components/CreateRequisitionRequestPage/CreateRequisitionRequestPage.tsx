@@ -200,6 +200,8 @@ const CreateRequisitionRequestPage = ({
         color: "green",
       });
 
+      await handleCreateJiraTicket();
+
       router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({
@@ -254,6 +256,37 @@ const CreateRequisitionRequestPage = ({
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
       return;
+    }
+  };
+
+  const handleCreateJiraTicket = async () => {
+    try {
+      const jiraTicket = await fetch("/api/create-jira-ticket", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          project_key: "FT",
+          issue_type_name: "Requisition Form",
+          summary: "Test Ticket",
+          description:
+            "Creating of an issue using ids for projects and issue types using the REST API",
+        }),
+      });
+
+      if (jiraTicket.ok) {
+        const jiraTicketResponse = await jiraTicket.json();
+        console.log(jiraTicketResponse);
+      } else {
+        console.error("Jira API request failed:", jiraTicket.statusText);
+        notifications.show({
+          message: "Failed to create Jira ticket",
+          color: "red",
+        });
+      }
+    } catch (error) {
+      console.error("An error occurred while making the request:", error);
     }
   };
 
