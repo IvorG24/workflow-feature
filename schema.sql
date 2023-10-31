@@ -381,6 +381,17 @@ CREATE TABLE ticket_comment_table(
 
 -- END: Ticket comment
 
+-- Start: Special Approver
+
+CREATE TABLE special_approver_table(
+  special_approver_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  special_approver_item_list VARCHAR(4000)[] NOT NULL,
+
+  special_approver_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
+);
+
+-- END: Special Approver
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -4008,6 +4019,28 @@ RETURNS JSON as $$
           };
         });
 
+        const specialApprover = plv8.execute(
+          `
+            SELECT 
+              special_approver_table.*,
+              signer_id, 
+              signer_is_primary_signer, 
+              signer_action, 
+              signer_order,
+              signer_is_disabled, 
+              signer_team_project_id,
+              team_member_id,
+              user_id, 
+              user_first_name, 
+              user_last_name, 
+              user_avatar
+            FROM special_approver_table
+            INNER JOIN signer_table ON signer_id = special_approver_signer_id
+            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_table ON user_id = team_member_user_id
+          `
+        );
+
         returnData = {
           form: {
             ...form,
@@ -4032,6 +4065,29 @@ RETURNS JSON as $$
           },
           itemOptions,
           projectOptions,
+          specialApprover: specialApprover.map(specialApprover => {
+            return {
+              special_approver_id: specialApprover.special_approver_id,
+              special_approver_item_list: specialApprover.special_approver_item_list,
+              special_approver_signer: {
+                signer_id: specialApprover.signer_id,
+                signer_is_primary_signer: specialApprover.signer_is_primary_signer,
+                signer_action: specialApprover.signer_action,
+                signer_order: specialApprover.signer_order,
+                signer_is_disabled: specialApprover.signer_is_disabled,
+                signer_team_project_id: specialApprover.signer_team_project_id,
+                signer_team_member: {
+                  team_member_id: specialApprover.team_member_id,
+                  team_member_user: {
+                    user_id: specialApprover.user_id,
+                    user_first_name: specialApprover.user_first_name,
+                    user_last_name: specialApprover.user_last_name,
+                    user_avatar: specialApprover.user_avatar,
+                  }
+                }
+              }
+            }
+          })
         }
         return;
       } else if (form.form_name === "Subcon") {
