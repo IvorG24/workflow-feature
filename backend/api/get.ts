@@ -1559,7 +1559,7 @@ export const getResponseDataByKeyword = async (
 };
 
 // Check user if owner or approver
-export const checkIfOwnerOrApprover = async (
+export const checkIfOwnerOrAdmin = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
@@ -1576,7 +1576,7 @@ export const checkIfOwnerOrApprover = async (
   if (error) throw error;
   const role = data?.team_member_role;
   if (role === null) return false;
-  return role === "APPROVER" || role === "OWNER";
+  return role === "ADMIN" || role === "OWNER";
 };
 
 // Get all formsly forward link form id

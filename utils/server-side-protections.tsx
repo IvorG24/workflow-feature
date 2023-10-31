@@ -1,4 +1,4 @@
-import { checkIfOwnerOrApprover, getUserActiveTeamId } from "@/backend/api/get";
+import { checkIfOwnerOrAdmin, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseClient, User } from "@supabase/supabase-js";
@@ -159,7 +159,7 @@ export const withOwnerOrApprover = <P extends { [key: string]: any }>(
         userId: user.id,
       });
       if (!teamId) throw new Error("No team found");
-      const isOwnerOrApprover = await checkIfOwnerOrApprover(supabaseClient, {
+      const isOwnerOrApprover = await checkIfOwnerOrAdmin(supabaseClient, {
         userId: user.id,
         teamId: teamId,
       });
