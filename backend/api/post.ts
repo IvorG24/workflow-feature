@@ -330,13 +330,12 @@ export const updateItem = async (
 // Create item description field
 export const createItemDescriptionField = async (
   supabaseClient: SupabaseClient<Database>,
-  params: ItemDescriptionFieldTableInsert
+  params: ItemDescriptionFieldTableInsert[]
 ) => {
   const { data, error } = await supabaseClient
     .from("item_description_field_table")
     .insert(params)
-    .select("*")
-    .single();
+    .select("*");
   if (error) throw error;
 
   return data;
