@@ -1235,7 +1235,7 @@ RETURNS VOID  as $$
   plv8.subtransaction(function(){
 
     plv8.execute(`UPDATE team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
-    plv8.execute(`UPDATE team_member_table SET team_member_role='ADMIN' WHERE team_member_id='${owner_id}'`);
+    plv8.execute(`UPDATE team_member_table SET team_member_role='APPROVER' WHERE team_member_id='${owner_id}'`);
  });
 $$ LANGUAGE plv8;
 
@@ -2517,6 +2517,37 @@ $$ LANGUAGE plv8;
 
 -- END: Delete team
 
+-- Start: Update multiple approver
+
+CREATE OR REPLACE FUNCTION update_multiple_approver(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let approverList = [];
+  plv8.subtransaction(function(){
+    const {
+      teamApproverIdList,
+      updateRole
+    } = input_data;
+    teamApproverIdList.forEach(id => {
+      const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
+      const user = plv8.execute(`SELECT * FROM user_table WHERE user_id='${member.team_member_user_id}'`)[0];
+
+      approverList.push({
+        team_member_id: member.team_member_id,
+        team_member_user: {
+          user_id: user.user_id,
+          user_first_name: user.user_first_name,
+          user_last_name: user.user_last_name,
+          user_avatar: user.user_avatar,
+          user_email: user.user_email
+        }
+      });
+    });
+ });
+ return approverList;
+$$ LANGUAGE plv8;
+
 -- Start: Update multiple admin
 
 CREATE OR REPLACE FUNCTION update_multiple_admin(
@@ -2549,6 +2580,8 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- END: Update multiple admin
+
+-- END: Update multiple approver
 
 -- Start: Request page on load
 
@@ -3001,7 +3034,8 @@ RETURNS JSON AS $$
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
               WHEN 'ADMIN' THEN 2
-              WHEN 'MEMBER' THEN 3
+              WHEN 'APPROVER' THEN 3
+              WHEN 'MEMBER' THEN 4
           END ASC,
           usert.user_first_name ASC,
           usert.user_last_name ASC
@@ -3025,7 +3059,7 @@ RETURNS JSON AS $$
 
     const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
 
-    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_date_created DESC LIMIT 10;`);
+    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC LIMIT 10;`);
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
@@ -3080,7 +3114,8 @@ RETURNS JSON AS $$
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
               WHEN 'ADMIN' THEN 2
-              WHEN 'MEMBER' THEN 3
+              WHEN 'APPROVER' THEN 3
+              WHEN 'MEMBER' THEN 4
           END ASC,
           usert.user_first_name ASC,
           usert.user_last_name ASC
@@ -3619,7 +3654,7 @@ RETURNS JSON as $$
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
-          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
         ORDER BY user_first_name, user_last_name ASC
       `
     );
@@ -3677,7 +3712,7 @@ RETURNS JSON as $$
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
-          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
         ORDER BY user_first_name, user_last_name ASC
       `
     );
@@ -3696,7 +3731,7 @@ RETURNS JSON as $$
     const teamGroupList = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
  
     if(isFormslyForm){
-      const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_date_created DESC LIMIT ${limit}`);
+      const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit}`);
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false`)[0].count;
     
       if(formName === 'Requisition'){
@@ -5521,8 +5556,8 @@ RETURNS JSON as $$
     const ticket = plv8.execute(`SELECT ticket_approver_team_member_id FROM ticket_table WHERE ticket_id='${ticketId}'`)[0];
     const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
 
-    const isAdmin = member.team_member_role === 'ADMIN' || member.team_member_role === 'OWNER'
-    if (!isAdmin) throw new Error("User is not an Admin");
+    const isApprover = member.team_member_role === 'APPROVER' || member.team_member_role === 'OWNER'
+    if (!isApprover) throw new Error("User is not an Approver");
 
     const hasApprover = ticket.ticket_approver_team_member_id !== null
     if (hasApprover) throw new Error("Ticket already have approver");
@@ -5776,9 +5811,10 @@ ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 
+
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
@@ -5814,7 +5850,7 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON option_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
 
@@ -5843,17 +5879,17 @@ DROP POLICY IF EXISTS "Allow READ for users based on invitation_to_email" ON inv
 DROP POLICY IF EXISTS "Allow UPDATE for users based on invitation_from_team_member_id" ON invitation_table;
 DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_member_id" ON invitation_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON notification_table;
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own notifications" ON notification_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own notifications" ON notification_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on notification_user_id" ON notification_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on notification_user_id" ON notification_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_response_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_response_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_response_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_response_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_response_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own request response" ON request_response_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own request response" ON request_response_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_table;
@@ -5889,7 +5925,7 @@ DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_me
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_member_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON team_project_table;
+DROP POLICY IF EXISTS "Allow READ for anon" ON team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
 
@@ -6208,7 +6244,7 @@ USING (
 );
 
 --- REQUEST_SIGNER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."request_signer_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6228,7 +6264,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6241,7 +6277,7 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6432,7 +6468,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role = 'OWNER'
+    AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR team_member_user_id = auth.uid()
 );
 
@@ -6443,7 +6479,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role = 'OWNER'
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
@@ -6645,7 +6681,7 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 )
 WITH CHECK (
@@ -6661,7 +6697,7 @@ WITH CHECK (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -7039,7 +7075,6 @@ USING (
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
-
 
 --- TICKET_TABLE
 

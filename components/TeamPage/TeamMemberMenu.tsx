@@ -32,8 +32,13 @@ const TeamMemberMenu = ({
 
   const authUserRole = authTeamMember ? authTeamMember.team_member_role : null;
   const canUserUpdateMember =
-    authUserRole === "OWNER" &&
-    authTeamMember?.team_member_user_id !== member.team_member_user.user_id;
+    (authUserRole === "OWNER" &&
+      authTeamMember?.team_member_user_id !==
+        member.team_member_user.user_id) ||
+    (authUserRole === "ADMIN" &&
+      authTeamMember?.team_member_user_id !== member.team_member_user.user_id &&
+      member.team_member_role !== "OWNER" &&
+      member.team_member_role !== "ADMIN");
 
   const canUserAccessDangerZone =
     authTeamMember && authTeamMember.team_member_role === "OWNER";
@@ -60,7 +65,7 @@ const TeamMemberMenu = ({
               <>
                 <Menu.Divider />
                 <Menu.Label>Team Role</Menu.Label>
-                {member.team_member_role !== "ADMIN" ? (
+                {member.team_member_role !== "APPROVER" ? (
                   <Menu.Item
                     icon={<IconUserUp {...defaultMenuIconProps} />}
                     onClick={() =>
@@ -76,17 +81,17 @@ const TeamMemberMenu = ({
                               )}
                               &nbsp;
                             </Text>
-                            to admin?
+                            to approver?
                           </Text>
                         ),
                         labels: { confirm: "Confirm", cancel: "Cancel" },
                         centered: true,
                         onConfirm: () =>
-                          onUpdateMemberRole(member.team_member_id, "ADMIN"),
+                          onUpdateMemberRole(member.team_member_id, "APPROVER"),
                       })
                     }
                   >
-                    Promote to Admin
+                    Promote to Approver
                   </Menu.Item>
                 ) : (
                   <Menu.Item

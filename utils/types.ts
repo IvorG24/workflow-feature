@@ -189,7 +189,7 @@ export type TicketCommentTableUpdate =
 
 // Start: Database Enums
 export type AppType = "GENERAL" | "REQUEST" | "REVIEW";
-export type MemberRoleType = "OWNER" | "ADMIN" | "MEMBER";
+export type MemberRoleType = "OWNER" | "APPROVER" | "MEMBER" | "ADMIN";
 export type AttachmentBucketType =
   | "USER_AVATARS"
   | "USER_SIGNATURES"
