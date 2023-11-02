@@ -3228,8 +3228,7 @@ RETURNS JSON AS $$
           AND tmt.team_member_is_disabled=false 
           AND usert.user_is_disabled=false
           ${search && `AND (
-            usert.user_first_name ILIKE '%${search}%'
-            OR usert.user_last_name ILIKE '%${search}%'
+            CONCAT(usert.user_first_name, ' ', usert.user_last_name) ILIKE '%${search}%'
             OR usert.user_email ILIKE '%${search}%'
           )`}
         ORDER BY
@@ -3256,8 +3255,7 @@ RETURNS JSON AS $$
           AND tmt.team_member_is_disabled=false 
           AND usert.user_is_disabled=false
           ${search && `AND (
-            usert.user_first_name ILIKE '%${search}%'
-            OR usert.user_last_name ILIKE '%${search}%'
+            CONCAT(usert.user_first_name, ' ', usert.user_last_name) ILIKE '%${search}%'
             OR usert.user_email ILIKE '%${search}%'
           )`}
       `
