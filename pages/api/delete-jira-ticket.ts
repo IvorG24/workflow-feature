@@ -5,7 +5,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    if (req.method !== "POST") {
+    if (req.method !== "DELETE") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
@@ -18,49 +18,32 @@ export default async function handler(
       return res.status(405).json({ error: "Jira env variables undefined" });
     }
 
-    const { summary, description, project_key, issue_type_name } = req.body;
-
-    const requestBody = {
-      fields: {
-        project: {
-          key: project_key,
-        },
-        summary,
-        description,
-        issuetype: {
-          name: issue_type_name,
-        },
-      },
-    };
+    const { jiraId } = req.body;
 
     const response = await fetch(
-      // Jira Rest API
-      "https://test-formsly.atlassian.net/rest/api/2/issue/",
+      `https://your-domain.atlassian.net/rest/api/3/issueLink/${jiraId}`,
       {
-        method: "POST",
+        method: "DELETE",
         headers: {
           Authorization: `Basic ${Buffer.from(
             `${jiraConfig.user}:${jiraConfig.api_token}`
           ).toString("base64")}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody),
       }
     );
 
     if (response.status === 201) {
-      // Jira ticket was created successfully
+      // Jira ticket was deleted successfully
       const responseData = await response.json();
       return res.status(200).json(responseData);
     } else {
       console.error(await response.text());
       return res
         .status(response.status)
-        .json({ error: "Error creating Jira ticket" });
+        .json({ error: "Error deleting Jira ticket" });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error creating Jira ticket" });
+    return res.status(500).json({ error: "Error deleting Jira ticket" });
   }
 }

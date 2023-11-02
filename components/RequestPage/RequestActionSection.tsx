@@ -62,7 +62,6 @@ Props) => {
 
       if (jiraTicket.ok) {
         const jiraTicketResponse = await jiraTicket.json();
-        console.log(jiraTicketResponse);
         return jiraTicketResponse;
       } else {
         console.error("Jira API request failed:", jiraTicket.statusText);
@@ -97,7 +96,11 @@ Props) => {
 
       if (!jiraTicket) throw Error;
 
-      handleUpdateRequest("APPROVED", jiraTicket.id, jiraTicket.self);
+      handleUpdateRequest(
+        "APPROVED",
+        jiraTicket.id,
+        `https://test-formsly.atlassian.net/jira/core/projects/FT/issues/${jiraTicket.key}`
+      );
     } catch (error) {
       console.log(error);
       notifications.show({
@@ -136,8 +139,8 @@ Props) => {
                 type="submit"
                 color="green"
                 onClick={async () => {
-                  await handleApproveRequisitionRequest();
                   modals.close("approveRf");
+                  handleApproveRequisitionRequest();
                 }}
               >
                 Approve
