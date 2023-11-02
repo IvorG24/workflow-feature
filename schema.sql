@@ -3112,8 +3112,9 @@ RETURNS JSON AS $$
         ORDER BY
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
-              WHEN 'APPROVER' THEN 2
-              WHEN 'MEMBER' THEN 3
+              WHEN 'ADMIN' THEN 2
+              WHEN 'APPROVER' THEN 3
+              WHEN 'MEMBER' THEN 4
           END ASC,
           usert.user_first_name ASC,
           usert.user_last_name ASC
