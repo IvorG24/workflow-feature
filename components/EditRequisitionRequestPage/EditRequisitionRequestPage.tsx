@@ -329,7 +329,7 @@ const EditRequisitionRequestPage = ({
               option_id: options.item_description_field_id,
               option_order: optionIndex + 1,
               option_value: `${options.item_description_field_value}${
-                options.item_description_field_uom
+                description.item_description_is_with_uom
                   ? ` ${options.item_description_field_uom}`
                   : ""
               }`,

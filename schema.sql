@@ -1005,6 +1005,129 @@ $$ LANGUAGE plv8;
 
 -- End: Create item
 
+-- Start: Update item
+
+CREATE OR REPLACE FUNCTION update_item(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let item_data;
+  plv8.subtransaction(function(){
+    const {
+      itemData: {
+        item_id,
+        item_general_name,
+        item_is_available,
+        item_unit,
+        item_gl_account,
+        item_team_id,
+        item_division_id_list
+      },
+      toAdd,
+      toUpdate,
+      toRemove,
+      formId
+    } = input_data;
+
+    
+    const item_result = plv8.execute(
+      `
+        UPDATE item_table SET 
+          item_general_name = '${item_general_name}',
+          item_is_available = '${item_is_available}',
+          item_unit = '${item_unit}',
+          item_gl_account = '${item_gl_account}',
+          item_team_id = '${item_team_id}',
+          item_division_id_list = ARRAY[${item_division_id_list}]
+        WHERE item_id = '${item_id}'
+        RETURNING *
+      `
+    )[0];
+
+    const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
+
+    const itemDescriptionInput = [];
+    const fieldInput= [];
+
+    toAdd.forEach((description) => {
+      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      itemDescriptionInput.push({
+        item_description_label: description.description,
+        item_description_item_id: item_result.item_id,
+        item_description_is_available: true,
+        item_description_field_id: fieldId,
+        item_description_is_with_uom: description.withUoM
+      });
+      fieldInput.push({
+        field_id: fieldId,
+        field_name: description.description,
+        field_type: "DROPDOWN",
+        field_order: 14,
+        field_section_id: section_id,
+        field_is_required: true,
+      });
+    });
+
+    const itemDescriptionValues = itemDescriptionInput
+      .map((item) =>
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}')`
+      )
+      .join(",");
+
+    const fieldValues = fieldInput
+      .map((field) =>
+        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+      )
+      .join(",");
+
+    // update
+    const updatedItemDescription = [];
+    toUpdate.forEach(description => {
+      const updatedDescription = plv8.execute(
+        `
+          UPDATE item_description_table SET 
+            item_description_is_with_uom = '${description.item_description_is_with_uom}',
+            item_description_label = '${description.item_description_label}'
+          WHERE item_description_id = '${description.item_description_id}'
+          RETURNING *
+        `
+      )[0];
+      plv8.execute(
+        `
+          UPDATE field_table SET 
+            field_name = '${description.item_description_label}'
+          WHERE field_id = '${description.item_description_field_id}'
+        `
+      );
+      updatedItemDescription.push(updatedDescription);
+    });
+
+    // delete
+    toRemove.forEach(description => {
+      plv8.execute(
+        `
+          UPDATE item_description_table SET 
+            item_description_is_disabled = true
+          WHERE item_description_id = '${description.descriptionId}'
+        `
+      );
+    });
+
+   // add
+   let addedDescription = [];
+   if(fieldValues.length && itemDescriptionValues.length){
+    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
+
+    addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom) VALUES ${itemDescriptionValues} RETURNING *`);
+   }
+
+    item_data = {...item_result, item_description: [...updatedItemDescription, ...addedDescription]}
+ });
+ return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Update item
+
 -- Start: Create service
 
 CREATE OR REPLACE FUNCTION create_service(

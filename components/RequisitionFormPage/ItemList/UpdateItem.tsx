@@ -1,10 +1,15 @@
 import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
-import { createItem } from "@/backend/api/post";
+import { updateItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { GL_ACCOUNT_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
+  ItemDescriptionTableUpdate,
+  ItemForm,
+  ItemWithDescriptionType,
+} from "@/utils/types";
+import {
+  ActionIcon,
   Button,
   Checkbox,
   Container,
@@ -14,6 +19,7 @@ import {
   MultiSelect,
   Select,
   Stack,
+  Text,
   TextInput,
   Title,
 } from "@mantine/core";
@@ -25,19 +31,18 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
 
 type Props = {
-  setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
   setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
-  setItemCount: Dispatch<SetStateAction<number>>;
+  setEditItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
+  editItem: ItemWithDescriptionType;
 };
 
-const CreateItem = ({
-  setIsCreatingItem,
-  setItemList,
-  setItemCount,
-}: Props) => {
+const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const formId = router.query.formId as string;
+  const [toRemoveDescription, setToRemoveDescription] = useState<
+    { descriptionId: string; fieldId: string }[]
+  >([]);
 
   const activeTeam = useActiveTeam();
 
@@ -72,10 +77,19 @@ const CreateItem = ({
   const { register, getValues, formState, handleSubmit, control } =
     useForm<ItemForm>({
       defaultValues: {
-        descriptions: [{ description: "", withUoM: false }],
-        generalName: "",
-        unit: "",
+        descriptions: editItem.item_description.map((description) => {
+          return {
+            description: description.item_description_label,
+            withUoM: description.item_description_is_with_uom,
+            descriptionId: description.item_description_id,
+            fieldId: description.item_description_field_id,
+          };
+        }),
+        generalName: editItem.item_general_name,
+        unit: editItem.item_unit,
         isAvailable: true,
+        glAccount: editItem.item_gl_account,
+        division: editItem.item_division_id_list,
       },
     });
 
@@ -89,14 +103,31 @@ const CreateItem = ({
 
   const onSubmit = async (data: ItemForm) => {
     try {
-      const newItem = await createItem(supabaseClient, {
-        itemDescription: data.descriptions.map((description) => {
-          return {
+      const toUpdate: ItemDescriptionTableUpdate[] = [];
+      const toAdd: ItemForm["descriptions"] = [];
+
+      data.descriptions.forEach((description) => {
+        if (description.descriptionId) {
+          toUpdate.push({
+            item_description_id: description.descriptionId,
+            item_description_is_with_uom: description.withUoM,
+            item_description_label: description.description.toUpperCase(),
+            item_description_field_id: description.fieldId,
+          });
+        } else {
+          toAdd.push({
             description: description.description.toUpperCase(),
             withUoM: description.withUoM,
-          };
-        }),
+          });
+        }
+      });
+
+      const newItem = await updateItem(supabaseClient, {
+        toAdd,
+        toUpdate,
+        toRemove: toRemoveDescription,
         itemData: {
+          item_id: editItem.item_id,
           item_general_name: data.generalName.toUpperCase(),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
@@ -106,17 +137,22 @@ const CreateItem = ({
         },
         formId: formId,
       });
+
       setItemList((prev) => {
-        prev.unshift(newItem);
-        return prev;
+        return prev.map((item) => {
+          if (item.item_id === editItem.item_id) {
+            return newItem;
+          } else {
+            return item;
+          }
+        });
       });
-      setItemCount((prev) => prev + 1);
       notifications.show({
-        message: "Item created.",
+        message: "Item updated.",
         color: "green",
       });
-      setIsCreatingItem(false);
-    } catch {
+      setEditItem(null);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -149,6 +185,8 @@ const CreateItem = ({
                 },
                 validate: {
                   duplicate: async (value) => {
+                    if (value === editItem.item_general_name) return true;
+
                     const isExisting = await checkItemName(supabaseClient, {
                       itemName: value.toUpperCase(),
                       teamId: activeTeam.team_id,
@@ -278,23 +316,57 @@ const CreateItem = ({
                       formState.errors.descriptions[index]?.description?.message
                     }
                   />
-                  <Checkbox
-                    {...register(`descriptions.${index}.withUoM`)}
-                    sx={{
-                      input: {
-                        cursor: "pointer",
-                      },
-                    }}
-                    mt={32}
-                    label={"with UoM?"}
+                  <Controller
+                    control={control}
+                    name={`descriptions.${index}.withUoM`}
+                    render={({ field: { value, onChange } }) => (
+                      <Checkbox
+                        sx={{
+                          input: {
+                            cursor: "pointer",
+                          },
+                        }}
+                        mt={32}
+                        label={"with UoM?"}
+                        checked={value}
+                        onChange={onChange}
+                      />
+                    )}
                   />
+
+                  {fields.length > 1 && (
+                    <ActionIcon
+                      onClick={() => {
+                        remove(index);
+                        if (field.descriptionId && field.fieldId) {
+                          setToRemoveDescription((prev) => [
+                            ...prev,
+                            {
+                              descriptionId: `${field.descriptionId}`,
+                              fieldId: `${field.fieldId}`,
+                            },
+                          ]);
+                        }
+                      }}
+                      size="md"
+                      radius={100}
+                      variant="light"
+                      color="blue"
+                      mt={28}
+                      ml={10}
+                    >
+                      <Text size="lg" fw={700}>
+                        -
+                      </Text>
+                    </ActionIcon>
+                  )}
                 </Flex>
               );
             })}
             <InputAddRemove
               canAdd={fields.length < 20}
               onAdd={onAddInput}
-              canRemove={fields.length > 1}
+              canRemove={false}
               onRemove={() => remove(fields.length - 1)}
             />
             <Checkbox
@@ -313,7 +385,7 @@ const CreateItem = ({
             miw={100}
             mt={30}
             mr={14}
-            onClick={() => setIsCreatingItem(false)}
+            onClick={() => setEditItem(null)}
           >
             Cancel
           </Button>
@@ -323,4 +395,4 @@ const CreateItem = ({
   );
 };
 
-export default CreateItem;
+export default UpdateItem;

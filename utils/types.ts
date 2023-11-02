@@ -110,7 +110,7 @@ export type ItemTableUpdate =
 
 export type ItemDescriptionTableRow =
   Database["public"]["Tables"]["item_description_table"]["Row"];
-export type ItemDescriptionableInsert =
+export type ItemDescriptionTableInsert =
   Database["public"]["Tables"]["item_description_table"]["Insert"];
 export type ItemDescriptionTableUpdate =
   Database["public"]["Tables"]["item_description_table"]["Update"];
@@ -500,7 +500,12 @@ export type ServiceWithScopeType = ServiceTableRow & {
 
 export type ItemForm = {
   generalName: string;
-  descriptions: { description: string; withUoM: boolean }[];
+  descriptions: {
+    description: string;
+    withUoM: boolean;
+    descriptionId?: string;
+    fieldId?: string;
+  }[];
   unit: string;
   isAvailable: boolean;
   glAccount: string;

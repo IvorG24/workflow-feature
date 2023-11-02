@@ -13,7 +13,10 @@ import {
   FormType,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
+  ItemDescriptionTableUpdate,
+  ItemForm,
   ItemTableInsert,
+  ItemTableUpdate,
   NotificationTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -301,6 +304,25 @@ export const createItem = async (
     .select()
     .single();
 
+  if (error) throw error;
+  return data;
+};
+
+// Update item
+export const updateItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemData: ItemTableUpdate;
+    toAdd: ItemForm["descriptions"];
+    toUpdate: ItemDescriptionTableUpdate[];
+    toRemove: { fieldId: string; descriptionId: string }[];
+    formId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_item", { input_data: params })
+    .select()
+    .single();
   if (error) throw error;
   return data;
 };
