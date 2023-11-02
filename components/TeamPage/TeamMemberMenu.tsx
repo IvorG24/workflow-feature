@@ -32,8 +32,13 @@ const TeamMemberMenu = ({
 
   const authUserRole = authTeamMember ? authTeamMember.team_member_role : null;
   const canUserUpdateMember =
-    authUserRole === "OWNER" &&
-    authTeamMember?.team_member_user_id !== member.team_member_user.user_id;
+    (authUserRole === "OWNER" &&
+      authTeamMember?.team_member_user_id !==
+        member.team_member_user.user_id) ||
+    (authUserRole === "ADMIN" &&
+      authTeamMember?.team_member_user_id !== member.team_member_user.user_id &&
+      member.team_member_role !== "OWNER" &&
+      member.team_member_role !== "ADMIN");
 
   const canUserAccessDangerZone =
     authTeamMember && authTeamMember.team_member_role === "OWNER";

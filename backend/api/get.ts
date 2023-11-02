@@ -1560,7 +1560,7 @@ export const getResponseDataByKeyword = async (
 };
 
 // Check user if owner or approver
-export const checkIfOwnerOrApprover = async (
+export const checkIfOwnerOrAdmin = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
@@ -1577,7 +1577,7 @@ export const checkIfOwnerOrApprover = async (
   if (error) throw error;
   const role = data?.team_member_role;
   if (role === null) return false;
-  return role === "APPROVER" || role === "OWNER";
+  return role === "ADMIN" || role === "OWNER";
 };
 
 // Get all formsly forward link form id
@@ -3163,10 +3163,11 @@ export const getTeamApproverListWithFilter = async (
     .eq("team_member_is_disabled", false);
 
   if (search) {
-    query = query.or(
-      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
-      { foreignTable: "team_member_user" }
-    );
+    let orQuery = "";
+    search.split(" ").map((search) => {
+      orQuery += `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`;
+    });
+    query = query.or(orQuery, { foreignTable: "team_member_user" });
   }
 
   query = query.order("team_member_date_created", {
@@ -3218,10 +3219,11 @@ export const getTeamAdminListWithFilter = async (
     .eq("team_member_is_disabled", false);
 
   if (search) {
-    query = query.or(
-      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
-      { foreignTable: "team_member_user" }
-    );
+    let orQuery = "";
+    search.split(" ").map((search) => {
+      orQuery += `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`;
+    });
+    query = query.or(orQuery, { foreignTable: "team_member_user" });
   }
 
   query = query.order("team_member_date_created", {
