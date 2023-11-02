@@ -1023,3 +1023,10 @@ export type TicketListOnLoad = {
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
 };
+
+export type JiraTicketConfig = {
+  summary: string;
+  description: string;
+  project_key: string;
+  issue_type_name: string;
+};

@@ -388,6 +388,7 @@ const RequisitionRequestPage = ({
                 .map((signer) => signer.request_signer_status)
                 .filter((status) => status === "APPROVED").length === 0
             }
+            jiraId={request.request_jira_id}
           />
         ) : null}
 
