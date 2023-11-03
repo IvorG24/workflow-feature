@@ -722,12 +722,17 @@ export const getItemList = async (
     query = query.ilike("item_general_name", `%${search}%`);
   }
 
-  query.order("item_date_created", { ascending: false });
+  query.order("item_general_name", { ascending: true });
+  query.order("item_description_order", {
+    foreignTable: "item_description",
+    ascending: true,
+  });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
 
   const { data, error, count } = await query;
+
   if (error) throw error;
 
   return {
@@ -810,14 +815,13 @@ export const getItemDescriptionFieldList = async (
       count: "exact",
     })
     .eq("item_description_field_item_description_id", descriptionId)
-    .eq("item_description_field_is_disabled", false)
-    .order("item_description_field_value", { ascending: true });
+    .eq("item_description_field_is_disabled", false);
 
   if (search) {
     query = query.ilike("item_description_field_value", `%${search}%`);
   }
 
-  query.order("item_description_field_date_created", { ascending: false });
+  query.order("item_description_field_value", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
