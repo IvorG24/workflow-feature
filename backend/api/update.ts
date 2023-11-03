@@ -461,6 +461,8 @@ export const reverseSignerApproval = async (
         request_status_date_updated: moment(new Date()).format(
           "YYYY-MM-DD HH:mm:ss.SSSSSSZ"
         ),
+        request_jira_id: null,
+        request_jira_link: null,
       })
       .eq("request_id", requestId);
 

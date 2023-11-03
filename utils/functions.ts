@@ -94,7 +94,7 @@ export const isValidUrl = (urlString: string) => {
 export const checkIfTimeIsWithinFiveMinutes = (timestampString: string) => {
   const timestamp = moment(timestampString);
   const currentTime = moment();
-  const fiveMinutesFromNow = currentTime.add(5, "minutes");
+  const differenceInMinutes = currentTime.diff(timestamp, "minutes");
 
-  return timestamp.isSameOrBefore(fiveMinutesFromNow);
+  return differenceInMinutes <= 5;
 };
