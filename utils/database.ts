@@ -336,6 +336,7 @@ export type Database = {
           item_description_is_with_uom: boolean;
           item_description_item_id: string;
           item_description_label: string;
+          item_description_order: number;
         };
         Insert: {
           item_description_date_created?: string;
@@ -346,6 +347,7 @@ export type Database = {
           item_description_is_with_uom?: boolean;
           item_description_item_id: string;
           item_description_label: string;
+          item_description_order: number;
         };
         Update: {
           item_description_date_created?: string;
@@ -356,6 +358,7 @@ export type Database = {
           item_description_is_with_uom?: boolean;
           item_description_item_id?: string;
           item_description_label?: string;
+          item_description_order?: number;
         };
         Relationships: [
           {
