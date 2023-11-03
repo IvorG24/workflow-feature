@@ -5,6 +5,7 @@ import { GL_ACCOUNT_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
+  Box,
   Button,
   Checkbox,
   Container,
@@ -23,6 +24,7 @@ import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
+import MoveUpAndDown from "../MoveUpAndDown";
 
 type Props = {
   setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
@@ -79,7 +81,7 @@ const CreateItem = ({
       },
     });
 
-  const { append, remove, fields } = useFieldArray<ItemForm>({
+  const { append, remove, fields, swap } = useFieldArray<ItemForm>({
     control,
     name: "descriptions",
     rules: { minLength: 1, maxLength: 20 },
@@ -90,10 +92,11 @@ const CreateItem = ({
   const onSubmit = async (data: ItemForm) => {
     try {
       const newItem = await createItem(supabaseClient, {
-        itemDescription: data.descriptions.map((description) => {
+        itemDescription: data.descriptions.map((description, index) => {
           return {
             description: description.description.toUpperCase(),
             withUoM: description.withUoM,
+            order: index + 1,
           };
         }),
         itemData: {
@@ -240,6 +243,14 @@ const CreateItem = ({
             {fields.map((field, index) => {
               return (
                 <Flex key={field.id} gap="xs">
+                  <Box sx={{ alignSelf: "center" }}>
+                    <MoveUpAndDown
+                      canUp={index !== 0}
+                      canDown={index !== fields.length - 1}
+                      onUp={() => swap(index, index - 1)}
+                      onDown={() => swap(index, index + 1)}
+                    />
+                  </Box>
                   <TextInput
                     withAsterisk
                     label={`Description #${index + 1}`}
@@ -278,15 +289,22 @@ const CreateItem = ({
                       formState.errors.descriptions[index]?.description?.message
                     }
                   />
-                  <Checkbox
-                    {...register(`descriptions.${index}.withUoM`)}
-                    sx={{
-                      input: {
-                        cursor: "pointer",
-                      },
-                    }}
-                    mt={32}
-                    label={"with UoM?"}
+                  <Controller
+                    control={control}
+                    name={`descriptions.${index}.withUoM`}
+                    render={({ field: { value, onChange } }) => (
+                      <Checkbox
+                        sx={{
+                          input: {
+                            cursor: "pointer",
+                          },
+                        }}
+                        mt={32}
+                        label={"with UoM?"}
+                        checked={value}
+                        onChange={onChange}
+                      />
+                    )}
                   />
                 </Flex>
               );

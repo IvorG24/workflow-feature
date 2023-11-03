@@ -10,6 +10,7 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Checkbox,
   Container,
@@ -29,6 +30,7 @@ import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
+import MoveUpAndDown from "../MoveUpAndDown";
 
 type Props = {
   setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
@@ -93,7 +95,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
       },
     });
 
-  const { append, remove, fields } = useFieldArray<ItemForm>({
+  const { append, remove, fields, swap } = useFieldArray<ItemForm>({
     control,
     name: "descriptions",
     rules: { minLength: 1, maxLength: 20 },
@@ -106,18 +108,20 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
       const toUpdate: ItemDescriptionTableUpdate[] = [];
       const toAdd: ItemForm["descriptions"] = [];
 
-      data.descriptions.forEach((description) => {
+      data.descriptions.forEach((description, index) => {
         if (description.descriptionId) {
           toUpdate.push({
             item_description_id: description.descriptionId,
             item_description_is_with_uom: description.withUoM,
             item_description_label: description.description.toUpperCase(),
             item_description_field_id: description.fieldId,
+            item_description_order: index + 1,
           });
         } else {
           toAdd.push({
             description: description.description.toUpperCase(),
             withUoM: description.withUoM,
+            order: index + 1,
           });
         }
       });
@@ -278,6 +282,14 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             {fields.map((field, index) => {
               return (
                 <Flex key={field.id} gap="xs">
+                  <Box sx={{ alignSelf: "center" }}>
+                    <MoveUpAndDown
+                      canUp={index !== 0}
+                      canDown={index !== fields.length - 1}
+                      onUp={() => swap(index, index - 1)}
+                      onDown={() => swap(index, index + 1)}
+                    />
+                  </Box>
                   <TextInput
                     withAsterisk
                     label={`Description #${index + 1}`}
