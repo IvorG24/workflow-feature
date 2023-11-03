@@ -594,23 +594,28 @@ export const editRequest = async (
 
   // get request signers
   const requestSignerInput: RequestSignerTableInsert[] = [];
+  const signerIdList: string[] = [];
 
   // get signer notification
   const requestSignerNotificationInput: NotificationTableInsert[] = [];
 
   signers.forEach((signer) => {
-    requestSignerInput.push({
-      request_signer_signer_id: signer.signer_id,
-      request_signer_request_id: requestId,
-    });
-    requestSignerNotificationInput.push({
-      notification_app: "REQUEST",
-      notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-      notification_redirect_url: `/team-requests/requests/${requestId}`,
-      notification_team_id: teamId,
-      notification_type: "REQUEST",
-      notification_user_id: signer.signer_team_member.team_member_user.user_id,
-    });
+    if (!signerIdList.includes(signer.signer_id)) {
+      requestSignerInput.push({
+        request_signer_signer_id: signer.signer_id,
+        request_signer_request_id: requestId,
+      });
+      requestSignerNotificationInput.push({
+        notification_app: "REQUEST",
+        notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
+        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_team_id: teamId,
+        notification_type: "REQUEST",
+        notification_user_id:
+          signer.signer_team_member.team_member_user.user_id,
+      });
+      signerIdList.push(signer.signer_id);
+    }
   });
 
   const responseValues = requestResponseInput
