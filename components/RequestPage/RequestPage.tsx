@@ -7,11 +7,10 @@ import {
   getCurrentDate,
   getFileUrl,
 } from "@/backend/api/get";
-import { createComment } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
   cancelRequest,
-  reverseSignerApproval,
+  reverseRequestApproval,
 } from "@/backend/api/update";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
 import useRealtimeProjectRequestSignerList from "@/hooks/useRealtimeRequestProjectSignerList";
@@ -640,27 +639,49 @@ const RequestPage = ({
 
   const handleReverseApproval = async () => {
     try {
-      if (!isUserSigner) return;
+      if (!isUserSigner || !teamMember) {
+        console.error("Signer or team member is undefined");
+        return;
+      }
+      setIsLoading(true);
 
-      await reverseSignerApproval(supabaseClient, {
-        requestSignerId: isUserSigner.request_signer_id,
+      const serverDate = (
+        await getCurrentDate(supabaseClient)
+      ).toLocaleString();
+
+      const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
+        `${isUserSigner.request_signer_status_date_updated}`,
+        serverDate
+      );
+
+      if (!actionIsWithinFiveMinutes) {
+        return notifications.show({
+          message: "Reversal is beyond the time limit.",
+          color: "orange",
+        });
+      }
+
+      const signerFullName = `${isUserSigner.signer_team_member.team_member_user.user_first_name} ${isUserSigner.signer_team_member.team_member_user.user_last_name}`;
+
+      await reverseRequestApproval(supabaseClient, {
+        requestAction: "REVERSED",
         requestId: request.request_id,
         isPrimarySigner: isUserSigner.signer_is_primary_signer,
+        requestSignerId: isUserSigner.request_signer_id,
+        requestOwnerId: request.request_team_member.team_member_user.user_id,
+        signerFullName: signerFullName,
+        formName: request.request_form.form_name,
+        memberId: teamMember.team_member_id,
+        teamId: request.request_team_member.team_member_team_id,
       });
-
-      const newComment = {
-        comment_request_id: request.request_id,
-        comment_team_member_id: teamMember?.team_member_id as string,
-        comment_content: `${user?.user_first_name} ${user?.user_last_name} reversed their approval of this request`,
-        comment_type: "ACTION_REVERSED",
-      };
-      await createComment(supabaseClient, { ...newComment });
     } catch (error) {
       console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

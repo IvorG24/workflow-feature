@@ -1628,6 +1628,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      update_item: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       update_multiple_admin: {
         Args: {
           input_data: Json;
