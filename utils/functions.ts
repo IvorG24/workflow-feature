@@ -91,9 +91,12 @@ export const isValidUrl = (urlString: string) => {
   return !!urlPattern.test(urlString);
 };
 
-export const checkIfTimeIsWithinFiveMinutes = (timestampString: string) => {
+export const checkIfTimeIsWithinFiveMinutes = (
+  timestampString: string,
+  currentDateString: string
+) => {
   const timestamp = moment(timestampString);
-  const currentTime = moment();
+  const currentTime = moment(currentDateString);
   const differenceInMinutes = currentTime.diff(timestamp, "minutes");
 
   return differenceInMinutes <= 5;

@@ -1,5 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getFileUrl } from "@/backend/api/get";
+import { getCurrentDate, getFileUrl } from "@/backend/api/get";
 import { createComment } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
@@ -73,6 +73,7 @@ const RequisitionRequestPage = ({
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [isCashPurchase, setIsCashPurchase] = useState(false);
+  const [currentServerDate, setCurrentServerDate] = useState("");
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -81,6 +82,7 @@ const RequisitionRequestPage = ({
   useEffect(() => {
     try {
       setIsFetchingApprover(true);
+
       const fetchApproverDetails = async () => {
         const data = await Promise.all(
           request.request_signer.map(async (signer) => {
@@ -109,6 +111,11 @@ const RequisitionRequestPage = ({
           })
         );
         setApproverDetails(data);
+
+        const serverDate = (
+          await getCurrentDate(supabaseClient)
+        ).toLocaleString();
+        setCurrentServerDate(serverDate);
       };
       if (request) {
         fetchApproverDetails();
@@ -313,10 +320,12 @@ const RequisitionRequestPage = ({
   };
 
   const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
-    if (!isUserSigner) return;
+    if (!isUserSigner) return false;
+    if (currentServerDate === "") return false;
 
     const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-      `${isUserSigner.request_signer_status_date_updated}`
+      `${isUserSigner.request_signer_status_date_updated}`,
+      currentServerDate
     );
     const primarySignerStatusIsPending = signerList.find(
       (signer) => signer.signer_is_primary_signer

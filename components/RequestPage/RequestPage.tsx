@@ -4,6 +4,7 @@ import {
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
+  getCurrentDate,
   getFileUrl,
 } from "@/backend/api/get";
 import { createComment } from "@/backend/api/post";
@@ -94,6 +95,7 @@ const RequestPage = ({
     []
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
+  const [currentServerDate, setCurrentServerDate] = useState("");
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
@@ -129,6 +131,11 @@ const RequestPage = ({
           })
         );
         setApproverDetails(data);
+
+        const serverDate = (
+          await getCurrentDate(supabaseClient)
+        ).toLocaleString();
+        setCurrentServerDate(serverDate);
       };
       if (request) {
         fetchApproverDetails();
@@ -658,10 +665,12 @@ const RequestPage = ({
   };
 
   const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
-    if (!isUserSigner) return;
+    if (!isUserSigner) return false;
+    if (currentServerDate === "") return false;
 
     const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-      `${isUserSigner.request_signer_status_date_updated}`
+      `${isUserSigner.request_signer_status_date_updated}`,
+      currentServerDate
     );
     const primarySignerStatusIsPending = signerList.find(
       (signer) => signer.signer_is_primary_signer
