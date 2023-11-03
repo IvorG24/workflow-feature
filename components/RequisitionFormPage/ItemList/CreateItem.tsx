@@ -243,14 +243,16 @@ const CreateItem = ({
             {fields.map((field, index) => {
               return (
                 <Flex key={field.id} gap="xs">
-                  <Box sx={{ alignSelf: "center" }}>
-                    <MoveUpAndDown
-                      canUp={index !== 0}
-                      canDown={index !== fields.length - 1}
-                      onUp={() => swap(index, index - 1)}
-                      onDown={() => swap(index, index + 1)}
-                    />
-                  </Box>
+                  {(index !== 0 || index !== fields.length - 1) && (
+                    <Box sx={{ alignSelf: "center" }}>
+                      <MoveUpAndDown
+                        canUp={index !== 0}
+                        canDown={index !== fields.length - 1}
+                        onUp={() => swap(index, index - 1)}
+                        onDown={() => swap(index, index + 1)}
+                      />
+                    </Box>
+                  )}
                   <TextInput
                     withAsterisk
                     label={`Description #${index + 1}`}
