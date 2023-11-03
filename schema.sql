@@ -5899,6 +5899,42 @@ $$ LANGUAGE plv8;
 
 -- End: Get ticket list on load
 
+-- Start: Reverse Request Approval
+
+CREATE OR REPLACE FUNCTION reverse_request_approval(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      requestId,
+      isPrimarySigner,
+      requestSignerId,
+      requestOwnerId,
+      signerFullName,
+      formName,
+      requestAction,
+      memberId,
+      teamId,
+    } = input_data;
+
+    const present = { REVERSED: "REVERSE" };
+
+    plv8.execute(`UPDATE request_signer_table SET request_signer_status = 'PENDING', request_signer_status_date_updated = NOW() WHERE request_signer_id='${requestSignerId}';`);
+    
+    plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()} their approval of this request.');`);
+    
+    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} their approval of your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+    
+    if(isPrimarySigner===true){
+      plv8.execute(`UPDATE request_table SET request_status = 'PENDING', request_status_date_updated = NOW(), ${`request_jira_id=NULL`}, ${`request_jira_link=NULL`} WHERE request_id='${requestId}';`);
+    }
+    
+ });
+$$ LANGUAGE plv8;
+
+-- End: Reverse Request Approval
+
 ---------- End: FUNCTIONS
 
 

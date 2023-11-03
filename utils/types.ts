@@ -238,7 +238,8 @@ export type NotificationType =
   | "REJECT"
   | "INVITE"
   | "REVIEW"
-  | "COMMENT";
+  | "COMMENT"
+  | "REVERSAL";
 export type InvitationStatusType = "ACCEPTED" | "DECLINED" | "PENDING";
 // End: Database Enums
 

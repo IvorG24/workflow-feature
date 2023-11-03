@@ -12,7 +12,6 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import moment from "moment";
 import { getCurrentDate } from "./get";
 
 // Update Team
@@ -437,35 +436,23 @@ export const updateTicketStatus = async (
 };
 
 // reverse request approval
-export const reverseSignerApproval = async (
+export const reverseRequestApproval = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    requestSignerId: string;
+    requestAction: "REVERSED";
     requestId: string;
     isPrimarySigner: boolean;
+    requestSignerId: string;
+    requestOwnerId: string;
+    signerFullName: string;
+    formName: string;
+    memberId: string;
+    teamId: string;
   }
 ) => {
-  const { requestSignerId, requestId, isPrimarySigner } = params;
-  const { error } = await supabaseClient
-    .from("request_signer_table")
-    .update({ request_signer_status: "PENDING" })
-    .eq("request_signer_id", requestSignerId);
+  const { error } = await supabaseClient.rpc("reverse_request_approval", {
+    input_data: { ...params },
+  });
 
   if (error) throw error;
-
-  if (isPrimarySigner) {
-    const { error } = await supabaseClient
-      .from("request_table")
-      .update({
-        request_status: "PENDING",
-        request_status_date_updated: moment(new Date()).format(
-          "YYYY-MM-DD HH:mm:ss.SSSSSSZ"
-        ),
-        request_jira_id: null,
-        request_jira_link: null,
-      })
-      .eq("request_id", requestId);
-
-    if (error) throw error;
-  }
 };
