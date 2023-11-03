@@ -295,6 +295,7 @@ export const createItem = async (
     itemDescription: {
       description: string;
       withUoM: boolean;
+      order: number;
     }[];
     formId: string;
   }

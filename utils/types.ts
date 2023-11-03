@@ -507,6 +507,7 @@ export type ItemForm = {
     withUoM: boolean;
     descriptionId?: string;
     fieldId?: string;
+    order?: number;
   }[];
   unit: string;
   isAvailable: boolean;
