@@ -675,7 +675,6 @@ const RequestPage = ({
         teamId: request.request_team_member.team_member_team_id,
       });
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later",
         color: "red",

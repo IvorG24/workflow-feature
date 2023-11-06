@@ -1,4 +1,4 @@
-import { checkIfRequestIsPending } from "@/backend/api/get";
+import { checkIfRequestIsEditable } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -107,7 +107,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
       if (!teamMember) return;
 
       setIsLoading(true);
-      const isPending = await checkIfRequestIsPending(supabaseClient, {
+      const isPending = await checkIfRequestIsEditable(supabaseClient, {
         requestId: request.request_id,
       });
 

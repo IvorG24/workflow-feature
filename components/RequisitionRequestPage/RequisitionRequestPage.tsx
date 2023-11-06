@@ -327,7 +327,6 @@ const RequisitionRequestPage = ({
         teamId: request.request_team_member.team_member_team_id,
       });
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later",
         color: "red",
@@ -448,9 +447,11 @@ const RequisitionRequestPage = ({
             )}
         />
 
-        {isUserSigner &&
-        isUserSigner.request_signer_status === "PENDING" &&
-        requestStatus !== "CANCELED" ? (
+        {(isUserOwner &&
+          (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
+        (isUserSigner &&
+          isUserSigner.request_signer_status === "PENDING" &&
+          requestStatus !== "CANCELED") ? (
           <RequestActionSection
             isUserOwner={isUserOwner}
             requestStatus={requestStatus as FormStatusType}

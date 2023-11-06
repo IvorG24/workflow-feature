@@ -7,7 +7,6 @@ import { isValidUrl } from "@/utils/functions";
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Button,
-  Divider,
   Flex,
   Paper,
   Space,
@@ -258,7 +257,6 @@ const RequestActionSection = ({
 
         {isUserOwner && requestStatus === "PENDING" && isEditable && (
           <>
-            <Divider />
             <Button
               variant="outline"
               fullWidth

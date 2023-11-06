@@ -1521,7 +1521,7 @@ export const checkRequsitionRequestForReleaseOrder = async (
 };
 
 // Check if request is pending
-export const checkIfRequestIsPending = async (
+export const checkIfRequestIsEditable = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
