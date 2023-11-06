@@ -1,5 +1,5 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
@@ -40,18 +40,28 @@ type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
+  specialApprover: {
+    special_approver_id: string;
+    special_approver_item_list: string[];
+    special_approver_signer: FormType["form_signer"][0];
+  }[];
 };
 
 const EditRequisitionRequestPage = ({
   request,
   itemOptions,
   projectOptions,
+  specialApprover,
 }: Props) => {
   const router = useRouter();
   const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
+
+  const specialApproverList = specialApprover.map(
+    (approver) => approver.special_approver_signer.signer_id
+  );
 
   const initialSignerList: FormType["form_signer"] = request.request_signer
     .map((signer) => signer.request_signer_signer)
@@ -153,23 +163,56 @@ const EditRequisitionRequestPage = ({
         sections: [data.sections[0], ...newSections],
       };
 
-      const isPending = await checkIfRequestIsPending(supabaseClient, {
+      const isPending = await checkIfRequestIsEditable(supabaseClient, {
         requestId: request.request_id,
       });
 
       if (!isPending) {
         notifications.show({
-          message: "Request can't be edited",
+          message: "A signer reviewed your request. Request can't be edited",
           color: "red",
+          autoClose: false,
         });
         router.push(`/team-requests/requests/${request.request_id}`);
         return;
       }
 
+      const filteredSignerList = signerList.filter(
+        (signer) => !specialApproverList.includes(signer.signer_id)
+      );
+
+      // special approver
+      const additionalSignerList: FormType["form_signer"] = [];
+      const alreadyAddedAdditionalSigner: string[] = [];
+      if (specialApprover && specialApprover.length !== 0) {
+        const generalNameList = newSections.map(
+          (section) =>
+            section.section_field[0].field_response[0].request_response
+        );
+        specialApprover.map((approver) => {
+          if (
+            alreadyAddedAdditionalSigner.includes(
+              approver.special_approver_signer.signer_id
+            )
+          )
+            return;
+          if (
+            approver.special_approver_item_list.some((item) =>
+              generalNameList.includes(item)
+            )
+          ) {
+            additionalSignerList.push(approver.special_approver_signer);
+            alreadyAddedAdditionalSigner.push(
+              approver.special_approver_signer.signer_id
+            );
+          }
+        });
+      }
+
       await editRequest(supabaseClient, {
         requestId: request.request_id,
         requestFormValues: newData,
-        signers: signerList,
+        signers: [...filteredSignerList, ...additionalSignerList],
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: request_form.form_name,

@@ -1,5 +1,5 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   getProjectSignerWithTeamMember,
   getService,
   getSupplier,
@@ -114,7 +114,7 @@ const EditSubconRequestPage = ({
 
       setIsLoading(true);
 
-      const isPending = await checkIfRequestIsPending(supabaseClient, {
+      const isPending = await checkIfRequestIsEditable(supabaseClient, {
         requestId: request.request_id,
       });
 

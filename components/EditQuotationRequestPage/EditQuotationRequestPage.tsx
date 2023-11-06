@@ -1,5 +1,5 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   checkRequisitionQuantity,
   getSupplier,
 } from "@/backend/api/get";
@@ -181,7 +181,7 @@ const EditQuotationRequestPage = ({
           ),
         });
       } else {
-        const isPending = await checkIfRequestIsPending(supabaseClient, {
+        const isPending = await checkIfRequestIsEditable(supabaseClient, {
           requestId: request.request_id,
         });
 

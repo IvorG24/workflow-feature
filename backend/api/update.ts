@@ -434,3 +434,25 @@ export const updateTicketStatus = async (
   if (error) throw error;
   return data as TicketTableRow;
 };
+
+// reverse request approval
+export const reverseRequestApproval = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestAction: "REVERSED";
+    requestId: string;
+    isPrimarySigner: boolean;
+    requestSignerId: string;
+    requestOwnerId: string;
+    signerFullName: string;
+    formName: string;
+    memberId: string;
+    teamId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("reverse_request_approval", {
+    input_data: { ...params },
+  });
+
+  if (error) throw error;
+};

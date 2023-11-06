@@ -230,14 +230,16 @@ export type CommentType =
   | "REQUEST_COMMENT"
   // | "REQUEST_CREATED"
   | "REVIEW_CREATED"
-  | "REVIEW_COMMENT";
+  | "REVIEW_COMMENT"
+  | "ACTION_REVERSED";
 export type NotificationType =
   | "REQUEST"
   | "APPROVE"
   | "REJECT"
   | "INVITE"
   | "REVIEW"
-  | "COMMENT";
+  | "COMMENT"
+  | "REVERSAL";
 export type InvitationStatusType = "ACCEPTED" | "DECLINED" | "PENDING";
 // End: Database Enums
 
@@ -1028,4 +1030,16 @@ export type TicketListOnLoad = {
   ticketList: TicketListType[];
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+};
+
+export type ApproverUnresolvedRequestListType = {
+  request_signer_status: string;
+  request_signer: {
+    signer_team_member_id: string;
+  };
+  request: {
+    request_id: string;
+    request_jira_id: string | null;
+    request_status: string;
+  };
 };

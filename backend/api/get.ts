@@ -4,6 +4,7 @@ import { Database } from "@/utils/database";
 import { regExp, startCase } from "@/utils/string";
 import {
   AppType,
+  ApproverUnresolvedRequestListType,
   AttachmentBucketType,
   AttachmentTableRow,
   CSICodeTableRow,
@@ -1520,7 +1521,7 @@ export const checkRequsitionRequestForReleaseOrder = async (
 };
 
 // Check if request is pending
-export const checkIfRequestIsPending = async (
+export const checkIfRequestIsEditable = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -1528,15 +1529,17 @@ export const checkIfRequestIsPending = async (
 ) => {
   const { requestId } = params;
 
-  const { count, error } = await supabaseClient
-    .from("request_table")
-    .select("*", { count: "exact" })
-    .eq("request_id", requestId)
-    .eq("request_status", "PENDING")
-    .eq("request_is_disabled", false);
-
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select("request_signer_status")
+    .eq("request_signer_request_id", requestId);
   if (error) throw error;
-  return Boolean(count);
+
+  const statusList = data as { request_signer_status: string }[];
+  const isPending = !statusList.some(
+    (status) => status.request_signer_status.toUpperCase() !== "PENDING"
+  );
+  return isPending;
 };
 
 // Get response data by keyword
@@ -3812,4 +3815,25 @@ export const getTicketListOnLoad = async (
   if (error) throw error;
 
   return data as unknown as TicketListOnLoad;
+};
+
+// Get ticket list on load
+export const getUnresolvedRequestListPerApprover = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { teamMemberId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_id, request_jira_id, request_status)"
+    )
+    .eq("request_signer.signer_team_member_id", teamMemberId)
+    .in("request_signer_status", ["APPROVED", "PENDING"]);
+
+  if (error) throw error;
+
+  return data as unknown as ApproverUnresolvedRequestListType[];
 };

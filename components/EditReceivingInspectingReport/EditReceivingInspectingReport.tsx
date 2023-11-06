@@ -1,5 +1,5 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   checkRIRItemQuantity,
 } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
@@ -197,7 +197,7 @@ const EditReceivingInspectingReportPage = ({
           ),
         });
       } else {
-        const isPending = await checkIfRequestIsPending(supabaseClient, {
+        const isPending = await checkIfRequestIsEditable(supabaseClient, {
           requestId: request.request_id,
         });
 

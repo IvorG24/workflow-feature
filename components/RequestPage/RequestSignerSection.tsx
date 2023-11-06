@@ -17,6 +17,8 @@ import {
 export type RequestSignerType =
   RequestWithResponseType["request_signer"][0]["request_signer_signer"] & {
     request_signer_status: ReceiverStatusType;
+    request_signer_status_date_updated: string | null;
+    request_signer_id: string;
   };
 
 type Props = {

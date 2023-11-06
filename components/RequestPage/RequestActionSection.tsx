@@ -56,7 +56,6 @@ const RequestActionSection = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
-
   const {
     register,
     handleSubmit,
@@ -255,6 +254,7 @@ const RequestActionSection = ({
             </Button>
           </>
         )}
+
         {isUserOwner && requestStatus === "PENDING" && isEditable && (
           <>
             <Button
