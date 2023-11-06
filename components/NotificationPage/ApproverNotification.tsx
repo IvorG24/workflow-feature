@@ -77,14 +77,8 @@ const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
   ];
 
   const handleResolvePendingRequestList = async () => {
-    console.log(localFilter);
     setLocalFilter({
-      search: "",
-      requestorList: [],
-      approverList: [],
-      formList: [],
-      status: undefined,
-      isAscendingSort: false,
+      ...localFilter,
       isApproversView: true,
     });
     router.push("/team-requests/requests");
