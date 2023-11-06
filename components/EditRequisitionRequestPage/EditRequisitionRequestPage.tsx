@@ -159,8 +159,9 @@ const EditRequisitionRequestPage = ({
 
       if (!isPending) {
         notifications.show({
-          message: "Request can't be edited",
+          message: "A signer reviewed your request. Request can't be edited",
           color: "red",
+          autoClose: false,
         });
         router.push(`/team-requests/requests/${request.request_id}`);
         return;

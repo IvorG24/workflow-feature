@@ -1529,15 +1529,17 @@ export const checkIfRequestIsPending = async (
 ) => {
   const { requestId } = params;
 
-  const { count, error } = await supabaseClient
-    .from("request_table")
-    .select("*", { count: "exact" })
-    .eq("request_id", requestId)
-    .eq("request_status", "PENDING")
-    .eq("request_is_disabled", false);
-
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select("request_signer_status")
+    .eq("request_signer_request_id", requestId);
   if (error) throw error;
-  return Boolean(count);
+
+  const statusList = data as { request_signer_status: string }[];
+  const isPending = !statusList.some(
+    (status) => status.request_signer_status.toUpperCase() !== "PENDING"
+  );
+  return isPending;
 };
 
 // Get response data by keyword
