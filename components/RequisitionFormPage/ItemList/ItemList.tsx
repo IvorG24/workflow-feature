@@ -24,7 +24,12 @@ import {
 import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconSearch,
+  IconSettings,
+  IconTrash,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 
@@ -55,6 +60,8 @@ type Props = {
   setItemCount: Dispatch<SetStateAction<number>>;
   setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
   setSelectedItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
+  setEditItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
+  editItem: ItemWithDescriptionType | null;
 };
 
 const ItemList = ({
@@ -64,6 +71,8 @@ const ItemList = ({
   setItemCount,
   setIsCreatingItem,
   setSelectedItem,
+  setEditItem,
+  editItem,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -228,38 +237,40 @@ const ItemList = ({
             className={classes.flexGrow}
           />
         </Group>
-        <Group className={classes.flexGrow}>
-          {checkList.length !== 0 ? (
+        {!editItem && (
+          <Group className={classes.flexGrow}>
+            {checkList.length !== 0 ? (
+              <Button
+                variant="outline"
+                rightIcon={<IconTrash size={16} />}
+                className={classes.flexGrow}
+                onClick={() => {
+                  openConfirmModal({
+                    title: <Text>Please confirm your action.</Text>,
+                    children: (
+                      <Text size={14}>
+                        Are you sure you want to delete{" "}
+                        {checkList.length === 1 ? "this item?" : "these items?"}
+                      </Text>
+                    ),
+                    labels: { confirm: "Confirm", cancel: "Cancel" },
+                    centered: true,
+                    onConfirm: handleDelete,
+                  });
+                }}
+              >
+                Delete
+              </Button>
+            ) : null}
             <Button
-              variant="outline"
-              rightIcon={<IconTrash size={16} />}
+              rightIcon={<IconPlus size={16} />}
               className={classes.flexGrow}
-              onClick={() => {
-                openConfirmModal({
-                  title: <Text>Please confirm your action.</Text>,
-                  children: (
-                    <Text size={14}>
-                      Are you sure you want to delete{" "}
-                      {checkList.length === 1 ? "this item?" : "these items?"}
-                    </Text>
-                  ),
-                  labels: { confirm: "Confirm", cancel: "Cancel" },
-                  centered: true,
-                  onConfirm: handleDelete,
-                });
-              }}
+              onClick={() => setIsCreatingItem(true)}
             >
-              Delete
+              Add
             </Button>
-          ) : null}
-          <Button
-            rightIcon={<IconPlus size={16} />}
-            className={classes.flexGrow}
-            onClick={() => setIsCreatingItem(true)}
-          >
-            Add
-          </Button>
-        </Group>
+          </Group>
+        )}
       </Flex>
       <DataTable
         idAccessor="item_id"
@@ -380,6 +391,23 @@ const ItemList = ({
                     handleUpdateStatus(item_id, e.currentTarget.checked)
                   }
                 />
+              </Center>
+            ),
+          },
+          {
+            accessor: "edit",
+            title: "",
+            textAlignment: "center",
+            render: (item) => (
+              <Center>
+                <ActionIcon
+                  onClick={() => {
+                    setEditItem(item);
+                    setSelectedItem(null);
+                  }}
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
               </Center>
             ),
           },

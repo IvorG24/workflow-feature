@@ -110,7 +110,7 @@ export type ItemTableUpdate =
 
 export type ItemDescriptionTableRow =
   Database["public"]["Tables"]["item_description_table"]["Row"];
-export type ItemDescriptionableInsert =
+export type ItemDescriptionTableInsert =
   Database["public"]["Tables"]["item_description_table"]["Insert"];
 export type ItemDescriptionTableUpdate =
   Database["public"]["Tables"]["item_description_table"]["Update"];
@@ -230,14 +230,16 @@ export type CommentType =
   | "REQUEST_COMMENT"
   // | "REQUEST_CREATED"
   | "REVIEW_CREATED"
-  | "REVIEW_COMMENT";
+  | "REVIEW_COMMENT"
+  | "ACTION_REVERSED";
 export type NotificationType =
   | "REQUEST"
   | "APPROVE"
   | "REJECT"
   | "INVITE"
   | "REVIEW"
-  | "COMMENT";
+  | "COMMENT"
+  | "REVERSAL";
 export type InvitationStatusType = "ACCEPTED" | "DECLINED" | "PENDING";
 // End: Database Enums
 
@@ -500,7 +502,13 @@ export type ServiceWithScopeType = ServiceTableRow & {
 
 export type ItemForm = {
   generalName: string;
-  descriptions: { description: string; withUoM: boolean }[];
+  descriptions: {
+    description: string;
+    withUoM: boolean;
+    descriptionId?: string;
+    fieldId?: string;
+    order?: number;
+  }[];
   unit: string;
   isAvailable: boolean;
   glAccount: string;
@@ -1029,4 +1037,16 @@ export type JiraTicketConfig = {
   description: string;
   project_key: string;
   issue_type_name: string;
+};
+
+export type ApproverUnresolvedRequestListType = {
+  request_signer_status: string;
+  request_signer: {
+    signer_team_member_id: string;
+  };
+  request: {
+    request_id: string;
+    request_jira_id: string | null;
+    request_status: string;
+  };
 };

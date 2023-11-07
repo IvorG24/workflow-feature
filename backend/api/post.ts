@@ -13,7 +13,10 @@ import {
   FormType,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
+  ItemDescriptionTableUpdate,
+  ItemForm,
   ItemTableInsert,
+  ItemTableUpdate,
   NotificationTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -292,6 +295,7 @@ export const createItem = async (
     itemDescription: {
       description: string;
       withUoM: boolean;
+      order: number;
     }[];
     formId: string;
   }
@@ -305,16 +309,34 @@ export const createItem = async (
   return data;
 };
 
+// Update item
+export const updateItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemData: ItemTableUpdate;
+    toAdd: ItemForm["descriptions"];
+    toUpdate: ItemDescriptionTableUpdate[];
+    toRemove: { fieldId: string; descriptionId: string }[];
+    formId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_item", { input_data: params })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
 // Create item description field
 export const createItemDescriptionField = async (
   supabaseClient: SupabaseClient<Database>,
-  params: ItemDescriptionFieldTableInsert
+  params: ItemDescriptionFieldTableInsert[]
 ) => {
   const { data, error } = await supabaseClient
     .from("item_description_field_table")
     .insert(params)
-    .select("*")
-    .single();
+    .select("*");
   if (error) throw error;
 
   return data;
@@ -573,23 +595,28 @@ export const editRequest = async (
 
   // get request signers
   const requestSignerInput: RequestSignerTableInsert[] = [];
+  const signerIdList: string[] = [];
 
   // get signer notification
   const requestSignerNotificationInput: NotificationTableInsert[] = [];
 
   signers.forEach((signer) => {
-    requestSignerInput.push({
-      request_signer_signer_id: signer.signer_id,
-      request_signer_request_id: requestId,
-    });
-    requestSignerNotificationInput.push({
-      notification_app: "REQUEST",
-      notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-      notification_redirect_url: `/team-requests/requests/${requestId}`,
-      notification_team_id: teamId,
-      notification_type: "REQUEST",
-      notification_user_id: signer.signer_team_member.team_member_user.user_id,
-    });
+    if (!signerIdList.includes(signer.signer_id)) {
+      requestSignerInput.push({
+        request_signer_signer_id: signer.signer_id,
+        request_signer_request_id: requestId,
+      });
+      requestSignerNotificationInput.push({
+        notification_app: "REQUEST",
+        notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
+        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_team_id: teamId,
+        notification_type: "REQUEST",
+        notification_user_id:
+          signer.signer_team_member.team_member_user.user_id,
+      });
+      signerIdList.push(signer.signer_id);
+    }
   });
 
   const responseValues = requestResponseInput

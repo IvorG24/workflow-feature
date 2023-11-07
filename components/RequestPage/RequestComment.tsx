@@ -31,6 +31,7 @@ import {
   IconDownload,
   IconEdit,
   IconFolderCancel,
+  IconRefresh,
   IconX,
 } from "@tabler/icons-react";
 import moment from "moment";
@@ -120,6 +121,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     "ACTION_APPROVED",
     "ACTION_REJECTED",
     "ACTION_CANCELED",
+    "ACTION_REVERSED",
   ];
 
   const actionCommentColor = (type: string) => {
@@ -130,6 +132,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "red";
       case "ACTION_CANCELED":
         return "gray";
+      case "ACTION_REVERSED":
+        return "orange";
     }
   };
 
@@ -141,6 +145,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "Rejected!";
       case "ACTION_CANCELED":
         return "Canceled!";
+      case "ACTION_REVERSED":
+        return "Reversed!";
     }
   };
 
@@ -152,6 +158,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return <IconX size={16} />;
       case "ACTION_CANCELED":
         return <IconFolderCancel size={16} />;
+      case "ACTION_REVERSED":
+        return <IconRefresh size={16} />;
     }
   };
 
@@ -209,6 +217,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                   <Stack m={0} p={0} spacing={0}>
                     <Text>
                       {commentContent} on{" "}
+                      {`${moment(comment.comment_date_created).format("LTS")} `}
                       {new Date(comment.comment_date_created).toDateString()}
                     </Text>
                     <Text color="dimmed" size={12}>

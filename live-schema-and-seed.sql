@@ -265,6 +265,7 @@ CREATE TABLE item_description_table(
   item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_description_is_with_uom BOOLEAN DEFAULT FALSE NOT NULL,
+  item_description_order INT NOT NULL,
 
   item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
   item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
@@ -970,7 +971,8 @@ RETURNS JSON AS $$
         item_description_item_id: item_result.item_id,
         item_description_is_available: true,
         item_description_field_id: fieldId,
-        item_description_is_with_uom: description.withUoM
+        item_description_is_with_uom: description.withUoM,
+        item_description_order: description.order
       });
       fieldInput.push({
         field_id: fieldId,
@@ -984,7 +986,7 @@ RETURNS JSON AS $$
 
     const itemDescriptionValues = itemDescriptionInput
       .map((item) =>
-        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}')`
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
       )
       .join(",");
 
@@ -996,7 +998,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
     
-    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom) VALUES ${itemDescriptionValues} RETURNING *;`);
+    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *;`);
 
     item_data = {...item_result, item_description: item_description}
 
@@ -1005,6 +1007,131 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Create item
+
+-- Start: Update item
+
+CREATE OR REPLACE FUNCTION update_item(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let item_data;
+  plv8.subtransaction(function(){
+    const {
+      itemData: {
+        item_id,
+        item_general_name,
+        item_is_available,
+        item_unit,
+        item_gl_account,
+        item_team_id,
+        item_division_id_list
+      },
+      toAdd,
+      toUpdate,
+      toRemove,
+      formId
+    } = input_data;
+
+    
+    const item_result = plv8.execute(
+      `
+        UPDATE item_table SET 
+          item_general_name = '${item_general_name}',
+          item_is_available = '${item_is_available}',
+          item_unit = '${item_unit}',
+          item_gl_account = '${item_gl_account}',
+          item_team_id = '${item_team_id}',
+          item_division_id_list = ARRAY[${item_division_id_list}]
+        WHERE item_id = '${item_id}'
+        RETURNING *
+      `
+    )[0];
+
+    const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
+
+    const itemDescriptionInput = [];
+    const fieldInput= [];
+
+    toAdd.forEach((description) => {
+      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      itemDescriptionInput.push({
+        item_description_label: description.description,
+        item_description_item_id: item_result.item_id,
+        item_description_is_available: true,
+        item_description_field_id: fieldId,
+        item_description_is_with_uom: description.withUoM,
+        item_description_order: description.order
+      });
+      fieldInput.push({
+        field_id: fieldId,
+        field_name: description.description,
+        field_type: "DROPDOWN",
+        field_order: 14,
+        field_section_id: section_id,
+        field_is_required: true,
+      });
+    });
+
+    const itemDescriptionValues = itemDescriptionInput
+      .map((item) =>
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
+      )
+      .join(",");
+
+    const fieldValues = fieldInput
+      .map((field) =>
+        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+      )
+      .join(",");
+
+    // update
+    const updatedItemDescription = [];
+    toUpdate.forEach(description => {
+      const updatedDescription = plv8.execute(
+        `
+          UPDATE item_description_table SET 
+            item_description_is_with_uom = '${description.item_description_is_with_uom}',
+            item_description_label = '${description.item_description_label}',
+            item_description_order = ${description.item_description_order}
+          WHERE item_description_id = '${description.item_description_id}'
+          RETURNING *
+        `
+      )[0];
+      plv8.execute(
+        `
+          UPDATE field_table SET 
+            field_name = '${description.item_description_label}'
+          WHERE field_id = '${description.item_description_field_id}'
+        `
+      );
+      updatedItemDescription.push(updatedDescription);
+    });
+
+    // delete
+    toRemove.forEach(description => {
+      plv8.execute(
+        `
+          UPDATE item_description_table SET 
+            item_description_is_disabled = true
+          WHERE item_description_id = '${description.descriptionId}'
+        `
+      );
+    });
+
+   // add
+   let addedDescription = [];
+   if(fieldValues.length && itemDescriptionValues.length){
+    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
+
+    addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+   }
+
+    item_data = {...item_result, item_description: [...updatedItemDescription, ...addedDescription]}
+ });
+ return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Update item
 
 -- Start: Create service
 
@@ -3740,7 +3867,7 @@ RETURNS JSON as $$
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
 
         itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}'`);
+          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' ORDER BY item_description_order ASC`);
           items.push({
             ...value,
             item_description: itemDescription
@@ -5779,6 +5906,42 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Get ticket list on load
+
+-- Start: Reverse Request Approval
+
+CREATE OR REPLACE FUNCTION reverse_request_approval(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      requestId,
+      isPrimarySigner,
+      requestSignerId,
+      requestOwnerId,
+      signerFullName,
+      formName,
+      requestAction,
+      memberId,
+      teamId,
+    } = input_data;
+
+    const present = { REVERSED: "REVERSE" };
+
+    plv8.execute(`UPDATE request_signer_table SET request_signer_status = 'PENDING', request_signer_status_date_updated = NOW() WHERE request_signer_id='${requestSignerId}';`);
+    
+    plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()} their approval of this request.');`);
+    
+    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} their approval of your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+    
+    if(isPrimarySigner===true){
+      plv8.execute(`UPDATE request_table SET request_status = 'PENDING', request_status_date_updated = NOW(), ${`request_jira_id=NULL`}, ${`request_jira_link=NULL`} WHERE request_id='${requestId}';`);
+    }
+    
+ });
+$$ LANGUAGE plv8;
+
+-- End: Reverse Request Approval
 
 ---------- End: FUNCTIONS
 

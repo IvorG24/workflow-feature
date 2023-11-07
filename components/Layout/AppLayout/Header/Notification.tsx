@@ -26,6 +26,7 @@ import {
   IconMail,
   IconMessage2,
   IconMessages,
+  IconRefresh,
 } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
@@ -68,6 +69,8 @@ const Notification = () => {
       return <IconMessages size={20} color="#BE4BDB" />;
     else if (type === "REQUEST") return <IconFile size={20} color="#228BE6" />;
     else if (type === "REVIEW") return <IconMessage2 size={20} />;
+    else if (type === "REVERSE")
+      return <IconRefresh size={20} color="#FF922B" />;
   };
 
   return (

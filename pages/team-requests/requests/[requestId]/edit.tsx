@@ -1,5 +1,5 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   getCSICodeOptionsForItems,
   getItem,
   getItemResponseForQuotation,
@@ -27,13 +27,17 @@ import {
 } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { parseJSONIfValid } from "@/utils/string";
-import { OptionTableRow, RequestWithResponseType } from "@/utils/types";
+import {
+  FormType,
+  OptionTableRow,
+  RequestWithResponseType,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const isPending = await checkIfRequestIsPending(supabaseClient, {
+      const isPending = await checkIfRequestIsEditable(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
       if (!isPending) throw new Error("Request can't be edited");
@@ -187,7 +191,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       option_id: options.item_description_field_id,
                       option_order: optionIndex + 1,
                       option_value: `${options.item_description_field_value}${
-                        options.item_description_field_uom
+                        description.item_description_is_with_uom
                           ? ` ${options.item_description_field_uom}`
                           : ""
                       }`,
@@ -250,11 +254,20 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               : parsedRequest.request_signer,
         };
 
+        const { data: specialApprover, error: specialApproverError } =
+          await supabaseClient
+            .from("special_approver_table")
+            .select(
+              "*, special_approver_signer: special_approver_signer_id(*, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(*)))"
+            );
+        if (specialApproverError) throw specialApproverError;
+
         return {
           props: {
             request: formattedRequest,
             itemOptions,
             projectOptions,
+            specialApprover,
           },
         };
       }
@@ -889,6 +902,11 @@ type Props = {
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
   requestingProject?: string;
+  specialApprover?: {
+    special_approver_id: string;
+    special_approver_item_list: string[];
+    special_approver_signer: FormType["form_signer"][0];
+  }[];
 };
 
 const Page = ({
@@ -899,6 +917,7 @@ const Page = ({
   projectOptions = [],
   requestingProject = "",
   sourceProjectList = {},
+  specialApprover = [],
 }: Props) => {
   const { request_form: form } = request;
   const formslyForm = () => {
@@ -909,6 +928,7 @@ const Page = ({
             request={request}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
+            specialApprover={specialApprover}
           />
         );
       case "Subcon":

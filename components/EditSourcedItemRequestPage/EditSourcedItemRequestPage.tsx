@@ -1,5 +1,5 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   checkRequisitionQuantity,
   getMultipleProjectSignerWithTeamMember,
 } from "@/backend/api/get";
@@ -242,7 +242,7 @@ const EditSourcedItemRequestPage = ({
           }
         });
 
-        const isPending = await checkIfRequestIsPending(supabaseClient, {
+        const isPending = await checkIfRequestIsEditable(supabaseClient, {
           requestId: request.request_id,
         });
 

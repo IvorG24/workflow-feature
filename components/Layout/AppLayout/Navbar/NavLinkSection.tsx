@@ -1,4 +1,12 @@
-import { Box, NavLink, NavLinkProps, Stack, Text } from "@mantine/core";
+import {
+  Badge,
+  Box,
+  Group,
+  NavLink,
+  NavLinkProps,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { useRouter } from "next/router";
 import { ReactNode } from "react";
 
@@ -6,6 +14,8 @@ export type NavLinkType = {
   label: string;
   icon?: ReactNode;
   href: string;
+  withIndicator?: boolean;
+  indicatorLabel?: string;
 };
 
 type NavLinkSectionProps = {
@@ -13,7 +23,12 @@ type NavLinkSectionProps = {
   links: NavLinkType[];
 } & NavLinkProps;
 
-const NavLinkSection = ({ label, links, ...props }: NavLinkSectionProps) => {
+const NavLinkSection = ({
+  label,
+  links,
+  rightSection,
+  ...props
+}: NavLinkSectionProps) => {
   const router = useRouter();
 
   return (
@@ -24,13 +39,32 @@ const NavLinkSection = ({ label, links, ...props }: NavLinkSectionProps) => {
       <Stack spacing={0}>
         {links.map((link, idx) => (
           <NavLink
-            label={link.label}
+            key={`navLink-${idx}`}
+            label={
+              link.withIndicator ? (
+                <Group>
+                  <Text>{link.label}</Text>
+                  <Badge
+                    px={6}
+                    w="fit-content"
+                    color="red"
+                    variant="filled"
+                    radius="xl"
+                    sx={{ fontSize: "14px", fontWeight: 400 }}
+                  >
+                    {link.indicatorLabel}
+                  </Badge>
+                </Group>
+              ) : (
+                link.label
+              )
+            }
             style={{ borderRadius: 5 }}
             icon={link.icon ? link.icon : null}
-            key={`navLink-${idx}`}
             px="xl"
             active={router.pathname === link.href}
             onClick={() => router.push(link.href)}
+            rightSection={rightSection ? rightSection : <></>}
             {...props}
           />
         ))}
