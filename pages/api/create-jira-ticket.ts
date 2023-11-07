@@ -44,6 +44,7 @@ export default async function handler(
           ).toString("base64")}`,
           Accept: "application/json",
           "Content-Type": "application/json",
+          "X-Atlassian-Token": "no-check",
         },
         body: JSON.stringify(requestBody),
       }
