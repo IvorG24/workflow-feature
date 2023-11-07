@@ -4,6 +4,7 @@ import {
   getCSICodeOptionsForItems,
   getItem,
   getProjectSignerWithTeamMember,
+  getSupplier,
 } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
@@ -80,6 +81,7 @@ const EditRequisitionRequestPage = ({
 
   const [signerList, setSignerList] = useState(initialSignerList);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -101,6 +103,7 @@ const EditRequisitionRequestPage = ({
     getValues,
     reset,
     formState: { isDirty },
+    setValue,
   } = requestFormMethods;
   const {
     fields: formSections,
@@ -360,6 +363,9 @@ const EditRequisitionRequestPage = ({
               })),
             };
           }),
+          {
+            ...newSection.section_field[9],
+          },
         ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
@@ -430,6 +436,7 @@ const EditRequisitionRequestPage = ({
               field_option: [],
             };
           }),
+          newSection.section_field[9],
         ];
       updateSection(index, {
         ...newSection,
@@ -488,7 +495,6 @@ const EditRequisitionRequestPage = ({
             })
           ),
         },
-
         ...newSection.section_field.slice(9),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
@@ -563,6 +569,26 @@ const EditRequisitionRequestPage = ({
     }
   };
 
+  const supplierSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearching(true);
+      const supplierList = await getSupplier(supabaseClient, {
+        supplier: value ?? "",
+        teamId: teamMember.team_member_team_id,
+        fieldId: request.request_form.form_section[1].section_field[9].field_id,
+      });
+      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -594,6 +620,8 @@ const EditRequisitionRequestPage = ({
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
+                      supplierSearch,
+                      isSearching,
                     }}
                     formslyFormName="Requisition"
                   />

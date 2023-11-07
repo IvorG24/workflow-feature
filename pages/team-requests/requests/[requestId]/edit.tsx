@@ -150,12 +150,52 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           };
         });
 
+        const { data: supplierList, error: supplierListError } =
+          await supabaseClient
+            .from("supplier_table")
+            .select("*")
+            .eq("supplier_team_id", teamId)
+            .eq("supplier_is_disabled", false)
+            .eq("supplier_is_available", true)
+            .order("supplier_name", { ascending: true })
+            .limit(100);
+        if (supplierListError) throw supplierListError;
+
+        const supplierOptions = supplierList.map((supplier, index) => {
+          return {
+            option_description: null,
+            option_field_id:
+              request.request_form.form_section[1].section_field[0].field_id,
+            option_id: supplier.supplier_id,
+            option_order: index,
+            option_value: supplier.supplier_name,
+          };
+        });
+
         const sectionWithDuplicateList = form.form_section
           .slice(1)
           .map((section) => parseItemSection(section));
 
         const itemSectionList = (await Promise.all(
           sectionWithDuplicateList.map(async (section) => {
+            const isWithPreferredSupplier =
+              section.section_field[9].field_name === "Preferred Supplier";
+            let preferredSupplierField = {};
+            if (!isWithPreferredSupplier) {
+              const {
+                data: preferredSupplierFieldData,
+                error: preferredSupplierFieldError,
+              } = await supabaseClient
+                .from("field_table")
+                .select("*")
+                .eq("field_name", "Preferred Supplier")
+                .eq("field_section_id", section.section_id)
+                .single();
+              if (preferredSupplierFieldError)
+                throw preferredSupplierFieldError;
+              preferredSupplierField = preferredSupplierFieldData;
+            }
+
             const itemName = parseJSONIfValid(
               section.section_field[0].field_response[0].request_response
             );
@@ -224,6 +264,15 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   field_option: csiCodeOptions,
                 },
                 ...section.section_field.slice(5, 9),
+                isWithPreferredSupplier
+                  ? {
+                      ...section.section_field[9],
+                      field_option: supplierOptions,
+                    }
+                  : {
+                      ...preferredSupplierField,
+                      field_option: supplierOptions,
+                    },
                 ...newFieldsWithOptions,
               ],
             };
