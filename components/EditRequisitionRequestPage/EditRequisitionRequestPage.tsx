@@ -32,7 +32,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { RequestFormValues } from "../EditRequestPage/EditRequestPage";
@@ -94,9 +94,7 @@ const EditRequisitionRequestPage = ({
     form_team_member: request.request_team_member,
   };
 
-  const requestFormMethods = useForm<RequestFormValues>({
-    defaultValues: { sections: request_form.form_section },
-  });
+  const requestFormMethods = useForm<RequestFormValues>();
   const {
     handleSubmit,
     control,
@@ -110,10 +108,21 @@ const EditRequisitionRequestPage = ({
     insert: addSection,
     remove: removeSection,
     update: updateSection,
+    replace: replaceSection,
   } = useFieldArray({
     control,
     name: "sections",
   });
+
+  useEffect(() => {
+    replaceSection(request_form.form_section);
+  }, [
+    request.request_form,
+    replaceSection,
+    requestFormMethods,
+    itemOptions,
+    request_form.form_section,
+  ]);
 
   const handleEditRequest = async (data: RequestFormValues) => {
     try {
