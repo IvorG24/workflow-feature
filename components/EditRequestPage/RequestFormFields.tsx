@@ -343,10 +343,6 @@ const RequestFormFields = ({
           };
         });
 
-        // if (field.field_name === "Preferred Supplier" && sectionIndex === 1) {
-        //   console.log(sectionIndex, dropdownOption);
-        // }
-
         return (
           <Controller
             control={control}
