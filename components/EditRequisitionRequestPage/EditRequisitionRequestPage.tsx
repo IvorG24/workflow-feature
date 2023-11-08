@@ -95,14 +95,7 @@ const EditRequisitionRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const {
-    handleSubmit,
-    control,
-    getValues,
-    reset,
-    formState: { isDirty },
-    setValue,
-  } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -655,14 +648,14 @@ const EditRequisitionRequestPage = ({
               <RequestFormSigner signerList={signerList} />
             </Box>
             <Flex direction="column" gap="sm">
-              {isDirty && (
-                <Button variant="outline" color="red" onClick={() => reset()}>
-                  Reset
-                </Button>
-              )}
-              <Button type="submit" disabled={!isDirty}>
-                Submit
+              <Button
+                variant="outline"
+                color="red"
+                onClick={() => replaceSection(request_form.form_section)}
+              >
+                Reset
               </Button>
+              <Button type="submit">Submit</Button>
             </Flex>
           </Stack>
         </form>
