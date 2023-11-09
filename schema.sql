@@ -3864,7 +3864,7 @@ RETURNS JSON as $$
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
 
         itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' ORDER BY item_description_order ASC`);
+          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC`);
           items.push({
             ...value,
             item_description: itemDescription
@@ -5965,6 +5965,142 @@ RETURNS VOID AS $$
 $$ LANGUAGE plv8;
 
 -- End: Reverse Request Approval
+
+-- Start: Analyze Item
+
+CREATE OR REPLACE FUNCTION analyze_item(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      itemName,
+      teamId,
+      page,
+      limit
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const skippedField = [
+      "General Name",
+      "GL Account",
+      "CSI Code",
+      "Division Description",
+      "Level 2 Major Group Description",
+      "Level 2 Minor Group Description",
+      "Preferred Supplier",
+      "Requesting Project",
+      "Type",
+      "Date Needed",
+      "Purpose"
+    ]
+
+    const generalNameFieldId = plv8.execute(
+      `
+        SELECT field_id
+        FROM field_table
+          INNER JOIN section_table ON section_id = field_section_id
+          INNER JOIN form_table ON form_id = section_form_id
+          INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        WHERE 
+          field_name = 'General Name' AND
+          team_member_team_id = '${teamId}' AND
+          form_name = 'Requisition' AND
+          form_is_formsly_form = true
+      `
+    )[0].field_id;
+
+    const itemGeneralNameList = plv8.execute(
+      `
+        SELECT 
+          request_response_table.*,
+          request_status,
+          request_formsly_id,
+          request_id
+        FROM request_response_table
+        INNER JOIN request_table ON request_id = request_response_request_id
+        WHERE 
+          request_response = '"${itemName}"' AND
+          request_response_field_id = '${generalNameFieldId}' AND
+          request_is_disabled = false 
+        ORDER BY request_date_created DESC
+        LIMIT '${limit}' 
+        OFFSET '${start}'
+      `
+    );
+
+    const itemGeneralNameCount = plv8.execute(
+      `
+        SELECT COUNT(*)
+        FROM request_response_table
+        INNER JOIN request_table ON request_id = request_response_request_id
+        WHERE 
+          request_response = '"${itemName}"' AND
+          request_response_field_id = '${generalNameFieldId}' AND
+          request_is_disabled = false 
+      `
+    )[0].count;
+
+    const itemList = itemGeneralNameList.map((item) => {
+      const itemDescription = [];
+      let csiCodeDescription = "";
+      let quantity = 0;
+      let uom = "";
+
+      const itemDescriptionList = plv8.execute(
+        `
+          SELECT 
+            request_response_table.*,
+            field_name
+          FROM request_response_table
+          INNER JOIN field_table ON field_id = request_response_field_id
+          WHERE 
+            request_response_request_id = '${item.request_response_request_id}' AND
+            request_response_duplicatable_section_id ${
+              item.request_response_duplicatable_section_id !== null ? 
+                ` = '${item.request_response_duplicatable_section_id}'` :
+                "IS NULL"
+            }
+        `
+      );
+
+      itemDescriptionList.forEach((description) => {
+        if(skippedField.includes(description.field_name)) return;
+
+        switch(description.field_name){
+          case "Base Unit of Measurement": uom = description.request_response; break;
+          case "Quantity": quantity = description.request_response; break;
+          case "CSI Code Description": csiCodeDescription = description.request_response; break;
+          default: 
+            itemDescription.push({
+              field_name: description.field_name,
+              request_response: description.request_response
+            });
+        }
+      })
+
+      return {
+        request_id: item.request_id,
+        request_formsly_id: item.request_formsly_id,
+        item_description: itemDescription,
+        csi_code_description: csiCodeDescription,
+        quantity: quantity,
+        unit_of_measurement: uom,
+        request_status: item.request_status
+      }
+    });
+
+    returnData = {
+      data: itemList,
+      count: Number(itemGeneralNameCount)
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Analyze Item
 
 ---------- End: FUNCTIONS
 
