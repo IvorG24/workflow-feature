@@ -19,7 +19,10 @@ import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { checkIfTimeIsWithinFiveMinutes } from "@/utils/functions";
+import {
+  checkIfTimeIsWithinFiveMinutes,
+  generateJiraTicket,
+} from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -357,6 +360,88 @@ const RequisitionRequestPage = ({
     );
   };
 
+  const handleCreateJiraTicket = async () => {
+    try {
+      if (!request.request_formsly_id) {
+        console.warn("formsly_id not found");
+        return null;
+      }
+      const projectName = request.request_project.team_project_name;
+      const itemCategory = sectionWithDuplicateList
+        .slice(1)
+        .map(
+          (section) => section.section_field[3].field_response?.request_response
+        ) as string[];
+
+      const jiraTicketConfig = generateJiraTicket({
+        projectName,
+        itemCategory,
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_id}`,
+      });
+
+      const newJiraTicketResponse = await fetch("/api/create-jira-ticket", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jiraTicketConfig),
+      });
+
+      if (!newJiraTicketResponse.ok) {
+        const data = await newJiraTicketResponse.json();
+        console.error(data.error);
+        notifications.show({
+          message: data.error,
+          color: "red",
+        });
+
+        return null;
+      }
+
+      const newJiraTicket = await newJiraTicketResponse.json();
+
+      const addFormToJiraTicket = await fetch(
+        `/api/add-form-to-jira-ticket?jiraTicketKey=${newJiraTicket.key}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!addFormToJiraTicket.ok) {
+        const data = await addFormToJiraTicket.json();
+        console.error(data.error);
+        notifications.show({
+          message: data.error,
+          color: "red",
+        });
+
+        return null;
+      }
+
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${newJiraTicket.key}`
+      );
+
+      if (!newJiraTicketData.ok) {
+        notifications.show({
+          message: "Failed to fetch ticket data. Please contact your IT.",
+          color: "red",
+        });
+
+        return null;
+      }
+
+      const jiraTicketResponse = await newJiraTicketData.json();
+      return JSON.stringify(jiraTicketResponse);
+    } catch (error) {
+      console.error("An error occurred while making the request:", error);
+    }
+  };
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -474,16 +559,7 @@ const RequisitionRequestPage = ({
                 .map((signer) => signer.request_signer_status)
                 .filter((status) => status === "APPROVED").length === 0
             }
-            requestJira={requestJira}
-            itemCategory={
-              sectionWithDuplicateList
-                .slice(1)
-                .map(
-                  (section) =>
-                    section.section_field[3].field_response?.request_response
-                ) as string[]
-            }
-            // request={request}
+            onCreateJiraTicket={handleCreateJiraTicket}
           />
         ) : null}
 

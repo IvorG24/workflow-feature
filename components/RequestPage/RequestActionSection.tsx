@@ -21,17 +21,7 @@ type Props = {
   isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
   isEditable?: boolean;
-  requestJira?: {
-    id: string | null;
-    link: string | null;
-  };
-  itemCategory?: string[];
-};
-
-type JiraTicketDataType = {
-  id: string;
-  key: string;
-  self: string;
+  onCreateJiraTicket: () => Promise<string | null | undefined>;
 };
 
 const RequestActionSection = ({
@@ -46,50 +36,21 @@ const RequestActionSection = ({
   isCashPurchase,
   isUserPrimarySigner,
   isEditable,
+  onCreateJiraTicket,
 }: Props) => {
   const router = useRouter();
 
-  const createJiraTicket = async (ticketConfig: JSON) => {
-    try {
-      const jiraTicket = await fetch("/api/create-jira-ticket", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(ticketConfig),
-      });
-
-      if (jiraTicket.ok) {
-        const jiraTicketResponse = await jiraTicket.json();
-        return jiraTicketResponse;
-      } else {
-        console.error("Jira API request failed:", jiraTicket.statusText);
-        notifications.show({
-          message: "Failed to create Jira ticket",
-          color: "red",
-        });
-        return null;
-      }
-    } catch (error) {
-      console.error("An error occurred while making the request:", error);
-    }
-  };
-
   const handleApproveRequisitionRequest = async () => {
     try {
-      const jiraTicketConfig = { test: "test" };
+      const jiraTicketResponse = await onCreateJiraTicket();
+      if (!jiraTicketResponse) return;
 
-      const jiraTicket: JiraTicketDataType | null = await createJiraTicket(
-        JSON.parse(JSON.stringify(jiraTicketConfig))
-      );
+      const jiraTicket = JSON.parse(jiraTicketResponse);
 
-      if (!jiraTicket) return;
+      const jiraTicketWebLink =
+        jiraTicket.fields["customfield_10010"]._links.web;
 
-      handleUpdateRequest(
-        "APPROVED",
-        jiraTicket.id,
-        `https://test-formsly.atlassian.net/jira/core/projects/FT/issues/${jiraTicket.key}`
-      );
+      handleUpdateRequest("APPROVED", jiraTicket.key, jiraTicketWebLink);
     } catch (error) {
       console.log(error);
       notifications.show({

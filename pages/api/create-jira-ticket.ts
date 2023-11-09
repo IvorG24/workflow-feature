@@ -18,10 +18,10 @@ export default async function handler(
     if (!jiraConfig.user || !jiraConfig.api_token || !jiraConfig.api_url) {
       return res.status(405).json({ error: "Jira env variables undefined" });
     }
-    console.log(req.body);
+
     const response = await fetch(
       // Jira Rest API
-      jiraConfig.api_url,
+      `${jiraConfig.api_url}/issue`,
       {
         method: "POST",
         headers: {

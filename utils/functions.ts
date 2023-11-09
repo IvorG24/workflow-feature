@@ -102,6 +102,32 @@ export const checkIfTimeIsWithinFiveMinutes = (
   return differenceInMinutes <= 5;
 };
 
+export const getJiraSourcingItemCategory = (formslyItemCategory: string) => {
+  switch (formslyItemCategory) {
+    case "Formworks Accessories":
+      return "Formworks";
+
+    case "Construction Materials":
+      return "Construction Items";
+
+    case "Fuel, Oil, Lubricants":
+      return "Fuel";
+
+    case "Fixed Asset - Construction Equipment, Machinery and Tools":
+      return "Fixed Asset";
+
+    case "Fixed Asset - Transportation Equipment":
+      return "Fixed Asset";
+    case "Fixed Asset - Office Machine and Equipment":
+      return "Fixed Asset";
+    case "Fixed Asset - Low Value Asset >50k":
+      return "Fixed Asset";
+
+    default:
+      break;
+  }
+};
+
 export const generateJiraTicket = ({
   projectName,
   itemCategory,
@@ -113,13 +139,9 @@ export const generateJiraTicket = ({
   requestId: string;
   requestUrl: string;
 }) => {
-  // const sourcingItemCategory = [
-  //   "Fuel",
-  //   "Construction Items",
-  //   "Fixed Asset",
-  //   "Formworks",
-  //   "PED Items",
-  // ];
+  const sourcingItemCategory = getJiraSourcingItemCategory(
+    JSON.parse(itemCategory[0])
+  );
 
   return {
     fields: {
@@ -138,7 +160,7 @@ export const generateJiraTicket = ({
         value: projectName,
       },
       customfield_10209: {
-        value: itemCategory,
+        value: sourcingItemCategory,
       },
       customfield_10010: "189", // Request Type
       customfield_10168: requestId,

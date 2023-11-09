@@ -5,45 +5,46 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    if (req.method !== "DELETE") {
+    if (req.method !== "GET") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
     const jiraConfig = {
       user: process.env.JIRA_USER,
       api_token: process.env.JIRA_API_TOKEN,
+      api_url: process.env.JIRA_API_URL,
     };
 
-    if (!jiraConfig.user || !jiraConfig.api_token) {
-      return res.status(405).json({ error: "Jira env variables undefined" });
+    if (!jiraConfig.user || !jiraConfig.api_token || !jiraConfig.api_url) {
+      return res.status(400).json({ error: "Jira env variables undefined" });
     }
 
-    const { jiraId } = req.body;
-
     const response = await fetch(
-      `https://your-domain.atlassian.net/rest/api/3/issueLink/${jiraId}`,
+      // Jira Rest API
+      `${jiraConfig.api_url}/issue/${req.query.jiraTicketKey}`,
       {
-        method: "DELETE",
+        method: "GET",
         headers: {
           Authorization: `Basic ${Buffer.from(
             `${jiraConfig.user}:${jiraConfig.api_token}`
           ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
         },
       }
     );
 
-    if (response.status === 201) {
-      // Jira ticket was deleted successfully
+    if (response.ok) {
       const responseData = await response.json();
       return res.status(200).json(responseData);
     } else {
       console.error(await response.text());
       return res
         .status(response.status)
-        .json({ error: "Error deleting Jira ticket" });
+        .json({ error: "Error fetching data from Jira API" });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error deleting Jira ticket" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
