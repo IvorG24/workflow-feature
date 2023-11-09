@@ -2386,7 +2386,7 @@ export const getSupplier = async (
     .eq("supplier_team_id", teamId)
     .ilike("supplier_name", `%${supplier}%`)
     .order("supplier_name", { ascending: true })
-    .limit(500);
+    .limit(100);
   if (error) throw error;
 
   const supplierList = data.map((supplier, index) => {
@@ -2487,7 +2487,7 @@ export const getTeamProjectList = async (
     query = query.ilike("team_project_name", `%${search}%`);
   }
 
-  query = query.order("team_project_date_created", { ascending: false });
+  query = query.order("team_project_name", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
 

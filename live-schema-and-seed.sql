@@ -4204,6 +4204,29 @@ RETURNS JSON as $$
           `
         );
 
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier_name ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((suppliers, index) => {
+          return {
+            option_description: null,
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: suppliers.supplier_id,
+            option_order: index,
+            option_value: suppliers.supplier_name,
+          };
+        });
+
         returnData = {
           form: {
             ...form,
@@ -4222,6 +4245,10 @@ RETURNS JSON as $$
                 ...form.form_section[1],
                 section_field: [
                   ...form.form_section[1].section_field.slice(0, 9),
+                  {
+                    ...form.form_section[1].section_field[9],
+                    field_option: supplierOptions
+                  }
                 ],
               },
             ],
@@ -6012,10 +6039,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON option_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON option_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON option_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_signer_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON section_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON section_table;
@@ -6407,7 +6434,7 @@ USING (
 );
 
 --- REQUEST_SIGNER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -6444,7 +6471,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow DELETE for authenticated users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6456,8 +6483,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    WHERE team_member_user_id = auth.uid()
   )
 );
 

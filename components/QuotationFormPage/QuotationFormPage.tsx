@@ -478,7 +478,7 @@ const QuotationFormPage = ({
           page={projectPage}
           onPageChange={(page: number) => {
             setProjectPage(page);
-            handleFetchProject(projectPage, projectSearch);
+            handleFetchProject(page, projectSearch);
           }}
         />
       </Paper>
