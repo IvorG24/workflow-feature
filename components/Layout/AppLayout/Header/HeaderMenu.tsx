@@ -1,6 +1,5 @@
 // import { getAllNotification, getFormList } from "@/backend/api/get";
 // import { useFormActions } from "@/stores/useFormStore";
-import {} from "@/stores/useTeamStore";
 import {
   useUserAvatar,
   useUserIntials,
@@ -13,17 +12,20 @@ import {
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 // import { AppType } from "@/utils/types";
+import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { startCase } from "@/utils/string";
 import {
   ActionIcon,
   Avatar,
   Divider,
   Group,
+  Indicator,
   Menu,
   useMantineColorScheme,
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
+  IconBell,
   IconHelpCircle,
   IconLogout,
   IconMoonStars,
@@ -32,6 +34,7 @@ import {
   IconUserCircle,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
+import Notification from "./Notification";
 
 const HeaderMenu = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -43,7 +46,7 @@ const HeaderMenu = () => {
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
   // const teamMember = useUserTeamMember();
-  // const unreadNotificationCount = useUnreadNotificationCount();
+  const unreadNotificationCount = useUnreadNotificationCount();
   const user = useUserProfile();
   // const { setActiveApp } = useTeamActions();
   // const { setFormList } = useFormActions();
@@ -94,7 +97,7 @@ const HeaderMenu = () => {
 
   return (
     <Group spacing={16}>
-      {/* <Menu
+      <Menu
         shadow="xs"
         width={300}
         radius={0}
@@ -116,7 +119,7 @@ const HeaderMenu = () => {
         <Menu.Dropdown>
           <Notification />
         </Menu.Dropdown>
-      </Menu> */}
+      </Menu>
 
       <Menu shadow="md" width={200} position="bottom-end" withArrow>
         <Menu.Target data-cy="header-account-button">
