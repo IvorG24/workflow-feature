@@ -33,6 +33,7 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
+import { v4 as uuidv4 } from "uuid";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
@@ -150,12 +151,46 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           };
         });
 
+        const { data: supplierList, error: supplierListError } =
+          await supabaseClient
+            .from("supplier_table")
+            .select("*")
+            .eq("supplier_team_id", teamId)
+            .eq("supplier_is_disabled", false)
+            .eq("supplier_is_available", true)
+            .order("supplier_name", { ascending: true })
+            .limit(100);
+        if (supplierListError) throw supplierListError;
+
+        const {
+          data: preferredSupplierField,
+          error: preferredSupplierFieldError,
+        } = await supabaseClient
+          .from("field_table")
+          .select("*")
+          .eq("field_id", "159c86c3-dda6-4c8a-919f-50e1674659bd")
+          .single();
+        if (preferredSupplierFieldError) throw preferredSupplierFieldError;
+
+        const supplierOptions = supplierList.map((supplier, index) => {
+          return {
+            option_description: null,
+            option_field_id: preferredSupplierField.field_id,
+            option_id: supplier.supplier_id,
+            option_order: index,
+            option_value: supplier.supplier_name,
+          };
+        });
+
         const sectionWithDuplicateList = form.form_section
           .slice(1)
           .map((section) => parseItemSection(section));
 
         const itemSectionList = (await Promise.all(
           sectionWithDuplicateList.map(async (section) => {
+            const isWithPreferredSupplier =
+              section.section_field[9].field_name === "Preferred Supplier";
+
             const itemName = parseJSONIfValid(
               section.section_field[0].field_response[0].request_response
             );
@@ -224,6 +259,40 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   field_option: csiCodeOptions,
                 },
                 ...section.section_field.slice(5, 9),
+                isWithPreferredSupplier
+                  ? {
+                      ...section.section_field[9],
+                      field_option: [
+                        {
+                          option_description: null,
+                          option_field_id: preferredSupplierField.field_id,
+                          option_id: JSON.parse(
+                            section.section_field[9].field_response[0]
+                              .request_response
+                          ),
+                          option_order: 1,
+                          option_value: JSON.parse(
+                            section.section_field[9].field_response[0]
+                              .request_response
+                          ),
+                        },
+                      ],
+                    }
+                  : {
+                      ...preferredSupplierField,
+                      field_response: [
+                        {
+                          request_response_id: uuidv4(),
+                          request_response: null,
+                          request_response_duplicatable_section_id:
+                            section.section_field[8].field_response[0]
+                              .request_response_duplicatable_section_id,
+                          request_response_field_id:
+                            preferredSupplierField.field_id,
+                        },
+                      ],
+                      field_option: supplierOptions,
+                    },
                 ...newFieldsWithOptions,
               ],
             };

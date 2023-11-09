@@ -4,6 +4,7 @@ import {
   getCSICodeOptionsForItems,
   getItem,
   getProjectSignerWithTeamMember,
+  getSupplier,
 } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
@@ -31,7 +32,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { RequestFormValues } from "../EditRequestPage/EditRequestPage";
@@ -80,6 +81,7 @@ const EditRequisitionRequestPage = ({
 
   const [signerList, setSignerList] = useState(initialSignerList);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -92,25 +94,28 @@ const EditRequisitionRequestPage = ({
     form_team_member: request.request_team_member,
   };
 
-  const requestFormMethods = useForm<RequestFormValues>({
-    defaultValues: { sections: request_form.form_section },
-  });
-  const {
-    handleSubmit,
-    control,
-    getValues,
-    reset,
-    formState: { isDirty },
-  } = requestFormMethods;
+  const requestFormMethods = useForm<RequestFormValues>();
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
     remove: removeSection,
     update: updateSection,
+    replace: replaceSection,
   } = useFieldArray({
     control,
     name: "sections",
   });
+
+  useEffect(() => {
+    replaceSection(request_form.form_section);
+  }, [
+    request.request_form,
+    replaceSection,
+    requestFormMethods,
+    itemOptions,
+    request_form.form_section,
+  ]);
 
   const handleEditRequest = async (data: RequestFormValues) => {
     try {
@@ -360,6 +365,9 @@ const EditRequisitionRequestPage = ({
               })),
             };
           }),
+          {
+            ...newSection.section_field[9],
+          },
         ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
@@ -430,6 +438,7 @@ const EditRequisitionRequestPage = ({
               field_option: [],
             };
           }),
+          newSection.section_field[9],
         ];
       updateSection(index, {
         ...newSection,
@@ -488,7 +497,6 @@ const EditRequisitionRequestPage = ({
             })
           ),
         },
-
         ...newSection.section_field.slice(9),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
@@ -563,6 +571,26 @@ const EditRequisitionRequestPage = ({
     }
   };
 
+  const supplierSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearching(true);
+      const supplierList = await getSupplier(supabaseClient, {
+        supplier: value ?? "",
+        teamId: teamMember.team_member_team_id,
+        fieldId: request.request_form.form_section[1].section_field[9].field_id,
+      });
+      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -594,6 +622,8 @@ const EditRequisitionRequestPage = ({
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
+                      supplierSearch,
+                      isSearching,
                     }}
                     formslyFormName="Requisition"
                   />
@@ -618,14 +648,14 @@ const EditRequisitionRequestPage = ({
               <RequestFormSigner signerList={signerList} />
             </Box>
             <Flex direction="column" gap="sm">
-              {isDirty && (
-                <Button variant="outline" color="red" onClick={() => reset()}>
-                  Reset
-                </Button>
-              )}
-              <Button type="submit" disabled={!isDirty}>
-                Submit
+              <Button
+                variant="outline"
+                color="red"
+                onClick={() => replaceSection(request_form.form_section)}
+              >
+                Reset
               </Button>
+              <Button type="submit">Submit</Button>
             </Flex>
           </Stack>
         </form>
