@@ -31,6 +31,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
+import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
@@ -78,6 +79,7 @@ const ItemList = ({
 
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
+  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -239,6 +241,12 @@ const ItemList = ({
         </Group>
         {!editItem && (
           <Group className={classes.flexGrow}>
+            <Button
+              variant="light"
+              onClick={() => router.push("/team-requests/item-analytics")}
+            >
+              Analytics
+            </Button>
             {checkList.length !== 0 ? (
               <Button
                 variant="outline"
