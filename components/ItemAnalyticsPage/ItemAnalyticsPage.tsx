@@ -136,7 +136,7 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
               control={control}
               name={"item"}
               rules={{
-                required: "Select an item first",
+                required: "Item is required.",
               }}
               render={({ field: { value, onChange } }) => (
                 <Select
@@ -225,7 +225,7 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
         )}
         {!resultList && (
           <Alert icon={<IconAlertCircle size="1rem" />} color="blue">
-            Item is required.
+            Select an item that you need to analyze.
           </Alert>
         )}
       </Paper>
