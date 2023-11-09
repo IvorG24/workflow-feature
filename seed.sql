@@ -185,7 +185,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('64bb5899-bad4-4fe4-bc08-60dce9923f57', 'Division Description', 'TEXT', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 ('8fdb158b-bed5-4eac-a6dc-bc69275f1ac7', 'Level 2 Major Group Description', 'TEXT', 12, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 ('b69182a9-dc96-472b-aa31-b1f2f92ec78b', 'Level 2 Minor Group Description', 'TEXT', 13, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
-('ea3df1e0-043f-4354-a10c-d69ac472baac', 'Preferred Supplier', 'DROPDOWN', 14, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, false),
+('159c86c3-dda6-4c8a-919f-50e1674659bd', 'Preferred Supplier', 'DROPDOWN', 14, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, false),
 
 -- Sourced Item 
 ('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
