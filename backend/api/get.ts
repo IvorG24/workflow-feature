@@ -717,7 +717,8 @@ export const getItemList = async (
       count: "exact",
     })
     .eq("item_team_id", teamId)
-    .eq("item_is_disabled", false);
+    .eq("item_is_disabled", false)
+    .eq("item_description.item_description_is_disabled", false);
 
   if (search) {
     query = query.ilike("item_general_name", `%${search}%`);
@@ -750,7 +751,7 @@ export const getAllItems = async (
   const { teamId } = params;
   const { data, error } = await supabaseClient
     .from("item_table")
-    .select("*, item_description: item_description_table(*)")
+    .select("item_general_name")
     .eq("item_team_id", teamId)
     .eq("item_is_disabled", false)
     .eq("item_is_available", true)
@@ -2386,7 +2387,7 @@ export const getSupplier = async (
     .eq("supplier_team_id", teamId)
     .ilike("supplier_name", `%${supplier}%`)
     .order("supplier_name", { ascending: true })
-    .limit(500);
+    .limit(100);
   if (error) throw error;
 
   const supplierList = data.map((supplier, index) => {
@@ -2487,7 +2488,7 @@ export const getTeamProjectList = async (
     query = query.ilike("team_project_name", `%${search}%`);
   }
 
-  query = query.order("team_project_date_created", { ascending: false });
+  query = query.order("team_project_name", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
 

@@ -7,6 +7,14 @@ type Props = {
 };
 
 const RequisitionSummary = ({ summaryData }: Props) => {
+  const isWithPreferredSupplier = summaryData
+    .map((data) => {
+      return data.section_field.findIndex(
+        (data) => data.field_name === "Preferred Supplier"
+      );
+    })
+    .some((index) => index !== -1);
+
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -37,6 +45,7 @@ const RequisitionSummary = ({ summaryData }: Props) => {
               <th>CSI Code Description</th>
               <th>Quantity</th>
               <th>Base Unit of Measurement</th>
+              {isWithPreferredSupplier ? <th>Preferred Supplier</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -46,13 +55,15 @@ const RequisitionSummary = ({ summaryData }: Props) => {
               );
 
               let description = "";
-              summary.section_field.slice(9).forEach((field) => {
-                if (field.field_response) {
-                  description += `${field.field_name}: ${JSON.parse(
-                    field.field_response.request_response
-                  )}\n`;
-                }
-              });
+              summary.section_field
+                .slice(isWithPreferredSupplier ? 10 : 9)
+                .forEach((field) => {
+                  if (field.field_response) {
+                    description += `${field.field_name}: ${JSON.parse(
+                      field.field_response.request_response
+                    )}\n`;
+                  }
+                });
 
               const csiCode = JSON.parse(
                 `${summary.section_field[4].field_response?.request_response}`
@@ -66,6 +77,13 @@ const RequisitionSummary = ({ summaryData }: Props) => {
               const unit = JSON.parse(
                 `${summary.section_field[1].field_response?.request_response}`
               );
+              const supplier =
+                summary.section_field[9].field_name === "Preferred Supplier" &&
+                summary.section_field[9].field_response?.request_response
+                  ? JSON.parse(
+                      `${summary.section_field[9].field_response?.request_response}`
+                    )
+                  : "";
 
               return (
                 <tr key={index}>
@@ -79,6 +97,7 @@ const RequisitionSummary = ({ summaryData }: Props) => {
                   <td>{csiCode}</td>
                   <td>{addCommaToNumber(quantity)}</td>
                   <td>{unit}</td>
+                  {isWithPreferredSupplier ? <td>{supplier}</td> : null}
                 </tr>
               );
             })}

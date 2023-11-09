@@ -38,6 +38,8 @@ type RequestFormFieldsProps = {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -325,11 +327,7 @@ const RequestFormFields = ({
                 error={fieldError}
                 searchable={formslyFormName !== ""}
                 onSearchChange={(value) => {
-                  if (
-                    quotationFormMethods &&
-                    value &&
-                    field.field_name === "Supplier"
-                  ) {
+                  if (quotationFormMethods && field.field_name === "Supplier") {
                     if (timeoutRef.current) {
                       clearTimeout(timeoutRef.current);
                     }
@@ -338,12 +336,30 @@ const RequestFormFields = ({
                       quotationFormMethods.supplierSearch &&
                         quotationFormMethods.supplierSearch(value);
                     }, 500);
+                  } else if (
+                    requisitionFormMethods &&
+                    field.field_name === "Preferred Supplier"
+                  ) {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+
+                    timeoutRef.current = setTimeout(() => {
+                      requisitionFormMethods.supplierSearch &&
+                        requisitionFormMethods.supplierSearch(
+                          value,
+                          sectionIndex
+                        );
+                    }, 500);
                   }
                 }}
                 rightSection={
-                  quotationFormMethods &&
-                  quotationFormMethods.isSearching &&
-                  field.field_name === "Supplier" ? (
+                  (quotationFormMethods &&
+                    quotationFormMethods.isSearching &&
+                    field.field_name === "Supplier") ||
+                  (requisitionFormMethods &&
+                    requisitionFormMethods.isSearching &&
+                    field.field_name === "Preferred Supplier") ? (
                     <Loader size={16} />
                   ) : null
                 }
