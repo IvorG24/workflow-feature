@@ -1032,13 +1032,6 @@ export type TicketListOnLoad = {
   teamMemberList: TeamMemberWithUserType[];
 };
 
-export type JiraTicketConfig = {
-  summary: string;
-  description: string;
-  project_key: string;
-  issue_type_name: string;
-};
-
 export type ApproverUnresolvedRequestListType = {
   request_signer_status: string;
   request_signer: {

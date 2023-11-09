@@ -12,30 +12,16 @@ export default async function handler(
     const jiraConfig = {
       user: process.env.JIRA_USER,
       api_token: process.env.JIRA_API_TOKEN,
+      api_url: process.env.JIRA_API_URL,
     };
 
-    if (!jiraConfig.user || !jiraConfig.api_token) {
+    if (!jiraConfig.user || !jiraConfig.api_token || !jiraConfig.api_url) {
       return res.status(405).json({ error: "Jira env variables undefined" });
     }
-
-    const { summary, description, project_key, issue_type_name } = req.body;
-
-    const requestBody = {
-      fields: {
-        project: {
-          key: project_key,
-        },
-        summary,
-        description,
-        issuetype: {
-          name: issue_type_name,
-        },
-      },
-    };
-
+    console.log(req.body);
     const response = await fetch(
       // Jira Rest API
-      "https://test-formsly.atlassian.net/rest/api/2/issue/",
+      jiraConfig.api_url,
       {
         method: "POST",
         headers: {
@@ -44,9 +30,8 @@ export default async function handler(
           ).toString("base64")}`,
           Accept: "application/json",
           "Content-Type": "application/json",
-          "X-Atlassian-Token": "no-check",
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(req.body),
       }
     );
 

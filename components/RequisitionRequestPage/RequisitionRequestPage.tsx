@@ -474,7 +474,16 @@ const RequisitionRequestPage = ({
                 .map((signer) => signer.request_signer_status)
                 .filter((status) => status === "APPROVED").length === 0
             }
-            jiraId={request.request_jira_id}
+            requestJira={requestJira}
+            itemCategory={
+              sectionWithDuplicateList
+                .slice(1)
+                .map(
+                  (section) =>
+                    section.section_field[3].field_response?.request_response
+                ) as string[]
+            }
+            // request={request}
           />
         ) : null}
 

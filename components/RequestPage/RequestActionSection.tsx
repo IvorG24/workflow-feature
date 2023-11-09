@@ -1,8 +1,4 @@
-import {
-  FormStatusType,
-  JiraTicketConfig,
-  RequestWithResponseType,
-} from "@/utils/types";
+import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import { Button, Flex, Paper, Space, Stack, Text, Title } from "@mantine/core";
 // import { useRouter } from "next/router";
 import { modals, openConfirmModal } from "@mantine/modals";
@@ -25,7 +21,11 @@ type Props = {
   isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
   isEditable?: boolean;
-  jiraId?: string | null;
+  requestJira?: {
+    id: string | null;
+    link: string | null;
+  };
+  itemCategory?: string[];
 };
 
 type JiraTicketDataType = {
@@ -46,11 +46,10 @@ const RequestActionSection = ({
   isCashPurchase,
   isUserPrimarySigner,
   isEditable,
-}: // jiraId,
-Props) => {
+}: Props) => {
   const router = useRouter();
 
-  const createJiraTicket = async (ticketConfig: JiraTicketConfig) => {
+  const createJiraTicket = async (ticketConfig: JSON) => {
     try {
       const jiraTicket = await fetch("/api/create-jira-ticket", {
         method: "POST",
@@ -76,25 +75,15 @@ Props) => {
     }
   };
 
-  // const deleteJiraTicket = () => {
-  //   console.log(jiraId);
-  // };
-
   const handleApproveRequisitionRequest = async () => {
     try {
-      const ticketConfig = {
-        project_key: "FT",
-        issue_type_name: "Requisition Form",
-        summary: "Test Ticket",
-        description:
-          "Creating of an issue using ids for projects and issue types using the REST API",
-      };
+      const jiraTicketConfig = { test: "test" };
 
       const jiraTicket: JiraTicketDataType | null = await createJiraTicket(
-        ticketConfig
+        JSON.parse(JSON.stringify(jiraTicketConfig))
       );
 
-      if (!jiraTicket) throw Error;
+      if (!jiraTicket) return;
 
       handleUpdateRequest(
         "APPROVED",

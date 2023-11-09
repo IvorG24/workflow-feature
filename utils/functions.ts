@@ -101,3 +101,52 @@ export const checkIfTimeIsWithinFiveMinutes = (
 
   return differenceInMinutes <= 5;
 };
+
+export const generateJiraTicket = ({
+  projectName,
+  itemCategory,
+  requestId,
+  requestUrl,
+}: {
+  projectName: string;
+  itemCategory: string[];
+  requestId: string;
+  requestUrl: string;
+}) => {
+  // const sourcingItemCategory = [
+  //   "Fuel",
+  //   "Construction Items",
+  //   "Fixed Asset",
+  //   "Formworks",
+  //   "PED Items",
+  // ];
+
+  return {
+    fields: {
+      project: {
+        id: "10031",
+        key: "SCSM",
+      },
+      summary: "Request Form for Notation",
+      issuetype: {
+        name: "Sourcing",
+      },
+      reporter: {
+        accountId: "712020:aae076f5-c5d1-4e92-82fe-acb5ada4bc7c", // SCIC Dev Jira Account
+      },
+      customfield_10102: {
+        value: projectName,
+      },
+      customfield_10209: {
+        value: itemCategory,
+      },
+      customfield_10010: "189", // Request Type
+      customfield_10168: requestId,
+      customfield_10297: requestId,
+      customfield_10296: requestUrl,
+      customfield_10298: {
+        value: "Formsly", // apiSource
+      },
+    },
+  };
+};
