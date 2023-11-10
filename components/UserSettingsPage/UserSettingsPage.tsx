@@ -11,6 +11,7 @@ import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
+import Compressor from "compressorjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -177,9 +178,26 @@ const UserSettingsPage = ({ user }: Props) => {
     }
   };
 
-  const handleUploadSignature = async (signature: File) => {
+  const handleUploadSignature = async (signature: File | null) => {
     try {
       setIsUpdatingSignature(true);
+      if (signature === null) return;
+
+      // compress image
+      let compressedImage: File | null = null;
+      if (signature.size > 500000) {
+        compressedImage = await new Promise((resolve) => {
+          new Compressor(signature, {
+            quality: 0.3,
+            success(result) {
+              resolve(result as File);
+            },
+            error(error) {
+              throw error;
+            },
+          });
+        });
+      }
 
       const { data: signatureAttachment, url } = await createAttachment(
         supabaseClient,
@@ -192,7 +210,7 @@ const UserSettingsPage = ({ user }: Props) => {
               ? user.user_signature_attachment_id
               : undefined,
           },
-          file: signature,
+          file: compressedImage || signature,
         }
       );
 
