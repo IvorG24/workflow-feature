@@ -34,6 +34,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
 import AdminGroup from "./TeamGroup/AdminGroup";
+import ApproverGroup from "./TeamGroup/ApproverGroup";
 import CreateGroup from "./TeamGroup/CreateGroup";
 import GroupList from "./TeamGroup/GroupList";
 import GroupMembers from "./TeamGroup/GroupMembers";
@@ -446,6 +447,17 @@ const TeamPage = ({
         <Box mt="xl">
           <Paper p="xl" shadow="xs">
             <AdminGroup
+              teamId={initialTeam.team_id}
+              teamMemberList={initialTeamMemberList}
+            />
+          </Paper>
+        </Box>
+      )}
+
+      {isOwnerOrAdmin && (
+        <Box mt="xl">
+          <Paper p="xl" shadow="xs">
+            <ApproverGroup
               teamId={initialTeam.team_id}
               teamMemberList={initialTeamMemberList}
             />

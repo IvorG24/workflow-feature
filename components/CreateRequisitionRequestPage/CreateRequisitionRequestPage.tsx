@@ -3,6 +3,7 @@ import {
   getCSICodeOptionsForItems,
   getItem,
   getProjectSignerWithTeamMember,
+  getSupplier,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -49,12 +50,18 @@ type Props = {
   form: FormType;
   itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
+  specialApprover?: {
+    special_approver_id: string;
+    special_approver_item_list: string[];
+    special_approver_signer: FormType["form_signer"][0];
+  }[];
 };
 
 const CreateRequisitionRequestPage = ({
   form,
   itemOptions,
   projectOptions,
+  specialApprover,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -69,6 +76,7 @@ const CreateRequisitionRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -81,7 +89,7 @@ const CreateRequisitionRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -92,6 +100,26 @@ const CreateRequisitionRequestPage = ({
     control,
     name: "sections",
   });
+
+  useEffect(() => {
+    const newFields = form.form_section[1].section_field.map((field) => {
+      if (field.field_name === "General Name") {
+        return {
+          ...field,
+          field_option: itemOptions,
+        };
+      } else {
+        return field;
+      }
+    });
+    replaceSection([
+      form.form_section[0],
+      {
+        ...form.form_section[1],
+        section_field: newFields,
+      },
+    ]);
+  }, [form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
@@ -150,11 +178,38 @@ const CreateRequisitionRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
+      // special approver
+      const additionalSignerList: FormType["form_signer"] = [];
+      const alreadyAddedAdditionalSigner: string[] = [];
+      if (specialApprover && specialApprover.length !== 0) {
+        const generalNameList = newSections.map(
+          (section) => section.section_field[0].field_response
+        );
+        specialApprover.map((approver) => {
+          if (
+            alreadyAddedAdditionalSigner.includes(
+              approver.special_approver_signer.signer_id
+            )
+          )
+            return;
+          if (
+            approver.special_approver_item_list.some((item) =>
+              generalNameList.includes(item)
+            )
+          ) {
+            additionalSignerList.push(approver.special_approver_signer);
+            alreadyAddedAdditionalSigner.push(
+              approver.special_approver_signer.signer_id
+            );
+          }
+        });
+      }
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: newData,
         formId,
         teamMemberId: teamMember.team_member_id,
-        signers: signerList,
+        signers: [...signerList, ...additionalSignerList],
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
@@ -224,26 +279,6 @@ const CreateRequisitionRequestPage = ({
     }
   };
 
-  useEffect(() => {
-    const newFields = form.form_section[1].section_field.map((field) => {
-      if (field.field_name === "General Name") {
-        return {
-          ...field,
-          field_option: itemOptions,
-        };
-      } else {
-        return field;
-      }
-    });
-    replaceSection([
-      form.form_section[0],
-      {
-        ...form.form_section[1],
-        section_field: newFields,
-      },
-    ]);
-  }, [form, replaceSection, requestFormMethods, itemOptions]);
-
   const handleGeneralNameChange = async (
     index: number,
     value: string | null
@@ -294,6 +329,9 @@ const CreateRequisitionRequestPage = ({
             field_response: "",
           };
         }),
+        {
+          ...newSection.section_field[9],
+        },
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
@@ -306,7 +344,7 @@ const CreateRequisitionRequestPage = ({
               option_id: options.item_description_field_id,
               option_order: optionIndex + 1,
               option_value: `${options.item_description_field_value}${
-                options.item_description_field_uom
+                description.item_description_is_with_uom
                   ? ` ${options.item_description_field_uom}`
                   : ""
               }`,
@@ -344,6 +382,7 @@ const CreateRequisitionRequestPage = ({
             field_option: [],
           };
         }),
+        newSection.section_field[9],
       ];
       updateSection(index, {
         ...newSection,
@@ -376,7 +415,6 @@ const CreateRequisitionRequestPage = ({
           ...newSection.section_field[8],
           field_response: csiCode?.csi_code_level_two_minor_group_description,
         },
-
         ...newSection.section_field.slice(9),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
@@ -450,6 +488,26 @@ const CreateRequisitionRequestPage = ({
     }
   };
 
+  const supplierSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearching(true);
+      const supplierList = await getSupplier(supabaseClient, {
+        supplier: value ?? "",
+        teamId: teamMember.team_member_team_id,
+        fieldId: form.form_section[1].section_field[9].field_id,
+      });
+      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -477,6 +535,8 @@ const CreateRequisitionRequestPage = ({
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
+                      supplierSearch,
+                      isSearching,
                     }}
                     formslyFormName="Requisition"
                   />

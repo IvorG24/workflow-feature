@@ -52,6 +52,7 @@ import FormSection from "../RequestFormPage/FormSection";
 import ItemDescription from "./ItemDescription/ItemDescription";
 import CreateItem from "./ItemList/CreateItem";
 import ItemList from "./ItemList/ItemList";
+import UpdateItem from "./ItemList/UpdateItem";
 
 type Props = {
   items: ItemWithDescriptionType[];
@@ -85,6 +86,9 @@ const RequisitionFormPage = ({
   const [isCreatingItem, setIsCreatingItem] = useState(false);
   const [selectedItem, setSelectedItem] =
     useState<ItemWithDescriptionType | null>(null);
+  const [editItem, setEditItem] = useState<ItemWithDescriptionType | null>(
+    null
+  );
   const [itemList, setItemList] = useState(items);
   const [itemCount, setItemCount] = useState(itemListCount);
 
@@ -392,7 +396,7 @@ const RequisitionFormPage = ({
       {!switchValue ? (
         <Box>
           <Paper p="xl" shadow="xs">
-            {!isCreatingItem ? (
+            {!isCreatingItem && !editItem ? (
               <ItemList
                 itemList={itemList}
                 setItemList={setItemList}
@@ -400,6 +404,8 @@ const RequisitionFormPage = ({
                 setItemCount={setItemCount}
                 setIsCreatingItem={setIsCreatingItem}
                 setSelectedItem={setSelectedItem}
+                setEditItem={setEditItem}
+                editItem={editItem}
               />
             ) : null}
             {isCreatingItem ? (
@@ -407,6 +413,13 @@ const RequisitionFormPage = ({
                 setIsCreatingItem={setIsCreatingItem}
                 setItemList={setItemList}
                 setItemCount={setItemCount}
+              />
+            ) : null}
+            {editItem ? (
+              <UpdateItem
+                setItemList={setItemList}
+                setEditItem={setEditItem}
+                editItem={editItem}
               />
             ) : null}
           </Paper>
@@ -552,7 +565,7 @@ const RequisitionFormPage = ({
           page={projectPage}
           onPageChange={(page: number) => {
             setProjectPage(page);
-            handleFetchProject(projectPage, projectSearch);
+            handleFetchProject(page, projectSearch);
           }}
         />
       </Paper>

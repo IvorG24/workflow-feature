@@ -23,13 +23,18 @@ type RequestListFilterProps = {
   teamMemberList: TeamMemberWithUserType[];
   handleFilterForms: () => void;
   localFilter: RequestListLocalFilter;
+  setLocalFilter: (
+    val:
+      | RequestListLocalFilter
+      | ((prevState: RequestListLocalFilter) => RequestListLocalFilter)
+  ) => void;
 };
 
 type FilterSelectedValuesType = {
-  formFilter: string[];
-  statusFilter: string[];
-  requestorFilter: string[];
-  approverFilter: string[];
+  formList: string[];
+  status: string[];
+  requestorList: string[];
+  approverList: string[];
   isApproversView: boolean;
 };
 
@@ -39,6 +44,7 @@ const RequestListFilter = ({
   teamMemberList,
   handleFilterForms,
   localFilter,
+  setLocalFilter,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -54,10 +60,10 @@ const RequestListFilter = ({
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
-      formFilter: [],
-      statusFilter: [],
-      requestorFilter: [],
-      approverFilter: [],
+      formList: [],
+      status: [],
+      requestorList: [],
+      approverList: [],
       isApproversView: false,
     });
 
@@ -99,6 +105,7 @@ const RequestListFilter = ({
       // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterForms();
       setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
+      setLocalFilter({ ...localFilter, [key]: value });
     }
   };
 
@@ -166,9 +173,9 @@ const RequestListFilter = ({
             value={value}
             onChange={(value) => {
               onChange(value);
-              if (!formRefFocused) handleFilterChange("formFilter", value);
+              if (!formRefFocused) handleFilterChange("formList", value);
             }}
-            onDropdownClose={() => handleFilterChange("formFilter", value)}
+            onDropdownClose={() => handleFilterChange("formList", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
@@ -188,10 +195,10 @@ const RequestListFilter = ({
             value={value}
             onChange={(value) => {
               onChange(value);
-              if (!statusRefFocused) handleFilterChange("statusFilter", value);
+              if (!statusRefFocused) handleFilterChange("status", value);
             }}
             onDropdownClose={() =>
-              handleFilterChange("statusFilter", value as string[])
+              handleFilterChange("status", value as string[])
             }
             {...inputFilterProps}
             sx={{ flex: 1 }}
@@ -214,9 +221,9 @@ const RequestListFilter = ({
             onChange={(value) => {
               onChange(value);
               if (!requestorRefFocused)
-                handleFilterChange("requestorFilter", value);
+                handleFilterChange("requestorList", value);
             }}
-            onDropdownClose={() => handleFilterChange("requestorFilter", value)}
+            onDropdownClose={() => handleFilterChange("requestorList", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
@@ -238,9 +245,9 @@ const RequestListFilter = ({
             onChange={(value) => {
               onChange(value);
               if (!approverRefFocused)
-                handleFilterChange("approverFilter", value);
+                handleFilterChange("approverList", value);
             }}
-            onDropdownClose={() => handleFilterChange("approverFilter", value)}
+            onDropdownClose={() => handleFilterChange("approverList", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}

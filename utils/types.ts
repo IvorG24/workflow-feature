@@ -110,7 +110,7 @@ export type ItemTableUpdate =
 
 export type ItemDescriptionTableRow =
   Database["public"]["Tables"]["item_description_table"]["Row"];
-export type ItemDescriptionableInsert =
+export type ItemDescriptionTableInsert =
   Database["public"]["Tables"]["item_description_table"]["Insert"];
 export type ItemDescriptionTableUpdate =
   Database["public"]["Tables"]["item_description_table"]["Update"];
@@ -189,7 +189,7 @@ export type TicketCommentTableUpdate =
 
 // Start: Database Enums
 export type AppType = "GENERAL" | "REQUEST" | "REVIEW";
-export type MemberRoleType = "OWNER" | "ADMIN" | "MEMBER";
+export type MemberRoleType = "OWNER" | "APPROVER" | "MEMBER" | "ADMIN";
 export type AttachmentBucketType =
   | "USER_AVATARS"
   | "USER_SIGNATURES"
@@ -230,14 +230,16 @@ export type CommentType =
   | "REQUEST_COMMENT"
   // | "REQUEST_CREATED"
   | "REVIEW_CREATED"
-  | "REVIEW_COMMENT";
+  | "REVIEW_COMMENT"
+  | "ACTION_REVERSED";
 export type NotificationType =
   | "REQUEST"
   | "APPROVE"
   | "REJECT"
   | "INVITE"
   | "REVIEW"
-  | "COMMENT";
+  | "COMMENT"
+  | "REVERSAL";
 export type InvitationStatusType = "ACCEPTED" | "DECLINED" | "PENDING";
 // End: Database Enums
 
@@ -305,6 +307,7 @@ export type RequestWithResponseType = RequestTableRow & {
       user_last_name: string;
       user_username: string;
       user_avatar: string;
+      user_job_title: string;
     };
   };
 } & {
@@ -499,7 +502,13 @@ export type ServiceWithScopeType = ServiceTableRow & {
 
 export type ItemForm = {
   generalName: string;
-  descriptions: { description: string; withUoM: boolean }[];
+  descriptions: {
+    description: string;
+    withUoM: boolean;
+    descriptionId?: string;
+    fieldId?: string;
+    order?: number;
+  }[];
   unit: string;
   isAvailable: boolean;
   glAccount: string;
@@ -1021,4 +1030,16 @@ export type TicketListOnLoad = {
   ticketList: TicketListType[];
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+};
+
+export type ApproverUnresolvedRequestListType = {
+  request_signer_status: string;
+  request_signer: {
+    signer_team_member_id: string;
+  };
+  request: {
+    request_id: string;
+    request_jira_id: string | null;
+    request_status: string;
+  };
 };

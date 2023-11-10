@@ -1,9 +1,10 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
   getProjectSignerWithTeamMember,
+  getSupplier,
 } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
@@ -31,7 +32,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { RequestFormValues } from "../EditRequestPage/EditRequestPage";
@@ -40,18 +41,28 @@ type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
+  specialApprover: {
+    special_approver_id: string;
+    special_approver_item_list: string[];
+    special_approver_signer: FormType["form_signer"][0];
+  }[];
 };
 
 const EditRequisitionRequestPage = ({
   request,
   itemOptions,
   projectOptions,
+  specialApprover,
 }: Props) => {
   const router = useRouter();
   const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
+
+  const specialApproverList = specialApprover.map(
+    (approver) => approver.special_approver_signer.signer_id
+  );
 
   const initialSignerList: FormType["form_signer"] = request.request_signer
     .map((signer) => signer.request_signer_signer)
@@ -70,6 +81,7 @@ const EditRequisitionRequestPage = ({
 
   const [signerList, setSignerList] = useState(initialSignerList);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -82,25 +94,28 @@ const EditRequisitionRequestPage = ({
     form_team_member: request.request_team_member,
   };
 
-  const requestFormMethods = useForm<RequestFormValues>({
-    defaultValues: { sections: request_form.form_section },
-  });
-  const {
-    handleSubmit,
-    control,
-    getValues,
-    reset,
-    formState: { isDirty },
-  } = requestFormMethods;
+  const requestFormMethods = useForm<RequestFormValues>();
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
     remove: removeSection,
     update: updateSection,
+    replace: replaceSection,
   } = useFieldArray({
     control,
     name: "sections",
   });
+
+  useEffect(() => {
+    replaceSection(request_form.form_section);
+  }, [
+    request.request_form,
+    replaceSection,
+    requestFormMethods,
+    itemOptions,
+    request_form.form_section,
+  ]);
 
   const handleEditRequest = async (data: RequestFormValues) => {
     try {
@@ -153,23 +168,56 @@ const EditRequisitionRequestPage = ({
         sections: [data.sections[0], ...newSections],
       };
 
-      const isPending = await checkIfRequestIsPending(supabaseClient, {
+      const isPending = await checkIfRequestIsEditable(supabaseClient, {
         requestId: request.request_id,
       });
 
       if (!isPending) {
         notifications.show({
-          message: "Request can't be edited",
+          message: "A signer reviewed your request. Request can't be edited",
           color: "red",
+          autoClose: false,
         });
         router.push(`/team-requests/requests/${request.request_id}`);
         return;
       }
 
+      const filteredSignerList = signerList.filter(
+        (signer) => !specialApproverList.includes(signer.signer_id)
+      );
+
+      // special approver
+      const additionalSignerList: FormType["form_signer"] = [];
+      const alreadyAddedAdditionalSigner: string[] = [];
+      if (specialApprover && specialApprover.length !== 0) {
+        const generalNameList = newSections.map(
+          (section) =>
+            section.section_field[0].field_response[0].request_response
+        );
+        specialApprover.map((approver) => {
+          if (
+            alreadyAddedAdditionalSigner.includes(
+              approver.special_approver_signer.signer_id
+            )
+          )
+            return;
+          if (
+            approver.special_approver_item_list.some((item) =>
+              generalNameList.includes(item)
+            )
+          ) {
+            additionalSignerList.push(approver.special_approver_signer);
+            alreadyAddedAdditionalSigner.push(
+              approver.special_approver_signer.signer_id
+            );
+          }
+        });
+      }
+
       await editRequest(supabaseClient, {
         requestId: request.request_id,
         requestFormValues: newData,
-        signers: signerList,
+        signers: [...filteredSignerList, ...additionalSignerList],
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: request_form.form_name,
@@ -317,6 +365,9 @@ const EditRequisitionRequestPage = ({
               })),
             };
           }),
+          {
+            ...newSection.section_field[9],
+          },
         ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
@@ -329,7 +380,7 @@ const EditRequisitionRequestPage = ({
               option_id: options.item_description_field_id,
               option_order: optionIndex + 1,
               option_value: `${options.item_description_field_value}${
-                options.item_description_field_uom
+                description.item_description_is_with_uom
                   ? ` ${options.item_description_field_uom}`
                   : ""
               }`,
@@ -387,6 +438,7 @@ const EditRequisitionRequestPage = ({
               field_option: [],
             };
           }),
+          newSection.section_field[9],
         ];
       updateSection(index, {
         ...newSection,
@@ -445,7 +497,6 @@ const EditRequisitionRequestPage = ({
             })
           ),
         },
-
         ...newSection.section_field.slice(9),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
@@ -520,6 +571,26 @@ const EditRequisitionRequestPage = ({
     }
   };
 
+  const supplierSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearching(true);
+      const supplierList = await getSupplier(supabaseClient, {
+        supplier: value ?? "",
+        teamId: teamMember.team_member_team_id,
+        fieldId: request.request_form.form_section[1].section_field[9].field_id,
+      });
+      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -551,6 +622,8 @@ const EditRequisitionRequestPage = ({
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
+                      supplierSearch,
+                      isSearching,
                     }}
                     formslyFormName="Requisition"
                   />
@@ -575,14 +648,14 @@ const EditRequisitionRequestPage = ({
               <RequestFormSigner signerList={signerList} />
             </Box>
             <Flex direction="column" gap="sm">
-              {isDirty && (
-                <Button variant="outline" color="red" onClick={() => reset()}>
-                  Reset
-                </Button>
-              )}
-              <Button type="submit" disabled={!isDirty}>
-                Submit
+              <Button
+                variant="outline"
+                color="red"
+                onClick={() => replaceSection(request_form.form_section)}
+              >
+                Reset
               </Button>
+              <Button type="submit">Submit</Button>
             </Flex>
           </Stack>
         </form>

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import moment from "moment";
+
 // check if a value is empty
 export const isEmpty = (value: any) => {
   if (value == null) {
@@ -87,4 +89,15 @@ export const isValidUrl = (urlString: string) => {
     "i"
   ); // validate fragment locator
   return !!urlPattern.test(urlString);
+};
+
+export const checkIfTimeIsWithinFiveMinutes = (
+  timestampString: string,
+  currentDateString: string
+) => {
+  const timestamp = moment(timestampString);
+  const currentTime = moment(currentDateString);
+  const differenceInMinutes = currentTime.diff(timestamp, "minutes");
+
+  return differenceInMinutes <= 5;
 };

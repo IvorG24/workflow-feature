@@ -160,6 +160,7 @@ type ColumnType =
 type FieldType = {
   label: string;
   value: string;
+  additional?: string;
 };
 
 type Props = {
@@ -240,6 +241,11 @@ const PdfDocumentTableVersion = ({
               >
                 <Text>{detail.label}</Text>
                 <Text style={{ fontWeight: 600 }}>{detail.value}</Text>
+                {detail.additional && (
+                  <Text style={{ color: "#868E96" }}>
+                    ({detail.additional})
+                  </Text>
+                )}
               </View>
             ))}
           </View>

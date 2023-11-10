@@ -90,7 +90,7 @@ const CreateProject = ({
         prev.unshift(newProject);
         return prev;
       });
-      setProjectCount((prev) => prev + 1);
+      setProjectCount((prev) => Number(prev) + 1);
       notifications.show({
         message: "Team project created.",
         color: "green",

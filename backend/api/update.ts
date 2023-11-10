@@ -1,5 +1,5 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
-import { TeamAdminChoiceType } from "@/components/TeamPage/TeamGroup/AdminGroup";
+import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
 import {
   AppType,
@@ -333,7 +333,22 @@ export const deleteTeam = async (
   if (error) throw error;
 };
 
-// Update admin role
+// Update approver role
+export const updateApproverRole = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamApproverIdList: string[];
+    updateRole: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("update_multiple_approver", {
+    input_data: params,
+  });
+  if (error) throw error;
+  return data as unknown as TeamApproverChoiceType[];
+};
+
+// Update approver role
 export const updateAdminRole = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -345,7 +360,7 @@ export const updateAdminRole = async (
     input_data: params,
   });
   if (error) throw error;
-  return data as unknown as TeamAdminChoiceType[];
+  return data as unknown as TeamApproverChoiceType[];
 };
 
 // Update OTP ID
@@ -418,4 +433,26 @@ export const updateTicketStatus = async (
     .single();
   if (error) throw error;
   return data as TicketTableRow;
+};
+
+// reverse request approval
+export const reverseRequestApproval = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestAction: "REVERSED";
+    requestId: string;
+    isPrimarySigner: boolean;
+    requestSignerId: string;
+    requestOwnerId: string;
+    signerFullName: string;
+    formName: string;
+    memberId: string;
+    teamId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("reverse_request_approval", {
+    input_data: { ...params },
+  });
+
+  if (error) throw error;
 };

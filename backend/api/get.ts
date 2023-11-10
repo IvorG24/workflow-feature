@@ -5,6 +5,7 @@ import { Database } from "@/utils/database";
 import { regExp, startCase } from "@/utils/string";
 import {
   AppType,
+  ApproverUnresolvedRequestListType,
   AttachmentBucketType,
   AttachmentTableRow,
   CSICodeTableRow,
@@ -539,8 +540,8 @@ export const getAllTeamMembers = async (
   return data;
 };
 
-// Get team's all admin members
-export const getTeamAdminList = async (
+// Get team's all approver members
+export const getTeamApproverList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
@@ -554,7 +555,7 @@ export const getTeamAdminList = async (
     )
     .eq("team_member_team_id", teamId)
     .eq("team_member_is_disabled", false)
-    .or("team_member_role.eq.ADMIN, team_member_role.eq.OWNER");
+    .or("team_member_role.eq.APPROVER, team_member_role.eq.OWNER");
   if (error) throw error;
 
   const formattedData = data as unknown as {
@@ -717,18 +718,24 @@ export const getItemList = async (
       count: "exact",
     })
     .eq("item_team_id", teamId)
-    .eq("item_is_disabled", false);
+    .eq("item_is_disabled", false)
+    .eq("item_description.item_description_is_disabled", false);
 
   if (search) {
     query = query.ilike("item_general_name", `%${search}%`);
   }
 
-  query.order("item_date_created", { ascending: false });
+  query.order("item_general_name", { ascending: true });
+  query.order("item_description_order", {
+    foreignTable: "item_description",
+    ascending: true,
+  });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
 
   const { data, error, count } = await query;
+
   if (error) throw error;
 
   return {
@@ -745,7 +752,7 @@ export const getAllItems = async (
   const { teamId } = params;
   const { data, error } = await supabaseClient
     .from("item_table")
-    .select("*, item_description: item_description_table(*)")
+    .select("item_general_name")
     .eq("item_team_id", teamId)
     .eq("item_is_disabled", false)
     .eq("item_is_available", true)
@@ -817,7 +824,7 @@ export const getItemDescriptionFieldList = async (
     query = query.ilike("item_description_field_value", `%${search}%`);
   }
 
-  query.order("item_description_field_date_created", { ascending: false });
+  query.order("item_description_field_value", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
@@ -1516,7 +1523,7 @@ export const checkRequsitionRequestForReleaseOrder = async (
 };
 
 // Check if request is pending
-export const checkIfRequestIsPending = async (
+export const checkIfRequestIsEditable = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
@@ -1524,15 +1531,17 @@ export const checkIfRequestIsPending = async (
 ) => {
   const { requestId } = params;
 
-  const { count, error } = await supabaseClient
-    .from("request_table")
-    .select("*", { count: "exact" })
-    .eq("request_id", requestId)
-    .eq("request_status", "PENDING")
-    .eq("request_is_disabled", false);
-
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select("request_signer_status")
+    .eq("request_signer_request_id", requestId);
   if (error) throw error;
-  return Boolean(count);
+
+  const statusList = data as { request_signer_status: string }[];
+  const isPending = !statusList.some(
+    (status) => status.request_signer_status.toUpperCase() !== "PENDING"
+  );
+  return isPending;
 };
 
 // Get response data by keyword
@@ -1558,7 +1567,7 @@ export const getResponseDataByKeyword = async (
   return data;
 };
 
-// Check user if owner or admin
+// Check user if owner or approver
 export const checkIfOwnerOrAdmin = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2379,7 +2388,7 @@ export const getSupplier = async (
     .eq("supplier_team_id", teamId)
     .ilike("supplier_name", `%${supplier}%`)
     .order("supplier_name", { ascending: true })
-    .limit(500);
+    .limit(100);
   if (error) throw error;
 
   const supplierList = data.map((supplier, index) => {
@@ -2480,7 +2489,7 @@ export const getTeamProjectList = async (
     query = query.ilike("team_project_name", `%${search}%`);
   }
 
-  query = query.order("team_project_date_created", { ascending: false });
+  query = query.order("team_project_name", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
 
@@ -3128,6 +3137,62 @@ export const getItemDivisionOption = async (
   return data;
 };
 
+// Get team approver list with filter
+export const getTeamApproverListWithFilter = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { teamId, search = "", page, limit } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+        team_member_id,
+        team_member_date_created, 
+        team_member_user: team_member_user_id!inner(
+          user_id, 
+          user_first_name, 
+          user_last_name,
+          user_avatar, 
+          user_email
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("team_member_role", "APPROVER")
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_is_disabled", false);
+
+  if (search) {
+    let orQuery = "";
+    search.split(" ").map((search) => {
+      orQuery += `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`;
+    });
+    query = query.or(orQuery, { foreignTable: "team_member_user" });
+  }
+
+  query = query.order("team_member_date_created", {
+    ascending: false,
+  });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
 // Get team admin list with filter
 export const getTeamAdminListWithFilter = async (
   supabaseClient: SupabaseClient<Database>,
@@ -3162,10 +3227,11 @@ export const getTeamAdminListWithFilter = async (
     .eq("team_member_is_disabled", false);
 
   if (search) {
-    query = query.or(
-      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
-      { foreignTable: "team_member_user" }
-    );
+    let orQuery = "";
+    search.split(" ").map((search) => {
+      orQuery += `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`;
+    });
+    query = query.or(orQuery, { foreignTable: "team_member_user" });
   }
 
   query = query.order("team_member_date_created", {
@@ -3751,6 +3817,27 @@ export const getTicketListOnLoad = async (
   if (error) throw error;
 
   return data as unknown as TicketListOnLoad;
+};
+
+// Get ticket list on load
+export const getUnresolvedRequestListPerApprover = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { teamMemberId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_id, request_jira_id, request_status)"
+    )
+    .eq("request_signer.signer_team_member_id", teamMemberId)
+    .in("request_signer_status", ["APPROVED", "PENDING"]);
+
+  if (error) throw error;
+
+  return data as unknown as ApproverUnresolvedRequestListType[];
 };
 
 // Get edit request on load

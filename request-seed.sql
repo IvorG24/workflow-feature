@@ -52,8 +52,8 @@ SELECT var_value INTO ownerMemberId
 
 INSERT INTO team_member_table (team_member_id, team_member_role, team_member_team_id, team_member_user_id) VALUES
 (ownerMemberId, 'OWNER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'beb2d52c-77d5-49a9-a175-637152c44424'),
-('0a61a37f-7805-4fe5-8856-3c7fa801c744', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'dd689b20-8293-4b8a-b9c6-9a5cc63f659c'),
-('a750df8c-35fe-48d6-862a-1135c8f96a9a', 'ADMIN', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '930de3a6-181d-449e-8890-0aa055947d80');
+('0a61a37f-7805-4fe5-8856-3c7fa801c744', 'APPROVER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', 'dd689b20-8293-4b8a-b9c6-9a5cc63f659c'),
+('a750df8c-35fe-48d6-862a-1135c8f96a9a', 'APPROVER', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2', '930de3a6-181d-449e-8890-0aa055947d80');
 
 -- Create Forms
 SELECT var_value INTO allFieldsFormId

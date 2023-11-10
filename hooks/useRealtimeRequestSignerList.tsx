@@ -35,6 +35,8 @@ const useRealtimeRequestSignerList = (
                 return {
                   ...signer,
                   request_signer_status: payload.new.request_signer_status,
+                  request_signer_status_date_updated:
+                    payload.new.request_signer_status_date_updated,
                 };
               }
               return signer;

@@ -1,5 +1,5 @@
 import {
-  checkIfRequestIsPending,
+  checkIfRequestIsEditable,
   getCSICodeOptionsForItems,
   getEditRequestOnLoad,
   getItem,
@@ -25,8 +25,13 @@ import Meta from "@/components/Meta/Meta";
 import { parseItemSection } from "@/utils/arrayFunctions/arrayFunctions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { parseJSONIfValid } from "@/utils/string";
-import { OptionTableRow, RequestWithResponseType } from "@/utils/types";
+import {
+  FormType,
+  OptionTableRow,
+  RequestWithResponseType,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
+import { v4 as uuidv4 } from "uuid";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
@@ -42,7 +47,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         },
       };
 
-      const isPending = await checkIfRequestIsPending(supabaseClient, {
+      const isPending = await checkIfRequestIsEditable(supabaseClient, {
         requestId: `${context.query.requestId}`,
       });
       if (!isPending) throw new Error("Request can't be edited");
@@ -155,12 +160,46 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           };
         });
 
+        const { data: supplierList, error: supplierListError } =
+          await supabaseClient
+            .from("supplier_table")
+            .select("*")
+            .eq("supplier_team_id", teamId)
+            .eq("supplier_is_disabled", false)
+            .eq("supplier_is_available", true)
+            .order("supplier_name", { ascending: true })
+            .limit(100);
+        if (supplierListError) throw supplierListError;
+
+        const {
+          data: preferredSupplierField,
+          error: preferredSupplierFieldError,
+        } = await supabaseClient
+          .from("field_table")
+          .select("*")
+          .eq("field_id", "159c86c3-dda6-4c8a-919f-50e1674659bd")
+          .single();
+        if (preferredSupplierFieldError) throw preferredSupplierFieldError;
+
+        const supplierOptions = supplierList.map((supplier, index) => {
+          return {
+            option_description: null,
+            option_field_id: preferredSupplierField.field_id,
+            option_id: supplier.supplier_id,
+            option_order: index,
+            option_value: supplier.supplier_name,
+          };
+        });
+
         const sectionWithDuplicateList = form.form_section
           .slice(1)
           .map((section) => parseItemSection(section));
 
         const itemSectionList = (await Promise.all(
           sectionWithDuplicateList.map(async (section) => {
+            const isWithPreferredSupplier =
+              section.section_field[9].field_name === "Preferred Supplier";
+
             const itemName = parseJSONIfValid(
               section.section_field[0].field_response[0].request_response
             );
@@ -196,7 +235,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                       option_id: options.item_description_field_id,
                       option_order: optionIndex + 1,
                       option_value: `${options.item_description_field_value}${
-                        options.item_description_field_uom
+                        description.item_description_is_with_uom
                           ? ` ${options.item_description_field_uom}`
                           : ""
                       }`,
@@ -229,6 +268,40 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
                   field_option: csiCodeOptions,
                 },
                 ...section.section_field.slice(5, 9),
+                isWithPreferredSupplier
+                  ? {
+                      ...section.section_field[9],
+                      field_option: [
+                        {
+                          option_description: null,
+                          option_field_id: preferredSupplierField.field_id,
+                          option_id: JSON.parse(
+                            section.section_field[9].field_response[0]
+                              .request_response
+                          ),
+                          option_order: 1,
+                          option_value: JSON.parse(
+                            section.section_field[9].field_response[0]
+                              .request_response
+                          ),
+                        },
+                      ],
+                    }
+                  : {
+                      ...preferredSupplierField,
+                      field_response: [
+                        {
+                          request_response_id: uuidv4(),
+                          request_response: null,
+                          request_response_duplicatable_section_id:
+                            section.section_field[8].field_response[0]
+                              .request_response_duplicatable_section_id,
+                          request_response_field_id:
+                            preferredSupplierField.field_id,
+                        },
+                      ],
+                      field_option: supplierOptions,
+                    },
                 ...newFieldsWithOptions,
               ],
             };
@@ -259,11 +332,20 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
               : parsedRequest.request_signer,
         };
 
+        const { data: specialApprover, error: specialApproverError } =
+          await supabaseClient
+            .from("special_approver_table")
+            .select(
+              "*, special_approver_signer: special_approver_signer_id(*, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(*)))"
+            );
+        if (specialApproverError) throw specialApproverError;
+
         return {
           props: {
             request: formattedRequest,
             itemOptions,
             projectOptions,
+            specialApprover,
           },
         };
       }
@@ -899,6 +981,11 @@ export type EditRequestOnLoadProps = {
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
   requestingProject?: string;
+  specialApprover?: {
+    special_approver_id: string;
+    special_approver_item_list: string[];
+    special_approver_signer: FormType["form_signer"][0];
+  }[];
 };
 
 const Page = ({
@@ -909,6 +996,7 @@ const Page = ({
   projectOptions = [],
   requestingProject = "",
   sourceProjectList = {},
+  specialApprover = [],
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
   const formslyForm = () => {
@@ -919,6 +1007,7 @@ const Page = ({
             request={request}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
+            specialApprover={specialApprover}
           />
         );
       case "Subcon":

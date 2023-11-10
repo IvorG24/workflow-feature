@@ -13,6 +13,7 @@ export const ROW_PER_PAGE = 10;
 export const MAX_FILE_SIZE_IN_MB = 5;
 export const MAX_FILE_SIZE = MAX_FILE_SIZE_IN_MB * 1024 * 1024;
 export const DEFAULT_NUMBER_SSOT_ROWS = 10;
+export const DEFAULT_ITEM_ANALYTICS_ROWS = 20;
 
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
@@ -1141,7 +1142,7 @@ export const ITEM_UNIT_CHOICES = [
   "Milliliter",
   "Microliter",
   "Milliampere hours",
-  "Metric Ton",
+  "Ton",
   "Gram",
   "Centigram",
   "Milligram",
@@ -1234,6 +1235,7 @@ export const ITEM_UNIT_CHOICES = [
   "Centipoise",
   "Kilovolt Ampere",
   "Kilowatt",
+  "Decibel",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [

@@ -74,12 +74,14 @@ export type Database = {
           {
             foreignKeyName: "comment_table_comment_request_id_fkey";
             columns: ["comment_request_id"];
+            isOneToOne: false;
             referencedRelation: "request_table";
             referencedColumns: ["request_id"];
           },
           {
             foreignKeyName: "comment_table_comment_team_member_id_fkey";
             columns: ["comment_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           }
@@ -162,6 +164,7 @@ export type Database = {
           {
             foreignKeyName: "field_table_field_section_id_fkey";
             columns: ["field_section_id"];
+            isOneToOne: false;
             referencedRelation: "section_table";
             referencedColumns: ["section_id"];
           }
@@ -211,6 +214,7 @@ export type Database = {
           {
             foreignKeyName: "form_table_form_team_member_id_fkey";
             columns: ["form_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           }
@@ -236,12 +240,14 @@ export type Database = {
           {
             foreignKeyName: "form_team_group_table_form_id_fkey";
             columns: ["form_id"];
+            isOneToOne: false;
             referencedRelation: "form_table";
             referencedColumns: ["form_id"];
           },
           {
             foreignKeyName: "form_team_group_table_team_group_id_fkey";
             columns: ["team_group_id"];
+            isOneToOne: false;
             referencedRelation: "team_group_table";
             referencedColumns: ["team_group_id"];
           }
@@ -276,6 +282,7 @@ export type Database = {
           {
             foreignKeyName: "invitation_table_invitation_from_team_member_id_fkey";
             columns: ["invitation_from_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           }
@@ -313,6 +320,7 @@ export type Database = {
           {
             foreignKeyName: "item_description_field_table_item_description_field_item_d_fkey";
             columns: ["item_description_field_item_description_id"];
+            isOneToOne: false;
             referencedRelation: "item_description_table";
             referencedColumns: ["item_description_id"];
           }
@@ -328,6 +336,7 @@ export type Database = {
           item_description_is_with_uom: boolean;
           item_description_item_id: string;
           item_description_label: string;
+          item_description_order: number;
         };
         Insert: {
           item_description_date_created?: string;
@@ -338,6 +347,7 @@ export type Database = {
           item_description_is_with_uom?: boolean;
           item_description_item_id: string;
           item_description_label: string;
+          item_description_order: number;
         };
         Update: {
           item_description_date_created?: string;
@@ -348,17 +358,20 @@ export type Database = {
           item_description_is_with_uom?: boolean;
           item_description_item_id?: string;
           item_description_label?: string;
+          item_description_order?: number;
         };
         Relationships: [
           {
             foreignKeyName: "item_description_table_item_description_field_id_fkey";
             columns: ["item_description_field_id"];
+            isOneToOne: false;
             referencedRelation: "field_table";
             referencedColumns: ["field_id"];
           },
           {
             foreignKeyName: "item_description_table_item_description_item_id_fkey";
             columns: ["item_description_item_id"];
+            isOneToOne: false;
             referencedRelation: "item_table";
             referencedColumns: ["item_id"];
           }
@@ -402,6 +415,7 @@ export type Database = {
           {
             foreignKeyName: "item_table_item_team_id_fkey";
             columns: ["item_team_id"];
+            isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
           }
@@ -445,12 +459,14 @@ export type Database = {
           {
             foreignKeyName: "notification_table_notification_team_id_fkey";
             columns: ["notification_team_id"];
+            isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
           },
           {
             foreignKeyName: "notification_table_notification_user_id_fkey";
             columns: ["notification_user_id"];
+            isOneToOne: false;
             referencedRelation: "user_table";
             referencedColumns: ["user_id"];
           }
@@ -482,6 +498,7 @@ export type Database = {
           {
             foreignKeyName: "option_table_option_field_id_fkey";
             columns: ["option_field_id"];
+            isOneToOne: false;
             referencedRelation: "field_table";
             referencedColumns: ["field_id"];
           }
@@ -513,12 +530,14 @@ export type Database = {
           {
             foreignKeyName: "request_response_table_request_response_field_id_fkey";
             columns: ["request_response_field_id"];
+            isOneToOne: false;
             referencedRelation: "field_table";
             referencedColumns: ["field_id"];
           },
           {
             foreignKeyName: "request_response_table_request_response_request_id_fkey";
             columns: ["request_response_request_id"];
+            isOneToOne: false;
             referencedRelation: "request_table";
             referencedColumns: ["request_id"];
           }
@@ -550,12 +569,14 @@ export type Database = {
           {
             foreignKeyName: "request_signer_table_request_signer_request_id_fkey";
             columns: ["request_signer_request_id"];
+            isOneToOne: false;
             referencedRelation: "request_table";
             referencedColumns: ["request_id"];
           },
           {
             foreignKeyName: "request_signer_table_request_signer_signer_id_fkey";
             columns: ["request_signer_signer_id"];
+            isOneToOne: false;
             referencedRelation: "signer_table";
             referencedColumns: ["signer_id"];
           }
@@ -608,18 +629,21 @@ export type Database = {
           {
             foreignKeyName: "request_table_request_form_id_fkey";
             columns: ["request_form_id"];
+            isOneToOne: false;
             referencedRelation: "form_table";
             referencedColumns: ["form_id"];
           },
           {
             foreignKeyName: "request_table_request_project_id_fkey";
             columns: ["request_project_id"];
+            isOneToOne: false;
             referencedRelation: "team_project_table";
             referencedColumns: ["team_project_id"];
           },
           {
             foreignKeyName: "request_table_request_team_member_id_fkey";
             columns: ["request_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           }
@@ -651,6 +675,7 @@ export type Database = {
           {
             foreignKeyName: "section_table_section_form_id_fkey";
             columns: ["section_form_id"];
+            isOneToOne: false;
             referencedRelation: "form_table";
             referencedColumns: ["form_id"];
           }
@@ -685,6 +710,7 @@ export type Database = {
           {
             foreignKeyName: "service_scope_choice_table_service_scope_choice_service_sc_fkey";
             columns: ["service_scope_choice_service_scope_id"];
+            isOneToOne: false;
             referencedRelation: "service_scope_table";
             referencedColumns: ["service_scope_id"];
           }
@@ -728,12 +754,14 @@ export type Database = {
           {
             foreignKeyName: "service_scope_table_service_scope_field_id_fkey";
             columns: ["service_scope_field_id"];
+            isOneToOne: false;
             referencedRelation: "field_table";
             referencedColumns: ["field_id"];
           },
           {
             foreignKeyName: "service_scope_table_service_scope_service_id_fkey";
             columns: ["service_scope_service_id"];
+            isOneToOne: false;
             referencedRelation: "service_table";
             referencedColumns: ["service_id"];
           }
@@ -768,6 +796,7 @@ export type Database = {
           {
             foreignKeyName: "service_table_service_team_id_fkey";
             columns: ["service_team_id"];
+            isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
           }
@@ -808,20 +837,49 @@ export type Database = {
           {
             foreignKeyName: "signer_table_signer_form_id_fkey";
             columns: ["signer_form_id"];
+            isOneToOne: false;
             referencedRelation: "form_table";
             referencedColumns: ["form_id"];
           },
           {
             foreignKeyName: "signer_table_signer_team_member_id_fkey";
             columns: ["signer_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           },
           {
             foreignKeyName: "signer_table_signer_team_project_id_fkey";
             columns: ["signer_team_project_id"];
+            isOneToOne: false;
             referencedRelation: "team_project_table";
             referencedColumns: ["team_project_id"];
+          }
+        ];
+      };
+      special_approver_table: {
+        Row: {
+          special_approver_id: string;
+          special_approver_item_list: string[];
+          special_approver_signer_id: string;
+        };
+        Insert: {
+          special_approver_id?: string;
+          special_approver_item_list: string[];
+          special_approver_signer_id: string;
+        };
+        Update: {
+          special_approver_id?: string;
+          special_approver_item_list?: string[];
+          special_approver_signer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "special_approver_table_special_approver_signer_id_fkey";
+            columns: ["special_approver_signer_id"];
+            isOneToOne: false;
+            referencedRelation: "signer_table";
+            referencedColumns: ["signer_id"];
           }
         ];
       };
@@ -854,6 +912,7 @@ export type Database = {
           {
             foreignKeyName: "supplier_table_supplier_team_id_fkey";
             columns: ["supplier_team_id"];
+            isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
           }
@@ -879,12 +938,14 @@ export type Database = {
           {
             foreignKeyName: "team_group_member_table_team_group_id_fkey";
             columns: ["team_group_id"];
+            isOneToOne: false;
             referencedRelation: "team_group_table";
             referencedColumns: ["team_group_id"];
           },
           {
             foreignKeyName: "team_group_member_table_team_member_id_fkey";
             columns: ["team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           }
@@ -916,6 +977,7 @@ export type Database = {
           {
             foreignKeyName: "team_group_table_team_group_team_id_fkey";
             columns: ["team_group_team_id"];
+            isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
           }
@@ -950,12 +1012,14 @@ export type Database = {
           {
             foreignKeyName: "team_member_table_team_member_team_id_fkey";
             columns: ["team_member_team_id"];
+            isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
           },
           {
             foreignKeyName: "team_member_table_team_member_user_id_fkey";
             columns: ["team_member_user_id"];
+            isOneToOne: false;
             referencedRelation: "user_table";
             referencedColumns: ["user_id"];
           }
@@ -981,12 +1045,14 @@ export type Database = {
           {
             foreignKeyName: "team_project_member_table_team_member_id_fkey";
             columns: ["team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           },
           {
             foreignKeyName: "team_project_member_table_team_project_id_fkey";
             columns: ["team_project_id"];
+            isOneToOne: false;
             referencedRelation: "team_project_table";
             referencedColumns: ["team_project_id"];
           }
@@ -1021,6 +1087,7 @@ export type Database = {
           {
             foreignKeyName: "team_project_table_team_project_team_id_fkey";
             columns: ["team_project_team_id"];
+            isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
           }
@@ -1058,6 +1125,7 @@ export type Database = {
           {
             foreignKeyName: "team_table_team_user_id_fkey";
             columns: ["team_user_id"];
+            isOneToOne: false;
             referencedRelation: "user_table";
             referencedColumns: ["user_id"];
           }
@@ -1101,12 +1169,14 @@ export type Database = {
           {
             foreignKeyName: "ticket_comment_table_ticket_comment_team_member_id_fkey";
             columns: ["ticket_comment_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           },
           {
             foreignKeyName: "ticket_comment_table_ticket_comment_ticket_id_fkey";
             columns: ["ticket_comment_ticket_id"];
+            isOneToOne: false;
             referencedRelation: "ticket_table";
             referencedColumns: ["ticket_id"];
           }
@@ -1150,12 +1220,14 @@ export type Database = {
           {
             foreignKeyName: "ticket_table_ticket_approver_team_member_id_fkey";
             columns: ["ticket_approver_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           },
           {
             foreignKeyName: "ticket_table_ticket_requester_team_member_id_fkey";
             columns: ["ticket_requester_team_member_id"];
+            isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
           }
@@ -1211,6 +1283,7 @@ export type Database = {
           {
             foreignKeyName: "user_table_user_signature_attachment_id_fkey";
             columns: ["user_signature_attachment_id"];
+            isOneToOne: false;
             referencedRelation: "attachment_table";
             referencedColumns: ["attachment_id"];
           }
@@ -1232,6 +1305,12 @@ export type Database = {
           invitation_id: string;
           team_id: string;
           user_id: string;
+        };
+        Returns: Json;
+      };
+      analyze_item: {
+        Args: {
+          input_data: Json;
         };
         Returns: Json;
       };
@@ -1533,6 +1612,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      reverse_request_approval: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: undefined;
+      };
       transfer_ownership: {
         Args: {
           owner_id: string;
@@ -1552,7 +1637,19 @@ export type Database = {
         };
         Returns: Json;
       };
+      update_item: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       update_multiple_admin: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      update_multiple_approver: {
         Args: {
           input_data: Json;
         };

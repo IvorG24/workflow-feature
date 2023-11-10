@@ -265,6 +265,7 @@ CREATE TABLE item_description_table(
   item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_description_is_with_uom BOOLEAN DEFAULT FALSE NOT NULL,
+  item_description_order INT NOT NULL,
 
   item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
   item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
@@ -381,6 +382,18 @@ CREATE TABLE ticket_comment_table(
 );
 
 -- END: Ticket comment
+
+-- Start: Special Approver
+
+CREATE TABLE special_approver_table(
+  special_approver_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  special_approver_item_list VARCHAR(4000)[] NOT NULL,
+
+  special_approver_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
+);
+
+-- END: Special Approver
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -958,7 +971,8 @@ RETURNS JSON AS $$
         item_description_item_id: item_result.item_id,
         item_description_is_available: true,
         item_description_field_id: fieldId,
-        item_description_is_with_uom: description.withUoM
+        item_description_is_with_uom: description.withUoM,
+        item_description_order: description.order
       });
       fieldInput.push({
         field_id: fieldId,
@@ -972,7 +986,7 @@ RETURNS JSON AS $$
 
     const itemDescriptionValues = itemDescriptionInput
       .map((item) =>
-        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}')`
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
       )
       .join(",");
 
@@ -984,7 +998,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
     
-    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom) VALUES ${itemDescriptionValues} RETURNING *;`);
+    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *;`);
 
     item_data = {...item_result, item_description: item_description}
 
@@ -993,6 +1007,131 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Create item
+
+-- Start: Update item
+
+CREATE OR REPLACE FUNCTION update_item(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let item_data;
+  plv8.subtransaction(function(){
+    const {
+      itemData: {
+        item_id,
+        item_general_name,
+        item_is_available,
+        item_unit,
+        item_gl_account,
+        item_team_id,
+        item_division_id_list
+      },
+      toAdd,
+      toUpdate,
+      toRemove,
+      formId
+    } = input_data;
+
+    
+    const item_result = plv8.execute(
+      `
+        UPDATE item_table SET 
+          item_general_name = '${item_general_name}',
+          item_is_available = '${item_is_available}',
+          item_unit = '${item_unit}',
+          item_gl_account = '${item_gl_account}',
+          item_team_id = '${item_team_id}',
+          item_division_id_list = ARRAY[${item_division_id_list}]
+        WHERE item_id = '${item_id}'
+        RETURNING *
+      `
+    )[0];
+
+    const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
+
+    const itemDescriptionInput = [];
+    const fieldInput= [];
+
+    toAdd.forEach((description) => {
+      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      itemDescriptionInput.push({
+        item_description_label: description.description,
+        item_description_item_id: item_result.item_id,
+        item_description_is_available: true,
+        item_description_field_id: fieldId,
+        item_description_is_with_uom: description.withUoM,
+        item_description_order: description.order
+      });
+      fieldInput.push({
+        field_id: fieldId,
+        field_name: description.description,
+        field_type: "DROPDOWN",
+        field_order: 14,
+        field_section_id: section_id,
+        field_is_required: true,
+      });
+    });
+
+    const itemDescriptionValues = itemDescriptionInput
+      .map((item) =>
+        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
+      )
+      .join(",");
+
+    const fieldValues = fieldInput
+      .map((field) =>
+        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+      )
+      .join(",");
+
+    // update
+    const updatedItemDescription = [];
+    toUpdate.forEach(description => {
+      const updatedDescription = plv8.execute(
+        `
+          UPDATE item_description_table SET 
+            item_description_is_with_uom = '${description.item_description_is_with_uom}',
+            item_description_label = '${description.item_description_label}',
+            item_description_order = ${description.item_description_order}
+          WHERE item_description_id = '${description.item_description_id}'
+          RETURNING *
+        `
+      )[0];
+      plv8.execute(
+        `
+          UPDATE field_table SET 
+            field_name = '${description.item_description_label}'
+          WHERE field_id = '${description.item_description_field_id}'
+        `
+      );
+      updatedItemDescription.push(updatedDescription);
+    });
+
+    // delete
+    toRemove.forEach(description => {
+      plv8.execute(
+        `
+          UPDATE item_description_table SET 
+            item_description_is_disabled = true
+          WHERE item_description_id = '${description.descriptionId}'
+        `
+      );
+    });
+
+   // add
+   let addedDescription = [];
+   if(fieldValues.length && itemDescriptionValues.length){
+    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
+
+    addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+   }
+
+    item_data = {...item_result, item_description: [...updatedItemDescription, ...addedDescription]}
+ });
+ return item_data;
+$$ LANGUAGE plv8;
+
+-- End: Update item
 
 -- Start: Create service
 
@@ -1223,7 +1362,7 @@ RETURNS VOID  as $$
   plv8.subtransaction(function(){
 
     plv8.execute(`UPDATE team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
-    plv8.execute(`UPDATE team_member_table SET team_member_role='ADMIN' WHERE team_member_id='${owner_id}'`);
+    plv8.execute(`UPDATE team_member_table SET team_member_role='APPROVER' WHERE team_member_id='${owner_id}'`);
  });
 $$ LANGUAGE plv8;
 
@@ -2505,6 +2644,37 @@ $$ LANGUAGE plv8;
 
 -- END: Delete team
 
+-- Start: Update multiple approver
+
+CREATE OR REPLACE FUNCTION update_multiple_approver(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let approverList = [];
+  plv8.subtransaction(function(){
+    const {
+      teamApproverIdList,
+      updateRole
+    } = input_data;
+    teamApproverIdList.forEach(id => {
+      const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
+      const user = plv8.execute(`SELECT * FROM user_table WHERE user_id='${member.team_member_user_id}'`)[0];
+
+      approverList.push({
+        team_member_id: member.team_member_id,
+        team_member_user: {
+          user_id: user.user_id,
+          user_first_name: user.user_first_name,
+          user_last_name: user.user_last_name,
+          user_avatar: user.user_avatar,
+          user_email: user.user_email
+        }
+      });
+    });
+ });
+ return approverList;
+$$ LANGUAGE plv8;
+
 -- Start: Update multiple admin
 
 CREATE OR REPLACE FUNCTION update_multiple_admin(
@@ -2537,6 +2707,8 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- END: Update multiple admin
+
+-- END: Update multiple approver
 
 -- Start: Request page on load
 
@@ -2989,7 +3161,8 @@ RETURNS JSON AS $$
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
               WHEN 'ADMIN' THEN 2
-              WHEN 'MEMBER' THEN 3
+              WHEN 'APPROVER' THEN 3
+              WHEN 'MEMBER' THEN 4
           END ASC,
           usert.user_first_name ASC,
           usert.user_last_name ASC
@@ -3013,7 +3186,7 @@ RETURNS JSON AS $$
 
     const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
 
-    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_date_created DESC LIMIT 10;`);
+    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC LIMIT 10;`);
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
@@ -3068,7 +3241,8 @@ RETURNS JSON AS $$
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
               WHEN 'ADMIN' THEN 2
-              WHEN 'MEMBER' THEN 3
+              WHEN 'APPROVER' THEN 3
+              WHEN 'MEMBER' THEN 4
           END ASC,
           usert.user_first_name ASC,
           usert.user_last_name ASC
@@ -3607,7 +3781,7 @@ RETURNS JSON as $$
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
-          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
         ORDER BY user_first_name, user_last_name ASC
       `
     );
@@ -3665,7 +3839,7 @@ RETURNS JSON as $$
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
-          AND (team_member_role = 'ADMIN' OR team_member_role = 'OWNER')
+          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
         ORDER BY user_first_name, user_last_name ASC
       `
     );
@@ -3684,16 +3858,16 @@ RETURNS JSON as $$
     const teamGroupList = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
  
     if(isFormslyForm){
-      const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_date_created DESC LIMIT ${limit}`);
+      const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit}`);
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false`)[0].count;
     
       if(formName === 'Requisition'){
         const items = [];
-        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false LIMIT ${limit}`);
+        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit}`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
 
         itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}'`);
+          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC`);
           items.push({
             ...value,
             item_description: itemDescription
@@ -4008,6 +4182,51 @@ RETURNS JSON as $$
           };
         });
 
+        const specialApprover = plv8.execute(
+          `
+            SELECT 
+              special_approver_table.*,
+              signer_id, 
+              signer_is_primary_signer, 
+              signer_action, 
+              signer_order,
+              signer_is_disabled, 
+              signer_team_project_id,
+              team_member_id,
+              user_id, 
+              user_first_name, 
+              user_last_name, 
+              user_avatar
+            FROM special_approver_table
+            INNER JOIN signer_table ON signer_id = special_approver_signer_id
+            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_table ON user_id = team_member_user_id
+          `
+        );
+
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier_name ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((suppliers, index) => {
+          return {
+            option_description: null,
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: suppliers.supplier_id,
+            option_order: index,
+            option_value: suppliers.supplier_name,
+          };
+        });
+
         returnData = {
           form: {
             ...form,
@@ -4026,12 +4245,39 @@ RETURNS JSON as $$
                 ...form.form_section[1],
                 section_field: [
                   ...form.form_section[1].section_field.slice(0, 9),
+                  {
+                    ...form.form_section[1].section_field[9],
+                    field_option: supplierOptions
+                  }
                 ],
               },
             ],
           },
           itemOptions,
           projectOptions,
+          specialApprover: specialApprover.map(specialApprover => {
+            return {
+              special_approver_id: specialApprover.special_approver_id,
+              special_approver_item_list: specialApprover.special_approver_item_list,
+              special_approver_signer: {
+                signer_id: specialApprover.signer_id,
+                signer_is_primary_signer: specialApprover.signer_is_primary_signer,
+                signer_action: specialApprover.signer_action,
+                signer_order: specialApprover.signer_order,
+                signer_is_disabled: specialApprover.signer_is_disabled,
+                signer_team_project_id: specialApprover.signer_team_project_id,
+                signer_team_member: {
+                  team_member_id: specialApprover.team_member_id,
+                  team_member_user: {
+                    user_id: specialApprover.user_id,
+                    user_first_name: specialApprover.user_first_name,
+                    user_last_name: specialApprover.user_last_name,
+                    user_avatar: specialApprover.user_avatar,
+                  }
+                }
+              }
+            }
+          })
         }
         return;
       } else if (form.form_name === "Subcon") {
@@ -4752,6 +4998,7 @@ RETURNS JSON as $$
           user_last_name, 
           user_username, 
           user_avatar,
+          user_job_title,
           form_id, 
           form_name, 
           form_description, 
@@ -4963,7 +5210,8 @@ RETURNS JSON as $$
           user_first_name: requestData.user_first_name, 
           user_last_name: requestData.user_last_name, 
           user_username: requestData.user_username, 
-          user_avatar: requestData.user_avatar
+          user_avatar: requestData.user_avatar,
+          user_job_title: requestData.user_job_title
         }
       },
       request_signer: requestSignerData.map(requestSigner => {
@@ -5462,8 +5710,8 @@ RETURNS JSON as $$
     const ticket = plv8.execute(`SELECT ticket_approver_team_member_id FROM ticket_table WHERE ticket_id='${ticketId}'`)[0];
     const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
 
-    const isAdmin = member.team_member_role === 'ADMIN' || member.team_member_role === 'OWNER'
-    if (!isAdmin) throw new Error("User is not an Admin");
+    const isApprover = member.team_member_role === 'APPROVER' || member.team_member_role === 'OWNER'
+    if (!isApprover) throw new Error("User is not an Approver");
 
     const hasApprover = ticket.ticket_approver_team_member_id !== null
     if (hasApprover) throw new Error("Ticket already have approver");
@@ -5686,6 +5934,178 @@ $$ LANGUAGE plv8;
 
 -- End: Get ticket list on load
 
+-- Start: Reverse Request Approval
+
+CREATE OR REPLACE FUNCTION reverse_request_approval(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      requestId,
+      isPrimarySigner,
+      requestSignerId,
+      requestOwnerId,
+      signerFullName,
+      formName,
+      requestAction,
+      memberId,
+      teamId,
+    } = input_data;
+
+    const present = { REVERSED: "REVERSE" };
+
+    plv8.execute(`UPDATE request_signer_table SET request_signer_status = 'PENDING', request_signer_status_date_updated = NOW() WHERE request_signer_id='${requestSignerId}';`);
+    
+    plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()} their approval of this request.');`);
+    
+    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} their approval of your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+    
+    if(isPrimarySigner===true){
+      plv8.execute(`UPDATE request_table SET request_status = 'PENDING', request_status_date_updated = NOW(), ${`request_jira_id=NULL`}, ${`request_jira_link=NULL`} WHERE request_id='${requestId}';`);
+    }
+    
+ });
+$$ LANGUAGE plv8;
+
+-- End: Reverse Request Approval
+
+-- Start: Analyze Item
+
+CREATE OR REPLACE FUNCTION analyze_item(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      itemName,
+      teamId,
+      page,
+      limit
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const skippedField = [
+      "General Name",
+      "GL Account",
+      "CSI Code",
+      "Division Description",
+      "Level 2 Major Group Description",
+      "Level 2 Minor Group Description",
+      "Preferred Supplier",
+      "Requesting Project",
+      "Type",
+      "Date Needed",
+      "Purpose"
+    ]
+
+    const generalNameFieldId = plv8.execute(
+      `
+        SELECT field_id
+        FROM field_table
+          INNER JOIN section_table ON section_id = field_section_id
+          INNER JOIN form_table ON form_id = section_form_id
+          INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        WHERE 
+          field_name = 'General Name' AND
+          team_member_team_id = '${teamId}' AND
+          form_name = 'Requisition' AND
+          form_is_formsly_form = true
+      `
+    )[0].field_id;
+
+    const itemGeneralNameList = plv8.execute(
+      `
+        SELECT 
+          request_response_table.*,
+          request_status,
+          request_formsly_id,
+          request_id
+        FROM request_response_table
+        INNER JOIN request_table ON request_id = request_response_request_id
+        WHERE 
+          request_response = '"${itemName}"' AND
+          request_response_field_id = '${generalNameFieldId}' AND
+          request_is_disabled = false 
+        ORDER BY request_date_created DESC
+        LIMIT '${limit}' 
+        OFFSET '${start}'
+      `
+    );
+
+    const itemGeneralNameCount = plv8.execute(
+      `
+        SELECT COUNT(*)
+        FROM request_response_table
+        INNER JOIN request_table ON request_id = request_response_request_id
+        WHERE 
+          request_response = '"${itemName}"' AND
+          request_response_field_id = '${generalNameFieldId}' AND
+          request_is_disabled = false 
+      `
+    )[0].count;
+
+    const itemList = itemGeneralNameList.map((item) => {
+      const itemDescription = [];
+      let csiCodeDescription = "";
+      let quantity = 0;
+      let uom = "";
+
+      const itemDescriptionList = plv8.execute(
+        `
+          SELECT 
+            request_response_table.*,
+            field_name
+          FROM request_response_table
+          INNER JOIN field_table ON field_id = request_response_field_id
+          WHERE 
+            request_response_request_id = '${item.request_response_request_id}' AND
+            request_response_duplicatable_section_id ${
+              item.request_response_duplicatable_section_id !== null ? 
+                ` = '${item.request_response_duplicatable_section_id}'` :
+                "IS NULL"
+            }
+        `
+      );
+
+      itemDescriptionList.forEach((description) => {
+        if(skippedField.includes(description.field_name)) return;
+
+        switch(description.field_name){
+          case "Base Unit of Measurement": uom = description.request_response; break;
+          case "Quantity": quantity = description.request_response; break;
+          case "CSI Code Description": csiCodeDescription = description.request_response; break;
+          default: 
+            itemDescription.push({
+              field_name: description.field_name,
+              request_response: description.request_response
+            });
+        }
+      })
+
+      return {
+        request_id: item.request_id,
+        request_formsly_id: item.request_formsly_id,
+        item_description: itemDescription,
+        csi_code_description: csiCodeDescription,
+        quantity: quantity,
+        unit_of_measurement: uom,
+        request_status: item.request_status
+      }
+    });
+
+    returnData = {
+      data: itemList,
+      count: Number(itemGeneralNameCount)
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Analyze Item
+
 ---------- End: FUNCTIONS
 
 
@@ -5717,9 +6137,10 @@ ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 
+
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
@@ -5754,10 +6175,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON option_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON option_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON option_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_signer_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON request_signer_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_signer_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON section_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON section_table;
@@ -5784,17 +6205,17 @@ DROP POLICY IF EXISTS "Allow READ for users based on invitation_to_email" ON inv
 DROP POLICY IF EXISTS "Allow UPDATE for users based on invitation_from_team_member_id" ON invitation_table;
 DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_member_id" ON invitation_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON notification_table;
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own notifications" ON notification_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own notifications" ON notification_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on notification_user_id" ON notification_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on notification_user_id" ON notification_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_response_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_response_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_response_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_response_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_response_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own request response" ON request_response_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own request response" ON request_response_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_table;
@@ -5830,7 +6251,7 @@ DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_me
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_member_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON team_project_table;
+DROP POLICY IF EXISTS "Allow READ for anon" ON team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
 
@@ -6169,7 +6590,7 @@ CREATE POLICY "Allow READ for anon users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "public"."request_signer_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -6182,11 +6603,11 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."request_signer_table"
+CREATE POLICY "Allow DELETE for authenticated users" ON "public"."request_signer_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -6198,8 +6619,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_member_table 
-    WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    WHERE team_member_user_id = auth.uid()
   )
 );
 
@@ -6373,7 +6793,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role = 'OWNER'
+    AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR team_member_user_id = auth.uid()
 );
 
@@ -6384,7 +6804,7 @@ USING (
   team_member_team_id IN (
     SELECT team_member_team_id from team_member_table
     WHERE team_member_user_id = auth.uid()
-    AND team_member_role = 'OWNER'
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
@@ -6586,7 +7006,7 @@ USING (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 )
 WITH CHECK (
@@ -6602,7 +7022,7 @@ WITH CHECK (
     SELECT team_member_team_id 
     FROM team_member_table 
     WHERE team_member_user_id = auth.uid() 
-    AND team_member_role IN ('OWNER', 'ADMIN')
+    AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
 
@@ -6980,7 +7400,6 @@ USING (
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
-
 
 --- TICKET_TABLE
 
