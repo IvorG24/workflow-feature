@@ -248,8 +248,9 @@ const EditRequisitionRequestPage = ({
     );
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
-      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
-        (field) => {
+      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field
+        .slice(0, 10)
+        .map((field) => {
           if (field.field_name === "General Name") {
             return {
               ...field,
@@ -272,8 +273,7 @@ const EditRequisitionRequestPage = ({
               field_section_duplicatable_id: sectionDuplicatableId,
             };
           }
-        }
-      );
+        });
       const newSection = {
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,
