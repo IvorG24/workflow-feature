@@ -6261,6 +6261,25 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_comment_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_comment_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_comment_table;
 
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON csi_code_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_scope_choice_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_scope_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_scope_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_scope_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_scope_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_table;
+
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON special_approver_table;
+
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
 AS PERMISSIVE FOR ALL
@@ -7452,6 +7471,163 @@ USING (
     WHERE team_member_user_id = auth.uid()
   )
 );
+
+--- CSI_CODE_TABLE
+CREATE POLICY "Allow READ access for anon users" ON "public"."csi_code_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- SERVICE_SCOPE_CHOICE_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_choice_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM service_scope_table
+    JOIN service_table ON service_id = service_scope_service_id
+    JOIN team_table ON team_id = service_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_scope_id = service_scope_choice_service_scope_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."service_scope_choice_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_choice_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM service_scope_table
+    JOIN service_table ON service_id = service_scope_service_id
+    JOIN team_table ON team_id = service_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_scope_id = service_scope_choice_service_scope_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_choice_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM service_scope_table
+    JOIN service_table ON service_id = service_scope_service_id
+    JOIN team_table ON team_id = service_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_scope_id = service_scope_choice_service_scope_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- SERVICE_SCOPE_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM service_table 
+    JOIN team_table ON team_id = service_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_id = service_scope_service_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."service_scope_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM service_table
+    JOIN team_table ON team_id = service_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_id = service_scope_service_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM service_table
+    JOIN team_table ON team_id = service_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_id = service_scope_service_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- SERVICE_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = service_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."service_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = service_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = service_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- SPECIAL_APPROVER_TABLE
+CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
 
 -------- End: POLICIES
 
