@@ -21,7 +21,7 @@ export default async function handler(
 
     const response = await fetch(
       // Jira Rest API
-      `${jiraConfig.api_url}/issue`,
+      `${jiraConfig.api_url}/issue/${req.query.jiraTicketKey}/comment`,
       {
         method: "POST",
         headers: {
@@ -36,7 +36,6 @@ export default async function handler(
     );
 
     if (response.ok) {
-      // Jira ticket was created successfully
       const responseData = await response.json();
       return res.status(200).json(responseData);
     } else {

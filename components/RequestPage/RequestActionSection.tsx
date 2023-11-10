@@ -40,10 +40,21 @@ const RequestActionSection = ({
 }: Props) => {
   const router = useRouter();
 
+  const canSignerTakeAction =
+    isUserSigner &&
+    signer?.request_signer_status === "PENDING" &&
+    requestStatus !== "CANCELED";
+
   const handleApproveRequisitionRequest = async () => {
     try {
       const jiraTicketResponse = await onCreateJiraTicket();
-      if (!jiraTicketResponse) return;
+      if (!jiraTicketResponse) {
+        notifications.show({
+          message: "Failed to create jira ticket",
+          color: "red",
+        });
+        return;
+      }
 
       const jiraTicket = JSON.parse(jiraTicketResponse);
 
@@ -126,11 +137,6 @@ const RequestActionSection = ({
       });
     }
   };
-
-  const canSignerTakeAction =
-    isUserSigner &&
-    signer?.request_signer_status === "PENDING" &&
-    requestStatus !== "CANCELED";
 
   return (
     <Paper p="xl" shadow="xs">

@@ -39,11 +39,9 @@ export default async function handler(
 
     if (!createFormResponse.ok) {
       console.error(await createFormResponse.text());
-      return res
-        .status(createFormResponse.status)
-        .json({
-          error: "Failed to add form to your ticket. Please contact your IT.",
-        });
+      return res.status(createFormResponse.status).json({
+        error: "Failed to add form to your ticket. Please contact your IT.",
+      });
     }
 
     const responseData = await createFormResponse.json();
@@ -95,6 +93,6 @@ export default async function handler(
     return res.status(200).json(submitFormResponse);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error creating Jira ticket" });
+    return res.status(500).json({ error: error });
   }
 }

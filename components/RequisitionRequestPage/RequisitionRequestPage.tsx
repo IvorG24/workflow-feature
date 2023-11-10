@@ -1,5 +1,9 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getCurrentDate, getFileUrl } from "@/backend/api/get";
+import {
+  getCommentAttachment,
+  getCurrentDate,
+  getFileUrl,
+} from "@/backend/api/get";
 import {
   approveOrRejectRequest,
   cancelRequest,
@@ -33,6 +37,7 @@ import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import moment from "moment";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
@@ -362,6 +367,7 @@ const RequisitionRequestPage = ({
 
   const handleCreateJiraTicket = async () => {
     try {
+      setIsLoading(true);
       if (!request.request_formsly_id) {
         console.warn("formsly_id not found");
         return null;
@@ -435,10 +441,145 @@ const RequisitionRequestPage = ({
         return null;
       }
 
+      await handleAddCommentToJiraTicket(newJiraTicket.key);
+
       const jiraTicketResponse = await newJiraTicketData.json();
       return JSON.stringify(jiraTicketResponse);
     } catch (error) {
       console.error("An error occurred while making the request:", error);
+    } finally {
+      setIsLoading(true);
+    }
+  };
+
+  const fetchCommentAttachmentList = async () => {
+    const commentListWithAttachmentUrl = await Promise.all(
+      requestCommentList.map(async (comment) => {
+        const commentAttachmentUrlList = await getCommentAttachment(
+          supabaseClient,
+          { commentId: comment.comment_id }
+        );
+
+        return {
+          ...comment,
+          comment_attachment: commentAttachmentUrlList,
+        };
+      })
+    );
+    return commentListWithAttachmentUrl.sort((a, b) => {
+      const aDate = moment(a.comment_date_created).valueOf();
+      const bDate = moment(b.comment_date_created).valueOf();
+
+      return aDate - bDate;
+    });
+  };
+
+  const handleAddCommentToJiraTicket = async (jiraTicketKey: string) => {
+    try {
+      const rfCommentList = await fetchCommentAttachmentList();
+      fetchCommentAttachmentList();
+      const rfCommentListForJira = rfCommentList.map((comment) => {
+        const commenter = comment.comment_team_member.team_member_user;
+        const attachmentContent = comment.comment_attachment.map(
+          (attachment) => {
+            const attachmentComment = {
+              type: "text",
+              text: attachment.attachment_name + " \n",
+              marks: [
+                {
+                  type: "link",
+                  attrs: {
+                    href: attachment.attachment_public_url,
+                    title: attachment.attachment_name,
+                  },
+                },
+              ],
+            };
+            return attachmentComment;
+          }
+        );
+
+        const formattedDate = moment(comment.comment_date_created).format(
+          "LTS"
+        );
+
+        const jiraComment = {
+          type: "blockquote",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: `${commenter.user_first_name} ${
+                    commenter.user_last_name
+                  } ${formattedDate} ${new Date(
+                    comment.comment_date_created
+                  ).toDateString()}`,
+                },
+                {
+                  type: "hardBreak",
+                },
+                {
+                  type: "text",
+                  text: comment.comment_content,
+                },
+              ],
+            },
+            {
+              type: "paragraph",
+              content: [...attachmentContent],
+            },
+          ],
+        };
+
+        return jiraComment;
+      });
+
+      const bodyData = {
+        body: {
+          version: 1,
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "Formsly Requisition Form Comment List",
+                  marks: [
+                    {
+                      type: "strong",
+                    },
+                  ],
+                },
+              ],
+            },
+            ...rfCommentListForJira,
+          ],
+        },
+      };
+
+      const jiraTicketCommentResponse = await fetch(
+        `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyData),
+        }
+      );
+
+      if (jiraTicketCommentResponse.ok) {
+        console.log(await jiraTicketCommentResponse.json());
+        console.log("Comment added successfully");
+      } else {
+        console.error("Failed to add comment");
+      }
+      return jiraTicketCommentResponse;
+    } catch (error) {
+      console.error("Error:", error);
     }
   };
 
