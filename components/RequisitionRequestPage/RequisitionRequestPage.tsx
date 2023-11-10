@@ -448,7 +448,7 @@ const RequisitionRequestPage = ({
     } catch (error) {
       console.error("An error occurred while making the request:", error);
     } finally {
-      setIsLoading(true);
+      setIsLoading(false);
     }
   };
 
