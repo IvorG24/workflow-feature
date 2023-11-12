@@ -2,7 +2,6 @@ import { UserWithSignatureType } from "@/utils/types";
 import {
   Box,
   Button,
-  Center,
   Container,
   Divider,
   FileButton,
@@ -13,14 +12,16 @@ import {
   Paper,
   Text,
 } from "@mantine/core";
-import { Dispatch, SetStateAction, useRef } from "react";
+import { notifications } from "@mantine/notifications";
+import { Dispatch, SetStateAction, useRef, useState } from "react";
 import {
   default as ReactSignatureCanvas,
   default as SignatureCanvas,
 } from "react-signature-canvas";
+import SignatureCrop from "./SignatureCrop";
 
 type Props = {
-  onUploadSignature: (signature: File) => void;
+  onUploadSignature: (signature: File | null) => void;
   user: UserWithSignatureType;
   isUpdatingSignature: boolean;
   openCanvas: boolean;
@@ -41,6 +42,7 @@ const UploadSignature = ({
   signatureUrl,
 }: Props) => {
   const sigCanvas = useRef<ReactSignatureCanvas>(null);
+  const [openCrop, setOpenCrop] = useState(false);
 
   const handleOnEndDrawSignature = async () => {
     const canvas = sigCanvas.current?.getTrimmedCanvas();
@@ -59,6 +61,21 @@ const UploadSignature = ({
     setSignatureFile(file);
   };
 
+  const checkFile = (signatureFile: File | null) => {
+    if (signatureFile === null) return;
+
+    // File size must be under 5MB
+    if (signatureFile.size > 1000000 * 5) {
+      notifications.show({
+        message: "File size must be under 5MB for upload. Please try again.",
+        color: "orange",
+      });
+      return;
+    }
+    setSignatureFile(signatureFile);
+    setOpenCrop(true);
+  };
+
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
       <LoadingOverlay
@@ -70,12 +87,77 @@ const UploadSignature = ({
         <Text weight={600}>Signature</Text>
         <Divider mt={4} />
 
-        <Flex mt={16} gap={16} align="center" direction="column">
-          {!openCanvas ? (
+        <Flex mt={16} gap={16} align="center" direction="column" mih={100}>
+          {openCanvas && (
+            <>
+              <Paper radius="md" withBorder h={166.67} w={250}>
+                <SignatureCanvas
+                  canvasProps={{
+                    width: 250,
+                    height: 166.67,
+                  }}
+                  ref={sigCanvas}
+                  data-testid="sigCanvas"
+                  onEnd={handleOnEndDrawSignature}
+                />
+                <Flex justify="flex-start"></Flex>
+              </Paper>
+
+              <Flex justify="space-between" gap="xs">
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={() => sigCanvas.current?.clear()}
+                >
+                  Clear
+                </Button>
+                <Flex justify="flex-end" gap="xs">
+                  <Button
+                    size="xs"
+                    onClick={() => {
+                      onUploadSignature(signatureFile as File);
+                    }}
+                  >
+                    Done
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => setOpenCanvas(false)}
+                  >
+                    Cancel
+                  </Button>
+                </Flex>
+              </Flex>
+            </>
+          )}
+
+          {openCrop && signatureFile && (
+            <Flex direction="column" justify="space-between" w={250} mih={275}>
+              <Group pos="absolute" h={166.67} w={250} mb="lg">
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: 166.67,
+                  }}
+                >
+                  <SignatureCrop
+                    file={signatureFile}
+                    setFile={setSignatureFile}
+                    onSaveChanges={onUploadSignature}
+                    onClose={() => setOpenCrop(false)}
+                  />
+                </div>
+              </Group>
+            </Flex>
+          )}
+
+          {!openCanvas && !openCrop && (
             <>
               <Image
-                width={200}
-                height={200}
+                width={250}
+                height={166.67}
                 radius="md"
                 src={signatureUrl}
                 alt="User signature"
@@ -87,11 +169,8 @@ const UploadSignature = ({
                   </Box>
                 }
               />
-              <Group spacing={12} position="center">
-                <FileButton
-                  onChange={onUploadSignature}
-                  accept="image/png,image/jpeg"
-                >
+              <Flex gap={12} justify="flex-start">
+                <FileButton onChange={checkFile} accept="image/png,image/jpeg">
                   {(props) => (
                     <Button size="xs" {...props}>
                       Upload
@@ -104,48 +183,6 @@ const UploadSignature = ({
                   onClick={() => setOpenCanvas(true)}
                 >
                   Draw
-                </Button>
-              </Group>
-            </>
-          ) : (
-            <>
-              <Paper radius="md" withBorder h={200}>
-                <SignatureCanvas
-                  canvasProps={{
-                    width: 200,
-                    height: 156,
-                  }}
-                  ref={sigCanvas}
-                  data-testid="sigCanvas"
-                  onEnd={handleOnEndDrawSignature}
-                />
-                <Center>
-                  <Button
-                    size="xs"
-                    variant="light"
-                    onClick={() => sigCanvas.current?.clear()}
-                  >
-                    Clear
-                  </Button>
-                </Center>
-              </Paper>
-
-              <Flex gap={12} justify="center">
-                <Button
-                  size="xs"
-                  onClick={() => {
-                    onUploadSignature(signatureFile as File);
-                    
-                  }}
-                >
-                  Done
-                </Button>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() => setOpenCanvas(false)}
-                >
-                  Cancel
                 </Button>
               </Flex>
             </>
