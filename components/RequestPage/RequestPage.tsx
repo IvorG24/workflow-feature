@@ -939,6 +939,7 @@ const RequestPage = ({
           requestId: request.request_id,
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
+          requestJiraId: request.request_jira_id,
         }}
         requestCommentList={requestCommentList}
       />

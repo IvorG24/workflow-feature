@@ -441,7 +441,9 @@ const RequisitionRequestPage = ({
         return null;
       }
 
-      await handleAddCommentToJiraTicket(newJiraTicket.key);
+      if (requestCommentList.length > 0) {
+        await handleAddCommentToJiraTicket(newJiraTicket.key);
+      }
 
       const jiraTicketResponse = await newJiraTicketData.json();
       return JSON.stringify(jiraTicketResponse);
@@ -572,7 +574,6 @@ const RequisitionRequestPage = ({
       );
 
       if (jiraTicketCommentResponse.ok) {
-        console.log(await jiraTicketCommentResponse.json());
         console.log("Comment added successfully");
       } else {
         console.error("Failed to add comment");
@@ -718,6 +719,7 @@ const RequisitionRequestPage = ({
           requestId: request.request_id,
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
+          requestJiraId: requestJira.id,
         }}
         requestCommentList={requestCommentList}
       />
