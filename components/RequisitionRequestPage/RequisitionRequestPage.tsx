@@ -84,8 +84,39 @@ const RequisitionRequestPage = ({
       setIsFetchingApprover(true);
 
       const fetchApproverDetails = async () => {
+        const primarySigner = request.request_signer.find(
+          (signer) => signer.request_signer_signer.signer_is_primary_signer
+        );
+        if (!primarySigner) return;
+        const signerWithDateUpdated = request.request_signer
+          .filter(
+            (signer) =>
+              !signer.request_signer_signer.signer_is_primary_signer &&
+              signer.request_signer_status_date_updated
+          )
+          .sort(
+            (a, b) =>
+              Date.parse(`${a.request_signer_status_date_updated}`) -
+              Date.parse(`${b.request_signer_status_date_updated}`)
+          );
+        const signerWithoutDateUpdated = request.request_signer
+          .filter(
+            (signer) =>
+              !signer.request_signer_signer.signer_is_primary_signer &&
+              !signer.request_signer_status_date_updated
+          )
+          .sort((a, b) => {
+            const fullNameA = `${a.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${a.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
+            const fullNameB = `${b.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${b.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
+            return fullNameA.localeCompare(fullNameB);
+          });
+
         const data = await Promise.all(
-          request.request_signer.map(async (signer) => {
+          [
+            primarySigner,
+            ...signerWithDateUpdated,
+            ...signerWithoutDateUpdated,
+          ].map(async (signer) => {
             let signatureUrl: string | null = null;
             if (
               signer.request_signer_status === "APPROVED" &&
