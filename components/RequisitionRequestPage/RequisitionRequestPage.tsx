@@ -1,17 +1,11 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getCurrentDate, getFileUrl } from "@/backend/api/get";
-import {
-  approveOrRejectRequest,
-  cancelRequest,
-  reverseRequestApproval,
-} from "@/backend/api/update";
+import { getFileUrl } from "@/backend/api/get";
+import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection, {
-  RequestSignerType,
-} from "@/components/RequestPage/RequestSignerSection";
+import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
 import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
@@ -19,7 +13,6 @@ import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { checkIfTimeIsWithinFiveMinutes } from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -33,7 +26,6 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
-import RequestReverseActionSection from "../RequestPage/RequestReverseActionSection";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
 import RequisitionSummary from "../SummarySection/RequisitionSummary";
 
@@ -72,7 +64,7 @@ const RequisitionRequestPage = ({
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [isCashPurchase, setIsCashPurchase] = useState(false);
-  const [currentServerDate, setCurrentServerDate] = useState("");
+  // const [currentServerDate, setCurrentServerDate] = useState("");
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
@@ -143,10 +135,10 @@ const RequisitionRequestPage = ({
         );
         setApproverDetails(data);
 
-        const serverDate = (
-          await getCurrentDate(supabaseClient)
-        ).toLocaleString();
-        setCurrentServerDate(serverDate);
+        // const serverDate = (
+        //   await getCurrentDate(supabaseClient)
+        // ).toLocaleString();
+        // setCurrentServerDate(serverDate);
       };
       if (request) {
         fetchApproverDetails();
@@ -332,73 +324,73 @@ const RequisitionRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const handleReverseApproval = async () => {
-    try {
-      if (!isUserSigner || !teamMember) {
-        console.error("Signer or team member is undefined");
-        return;
-      }
-      setIsLoading(true);
+  // const handleReverseApproval = async () => {
+  //   try {
+  //     if (!isUserSigner || !teamMember) {
+  //       console.error("Signer or team member is undefined");
+  //       return;
+  //     }
+  //     setIsLoading(true);
 
-      const serverDate = (
-        await getCurrentDate(supabaseClient)
-      ).toLocaleString();
+  //     const serverDate = (
+  //       await getCurrentDate(supabaseClient)
+  //     ).toLocaleString();
 
-      const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-        `${isUserSigner.request_signer_status_date_updated}`,
-        serverDate
-      );
+  //     const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
+  //       `${isUserSigner.request_signer_status_date_updated}`,
+  //       serverDate
+  //     );
 
-      if (!actionIsWithinFiveMinutes) {
-        return notifications.show({
-          message: "Reversal is beyond the time limit.",
-          color: "orange",
-        });
-      }
+  //     if (!actionIsWithinFiveMinutes) {
+  //       return notifications.show({
+  //         message: "Reversal is beyond the time limit.",
+  //         color: "orange",
+  //       });
+  //     }
 
-      const signerFullName = `${isUserSigner.signer_team_member.team_member_user.user_first_name} ${isUserSigner.signer_team_member.team_member_user.user_last_name}`;
+  //     const signerFullName = `${isUserSigner.signer_team_member.team_member_user.user_first_name} ${isUserSigner.signer_team_member.team_member_user.user_last_name}`;
 
-      await reverseRequestApproval(supabaseClient, {
-        requestAction: "REVERSED",
-        requestId: request.request_id,
-        isPrimarySigner: isUserSigner.signer_is_primary_signer,
-        requestSignerId: isUserSigner.request_signer_id,
-        requestOwnerId: request.request_team_member.team_member_user.user_id,
-        signerFullName: signerFullName,
-        formName: request.request_form.form_name,
-        memberId: teamMember.team_member_id,
-        teamId: request.request_team_member.team_member_team_id,
-      });
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     await reverseRequestApproval(supabaseClient, {
+  //       requestAction: "REVERSED",
+  //       requestId: request.request_id,
+  //       isPrimarySigner: isUserSigner.signer_is_primary_signer,
+  //       requestSignerId: isUserSigner.request_signer_id,
+  //       requestOwnerId: request.request_team_member.team_member_user.user_id,
+  //       signerFullName: signerFullName,
+  //       formName: request.request_form.form_name,
+  //       memberId: teamMember.team_member_id,
+  //       teamId: request.request_team_member.team_member_team_id,
+  //     });
+  //   } catch (error) {
+  //     notifications.show({
+  //       message: "Something went wrong. Please try again later",
+  //       color: "red",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
-  const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
-    if (!isUserSigner) return false;
-    if (currentServerDate === "") return false;
+  // const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
+  //   if (!isUserSigner) return false;
+  //   if (currentServerDate === "") return false;
 
-    const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-      `${isUserSigner.request_signer_status_date_updated}`,
-      currentServerDate
-    );
-    const primarySignerStatusIsPending = signerList.find(
-      (signer) => signer.signer_is_primary_signer
-    )?.request_signer_status;
-    const signerStatusIsPending =
-      isUserSigner.request_signer_status !== "PENDING";
+  //   const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
+  //     `${isUserSigner.request_signer_status_date_updated}`,
+  //     currentServerDate
+  //   );
+  //   const primarySignerStatusIsPending = signerList.find(
+  //     (signer) => signer.signer_is_primary_signer
+  //   )?.request_signer_status;
+  //   const signerStatusIsPending =
+  //     isUserSigner.request_signer_status !== "PENDING";
 
-    return (
-      actionIsWithinFiveMinutes &&
-      primarySignerStatusIsPending &&
-      signerStatusIsPending
-    );
-  };
+  //   return (
+  //     actionIsWithinFiveMinutes &&
+  //     primarySignerStatusIsPending &&
+  //     signerStatusIsPending
+  //   );
+  // };
 
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
@@ -543,11 +535,11 @@ const RequisitionRequestPage = ({
           />
         ) : null}
 
-        {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
+        {/* {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
           <RequestReverseActionSection
             handleReverseApproval={handleReverseApproval}
           />
-        ) : null}
+        ) : null} */}
 
         <RequestSignerSection signerList={signerList} />
       </Stack>
