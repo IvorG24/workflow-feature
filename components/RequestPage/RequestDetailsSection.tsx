@@ -1,7 +1,11 @@
 import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
 import { Database } from "@/utils/database";
-import { getAvatarColor, getStatusToColor } from "@/utils/styling";
+import {
+  getAvatarColor,
+  getJiraTicketStatusColor,
+  getStatusToColor,
+} from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
   Anchor,
@@ -33,6 +37,7 @@ type Props = {
     id: string | null;
     link: string | null;
   };
+  jiraTicketStatus?: string | null;
 };
 
 const RequestDetailsSection = ({
@@ -42,6 +47,7 @@ const RequestDetailsSection = ({
   requestStatus,
   isPrimarySigner,
   requestJira,
+  jiraTicketStatus,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -145,6 +151,13 @@ const RequestDetailsSection = ({
               {requestJira.id}
             </Anchor>
           </Text>
+          {jiraTicketStatus && (
+            <Badge
+              color={getJiraTicketStatusColor(jiraTicketStatus.toLowerCase())}
+            >
+              {jiraTicketStatus}
+            </Badge>
+          )}
         </Group>
       )}
       {isFormslyRequisitionRequest &&

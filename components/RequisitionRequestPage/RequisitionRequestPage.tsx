@@ -73,6 +73,7 @@ const RequisitionRequestPage = ({
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [isCashPurchase, setIsCashPurchase] = useState(false);
   const [currentServerDate, setCurrentServerDate] = useState("");
+  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -186,8 +187,7 @@ const RequisitionRequestPage = ({
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string,
-    jiraLink?: string
+    jiraId?: string
   ) => {
     try {
       setIsLoading(true);
@@ -202,6 +202,18 @@ const RequisitionRequestPage = ({
       }
       if (!teamMember) return;
 
+      let autoJiraLink = "";
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketWebLink =
+          jiraTicket.fields["customfield_10010"]._links.web;
+        autoJiraLink = jiraTicketWebLink;
+      }
+
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -213,7 +225,7 @@ const RequisitionRequestPage = ({
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
-        jiraLink,
+        jiraLink: autoJiraLink,
       });
 
       notifications.show({
@@ -357,6 +369,28 @@ const RequisitionRequestPage = ({
     );
   };
 
+  useEffect(() => {
+    const fetchJiraTicketStatus = async (requestJiraId: string) => {
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketStatus =
+          jiraTicket.fields["customfield_10010"].currentStatus.status;
+
+        setJiraTicketStatus(jiraTicketStatus);
+      } else {
+        setJiraTicketStatus("Ticket Not Found");
+      }
+    };
+
+    if (requestJira.id) {
+      fetchJiraTicketStatus(requestJira.id);
+    }
+  }, [requestJira.id]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -405,6 +439,7 @@ const RequisitionRequestPage = ({
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
+          jiraTicketStatus={jiraTicketStatus}
         />
 
         {canvassRequest.length !== 0 ? (
