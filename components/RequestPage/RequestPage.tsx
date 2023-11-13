@@ -705,6 +705,13 @@ const RequestPage = ({
     );
   };
 
+  const handleCreateJiraTicket = async () => {
+    console.error(
+      "Creating jira ticket is only supported for Requisition Forms as of Nov.10.2023"
+    );
+    return null;
+  };
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -914,6 +921,7 @@ const RequestPage = ({
                 .map((signer) => signer.request_signer_status)
                 .filter((status) => status === "APPROVED").length === 0
             }
+            onCreateJiraTicket={handleCreateJiraTicket}
           />
         ) : null}
 
@@ -931,6 +939,7 @@ const RequestPage = ({
           requestId: request.request_id,
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
+          requestJiraId: request.request_jira_id,
         }}
         requestCommentList={requestCommentList}
       />

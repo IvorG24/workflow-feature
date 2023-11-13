@@ -47,7 +47,11 @@ type Props = {
 };
 
 const TEMP_DEFAULT_TICKET_LIST_LIMIT = 13;
-export const TEMP_DEFAULT_TICKET_CATEGORY_LIST = ["Item Request", "General"];
+export const TEMP_DEFAULT_TICKET_CATEGORY_LIST = [
+  "Item Request",
+  "General",
+  "Feature Request",
+];
 
 const TicketListPage = ({
   ticketList: inititalTicketList,
