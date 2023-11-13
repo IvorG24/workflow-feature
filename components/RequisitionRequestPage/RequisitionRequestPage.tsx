@@ -369,6 +369,11 @@ const RequisitionRequestPage = ({
         const jiraTicketStatus =
           jiraTicket.fields["customfield_10010"].currentStatus.status;
 
+        const jiraTicketWebLink =
+          jiraTicket.fields["customfield_10010"]._links.web;
+
+        handleUpdateRequest("APPROVED", jiraTicket.key, jiraTicketWebLink);
+
         setJiraTicketStatus(jiraTicketStatus);
       } else {
         setJiraTicketStatus("Ticket Not Found");
