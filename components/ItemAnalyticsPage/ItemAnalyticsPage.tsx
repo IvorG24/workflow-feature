@@ -114,7 +114,6 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
       setResultList(formattedData.data);
       setResultCount(formattedData.count ?? 0);
     } catch (e) {
-      console.log("ERROR", e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

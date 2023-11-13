@@ -165,7 +165,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
         <Group position="apart">
           <Title order={2}>Dashboard</Title>
         </Group>
-        {(teamMember?.team_member_role === "APPROVER" ||
+        {(teamMember?.team_member_role === "ADMIN" ||
           teamMember?.team_member_role === "OWNER") &&
           ticketListCount > 0 && (
             <Alert variant="light" color="blue" title="Pending Tickets">

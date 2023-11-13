@@ -86,8 +86,7 @@ const TicketPage = ({ ticket: initialTicket, user }: Props) => {
           {ticket.ticket_status === "PENDING" &&
             ticket.ticket_approver_team_member_id === null &&
             ticket.ticket_requester_team_member_id !== user.team_member_id &&
-            (user.team_member_role === "APPROVER" ||
-              user.team_member_role === "OWNER") && (
+            ["ADMIN", "OWNER"].includes(user.team_member_role) && (
               <Tooltip label="You will be assigned to review this ticket.">
                 <Button size="md" onClick={handleAssignTicketToUser}>
                   Assign To Me

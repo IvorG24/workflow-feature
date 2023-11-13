@@ -5710,7 +5710,7 @@ RETURNS JSON as $$
     const ticket = plv8.execute(`SELECT ticket_approver_team_member_id FROM ticket_table WHERE ticket_id='${ticketId}'`)[0];
     const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
 
-    const isApprover = member.team_member_role === 'APPROVER' || member.team_member_role === 'OWNER'
+    const isApprover = member.team_member_role === 'OWNER' || member.team_member_role === 'ADMIN';
     if (!isApprover) throw new Error("User is not an Approver");
 
     const hasApprover = ticket.ticket_approver_team_member_id !== null
