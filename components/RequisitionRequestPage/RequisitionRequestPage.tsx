@@ -73,6 +73,7 @@ const RequisitionRequestPage = ({
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [isCashPurchase, setIsCashPurchase] = useState(false);
   const [currentServerDate, setCurrentServerDate] = useState("");
+  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -357,6 +358,28 @@ const RequisitionRequestPage = ({
     );
   };
 
+  useEffect(() => {
+    const fetchJiraTicketStatus = async (requestJiraId: string) => {
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketStatus =
+          jiraTicket.fields["customfield_10010"].currentStatus.status;
+
+        setJiraTicketStatus(jiraTicketStatus);
+      } else {
+        setJiraTicketStatus("Ticket Not Found");
+      }
+    };
+
+    if (requestJira.id) {
+      fetchJiraTicketStatus(requestJira.id);
+    }
+  }, [requestJira.id]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -405,6 +428,7 @@ const RequisitionRequestPage = ({
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
+          jiraTicketStatus={jiraTicketStatus}
         />
 
         {canvassRequest.length !== 0 ? (
