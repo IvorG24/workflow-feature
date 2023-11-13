@@ -456,23 +456,3 @@ export const reverseRequestApproval = async (
 
   if (error) throw error;
 };
-
-// update jira id and link
-// remove once jira automation is finalized
-export const updateJiraIdAndLink = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-    jiraId?: string;
-    jiraLink?: string;
-  }
-) => {
-  const { jiraId, jiraLink, requestId } = params;
-  const { error } = await supabaseClient
-    .from("request_table")
-    .update({ request_jira_id: jiraId, request_jira_link: jiraLink })
-    .eq("request_id", requestId)
-    .select();
-
-  if (error) throw error;
-};
