@@ -1,9 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import {
-  getCommentAttachment,
-  getCurrentDate,
-  getFileUrl,
-} from "@/backend/api/get";
+import { getCurrentDate, getFileUrl } from "@/backend/api/get";
 import {
   approveOrRejectRequest,
   cancelRequest,
@@ -23,10 +19,7 @@ import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import {
-  checkIfTimeIsWithinFiveMinutes,
-  generateJiraTicket,
-} from "@/utils/functions";
+import { checkIfTimeIsWithinFiveMinutes } from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -37,7 +30,6 @@ import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import moment from "moment";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
@@ -365,225 +357,6 @@ const RequisitionRequestPage = ({
     );
   };
 
-  const handleCreateJiraTicket = async () => {
-    try {
-      setIsLoading(true);
-      if (!request.request_formsly_id) {
-        console.warn("formsly_id not found");
-        return null;
-      }
-      const projectName = request.request_project.team_project_name;
-      const itemCategory = sectionWithDuplicateList
-        .slice(1)
-        .map(
-          (section) => section.section_field[3].field_response?.request_response
-        ) as string[];
-
-      const jiraTicketConfig = generateJiraTicket({
-        projectName,
-        itemCategory,
-        requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_id}`,
-      });
-
-      const newJiraTicketResponse = await fetch("/api/create-jira-ticket", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(jiraTicketConfig),
-      });
-
-      if (!newJiraTicketResponse.ok) {
-        const data = await newJiraTicketResponse.json();
-        console.error(data.error);
-        notifications.show({
-          message: data.error,
-          color: "red",
-        });
-
-        return null;
-      }
-
-      const newJiraTicket = await newJiraTicketResponse.json();
-
-      const addFormToJiraTicket = await fetch(
-        `/api/add-form-to-jira-ticket?jiraTicketKey=${newJiraTicket.key}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!addFormToJiraTicket.ok) {
-        const data = await addFormToJiraTicket.json();
-        console.error(data.error);
-        notifications.show({
-          message: data.error,
-          color: "red",
-        });
-
-        return null;
-      }
-
-      const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${newJiraTicket.key}`
-      );
-
-      if (!newJiraTicketData.ok) {
-        notifications.show({
-          message: "Failed to fetch ticket data. Please contact your IT.",
-          color: "red",
-        });
-
-        return null;
-      }
-
-      if (requestCommentList.length > 0) {
-        await handleAddCommentToJiraTicket(newJiraTicket.key);
-      }
-
-      const jiraTicketResponse = await newJiraTicketData.json();
-      return JSON.stringify(jiraTicketResponse);
-    } catch (error) {
-      console.error("An error occurred while making the request:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchCommentAttachmentList = async () => {
-    const commentListWithAttachmentUrl = await Promise.all(
-      requestCommentList.map(async (comment) => {
-        const commentAttachmentUrlList = await getCommentAttachment(
-          supabaseClient,
-          { commentId: comment.comment_id }
-        );
-
-        return {
-          ...comment,
-          comment_attachment: commentAttachmentUrlList,
-        };
-      })
-    );
-    return commentListWithAttachmentUrl.sort((a, b) => {
-      const aDate = moment(a.comment_date_created).valueOf();
-      const bDate = moment(b.comment_date_created).valueOf();
-
-      return aDate - bDate;
-    });
-  };
-
-  const handleAddCommentToJiraTicket = async (jiraTicketKey: string) => {
-    try {
-      const rfCommentList = await fetchCommentAttachmentList();
-      fetchCommentAttachmentList();
-      const rfCommentListForJira = rfCommentList.map((comment) => {
-        const commenter = comment.comment_team_member.team_member_user;
-        const attachmentContent = comment.comment_attachment.map(
-          (attachment) => {
-            const attachmentComment = {
-              type: "text",
-              text: attachment.attachment_name + " \n",
-              marks: [
-                {
-                  type: "link",
-                  attrs: {
-                    href: attachment.attachment_public_url,
-                    title: attachment.attachment_name,
-                  },
-                },
-              ],
-            };
-            return attachmentComment;
-          }
-        );
-
-        const formattedDate = moment(comment.comment_date_created).format(
-          "LTS"
-        );
-
-        const jiraComment = {
-          type: "blockquote",
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: `${commenter.user_first_name} ${
-                    commenter.user_last_name
-                  } ${formattedDate} ${new Date(
-                    comment.comment_date_created
-                  ).toDateString()}`,
-                },
-                {
-                  type: "hardBreak",
-                },
-                {
-                  type: "text",
-                  text: comment.comment_content,
-                },
-              ],
-            },
-            {
-              type: "paragraph",
-              content: [...attachmentContent],
-            },
-          ],
-        };
-
-        return jiraComment;
-      });
-
-      const bodyData = {
-        body: {
-          version: 1,
-          type: "doc",
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: "Formsly Requisition Form Comment List",
-                  marks: [
-                    {
-                      type: "strong",
-                    },
-                  ],
-                },
-              ],
-            },
-            ...rfCommentListForJira,
-          ],
-        },
-      };
-
-      const jiraTicketCommentResponse = await fetch(
-        `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(bodyData),
-        }
-      );
-
-      if (jiraTicketCommentResponse.ok) {
-        console.log("Comment added successfully");
-      } else {
-        console.error("Failed to add comment");
-      }
-      return jiraTicketCommentResponse;
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -701,7 +474,6 @@ const RequisitionRequestPage = ({
                 .map((signer) => signer.request_signer_status)
                 .filter((status) => status === "APPROVED").length === 0
             }
-            onCreateJiraTicket={handleCreateJiraTicket}
           />
         ) : null}
 
@@ -719,7 +491,6 @@ const RequisitionRequestPage = ({
           requestId: request.request_id,
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
-          requestJiraId: requestJira.id,
         }}
         requestCommentList={requestCommentList}
       />
