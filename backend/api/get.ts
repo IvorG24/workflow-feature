@@ -3178,9 +3178,11 @@ export const getTeamApproverListWithFilter = async (
     query = query.or(orQuery, { foreignTable: "team_member_user" });
   }
 
-  query = query.order("team_member_date_created", {
-    ascending: false,
+  query = query.order("team_member_user(user_first_name)", {
+    ascending: true,
+    foreignTable: "",
   });
+
   query.limit(limit);
   query.range(start, start + limit - 1);
 
@@ -3234,9 +3236,11 @@ export const getTeamAdminListWithFilter = async (
     query = query.or(orQuery, { foreignTable: "team_member_user" });
   }
 
-  query = query.order("team_member_date_created", {
-    ascending: false,
+  query = query.order("team_member_user(user_first_name)", {
+    ascending: true,
+    foreignTable: "",
   });
+
   query.limit(limit);
   query.range(start, start + limit - 1);
 

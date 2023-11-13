@@ -187,13 +187,13 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('83530e5f-0bc4-4983-9079-485384996e20', 'Level 2 Major Group Description', 'TEXT', 12, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, true),
 ('1d88906e-f786-4d8a-8992-a2f11e7a55dd', 'Level 2 Minor Group Description', 'TEXT', 13, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, true),
 
-('bef47113-a186-4755-9764-263b5c246a41', 'Length', 'DROPDOWN', 14, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
-('6e539c9f-8ab2-46f1-a8a6-89cc928c3612', 'Width', 'DROPDOWN', 14, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
-('0af6a571-3bef-4f8c-8716-2bca5a5250fc', 'Height', 'DROPDOWN', 14, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
-('25e93bd3-30f0-4920-a0e8-6bde5a44898c', 'Type', 'DROPDOWN', 14, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
-('db862c96-01ec-499c-b9f1-faf7b674074d', 'Brand', 'DROPDOWN', 14, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
-('03003ee0-811a-44e9-b420-aaac9f80d1de', 'Material', 'DROPDOWN', 14, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
-('a6745b58-c88d-41dc-82f4-887c0062c03d', 'Size', 'DROPDOWN', 14, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
+('bef47113-a186-4755-9764-263b5c246a41', 'Length', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
+('6e539c9f-8ab2-46f1-a8a6-89cc928c3612', 'Width', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
+('0af6a571-3bef-4f8c-8716-2bca5a5250fc', 'Height', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
+('25e93bd3-30f0-4920-a0e8-6bde5a44898c', 'Type', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
+('db862c96-01ec-499c-b9f1-faf7b674074d', 'Brand', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
+('03003ee0-811a-44e9-b420-aaac9f80d1de', 'Material', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
+('a6745b58-c88d-41dc-82f4-887c0062c03d', 'Size', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
 
 -- Sourced Item 
 ('f8f77f42-63a5-4053-8b2e-36d0f5174e94', 'Requisition ID', 'LINK', 1, 'dc06e690-9dd1-46e8-a769-0f83ea5cb215', true, true),
