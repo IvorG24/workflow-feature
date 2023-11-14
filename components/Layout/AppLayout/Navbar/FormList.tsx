@@ -78,7 +78,13 @@ const FormList = () => {
         rightSectionWidth={70}
         styles={{ rightSection: { pointerEvents: "none" } }}
         onChange={handleSearchForm}
-        data={formList?.map((form) => form.form_name) as string[]}
+        data={
+          formList
+            ?.filter(
+              (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)
+            )
+            .map((form) => form.form_name) as string[]
+        }
       />
       <Navbar.Section grow component={ScrollArea} mx="-xs" px="xs" mt="sm">
         {formList
