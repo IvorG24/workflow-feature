@@ -109,3 +109,19 @@ export const getFileTypeColor = (filename: string) => {
     return "dark";
   }
 };
+
+export const getJiraTicketStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "in progress":
+      return "cyan";
+    case "done":
+      return "green";
+    case "declined":
+      return "red";
+    case "canceled":
+      return "gray";
+
+    default:
+      return "dark";
+  }
+};

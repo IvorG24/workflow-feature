@@ -1,9 +1,5 @@
-import {
-  checkIfJiraIDIsUnique,
-  checkIfJiraLinkIsUnique,
-} from "@/backend/api/get";
+import { checkIfJiraIDIsUnique } from "@/backend/api/get";
 import { Database } from "@/utils/database";
-import { isValidUrl } from "@/utils/functions";
 import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Button,
@@ -19,7 +15,7 @@ import {
 import { modals, openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconId, IconLink } from "@tabler/icons-react";
+import { IconId } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 
@@ -62,13 +58,11 @@ const RequestActionSection = ({
     setValue,
     setError,
     formState: { errors },
-  } = useForm<{ jiraId: string; jiraLink: string }>();
+  } = useForm<{ jiraId: string }>();
 
   const resetValue = () => {
     setValue("jiraId", "");
-    setValue("jiraLink", "");
     setError("jiraId", { message: "" });
-    setError("jiraLink", { message: "" });
   };
 
   const handleAction = (action: string, color: string) => {
@@ -88,14 +82,7 @@ const RequestActionSection = ({
             </Text>
             <form
               onSubmit={handleSubmit((data) => {
-                if (!isValidUrl(data.jiraLink)) {
-                  notifications.show({
-                    message: "Enter a valid link.",
-                    color: "red",
-                  });
-                  return;
-                }
-                handleUpdateRequest("APPROVED", data.jiraId, data.jiraLink);
+                handleUpdateRequest("APPROVED", data.jiraId);
                 modals.close("approveRf");
               })}
             >
@@ -135,42 +122,6 @@ const RequestActionSection = ({
                     },
                   })}
                   error={errors.jiraId?.message}
-                />
-                <TextInput
-                  icon={<IconLink size={16} />}
-                  placeholder="Jira Link"
-                  data-autofocus
-                  {...register("jiraLink", {
-                    validate: {
-                      required: (value) => {
-                        if (!value) {
-                          notifications.show({
-                            message: "Jira Link is required.",
-                            color: "red",
-                          });
-                          return "Jira Link is required.";
-                        } else {
-                          return true;
-                        }
-                      },
-                      checkIfUnique: async (value) => {
-                        if (
-                          await checkIfJiraLinkIsUnique(supabaseClient, {
-                            value: value,
-                          })
-                        ) {
-                          notifications.show({
-                            message: "Jira Link already exists.",
-                            color: "red",
-                          });
-                          return "Jira Link already exists.";
-                        } else {
-                          return true;
-                        }
-                      },
-                    },
-                  })}
-                  error={errors.jiraLink?.message}
                 />
               </Stack>
 

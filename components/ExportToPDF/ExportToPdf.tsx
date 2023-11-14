@@ -130,11 +130,17 @@ const ExportToPdf = ({
     return newSection;
   });
 
+  const requestorFullName =
+    `${requestor.user_first_name}-${requestor.user_last_name}`.replaceAll(
+      ".",
+      ""
+    );
+
   const pdfFileName = `${moment(request.request_date_created).format(
     "YYYY-MM-DD"
-  )}-${request.request_form.form_name.split(" ").join("-")}-${
-    requestor.user_first_name
-  }-${requestor.user_last_name}`;
+  )}-${request.request_form.form_name
+    .split(" ")
+    .join("-")}-${requestorFullName}`;
 
   const [instance] = usePDF({
     document: (

@@ -1,17 +1,11 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getCurrentDate, getFileUrl } from "@/backend/api/get";
-import {
-  approveOrRejectRequest,
-  cancelRequest,
-  reverseRequestApproval,
-} from "@/backend/api/update";
+import { getFileUrl } from "@/backend/api/get";
+import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection, {
-  RequestSignerType,
-} from "@/components/RequestPage/RequestSignerSection";
+import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
 import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
@@ -19,7 +13,6 @@ import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { checkIfTimeIsWithinFiveMinutes } from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -33,7 +26,6 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
-import RequestReverseActionSection from "../RequestPage/RequestReverseActionSection";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
 import RequisitionSummary from "../SummarySection/RequisitionSummary";
 
@@ -72,7 +64,8 @@ const RequisitionRequestPage = ({
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [isCashPurchase, setIsCashPurchase] = useState(false);
-  const [currentServerDate, setCurrentServerDate] = useState("");
+  // const [currentServerDate, setCurrentServerDate] = useState("");
+  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -83,8 +76,39 @@ const RequisitionRequestPage = ({
       setIsFetchingApprover(true);
 
       const fetchApproverDetails = async () => {
+        const primarySigner = request.request_signer.find(
+          (signer) => signer.request_signer_signer.signer_is_primary_signer
+        );
+        if (!primarySigner) return;
+        const signerWithDateUpdated = request.request_signer
+          .filter(
+            (signer) =>
+              !signer.request_signer_signer.signer_is_primary_signer &&
+              signer.request_signer_status_date_updated
+          )
+          .sort(
+            (a, b) =>
+              Date.parse(`${a.request_signer_status_date_updated}`) -
+              Date.parse(`${b.request_signer_status_date_updated}`)
+          );
+        const signerWithoutDateUpdated = request.request_signer
+          .filter(
+            (signer) =>
+              !signer.request_signer_signer.signer_is_primary_signer &&
+              !signer.request_signer_status_date_updated
+          )
+          .sort((a, b) => {
+            const fullNameA = `${a.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${a.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
+            const fullNameB = `${b.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${b.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
+            return fullNameA.localeCompare(fullNameB);
+          });
+
         const data = await Promise.all(
-          request.request_signer.map(async (signer) => {
+          [
+            primarySigner,
+            ...signerWithDateUpdated,
+            ...signerWithoutDateUpdated,
+          ].map(async (signer) => {
             let signatureUrl: string | null = null;
             if (
               signer.request_signer_status === "APPROVED" &&
@@ -111,10 +135,10 @@ const RequisitionRequestPage = ({
         );
         setApproverDetails(data);
 
-        const serverDate = (
-          await getCurrentDate(supabaseClient)
-        ).toLocaleString();
-        setCurrentServerDate(serverDate);
+        // const serverDate = (
+        //   await getCurrentDate(supabaseClient)
+        // ).toLocaleString();
+        // setCurrentServerDate(serverDate);
       };
       if (request) {
         fetchApproverDetails();
@@ -186,8 +210,7 @@ const RequisitionRequestPage = ({
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string,
-    jiraLink?: string
+    jiraId?: string
   ) => {
     try {
       setIsLoading(true);
@@ -202,6 +225,18 @@ const RequisitionRequestPage = ({
       }
       if (!teamMember) return;
 
+      let autoJiraLink = "";
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketWebLink =
+          jiraTicket.fields["customfield_10010"]._links.web;
+        autoJiraLink = jiraTicketWebLink;
+      }
+
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -213,7 +248,7 @@ const RequisitionRequestPage = ({
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
-        jiraLink,
+        jiraLink: autoJiraLink,
       });
 
       notifications.show({
@@ -289,73 +324,95 @@ const RequisitionRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const handleReverseApproval = async () => {
-    try {
-      if (!isUserSigner || !teamMember) {
-        console.error("Signer or team member is undefined");
-        return;
-      }
-      setIsLoading(true);
+  // const handleReverseApproval = async () => {
+  //   try {
+  //     if (!isUserSigner || !teamMember) {
+  //       console.error("Signer or team member is undefined");
+  //       return;
+  //     }
+  //     setIsLoading(true);
 
-      const serverDate = (
-        await getCurrentDate(supabaseClient)
-      ).toLocaleString();
+  //     const serverDate = (
+  //       await getCurrentDate(supabaseClient)
+  //     ).toLocaleString();
 
-      const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-        `${isUserSigner.request_signer_status_date_updated}`,
-        serverDate
+  //     const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
+  //       `${isUserSigner.request_signer_status_date_updated}`,
+  //       serverDate
+  //     );
+
+  //     if (!actionIsWithinFiveMinutes) {
+  //       return notifications.show({
+  //         message: "Reversal is beyond the time limit.",
+  //         color: "orange",
+  //       });
+  //     }
+
+  //     const signerFullName = `${isUserSigner.signer_team_member.team_member_user.user_first_name} ${isUserSigner.signer_team_member.team_member_user.user_last_name}`;
+
+  //     await reverseRequestApproval(supabaseClient, {
+  //       requestAction: "REVERSED",
+  //       requestId: request.request_id,
+  //       isPrimarySigner: isUserSigner.signer_is_primary_signer,
+  //       requestSignerId: isUserSigner.request_signer_id,
+  //       requestOwnerId: request.request_team_member.team_member_user.user_id,
+  //       signerFullName: signerFullName,
+  //       formName: request.request_form.form_name,
+  //       memberId: teamMember.team_member_id,
+  //       teamId: request.request_team_member.team_member_team_id,
+  //     });
+  //   } catch (error) {
+  //     notifications.show({
+  //       message: "Something went wrong. Please try again later",
+  //       color: "red",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
+  //   if (!isUserSigner) return false;
+  //   if (currentServerDate === "") return false;
+
+  //   const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
+  //     `${isUserSigner.request_signer_status_date_updated}`,
+  //     currentServerDate
+  //   );
+  //   const primarySignerStatusIsPending = signerList.find(
+  //     (signer) => signer.signer_is_primary_signer
+  //   )?.request_signer_status;
+  //   const signerStatusIsPending =
+  //     isUserSigner.request_signer_status !== "PENDING";
+
+  //   return (
+  //     actionIsWithinFiveMinutes &&
+  //     primarySignerStatusIsPending &&
+  //     signerStatusIsPending
+  //   );
+  // };
+
+  useEffect(() => {
+    const fetchJiraTicketStatus = async (requestJiraId: string) => {
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
       );
 
-      if (!actionIsWithinFiveMinutes) {
-        return notifications.show({
-          message: "Reversal is beyond the time limit.",
-          color: "orange",
-        });
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketStatus =
+          jiraTicket.fields["customfield_10010"].currentStatus.status;
+
+        setJiraTicketStatus(jiraTicketStatus);
+      } else {
+        setJiraTicketStatus("Ticket Not Found");
       }
+    };
 
-      const signerFullName = `${isUserSigner.signer_team_member.team_member_user.user_first_name} ${isUserSigner.signer_team_member.team_member_user.user_last_name}`;
-
-      await reverseRequestApproval(supabaseClient, {
-        requestAction: "REVERSED",
-        requestId: request.request_id,
-        isPrimarySigner: isUserSigner.signer_is_primary_signer,
-        requestSignerId: isUserSigner.request_signer_id,
-        requestOwnerId: request.request_team_member.team_member_user.user_id,
-        signerFullName: signerFullName,
-        formName: request.request_form.form_name,
-        memberId: teamMember.team_member_id,
-        teamId: request.request_team_member.team_member_team_id,
-      });
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
+    if (requestJira.id) {
+      fetchJiraTicketStatus(requestJira.id);
     }
-  };
-
-  const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
-    if (!isUserSigner) return false;
-    if (currentServerDate === "") return false;
-
-    const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-      `${isUserSigner.request_signer_status_date_updated}`,
-      currentServerDate
-    );
-    const primarySignerStatusIsPending = signerList.find(
-      (signer) => signer.signer_is_primary_signer
-    )?.request_signer_status;
-    const signerStatusIsPending =
-      isUserSigner.request_signer_status !== "PENDING";
-
-    return (
-      actionIsWithinFiveMinutes &&
-      primarySignerStatusIsPending &&
-      signerStatusIsPending
-    );
-  };
+  }, [requestJira.id]);
 
   return (
     <Container>
@@ -405,6 +462,7 @@ const RequisitionRequestPage = ({
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
+          jiraTicketStatus={jiraTicketStatus}
         />
 
         {canvassRequest.length !== 0 ? (
@@ -477,11 +535,11 @@ const RequisitionRequestPage = ({
           />
         ) : null}
 
-        {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
+        {/* {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
           <RequestReverseActionSection
             handleReverseApproval={handleReverseApproval}
           />
-        ) : null}
+        ) : null} */}
 
         <RequestSignerSection signerList={signerList} />
       </Stack>
