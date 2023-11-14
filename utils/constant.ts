@@ -1224,7 +1224,7 @@ export const ITEM_UNIT_CHOICES = [
   "Unit",
   "Yard",
   "Diameter Nominal",
-  "Mega bit per second",
+  "Mega Bit Per Second",
   "Pound Per Square Inch",
   "Square Millimeter",
   "Cylinder",
@@ -1236,6 +1236,7 @@ export const ITEM_UNIT_CHOICES = [
   "Kilovolt Ampere",
   "Kilowatt",
   "Decibel",
+  "Cubic Feet Per Minute",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
