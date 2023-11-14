@@ -53,6 +53,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState<string | null>(null);
   const previousActiveTeamId = usePrevious(activeTeam.team_id);
+  const [isFetching, setIsFetching] = useState(true);
   // const [isRequsitionForm, setIsRequsitionForm] = useState(false);
 
   const currentDate = moment().toDate();
@@ -139,6 +140,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
               startDateFilter={startDateFilter}
               endDateFilter={endDateFilter}
               selectedForm={selectedForm}
+              setIsFetching={setIsFetching}
             />
           </>
         );
@@ -200,6 +202,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
               value={selectedForm}
               onChange={setSelectedForm}
               searchable
+              disabled={isFetching}
             />
             <Select
               label="Date Created"
@@ -208,6 +211,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
               value={selectedDays}
               onChange={setSelectedDays}
               searchable
+              disabled={isFetching}
             />
 
             {selectedDays === "0" && (
