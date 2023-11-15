@@ -183,11 +183,12 @@ const RequestFormFields = ({
 
   const checkIfDateIsValid = (value: Date | undefined) => {
     if (!formslyFormName || !value) return value;
-
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
     if (subconFormMethods) {
-      return value >= addDays(new Date(), 14) ? value : undefined;
+      return value >= addDays(currentDate, 14) ? value : undefined;
     } else {
-      return value >= new Date() ? value : undefined;
+      return value >= currentDate ? value : undefined;
     }
   };
 

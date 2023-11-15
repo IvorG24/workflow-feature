@@ -110,3 +110,11 @@ export const isStringParsable = (str: string) => {
     return false;
   }
 };
+
+export const safeParse = (str: string) => {
+  if (isStringParsable(str)) {
+    return JSON.parse(str);
+  } else {
+    return str;
+  }
+};

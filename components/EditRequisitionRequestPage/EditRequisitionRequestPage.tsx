@@ -14,7 +14,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { isStringParsable } from "@/utils/functions";
+import { isStringParsable, safeParse } from "@/utils/functions";
 import {
   FormType,
   FormWithResponseType,
@@ -143,24 +143,39 @@ const EditRequisitionRequestPage = ({
           newSections.forEach((newSection) => {
             // if section general name is equal
             if (
-              newSection.section_field[0].field_response ===
-              section.section_field[0].field_response
+              safeParse(
+                newSection.section_field[0].field_response[0].request_response
+              ) ==
+              safeParse(
+                section.section_field[0].field_response[0].request_response
+              )
             ) {
               let uniqueField = false;
               // loop on every field except name and quantity
               for (let i = 5; i < newSection.section_field.length; i++) {
-                if (
-                  newSection.section_field[i].field_response !==
-                  section.section_field[i].field_response
-                ) {
+                const newSectionField =
+                  safeParse(
+                    newSection.section_field[i].field_response[0]
+                      .request_response
+                  ) ?? "";
+                const sectionField =
+                  safeParse(
+                    section.section_field[i].field_response[0].request_response
+                  ) ?? "";
+                if (newSectionField != sectionField) {
                   uniqueField = true;
                   break;
                 }
               }
               if (!uniqueField) {
                 newSection.section_field[2].field_response[0].request_response = `${
-                  Number(newSection.section_field[2].field_response) +
-                  Number(section.section_field[2].field_response)
+                  Number(
+                    newSection.section_field[2].field_response[0]
+                      .request_response
+                  ) +
+                  Number(
+                    section.section_field[2].field_response[0].request_response
+                  )
                 }`;
                 uniqueItem = false;
               }
@@ -274,24 +289,28 @@ const EditRequisitionRequestPage = ({
       const toBeCheckedSections = formattedData.slice(1);
       const newSections: RequestFormValuesForReferenceRequest["sections"] = [];
       toBeCheckedSections.forEach((section) => {
-        // if new section is empty
+        // if new section if empty
         if (newSections.length === 0) {
           newSections.push(section);
         } else {
           let uniqueItem = true;
           newSections.forEach((newSection) => {
             // if section general name is equal
+
             if (
-              newSection.section_field[0].field_response ===
-              section.section_field[0].field_response
+              safeParse(newSection.section_field[0].field_response as string) ==
+              safeParse(section.section_field[0].field_response)
             ) {
               let uniqueField = false;
               // loop on every field except name and quantity
               for (let i = 5; i < newSection.section_field.length; i++) {
-                if (
-                  newSection.section_field[i].field_response !==
-                  section.section_field[i].field_response
-                ) {
+                const newSectionField =
+                  safeParse(
+                    newSection.section_field[i].field_response as string
+                  ) ?? "";
+                const sectionField =
+                  safeParse(section.section_field[i].field_response) ?? "";
+                if (newSectionField != sectionField) {
                   uniqueField = true;
                   break;
                 }

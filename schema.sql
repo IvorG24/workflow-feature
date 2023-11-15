@@ -6119,14 +6119,14 @@ RETURNS JSON AS $$
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     if (!teamId) throw new Error("No team found");
 
+    const unformattedRequest = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
+
     if(!referenceOnly){
       const isPending = Boolean(plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_id='${requestId}' AND request_status='PENDING' AND request_is_disabled=false;`)[0].count);
       if (!isPending) throw new Error("Request can't be edited") 
       const isRequester = userId===unformattedRequest.request_team_member.team_member_user.user_id
       if (!isRequester) throw new Error("Requests can only be edited by the request creator") 
     }
-
-    const unformattedRequest = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
 
     const {
       request_form: { form_section: originalSectionList },
