@@ -101,3 +101,12 @@ export const checkIfTimeIsWithinFiveMinutes = (
 
   return differenceInMinutes <= 5;
 };
+
+export const isStringParsable = (str: string) => {
+  try {
+    JSON.parse(str);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};

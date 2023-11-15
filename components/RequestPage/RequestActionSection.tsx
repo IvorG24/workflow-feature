@@ -35,6 +35,7 @@ type Props = {
   isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
   isEditable?: boolean;
+  requestId: string;
 };
 
 const RequestActionSection = ({
@@ -49,6 +50,7 @@ const RequestActionSection = ({
   isCashPurchase,
   isUserPrimarySigner,
   isEditable,
+  requestId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -187,6 +189,16 @@ const RequestActionSection = ({
       </Title>
       <Space h="xl" />
       <Stack>
+        <Button
+          fullWidth
+          onClick={() =>
+            router.push(
+              `/team-requests/requests/${requestId}/edit?referenceOnly=true`
+            )
+          }
+        >
+          Reference this Request
+        </Button>
         {canSignerTakeAction && (
           <>
             <Button

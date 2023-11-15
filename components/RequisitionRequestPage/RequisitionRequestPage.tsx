@@ -505,35 +505,30 @@ const RequisitionRequestPage = ({
             )}
         />
 
-        {(isUserOwner &&
-          (requestStatus === "PENDING" || requestStatus === "CANCELED")) ||
-        (isUserSigner &&
-          isUserSigner.request_signer_status === "PENDING" &&
-          requestStatus !== "CANCELED") ? (
-          <RequestActionSection
-            isUserOwner={isUserOwner}
-            requestStatus={requestStatus as FormStatusType}
-            handleCancelRequest={handleCancelRequest}
-            openPromptDeleteModal={openPromptDeleteModal}
-            isUserSigner={Boolean(isUserSigner)}
-            handleUpdateRequest={handleUpdateRequest}
-            signer={
-              isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
-            }
-            isRf
-            isCashPurchase={isCashPurchase}
-            isUserPrimarySigner={
-              isUserSigner
-                ? Boolean(isUserSigner.signer_is_primary_signer)
-                : false
-            }
-            isEditable={
-              signerList
-                .map((signer) => signer.request_signer_status)
-                .filter((status) => status === "APPROVED").length === 0
-            }
-          />
-        ) : null}
+        <RequestActionSection
+          isUserOwner={isUserOwner}
+          requestStatus={requestStatus as FormStatusType}
+          handleCancelRequest={handleCancelRequest}
+          openPromptDeleteModal={openPromptDeleteModal}
+          isUserSigner={Boolean(isUserSigner)}
+          handleUpdateRequest={handleUpdateRequest}
+          signer={
+            isUserSigner as unknown as RequestWithResponseType["request_signer"][0]
+          }
+          isRf
+          isCashPurchase={isCashPurchase}
+          isUserPrimarySigner={
+            isUserSigner
+              ? Boolean(isUserSigner.signer_is_primary_signer)
+              : false
+          }
+          isEditable={
+            signerList
+              .map((signer) => signer.request_signer_status)
+              .filter((status) => status !== "PENDING").length === 0
+          }
+          requestId={request.request_id}
+        />
 
         {/* {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
           <RequestReverseActionSection

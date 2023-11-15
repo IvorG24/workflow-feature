@@ -19,14 +19,17 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
+      const referenceOnly = Boolean(context.query.referenceOnly === "true");
       const editRequestOnLoad = await getEditRequestOnLoad(supabaseClient, {
         userId: user.id,
         requestId: `${context.query.requestId}`,
+        referenceOnly,
       });
 
       return {
         props: {
           ...editRequestOnLoad,
+          referenceOnly,
         },
       };
     } catch (error) {
@@ -54,6 +57,7 @@ export type EditRequestOnLoadProps = {
     special_approver_item_list: string[];
     special_approver_signer: FormType["form_signer"][0];
   }[];
+  referenceOnly: boolean;
 };
 
 const Page = ({
@@ -65,6 +69,7 @@ const Page = ({
   requestingProject = "",
   sourceProjectList = {},
   specialApprover = [],
+  referenceOnly,
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
   const formslyForm = () => {
@@ -76,6 +81,7 @@ const Page = ({
             itemOptions={itemOptions}
             projectOptions={projectOptions}
             specialApprover={specialApprover}
+            referenceOnly={referenceOnly}
           />
         );
       case "Subcon":
