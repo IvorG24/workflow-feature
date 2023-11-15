@@ -24,7 +24,6 @@ const useStyles = createStyles((theme) => ({
         : theme.colors.gray[2],
     color: theme.colorScheme === "light" ? "white" : "black",
     pointerEvents: "none",
-    position: "fixed",
   },
 }));
 
