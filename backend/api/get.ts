@@ -1,3 +1,4 @@
+import { EditRequestOnLoadProps } from "@/pages/team-requests/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -3841,4 +3842,20 @@ export const getUnresolvedRequestListPerApprover = async (
   if (error) throw error;
 
   return data as unknown as ApproverUnresolvedRequestListType[];
+};
+
+// Get edit request on load
+export const getEditRequestOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_edit_request_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as EditRequestOnLoadProps;
 };
