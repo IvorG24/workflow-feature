@@ -1237,6 +1237,7 @@ export const ITEM_UNIT_CHOICES = [
   "Kilowatt",
   "Decibel",
   "Cubic Feet Per Minute",
+  "Blows per Minute"
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
