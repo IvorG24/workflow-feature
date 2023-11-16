@@ -1238,6 +1238,10 @@ export const ITEM_UNIT_CHOICES = [
   "Decibel",
   "Cubic Feet Per Minute",
   "Blows Per Minute",
+  "Gram Per Hour",
+  "Kilocalorie",
+  "British Thermal Unit",
+  "Celsius",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
