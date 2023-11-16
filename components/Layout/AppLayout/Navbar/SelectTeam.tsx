@@ -1,4 +1,5 @@
 import {
+  getAllGroupOfTeamMember,
   getAllNotification,
   getFormList,
   getUserTeamMemberData,
@@ -64,7 +65,7 @@ const SelectTeam = () => {
   const { setIsLoading } = useLoadingActions();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
-  const { setUserTeamMember } = useUserActions();
+  const { setUserTeamMember, setUserTeamMemberGroupList } = useUserActions();
 
   const formatTeamOptions = () => {
     const teamOptions = teamList.map((team) => {
@@ -101,7 +102,12 @@ const SelectTeam = () => {
       });
       // set user team member id
       if (teamMember) {
+        const teamMemberGroupList = await getAllGroupOfTeamMember(
+          supabaseClient,
+          { teamMemberId: teamMember.team_member_id }
+        );
         setUserTeamMember(teamMember);
+        setUserTeamMemberGroupList(teamMemberGroupList);
 
         // fetch form list
         const formList = await getFormList(supabaseClient, {

@@ -1,4 +1,8 @@
-import { getFormList, getUserTeamMemberData } from "@/backend/api/get";
+import {
+  getAllGroupOfTeamMember,
+  getFormList,
+  getUserTeamMemberData,
+} from "@/backend/api/get";
 import { updateUserActiveTeam } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -24,7 +28,7 @@ const TeamCard = ({ team }: TeamCardProps) => {
 
   const { setActiveTeam } = useTeamActions();
   const { setIsLoading } = useLoadingActions();
-  const { setUserTeamMember } = useUserActions();
+  const { setUserTeamMember, setUserTeamMemberGroupList } = useUserActions();
   const { setFormList } = useFormActions();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
@@ -47,7 +51,13 @@ const TeamCard = ({ team }: TeamCardProps) => {
       });
       // set user team member id
       if (teamMember) {
+        const teamMemberGroupList = await getAllGroupOfTeamMember(
+          supabaseClient,
+          { teamMemberId: teamMember.team_member_id }
+        );
+
         setUserTeamMember(teamMember);
+        setUserTeamMemberGroupList(teamMemberGroupList);
 
         // set notification
         setNotificationList([]);

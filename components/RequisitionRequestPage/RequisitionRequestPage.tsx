@@ -11,7 +11,11 @@ import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
 import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   ConnectedRequestIdList,
@@ -70,6 +74,7 @@ const RequisitionRequestPage = ({
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   useEffect(() => {
     try {
@@ -288,7 +293,6 @@ const RequisitionRequestPage = ({
       await deleteRequest(supabaseClient, {
         requestId: request.request_id,
       });
-
       notifications.show({
         message: "Request deleted.",
         color: "green",
@@ -425,8 +429,10 @@ const RequisitionRequestPage = ({
     isUserOwner &&
     requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
+  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+
   const isRequestActionSectionVisible =
-    canSignerTakeAction || isEditable || isDeletable;
+    canSignerTakeAction || isEditable || isDeletable || isUserRequester;
 
   return (
     <Container>
@@ -534,6 +540,7 @@ const RequisitionRequestPage = ({
             isEditable={isEditable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
+            isUserRequester={isUserRequester}
             requestId={request.request_id}
           />
         )}

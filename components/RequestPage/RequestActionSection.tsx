@@ -33,6 +33,7 @@ type Props = {
   isEditable: boolean;
   canSignerTakeAction?: boolean;
   isDeletable: boolean;
+  isUserRequester?: boolean;
 };
 
 const RequestActionSection = ({
@@ -46,6 +47,7 @@ const RequestActionSection = ({
   isEditable,
   canSignerTakeAction,
   isDeletable,
+  isUserRequester,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -179,16 +181,19 @@ const RequestActionSection = ({
       </Title>
       <Space h="xl" />
       <Stack>
-        <Button
-          fullWidth
-          onClick={() =>
-            router.push(
-              `/team-requests/requests/${requestId}/edit?referenceOnly=true`
-            )
-          }
-        >
-          Reference this Request
-        </Button>
+        {!isUserRequester === false && (
+          <Button
+            fullWidth
+            onClick={() =>
+              router.push(
+                `/team-requests/requests/${requestId}/edit?referenceOnly=true`
+              )
+            }
+          >
+            Reference this Request
+          </Button>
+        )}
+
         {canSignerTakeAction && (
           <>
             <Button
