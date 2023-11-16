@@ -1,6 +1,5 @@
 import { checkIfJiraIDIsUnique } from "@/backend/api/get";
 import { Database } from "@/utils/database";
-import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Button,
   Flex,
@@ -20,37 +19,33 @@ import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 
 type Props = {
-  isUserOwner: boolean;
-  requestStatus: FormStatusType;
   handleCancelRequest: () => void;
   openPromptDeleteModal: () => void;
-  isUserSigner: boolean;
   handleUpdateRequest: (
     status: "APPROVED" | "REJECTED",
     jiraId?: string,
     jiraLink?: string
   ) => void;
-  signer?: RequestWithResponseType["request_signer"][0];
   isRf?: boolean;
   isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
-  isEditable?: boolean;
   requestId: string;
+  isEditable: boolean;
+  canSignerTakeAction?: boolean;
+  isDeletable: boolean;
 };
 
 const RequestActionSection = ({
-  isUserOwner,
-  requestStatus,
   handleCancelRequest,
   openPromptDeleteModal,
-  isUserSigner,
   handleUpdateRequest,
-  signer,
   isRf,
   isCashPurchase,
   isUserPrimarySigner,
-  isEditable,
   requestId,
+  isEditable,
+  canSignerTakeAction,
+  isDeletable,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -177,11 +172,6 @@ const RequestActionSection = ({
     }
   };
 
-  const canSignerTakeAction =
-    isUserSigner &&
-    signer?.request_signer_status === "PENDING" &&
-    requestStatus !== "CANCELED";
-
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -218,7 +208,7 @@ const RequestActionSection = ({
           </>
         )}
 
-        {isUserOwner && requestStatus === "PENDING" && isEditable && (
+        {isEditable && (
           <>
             <Button
               variant="outline"
@@ -240,7 +230,7 @@ const RequestActionSection = ({
             </Button>
           </>
         )}
-        {isUserOwner && requestStatus === "CANCELED" && (
+        {isDeletable && (
           <Button color="red" fullWidth onClick={openPromptDeleteModal}>
             Delete Request
           </Button>
