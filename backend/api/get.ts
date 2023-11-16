@@ -1,3 +1,4 @@
+import { EditRequestOnLoadProps } from "@/pages/team-requests/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -3841,4 +3842,44 @@ export const getUnresolvedRequestListPerApprover = async (
   if (error) throw error;
 
   return data as unknown as ApproverUnresolvedRequestListType[];
+};
+
+// Get edit request on load
+export const getEditRequestOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    requestId: string;
+    referenceOnly: boolean;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_edit_request_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as EditRequestOnLoadProps;
+};
+
+// Get all group of team member
+export const getAllGroupOfTeamMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamMemberId: string }
+) => {
+  const { teamMemberId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("team_group_member_table")
+    .select(
+      "team_group: team_group_id(team_group_name, team_group_is_disabled)"
+    )
+    .eq("team_member_id", teamMemberId)
+    .eq("team_group.team_group_is_disabled", false);
+
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    team_group: { team_group_name: string };
+  }[];
+
+  return formattedData.map((group) => group.team_group.team_group_name);
 };

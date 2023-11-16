@@ -6,7 +6,7 @@ import {
   getProjectSignerWithTeamMember,
   getSupplier,
 } from "@/backend/api/get";
-import { editRequest } from "@/backend/api/post";
+import { createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
@@ -14,8 +14,10 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { isStringParsable, safeParse } from "@/utils/functions";
 import {
   FormType,
+  FormWithResponseType,
   OptionTableRow,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -37,6 +39,10 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { RequestFormValues } from "../EditRequestPage/EditRequestPage";
 
+export type RequestFormValuesForReferenceRequest = {
+  sections: FormWithResponseType["form_section"];
+};
+
 type Props = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
@@ -46,6 +52,7 @@ type Props = {
     special_approver_item_list: string[];
     special_approver_signer: FormType["form_signer"][0];
   }[];
+  referenceOnly: boolean;
 };
 
 const EditRequisitionRequestPage = ({
@@ -53,6 +60,7 @@ const EditRequisitionRequestPage = ({
   itemOptions,
   projectOptions,
   specialApprover,
+  referenceOnly,
 }: Props) => {
   const router = useRouter();
   const formId = request.request_form_id;
@@ -135,24 +143,39 @@ const EditRequisitionRequestPage = ({
           newSections.forEach((newSection) => {
             // if section general name is equal
             if (
-              newSection.section_field[0].field_response ===
-              section.section_field[0].field_response
+              safeParse(
+                newSection.section_field[0].field_response[0].request_response
+              ) ==
+              safeParse(
+                section.section_field[0].field_response[0].request_response
+              )
             ) {
               let uniqueField = false;
               // loop on every field except name and quantity
               for (let i = 5; i < newSection.section_field.length; i++) {
-                if (
-                  newSection.section_field[i].field_response !==
-                  section.section_field[i].field_response
-                ) {
+                const newSectionField =
+                  safeParse(
+                    newSection.section_field[i].field_response[0]
+                      .request_response
+                  ) ?? "";
+                const sectionField =
+                  safeParse(
+                    section.section_field[i].field_response[0].request_response
+                  ) ?? "";
+                if (newSectionField != sectionField) {
                   uniqueField = true;
                   break;
                 }
               }
               if (!uniqueField) {
                 newSection.section_field[2].field_response[0].request_response = `${
-                  Number(newSection.section_field[2].field_response) +
-                  Number(section.section_field[2].field_response)
+                  Number(
+                    newSection.section_field[2].field_response[0]
+                      .request_response
+                  ) +
+                  Number(
+                    section.section_field[2].field_response[0].request_response
+                  )
                 }`;
                 uniqueItem = false;
               }
@@ -229,6 +252,143 @@ const EditRequisitionRequestPage = ({
       });
 
       router.push(`/team-requests/requests/${request.request_id}`);
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateRequest = async (data: RequestFormValues) => {
+    try {
+      if (!requestorProfile) return;
+      if (!teamMember) return;
+
+      setIsLoading(true);
+      const formattedData = data.sections.map((section, index) => {
+        const duplicatableId = uuidv4();
+        return {
+          ...section,
+          section_field: section.section_field.map((field) => {
+            return {
+              ...field,
+              field_section_duplicatable_id:
+                index > 1 ? duplicatableId : undefined,
+              field_response: isStringParsable(
+                field.field_response[0].request_response
+              )
+                ? JSON.parse(field.field_response[0].request_response)
+                : field.field_response[0].request_response ?? undefined,
+            };
+          }),
+        };
+      });
+      const toBeCheckedSections = formattedData.slice(1);
+      const newSections: RequestFormValuesForReferenceRequest["sections"] = [];
+      toBeCheckedSections.forEach((section) => {
+        // if new section if empty
+        if (newSections.length === 0) {
+          newSections.push(section);
+        } else {
+          let uniqueItem = true;
+          newSections.forEach((newSection) => {
+            // if section general name is equal
+
+            if (
+              safeParse(newSection.section_field[0].field_response as string) ==
+              safeParse(section.section_field[0].field_response)
+            ) {
+              let uniqueField = false;
+              // loop on every field except name and quantity
+              for (let i = 5; i < newSection.section_field.length; i++) {
+                const newSectionField =
+                  safeParse(
+                    newSection.section_field[i].field_response as string
+                  ) ?? "";
+                const sectionField =
+                  safeParse(section.section_field[i].field_response) ?? "";
+                if (newSectionField != sectionField) {
+                  uniqueField = true;
+                  break;
+                }
+              }
+              if (!uniqueField) {
+                newSection.section_field[2].field_response =
+                  Number(newSection.section_field[2].field_response) +
+                  Number(section.section_field[2].field_response);
+                uniqueItem = false;
+              }
+            }
+          });
+          if (uniqueItem) {
+            newSections.push(section);
+          }
+        }
+      });
+
+      const newData = {
+        sections: [formattedData[0], ...newSections],
+      };
+
+      const response = formattedData[0].section_field[0]
+        .field_response as string;
+
+      const projectId = formattedData[0].section_field[0].field_option.find(
+        (option) => option.option_value === response
+      )?.option_id as string;
+
+      const filteredSignerList = signerList.filter(
+        (signer) => !specialApproverList.includes(signer.signer_id)
+      );
+
+      // special approver
+      const additionalSignerList: FormType["form_signer"] = [];
+      const alreadyAddedAdditionalSigner: string[] = [];
+      if (specialApprover && specialApprover.length !== 0) {
+        const generalNameList = newSections.map(
+          (section) => section.section_field[0].field_response
+        );
+        specialApprover.map((approver) => {
+          if (
+            alreadyAddedAdditionalSigner.includes(
+              approver.special_approver_signer.signer_id
+            )
+          )
+            return;
+          if (
+            approver.special_approver_item_list.some((item) =>
+              generalNameList.includes(item)
+            )
+          ) {
+            additionalSignerList.push(approver.special_approver_signer);
+            alreadyAddedAdditionalSigner.push(
+              approver.special_approver_signer.signer_id
+            );
+          }
+        });
+      }
+
+      const newRequest = await createRequest(supabaseClient, {
+        requestFormValues: newData,
+        formId,
+        teamMemberId: teamMember.team_member_id,
+        signers: [...filteredSignerList, ...additionalSignerList],
+        teamId: teamMember.team_member_team_id,
+        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+        formName: request.request_form.form_name,
+        isFormslyForm: true,
+        projectId,
+      });
+
+      notifications.show({
+        message: "Request created.",
+        color: "green",
+      });
+
+      router.push(`/team-requests/requests/${newRequest.request_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -598,7 +758,11 @@ const EditRequisitionRequestPage = ({
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleEditRequest)}>
+        <form
+          onSubmit={handleSubmit(
+            referenceOnly ? handleCreateRequest : handleEditRequest
+          )}
+        >
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
@@ -626,6 +790,7 @@ const EditRequisitionRequestPage = ({
                       isSearching,
                     }}
                     formslyFormName="Requisition"
+                    referenceOnly={referenceOnly}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

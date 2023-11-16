@@ -6,11 +6,13 @@ type Store = {
   userInitials: string;
   userProfile: UserTableRow | null;
   userTeamMember: TeamMemberTableRow | null;
+  userTeamMemberGroupList: string[];
   actions: {
     setUserAvatar: (avatar: string | null) => void;
     setUserInitials: (initials: string) => void;
     setUserTeamMember: (member: TeamMemberTableRow) => void;
     setUserProfile: (profile: UserTableRow) => void;
+    setUserTeamMemberGroupList: (groupList: string[]) => void;
   };
 };
 
@@ -19,6 +21,7 @@ export const useUserStore = create<Store>((set) => ({
   userInitials: "",
   userProfile: null,
   userTeamMember: null,
+  userTeamMemberGroupList: [],
   actions: {
     setUserAvatar(avatar) {
       set((state) => ({
@@ -38,10 +41,16 @@ export const useUserStore = create<Store>((set) => ({
         userProfile: profile,
       }));
     },
-    setUserTeamMember(teamMember) {
+    setUserTeamMember(member) {
       set((state) => ({
         ...state,
-        userTeamMember: teamMember,
+        userTeamMember: member,
+      }));
+    },
+    setUserTeamMemberGroupList(groupList) {
+      set((state) => ({
+        ...state,
+        userTeamMemberGroupList: groupList,
       }));
     },
   },
@@ -53,3 +62,5 @@ export const useUserTeamMember = () =>
   useUserStore((state) => state.userTeamMember);
 export const useUserActions = () => useUserStore((state) => state.actions);
 export const useUserProfile = () => useUserStore((state) => state.userProfile);
+export const useUserTeamMemberGroupList = () =>
+  useUserStore((state) => state.userTeamMemberGroupList);
