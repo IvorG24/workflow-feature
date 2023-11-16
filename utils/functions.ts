@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import moment from "moment";
+import { RequestCommentType } from "./types";
 
 // check if a value is empty
 export const isEmpty = (value: any) => {
@@ -494,4 +495,67 @@ export const generateJiraTicketPayload = ({
   }
 
   return jiraTicketPayload;
+};
+
+export const generateJiraCommentPayload = (
+  commentList: RequestCommentType[]
+) => {
+  const commentListForJira = commentList.map((comment) => {
+    const commenter = comment.comment_team_member.team_member_user;
+    const attachmentContent = comment.comment_attachment.map((attachment) => {
+      const attachmentComment = {
+        type: "text",
+        text: attachment.attachment_name + " \n",
+        marks: [
+          {
+            type: "link",
+            attrs: {
+              href: attachment.attachment_public_url,
+              title: attachment.attachment_name,
+            },
+          },
+        ],
+      };
+      return attachmentComment;
+    });
+
+    const formattedDate = moment(comment.comment_date_created).format("LTS");
+
+    const jiraComment = {
+      type: "blockquote",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: `${commenter.user_first_name} ${
+                commenter.user_last_name
+              } ${formattedDate} ${new Date(
+                comment.comment_date_created
+              ).toDateString()}`,
+            },
+            {
+              type: "hardBreak",
+            },
+            {
+              type: "text",
+              text: comment.comment_content,
+            },
+          ],
+        },
+      ],
+    };
+
+    if (attachmentContent.length > 0) {
+      jiraComment.content.push({
+        type: "paragraph",
+        content: [...attachmentContent],
+      });
+    }
+
+    return jiraComment;
+  });
+
+  return commentListForJira;
 };

@@ -9,6 +9,7 @@ import { RequestCommentType } from "@/utils/types";
 import { Divider, Group, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import moment from "moment";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -21,6 +22,7 @@ type Props = {
     requestId: string;
     requestOwnerId: string;
     teamId: string;
+    requestJiraId?: string | null;
   };
   requestCommentList: RequestCommentType[];
 };
@@ -66,9 +68,10 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
       setIsLoading(true);
       const newCommentId = uuidv4();
       // upload attachments
+      const commentAttachmentList = [];
       if (commentAttachment.length > 0) {
         for (const attachment of commentAttachment) {
-          await createAttachment(supabaseClient, {
+          const { data, url } = await createAttachment(supabaseClient, {
             file: attachment,
             attachmentData: {
               attachment_bucket: "COMMENT_ATTACHMENTS",
@@ -76,10 +79,11 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
               attachment_value: `${newCommentId}-${attachment.name}`,
             },
           });
+          commentAttachmentList.push({ ...data, attachment_public_url: url });
         }
         setCommentAttachment([]);
       }
-      const { error } = await createComment(supabaseClient, {
+      const { data: newComment, error } = await createComment(supabaseClient, {
         comment_request_id: requestData.requestId,
         comment_team_member_id: teamMember.team_member_id,
         comment_type: "REQUEST_COMMENT",
@@ -88,6 +92,27 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
       });
 
       if (error) throw error;
+
+      if (requestData.requestJiraId) {
+        const newCommentWithAttachment = {
+          ...newComment,
+          comment_attachment: commentAttachmentList,
+          comment_team_member: {
+            team_member_user: {
+              user_id: teamMember.team_member_user_id,
+              user_first_name: userProfile.user_first_name,
+              user_last_name: userProfile.user_last_name,
+              user_username: userProfile.user_username,
+              user_avatar: userProfile.user_avatar,
+            },
+          },
+        };
+
+        await handleAddCommentToJiraTicket(
+          requestData.requestJiraId,
+          newCommentWithAttachment as RequestCommentType
+        );
+      }
 
       if (!error) {
         if (requestData.requestOwnerId !== user?.user_id) {
@@ -116,6 +141,97 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddCommentToJiraTicket = async (
+    jiraTicketKey: string,
+    comment: RequestCommentType
+  ) => {
+    try {
+      const commenter = comment.comment_team_member.team_member_user;
+      const attachmentContent = comment.comment_attachment.map((attachment) => {
+        const attachmentComment = {
+          type: "text",
+          text: attachment.attachment_name + " \n",
+          marks: [
+            {
+              type: "link",
+              attrs: {
+                href: attachment.attachment_public_url,
+                title: attachment.attachment_name,
+              },
+            },
+          ],
+        };
+        return attachmentComment;
+      });
+
+      const formattedDate = moment(comment.comment_date_created).format("LTS");
+      const jiraComment = {
+        type: "blockquote",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: comment.comment_content,
+              },
+            ],
+          },
+        ],
+      };
+
+      if (attachmentContent.length > 0) {
+        jiraComment.content.push({
+          type: "paragraph",
+          content: [...attachmentContent],
+        });
+      }
+
+      const bodyData = {
+        body: {
+          version: 1,
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: `${commenter.user_first_name} ${
+                    commenter.user_last_name
+                  } ${formattedDate} ${new Date(
+                    comment.comment_date_created
+                  ).toDateString()}`,
+                  marks: [{ type: "strong" }],
+                },
+              ],
+            },
+            jiraComment,
+          ],
+        },
+      };
+
+      const jiraTicketCommentResponse = await fetch(
+        `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyData),
+        }
+      );
+
+      if (jiraTicketCommentResponse.ok) {
+        console.log("Jira comment added successfully");
+      } else {
+        console.error("Failed to add comment");
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 

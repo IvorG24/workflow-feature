@@ -1,5 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getFileUrl } from "@/backend/api/get";
+import { getCommentAttachment, getFileUrl } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -17,7 +17,10 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { generateJiraTicketPayload } from "@/utils/functions";
+import {
+  generateJiraCommentPayload,
+  generateJiraTicketPayload,
+} from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   ReceiverStatusType,
@@ -27,6 +30,7 @@ import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
@@ -443,11 +447,89 @@ const RequisitionRequestPage = ({
         return null;
       }
 
+      if (requestCommentList.length > 0) {
+        await handleAddCommentToJiraTicket(jiraTicketData.issueKey);
+      }
+
       return JSON.stringify(jiraTicketData);
     } catch (error) {
       console.error("Failed to create jira ticket", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchCommentAttachmentList = async () => {
+    const commentListWithAttachmentUrl = await Promise.all(
+      requestCommentList.map(async (comment) => {
+        const commentAttachmentUrlList = await getCommentAttachment(
+          supabaseClient,
+          { commentId: comment.comment_id }
+        );
+
+        return {
+          ...comment,
+          comment_attachment: commentAttachmentUrlList,
+        };
+      })
+    );
+    return commentListWithAttachmentUrl.sort((a, b) => {
+      const aDate = moment(a.comment_date_created).valueOf();
+      const bDate = moment(b.comment_date_created).valueOf();
+
+      return aDate - bDate;
+    });
+  };
+
+  const handleAddCommentToJiraTicket = async (jiraTicketKey: string) => {
+    try {
+      // fetch comments with attachment
+      const rfCommentList = await fetchCommentAttachmentList();
+      const rfCommentListForJira = generateJiraCommentPayload(rfCommentList);
+
+      const bodyData = {
+        body: {
+          version: 1,
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "Formsly Request Comment List Before Approval",
+                  marks: [
+                    {
+                      type: "strong",
+                    },
+                  ],
+                },
+              ],
+            },
+            ...rfCommentListForJira,
+          ],
+        },
+      };
+
+      const jiraTicketCommentResponse = await fetch(
+        `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyData),
+        }
+      );
+
+      if (jiraTicketCommentResponse.ok) {
+        console.log("Comment added successfully");
+      } else {
+        console.error("Failed to add comment");
+      }
+      return jiraTicketCommentResponse;
+    } catch (error) {
+      console.error("Error:", error);
     }
   };
 
@@ -620,6 +702,7 @@ const RequisitionRequestPage = ({
           requestId: request.request_id,
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
+          requestJiraId: requestJira.id,
         }}
         requestCommentList={requestCommentList}
       />
