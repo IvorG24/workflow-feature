@@ -48,6 +48,7 @@ type RequestFormSectionProps = {
   sourcedItemFormMethods?: {
     onProjectSiteChange: () => void;
   };
+  referenceOnly?: boolean;
 };
 
 const RequestFormSection = ({
@@ -61,6 +62,7 @@ const RequestFormSection = ({
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
+  referenceOnly,
 }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -97,6 +99,7 @@ const RequestFormSection = ({
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}
+            referenceOnly={referenceOnly}
           />
         ))}
       </Stack>

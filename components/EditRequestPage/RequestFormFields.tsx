@@ -72,6 +72,7 @@ type RequestFormFieldsProps = {
   sourcedItemFormMethods?: {
     onProjectSiteChange: () => void;
   };
+  referenceOnly?: boolean;
 };
 
 const RequestFormFields = ({
@@ -84,6 +85,7 @@ const RequestFormFields = ({
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
+  referenceOnly,
 }: RequestFormFieldsProps) => {
   const {
     control,
@@ -112,9 +114,11 @@ const RequestFormFields = ({
 
   const readOnly =
     field.field_name === "Requesting Project" &&
+    !referenceOnly &&
     ["Requisition", "Subcon"].includes(formslyFormName)
       ? true
       : field.field_is_read_only;
+
   const inputProps = {
     label: field.field_name,
     description: field.field_description,
@@ -176,6 +180,17 @@ const RequestFormFields = ({
       fetchFile();
     }
   }, []);
+
+  const checkIfDateIsValid = (value: Date | undefined) => {
+    if (!formslyFormName || !value) return value;
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+    if (subconFormMethods) {
+      return value >= addDays(currentDate, 14) ? value : undefined;
+    } else {
+      return value >= currentDate ? value : undefined;
+    }
+  };
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
     let fieldOption = field.options;
@@ -499,7 +514,7 @@ const RequestFormFields = ({
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`}
             render={({ field: { value, onChange } }) => (
               <DateInput
-                value={convertTimestampToDate(value)}
+                value={checkIfDateIsValid(convertTimestampToDate(value))}
                 onChange={onChange}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
@@ -514,7 +529,9 @@ const RequestFormFields = ({
                 }
               />
             )}
-            rules={{ ...fieldRules }}
+            rules={{
+              ...fieldRules,
+            }}
           />
         );
 
