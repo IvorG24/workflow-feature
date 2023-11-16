@@ -908,6 +908,12 @@ const RequestPage = ({
             isEditable={isEditable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
+            onCreateJiraTicket={async () => {
+              console.log(
+                "Currently Formlsy does not support the creation of Jira Ticket of other forms"
+              );
+              return null;
+            }}
           />
         )}
 

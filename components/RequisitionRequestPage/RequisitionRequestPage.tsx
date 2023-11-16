@@ -17,6 +17,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { generateJiraTicketPayload } from "@/utils/functions";
 import {
   ConnectedRequestIdList,
   ReceiverStatusType,
@@ -391,6 +392,65 @@ const RequisitionRequestPage = ({
   //   );
   // };
 
+  const handleCreateJiraTicket = async () => {
+    try {
+      setIsLoading(true);
+      if (!request.request_formsly_id) {
+        console.warn("formsly_id not found");
+        return null;
+      }
+      const projectName = request.request_project.team_project_name;
+      const itemCategory = sectionWithDuplicateList
+        .slice(1)
+        .map(
+          (section) => section.section_field[3].field_response?.request_response
+        ) as string[];
+
+      const primaryApproverJiraUserResponse = await fetch(
+        `/api/get-jira-user?approverEmail=${user?.user_email}`
+      );
+
+      const primaryApproverJiraUserData =
+        await primaryApproverJiraUserResponse.json();
+
+      const jiraTicketPayload = generateJiraTicketPayload({
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_id}`,
+        requestTypeId: "189",
+        projectName,
+        itemCategory,
+        primaryApproverJiraAccountId: primaryApproverJiraUserData[0]
+          ? primaryApproverJiraUserData[0].accountId
+          : null,
+      });
+
+      const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jiraTicketPayload),
+      });
+
+      const jiraTicketData = await jiraTicketResponse.json();
+
+      if (!jiraTicketResponse.ok) {
+        console.error(jiraTicketData.error);
+        notifications.show({
+          message: jiraTicketData.error,
+          color: "red",
+        });
+        return null;
+      }
+
+      return JSON.stringify(jiraTicketData);
+    } catch (error) {
+      console.error("Failed to create jira ticket", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
@@ -542,6 +602,7 @@ const RequisitionRequestPage = ({
             isDeletable={isDeletable}
             isUserRequester={isUserRequester}
             requestId={request.request_id}
+            onCreateJiraTicket={handleCreateJiraTicket}
           />
         )}
 
