@@ -536,6 +536,9 @@ export const editRequest = async (
   // get request response
   const requestResponseInput: RequestResponseTableInsert[] = [];
   for (const section of requestFormValues.sections) {
+    const duplicatableSectionId = section.section_is_duplicatable
+      ? uuidv4()
+      : null;
     for (const field of section.section_field) {
       let responseValue = field?.field_response[0]?.request_response as unknown;
       if (
@@ -582,9 +585,7 @@ export const editRequest = async (
 
         const response = {
           request_response: JSON.stringify(responseValue),
-          request_response_duplicatable_section_id:
-            field.field_response[0].request_response_duplicatable_section_id ??
-            null,
+          request_response_duplicatable_section_id: duplicatableSectionId,
           request_response_field_id: field.field_id,
           request_response_request_id: requestId,
         };

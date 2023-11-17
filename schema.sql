@@ -6102,7 +6102,7 @@ $$ LANGUAGE plv8;
 
 -- End: Analyze Item
 
--- Start: Get edit request on load
+-- Start: Get Edit Request on load
 
 CREATE OR REPLACE FUNCTION get_edit_request_on_load(
     input_data JSON
@@ -6112,16 +6112,21 @@ RETURNS JSON AS $$
   plv8.subtransaction(function(){
     const {
       userId,
-      requestId
+      requestId,
+      referenceOnly
     } = input_data;
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     if (!teamId) throw new Error("No team found");
 
-    const isPending = Boolean(plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_id='${requestId}' AND request_status='PENDING' AND request_is_disabled=false;`)[0].count);
-    if (!isPending) throw new Error("Request can't be edited") 
-
     const unformattedRequest = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
+
+    if(!referenceOnly){
+      const isPending = Boolean(plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_id='${requestId}' AND request_status='PENDING' AND request_is_disabled=false;`)[0].count);
+      if (!isPending) throw new Error("Request can't be edited") 
+      const isRequester = userId===unformattedRequest.request_team_member.team_member_user.user_id
+      if (!isRequester) throw new Error("Requests can only be edited by the request creator") 
+    }
 
     const {
       request_form: { form_section: originalSectionList },
@@ -6441,7 +6446,7 @@ RETURNS JSON AS $$
                       ...preferredSupplierField,
                       field_response: [
                         {
-                          request_response_id: uuidv4(),
+                          request_response_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
                           request_response: null,
                           request_response_duplicatable_section_id:
                             section.section_field[8].field_response[0]
@@ -6661,6 +6666,121 @@ RETURNS JSON AS $$
           serviceOptions,
           projectOptions,
         };
+        
+      } else if (form.form_name === "Sourced Item") {
+        const requisitionId = JSON.parse(form.form_section[0].section_field.find(
+          (field) => field.field_name === "Requisition ID"
+        )?.field_response[0].request_response);
+
+        const requestResponseData = plv8.execute(`
+          SELECT rrt.*,
+            json_build_object(
+              'field_name', ft.field_name,
+              'field_order', ft.field_order
+            ) AS request_response_field
+          FROM request_response_table rrt
+          INNER JOIN field_table ft ON rrt.request_response_field_id = ft.field_id
+          WHERE rrt.request_response_request_id='${requisitionId}';
+        `);
+
+        const items = {};
+        const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+        requestResponseData.forEach((response) => {
+          if (response.request_response_field) {
+            const fieldName = response.request_response_field.field_name;
+            const duplicatableSectionId =
+              response.request_response_duplicatable_section_id ??
+              idForNullDuplicationId;
+
+            if (response.request_response_field.field_order > 4) {
+              if (!items[duplicatableSectionId]) {
+                items[duplicatableSectionId] = {
+                  name: "",
+                  description: "",
+                  quantity: 0,
+                  unit: "",
+                };
+              }
+
+              if (fieldName === "General Name") {
+                items[duplicatableSectionId].name = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Base Unit of Measurement") {
+                items[duplicatableSectionId].unit = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Quantity") {
+                items[duplicatableSectionId].quantity = Number(
+                  response.request_response
+                );
+              } else if (
+                fieldName === "GL Account" ||
+                fieldName === "CSI Code" ||
+                fieldName === "CSI Code Description" ||
+                fieldName === "Division Description" ||
+                fieldName === "Level 2 Major Group Description" ||
+                fieldName === "Level 2 Minor Group Description"
+              ) {
+              } else {
+                items[duplicatableSectionId].description += `${
+                  items[duplicatableSectionId].description ? ", " : ""
+                }${fieldName}: ${JSON.parse(response.request_response)}`;
+              }
+            }
+          }
+        });
+
+        const itemOptions = Object.keys(items).map((item, index) => {
+          const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+
+        const itemSectionWithProjectOptions = form.form_section
+          .slice(1)
+          .map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: itemOptions,
+              },
+              section.section_field[1],
+              {
+                ...section.section_field[2],
+                field_option: projectOptions.filter(
+                  (project) => project.option_id !== request.request_project_id
+                ),
+              },
+            ],
+          }));
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...request.request_form,
+            form_section: [
+              request.request_form.form_section[0],
+              ...itemSectionWithProjectOptions,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          itemOptions,
+          requestingProject: request.request_project.team_project_name,
+        };
       } else {
         returnData = {request};
       }
@@ -6669,7 +6789,7 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Get edit request on load
+-- End: Get Edit Request on load
 
 ---------- End: FUNCTIONS
 

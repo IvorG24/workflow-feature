@@ -10,7 +10,6 @@ import {
   LoadingOverlay,
   Pagination,
   Paper,
-  ScrollArea,
   Select,
   Stack,
   Table,
@@ -173,40 +172,39 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
           {currentItem}
         </Title>
         {resultList && resultList.length !== 0 && (
-          <Box sx={{ overflow: "hidden" }}>
-            <ScrollArea scrollbarSize={10} offsetScrollbars type="auto">
-              <Table
-                withBorder
-                withColumnBorders
-                striped
-                highlightOnHover
-                sx={(theme) => ({
-                  "& th": {
-                    backgroundColor:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.blue[9]
-                        : theme.colors.blue[2],
-                  },
-                  overflowX: "scroll",
+          <Box>
+            <Table
+              withBorder
+              withColumnBorders
+              striped
+              highlightOnHover
+              sx={(theme) => ({
+                "& th": {
+                  backgroundColor:
+                    theme.colorScheme === "dark"
+                      ? theme.colors.blue[9]
+                      : theme.colors.blue[2],
+                },
+                overflowX: "scroll",
+              })}
+            >
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Item Description</th>
+                  <th>CSI Code Description</th>
+                  <th>Quantity</th>
+                  <th>Unit of Measurement</th>
+                  <th>Request Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resultList.map((result, index) => {
+                  return <ItemRow key={index} result={result} />;
                 })}
-              >
-                <thead>
-                  <tr>
-                    <th>Request ID</th>
-                    <th>Item Description</th>
-                    <th>CSI Code Description</th>
-                    <th>Quantity</th>
-                    <th>Unit of Measurement</th>
-                    <th>Request Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resultList.map((result, index) => {
-                    return <ItemRow key={index} result={result} />;
-                  })}
-                </tbody>
-              </Table>
-            </ScrollArea>
+              </tbody>
+            </Table>
+
             <Flex justify="flex-end">
               <Pagination
                 value={page}

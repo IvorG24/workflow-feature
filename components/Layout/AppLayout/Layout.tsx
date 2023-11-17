@@ -1,4 +1,5 @@
 import {
+  getAllGroupOfTeamMember,
   getAllNotification,
   getAllTeamOfUser,
   getFormList,
@@ -37,8 +38,13 @@ const Layout = ({ children }: LayoutProps) => {
   const activeApp = useActiveApp();
   const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
   const { setFormList } = useFormActions();
-  const { setUserAvatar, setUserInitials, setUserTeamMember, setUserProfile } =
-    useUserActions();
+  const {
+    setUserAvatar,
+    setUserInitials,
+    setUserTeamMember,
+    setUserProfile,
+    setUserTeamMemberGroupList,
+  } = useUserActions();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
 
@@ -102,7 +108,13 @@ const Layout = ({ children }: LayoutProps) => {
           });
           // set user team member id
           if (teamMember) {
+            const teamMemberGroupList = await getAllGroupOfTeamMember(
+              supabaseClient,
+              { teamMemberId: teamMember.team_member_id }
+            );
+  
             setUserTeamMember(teamMember);
+            setUserTeamMemberGroupList(teamMemberGroupList);
 
             // fetch form list of active team
             const formList = await getFormList(supabaseClient, {
@@ -136,6 +148,7 @@ const Layout = ({ children }: LayoutProps) => {
         setNotificationList(notificationList);
         setUnreadNotification(unreadNotificationCount || 0);
       } catch (e) {
+
         console.error(e);
         notifications.show({
           message: "Something went wrong. Please try again later.",

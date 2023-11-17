@@ -1,10 +1,5 @@
-import {
-  checkIfJiraIDIsUnique,
-  checkIfJiraLinkIsUnique,
-} from "@/backend/api/get";
+import { checkIfJiraIDIsUnique } from "@/backend/api/get";
 import { Database } from "@/utils/database";
-import { isValidUrl } from "@/utils/functions";
-import { FormStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Button,
   Flex,
@@ -19,40 +14,40 @@ import {
 import { modals, openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconId, IconLink } from "@tabler/icons-react";
+import { IconId } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 
 type Props = {
-  isUserOwner: boolean;
-  requestStatus: FormStatusType;
   handleCancelRequest: () => void;
   openPromptDeleteModal: () => void;
-  isUserSigner: boolean;
   handleUpdateRequest: (
     status: "APPROVED" | "REJECTED",
     jiraId?: string,
     jiraLink?: string
   ) => void;
-  signer?: RequestWithResponseType["request_signer"][0];
   isRf?: boolean;
   isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
-  isEditable?: boolean;
+  requestId: string;
+  isEditable: boolean;
+  canSignerTakeAction?: boolean;
+  isDeletable: boolean;
+  isUserRequester?: boolean;
 };
 
 const RequestActionSection = ({
-  isUserOwner,
-  requestStatus,
   handleCancelRequest,
   openPromptDeleteModal,
-  isUserSigner,
   handleUpdateRequest,
-  signer,
   isRf,
   isCashPurchase,
   isUserPrimarySigner,
+  requestId,
   isEditable,
+  canSignerTakeAction,
+  isDeletable,
+  isUserRequester,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -62,13 +57,11 @@ const RequestActionSection = ({
     setValue,
     setError,
     formState: { errors },
-  } = useForm<{ jiraId: string; jiraLink: string }>();
+  } = useForm<{ jiraId: string }>();
 
   const resetValue = () => {
     setValue("jiraId", "");
-    setValue("jiraLink", "");
     setError("jiraId", { message: "" });
-    setError("jiraLink", { message: "" });
   };
 
   const handleAction = (action: string, color: string) => {
@@ -88,14 +81,7 @@ const RequestActionSection = ({
             </Text>
             <form
               onSubmit={handleSubmit((data) => {
-                if (!isValidUrl(data.jiraLink)) {
-                  notifications.show({
-                    message: "Enter a valid link.",
-                    color: "red",
-                  });
-                  return;
-                }
-                handleUpdateRequest("APPROVED", data.jiraId, data.jiraLink);
+                handleUpdateRequest("APPROVED", data.jiraId);
                 modals.close("approveRf");
               })}
             >
@@ -135,42 +121,6 @@ const RequestActionSection = ({
                     },
                   })}
                   error={errors.jiraId?.message}
-                />
-                <TextInput
-                  icon={<IconLink size={16} />}
-                  placeholder="Jira Link"
-                  data-autofocus
-                  {...register("jiraLink", {
-                    validate: {
-                      required: (value) => {
-                        if (!value) {
-                          notifications.show({
-                            message: "Jira Link is required.",
-                            color: "red",
-                          });
-                          return "Jira Link is required.";
-                        } else {
-                          return true;
-                        }
-                      },
-                      checkIfUnique: async (value) => {
-                        if (
-                          await checkIfJiraLinkIsUnique(supabaseClient, {
-                            value: value,
-                          })
-                        ) {
-                          notifications.show({
-                            message: "Jira Link already exists.",
-                            color: "red",
-                          });
-                          return "Jira Link already exists.";
-                        } else {
-                          return true;
-                        }
-                      },
-                    },
-                  })}
-                  error={errors.jiraLink?.message}
                 />
               </Stack>
 
@@ -224,11 +174,6 @@ const RequestActionSection = ({
     }
   };
 
-  const canSignerTakeAction =
-    isUserSigner &&
-    signer?.request_signer_status === "PENDING" &&
-    requestStatus !== "CANCELED";
-
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -236,6 +181,19 @@ const RequestActionSection = ({
       </Title>
       <Space h="xl" />
       <Stack>
+        {!isUserRequester === false && (
+          <Button
+            fullWidth
+            onClick={() =>
+              router.push(
+                `/team-requests/requests/${requestId}/edit?referenceOnly=true`
+              )
+            }
+          >
+            Reference this Request
+          </Button>
+        )}
+
         {canSignerTakeAction && (
           <>
             <Button
@@ -255,7 +213,7 @@ const RequestActionSection = ({
           </>
         )}
 
-        {isUserOwner && requestStatus === "PENDING" && isEditable && (
+        {isEditable && (
           <>
             <Button
               variant="outline"
@@ -277,7 +235,7 @@ const RequestActionSection = ({
             </Button>
           </>
         )}
-        {isUserOwner && requestStatus === "CANCELED" && (
+        {isDeletable && (
           <Button color="red" fullWidth onClick={openPromptDeleteModal}>
             Delete Request
           </Button>
