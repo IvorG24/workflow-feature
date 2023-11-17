@@ -8930,7 +8930,7 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 
 ---------- Start: VIEWS
 
-CREATE VIEW distinct_division AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
+CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 
 -------- End: VIEWS
 

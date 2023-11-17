@@ -1291,7 +1291,7 @@ export type Database = {
       };
     };
     Views: {
-      distinct_division: {
+      distinct_division_view: {
         Row: {
           csi_code_division_description: string | null;
           csi_code_division_id: string | null;
