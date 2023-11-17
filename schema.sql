@@ -4445,6 +4445,7 @@ RETURNS JSON as $$
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
               request_response_request_id = '${requisitionId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
           `
         );
 
@@ -4579,6 +4580,7 @@ RETURNS JSON as $$
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
               request_response_request_id = '${requisitionId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
           `
         );
 
@@ -4680,6 +4682,7 @@ RETURNS JSON as $$
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
               request_response_request_id = '${quotationId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
           `
         );
 
@@ -4774,6 +4777,7 @@ RETURNS JSON as $$
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
               request_response_request_id = '${sourcedItemId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
           `
         );
 
@@ -4884,6 +4888,7 @@ RETURNS JSON as $$
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
               request_response_request_id = '${releaseOrderId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
           `
         );
 
@@ -6673,26 +6678,27 @@ RETURNS JSON AS $$
         )?.field_response[0].request_response);
 
         const requestResponseData = plv8.execute(`
-          SELECT rrt.*,
-            json_build_object(
-              'field_name', ft.field_name,
-              'field_order', ft.field_order
-            ) AS request_response_field
-          FROM request_response_table rrt
-          INNER JOIN field_table ft ON rrt.request_response_field_id = ft.field_id
-          WHERE rrt.request_response_request_id='${requisitionId}';
+          SELECT
+              request_response_table.*,
+              field_name,
+              field_order
+            FROM request_response_table 
+            INNER JOIN field_table ON field_id  = request_response_field_id
+            WHERE 
+              request_response_request_id = '${requisitionId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
         `);
 
         const items = {};
         const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
         requestResponseData.forEach((response) => {
-          if (response.request_response_field) {
-            const fieldName = response.request_response_field.field_name;
+          if (response.field_name) {
+            const fieldName = response.field_name;
             const duplicatableSectionId =
               response.request_response_duplicatable_section_id ??
               idForNullDuplicationId;
 
-            if (response.request_response_field.field_order > 4) {
+            if (response.field_order > 4) {
               if (!items[duplicatableSectionId]) {
                 items[duplicatableSectionId] = {
                   name: "",
@@ -6781,6 +6787,596 @@ RETURNS JSON AS $$
           itemOptions,
           requestingProject: request.request_project.team_project_name,
         };
+      } else if (form.form_name === "Release Order") {
+        const sourcedItemId =JSON.parse(form.form_section[0].section_field.slice(-1)[0].field_response[0].request_response);
+       
+        const requestResponseData = plv8.execute(`
+          SELECT
+              request_response_table.*,
+              field_name,
+              field_order
+            FROM request_response_table 
+            INNER JOIN field_table ON field_id  = request_response_field_id
+            WHERE 
+              request_response_request_id = '${sourcedItemId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
+        `);
+
+        const items = {};
+        const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+        requestResponseData.forEach((response) => {
+          if (response.field_name) {
+            const fieldName = response.field_name;
+            const duplicatableSectionId =
+              response.request_response_duplicatable_section_id ??
+              idForNullDuplicationId;
+
+            if (response.field_order > 1) {
+              if (!items[duplicatableSectionId]) {
+                items[duplicatableSectionId] = {
+                  item: "",
+                  quantity: 0,
+                  sourceProject: "",
+                };
+              }
+
+              if (fieldName === "Item") {
+                items[duplicatableSectionId].item = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Quantity") {
+                items[duplicatableSectionId].quantity = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Source Project") {
+                items[duplicatableSectionId].sourceProject = JSON.parse(
+                  response.request_response
+                );
+              }
+            }
+          }
+        });
+
+        const sourceProjectList = {};
+
+        const regex = /\(([^()]+)\)/g;
+        const itemList = Object.keys(items);
+        const newOptionList = itemList.map((item, index) => {
+          const itemName = items[item].item;
+          const quantity = items[item].quantity;
+          const sourceProject = items[item].sourceProject;
+
+          const matches = regex.exec(itemName);
+          const unit = matches && matches[1].replace(/\d+/g, "").trim();
+
+          const replace = items[item].item.match(regex);
+          if (!replace) return;
+
+          const value = `${itemName.replace(
+            replace[0],
+            `(${quantity} ${unit}) (${sourceProject})`
+          )} `;
+          sourceProjectList[value] = items[item].sourceProject;
+
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        );
+
+        const usedItem = request.request_form.form_section
+          .slice(1)
+          .map((section) =>
+            `${JSON.parse(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(option.option_value.trim())
+        );
+        const itemSectionWithOptions =
+          request.request_form.form_section.slice(1).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      JSON.parse(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...request.request_form,
+            form_section: [
+              request.request_form.form_section[0],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          itemOptions: unusedItemOption,
+          originalItemOptions: itemOptions,
+          sourceProjectList,
+          requestingProject: request.request_project.team_project_name,
+        }
+      } else if (form.form_name === "Transfer Receipt") {
+        const releaseOrderId =
+          JSON.parse(form.form_section[0].section_field.slice(-1)[0].field_response[0]
+            .request_response);
+        
+        const requestResponseData = plv8.execute(`
+          SELECT
+              request_response_table.*,
+              field_name,
+              field_order
+            FROM request_response_table 
+            INNER JOIN field_table ON field_id  = request_response_field_id
+            WHERE 
+              request_response_request_id = '${releaseOrderId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
+        `);
+
+        const items = {};
+        const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+        requestResponseData.forEach((response) => {
+          if (response.field_name) {
+            const fieldName = response.field_name;
+            const duplicatableSectionId =
+              response.request_response_duplicatable_section_id ??
+              idForNullDuplicationId;
+
+            if (response.field_order > 1) {
+              if (!items[duplicatableSectionId]) {
+                items[duplicatableSectionId] = {
+                  item: "",
+                  quantity: 0,
+                  sourceProject: "",
+                };
+              }
+
+              if (fieldName === "Item") {
+                items[duplicatableSectionId].item = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Quantity") {
+                items[duplicatableSectionId].quantity = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Source Project") {
+                items[duplicatableSectionId].sourceProject = JSON.parse(
+                  response.request_response
+                );
+              }
+            }
+          }
+        });
+
+        const sourceProjectList = {};
+
+        const regex = /\(([^()]+)\)/g;
+        const itemList = Object.keys(items);
+        const newOptionList = itemList.map((item, index) => {
+          const itemName = items[item].item;
+          const quantity = items[item].quantity;
+
+          const matches = regex.exec(itemName);
+          const unit = matches && matches[1].replace(/\d+/g, "").trim();
+
+          const replace = items[item].item.match(regex);
+          if (!replace) return;
+
+          const value = `${itemName.replace(
+            replace[0],
+            `(${quantity} ${unit})`
+          )} `;
+          sourceProjectList[value] = items[item].sourceProject;
+
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        );
+
+        const usedItem = request.request_form.form_section
+          .slice(1)
+          .map((section) =>
+            `${JSON.parse(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(option.option_value.trim())
+        );
+        const itemSectionWithOptions =
+          request.request_form.form_section.slice(1).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      JSON.parse(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...request.request_form,
+            form_section: [
+              request.request_form.form_section[0],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          itemOptions: unusedItemOption,
+          originalItemOptions: itemOptions,
+          sourceProjectList,
+          requestingProject: request.request_project.team_project_name,
+        }
+      } else if (form.form_name === "Quotation") {
+        const requisitionId =
+          JSON.parse(form.form_section[0].section_field.slice(-1)[0].field_response[0]
+            .request_response);
+        
+        const requestResponseData = plv8.execute(`
+          SELECT
+              request_response_table.*,
+              field_name,
+              field_order
+            FROM request_response_table 
+            INNER JOIN field_table ON field_id  = request_response_field_id
+            WHERE 
+              request_response_request_id = '${requisitionId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
+        `);
+
+        const items = {};
+        const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+        requestResponseData.forEach((response) => {
+          if (response) {
+            const fieldName = response.field_name;
+            const duplicatableSectionId =
+              response.request_response_duplicatable_section_id ??
+              idForNullDuplicationId;
+
+            if (response.field_order > 4) {
+              if (!items[duplicatableSectionId]) {
+                items[duplicatableSectionId] = {
+                  name: "",
+                  description: "",
+                  quantity: 0,
+                  unit: "",
+                };
+              }
+
+              if (fieldName === "General Name") {
+                items[duplicatableSectionId].name = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Base Unit of Measurement") {
+                items[duplicatableSectionId].unit = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Quantity") {
+                items[duplicatableSectionId].quantity = Number(
+                  response.request_response
+                );
+              } else if (
+                fieldName === "GL Account" ||
+                fieldName === "CSI Code" ||
+                fieldName === "CSI Code Description" ||
+                fieldName === "Division Description" ||
+                fieldName === "Level 2 Major Group Description" ||
+                fieldName === "Level 2 Minor Group Description"
+              ) {
+              } else {
+                items[duplicatableSectionId].description += `${
+                  items[duplicatableSectionId].description ? ", " : ""
+                }${fieldName}: ${JSON.parse(response.request_response)}`;
+              }
+            }
+          }
+        });
+
+        const newOptionList = Object.keys(items).map((item, index) => {
+          const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value,
+          };
+        });
+
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        )
+
+        const usedItem = request.request_form.form_section
+          .slice(3)
+          .map((section) =>
+            `${JSON.parse(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(option.option_value.trim())
+        );
+
+        const itemSectionWithOptions =
+          request.request_form.form_section.slice(3).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      JSON.parse(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+
+        const supplierResponse =
+          JSON.parse(request.request_form.form_section[1].section_field[0]
+            .field_response[0].request_response);
+
+        const supplierListData = plv8.execute(`
+          SELECT * 
+          FROM supplier_table
+          WHERE supplier_team_id = '${teamId}'
+            AND supplier_name ILIKE '%${supplierResponse}%'
+          ORDER BY supplier_name ASC
+          LIMIT 100;
+        `);
+
+        const supplierList = supplierListData.map((supplier, index) => {
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+            option_order: index + 1,
+            option_value: supplier.supplier_name,
+          };
+        });
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...request.request_form,
+            form_section: [
+              request.request_form.form_section[0],
+              {
+                ...request.request_form.form_section[1],
+                section_field: [
+                  {
+                    ...request.request_form.form_section[1]
+                      .section_field[0],
+                    field_option: supplierList,
+                  },
+                  ...request.request_form.form_section[1].section_field.slice(
+                    1
+                  ),
+                ],
+              },
+              request.request_form.form_section[2],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          requestResponseData,
+          request: formattedRequest,
+          itemOptions: unusedItemOption,
+          originalItemOptions: itemOptions,
+          requestingProject: request.request_project.team_project_name,
+        };
+
+      } else if (form.form_name === "Receiving Inspecting Report") {
+        const quotationId =
+          JSON.parse(form.form_section[0].section_field.slice(-1)[0].field_response[0]
+            .request_response);
+        
+        const requestResponseData = plv8.execute(`
+          SELECT
+              request_response_table.*,
+              field_name,
+              field_order
+            FROM request_response_table 
+            INNER JOIN field_table ON field_id  = request_response_field_id
+            WHERE 
+              request_response_request_id = '${quotationId}'
+            ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
+        `);
+
+        const items = {};
+        const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+        requestResponseData.forEach((response) => {
+          if (response.field_name) {
+            const fieldName = response.field_name;
+            const duplicatableSectionId =
+              response.request_response_duplicatable_section_id ??
+              idForNullDuplicationId;
+
+            if (response.field_order > 12) {
+              if (!items[duplicatableSectionId]) {
+                items[duplicatableSectionId] = {
+                  item: "",
+                  quantity: "",
+                };
+              }
+
+              if (fieldName === "Item") {
+                items[duplicatableSectionId].item = JSON.parse(
+                  response.request_response
+                );
+              } else if (fieldName === "Quantity") {
+                const matches = /\(([^)]+)\)/.exec(items[duplicatableSectionId].item);
+
+                if (matches) {
+                  const unit = matches[1].replace(/\d+/g, "").trim();
+
+                  items[
+                    duplicatableSectionId
+                  ].quantity = `${response.request_response} ${unit}`;
+                }
+              }
+            }
+          }
+        });
+
+        const sourceProjectList = {};
+
+        const regex = /\(([^()]+)\)/g;
+        const itemList = Object.keys(items);
+        const newOptionList = itemList.map((item, index) => {
+          const itemName = items[item].item;
+          const quantity = items[item].quantity;
+          const replace = items[item].item.match(regex);
+          if (!replace) return;
+          const value = `${itemName.replace(replace[0], `(${quantity})`)} `;
+
+          return {
+            option_description: null,
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item,
+            option_order: index,
+            option_value: value.trim(),
+          };
+        });
+
+        const itemOptions = newOptionList.filter(
+          (item) => item?.option_value
+        ) 
+
+        const usedItem = request.request_form.form_section
+          .slice(1)
+          .map((section) =>
+            `${JSON.parse(
+              section.section_field[0].field_response[0].request_response
+            )}`.trim()
+          )
+          .flat();
+
+        const unusedItemOption = itemOptions.filter(
+          (option) => !usedItem.includes(option.option_value.trim())
+        );
+        const itemSectionWithOptions =
+          request.request_form.form_section.slice(2).map((section) => ({
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: [
+                  ...itemOptions.filter(
+                    (option) =>
+                      option.option_value ===
+                      JSON.parse(
+                        section.section_field[0].field_response[0]
+                          .request_response
+                      )
+                  ),
+                  ...unusedItemOption,
+                ],
+              },
+              ...section.section_field.slice(1),
+            ],
+          }));
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...request.request_form,
+            form_section: [
+              request.request_form.form_section[0],
+              request.request_form.form_section[1],
+              ...itemSectionWithOptions,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          itemOptions: unusedItemOption,
+          originalItemOptions: itemOptions,
+          sourceProjectList,
+          requestingProject: request.request_project.team_project_name,
+        }
       } else {
         returnData = {request};
       }
