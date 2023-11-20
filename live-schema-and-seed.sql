@@ -253,9 +253,15 @@ CREATE TABLE item_table(
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
-  item_division_id_list VARCHAR(4000)[] NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE item_division_table(
+  item_division_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_division_value VARCHAR(4000) NOT NULL,
+
+  item_division_item_id UUID REFERENCES item_table(item_id) NOT NULL
 );
 
 CREATE TABLE item_description_table(
@@ -957,7 +963,11 @@ RETURNS JSON AS $$
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_division_id_list) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}',ARRAY[${item_division_id_list}]) RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
+    const itemDivisionInput = item_division_id_list.map(division => {
+      return `(${division}, '${item_result.item_id}')`;
+    }).join(",");
+    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
 
@@ -1000,8 +1010,11 @@ RETURNS JSON AS $$
     
     const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *;`);
 
-    item_data = {...item_result, item_description: item_description}
-
+    item_data = {
+      ...item_result, 
+      item_division_id_list: item_division_list_result.map(division => division.item_division_value), 
+      item_description: item_description
+    }
  });
  return item_data;
 $$ LANGUAGE plv8;
@@ -1040,8 +1053,7 @@ RETURNS JSON AS $$
           item_is_available = '${item_is_available}',
           item_unit = '${item_unit}',
           item_gl_account = '${item_gl_account}',
-          item_team_id = '${item_team_id}',
-          item_division_id_list = ARRAY[${item_division_id_list}]
+          item_team_id = '${item_team_id}'
         WHERE item_id = '${item_id}'
         RETURNING *
       `
@@ -1118,15 +1130,26 @@ RETURNS JSON AS $$
       );
     });
 
-   // add
-   let addedDescription = [];
-   if(fieldValues.length && itemDescriptionValues.length){
-    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
+    // add
+    let addedDescription = [];
+    if(fieldValues.length && itemDescriptionValues.length){
+      plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
 
-    addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
-   }
+      addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+    }
 
-    item_data = {...item_result, item_description: [...updatedItemDescription, ...addedDescription]}
+    plv8.execute(`DELETE FROM item_division_table WHERE item_division_item_id='${item_id}'`);
+    const itemDivisionInput = item_division_id_list.map(division => {
+      return `(${division}, '${item_result.item_id}')`;
+    }).join(",");
+
+    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
+
+    item_data = {
+      ...item_result, 
+      item_division_id_list: item_division_list_result.map(division => division.item_division_value), 
+      item_description: [...updatedItemDescription, ...addedDescription]
+    }
  });
  return item_data;
 $$ LANGUAGE plv8;
@@ -3868,8 +3891,12 @@ RETURNS JSON as $$
 
         itemData.forEach(value => {
           const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC`);
+          
+          const itemDivision = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${value.item_id}'`);
+          
           items.push({
             ...value,
+            item_division_id_list: itemDivision.map(division => division.item_division_value),
             item_description: itemDescription
           })
         })
@@ -6337,6 +6364,8 @@ RETURNS JSON AS $$
                 AND item_is_available = true;
             `)[0];
 
+            const item_division_list = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${item.item_id}'`);
+
             const itemDescriptionList = plv8.execute(`
               SELECT * 
               FROM item_description_table
@@ -6369,7 +6398,7 @@ RETURNS JSON AS $$
                 }
               })
 
-            const itemDivisionIdList = `('${item.item_division_id_list.join("','")}')`
+            const itemDivisionIdList = `('${item_division_list.map(division => division.item_division_value).join("','")}')`
 
             const csiCodeList = plv8.execute(`
               SELECT *
@@ -7633,7 +7662,7 @@ ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
-
+ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -7780,6 +7809,11 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_table;
 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON special_approver_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_division_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_division_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -9129,6 +9163,56 @@ USING (
 CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+--- ITEM_DIVISION_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_division_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_division_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_division_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_division_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 -------- End: POLICIES
 
