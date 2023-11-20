@@ -33,6 +33,7 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
+import LeaveTeamSection from "./LeaveTeamSection";
 import AdminGroup from "./TeamGroup/AdminGroup";
 import ApproverGroup from "./TeamGroup/ApproverGroup";
 import CreateGroup from "./TeamGroup/CreateGroup";
@@ -560,6 +561,7 @@ const TeamPage = ({
       )}
 
       {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />}
+      {!isOwner && <LeaveTeamSection />}
 
       <Space mt={32} />
     </Container>
