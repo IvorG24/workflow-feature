@@ -964,9 +964,9 @@ RETURNS JSON AS $$
     
     const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}',ARRAY[${item_division_id_list}]) RETURNING *;`)[0];
     const itemDivisionInput = item_division_id_list.map(division => {
-      return `('${division}', '${item_result.item_id}')`;
+      return `(${division}, '${item_result.item_id}')`;
     }).join(",");
-    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput}`);
+    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
 
@@ -1138,10 +1138,11 @@ RETURNS JSON AS $$
     }
 
     plv8.execute(`DELETE FROM item_division_table WHERE item_division_item_id='${item_id}'`);
-    item_division_id_list.map(division => {
-      return `('${division}', '${item_result.item_id}')`;
+    const itemDivisionInput = item_division_id_list.map(division => {
+      return `(${division}, '${item_result.item_id}')`;
     }).join(",");
-    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput}`);
+    
+    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     item_data = {
       ...item_result, 
