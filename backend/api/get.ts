@@ -848,7 +848,7 @@ export const getItem = async (
   const { data, error } = await supabaseClient
     .from("item_table")
     .select(
-      "*, item_description: item_description_table(*, item_description_field: item_description_field_table(*), item_field: item_description_field_id(*))"
+      "*, item_division_table(*), item_description: item_description_table(*, item_description_field: item_description_field_table(*), item_field: item_description_field_id(*))"
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)
@@ -866,8 +866,16 @@ export const getItem = async (
     )
     .single();
   if (error) throw error;
+  const formattedData = data as unknown as ItemWithDescriptionAndField & {
+    item_division_table: { item_division_value: string }[];
+  };
 
-  return data as unknown as ItemWithDescriptionAndField;
+  return {
+    ...formattedData,
+    item_division_id_list: formattedData.item_division_table.map(
+      (division) => division.item_division_value
+    ),
+  } as unknown as ItemWithDescriptionAndField;
 };
 
 // check if Requisition form can be activated
