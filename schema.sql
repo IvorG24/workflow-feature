@@ -962,7 +962,7 @@ RETURNS JSON AS $$
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}',ARRAY[${item_division_id_list}]) RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");

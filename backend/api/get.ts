@@ -17,6 +17,7 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  ItemWithDescriptionType,
   NotificationOnLoad,
   NotificationTableRow,
   RequestByFormType,
@@ -714,9 +715,12 @@ export const getItemList = async (
 
   let query = supabaseClient
     .from("item_table")
-    .select("*, item_description: item_description_table(*)", {
-      count: "exact",
-    })
+    .select(
+      "*, item_division_table(*), item_description: item_description_table(*)",
+      {
+        count: "exact",
+      }
+    )
     .eq("item_team_id", teamId)
     .eq("item_is_disabled", false)
     .eq("item_description.item_description_is_disabled", false);
@@ -735,11 +739,21 @@ export const getItemList = async (
   query.maybeSingle;
 
   const { data, error, count } = await query;
-
   if (error) throw error;
 
+  const formattedData = data as unknown as (ItemWithDescriptionType & {
+    item_division_table: { item_division_value: string }[];
+  })[];
+
   return {
-    data,
+    data: formattedData.map((data) => {
+      return {
+        ...data,
+        item_division_id_list: data.item_division_table.map(
+          (division) => division.item_division_value
+        ),
+      };
+    }),
     count,
   };
 };
