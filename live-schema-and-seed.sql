@@ -6796,6 +6796,217 @@ $$ LANGUAGE plv8;
 
 -- End: Get Edit Request on load
 
+-- Start: Fetch Top Requestor
+
+CREATE OR REPLACE FUNCTION fetch_dashboard_top_requestor(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      formId,
+      startDate,
+      endDate,
+      page,
+      limit
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const topRequestorList = plv8.execute(`
+      SELECT 
+        request_team_member_id, 
+        COUNT(*) 
+      FROM request_table
+      WHERE 
+        request_is_disabled = false
+        AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
+        AND request_form_id = '${formId}'
+      GROUP BY request_team_member_id
+      ORDER BY COUNT(*) DESC
+      LIMIT '${limit}' 
+      OFFSET '${start}'
+    `);
+
+    const teamMemberList = topRequestorList.map(requestor => {
+      const teamMember = plv8.execute(`
+        SELECT 
+          team_member_id,
+          team_member_role,
+          team_member_date_created,
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_avatar,
+          user_email
+        FROM team_member_table
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE team_member_id = '${requestor.request_team_member_id}'
+      `)[0];
+      const pendingCount = Number(plv8.execute(`
+        SELECT COUNT(*)
+        FROM request_table
+        WHERE 
+          request_status = 'PENDING'
+          AND request_is_disabled = false
+          AND request_team_member_id = '${requestor.request_team_member_id}'
+      `)[0].count);
+      const approvedCount = Number(plv8.execute(`
+        SELECT COUNT(*)
+        FROM request_table
+        WHERE 
+          request_status = 'APPROVED'
+          AND request_is_disabled = false
+          AND request_team_member_id = '${requestor.request_team_member_id}'
+      `)[0].count);
+      const rejectedCount = Number(plv8.execute(`
+        SELECT COUNT(*)
+        FROM request_table
+        WHERE 
+          request_status = 'REJECTED'
+          AND request_is_disabled = false
+          AND request_team_member_id = '${requestor.request_team_member_id}'
+      `)[0].count);
+
+      return {
+        request: [
+          { label: 'Pending', value: pendingCount },
+          { label: 'Approved', value: approvedCount },
+          { label: 'Rejected', value: rejectedCount },
+        ],
+        total: pendingCount + approvedCount + rejectedCount,
+        team_member_id: teamMember.team_member_id,
+        team_member_role: teamMember.team_member_role,
+        team_member_user: {
+          user_avatar: teamMember.user_avatar,
+          user_email: teamMember.user_email,
+          user_first_name: teamMember.user_first_name,
+          user_id: teamMember.user_id,
+          user_last_name: teamMember.user_last_name
+        }
+      }
+    });
+
+    returnData = teamMemberList;
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch Top Requestor
+
+-- Start: Fetch Top Signer
+
+CREATE OR REPLACE FUNCTION fetch_dashboard_top_signer(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      formId,
+      startDate,
+      endDate,
+      page,
+      limit
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const topSignerList = plv8.execute(`
+      SELECT 
+        signer_team_member_id, 
+        COUNT(*) 
+      FROM request_signer_table
+      INNER JOIN signer_table ON signer_id = request_signer_signer_id
+      INNER JOIN request_table ON request_id = request_signer_request_id
+      WHERE 
+        request_is_disabled = false
+        AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
+        AND request_form_id = '${formId}'
+        AND signer_is_disabled = false
+        AND request_status != 'CANCELED'
+      GROUP BY signer_team_member_id
+      ORDER BY COUNT(*) DESC
+      LIMIT '${limit}' 
+      OFFSET '${start}'
+    `);
+
+    const teamMemberList = topSignerList.map(signer => {
+      const teamMember = plv8.execute(`
+        SELECT 
+          team_member_id,
+          team_member_role,
+          team_member_date_created,
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_avatar,
+          user_email
+        FROM team_member_table
+        INNER JOIN user_table ON user_id = team_member_user_id
+        WHERE team_member_id = '${signer.signer_team_member_id}'
+      `)[0];
+      const pendingCount = Number(plv8.execute(`
+        SELECT COUNT(*)
+        FROM request_signer_table
+        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN request_table ON request_id = request_signer_request_id
+        WHERE 
+          request_status = 'PENDING'
+          AND request_is_disabled = false
+          AND request_status != 'CANCELED'
+          AND signer_team_member_id = '${signer.signer_team_member_id}'
+      `)[0].count);
+      const approvedCount = Number(plv8.execute(`
+        SELECT COUNT(*)
+        FROM request_signer_table
+        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN request_table ON request_id = request_signer_request_id
+        WHERE 
+          request_status = 'APPROVED'
+          AND request_is_disabled = false
+          AND request_status != 'CANCELED'
+          AND signer_team_member_id = '${signer.signer_team_member_id}'
+      `)[0].count);
+      const rejectedCount = Number(plv8.execute(`
+        SELECT COUNT(*)
+        FROM request_signer_table
+        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN request_table ON request_id = request_signer_request_id
+        WHERE 
+          request_status = 'REJECTED'
+          AND request_is_disabled = false
+          AND request_status != 'CANCELED'
+          AND signer_team_member_id = '${signer.signer_team_member_id}'
+      `)[0].count);
+
+      return {
+        request: [
+          { label: 'Pending', value: pendingCount },
+          { label: 'Approved', value: approvedCount },
+          { label: 'Rejected', value: rejectedCount },
+        ],
+        total: pendingCount + approvedCount + rejectedCount,
+        team_member_id: teamMember.team_member_id,
+        team_member_role: teamMember.team_member_role,
+        team_member_user: {
+          user_avatar: teamMember.user_avatar,
+          user_email: teamMember.user_email,
+          user_first_name: teamMember.user_first_name,
+          user_id: teamMember.user_id,
+          user_last_name: teamMember.user_last_name
+        }
+      }
+    });
+
+    returnData = teamMemberList;
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch Top Signer
+
 ---------- End: FUNCTIONS
 
 
