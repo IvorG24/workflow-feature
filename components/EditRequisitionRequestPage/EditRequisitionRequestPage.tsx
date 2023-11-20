@@ -213,9 +213,8 @@ const EditRequisitionRequestPage = ({
       const additionalSignerList: FormType["form_signer"] = [];
       const alreadyAddedAdditionalSigner: string[] = [];
       if (specialApprover && specialApprover.length !== 0) {
-        const generalNameList = newSections.map(
-          (section) =>
-            section.section_field[0].field_response[0].request_response
+        const generalNameList = newSections.map((section) =>
+          safeParse(section.section_field[0].field_response[0].request_response)
         );
         specialApprover.map((approver) => {
           if (
