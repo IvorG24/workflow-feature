@@ -1,14 +1,13 @@
 import {
   getRequestStatusCount,
   getRequestStatusMonthlyCount,
-  getRequestorData,
-  getSignerData,
   getTeamMemberList,
 } from "@/backend/api/get";
 import { RadialChartData } from "@/components/Chart/RadialChart";
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { DEFAULT_ON_SCROLL_LIMIT } from "@/utils/constant";
 import { TeamMemberType } from "@/utils/types";
 import { Box, Flex, Loader, LoadingOverlay, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -73,6 +72,12 @@ const Overview = ({
     []
   );
 
+  const [requestorOffset, setRequestorOffset] = useState(1);
+  const [isRequestorFetchable, setIsRequestorFetchable] = useState(true);
+
+  const [signerOffset, setSignerOffset] = useState(1);
+  const [isSignerFetchable, setIsSignerFetchable] = useState(false);
+
   useEffect(() => {
     const fetchTeamMemberList = async () => {
       const members = await getTeamMemberList(supabaseClient, {
@@ -96,6 +101,11 @@ const Overview = ({
         setIsFetchingRequestor(true);
         setIsFetchingSigner(true);
         setIsFetchingMonthlyStatistics(true);
+
+        setIsRequestorFetchable(true);
+        setRequestorOffset(1);
+        setIsSignerFetchable(true);
+        setSignerOffset(1);
 
         // set request status tracker
         const { data: requestStatusCountData, totalCount } =
@@ -133,59 +143,34 @@ const Overview = ({
           (form) => form.form_id === selectedForm
         );
         if (!formMatch) return;
-        const requestorList = await Promise.all(
-          teamMemberList.map(async (member) => {
-            const requestData = await getRequestorData(supabaseClient, {
+        // set requestor data
+        const { data: requestorList, error: requestorListError } =
+          await supabaseClient.rpc("fetch_dashboard_top_requestor", {
+            input_data: {
               formId: selectedForm,
-              teamMemberId: member.team_member_id,
               startDate: moment(startDateFilter).format(),
               endDate: moment(endDateFilter).format(),
-            });
-
-            const totalRequestCount = requestData.reduce(
-              (sum, item) => sum + item.value,
-              0
-            );
-
-            const newRequestor = {
-              ...member,
-              request: requestData,
-              total: totalRequestCount,
-            };
-
-            return newRequestor;
-          })
-        );
-        setRequestorList(
-          requestorList.filter((requestor) => requestor.total !== 0)
-        );
+              page: 1,
+              limit: DEFAULT_ON_SCROLL_LIMIT,
+            },
+          });
+        if (requestorListError) throw requestorListError;
+        setRequestorList(requestorList);
         setIsFetchingRequestor(false);
 
         // set signer data
-        const signerList = await Promise.all(
-          teamMemberList.map(async (member) => {
-            const signedRequestData = await getSignerData(supabaseClient, {
+        const { data: sigerList, error: signerListError } =
+          await supabaseClient.rpc("fetch_dashboard_top_signer", {
+            input_data: {
               formId: selectedForm,
-              teamMemberId: member.team_member_id,
               startDate: moment(startDateFilter).format(),
               endDate: moment(endDateFilter).format(),
-            });
-
-            const totalRequestCount = signedRequestData.reduce(
-              (sum, item) => sum + item.value,
-              0
-            );
-
-            const newSigner = {
-              ...member,
-              request: signedRequestData,
-              total: totalRequestCount,
-            };
-
-            return newSigner;
-          })
-        );
-        setSignerList(signerList.filter((signer) => signer.total !== 0));
+              page: 1,
+              limit: DEFAULT_ON_SCROLL_LIMIT,
+            },
+          });
+        if (signerListError) throw signerListError;
+        setSignerList(sigerList);
         setIsFetchingSigner(false);
       } catch (error) {
         notifications.show({
@@ -212,6 +197,64 @@ const Overview = ({
     activeTeam.team_id,
     teamMemberList,
   ]);
+
+  const loadMoreRequestor = async (page: number) => {
+    try {
+      setIsFetchingRequestor(true);
+      const { data: requestorList, error: requestorListError } =
+        await supabaseClient.rpc("fetch_dashboard_top_requestor", {
+          input_data: {
+            formId: selectedForm,
+            startDate: moment(startDateFilter).format(),
+            endDate: moment(endDateFilter).format(),
+            page: page,
+            limit: DEFAULT_ON_SCROLL_LIMIT,
+          },
+        });
+      if (requestorListError) throw requestorListError;
+      setRequestorList((prev) => [...prev, ...requestorList]);
+      if (requestorList.length < DEFAULT_ON_SCROLL_LIMIT) {
+        setIsRequestorFetchable(false);
+      }
+    } catch (e) {
+      notifications.show({
+        message:
+          "There was a problem while fetching the data. Please try again later",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingRequestor(false);
+    }
+  };
+
+  const loadMoreSigner = async (page: number) => {
+    try {
+      setIsFetchingSigner(true);
+      const { data: signerList, error: signerListError } =
+        await supabaseClient.rpc("fetch_dashboard_top_signer", {
+          input_data: {
+            formId: selectedForm,
+            startDate: moment(startDateFilter).format(),
+            endDate: moment(endDateFilter).format(),
+            page: page,
+            limit: DEFAULT_ON_SCROLL_LIMIT,
+          },
+        });
+      if (signerListError) throw signerListError;
+      setSignerList((prev) => [...prev, ...signerList]);
+      if (signerList.length < DEFAULT_ON_SCROLL_LIMIT) {
+        setIsSignerFetchable(false);
+      }
+    } catch (e) {
+      notifications.show({
+        message:
+          "There was a problem while fetching the data. Please try again later",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingSigner(false);
+    }
+  };
 
   return (
     <Stack w="100%" align="center" pos="relative">
@@ -244,6 +287,10 @@ const Overview = ({
           <RequestorTable
             totalRequestCount={totalRequestCount}
             requestorList={requestorList.length > 0 ? requestorList : []}
+            loadMoreRequestor={loadMoreRequestor}
+            isRequestorFetchable={isRequestorFetchable}
+            requestorOffset={requestorOffset}
+            setRequestorOffset={setRequestorOffset}
           />
         </Box>
         <Box w={{ base: "100%", sm: 300 }} h={420} pos="relative">
@@ -256,6 +303,10 @@ const Overview = ({
           <SignerTable
             signerList={signerList.length > 0 ? signerList : []}
             totalRequestCount={totalRequestCount}
+            loadMoreSigner={loadMoreSigner}
+            isSignerFetchable={isSignerFetchable}
+            signerOffset={signerOffset}
+            setSignerOffset={setSignerOffset}
           />
         </Box>
       </Flex>
