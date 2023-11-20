@@ -3865,8 +3865,11 @@ RETURNS JSON as $$
 
         itemData.forEach(value => {
           const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC`);
+          const itemDivision = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${value.item_id}'`);
+
           items.push({
             ...value,
+            item_division_id_list: itemDivision.map(division => division.item_division_value),
             item_description: itemDescription
           })
         })
@@ -7628,7 +7631,7 @@ ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
-
+ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -7775,6 +7778,11 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_table;
 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON special_approver_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_division_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_division_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -7933,8 +7941,8 @@ USING (
   )
 );
 
---- ITEM_DESCRIPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+--- item_division_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -7943,17 +7951,17 @@ WITH CHECK (
     FROM item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
-    WHERE it.item_id = item_description_item_id
+    WHERE it.item_id = item_division_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_table"
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_division_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -7962,13 +7970,13 @@ USING (
     FROM item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
-    WHERE it.item_id = item_description_item_id
+    WHERE it.item_id = item_division_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -7977,7 +7985,7 @@ USING (
     FROM item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
-    WHERE it.item_id = item_description_item_id
+    WHERE it.item_id = item_division_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
