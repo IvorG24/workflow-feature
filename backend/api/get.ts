@@ -3129,7 +3129,7 @@ export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
-    .from("distinct_division")
+    .from("distinct_division_view")
     .select("csi_code_division_id, csi_code_division_description")
     .order("csi_code_division_id", { ascending: true });
   if (error) throw error;
