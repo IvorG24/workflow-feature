@@ -1,9 +1,13 @@
+import { createAttachment } from "@/backend/api/post";
+import { udpateUser } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserProfile } from "@/stores/useUserStore";
+import { Database } from "@/utils/database";
+import { UserWithSignatureType } from "@/utils/types";
 import {
   Button,
   Card,
   Checkbox,
-  Divider,
   Group,
   Modal,
   Paper,
@@ -12,12 +16,22 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import Compressor from "compressorjs";
 import { useState } from "react";
+import UploadSignature from "../UploadSignature/UploadSignature";
 
 const LeaveTeamSection = () => {
-  // const supabaseClient = createPagesBrowserClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   // const router = useRouter();
+  const user = useUserProfile();
   const activeTeam = useActiveTeam();
+
+  const [openCanvas, setOpenCanvas] = useState(false);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [signatureUrl, setSignatureUrl] = useState("");
+  const [isUpdatingSignature, setIsUpdatingSignature] = useState(false);
+
   // const authUserMember = useUserTeamMember();
   // const authUserTeamList = useTeamList();
   // const { setTeamList } = useTeamActions();
@@ -46,6 +60,64 @@ const LeaveTeamSection = () => {
         message: "Error: cannot leave team",
         color: "red",
       });
+    }
+  };
+
+  const handleUploadSignature = async (signature: File | null) => {
+    try {
+      setIsUpdatingSignature(true);
+      if (signature === null) return;
+
+      // compress image
+      let compressedImage: File | null = null;
+      if (signature.size > 50000) {
+        compressedImage = await new Promise((resolve) => {
+          new Compressor(signature, {
+            quality: 0.2,
+            success(result) {
+              resolve(result as File);
+            },
+            error(error) {
+              throw error;
+            },
+          });
+        });
+      }
+
+      const { data: signatureAttachment, url } = await createAttachment(
+        supabaseClient,
+        {
+          attachmentData: {
+            attachment_name: signature.name,
+            attachment_bucket: "USER_SIGNATURES",
+            attachment_value: `${user?.user_id}`,
+            attachment_id: user?.user_signature_attachment_id
+              ? user.user_signature_attachment_id
+              : undefined,
+          },
+          file: compressedImage || signature,
+        }
+      );
+
+      await udpateUser(supabaseClient, {
+        user_id: user?.user_id,
+        user_signature_attachment_id: signatureAttachment.attachment_id,
+      });
+
+      setSignatureUrl(url);
+      notifications.show({
+        message: "Signature updated.",
+        color: "green",
+      });
+    } catch (e) {
+      console.log(e);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setOpenCanvas(false);
+      setIsUpdatingSignature(false);
     }
   };
 
@@ -81,7 +153,6 @@ const LeaveTeamSection = () => {
               and requests.
             </Text>
           </Group>
-          <Divider />
           <Button variant="default" onClick={handleOpenLeaveTeamFormModal}>
             I want to leave this team
           </Button>
@@ -94,12 +165,28 @@ const LeaveTeamSection = () => {
         opened={openLeaveTeamFormModal}
         onClose={() => {
           setOpenLeaveTeamFormModal(false);
+          setOpenCanvas(false);
+          setSignatureFile(null);
+          setCheckedLeave(false);
+          setSignatureUrl("");
         }}
         title={`Leave team ${activeTeam.team_name}`}
       >
         <Text>
           Confirm your departure by drawing or uploading your signature.
         </Text>
+
+        <UploadSignature
+          onUploadSignature={handleUploadSignature}
+          user={user as UserWithSignatureType}
+          isUpdatingSignature={isUpdatingSignature}
+          openCanvas={openCanvas}
+          setOpenCanvas={setOpenCanvas}
+          signatureFile={signatureFile}
+          setSignatureFile={setSignatureFile}
+          signatureUrl={signatureUrl}
+        />
+
         <Stack spacing="xl" py="xs">
           <Checkbox
             label="I have read and understand the effects of this action."
@@ -108,7 +195,11 @@ const LeaveTeamSection = () => {
             required
           />
 
-          <Button color="red" onClick={onLeaveTeam} disabled={!checkedLeave}>
+          <Button
+            color="red"
+            onClick={onLeaveTeam}
+            disabled={Boolean(!checkedLeave || signatureUrl.length === 0)}
+          >
             Leave this team
           </Button>
         </Stack>

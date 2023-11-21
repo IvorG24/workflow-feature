@@ -66,6 +66,7 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
             image={fileUrl}
             crop={crop}
             zoom={zoom}
+            cropSize={{ height: 166.67, width: 250 }}
             aspect={3 / 2}
             onCropChange={setCrop}
             onCropComplete={onCropComplete}
@@ -86,7 +87,7 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
           step={0.1}
         />
 
-        <Flex align="center" gap="md">
+        <Flex align="center" justify="center" gap="md">
           <Button
             size="xs"
             type="submit"
