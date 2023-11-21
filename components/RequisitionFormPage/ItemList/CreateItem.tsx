@@ -119,7 +119,7 @@ const CreateItem = ({
         color: "green",
       });
       setIsCreatingItem(false);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
