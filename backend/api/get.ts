@@ -828,9 +828,12 @@ export const getItemDescriptionFieldList = async (
 
   let query = supabaseClient
     .from("item_description_field_table")
-    .select("*", {
-      count: "exact",
-    })
+    .select(
+      "*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)",
+      {
+        count: "exact",
+      }
+    )
     .eq("item_description_field_item_description_id", descriptionId)
     .eq("item_description_field_is_disabled", false);
 
@@ -862,7 +865,7 @@ export const getItem = async (
   const { data, error } = await supabaseClient
     .from("item_table")
     .select(
-      "*, item_division_table(*), item_description: item_description_table(*, item_description_field: item_description_field_table(*), item_field: item_description_field_id(*))"
+      "*, item_division_table(*), item_description: item_description_table(*, item_description_field: item_description_field_table(*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)), item_field: item_description_field_id(*))"
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)

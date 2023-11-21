@@ -281,7 +281,6 @@ CREATE TABLE item_description_field_table(
   item_description_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_description_field_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_description_field_value VARCHAR(4000) NOT NULL,
-  item_description_field_uom VARCHAR(4000),
   item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
@@ -398,6 +397,14 @@ CREATE TABLE special_approver_table(
 );
 
 -- END: Special Approver
+
+-- Start: Item Description Field UOM
+CREATE TABLE item_description_field_uom_table(
+  item_description_field_uom_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_description_field_uom VARCHAR(4000) NOT NULL,
+  item_description_field_uom_item_description_field_id UUID REFERENCES item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
+);
+-- END: Item Description Field UOM
 
 ---------- End: TABLES
 
@@ -6374,6 +6381,7 @@ RETURNS JSON AS $$
                 const itemDescriptionFieldList = plv8.execute(`
                   SELECT * 
                   FROM item_description_field_table
+                  LEFT JOIN item_description_field_uom_table ON item_description_field_id = item_description_field_uom_item_description_field_id
                   WHERE item_description_field_item_description_id = '${description.item_description_id}'
                     AND item_description_field_is_disabled = false
                     AND item_description_field_is_available = true;
@@ -7657,6 +7665,7 @@ ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -7808,6 +7817,11 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_division_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_division_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_field_uom_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -9205,6 +9219,62 @@ USING (
     WHERE it.item_id = item_division_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- item_description_field_uom_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_uom_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM item_description_field_table AS idf
+    JOIN item_description_table ON item_description_id = item_description_field_item_description_id
+    JOIN item_table ON item_id = item_description_item_id
+    JOIN team_table ON team_id = item_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_field_uom_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_uom_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM item_description_field_table AS idf
+    JOIN item_description_table ON item_description_id = item_description_field_item_description_id
+    JOIN item_table ON item_id = item_description_item_id
+    JOIN team_table ON team_id = item_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_uom_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM item_description_field_table AS idf
+    JOIN item_description_table ON item_description_id = item_description_field_item_description_id
+    JOIN item_table ON item_id = item_description_item_id
+    JOIN team_table ON team_id = item_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
