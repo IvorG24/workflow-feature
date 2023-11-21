@@ -108,7 +108,7 @@ const ItemDescriptionFieldTable = ({
       );
       setRecords(data);
       setCount(Number(count));
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -283,7 +283,8 @@ const ItemDescriptionFieldTable = ({
           ...(description.item_description_is_with_uom
             ? [
                 {
-                  accessor: "item_description_field_uom",
+                  accessor:
+                    "item_description_field_uom.[0].item_description_field_uom",
                   title: "Base Unit of Measurement",
                 },
               ]

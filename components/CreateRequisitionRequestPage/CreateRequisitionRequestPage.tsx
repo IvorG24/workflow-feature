@@ -345,7 +345,7 @@ const CreateRequisitionRequestPage = ({
               option_order: optionIndex + 1,
               option_value: `${options.item_description_field_value}${
                 description.item_description_is_with_uom
-                  ? ` ${options.item_description_field_uom}`
+                  ? ` ${options.item_description_field_uom[0].item_description_field_uom}`
                   : ""
               }`,
             };

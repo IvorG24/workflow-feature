@@ -13,10 +13,10 @@ import {
   FormType,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
+  ItemDescriptionFieldUOMTableInsert,
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
-  ItemTableUpdate,
   NotificationTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -291,7 +291,7 @@ export const createComment = async (
 export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert;
+    itemData: ItemTableInsert & { item_division_id_list: string[] };
     itemDescription: {
       description: string;
       withUoM: boolean;
@@ -313,7 +313,7 @@ export const createItem = async (
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableUpdate;
+    itemData: ItemTableInsert & { item_division_id_list: string[] };
     toAdd: ItemForm["descriptions"];
     toUpdate: ItemDescriptionTableUpdate[];
     toRemove: { fieldId: string; descriptionId: string }[];
@@ -331,15 +331,49 @@ export const updateItem = async (
 // Create item description field
 export const createItemDescriptionField = async (
   supabaseClient: SupabaseClient<Database>,
-  params: ItemDescriptionFieldTableInsert[]
+  params: (ItemDescriptionFieldTableInsert & {
+    item_description_field_uom: string | null;
+  })[]
 ) => {
-  const { data, error } = await supabaseClient
+  const itemDescriptionFieldUomInput: ItemDescriptionFieldUOMTableInsert[] = [];
+  const itemDescriptionFieldInput = params.map((field) => {
+    const fieldId = uuidv4();
+    if (field.item_description_field_uom) {
+      itemDescriptionFieldUomInput.push({
+        item_description_field_uom_item_description_field_id: fieldId,
+        item_description_field_uom: field.item_description_field_uom,
+      });
+    }
+    return {
+      item_description_field_id: fieldId,
+      item_description_field_value: field.item_description_field_value,
+      item_description_field_is_available:
+        field.item_description_field_is_available,
+      item_description_field_item_description_id:
+        field.item_description_field_item_description_id,
+    };
+  });
+  const { data: item, error: itemError } = await supabaseClient
     .from("item_description_field_table")
-    .insert(params)
+    .insert(itemDescriptionFieldInput)
     .select("*");
-  if (error) throw error;
-
-  return data;
+  if (itemError) throw itemError;
+  const { data: uom, error: uomError } = await supabaseClient
+    .from("item_description_field_uom_table")
+    .insert(itemDescriptionFieldUomInput)
+    .select("*");
+  if (uomError) throw uomError;
+  return item.map((item) => {
+    const itemUom = uom.find(
+      (value) =>
+        value.item_description_field_uom_item_description_field_id ===
+        item.item_description_field_id
+    );
+    return {
+      ...item,
+      item_description_field_uom: itemUom?.item_description_field_uom,
+    };
+  });
 };
 
 // Create request form
