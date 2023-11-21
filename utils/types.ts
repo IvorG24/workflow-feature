@@ -122,6 +122,13 @@ export type ItemDescriptionFieldTableInsert =
 export type ItemDescriptionFieldTableUpdate =
   Database["public"]["Tables"]["item_description_field_table"]["Update"];
 
+export type ItemDescriptionFieldUOMTableRow =
+  Database["public"]["Tables"]["item_description_field_uom_table"]["Row"];
+export type ItemDescriptionFieldUOMTableInsert =
+  Database["public"]["Tables"]["item_description_field_uom_table"]["Insert"];
+export type ItemDescriptionFieldUOMTableUpdate =
+  Database["public"]["Tables"]["item_description_field_uom_table"]["Update"];
+
 export type SupplierTableRow =
   Database["public"]["Tables"]["supplier_table"]["Row"];
 export type SupplierTableInsert =
@@ -493,6 +500,8 @@ export type FormWithTeamMember = FormTableRow & {
 };
 
 export type ItemWithDescriptionType = ItemTableRow & {
+  item_division_id_list: string[];
+} & {
   item_description: ItemDescriptionTableRow[];
 };
 
@@ -546,8 +555,14 @@ export type FieldWithChoices = {
 } & FieldTableRow;
 
 export type ItemWithDescriptionAndField = ItemTableRow & {
+  item_division_id_list: string[];
+} & {
   item_description: (ItemDescriptionTableRow & {
-    item_description_field: ItemDescriptionFieldTableRow[];
+    item_description_field: (ItemDescriptionFieldTableRow & {
+      item_description_field_uom: {
+        item_description_field_uom: string | null;
+      }[];
+    })[];
     item_field: FieldTableRow;
   })[];
 };
