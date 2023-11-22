@@ -181,7 +181,6 @@ CREATE TABLE field_table (
 CREATE TABLE option_table (
   option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   option_value VARCHAR(4000) NOT NULL,
-  option_description VARCHAR(4000),
   option_order INT NOT NULL,
 
   option_field_id UUID REFERENCES field_table(field_id) NOT NULL
@@ -392,7 +391,6 @@ CREATE TABLE ticket_comment_table(
 
 CREATE TABLE special_approver_table(
   special_approver_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  special_approver_item_list VARCHAR(4000)[] NOT NULL,
 
   special_approver_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
@@ -409,6 +407,17 @@ CREATE TABLE item_description_field_uom_table(
 );
 
 -- END: Item Description Field UOM
+
+-- Start: Special approver item table
+
+CREATE TABLE special_approver_item_table(
+  special_approver_item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  special_approver_item_value VARCHAR(4000) NOT NULL,
+
+  special_approver_item_special_approver_id UUID REFERENCES special_approver_table(special_approver_id) ON DELETE CASCADE NOT NULL
+);
+
+-- END: Special approver item table
 
 ---------- End: TABLES
 
@@ -1516,9 +1525,7 @@ RETURNS JSON AS $$
     const optionValues = optionInput
       .map(
         (option) =>
-          `('${option.option_id}','${option.option_value}',${
-            option.option_description ? `'${option.option_description}'` : "NULL"
-          },'${option.option_order}','${option.option_field_id}')`
+          `('${option.option_id}','${option.option_value}','${option.option_order}','${option.option_field_id}')`
       )
       .join(",");
     
@@ -1540,7 +1547,7 @@ RETURNS JSON AS $$
 
     const field_query = `INSERT INTO field_table (field_id,field_name,field_type,field_description,field_is_positive_metric,field_is_required,field_order,field_section_id) VALUES ${fieldValues}`;
 
-    const option_query = `INSERT INTO option_table (option_id,option_value,option_description,option_order,option_field_id) VALUES ${optionValues}`;
+    const option_query = `INSERT INTO option_table (option_id,option_value,option_order,option_field_id) VALUES ${optionValues}`;
 
     const signer_query = `INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
 
@@ -4190,7 +4197,6 @@ RETURNS JSON as $$
 
         const itemOptions = items.map((item, index) => {
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item.item_id,
             option_order: index,
@@ -4211,7 +4217,6 @@ RETURNS JSON as $$
 
         const projectOptions = projects.map((project, index) => {
           return {
-            option_description: null,
             option_field_id: form.form_section[0].section_field[0].field_id,
             option_id: project.team_project_id,
             option_order: index,
@@ -4241,6 +4246,14 @@ RETURNS JSON as $$
           `
         );
 
+        const specialApproverWithItem = specialApprover.map(approver => {
+          const itemList = plv8.execute(`SELECT * FROM special_approver_item_table WHERE special_approver_item_special_approver_id = '${approver.special_approver_id}'`);
+          return {
+            ...approver,
+            special_approver_item_list: itemList.map(item => item.special_approver_item_value)
+          }
+        })
+
         const suppliers = plv8.execute(
           `
             SELECT *
@@ -4256,7 +4269,6 @@ RETURNS JSON as $$
 
         const supplierOptions = suppliers.map((suppliers, index) => {
           return {
-            option_description: null,
             option_field_id: form.form_section[0].section_field[0].field_id,
             option_id: suppliers.supplier_id,
             option_order: index,
@@ -4292,7 +4304,7 @@ RETURNS JSON as $$
           },
           itemOptions,
           projectOptions,
-          specialApprover: specialApprover.map(specialApprover => {
+          specialApprover: specialApproverWithItem.map(specialApprover => {
             return {
               special_approver_id: specialApprover.special_approver_id,
               special_approver_item_list: specialApprover.special_approver_item_list,
@@ -4347,7 +4359,6 @@ RETURNS JSON as $$
 
         const serviceOptions = services.map((service, index) => {
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: service.service_id,
             option_order: index,
@@ -4368,7 +4379,6 @@ RETURNS JSON as $$
 
         const projectOptions = projects.map((project, index) => {
           return {
-            option_description: null,
             option_field_id: form.form_section[0].section_field[0].field_id,
             option_id: project.team_project_id,
             option_order: index,
@@ -4540,7 +4550,6 @@ RETURNS JSON as $$
         const itemOptions = Object.keys(items).map((item, index) => {
           const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -4557,14 +4566,15 @@ RETURNS JSON as $$
           `
         );
 
-        const projectOptions = teamProjects.map((project, index) => {
-          return {
-            option_description: project.team_project_id,
-            option_field_id: form.form_section[1].section_field[2].field_id,
-            option_id: project.team_project_name,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
+        const projectOptions = teamProjects.filter((project, index) => {
+          if(requestProjectId === project.team_project_id){
+            return {
+              option_field_id: form.form_section[1].section_field[2].field_id,
+              option_id: project.team_project_name,
+              option_order: index,
+              option_value: project.team_project_name,
+            };
+          }
         });
 
         returnData = {
@@ -4578,10 +4588,7 @@ RETURNS JSON as $$
                   ...form.form_section[1].section_field.slice(0, 2),
                   {
                     ...form.form_section[1].section_field[2],
-                    field_option: projectOptions.filter(
-                      (project) =>
-                        project.option_description !== requestProjectId
-                    ),
+                    field_option: projectOptions
                   },
                 ],
               },
@@ -4675,7 +4682,6 @@ RETURNS JSON as $$
         const itemOptions = Object.keys(items).map((item, index) => {
           const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -4771,7 +4777,6 @@ RETURNS JSON as $$
             result &&
             items[item].item.replace(result[0], `(${items[item].quantity})`);
           return {
-            option_description: null,
             option_field_id: form.form_section[2].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -4879,7 +4884,6 @@ RETURNS JSON as $$
           sourceProjectList[value] = items[item].sourceProject;
 
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -4988,7 +4992,6 @@ RETURNS JSON as $$
           sourceProjectList[value] = items[item].sourceProject;
 
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -6244,7 +6247,6 @@ RETURNS JSON AS $$
         return {
           option_id: project.team_project_id,
           option_value: project.team_project_name,
-          option_description: null,
           option_order: index,
           option_field_id: null,
         };
@@ -6307,7 +6309,6 @@ RETURNS JSON AS $$
 
         const itemOptions = itemList.map((item, index) => {
           return {
-            option_description: null,
             option_field_id:
               request.request_form.form_section[1].section_field[0].field_id,
             option_id: item.item_id,
@@ -6335,7 +6336,6 @@ RETURNS JSON AS $$
 
         const supplierOptions = supplierList.map((supplier, index) => {
           return {
-            option_description: null,
             option_field_id: preferredSupplierField.field_id,
             option_id: supplier.supplier_id,
             option_order: index,
@@ -6419,7 +6419,6 @@ RETURNS JSON AS $$
 
             const csiCodeOptions = csiCodeList.map((csiCode, index) => {
               return {
-                option_description: null,
                 option_field_id: form.form_section[0].section_field[0].field_id,
                 option_id: csiCode.csi_code_id,
                 option_order: index,
@@ -6432,7 +6431,6 @@ RETURNS JSON AS $$
                 const options = description.item_description_field.map(
                   (options, optionIndex) => {
                     return {
-                      option_description: null,
                       option_field_id: description.item_field.field_id,
                       option_id: options.item_description_field_id,
                       option_order: optionIndex + 1,
@@ -6478,7 +6476,6 @@ RETURNS JSON AS $$
                       ...section.section_field[9],
                       field_option: [
                         {
-                          option_description: null,
                           option_field_id: preferredSupplierField.field_id,
                           option_id: JSON.parse(
                             section.section_field[9].field_response[0]
@@ -6563,11 +6560,19 @@ RETURNS JSON AS $$
           INNER JOIN user_table ut ON tmt.team_member_user_id = ut.user_id;
         `);
 
+        const specialApproverWithItem = specialApprover.map(approver => {
+          const itemList = plv8.execute(`SELECT * FROM special_approver_item_table WHERE special_approver_item_special_approver_id = '${approver.special_approver_id}'`);
+          return {
+            ...approver,
+            special_approver_item_list: itemList.map(item => item.special_approver_item_value)
+          }
+        })
+
         returnData = {
           request: formattedRequest,
           itemOptions,
           projectOptions,
-          specialApprover
+          specialApprover: specialApproverWithItem
         }
       } else if (form.form_name === "Subcon") {
         const serviceList = plv8.execute(`
@@ -6581,7 +6586,6 @@ RETURNS JSON AS $$
 
         const serviceOptions = serviceList.map((service, index) => {
           return {
-            option_description: null,
             option_field_id:
               request.request_form.form_section[1].section_field[0].field_id,
             option_id: service.service_id,
@@ -6596,7 +6600,6 @@ RETURNS JSON AS $$
         );
 
         const supplierOptions = subconResponse.map((response, responseIdx) => ({
-          option_description: null,
           option_field_id: `${responseIdx}`,
           option_id: `${responseIdx}`,
           option_order: responseIdx,
@@ -6654,7 +6657,6 @@ RETURNS JSON AS $$
               options = serviceScopeChoiceList.map(
                 (options, optionIndex) => {
                   return {
-                    option_description: null,
                     option_field_id: field.field_id,
                     option_id: options.service_scope_choice_id,
                     option_order: optionIndex + 1,
@@ -6785,7 +6787,6 @@ RETURNS JSON AS $$
         const itemOptions = Object.keys(items).map((item, index) => {
           const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -6904,7 +6905,6 @@ RETURNS JSON AS $$
           sourceProjectList[value] = items[item].sourceProject;
 
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -7045,7 +7045,6 @@ RETURNS JSON AS $$
           sourceProjectList[value] = items[item].sourceProject;
 
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -7181,7 +7180,6 @@ RETURNS JSON AS $$
         const newOptionList = Object.keys(items).map((item, index) => {
           const value = `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`;
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -7243,7 +7241,6 @@ RETURNS JSON AS $$
 
         const supplierList = supplierListData.map((supplier, index) => {
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
             option_order: index + 1,
@@ -7353,7 +7350,6 @@ RETURNS JSON AS $$
           const value = `${itemName.replace(replace[0], `(${quantity})`)} `;
 
           return {
-            option_description: null,
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: item,
             option_order: index,
@@ -7675,6 +7671,7 @@ ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9286,6 +9283,11 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
+
+--- SPECIAL_APPROVER_ITEM_TABLE
+CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_item_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
 
 -------- End: POLICIES
 

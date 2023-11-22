@@ -223,7 +223,6 @@ const CreateSubconRequestPage = ({
         const options = scope.service_scope_choice.map(
           (options, optionIndex) => {
             return {
-              option_description: null,
               option_field_id: scope.service_field.field_id,
               option_id: options.service_scope_choice_id,
               option_order: optionIndex + 1,

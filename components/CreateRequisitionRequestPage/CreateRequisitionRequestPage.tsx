@@ -315,7 +315,6 @@ const CreateRequisitionRequestPage = ({
           field_response: "",
           field_option: csiCodeList.map((csiCode, index) => {
             return {
-              option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: csiCode.csi_code_id,
               option_order: index,
@@ -339,7 +338,6 @@ const CreateRequisitionRequestPage = ({
         const options = description.item_description_field.map(
           (options, optionIndex) => {
             return {
-              option_description: null,
               option_field_id: description.item_field.field_id,
               option_id: options.item_description_field_id,
               option_order: optionIndex + 1,

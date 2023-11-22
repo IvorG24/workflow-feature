@@ -226,7 +226,6 @@ const Field = ({
   //       option_field_id: field.field_id,
   //       option_value: "[1,5]",
   //       option_order: options.length + 1,
-  //       option_description: "",
   //     });
   //   }
   // }, [optionsWatch, fieldType]);
@@ -238,7 +237,6 @@ const Field = ({
   //       option_field_id: field.field_id,
   //       option_value: `[${sliderStart},${sliderEnd}]`,
   //       option_order: options.length + 1,
-  //       option_description: "",
   //     });
   //   }
   // }, [sliderStart, sliderEnd]);
@@ -526,7 +524,6 @@ const Field = ({
                 option_field_id: field.field_id,
                 option_value: "",
                 option_order: options.length + 1,
-                option_description: "",
               })
             }
             leftIcon={<IconCirclePlus height={16} />}
