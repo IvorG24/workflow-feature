@@ -2418,7 +2418,6 @@ export const getSupplier = async (
 
   const supplierList = data.map((supplier, index) => {
     return {
-      option_description: null,
       option_field_id: fieldId,
       option_id: uuidv4(),
       option_order: index + 1,
