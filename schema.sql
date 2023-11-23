@@ -3902,8 +3902,9 @@ RETURNS JSON as $$
 
         itemData.forEach(value => {
           const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC`);
-          const itemDivision = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${value.item_id}'`);
-
+          
+          const itemDivision = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC`);
+          
           items.push({
             ...value,
             item_division_id_list: itemDivision.map(division => division.item_division_value),

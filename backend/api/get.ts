@@ -734,6 +734,10 @@ export const getItemList = async (
     foreignTable: "item_description",
     ascending: true,
   });
+  query.order("item_division_value", {
+    foreignTable: "item_division_table",
+    ascending: true,
+  });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
