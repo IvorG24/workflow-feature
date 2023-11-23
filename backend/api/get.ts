@@ -17,6 +17,7 @@ import {
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
+  ItemWithDescriptionType,
   NotificationOnLoad,
   NotificationTableRow,
   RequestByFormType,
@@ -714,9 +715,12 @@ export const getItemList = async (
 
   let query = supabaseClient
     .from("item_table")
-    .select("*, item_description: item_description_table(*)", {
-      count: "exact",
-    })
+    .select(
+      "*, item_division_table(*), item_description: item_description_table(*)",
+      {
+        count: "exact",
+      }
+    )
     .eq("item_team_id", teamId)
     .eq("item_is_disabled", false)
     .eq("item_description.item_description_is_disabled", false);
@@ -730,16 +734,30 @@ export const getItemList = async (
     foreignTable: "item_description",
     ascending: true,
   });
+  query.order("item_division_value", {
+    foreignTable: "item_division_table",
+    ascending: true,
+  });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
 
   const { data, error, count } = await query;
-
   if (error) throw error;
 
+  const formattedData = data as unknown as (ItemWithDescriptionType & {
+    item_division_table: { item_division_value: string }[];
+  })[];
+
   return {
-    data,
+    data: formattedData.map((data) => {
+      return {
+        ...data,
+        item_division_id_list: data.item_division_table.map(
+          (division) => division.item_division_value
+        ),
+      };
+    }),
     count,
   };
 };
@@ -814,9 +832,12 @@ export const getItemDescriptionFieldList = async (
 
   let query = supabaseClient
     .from("item_description_field_table")
-    .select("*", {
-      count: "exact",
-    })
+    .select(
+      "*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)",
+      {
+        count: "exact",
+      }
+    )
     .eq("item_description_field_item_description_id", descriptionId)
     .eq("item_description_field_is_disabled", false);
 
@@ -848,7 +869,7 @@ export const getItem = async (
   const { data, error } = await supabaseClient
     .from("item_table")
     .select(
-      "*, item_description: item_description_table(*, item_description_field: item_description_field_table(*), item_field: item_description_field_id(*))"
+      "*, item_division_table(*), item_description: item_description_table(*, item_description_field: item_description_field_table(*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)), item_field: item_description_field_id(*))"
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)
@@ -866,8 +887,16 @@ export const getItem = async (
     )
     .single();
   if (error) throw error;
+  const formattedData = data as unknown as ItemWithDescriptionAndField & {
+    item_division_table: { item_division_value: string }[];
+  };
 
-  return data as unknown as ItemWithDescriptionAndField;
+  return {
+    ...formattedData,
+    item_division_id_list: formattedData.item_division_table.map(
+      (division) => division.item_division_value
+    ),
+  } as unknown as ItemWithDescriptionAndField;
 };
 
 // check if Requisition form can be activated
@@ -2393,7 +2422,6 @@ export const getSupplier = async (
 
   const supplierList = data.map((supplier, index) => {
     return {
-      option_description: null,
       option_field_id: fieldId,
       option_id: uuidv4(),
       option_order: index + 1,

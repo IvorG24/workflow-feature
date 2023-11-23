@@ -295,7 +295,6 @@ export type Database = {
           item_description_field_is_available: boolean;
           item_description_field_is_disabled: boolean;
           item_description_field_item_description_id: string;
-          item_description_field_uom: string | null;
           item_description_field_value: string;
         };
         Insert: {
@@ -304,7 +303,6 @@ export type Database = {
           item_description_field_is_available?: boolean;
           item_description_field_is_disabled?: boolean;
           item_description_field_item_description_id: string;
-          item_description_field_uom?: string | null;
           item_description_field_value: string;
         };
         Update: {
@@ -313,7 +311,6 @@ export type Database = {
           item_description_field_is_available?: boolean;
           item_description_field_is_disabled?: boolean;
           item_description_field_item_description_id?: string;
-          item_description_field_uom?: string | null;
           item_description_field_value?: string;
         };
         Relationships: [
@@ -323,6 +320,32 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "item_description_table";
             referencedColumns: ["item_description_id"];
+          }
+        ];
+      };
+      item_description_field_uom_table: {
+        Row: {
+          item_description_field_uom: string;
+          item_description_field_uom_id: string;
+          item_description_field_uom_item_description_field_id: string;
+        };
+        Insert: {
+          item_description_field_uom: string;
+          item_description_field_uom_id?: string;
+          item_description_field_uom_item_description_field_id: string;
+        };
+        Update: {
+          item_description_field_uom?: string;
+          item_description_field_uom_id?: string;
+          item_description_field_uom_item_description_field_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_description_field_uom_ta_item_description_field_uom_i_fkey";
+            columns: ["item_description_field_uom_item_description_field_id"];
+            isOneToOne: false;
+            referencedRelation: "item_description_field_table";
+            referencedColumns: ["item_description_field_id"];
           }
         ];
       };
@@ -377,10 +400,35 @@ export type Database = {
           }
         ];
       };
+      item_division_table: {
+        Row: {
+          item_division_id: string;
+          item_division_item_id: string;
+          item_division_value: string;
+        };
+        Insert: {
+          item_division_id?: string;
+          item_division_item_id: string;
+          item_division_value: string;
+        };
+        Update: {
+          item_division_id?: string;
+          item_division_item_id?: string;
+          item_division_value?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_division_table_item_division_item_id_fkey";
+            columns: ["item_division_item_id"];
+            isOneToOne: false;
+            referencedRelation: "item_table";
+            referencedColumns: ["item_id"];
+          }
+        ];
+      };
       item_table: {
         Row: {
           item_date_created: string;
-          item_division_id_list: string[];
           item_general_name: string;
           item_gl_account: string;
           item_id: string;
@@ -391,7 +439,6 @@ export type Database = {
         };
         Insert: {
           item_date_created?: string;
-          item_division_id_list: string[];
           item_general_name: string;
           item_gl_account: string;
           item_id?: string;
@@ -402,7 +449,6 @@ export type Database = {
         };
         Update: {
           item_date_created?: string;
-          item_division_id_list?: string[];
           item_general_name?: string;
           item_gl_account?: string;
           item_id?: string;
@@ -474,21 +520,18 @@ export type Database = {
       };
       option_table: {
         Row: {
-          option_description: string | null;
           option_field_id: string;
           option_id: string;
           option_order: number;
           option_value: string;
         };
         Insert: {
-          option_description?: string | null;
           option_field_id: string;
           option_id?: string;
           option_order: number;
           option_value: string;
         };
         Update: {
-          option_description?: string | null;
           option_field_id?: string;
           option_id?: string;
           option_order?: number;
@@ -1470,6 +1513,18 @@ export type Database = {
         };
         Returns: Json;
       };
+      fetch_dashboard_top_requestor: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      fetch_dashboard_top_signer: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       fetch_request_list: {
         Args: {
           input_data: Json;
@@ -1527,6 +1582,12 @@ export type Database = {
       get_current_date: {
         Args: Record<PropertyKey, never>;
         Returns: string;
+      };
+      get_edit_request_on_load: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
       };
       get_notification_on_load: {
         Args: {
@@ -1606,6 +1667,13 @@ export type Database = {
         };
         Returns: Json;
       };
+      leave_team: {
+        Args: {
+          team_id: string;
+          team_member_id: string;
+        };
+        Returns: undefined;
+      };
       request_page_on_load: {
         Args: {
           input_data: Json;
@@ -1660,19 +1728,6 @@ export type Database = {
           input_data: Json;
         };
         Returns: Json;
-      };
-      get_edit_request_on_load: {
-        Args: {
-          input_data: Json;
-        };
-        Returns: Json;
-      };
-      leave_team: {
-        Args: {
-          team_id: string;
-          team_member_id: string;
-        };
-        Returns: undefined;
       };
     };
     Enums: {

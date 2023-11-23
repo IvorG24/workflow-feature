@@ -1243,6 +1243,8 @@ export const ITEM_UNIT_CHOICES = [
   "Kilocalorie",
   "British Thermal Unit",
   "Celsius",
+  "Percent",
+  "Parts Per Million",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
