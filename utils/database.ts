@@ -1667,6 +1667,13 @@ export type Database = {
         };
         Returns: Json;
       };
+      leave_team: {
+        Args: {
+          team_id: string;
+          team_member_id: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

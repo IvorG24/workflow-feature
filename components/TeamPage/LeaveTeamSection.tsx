@@ -21,9 +21,12 @@ import Compressor from "compressorjs";
 import { useState } from "react";
 import UploadSignature from "../UploadSignature/UploadSignature";
 
-const LeaveTeamSection = () => {
+type Props = {
+  onLeaveTeam: () => void;
+};
+
+const LeaveTeamSection = ({ onLeaveTeam }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  // const router = useRouter();
   const user = useUserProfile();
   const activeTeam = useActiveTeam();
 
@@ -32,9 +35,6 @@ const LeaveTeamSection = () => {
   const [signatureUrl, setSignatureUrl] = useState("");
   const [isUpdatingSignature, setIsUpdatingSignature] = useState(false);
 
-  // const authUserMember = useUserTeamMember();
-  // const authUserTeamList = useTeamList();
-  // const { setTeamList } = useTeamActions();
   const [openFirstWarningModal, setOpenFirstWarningModal] = useState(false);
   const [openLeaveTeamFormModal, setOpenLeaveTeamFormModal] = useState(false);
   const [checkedLeave, setCheckedLeave] = useState(false);
@@ -42,25 +42,6 @@ const LeaveTeamSection = () => {
   const handleOpenLeaveTeamFormModal = () => {
     setOpenFirstWarningModal(false);
     setOpenLeaveTeamFormModal(true);
-  };
-
-  const onLeaveTeam = async () => {
-    try {
-      // const teamId = activeTeam.team_id;
-      // const updatedTeamList = authUserTeamList.filter(
-      //   (team) => team.team_id !== teamId
-      // );
-      // setTeamList(updatedTeamList);
-      // setTimeout(router.reload, 500);
-      // if (updatedTeamList.length <= 0) {
-      //   router.push("/team/create");
-      // }
-    } catch (error) {
-      notifications.show({
-        message: "Error: cannot leave team",
-        color: "red",
-      });
-    }
   };
 
   const handleUploadSignature = async (signature: File | null) => {
