@@ -1,7 +1,11 @@
 import { getUnresolvedRequestListPerApprover } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
-import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
+import {
+  useActiveApp,
+  useActiveTeam,
+  useTeamList,
+} from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
@@ -31,6 +35,8 @@ const ReviewAppNavLink = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
+  const teamList = useTeamList();
+  const hasTeam = teamList.length > 0;
   const forms = useFormList();
   const userTeamMemberData = useUserTeamMember();
   const unreadNotificationCount = useUnreadNotificationCount();
@@ -169,7 +175,7 @@ const ReviewAppNavLink = () => {
         <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
       ) : null}
 
-      {!isEmpty(activeTeam) ? (
+      {!isEmpty(activeTeam) && hasTeam ? (
         <NavLinkSection
           label={"Overview"}
           links={overviewSection}
@@ -179,7 +185,11 @@ const ReviewAppNavLink = () => {
 
       <NavLinkSection
         label={"Team"}
-        links={!isEmpty(activeTeam) ? teamSectionWithManageTeam : teamSection}
+        links={
+          !isEmpty(activeTeam) && hasTeam
+            ? teamSectionWithManageTeam
+            : teamSection
+        }
         {...defaultNavLinkProps}
       />
 

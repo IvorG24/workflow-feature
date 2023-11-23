@@ -338,11 +338,7 @@ const TeamPage = ({
         (team) => team.team_id !== teamId
       );
       setTeamList(updatedTeamList);
-      if (updatedTeamList.length <= 0) {
-        router.push("/");
-      } else {
-        setTimeout(router.reload, 500);
-      }
+      router.push("/");
     } catch (error) {
       notifications.show({
         message: "Error: cannot leave team",
