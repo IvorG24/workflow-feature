@@ -338,9 +338,10 @@ const TeamPage = ({
         (team) => team.team_id !== teamId
       );
       setTeamList(updatedTeamList);
-      setTimeout(router.reload, 500);
       if (updatedTeamList.length <= 0) {
-        router.push("/team/create");
+        router.push("/");
+      } else {
+        setTimeout(router.reload, 500);
       }
     } catch (error) {
       notifications.show({
