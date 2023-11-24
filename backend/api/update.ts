@@ -456,3 +456,21 @@ export const reverseRequestApproval = async (
 
   if (error) throw error;
 };
+
+// leave team
+export const leaveTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    teamMemberId: string;
+  }
+) => {
+  const { teamId, teamMemberId } = params;
+
+  const { error } = await supabaseClient.rpc("leave_team", {
+    team_id: teamId,
+    team_member_id: teamMemberId,
+  });
+
+  if (error) throw error;
+};
