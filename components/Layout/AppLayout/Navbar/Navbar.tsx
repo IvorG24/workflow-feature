@@ -1,4 +1,8 @@
-import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
+import {
+  useActiveApp,
+  useActiveTeam,
+  useTeamList,
+} from "@/stores/useTeamStore";
 import { isEmpty } from "@/utils/functions";
 import { Navbar as MantineNavbar, Skeleton, Stack } from "@mantine/core";
 import { useScrollLock } from "@mantine/hooks";
@@ -14,6 +18,8 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
   const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
   useScrollLock(openNavbar);
+  const teamList = useTeamList();
+  const hasTeam = teamList.length > 0;
 
   return (
     <MantineNavbar
@@ -22,8 +28,8 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
       hidden={!openNavbar}
       width={{ sm: 200, lg: 300 }}
     >
-      {!isEmpty(activeTeam) ? <SelectTeam /> : null}
-      {!activeApp ? (
+      {hasTeam ? <SelectTeam /> : null}
+      {!activeApp && hasTeam ? (
         <Stack>
           <Stack spacing={5}>
             <Skeleton height={20} width={60} />
@@ -46,7 +52,7 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
       {activeApp ? (
         <>
           <NavLink />
-          {!isEmpty(activeTeam) ? <FormList /> : null}
+          {!isEmpty(activeTeam) && hasTeam ? <FormList /> : null}
         </>
       ) : null}
     </MantineNavbar>

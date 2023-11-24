@@ -43,6 +43,7 @@ const UploadSignature = ({
 }: Props) => {
   const sigCanvas = useRef<ReactSignatureCanvas>(null);
   const [openCrop, setOpenCrop] = useState(false);
+  const [hasDrawnSignature, setHasDrawnSignature] = useState(false);
 
   const handleOnEndDrawSignature = async () => {
     const canvas = sigCanvas.current?.getTrimmedCanvas();
@@ -59,16 +60,18 @@ const UploadSignature = ({
 
     if (!file) throw new Error();
     setSignatureFile(file);
+    setHasDrawnSignature(true);
   };
 
   const checkFile = (signatureFile: File | null) => {
     if (signatureFile === null) return;
 
-    // File size must be under 5MB
-    if (signatureFile.size > 1000000 * 5) {
+    // File size must be under 2MB
+    if (signatureFile.size > 1000000 * 2) {
       notifications.show({
-        message: "File size must be under 5MB for upload. Please try again.",
+        message: "File size must be under 2MB for upload. Please try again.",
         color: "orange",
+        autoClose: false,
       });
       return;
     }
@@ -96,6 +99,7 @@ const UploadSignature = ({
                     width: 250,
                     height: 166.67,
                   }}
+                  backgroundColor="white"
                   ref={sigCanvas}
                   data-testid="sigCanvas"
                   onEnd={handleOnEndDrawSignature}
@@ -107,6 +111,7 @@ const UploadSignature = ({
                 <Button
                   size="xs"
                   variant="light"
+                  disabled={!hasDrawnSignature}
                   onClick={() => sigCanvas.current?.clear()}
                 >
                   Clear
@@ -114,6 +119,7 @@ const UploadSignature = ({
                 <Flex justify="flex-end" gap="xs">
                   <Button
                     size="xs"
+                    disabled={!hasDrawnSignature}
                     onClick={() => {
                       onUploadSignature(signatureFile as File);
                     }}
@@ -123,7 +129,10 @@ const UploadSignature = ({
                   <Button
                     size="xs"
                     variant="outline"
-                    onClick={() => setOpenCanvas(false)}
+                    onClick={() => {
+                      setOpenCanvas(false);
+                      setHasDrawnSignature(false);
+                    }}
                   >
                     Cancel
                   </Button>
@@ -170,20 +179,16 @@ const UploadSignature = ({
                 }
               />
               <Flex gap={12} justify="flex-start">
+                <Button size="xs" onClick={() => setOpenCanvas(true)}>
+                  Draw
+                </Button>
                 <FileButton onChange={checkFile} accept="image/png,image/jpeg">
                   {(props) => (
-                    <Button size="xs" {...props}>
+                    <Button size="xs" variant="outline" {...props}>
                       Upload
                     </Button>
                   )}
                 </FileButton>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() => setOpenCanvas(true)}
-                >
-                  Draw
-                </Button>
               </Flex>
             </>
           )}
