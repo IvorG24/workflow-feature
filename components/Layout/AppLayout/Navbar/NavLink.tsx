@@ -171,7 +171,8 @@ const ReviewAppNavLink = () => {
     <>
       {requisitionForm &&
       requisitionForm.form_is_hidden === false &&
-      requisitionForm.form_team_group.length ? (
+      requisitionForm.form_team_group.length &&
+      hasTeam ? (
         <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
       ) : null}
 
