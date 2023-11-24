@@ -900,20 +900,43 @@ export type Database = {
           }
         ];
       };
+      special_approver_item_table: {
+        Row: {
+          special_approver_item_id: string;
+          special_approver_item_special_approver_id: string;
+          special_approver_item_value: string;
+        };
+        Insert: {
+          special_approver_item_id?: string;
+          special_approver_item_special_approver_id: string;
+          special_approver_item_value: string;
+        };
+        Update: {
+          special_approver_item_id?: string;
+          special_approver_item_special_approver_id?: string;
+          special_approver_item_value?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "special_approver_item_table_special_approver_item_special__fkey";
+            columns: ["special_approver_item_special_approver_id"];
+            isOneToOne: false;
+            referencedRelation: "special_approver_table";
+            referencedColumns: ["special_approver_id"];
+          }
+        ];
+      };
       special_approver_table: {
         Row: {
           special_approver_id: string;
-          special_approver_item_list: string[];
           special_approver_signer_id: string;
         };
         Insert: {
           special_approver_id?: string;
-          special_approver_item_list: string[];
           special_approver_signer_id: string;
         };
         Update: {
           special_approver_id?: string;
-          special_approver_item_list?: string[];
           special_approver_signer_id?: string;
         };
         Relationships: [
@@ -1661,18 +1684,24 @@ export type Database = {
         };
         Returns: Json;
       };
-      insert_project_member: {
-        Args: {
-          input_data: Json;
-        };
-        Returns: Json;
-      };
       leave_team: {
         Args: {
           team_id: string;
           team_member_id: string;
         };
         Returns: undefined;
+      };
+      insert_project_member: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      redirect_to_new_team: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
       };
       request_page_on_load: {
         Args: {

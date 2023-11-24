@@ -7639,6 +7639,76 @@ $$ LANGUAGE plv8;
 
 -- End: Fetch Top Signer
 
+-- Start: Redirect to team dashboard
+
+CREATE OR REPLACE FUNCTION redirect_to_new_team(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      teamId,
+      app
+    } = input_data;
+
+    plv8.execute(`UPDATE user_table SET user_active_team_id = '${teamId}' WHERE user_id = '${userId}'`);
+
+    const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
+
+    let formList = [];
+
+    if(teamMember){
+      const formData = plv8.execute(
+        `
+          SELECT *
+          FROM form_table
+          INNER JOIN team_member_table ON team_member_id = form_team_member_id
+          WHERE 
+            team_member_team_id = '${teamId}'
+            AND form_is_disabled = false
+            AND form_app = '${app}'
+          ORDER BY form_date_created DESC
+        `
+      );
+
+      formList = formData.map(form => {
+        return {
+          form_app: form.form_app,
+          form_date_created: form.form_date_created,
+          form_description: form.form_description,
+          form_id: form.form_id,
+          form_is_disabled: form.form_is_disabled,
+          form_is_for_every_member: form.form_is_for_every_member,
+          form_is_formsly_form: form.form_is_formsly_form,
+          form_is_hidden: form.form_is_hidden,
+          form_is_signature_required: form.form_is_signature_required,
+          form_name: form.form_name,
+          form_team_group: [],
+          form_team_member: {
+            team_member_date_created: form.team_member_date_created,
+            team_member_id: form.team_member_id,
+            team_member_is_disabled: form.team_member_is_disabled,
+            team_member_role: form.team_member_role,
+            team_member_team_id: form.team_member_team_id,
+            team_member_user_id: form.team_member_user_id
+          },
+          form_team_member_id: form.form_team_member_id
+        }
+      })
+    }
+
+    returnData = {
+      teamMember,
+      formList
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Redirect to team dashboard
+
 -- Start: Leave Team
 
 CREATE OR REPLACE FUNCTION leave_team(

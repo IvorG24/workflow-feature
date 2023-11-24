@@ -24,6 +24,8 @@ const FormList = () => {
   const activeApp = useActiveApp();
   const teamMember = useUserTeamMember();
 
+  const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
+
   const [formList, setFormList] = useState<
     (FormTableRow & { form_team_group: string[] })[]
   >([]);
@@ -57,7 +59,11 @@ const FormList = () => {
                 router.push(`/team-${activeApp.toLowerCase()}s/forms`)
               }
             >
-              View All ({forms.length - UNHIDEABLE_FORMLY_FORMS.length})
+              View All (
+              {isFormslyTeam
+                ? forms.length - UNHIDEABLE_FORMLY_FORMS.length
+                : forms.length}
+              )
             </Anchor>
           </Text>
           <Button
