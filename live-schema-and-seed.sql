@@ -5151,8 +5151,21 @@ RETURNS JSON as $$
               ORDER BY option_order ASC
             `
           );
+          let fieldItemDescriptionOrder = 0;
+          const order = plv8.execute(
+            `
+              SELECT item_description_order
+              FROM item_description_table
+              WHERE item_description_field_id = '${field.field_id}'
+            `
+          );
+          if(order.length > 0){
+            fieldItemDescriptionOrder = order[0].item_description_order;
+          }
+
           fieldWithOptionAndResponse.push({
             ...field,
+            field_order: field.field_order + fieldItemDescriptionOrder,
             field_response: requestResponseData,
             field_option: optionData
           });
@@ -5160,7 +5173,7 @@ RETURNS JSON as $$
 
         formSection.push({
           ...section,
-          section_field: fieldWithOptionAndResponse,
+          section_field: fieldWithOptionAndResponse.sort((a,b) => a.field_order - b.field_order),
         }) 
       });
     } else {
