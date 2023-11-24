@@ -7639,6 +7639,32 @@ $$ LANGUAGE plv8;
 
 -- End: Fetch Top Signer
 
+-- Start: Leave Team
+
+CREATE OR REPLACE FUNCTION leave_team(
+    team_id TEXT,
+    team_member_id TEXT
+)
+RETURNS VOID as $$
+  plv8.subtransaction(function(){
+    const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
+    const isUserOwner = teamMember.team_member_role === 'OWNER';
+    if(isUserOwner) throw new Error('Owner cannot leave the team');
+
+    plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`);
+
+    const userTeamList = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${teamMember.team_member_user_id}' AND team_member_is_disabled=FALSE`);
+
+    if (userTeamList.length > 0) {
+      plv8.execute(`UPDATE user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${teamMember.team_member_user_id}'`);
+    } else {
+      plv8.execute(`UPDATE user_table SET user_active_team_id=NULL WHERE user_id='${teamMember.team_member_user_id}'`);
+    }
+ });
+$$ LANGUAGE plv8;
+
+-- End: Leave Team
+
 ---------- End: FUNCTIONS
 
 
