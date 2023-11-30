@@ -367,7 +367,7 @@ CREATE TABLE ticket_table(
   ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
--- END: Ticket
+-- End: Ticket
 
 -- Start: Ticket comment
 
@@ -384,7 +384,7 @@ CREATE TABLE ticket_comment_table(
   ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 
--- END: Ticket comment
+-- End: Ticket comment
 
 -- Start: Special Approver
 
@@ -394,15 +394,16 @@ CREATE TABLE special_approver_table(
   special_approver_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
 
--- END: Special Approver
+-- End: Special Approver
 
 -- Start: Item Description Field UOM
 CREATE TABLE item_description_field_uom_table(
   item_description_field_uom_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_description_field_uom VARCHAR(4000) NOT NULL,
+
   item_description_field_uom_item_description_field_id UUID REFERENCES item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
 );
--- END: Item Description Field UOM
+-- End: Item Description Field UOM
 
 -- Start: Special approver item table
 
@@ -413,7 +414,94 @@ CREATE TABLE special_approver_item_table(
   special_approver_item_special_approver_id UUID REFERENCES special_approver_table(special_approver_id) ON DELETE CASCADE NOT NULL
 );
 
--- END: Special approver item table
+-- End: Special approver item table
+
+-- Start: Equipment category
+
+CREATE TABLE equipment_category_table(
+  equipment_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_category VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment category
+
+-- Start: Equipment brand
+
+CREATE TABLE equipment_brand_table(
+  equipment_brand_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_brand VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment brand
+
+-- Start: Equipment model
+
+CREATE TABLE equipment_model_table(
+  equipment_model_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_model VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment model
+
+-- Start: Equipment component category model
+
+CREATE TABLE equipment_component_category_table(
+  equipment_component_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_component_category VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment component category model
+
+-- Start: Equipment
+
+CREATE TABLE equipment_table(
+  equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_name VARCHAR(4000) NOT NULL,
+  
+  equipment_equipment_category_id UUID REFERENCES equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Equipment 
+
+-- Start: Equipment description
+
+CREATE TABLE equipment_description_table(
+  equipment_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_description_property_number VARCHAR(4000) NOT NULL,
+  equipment_description_serial_number VARCHAR(4000) NOT NULL,
+  
+  equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+);
+
+-- End: Equipment description
+
+-- Start: Equipment unit of measurememt
+
+CREATE TABLE equipment_unit_of_measurement_table(
+  equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_unit_of_measurement VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment unit of measurememt
+
+-- Start: Equipment part
+
+CREATE TABLE equipment_part_table(
+  equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_part_name VARCHAR(4000) NOT NULL,
+  equipment_part_number VARCHAR(4000) NOT NULL,
+
+  equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+);
+
+-- End: Equipment part
 
 ---------- End: TABLES
 
@@ -2678,7 +2766,7 @@ RETURNS VOID as $$
  });
 $$ LANGUAGE plv8;
 
--- END: Delete team
+-- End: Delete team
 
 -- Start: Update multiple approver
 
@@ -2711,7 +2799,7 @@ RETURNS JSON as $$
  return approverList;
 $$ LANGUAGE plv8;
 
--- END: Update multiple approver
+-- End: Update multiple approver
 
 -- Start: Update multiple admin
 
@@ -2744,7 +2832,7 @@ RETURNS JSON as $$
  return adminList;
 $$ LANGUAGE plv8;
 
--- END: Update multiple admin
+-- End: Update multiple admin
 
 -- Start: Request page on load
 
@@ -3112,7 +3200,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Request page on load
+-- End: Request page on load
 
 -- Start: Get team member on load
 
@@ -3157,7 +3245,7 @@ RETURNS JSON AS $$
  return team_member_data;
 $$ LANGUAGE plv8;
 
--- END: Get team member on load
+-- End: Get team member on load
 
 -- START: Get team on load
 
@@ -3231,7 +3319,7 @@ RETURNS JSON AS $$
  return team_data;
 $$ LANGUAGE plv8;
 
--- END: Get team on load
+-- End: Get team on load
 
 -- START: Get team members with filter
 
@@ -3307,7 +3395,7 @@ RETURNS JSON AS $$
  return team_data;
 $$ LANGUAGE plv8;
 
--- END: Get team members with filter
+-- End: Get team members with filter
 
 -- START: Get notifications on load
 
@@ -3347,7 +3435,7 @@ RETURNS JSON AS $$
  return notification_data;
 $$ LANGUAGE plv8;
 
--- END: Get notifications on load
+-- End: Get notifications on load
 
 -- START: Get ssot on load
 
@@ -3381,9 +3469,9 @@ RETURNS JSON AS $$
  return ssot_data;
 $$ LANGUAGE plv8;
 
--- END: Get ssot on load
+-- End: Get ssot on load
 
--- END: Get request list on load
+-- End: Get request list on load
 
 CREATE FUNCTION get_request_list_on_load(
     input_data JSON
@@ -3414,7 +3502,7 @@ RETURNS JSON AS $$
  return request_data;
 $$ LANGUAGE plv8;
 
--- END: Get request list on load
+-- End: Get request list on load
 
 -- Start: Canvass page on load
 
@@ -3674,7 +3762,7 @@ $$ LANGUAGE plv8;
 
 
 
--- END: Canvass page on load
+-- End: Canvass page on load
 
 -- Start: Form list page on load
 
@@ -3787,7 +3875,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Form list page on load
+-- End: Form list page on load
 
 -- Start: Build form page on load
 
@@ -3841,7 +3929,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Build form page on load
+-- End: Build form page on load
 
 -- Start: Form page on load
 
@@ -3976,7 +4064,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Form page on load
+-- End: Form page on load
 
 -- Start: Create request page on load
 
@@ -5017,7 +5105,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Create request page on load
+-- End: Create request page on load
 
 -- Start: Get request
 
@@ -5298,7 +5386,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Get request
+-- End: Get request
 
 -- Start: Get all approved requisition json
 
@@ -9415,7 +9503,7 @@ COMMIT;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table ;
 
--------- END: SUBSCRIPTION
+-------- End: SUBSCRIPTION
 
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
