@@ -368,7 +368,7 @@ CREATE TABLE ticket_table(
   ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
--- END: Ticket
+-- End: Ticket
 
 -- Start: Ticket comment
 
@@ -385,7 +385,7 @@ CREATE TABLE ticket_comment_table(
   ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 
--- END: Ticket comment
+-- End: Ticket comment
 
 -- Start: Special Approver
 
@@ -395,7 +395,7 @@ CREATE TABLE special_approver_table(
   special_approver_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
 
--- END: Special Approver
+-- End: Special Approver
 
 -- Start: Item Description Field UOM
 
@@ -406,7 +406,7 @@ CREATE TABLE item_description_field_uom_table(
   item_description_field_uom_item_description_field_id UUID REFERENCES item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
 );
 
--- END: Item Description Field UOM
+-- End: Item Description Field UOM
 
 -- Start: Special approver item table
 
@@ -417,7 +417,94 @@ CREATE TABLE special_approver_item_table(
   special_approver_item_special_approver_id UUID REFERENCES special_approver_table(special_approver_id) ON DELETE CASCADE NOT NULL
 );
 
--- END: Special approver item table
+-- End: Special approver item table
+
+-- Start: Equipment category
+
+CREATE TABLE equipment_category_table(
+  equipment_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_category VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment category
+
+-- Start: Equipment brand
+
+CREATE TABLE equipment_brand_table(
+  equipment_brand_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_brand VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment brand
+
+-- Start: Equipment model
+
+CREATE TABLE equipment_model_table(
+  equipment_model_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_model VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment model
+
+-- Start: Equipment component category model
+
+CREATE TABLE equipment_component_category_table(
+  equipment_component_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_component_category VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment component category model
+
+-- Start: Equipment
+
+CREATE TABLE equipment_table(
+  equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_name VARCHAR(4000) NOT NULL,
+  
+  equipment_equipment_category_id UUID REFERENCES equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Equipment 
+
+-- Start: Equipment description
+
+CREATE TABLE equipment_description_table(
+  equipment_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_description_property_number VARCHAR(4000) NOT NULL,
+  equipment_description_serial_number VARCHAR(4000) NOT NULL,
+  
+  equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+);
+
+-- End: Equipment description
+
+-- Start: Equipment unit of measurememt
+
+CREATE TABLE equipment_unit_of_measurement_table(
+  equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_unit_of_measurement VARCHAR(4000) NOT NULL
+);
+
+-- End: Equipment unit of measurememt
+
+-- Start: Equipment part
+
+CREATE TABLE equipment_part_table(
+  equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_part_name VARCHAR(4000) NOT NULL,
+  equipment_part_number VARCHAR(4000) NOT NULL,
+
+  equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+);
+
+-- End: Equipment part
 
 ---------- End: TABLES
 
@@ -2682,7 +2769,7 @@ RETURNS VOID as $$
  });
 $$ LANGUAGE plv8;
 
--- END: Delete team
+-- End: Delete team
 
 -- Start: Update multiple approver
 
@@ -2746,9 +2833,9 @@ RETURNS JSON as $$
  return adminList;
 $$ LANGUAGE plv8;
 
--- END: Update multiple admin
+-- End: Update multiple admin
 
--- END: Update multiple approver
+-- End: Update multiple approver
 
 -- Start: Request page on load
 
@@ -3116,7 +3203,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Request page on load
+-- End: Request page on load
 
 -- Start: Get team member on load
 
@@ -3161,7 +3248,7 @@ RETURNS JSON AS $$
  return team_member_data;
 $$ LANGUAGE plv8;
 
--- END: Get team member on load
+-- End: Get team member on load
 
 -- START: Get team on load
 
@@ -3235,7 +3322,7 @@ RETURNS JSON AS $$
  return team_data;
 $$ LANGUAGE plv8;
 
--- END: Get team on load
+-- End: Get team on load
 
 -- START: Get team members with filter
 
@@ -3313,7 +3400,7 @@ RETURNS JSON AS $$
  return team_data;
 $$ LANGUAGE plv8;
 
--- END: Get team members with filter
+-- End: Get team members with filter
 
 -- START: Get notifications on load
 
@@ -3353,7 +3440,7 @@ RETURNS JSON AS $$
  return notification_data;
 $$ LANGUAGE plv8;
 
--- END: Get notifications on load
+-- End: Get notifications on load
 
 -- START: Get ssot on load
 
@@ -3387,9 +3474,9 @@ RETURNS JSON AS $$
  return ssot_data;
 $$ LANGUAGE plv8;
 
--- END: Get ssot on load
+-- End: Get ssot on load
 
--- END: Get request list on load
+-- End: Get request list on load
 
 CREATE FUNCTION get_request_list_on_load(
     input_data JSON
@@ -3420,7 +3507,7 @@ RETURNS JSON AS $$
  return request_data;
 $$ LANGUAGE plv8;
 
--- END: Get request list on load
+-- End: Get request list on load
 
 -- Start: Canvass page on load
 
@@ -3680,7 +3767,7 @@ $$ LANGUAGE plv8;
 
 
 
--- END: Canvass page on load
+-- End: Canvass page on load
 
 -- Start: Form list page on load
 
@@ -3793,7 +3880,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Form list page on load
+-- End: Form list page on load
 
 -- Start: Build form page on load
 
@@ -3847,7 +3934,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Build form page on load
+-- End: Build form page on load
 
 -- Start: Form page on load
 
@@ -3982,7 +4069,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Form page on load
+-- End: Form page on load
 
 -- Start: Create request page on load
 
@@ -5023,7 +5110,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Create request page on load
+-- End: Create request page on load
 
 -- Start: Get request
 
@@ -5304,7 +5391,7 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Get request
+-- End: Get request
 
 -- Start: Get all approved requisition json
 
@@ -9422,7 +9509,7 @@ COMMIT;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table;
 
--------- END: SUBSCRIPTION
+-------- End: SUBSCRIPTION
 
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
@@ -9462,6 +9549,8 @@ INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_is_disabled) VALUES
 ('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition', 'formsly premade Requisition form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
+('c95dc9cd-d84a-474c-b438-9507245765c5', 'PED Part', 'formsly premade PED Part form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
+('44525763-2de2-43b4-9b95-137a0721cdb2', 'PED Equipment', 'formsly premade PED Equipment form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
 ('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
@@ -9473,6 +9562,14 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 -- Requisition
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+
+-- PED Part
+('88012978-96a6-45dd-a0c4-d94603612f12', 'Header', 1, false, 'c95dc9cd-d84a-474c-b438-9507245765c5'),
+('7d9a0c47-540f-415d-885b-e9c5adb2b2a8', 'Item', 2, true, 'c95dc9cd-d84a-474c-b438-9507245765c5'),
+
+-- PED Equipment
+('ad44c2b7-0056-4341-8caf-35d8a6b5efe5', 'Header', 1, false, '44525763-2de2-43b4-9b95-137a0721cdb2'),
+('0235bd54-7417-420a-b486-a1c4ac0763c0', 'Item', 2, true, '44525763-2de2-43b4-9b95-137a0721cdb2'),
 
 -- Sourced Item
 ('65d2d36a-7e69-4044-9f74-157bc753bd59', 'ID', 1, false, 'e5062660-9026-4629-bc2c-633826fdaa24'),
@@ -9518,6 +9615,35 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('64bb5899-bad4-4fe4-bc08-60dce9923f57', 'Division Description', 'TEXT', 11, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 ('8fdb158b-bed5-4eac-a6dc-bc69275f1ac7', 'Level 2 Major Group Description', 'TEXT', 12, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 ('b69182a9-dc96-472b-aa31-b1f2f92ec78b', 'Level 2 Minor Group Description', 'TEXT', 13, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
+
+-- PED Part 
+('c3f18480-353d-4677-94e5-ca2a9d065f03', 'Category', 'DROPDOWN', 1, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('fec1de43-c4bc-4c0d-9f6d-41f8146b14a5', 'Type of Order', 'DROPDOWN', 2, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('972caae1-49fa-404f-b518-6b0e9bbe312d', 'Equipment Name', 'DROPDOWN', 3, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('e35835b4-c107-4710-86d5-11b6059e221c', 'Equipment Property Number', 'DROPDOWN', 4, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('1e0dd682-452d-4a0a-b82d-4f34ae5385a1', 'Equipment Brand', 'TEXT', 5, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('0c47fc2e-b326-4b22-9add-5c03c3c5d2f3', 'Equipment Model', 'TEXT', 6, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('6a4e95c9-c68a-4c79-9ece-36c1a263f947', 'Equipment Make', 'TEXT', 7, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('eff5d1ab-c0bc-4b97-814d-d1a900dc6fc2', 'Equipment Serial No.', 'TEXT', 8, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('124fce5f-e848-422a-a502-df71f3f14e8a', 'Purpose Type', 'DROPDOWN', 9, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('a9928556-1a99-4d5f-b4b6-93eafb675a50', 'Purpose Description', 'TEXT', 10, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('b051ce7e-980e-4bbc-ad78-3b2c058e49cc', 'Project Name', 'TEXT', 11, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('95708a5f-655e-4b8e-af2c-7eb577a5168c', 'Equipment Service Report', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('12f7bd37-603a-43b0-883c-42188db5fbc2', 'Tire Thread Depth Measurement Form', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('c0c76f97-9939-4ef1-b8d6-fd1edd81a5d0', 'Photo of Voltage on Tester', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+
+('7f3593fe-926a-485a-a2ee-fe0a7a7dfbc4', 'General Item Name', 'DROPDOWN', 13, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('65b88de2-f6bd-4e6d-8d33-b5a4bd69555c', 'Part Number', 'DROPDOWN', 14, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('346cee79-f6f4-406e-8633-812ead35d2ed', 'Quantity', 'NUMBER', 15, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('545eafd4-3e97-4b2f-9a40-add2617cfefc', 'Unit of Measurement', 'TEXT', 16, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, true),
+
+-- PED Equipment
+('289cea0b-f295-476d-a6f6-83469deffa0c', 'Request Type', 'DROPDOWN', 1, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+('2782a46e-42eb-4f01-9aad-f76e91422b98', 'Purpose Description', 'TEXT', 2, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+('197f0e69-39f2-4f51-b49a-8c383a1a325e', 'Project Name', 'DROPDOWN', 3, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+('6de3b943-470a-474f-87e5-35c01f9cf8c4', 'Equipment Loading Form', 'FILE', 4, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+('662b6f69-a534-4837-b64a-4599a9df4405', 'Category', 'DROPDOWN', 5, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('2c715814-fecf-448e-9b78-460d8a536714', 'Equipment Name*', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 
 -- Sourced Item 
 ('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
@@ -9595,6 +9721,18 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('6ce7fa3a-9e85-4ab1-9f3b-de931071fa26', 'Cash Purchase - Local Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 3, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 
+-- PED Part 
+('0c3eede2-b93a-4e3c-b216-d0a2b790d4d0', 'Spare Part', 1, '124fce5f-e848-422a-a502-df71f3f14e8a'),
+('eb71b0ca-c3c5-41c2-baa0-a24231681e42', 'Tire', 2, '124fce5f-e848-422a-a502-df71f3f14e8a'),
+('bd789447-9650-42c0-b83e-35885386f862', 'Battery', 3, '124fce5f-e848-422a-a502-df71f3f14e8a'),
+
+('e75bff75-070d-4b96-afe7-181a9739d4b6', 'Single', 1, 'fec1de43-c4bc-4c0d-9f6d-41f8146b14a5'),
+('731a9bf4-1359-4616-9cf1-6b663317b331', 'Bulk', 2, 'fec1de43-c4bc-4c0d-9f6d-41f8146b14a5'),
+
+-- PED Equipment 
+('5bc48119-b2c2-4041-a6ec-59879a508bc9', 'In-house', 1, '289cea0b-f295-476d-a6f6-83469deffa0c'),
+('aa1bf11f-3858-48e2-bb20-319aed587b6b', 'Rental', 2, '289cea0b-f295-476d-a6f6-83469deffa0c'),
+
 -- Quotation 
 ('345214ae-9523-4f81-b3c1-d118f7735999', 'Email', 1, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
 ('3b8437da-7135-4fc5-ae4f-d9e294f096ab', 'Text', 2, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
@@ -9636,7 +9774,9 @@ INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) V
 ('8fa70223-807d-41eb-898b-31f16a34fb4f', '5782d70a-5f6b-486c-a77f-401066afd005', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('2b3806c6-c61c-46d4-a56e-eb563e2fc78c', '8e173d92-c346-4fb5-8ef2-490105e19263', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('5aa860bf-95d3-463e-901b-a552ec2ae171', '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', '9f7de2eb-4073-43e6-b662-d688ccba4b26');
+('5aa860bf-95d3-463e-901b-a552ec2ae171', '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('a0bb76ab-3aaf-4b40-998f-3316a28584b5', 'c95dc9cd-d84a-474c-b438-9507245765c5', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('adc43a8f-f581-4f09-8d7c-dd3ee0171fc4', '44525763-2de2-43b4-9b95-137a0721cdb2', '9f7de2eb-4073-43e6-b662-d688ccba4b26');
 
 DROP FUNCTION IF EXISTS supplier_seed;
 CREATE FUNCTION supplier_seed()
