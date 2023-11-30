@@ -253,7 +253,8 @@ CREATE TABLE item_table(
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
 
-  item_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  item_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
 CREATE TABLE item_division_table(
@@ -283,7 +284,8 @@ CREATE TABLE item_description_field_table(
   item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
+  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL,
+  item_description_field_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
 -- End: Requisition Form
@@ -976,13 +978,14 @@ RETURNS JSON AS $$
         item_unit,
         item_gl_account,
         item_team_id,
-        item_division_id_list
+        item_division_id_list,
+        item_encoder_team_member_id
       },
       itemDescription
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}') RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}') RETURNING *;`)[0];
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
