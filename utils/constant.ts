@@ -1246,7 +1246,10 @@ export const ITEM_UNIT_CHOICES = [
   "Percent",
   "Parts Per Million",
   "Meter Per Second",
-  "Cubic Meter Per Second"
+  "Cubic Meter Per Second",
+  "Microfarad",
+  "Nanofarad",
+  "Picofarad",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
