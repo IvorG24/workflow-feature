@@ -20,14 +20,18 @@ import {
   NotificationTableRow,
 } from "@/utils/types";
 import {
+  Box,
+  Button,
   Center,
   Container,
+  CopyButton,
   Pagination,
   Paper,
   Tabs,
   Text,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
@@ -159,6 +163,56 @@ const NotificationPage = ({
       setIsLoading(false);
     }
   };
+
+  const openJoinTeamModal = () =>
+    modals.open({
+      centered: true,
+      closeOnEscape: false,
+      closeOnClickOutside: false,
+      withCloseButton: false,
+      children: (
+        <Box>
+          <Title order={3}>Team Invitation Required</Title>
+          <Text mt="xs">
+            To join a team, you need an invitation. Send a request to the team
+            administrator using the email address below.
+          </Text>
+
+          <Text weight="bold" mt="md">
+            Email:
+            <Text weight="normal" underline span>
+              {` ${userProfile?.user_email}`}
+            </Text>
+          </Text>
+
+          <CopyButton value={`${userProfile?.user_email}`}>
+            {({ copied, copy }) => (
+              <Button
+                color={copied ? "teal" : "blue"}
+                onClick={copy}
+                fullWidth
+                mt="md"
+              >
+                {copied ? "Copied email" : "Copy email"}
+              </Button>
+            )}
+          </CopyButton>
+          <Button onClick={router.reload} mt="md" variant="outline" fullWidth>
+            Refresh
+          </Button>
+        </Box>
+      ),
+    });
+
+  useEffect(() => {
+    const hasInvitation =
+      storeNotificationList.filter(
+        (notification) => notification.notification_type === "INVITE"
+      ).length > 0;
+    if (router.query.onboarding === "join" && !hasInvitation)
+      openJoinTeamModal();
+    else modals.closeAll();
+  }, [router.query, storeNotificationList]);
 
   useEffect(() => {
     if (router.query.page === "1") {

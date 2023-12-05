@@ -32,6 +32,7 @@ import {
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketTableRow,
+  UserOnboardTableInsert,
   UserTableInsert,
   UserTableRow,
 } from "@/utils/types";
@@ -954,4 +955,21 @@ export const createTicketComment = async (
   if (error) throw error;
 
   return { data, error };
+};
+
+// Create onboard
+export const createOnboard = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    onboardData: UserOnboardTableInsert;
+  }
+) => {
+  const { onboardData } = params;
+  const { data, error } = await supabaseClient
+    .from("user_onboard_table")
+    .insert(onboardData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 };

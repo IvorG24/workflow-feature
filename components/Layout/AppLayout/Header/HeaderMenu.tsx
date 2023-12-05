@@ -25,6 +25,7 @@ import {
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
+  IconArrowGuide,
   IconBell,
   IconHelpCircle,
   IconLogout,
@@ -164,6 +165,12 @@ const HeaderMenu = () => {
           </Menu.Item> */}
 
           <Menu.Label>Support</Menu.Label>
+          <Menu.Item
+            icon={<IconArrowGuide size={16} />}
+            onClick={() => router.push("/user/onboarding")}
+          >
+            Onboarding
+          </Menu.Item>
           <Menu.Item
             icon={<IconHelpCircle size={16} />}
             onClick={() => router.push("/help")}

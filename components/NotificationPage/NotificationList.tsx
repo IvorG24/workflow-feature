@@ -1,6 +1,15 @@
+import { JoyRideNoSSR } from "@/utils/functions";
 import { NotificationTableRow } from "@/utils/types";
-import { Button, Container, Flex, LoadingOverlay, Text } from "@mantine/core";
+import {
+  Button,
+  Container,
+  Flex,
+  LoadingOverlay,
+  Text,
+  useMantineTheme,
+} from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { MouseEventHandler } from "react";
 import NotificationItem from "./NotificationItem";
 
@@ -17,6 +26,9 @@ const NotificationList = ({
   onMarkAsRead,
   isLoading,
 }: Props) => {
+  const router = useRouter();
+  const { colors } = useMantineTheme();
+  const isInvitationOnboarding = router.query.onboarding === "join" || false;
   return (
     <Container m={0} p={0} mt="xl" pos="relative" fluid>
       <LoadingOverlay
@@ -24,6 +36,25 @@ const NotificationList = ({
         overlayBlur={2}
         transitionDuration={500}
       />
+      {isInvitationOnboarding && (
+        <JoyRideNoSSR
+          steps={[
+            {
+              target: ".onboarding-join-team",
+              content: <Text>Click the invitation</Text>,
+            },
+          ]}
+          run={isInvitationOnboarding}
+          scrollToFirstStep
+          hideCloseButton
+          disableCloseOnEsc
+          disableOverlayClose
+          hideBackButton
+          spotlightClicks={true}
+          styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+        />
+      )}
+
       <Flex
         justify="space-between"
         align="center"
@@ -45,13 +76,21 @@ const NotificationList = ({
 
       <Flex direction="column" gap="xs" mt="md">
         {notificationList.map((notification) => (
-          <NotificationItem
-            notification={notification}
-            onReadNotification={() =>
-              onMarkAsRead(notification.notification_id)
+          <div
+            className={
+              notification.notification_type === "INVITE"
+                ? "onboarding-join-team"
+                : ""
             }
             key={notification.notification_id}
-          />
+          >
+            <NotificationItem
+              notification={notification}
+              onReadNotification={() =>
+                onMarkAsRead(notification.notification_id)
+              }
+            />
+          </div>
         ))}
       </Flex>
     </Container>

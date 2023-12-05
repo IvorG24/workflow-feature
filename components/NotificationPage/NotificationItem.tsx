@@ -30,6 +30,7 @@ type Props = {
 const NotificationItem = ({ notification, onReadNotification }: Props) => {
   const router = useRouter();
   const tab = router.query.tab || "all";
+  const isJoinOnboarding = router.query.onboarding === "join" || false;
 
   const getIcon = () => {
     const type = notification.notification_type;
@@ -52,7 +53,10 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
       m={0}
       p={0}
       onClick={async () => {
-        await router.push(notification.notification_redirect_url || "");
+        const redirectUrl = isJoinOnboarding
+          ? `${notification.notification_redirect_url}?onboarding=accept`
+          : `${notification.notification_redirect_url}`;
+        await router.push(redirectUrl);
         onReadNotification();
       }}
       sx={{ cursor: "pointer" }}

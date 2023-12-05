@@ -6,6 +6,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { JoyRideNoSSR } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { InvitationWithTeam, TeamTableRow } from "@/utils/types";
@@ -16,7 +17,9 @@ import {
   Container,
   Paper,
   Stack,
+  Text,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -29,9 +32,10 @@ export type Props = {
 
 const TeamInvitationPage = ({ invitation }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const { colors } = useMantineTheme();
   const user = useUserProfile();
   const router = useRouter();
+  const isAcceptOnboarding = router.query.onboarding === "accept" || false;
   const { setIsLoading } = useLoadingActions();
   const { setTeamList } = useTeamActions();
 
@@ -58,6 +62,9 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         message: "Invitation accepted.",
         color: "green",
       });
+      await router.push(
+        `/team/invitation/${invitation.invitation_id}?onboarding=nav`
+      );
       setTimeout(router.reload, 1000);
     } catch {
       notifications.show({
@@ -90,6 +97,23 @@ const TeamInvitationPage = ({ invitation }: Props) => {
 
   return (
     <Container fluid>
+      <JoyRideNoSSR
+        steps={[
+          {
+            target: ".onboarding-accept-team",
+            content: <Text>Accept the invitation</Text>,
+            placement: "top-start",
+          },
+        ]}
+        run={isAcceptOnboarding}
+        scrollToFirstStep
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        hideBackButton
+        spotlightClicks={true}
+        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+      />
       <Center>
         <Paper p="xl" mt="xl">
           <Stack align="center">
@@ -129,6 +153,9 @@ const TeamInvitationPage = ({ invitation }: Props) => {
                   <Button
                     fullWidth
                     size="md"
+                    className={
+                      isAcceptOnboarding ? "onboarding-accept-team" : ""
+                    }
                     onClick={() => handleAcceptInvitation()}
                   >
                     Accept Invitation

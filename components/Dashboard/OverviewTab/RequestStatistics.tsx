@@ -82,7 +82,14 @@ const RequestStatistics = ({
   }, [monthlyChartData]);
 
   return (
-    <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
+    <Paper
+      w="100%"
+      h="100%"
+      p="lg"
+      withBorder
+      sx={{ flex: 1 }}
+      className="onboarding-dashboard-monthly-statistics"
+    >
       <Stack>
         <Group position="apart">
           <Group spacing="xs" mb="sm">
