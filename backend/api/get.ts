@@ -958,16 +958,39 @@ export const checkItemName = async (
 // check if item description already exists
 export const checkItemDescription = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { itemDescription: string; descriptionId: string }
+  params: {
+    itemDescription: string;
+    itemDescriptionUom: string;
+    descriptionId: string;
+  }
 ) => {
-  const { itemDescription, descriptionId } = params;
+  const { itemDescription, itemDescriptionUom, descriptionId } = params;
 
-  const { count, error } = await supabaseClient
+  let query = supabaseClient
     .from("item_description_field_table")
-    .select("*", { count: "exact", head: true })
+    .select(
+      `*${
+        itemDescriptionUom
+          ? ",item_description_field_uom: item_description_field_uom_table!inner(item_description_field_uom) "
+          : ""
+      }`,
+      {
+        count: "exact",
+        head: true,
+      }
+    )
     .eq("item_description_field_value", itemDescription)
     .eq("item_description_field_is_disabled", false)
     .eq("item_description_field_item_description_id", descriptionId);
+
+  if (itemDescriptionUom) {
+    query = query.eq(
+      "item_description_field_uom.item_description_field_uom",
+      itemDescriptionUom
+    );
+  }
+
+  const { count, error } = await query;
   if (error) throw error;
 
   return Boolean(count);
