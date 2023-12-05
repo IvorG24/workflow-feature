@@ -8,6 +8,7 @@ export const ONBOARD_NAME = {
   DASHBOARD: "Dashboard",
   CREATE_REQUISITION: "Create Requisition",
   REQUEST_LIST: "Request List",
+  REQUISITION_REQUEST: "Requisition Request",
 };
 
 export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
@@ -1533,3 +1534,120 @@ export const REQUISITION_REQUEST_SAMPLE: RequestWithResponseType = {
     team_project_name: "PHILIP MORRIS",
   },
 };
+
+export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
+  {
+    target: ".onboarding-requisition-request-request",
+    content: (
+      <Box>
+        <Title order={4}>Request Details</Title>
+        <Text align="center" mt="md">
+          Provides a quick overview of essential information, including form
+          name, requestor, date created, status, request ID, requesting project,
+          and Jira ID.
+        </Text>
+      </Box>
+    ),
+    placement: "bottom",
+  },
+  {
+    target: ".onboarding-requisition-request-pdf",
+    content: (
+      <Box>
+        <Title order={4}>Export to PDF</Title>
+        <Text align="center" mt="md">
+          Click this button to generate a PDF version of the request for easy
+          sharing and documentation.
+        </Text>
+      </Box>
+    ),
+    placement: "bottom",
+  },
+  {
+    target: ".onboarding-requisition-request-main",
+    content: (
+      <Box>
+        <Title order={4}>Main Section</Title>
+        <Text align="center" mt="md">
+          The &apos;Main Section&apos; displays the request details filled out
+          during request creation.
+        </Text>
+      </Box>
+    ),
+    placement: "top",
+  },
+  {
+    target: ".onboarding-requisition-request-item",
+    content: (
+      <Box>
+        <Title order={4}>Items Sections</Title>
+        <Text align="center" mt="md">
+          This section displays the specific items requested by the user.
+        </Text>
+      </Box>
+    ),
+    placement: "top",
+  },
+
+  {
+    target: ".onboarding-requisition-request-summary",
+    content: (
+      <Box>
+        <Title order={4}>Summary</Title>
+        <Text align="center" mt="md">
+          Access a tabulated summary of the requested items in the
+          &apos;Summary&apos; section.
+        </Text>
+      </Box>
+    ),
+    placement: "top",
+  },
+  {
+    target: ".onboarding-requisition-request-action",
+    content: (
+      <Box>
+        <Title order={4}>Request Action</Title>
+        <Text align="center" mt="md">
+          Utilize the &apos;Reference This Request&apos; button to create a new
+          request effortlessly by referencing the current one. Edit your
+          request, if pending, with the &apos;Edit Request&apos; button. Cancel
+          a request anytime with the &apos;Cancel Request&apos; button.
+        </Text>
+        <Text align="center" mt="md">
+          Edit your request, if pending, with the &apos;Edit Request&apos;
+          button.
+        </Text>
+        <Text align="center" mt="md">
+          Cancel a request anytime with the &apos;Cancel Request&apos; button.
+        </Text>
+      </Box>
+    ),
+    placement: "top",
+  },
+  {
+    target: ".onboarding-requisition-request-signer",
+    content: (
+      <Box>
+        <Title order={4}>Signers</Title>
+        <Text align="center" mt="md">
+          Easily view the status of each signer for effective tracking and
+          management of the request approval process.
+        </Text>
+      </Box>
+    ),
+    placement: "top",
+  },
+  {
+    target: ".onboarding-requisition-request-comment",
+    content: (
+      <Box>
+        <Title order={4}>Comments</Title>
+        <Text align="center" mt="md">
+          Use the &apos;Comments&apos; section to add comments, share insights,
+          and attach files for enhanced collaboration and communication.
+        </Text>
+      </Box>
+    ),
+    placement: "top",
+  },
+];

@@ -209,7 +209,7 @@ const NotificationPage = ({
       storeNotificationList.filter(
         (notification) => notification.notification_type === "INVITE"
       ).length > 0;
-    if (router.query.onboarding === "join" && !hasInvitation)
+    if (router.query.onboarding === "true" && !hasInvitation)
       openJoinTeamModal();
     else modals.closeAll();
   }, [router.query, storeNotificationList]);

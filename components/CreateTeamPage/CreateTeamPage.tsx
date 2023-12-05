@@ -1,7 +1,4 @@
-import { getOnboardList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserStore } from "@/stores/useUserStore";
-import { Database } from "@/utils/database";
 import { JoyRideNoSSR, isEmpty } from "@/utils/functions";
 import { TeamMemberTableRow, TeamTableRow } from "@/utils/types";
 import {
@@ -14,7 +11,6 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import CreateTeamForm from "./CreateTeamForm";
@@ -23,8 +19,6 @@ import TeamCard from "./TeamCard";
 
 const CreateTeamPage = () => {
   const router = useRouter();
-  const supabaseClient = createPagesBrowserClient<Database>();
-  const { userProfile } = useUserStore();
   const [activeStep, setActiveStep] = useState(1);
   const [newTeam, setNewTeam] = useState<TeamTableRow | null>(null);
   const [ownerData, setOwnerData] = useState<TeamMemberTableRow | null>(null);
@@ -79,7 +73,7 @@ const CreateTeamPage = () => {
             mt="md"
             onClick={() => {
               modals.closeAll();
-              router.push("/team-requests/notification?onboarding=join");
+              router.push("/team-requests/notification?onboarding=true");
             }}
           >
             <Box>
@@ -110,19 +104,10 @@ const CreateTeamPage = () => {
     });
 
   useEffect(() => {
-    const fetchOnboard = async () => {
-      const onboardList = await getOnboardList(supabaseClient, {
-        userId: `${userProfile?.user_id}`,
-        page: router.pathname,
-      });
-
-      if (onboardList.length <= 0) {
-        modals.closeAll();
-        openUserRouteModal();
-      }
-    };
-    fetchOnboard();
-  }, []);
+    if (router.query.onboarding === "true") {
+      openUserRouteModal();
+    }
+  }, [router.query]);
 
   return (
     <Container>

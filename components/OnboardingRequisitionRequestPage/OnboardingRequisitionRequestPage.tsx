@@ -17,17 +17,33 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { JoyRideNoSSR } from "@/utils/functions";
+import {
+  ONBOARDING_REQUISITION_REQUEST_STEP,
+  ONBOARD_NAME,
+} from "@/utils/onboarding";
 import {
   ConnectedRequestIdList,
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Group,
+  Stack,
+  Text,
+  Title,
+  useMantineTheme,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { CallBackProps, STATUS } from "react-joyride";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
 import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
 import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
@@ -63,6 +79,8 @@ const OnboardingRequisitionRequestPage = ({
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
+  const { colors } = useMantineTheme();
+  const [isOnboarding, setIsOnboarding] = useState(false);
   const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
     []
   );
@@ -434,6 +452,56 @@ const OnboardingRequisitionRequestPage = ({
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
 
+  const openRequisitionRequestOnboardingModal = () =>
+    modals.open({
+      centered: true,
+      closeOnEscape: false,
+      closeOnClickOutside: false,
+      withCloseButton: false,
+      children: (
+        <Box>
+          <Title order={3}>Welcome to Requisition Request</Title>
+          <Text mt="xs">
+            Streamline your workflow, review details, and easily take action on
+            pending requests. This brief session will guide you through key
+            features for a seamless experience on the Requisition Request Page.
+          </Text>
+
+          <Flex justify="flex-end" direction="row" gap="md" mt="lg">
+            <Button
+              variant="outline"
+              onClick={() => {
+                modals.closeAll();
+                router.push(`/team-requests/dashboard`);
+              }}
+            >
+              Skip Onboarding
+            </Button>
+            <Button
+              onClick={() => {
+                modals.closeAll();
+                setIsOnboarding(true);
+              }}
+            >
+              Start
+            </Button>
+          </Flex>
+        </Box>
+      ),
+    });
+
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    if (status === STATUS.FINISHED) {
+      router.push(
+        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.REQUISITION_REQUEST}`
+      );
+    }
+  };
+
+  useEffect(() => {
+    openRequisitionRequestOnboardingModal();
+  }, []);
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -561,6 +629,23 @@ const OnboardingRequisitionRequestPage = ({
           teamId: request.request_team_member.team_member_team_id,
         }}
         requestCommentList={requestCommentList}
+      />
+
+      <JoyRideNoSSR
+        callback={handleJoyrideCallback}
+        continuous
+        run={isOnboarding}
+        steps={ONBOARDING_REQUISITION_REQUEST_STEP}
+        scrollToFirstStep
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        showProgress
+        styles={{
+          buttonNext: { backgroundColor: colors.blue[6] },
+          buttonBack: { color: colors.blue[6] },
+          beaconInner: { backgroundColor: colors.blue[6] },
+        }}
       />
     </Container>
   );

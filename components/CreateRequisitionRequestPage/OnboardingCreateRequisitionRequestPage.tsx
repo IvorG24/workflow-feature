@@ -465,7 +465,7 @@ const OnboardingCreateRequisitionRequestPage = ({
     const { status } = data;
     if (status === STATUS.FINISHED) {
       router.push(
-        `/team-requests/forms/${router.query.formId}/create/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.CREATE_REQUISITION}`
+        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.CREATE_REQUISITION}`
       );
     }
   };

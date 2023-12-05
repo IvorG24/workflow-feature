@@ -147,7 +147,7 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
               <Button
                 onClick={() => {
                   modals.closeAll();
-                  router.push(`/team-requests/dashboard`);
+                  router.push(`/user/onboarding`);
                 }}
                 mt="md"
                 fullWidth
@@ -155,12 +155,19 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
                 Continue
               </Button>
               <Button
-                onClick={() => {
-                  modals.closeAll();
-                  router.push(
-                    `/team-requests/requests/test?onboardName=${router.query.onboardName}`
+                onClick={async () => {
+                  await router.push(
+                    {
+                      query: {
+                        notice: false,
+                        onboardName: router.query.onboardName,
+                      },
+                    },
+                    undefined,
+                    { shallow: true }
                   );
                   router.reload();
+                  modals.closeAll();
                 }}
                 mt="md"
                 fullWidth
@@ -230,7 +237,7 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
 
   useEffect(() => {
     if (router.query.notice === "success") openSuccessNoticeModal();
-  }, [router.query.notice]);
+  }, [router.query]);
 
   return (
     <Container>

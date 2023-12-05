@@ -117,7 +117,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
     if (status === STATUS.FINISHED) {
       console.log("first");
       router.push(
-        `/team-requests/dashboard/test?notice=success&onboardName=${ONBOARD_NAME.DASHBOARD}`
+        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.DASHBOARD}`
       );
     }
   };

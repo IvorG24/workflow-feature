@@ -220,9 +220,8 @@ const RequestListPage = ({
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status } = data;
     if (status === STATUS.FINISHED) {
-      console.log("first");
       router.push(
-        `/team-requests/requests/test?notice=success&onboardName=${ONBOARD_NAME.REQUEST_LIST}`
+        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.REQUEST_LIST}`
       );
     }
   };

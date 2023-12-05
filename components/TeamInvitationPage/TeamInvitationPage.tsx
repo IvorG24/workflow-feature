@@ -3,7 +3,7 @@ import {
   declineTeamInvitation,
 } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useTeamActions } from "@/stores/useTeamStore";
+import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { JoyRideNoSSR } from "@/utils/functions";
@@ -35,9 +35,10 @@ const TeamInvitationPage = ({ invitation }: Props) => {
   const { colors } = useMantineTheme();
   const user = useUserProfile();
   const router = useRouter();
-  const isAcceptOnboarding = router.query.onboarding === "accept" || false;
+  const isAcceptOnboarding = router.query.onboarding === "true";
   const { setIsLoading } = useLoadingActions();
   const { setTeamList } = useTeamActions();
+  const teamList = useTeamList();
 
   const [status, setStatus] = useState(invitation.invitation_status);
 
@@ -62,10 +63,14 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         message: "Invitation accepted.",
         color: "green",
       });
-      await router.push(
-        `/team/invitation/${invitation.invitation_id}?onboarding=nav`
-      );
-      setTimeout(router.reload, 1000);
+      console.log(teamList.length);
+      console.log(teamList.length <= 0);
+      if (teamList.length <= 0) {
+        router.push(`/team-requests/dashboard?onboarding=true`);
+      } else {
+        await router.push(`/team/invitation/${invitation.invitation_id}`);
+        setTimeout(router.reload, 1000);
+      }
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
