@@ -64,6 +64,14 @@ const RequestActionSection = ({
     setError("jiraId", { message: "" });
   };
 
+  const isValidJiraId = async (jiraId: string) => {
+    const newJiraTicketData = await fetch(
+      `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
+    );
+
+    return newJiraTicketData.ok ? true : false;
+  };
+
   const handleAction = (action: string, color: string) => {
     if (
       isRf &&
@@ -80,9 +88,18 @@ const RequestActionSection = ({
               Are you sure you want to {action} this request?
             </Text>
             <form
-              onSubmit={handleSubmit((data) => {
-                handleUpdateRequest("APPROVED", data.jiraId);
-                modals.close("approveRf");
+              onSubmit={handleSubmit(async (data) => {
+                const checkJiraIfValid = await isValidJiraId(data.jiraId);
+                if (checkJiraIfValid) {
+                  handleUpdateRequest("APPROVED", data.jiraId);
+                  modals.close("approveRf");
+                } else {
+                  notifications.show({
+                    message: "Jira ID is invalid or does not exist.",
+                    color: "red",
+                  });
+                  return "Jira ID is invalid.";
+                }
               })}
             >
               <Stack mt="xl" spacing="xs">
