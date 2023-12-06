@@ -47,11 +47,25 @@ const OnboardingListPage = ({ onboardList }: Props) => {
 
   let onboardingList: OnboardListType = [
     {
+      onboardName: ONBOARD_NAME.DASHBOARD,
+      onboardDescription:
+        "Navigate through key features, including 'Total Requests','Top Requestor,' 'Top Signer,' and 'Monthly Statistics.' Effortlessly track and manage your requests with our user-friendly dashboard. This quick session will guide you through the essentials for a seamless and informed experience.",
+      onboardingList: [],
+      path: "/team-requests/dashboard?onboarding=true",
+    },
+    {
       onboardName: ONBOARD_NAME.CREATE_REQUISITION,
       onboardDescription:
         "Effortlessly create a requisition request using Formsly. This user-friendly feature guides you through the process, ensuring a seamless experience. Simplify requisition submission and make your workflow more efficient with Formsly's intuitive interface.",
       onboardingList: [],
       path: "/team-requests/forms/d13b3b0f-14df-4277-b6c1-7c80f7e7a829/create/onboarding",
+    },
+    {
+      onboardName: ONBOARD_NAME.REQUISITION_REQUEST,
+      onboardDescription:
+        "Streamline your workflow, review details, and easily take action on pending requests. This brief session will guide you through key features for a seamless experience on the Requisition Request Page.",
+      onboardingList: [],
+      path: "/team-requests/requests/40a7c790-6b30-45f1-a29a-a398c4a5514d/onboarding?requestFormName=Requisition",
     },
     {
       onboardName: ONBOARD_NAME.REQUEST_LIST,
@@ -147,9 +161,9 @@ const OnboardingListPage = ({ onboardList }: Props) => {
       <Title order={2}> Onboarding Assessment</Title>
       <Flex gap="md" wrap="wrap" mt="lg">
         {onboardingCategorized.map((onboard, onboardIdx) => (
-          <Card radius="sm" mih={150} miw="100%" key={onboardIdx}>
+          <Card radius="sm" mih={150} miw="100%" shadow="xs" key={onboardIdx}>
             <Card.Section px="md" pt="xs">
-              <Text size="lg" weight="bold">
+              <Text size="xl" weight="bold">
                 {onboard.onboardName}
               </Text>
             </Card.Section>

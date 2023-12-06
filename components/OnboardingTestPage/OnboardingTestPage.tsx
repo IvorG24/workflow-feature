@@ -241,19 +241,8 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
 
   return (
     <Container>
-      <Flex justify="space-between" direction={{ base: "column", sm: "row" }}>
-        <Title order={2}>Post-Onboarding Assessment</Title>
-        <Button
-          onClick={() => {
-            modals.closeAll();
-            router.back();
-          }}
-          mt="md"
-          variant="outline"
-        >
-          Review
-        </Button>
-      </Flex>
+      <Title order={2}>Post-Onboarding Assessment</Title>
+
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateOnboard)}>
           <Stack spacing="xl" mt="lg">

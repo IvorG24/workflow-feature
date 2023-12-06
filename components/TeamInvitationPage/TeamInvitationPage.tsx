@@ -108,6 +108,7 @@ const TeamInvitationPage = ({ invitation }: Props) => {
             target: ".onboarding-accept-team",
             content: <Text>Accept the invitation</Text>,
             placement: "top-start",
+            disableBeacon: true,
           },
         ]}
         run={isAcceptOnboarding}

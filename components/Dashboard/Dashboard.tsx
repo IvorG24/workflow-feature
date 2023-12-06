@@ -128,6 +128,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
       closeOnEscape: false,
       closeOnClickOutside: false,
       withCloseButton: false,
+      zIndex: 1000,
       children: (
         <Box>
           <Title order={3}>Welcome to Dashboard Overview</Title>
@@ -325,6 +326,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
           buttonNext: { backgroundColor: colors.blue[6] },
           buttonBack: { color: colors.blue[6] },
           beaconInner: { backgroundColor: colors.blue[6] },
+          tooltipContent: { padding: 0 },
         }}
       />
     </Container>

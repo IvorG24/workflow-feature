@@ -116,6 +116,7 @@ const CreateTeamPage = () => {
           {
             target: ".onboarding-create-team",
             content: <Text>Follow these steps to create a team.</Text>,
+            disableBeacon: true,
           },
         ]}
         run={isCreateTeam}

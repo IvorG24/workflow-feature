@@ -42,6 +42,7 @@ const NotificationList = ({
             {
               target: ".onboarding-join-team",
               content: <Text>Click the invitation</Text>,
+              disableBeacon: true,
             },
           ]}
           run={isInvitationOnboarding}

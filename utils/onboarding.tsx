@@ -17,7 +17,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Request Details</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           This section provides essential details about the form you&apos;re
           working on. Find information such as the form name, description,
           requester, and date created.
@@ -25,13 +25,14 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
       </Box>
     ),
     placement: "bottom",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-create-request-main-section",
     content: (
       <Box>
         <Title order={4}>Main Form Section</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           This part helps you share key details. Just fill in the fields.
         </Text>
       </Box>
@@ -44,7 +45,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Item Details Section</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           This section is where you input your item details. Simply fill in the
           required fields.
         </Text>
@@ -62,7 +63,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Add Item</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           To add another item, click on the Item + button. There is no limit;
           you can add as many items as needed.
         </Text>
@@ -76,7 +77,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Remove Item</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           To remove an item, click on the trash icon located at the top-right of
           the item section you wish to remove.
         </Text>
@@ -90,7 +91,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Signers Section</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           This section displays the individuals responsible for approving or
           signing your request.
         </Text>
@@ -104,7 +105,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Submit Button</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           After completing the form and reviewing the filled-out fields to
           ensure all details are correct, click on the Submit button.
         </Text>
@@ -121,7 +122,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Request List</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           This table displays a list of requests. Get familiar with the layout
           and discover the details you need at a glance on the Request List
           page.
@@ -130,13 +131,14 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-rid",
     content: (
       <Box>
         <Title order={4}>Request ID</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Find request, Jira, and OTP IDs effortlessly! In the first columns of
           the table, click the copy button on the right side of each ID to
           quickly copy it for your convenience.
@@ -151,7 +153,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Jira ID</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Find request, Jira, and OTP IDs effortlessly! In the first columns of
           the table, click the copy button on the right side of each ID to
           quickly copy it for your convenience.
@@ -166,7 +168,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>OTP ID</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Find request, Jira, and OTP IDs effortlessly! In the first columns of
           the table, click the copy button on the right side of each ID to
           quickly copy it for your convenience.
@@ -181,7 +183,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Form name</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Form name of the request.
         </Text>
       </Box>
@@ -194,7 +196,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Status</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Stay informed with the status indicators. Requests are categorized as
           pending, approved, rejected, or cancelled.
         </Text>
@@ -208,7 +210,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Requested By</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           The &apos;Requested By&apos; column provides information about the
           user who initiated the request
         </Text>
@@ -222,7 +224,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Approver</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Effortlessly track the approver status with color-coded indicators on
           their profile icon. A blue border signals pending approval, green for
           approval, red for rejection, and gray for cancellation.
@@ -237,7 +239,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Date Created</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Stay informed about the exact date each request was created.
         </Text>
       </Box>
@@ -250,7 +252,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>View</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           View button to access full details of the request.
         </Text>
       </Box>
@@ -262,7 +264,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Sort</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Sorting requests based on their creation date.
         </Text>
       </Box>
@@ -275,7 +277,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Request ID Filter</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Refine your search with powerful filters! Utilize the search bar to
           filter requests by ID, form, status, requester, or approver.
         </Text>
@@ -289,7 +291,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Form Filter</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Refine your search with powerful filters! Utilize the search bar to
           filter requests by ID, form, status, requester, or approver.
         </Text>
@@ -303,7 +305,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Status Filter</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Refine your search with powerful filters! Utilize the search bar to
           filter requests by ID, form, status, requester, or approver.
         </Text>
@@ -317,7 +319,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Requestor Filter</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Refine your search with powerful filters! Utilize the search bar to
           filter requests by ID, form, status, requester, or approver.
         </Text>
@@ -331,7 +333,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Approver Filter</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Refine your search with powerful filters! Utilize the search bar to
           filter requests by ID, form, status, requester, or approver.
         </Text>
@@ -345,7 +347,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Approver&apos;s View Filter </Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Optimize your workflow! Toggle the &apos;Approver&apos;s View&apos;
           checkbox to exclusively display requests where you are the approver.
           Note that when enabled, other filters will be ignored and disabled,
@@ -361,7 +363,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Pagination</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Utilize pagination to explore multiple pages of the Request List.
         </Text>
       </Box>
@@ -374,7 +376,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Refresh</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Use the &apos;Refresh&apos; button to instantly update the Request
           List and view the latest requests without navigating away from the
           page.
@@ -389,7 +391,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>SSOT Spreadsheet View</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Experience data in a spreadsheet-like format! Click on &apos;SSOT
           Spreadsheet View&apos; to seamlessly navigate through an organized and
           tabular display of approved requests for enhanced visibility and easy
@@ -740,7 +742,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Total Requests</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Get a quick glance at request status percentages. The &apos;Total
           Requests&apos; section not only shows the count but also the
           percentage breakdown for each status – pending, approved, and
@@ -750,13 +752,14 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-dashboard-top-requestor",
     content: (
       <Box>
         <Title order={4}>Top Requestor</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Discover top requestors with the &apos;Top Requestor&apos; section.
           Easily identify the top requestor and hover over their bar to view a
           breakdown of their total pending, approved, and rejected requests.
@@ -771,7 +774,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Top Signer</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Spotlight on top signers! The &apos;Top Signer&apos; section
           highlights the top contributor in signing requests. Identify the
           leading signer and gain insights into their total pending, approved,
@@ -787,7 +790,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Monthly Statistics</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Track monthly activity effortlessly! The &apos;Monthly
           Statistics&apos; feature provides the number of requests for each
           month, and you can hover over each month to see the detailed breakdown
@@ -804,7 +807,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Form Filter</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Select a form, and instantly see requests associated with that form,
           streamlining your focus and making your dashboard experience more
           personalized.
@@ -819,7 +822,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Date Created Filter</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Choose from preset options like &apos;Last 7 days,&apos; &apos;Last 14
           days,&apos; &apos;Last 30 days,&apos; and &apos;Last 90 days.&apos;
           For a custom range, pick your own start and end dates. Easily filter
@@ -834,8 +837,8 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
 ];
 
 export const REQUISITION_REQUEST_SAMPLE: RequestWithResponseType = {
-  request_id: "4decb859-9744-4132-8ccb-f841a2fbd5f3",
-  request_formsly_id: "PM1-4",
+  request_id: "40a7c790-6b30-45f1-a29a-a398c4a5514d",
+  request_formsly_id: "PM1-1",
   request_date_created: "2023-12-05T03:00:35.924Z",
   request_status_date_updated: "2023-12-05T03:00:35.924Z",
   request_status: "PENDING",
@@ -844,7 +847,7 @@ export const REQUISITION_REQUEST_SAMPLE: RequestWithResponseType = {
   request_form_id: "d13b3b0f-14df-4277-b6c1-7c80f7e7a829",
   request_project_id: "4b3a151a-a077-486c-9dfb-e996c2c9184c",
   request_jira_id: "SCSM-1234",
-  request_jira_link: "https://formsly.io",
+  request_jira_link: `${process.env.NEXT_PUBLIC_SITE_URL}/team-requests/requests/40a7c790-6b30-45f1-a29a-a398c4a5514d/onboarding?requestFormName=Requisition`,
   request_otp_id: null,
   request_comment: [
     {
@@ -1541,7 +1544,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Request Details</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Provides a quick overview of essential information, including form
           name, requestor, date created, status, request ID, requesting project,
           and Jira ID.
@@ -1549,13 +1552,14 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
       </Box>
     ),
     placement: "bottom",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-requisition-request-pdf",
     content: (
       <Box>
         <Title order={4}>Export to PDF</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Click this button to generate a PDF version of the request for easy
           sharing and documentation.
         </Text>
@@ -1568,7 +1572,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Main Section</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           The &apos;Main Section&apos; displays the request details filled out
           during request creation.
         </Text>
@@ -1581,7 +1585,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Items Sections</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           This section displays the specific items requested by the user.
         </Text>
       </Box>
@@ -1594,7 +1598,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Summary</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Access a tabulated summary of the requested items in the
           &apos;Summary&apos; section.
         </Text>
@@ -1607,17 +1611,18 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Request Action</Title>
-        <Text align="center" mt="md">
+
+        <Text align="center" mt="md" size="sm">
           Utilize the &apos;Reference This Request&apos; button to create a new
           request effortlessly by referencing the current one. Edit your
           request, if pending, with the &apos;Edit Request&apos; button. Cancel
           a request anytime with the &apos;Cancel Request&apos; button.
         </Text>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Edit your request, if pending, with the &apos;Edit Request&apos;
           button.
         </Text>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Cancel a request anytime with the &apos;Cancel Request&apos; button.
         </Text>
       </Box>
@@ -1629,7 +1634,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Signers</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Easily view the status of each signer for effective tracking and
           management of the request approval process.
         </Text>
@@ -1642,12 +1647,497 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
     content: (
       <Box>
         <Title order={4}>Comments</Title>
-        <Text align="center" mt="md">
+        <Text align="center" mt="md" size="sm">
           Use the &apos;Comments&apos; section to add comments, share insights,
           and attach files for enhanced collaboration and communication.
         </Text>
       </Box>
     ),
     placement: "top",
+  },
+];
+
+export const ONBOARDING_DASHBOARD_QUESTION: OnboardingTestFormValues["sections"] =
+  [
+    {
+      section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+      section_name: "Dashboard assessment",
+      section_order: 1,
+      section_is_duplicatable: false,
+      section_form_id: "9df4b071-48ec-4b05-9553-4db3c814d4ae",
+      section_field: [
+        {
+          field_id: "7f6448ec-3488-4382-b0cb-e6a83c32dfb1",
+          field_name:
+            "What information does the 'Total Requests' section provide?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+          field_option: createOptionArray(
+            "7f6448ec-3488-4382-b0cb-e6a83c32dfb1",
+            [
+              "Request ID breakdown",
+              "Status percentages breakdown",
+              "Monthly activity overview",
+              "Top requestors breakdown",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "07b9b6e6-5a68-4c0e-a661-09cee967370d",
+          field_name:
+            "How do you identify the breakdown of request status in the 'Top Requestor' section?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 2,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+          field_option: createOptionArray(
+            "07b9b6e6-5a68-4c0e-a661-09cee967370d",
+            [
+              "Hover over their bar",
+              "Click on their name",
+              "Use the 'Form Filter'",
+              "Check the 'Date Created Filter'",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "8b80e4f0-4c7e-47f3-80fe-c8ff52187738",
+          field_name:
+            "Which section allows you to view the top contributor in signing requests?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 3,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+          field_option: createOptionArray(
+            "8b80e4f0-4c7e-47f3-80fe-c8ff52187738",
+            [
+              "Total Requests",
+              "Top Requestor",
+              "Monthly Statistics",
+              "Top Signer",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "ed34e7d9-d6ac-47cd-aa14-7403ea4d47db",
+          field_name: "What does the 'Monthly Statistics' feature provide?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 4,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+          field_option: createOptionArray(
+            "ed34e7d9-d6ac-47cd-aa14-7403ea4d47db",
+            [
+              "Status percentages",
+              "Number of requests for each month",
+              "Breakdown of top signers",
+              "Top requestor details",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "f0a90d87-c478-4fd3-bcc6-ec7b4a68d8c9",
+          field_name:
+            "How can you personalize your dashboard experience by focusing on specific forms?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 5,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+          field_option: createOptionArray(
+            "f0a90d87-c478-4fd3-bcc6-ec7b4a68d8c9",
+            [
+              "Use the 'Form Filter'",
+              "Check 'Top Requestor' details",
+              "Utilize the 'Date Created Filter'",
+              "Refer to 'Monthly Statistics'",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "2c8ccaf1-26b6-43b7-9c24-16b4216adde8",
+          field_name:
+            "Which filter allows you to choose a custom time frame for request filtering?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 6,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+          field_option: createOptionArray(
+            "2c8ccaf1-26b6-43b7-9c24-16b4216adde8",
+            [
+              "Top Signer",
+              "Form Filter",
+              "Date Created Filter",
+              "Total Requests",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "c516b61f-bbb8-4f3e-8710-b0d17f42f247",
+          field_name:
+            "What does the 'Date Created Filter' offer in terms of preset options?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 7,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "e7a77cf8-4831-4049-93d5-4d4264b5d53b",
+          field_option: createOptionArray(
+            "c516b61f-bbb8-4f3e-8710-b0d17f42f247",
+            [
+              "Last 3 days, 10 days, 20 days, 60 days",
+              "Last 7 days, 14 days, 30 days, 90 days",
+              "Last week, last month, last quarter, last year",
+              "Past week, past month, past 3 months, past 6 months",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+      ],
+    },
+  ];
+
+export const ONBOARDING_DASHBOARD_ANSWER: OnboardAnswer[] = [
+  {
+    fieldId: "7f6448ec-3488-4382-b0cb-e6a83c32dfb1",
+    response: "Status percentages breakdown",
+  },
+  {
+    fieldId: "07b9b6e6-5a68-4c0e-a661-09cee967370d",
+    response: "Hover over their bar",
+  },
+  {
+    fieldId: "8b80e4f0-4c7e-47f3-80fe-c8ff52187738",
+    response: "Top Signer",
+  },
+  {
+    fieldId: "ed34e7d9-d6ac-47cd-aa14-7403ea4d47db",
+    response: "Number of requests for each month",
+  },
+  {
+    fieldId: "f0a90d87-c478-4fd3-bcc6-ec7b4a68d8c9",
+    response: "Use the 'Form Filter'",
+  },
+  {
+    fieldId: "2c8ccaf1-26b6-43b7-9c24-16b4216adde8",
+    response: "Date Created Filter",
+  },
+  {
+    fieldId: "c516b61f-bbb8-4f3e-8710-b0d17f42f247",
+    response: "Last 7 days, 14 days, 30 days, 90 days",
+  },
+];
+
+export const ONBOARDING_REQUISITION_REQUEST_QUESTION: OnboardingTestFormValues["sections"] =
+  [
+    {
+      section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+      section_name: "Requisition request assessment",
+      section_order: 1,
+      section_is_duplicatable: false,
+      section_form_id: "9df4b071-48ec-4b05-9553-4db3c814d4ae",
+      section_field: [
+        {
+          field_id: "4096314c-e4ef-43dd-96c1-4e6470e42120",
+          field_name:
+            "Which section provides a quick overview of essential information, including form name, requestor, date created, status, request ID, requesting project, and Jira ID?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "4096314c-e4ef-43dd-96c1-4e6470e42120",
+            [
+              "Request Action",
+              "Main Section",
+              "Request Details",
+              "Items Section",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "3a8268f5-0a72-41dc-a12c-ecb3796bb2b5",
+          field_name: "What does the 'Export to PDF' feature allow you to do",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "3a8268f5-0a72-41dc-a12c-ecb3796bb2b5",
+            [
+              "Edit a request",
+              "Generate a PDF version for sharing and documentation",
+              "Cancel a request",
+              "Add comments",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "1efe0e30-22de-4e3b-b7a6-c8bb31bd8e61",
+          field_name: "Which section displays the Date Needed",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "1efe0e30-22de-4e3b-b7a6-c8bb31bd8e61",
+            ["Request Details", "Summary", "Main Section", "Signers"]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "a1fb2040-3c98-42c6-bf67-0890ccce2ff5",
+          field_name: "What does the 'Items Section' display?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "a1fb2040-3c98-42c6-bf67-0890ccce2ff5",
+            [
+              "Tabulated summary of requested items",
+              "Request details",
+              "Specific items requested",
+              "Status of each signer",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "d2cfa168-d6c9-47fb-ae38-7b410a066008",
+          field_name:
+            "Where can you access a tabulated summary of the requested items?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "d2cfa168-d6c9-47fb-ae38-7b410a066008",
+            ["Request Action", "Items Section", "Summary", "Main Section"]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "d7333d99-caa3-4295-b120-46008877b9d3",
+          field_name:
+            "What actions can you perform in the 'Request Action' section?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "d7333d99-caa3-4295-b120-46008877b9d3",
+            [
+              "Cancel a request",
+              "Reference an existing request",
+              "Edit a request",
+              "All of the above",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "3b33eafa-e4c5-4e32-adee-c91683abeb5d",
+          field_name:
+            "Where can you view the status of each signer for effective tracking?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "3b33eafa-e4c5-4e32-adee-c91683abeb5d",
+            ["Signers", "Items Section", "Request Details", "Main Section"]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "4887e0d9-2c01-4360-b160-0336c352b5e0",
+          field_name:
+            "What can you do in the 'Comments' section to enhance collaboration?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "4887e0d9-2c01-4360-b160-0336c352b5e0",
+            [
+              "Edit or delete comments",
+              "Attach files",
+              "View attachments",
+              "All of the above",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "b604cdc8-4c7e-4448-be90-78d4fd927e4b",
+          field_name:
+            "How can you manage your comments in the 'Comments' section?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "b604cdc8-4c7e-4448-be90-78d4fd927e4b",
+            [
+              "Edit or delete comments",
+              "Download attached files",
+              "View all attachments",
+              "Cancel a request",
+            ]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "66dff7fe-4fcf-4961-a173-936b8d378dfb",
+          field_name:
+            "Which section allows you to add comments, share insights, and attach files for comprehensive communication?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "7de1c8c2-1489-4fe7-a61f-6ef8743528a4",
+          field_option: createOptionArray(
+            "66dff7fe-4fcf-4961-a173-936b8d378dfb",
+            ["Items Section", "Signers", "Request Action", "Comments"]
+          ),
+
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+      ],
+    },
+  ];
+
+export const ONBOARDING_REQUISITION_REQUEST_ANSWER: OnboardAnswer[] = [
+  {
+    fieldId: "4096314c-e4ef-43dd-96c1-4e6470e42120",
+    response: "Request Details",
+  },
+  {
+    fieldId: "3a8268f5-0a72-41dc-a12c-ecb3796bb2b5",
+    response: "Generate a PDF version for sharing and documentation",
+  },
+  {
+    fieldId: "1efe0e30-22de-4e3b-b7a6-c8bb31bd8e61",
+    response: "Main Section",
+  },
+  {
+    fieldId: "a1fb2040-3c98-42c6-bf67-0890ccce2ff5",
+    response: "Specific items requested",
+  },
+  {
+    fieldId: "d2cfa168-d6c9-47fb-ae38-7b410a066008",
+    response: "Summary",
+  },
+  {
+    fieldId: "d7333d99-caa3-4295-b120-46008877b9d3",
+    response: "All of the above",
+  },
+  {
+    fieldId: "3b33eafa-e4c5-4e32-adee-c91683abeb5d",
+
+    response: "Signers",
+  },
+  {
+    fieldId: "4887e0d9-2c01-4360-b160-0336c352b5e0",
+    response: "All of the above",
+  },
+  {
+    fieldId: "b604cdc8-4c7e-4448-be90-78d4fd927e4b",
+    response: "Edit or delete comments",
+  },
+  {
+    fieldId: "66dff7fe-4fcf-4961-a173-936b8d378dfb",
+    response: "Comments",
   },
 ];

@@ -427,6 +427,7 @@ const RequestListPage = ({
           buttonNext: { backgroundColor: colors.blue[6] },
           buttonBack: { color: colors.blue[6] },
           beaconInner: { backgroundColor: colors.blue[6] },
+          tooltipContent: { padding: 0 },
         }}
       />
     </Container>
