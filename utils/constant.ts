@@ -1250,6 +1250,7 @@ export const ITEM_UNIT_CHOICES = [
   "Microfarad",
   "Nanofarad",
   "Picofarad",
+  "Frames Per Second",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
