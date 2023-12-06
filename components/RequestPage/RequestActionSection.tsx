@@ -89,8 +89,8 @@ const RequestActionSection = ({
             </Text>
             <form
               onSubmit={handleSubmit(async (data) => {
-                const checkJiraIfValid = await isValidJiraId(data.jiraId);
-                if (checkJiraIfValid) {
+                const checkJiraIdIfValid = await isValidJiraId(data.jiraId);
+                if (checkJiraIdIfValid) {
                   handleUpdateRequest("APPROVED", data.jiraId.toUpperCase());
                   modals.close("approveRf");
                 } else {
