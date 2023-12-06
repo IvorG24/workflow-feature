@@ -91,7 +91,7 @@ const RequestActionSection = ({
               onSubmit={handleSubmit(async (data) => {
                 const checkJiraIfValid = await isValidJiraId(data.jiraId);
                 if (checkJiraIfValid) {
-                  handleUpdateRequest("APPROVED", data.jiraId);
+                  handleUpdateRequest("APPROVED", data.jiraId.toUpperCase());
                   modals.close("approveRf");
                 } else {
                   notifications.show({
@@ -123,14 +123,15 @@ const RequestActionSection = ({
                       checkIfUnique: async (value) => {
                         if (
                           await checkIfJiraIDIsUnique(supabaseClient, {
-                            value: value,
+                            value: value.toUpperCase(),
                           })
                         ) {
                           notifications.show({
-                            message: "Jira ID already exists.",
+                            message:
+                              "Jira ID is already used by another request.",
                             color: "red",
                           });
-                          return "Jira ID already exists.";
+                          return "Jira ID is already used by another request.";
                         } else {
                           return true;
                         }
