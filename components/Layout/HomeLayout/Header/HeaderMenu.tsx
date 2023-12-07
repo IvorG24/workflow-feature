@@ -1,5 +1,3 @@
-import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Button,
   Group,
@@ -62,7 +60,6 @@ const HeaderMenu = () => {
   const router = useRouter();
   const { classes } = useStyles();
   const user = useUser();
-  const activeTeam = useActiveTeam();
 
   return (
     <>
@@ -82,13 +79,7 @@ const HeaderMenu = () => {
       <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
         <Group>
           {user ? (
-            <Button
-              onClick={() =>
-                router.push(
-                  `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
-                )
-              }
-            >
+            <Button onClick={() => router.push(`/userActiveTeam`)}>
               Go to Formsly
             </Button>
           ) : null}

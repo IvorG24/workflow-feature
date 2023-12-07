@@ -1,5 +1,3 @@
-import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Button,
   Navbar as MantineNavbar,
@@ -43,7 +41,6 @@ type NavbarProps = {
 const Navbar = ({ openNavbar, setOpenNavbar }: NavbarProps) => {
   const router = useRouter();
   const user = useUser();
-  const activeTeam = useActiveTeam();
 
   return (
     <MediaQuery largerThan="sm" styles={{ display: "none" }}>
@@ -70,13 +67,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: NavbarProps) => {
         </Stack>
         <Stack mt="md">
           {user ? (
-            <Button
-              onClick={() =>
-                router.push(
-                  `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
-                )
-              }
-            >
+            <Button onClick={() => router.push(`/userActiveTeam`)}>
               Go to Formsly
             </Button>
           ) : null}
