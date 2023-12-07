@@ -97,7 +97,7 @@ const ReviewAppNavLink = () => {
           <IconBell {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/notification`,
+      href: `/user/notification`,
       withIndicator: userNotificationCount > 0,
       indicatorLabel: `${userNotificationCount}`,
     },
