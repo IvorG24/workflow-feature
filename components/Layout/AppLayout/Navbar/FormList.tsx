@@ -1,7 +1,8 @@
 import { useFormList } from "@/stores/useFormStore";
-import { useActiveApp } from "@/stores/useTeamStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
 import {
   Anchor,
@@ -21,8 +22,8 @@ const FormList = () => {
   const router = useRouter();
 
   const forms = useFormList();
-  const activeApp = useActiveApp();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
   const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
 
@@ -56,7 +57,9 @@ const FormList = () => {
           <Text mb={4} size="xs" weight={400}>
             <Anchor
               onClick={() =>
-                router.push(`/team-${activeApp.toLowerCase()}s/forms`)
+                router.push(
+                  `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms`
+                )
               }
             >
               View All (
@@ -70,7 +73,9 @@ const FormList = () => {
             variant="light"
             size="xs"
             onClick={() =>
-              router.push(`/team-${activeApp.toLowerCase()}s/forms/build`)
+              router.push(
+                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/build`
+              )
             }
           >
             Build Form
@@ -111,7 +116,7 @@ const FormList = () => {
                 rightSection={<IconPlus size={14} />}
                 onClick={() =>
                   router.push(
-                    `/team-${activeApp.toLowerCase()}s/forms/${
+                    `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
                       form.form_id
                     }/create`
                   )

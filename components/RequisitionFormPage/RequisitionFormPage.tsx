@@ -366,7 +366,11 @@ const RequisitionFormPage = ({
           {isGroupMember || initialGroupBoolean ? (
             <Button
               onClick={() =>
-                router.push(`/team-requests/forms/${formId}/create`)
+                router.push(
+                  `//${formatTeamNameToUrlKey(
+                    team.team_name
+                  )}/forms/${formId}/create`
+                )
               }
             >
               Create Request

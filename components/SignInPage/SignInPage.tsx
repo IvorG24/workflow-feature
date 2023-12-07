@@ -1,9 +1,7 @@
 import { getInvitationId } from "@/backend/api/get";
 import { checkIfEmailExists, signInUser } from "@/backend/api/post";
 import { JwtPayload } from "@/pages/api/team-invite";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { JWT_SECRET_KEY } from "@/utils/constant";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Anchor,
   Box,
@@ -37,7 +35,6 @@ type SignInFormValues = {
 const SignInPage = () => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  const activeTeam = useActiveTeam();
   const [isLoading, setIsLoading] = useState(false);
   const [openResetPasswordModal, setOpenResetPasswordModal] = useState(false);
   const {
@@ -82,9 +79,7 @@ const SignInPage = () => {
           });
           router.push(`/team/invitation/${invitationId}`);
         } else {
-          router.push(
-            `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
-          );
+          router.push(`/userActiveTeam`);
         }
         return;
       }

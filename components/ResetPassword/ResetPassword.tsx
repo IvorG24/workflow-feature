@@ -61,7 +61,7 @@ const ResetPasswordPage = () => {
         message: "Password updated.",
         color: "green",
       });
-      router.push("/team-requests/requests");
+      router.push("/userActiveTeam");
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

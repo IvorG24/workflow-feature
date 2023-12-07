@@ -57,7 +57,9 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: requisitionForm
-        ? `/team-requests/forms/${requisitionForm.form_id}/create`
+        ? `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
+            requisitionForm.form_id
+          }/create`
         : "",
     },
     {
