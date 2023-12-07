@@ -62,3 +62,7 @@ export const toTitleCase = (input: string) => {
     return match.toUpperCase();
   });
 };
+
+export const formatTeamNameToUrlKey = (teamName: string) => {
+  return teamName.replace(/\s+/g, "-").toLowerCase();
+};
