@@ -43,6 +43,7 @@ import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import GroupSection from "../FormBuilder/GroupSection";
@@ -358,7 +359,9 @@ const SubconFormPage = ({
           <Button
             onClick={() =>
               router.push({
-                pathname: `/team-requests/dashboard/`,
+                pathname: `/${formatTeamNameToUrlKey(
+                  team.team_name
+                )}/dashboard/`,
                 query: { ...router.query, formId },
               })
             }

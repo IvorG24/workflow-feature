@@ -3,7 +3,7 @@ import {
   useNotificationActions,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
-import { useActiveApp } from "@/stores/useTeamStore";
+import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
 import {
   Box,
   Burger,
@@ -14,6 +14,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { MouseEventHandler, useEffect } from "react";
@@ -28,6 +29,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   const theme = useMantineTheme();
   const activeApp = useActiveApp();
   const router = useRouter();
+  const activeTeam = useActiveTeam();
 
   const notificationList = useRealtimeNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
@@ -63,7 +65,9 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
         {activeApp ? (
           <UnstyledButton
             onClick={() =>
-              router.push(`/team-${activeApp.toLowerCase()}s/dashboard`)
+              router.push(
+                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
+              )
             }
           >
             <Image

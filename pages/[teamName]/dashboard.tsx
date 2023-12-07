@@ -49,7 +49,7 @@ type Props = {
 const Page = ({ ticketListCount }: Props) => {
   return (
     <>
-      <Meta description="Request List Page" url="/team-requests/requests" />
+      <Meta description="Request List Page" url="/{teamName}/dashboard" />
       <Dashboard ticketListCount={ticketListCount} />
     </>
   );

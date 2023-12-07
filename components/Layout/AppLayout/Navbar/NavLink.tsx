@@ -9,7 +9,7 @@ import {
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
-import { startCase } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
 import { Box, Space } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -79,7 +79,7 @@ const ReviewAppNavLink = () => {
           <IconDashboard {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/dashboard`,
+      href: `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`,
     },
     {
       label: `${startCase(activeApp)} List`,
