@@ -237,3 +237,76 @@ export const withAuthAndOnboardingRequestPage = <
     }
   };
 };
+
+export const withActiveTeam = <P extends { [key: string]: any }>(
+  getServerSidePropsFunc: (params: {
+    context: GetServerSidePropsContext;
+    supabaseClient: SupabaseClient<Database>;
+    user: User;
+    teamId: string;
+  }) => Promise<GetServerSidePropsResult<P>>
+): GetServerSideProps<P> => {
+  return async (
+    context: GetServerSidePropsContext
+  ): Promise<GetServerSidePropsResult<P>> => {
+    const supabaseClient = createPagesServerClient(context);
+
+    try {
+      // * 1. Check if user is authenticated
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!session) {
+        return {
+          redirect: {
+            destination: SIGN_IN_PAGE_PATH,
+            permanent: false,
+          },
+        };
+      }
+      if (!session?.user?.email) throw new Error("No email in session");
+
+      // * 2. Check if user is onboarded
+      if (
+        !(await checkIfEmailExists(supabaseClient, {
+          email: session.user.email,
+        }))
+      ) {
+        return {
+          redirect: {
+            destination: "/onboarding",
+            permanent: false,
+          },
+        };
+      }
+
+      const user = session.user;
+
+      // * 3. Check if user has active team
+
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+
+      if (!teamId) {
+        return {
+          redirect: {
+            destination: "/team/create",
+            permanent: false,
+          },
+        };
+      }
+
+      return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
+    } catch (error) {
+      console.error(error);
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
+  };
+};
