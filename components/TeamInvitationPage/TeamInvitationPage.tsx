@@ -66,7 +66,9 @@ const TeamInvitationPage = ({ invitation }: Props) => {
       console.log(teamList.length);
       console.log(teamList.length <= 0);
       if (teamList.length <= 0) {
-        router.push(`/team-requests/dashboard?onboarding=true`);
+        await router
+          .push(`/team-requests/dashboard?onboarding=true`)
+          .then(() => router.reload());
       } else {
         await router.push(`/team/invitation/${invitation.invitation_id}`);
         setTimeout(router.reload, 1000);
