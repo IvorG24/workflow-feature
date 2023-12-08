@@ -126,7 +126,11 @@ const RequestDetailsSection = ({
       </Group>
       <Group spacing="md" mt="xl">
         <Title order={5}>Request ID:</Title>
-        <Text>{request.request_formsly_id ?? request.request_id}</Text>
+        <Text>
+          {request.request_formsly_id === "-"
+            ? request.request_id
+            : request.request_formsly_id}
+        </Text>
       </Group>
       {request.request_project.team_project_name && (
         <Group spacing="md" mt="xl">

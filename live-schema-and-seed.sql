@@ -197,7 +197,8 @@ CREATE TABLE form_team_group_table(
 -- Start: Request
 CREATE TABLE request_table(
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  request_formsly_id VARCHAR(4000) UNIQUE,
+  request_formsly_id_prefix VARCHAR(4000),
+  request_formsly_id_serial VARCHAR(4000),
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
@@ -808,45 +809,58 @@ RETURNS JSON AS $$
       teamMemberId,
       responseValues,
       signerValues,
-      notificationValues,
+      requestSignerNotificationInput,
       formName,
       isFormslyForm,
-      projectId
+      projectId,
+      teamId
     } = input_data;
 
-    let request_formsly_id = 'NULL';
+    let formslyIdPrefix = '';
+    let formslyIdSerial = '';
+
     if(isFormslyForm===true) {
-      let requestCount = 0
-      if(formName==='Requisition' || formName==='Subcon') {
-        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table rt INNER JOIN form_table ft ON rt.request_form_id = ft.form_id  WHERE ft.form_name=ANY(ARRAY['Requisition','Subcon']) AND rt.request_project_id='${projectId}';`)[0].count;
-      }else{
-        requestCount = plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_form_id='${formId}' AND request_project_id='${projectId}';`)[0].count;
-      }
-      const newCount = (Number(requestCount) + 1).toString(16).toUpperCase();
+       const requestCount = plv8.execute(
+        `
+          SELECT COUNT(*) FROM request_table 
+          INNER JOIN form_table ON request_form_id = form_id
+          INNER JOIN team_member_table ON team_member_id = form_team_member_id
+          WHERE 
+            request_project_id = '${projectId}'
+            AND team_member_team_id = '${teamId}'
+        `
+      )[0].count;
+  
+      formslyIdSerial = (Number(requestCount) + 1).toString(16).toUpperCase();
       const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
       
-      let endId = '';
       if(formName==='Quotation') {
-        endId = `Q-${newCount}`;
+        endId = `Q`;
       } else if(formName==='Sourced Item') {
-        endId = `SI-${newCount}`;
+        endId = `SI`;
       } else if(formName==='Receiving Inspecting Report') {
-        endId = `RIR-${newCount}`;
+        endId = `RIR`;
       } else if(formName==='Release Order') {
-        endId = `RO-${newCount}`;
+        endId = `RO`;
       } else if(formName==='Transfer Receipt') {
-        endId = `TR-${newCount}`;
+        endId = `TR`;
       } else {
-        endId = `-${newCount}`;
+        endId = ``;
       }
-
-      request_formsly_id = `${project.team_project_code}${endId}`;
+      formslyIdPrefix = `${project.team_project_code}${endId}`;
     }
+
+    const notificationValues = requestSignerNotificationInput
+    .map(
+      (notification) =>
+        `('${notification.notification_app}','${notification.notification_content}','/team-requests/requests/${isFormslyForm ? `${formslyIdPrefix}-${formslyIdSerial}` : requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+    )
+    .join(",");
     
     if (projectId === "") {
       request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
     } else {
-      request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id,request_formsly_id,request_project_id) VALUES ('${requestId}','${formId}','${teamMemberId}','${request_formsly_id}','${projectId}') RETURNING *;`)[0];
+      request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id,request_formsly_id_prefix,request_formsly_id_serial,request_project_id) VALUES ('${requestId}','${formId}','${teamMemberId}','${formslyIdPrefix}','${formslyIdSerial}','${projectId}') RETURNING *;`)[0];
     }
 
     plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
@@ -873,10 +887,10 @@ RETURNS JSON AS $$
       requestId,
       responseValues,
       signerValues,
-      notificationValues,
+      requestSignerNotificationInput,
     } = input_data;
 
-    request_data = plv8.execute(`SELECT * FROM request_table WHERE request_id='${requestId}';`)[0];
+    request_data = plv8.execute(`SELECT * FROM request_view WHERE request_id='${requestId}';`)[0];
 
     plv8.execute(`DELETE FROM request_response_table WHERE request_response_request_id='${requestId}';`);
 
@@ -885,6 +899,13 @@ RETURNS JSON AS $$
     plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
+
+    const notificationValues = requestSignerNotificationInput
+    .map(
+      (notification) =>
+        `('${notification.notification_app}','${notification.notification_content}','/team-requests/requests/${request_data.request_formsly_id ?? requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+    )
+    .join(",");
 
     plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
     
@@ -912,7 +933,8 @@ RETURNS VOID AS $$
       memberId,
       teamId,
       jiraId,
-      jiraLink
+      jiraLink,
+      requestFormslyId
     } = input_data;
 
     const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
@@ -921,7 +943,7 @@ RETURNS VOID AS $$
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
     
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestFormslyId ?? requestId}','${requestOwnerId}','${teamId}');`);
     
     if(isPrimarySigner===true){
       plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""} WHERE request_id='${requestId}';`);
@@ -2152,8 +2174,8 @@ RETURNS JSON AS $$
         request_list = plv8.execute(
           `
             SELECT DISTINCT
-              request_table.request_id, 
-              request_table.request_formsly_id,
+              request_id, 
+              request_formsly_id,
               request_date_created, 
               request_status,
               request_team_member_id,
@@ -2161,10 +2183,10 @@ RETURNS JSON AS $$
               request_jira_link,
               request_otp_id,
               request_form_id
-            FROM request_table
-            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
-            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
-            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
             INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
@@ -2174,7 +2196,7 @@ RETURNS JSON AS $$
             ${status}
             ${form}
             ${search}
-            ORDER BY request_table.request_date_created ${sort} 
+            ORDER BY request_view.request_date_created ${sort} 
             OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
           `
         );
@@ -2182,10 +2204,10 @@ RETURNS JSON AS $$
         request_count = plv8.execute(
           `
             SELECT COUNT(DISTINCT request_id)
-            FROM request_table
-            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
-            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
-            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
             INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
@@ -2201,8 +2223,8 @@ RETURNS JSON AS $$
         request_list = plv8.execute(
           `
             SELECT DISTINCT
-              request_table.request_id, 
-              request_table.request_formsly_id,
+              request_view.request_id, 
+              request_view.request_formsly_id,
               request_date_created, 
               request_status,
               request_team_member_id,
@@ -2210,27 +2232,27 @@ RETURNS JSON AS $$
               request_jira_link,
               request_otp_id,
               request_form_id
-            FROM request_table
-            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
-            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
-            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
             INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false
             AND signer_team_member_id = '${teamMemberId}'
             AND request_status = 'PENDING'
-            ORDER BY request_table.request_date_created ${sort} 
+            ORDER BY request_view.request_date_created ${sort} 
             OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
           `
         );
         request_count = plv8.execute(
           `
             SELECT COUNT(DISTINCT request_id)
-            FROM request_table
-            INNER JOIN team_member_table ON request_table.request_team_member_id = team_member_table.team_member_id
-            INNER JOIN form_table ON request_table.request_form_id = form_table.form_id
-            INNER JOIN request_signer_table ON request_table.request_id = request_signer_table.request_signer_request_id
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
             INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
@@ -2787,10 +2809,10 @@ RETURNS JSON as $$
             request_formsly_id,
             form_name
           FROM request_response_table 
-          INNER JOIN request_table ON request_id=request_response_request_id
+          INNER JOIN request_view ON request_id=request_response_request_id
           INNER JOIN form_table ON form_id=request_form_id 
           WHERE 
-            request_response='"${requestId}"' 
+            request_response='"${request.request_formsly_id}"' 
             AND request_status='APPROVED'
         `
       );
@@ -2892,10 +2914,10 @@ RETURNS JSON as $$
               request_status,
               form_name
             FROM request_response_table
-            INNER JOIN request_table ON request_response_request_id = request_id
+            INNER JOIN request_view ON request_response_request_id = request_id
             INNER JOIN form_table ON request_form_id = form_id
             WHERE
-              request_response = '"${requestId}"'
+              request_response = '"${request.request_formsly_id}"'
               AND request_status = 'PENDING'
               AND form_name = 'Quotation'
             ORDER BY request_formsly_id DESC
@@ -3019,7 +3041,7 @@ RETURNS JSON as $$
             INNER JOIN signer_table ON signer_id = request_signer_signer_id
             INNER JOIN team_project_table ON team_project_id = signer_team_project_id
             WHERE
-              request_signer_request_id='${requestId}'
+              request_signer_request_id='${request.request_id}'
               AND signer_is_disabled=false
           `
         );
@@ -3401,7 +3423,7 @@ RETURNS JSON AS $$
   let request_data;
   plv8.subtransaction(function(){
     const {
-      userId,
+      userId
     } = input_data;
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
@@ -5036,10 +5058,23 @@ CREATE OR REPLACE FUNCTION get_request(
 RETURNS JSON as $$
   let returnData;
   plv8.subtransaction(function(){
+
+    const isUUID = (str) => {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidPattern.test(str);
+    }
+    let idCondition = '';
+    if(isUUID(request_id)){
+      idCondition = `request_id = '${request_id}'`;
+    }else{
+      const formslyId = request_id.split("-");
+      idCondition = `request_formsly_id_prefix = '${formslyId[0]}' AND request_formsly_id_serial = '${formslyId[1]}'`
+    }
+
     const requestData = plv8.execute(
       `
         SELECT 
-          request_table.*,
+          request_view.*,
           team_member_team_id,
           user_id, 
           user_first_name, 
@@ -5052,13 +5087,13 @@ RETURNS JSON as $$
           form_description, 
           form_is_formsly_form,
           team_project_name
-        FROM request_table
+        FROM request_view
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
         INNER JOIN form_table ON form_id = request_form_id
         LEFT JOIN team_project_table ON team_project_id = request_project_id
         WHERE 
-          request_id = '${request_id}'
+          ${idCondition}
           AND request_is_disabled = false
       `
     )[0];
@@ -5085,7 +5120,7 @@ RETURNS JSON as $$
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
         LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
-        WHERE request_signer_request_id = '${request_id}'
+        WHERE request_signer_request_id = '${requestData.request_id}'
       `
     );
 
@@ -5108,7 +5143,7 @@ RETURNS JSON as $$
         INNER JOIN team_member_table ON team_member_id = comment_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
         WHERE
-          comment_request_id = '${request_id}'
+          comment_request_id = '${requestData.request_id}'
         ORDER BY comment_date_created DESC
       `
     );
@@ -6188,7 +6223,7 @@ RETURNS JSON AS $$
     const unformattedRequest = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
 
     if(!referenceOnly){
-      const isPending = Boolean(plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_id='${requestId}' AND request_status='PENDING' AND request_is_disabled=false;`)[0].count);
+      const isPending = Boolean(plv8.execute(`SELECT COUNT(*) FROM request_table WHERE request_id='${unformattedRequest.request_id}' AND request_status='PENDING' AND request_is_disabled=false;`)[0].count);
       if (!isPending) throw new Error("Request can't be edited") 
       const isRequester = userId===unformattedRequest.request_team_member.team_member_user.user_id
       if (!isRequester) throw new Error("Requests can only be edited by the request creator") 
