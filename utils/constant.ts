@@ -29,6 +29,7 @@ export const UUID_EXP =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 
 export const SIGN_IN_PAGE_PATH = "/sign-in";
+export const CREATE_PASSWORD_PAGE_PATH = "/create-password";
 export const DEFAULT_LANDING_PAGE = "/team-requests/dashboard";
 
 export const defaultRequestFormBuilderSection = (

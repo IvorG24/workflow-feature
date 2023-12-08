@@ -39,6 +39,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-create-request-item-section",
@@ -57,6 +58,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-create-request-duplicate-item",
@@ -71,6 +73,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-create-request-remove-item",
@@ -85,6 +88,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-create-request-signer-section",
@@ -99,6 +103,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-create-request-submit-button",
@@ -113,6 +118,7 @@ export const ONBOARDING_CREATE_REQUEST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
 ];
 
@@ -147,6 +153,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-jira",
@@ -162,6 +169,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-otp",
@@ -177,6 +185,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-form",
@@ -190,6 +199,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-status",
@@ -204,6 +214,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-requester",
@@ -218,6 +229,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-approver",
@@ -233,6 +245,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-date",
@@ -246,6 +259,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-row-view",
@@ -258,6 +272,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
       </Box>
     ),
     placement: "top",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-sort",
@@ -271,6 +286,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-filters-rid",
@@ -285,6 +301,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-filters-form",
@@ -299,6 +316,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-filters-status",
@@ -313,6 +331,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-filters-requestor",
@@ -327,6 +346,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-filters-approver",
@@ -341,6 +361,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-filters-approver-view",
@@ -357,6 +378,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-pagination",
@@ -370,6 +392,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-refresh",
@@ -385,6 +408,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-request-list-ssot",
@@ -401,6 +425,7 @@ export const ONBOARDING_REQUEST_LIST_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
 ];
 
@@ -477,6 +502,27 @@ export const ONBOARDING_FORM_CREATE_REQUISITION_ANSWER: OnboardAnswer[] = [
     fieldId: "47f045c3-b47e-41f3-ba6c-3cc3dc112b8c",
     response: "Preffered Supplier",
   },
+  {
+    fieldId: "fac7715b-0ab8-49b0-9430-92007449e3d8",
+    response: "Request Details",
+  },
+  {
+    fieldId: "fcd51fd3-f943-47ee-851f-87ed6ac25586",
+    response: "Input item details",
+  },
+  {
+    fieldId: "b48dd3f9-5df8-47e1-ad3b-63d1e45d925c",
+    response: "Click the 'Item +' button",
+  },
+  {
+    fieldId: "4ab1a9bf-9b54-40c2-a7ef-4b159d00caa3",
+    response: "Display individuals responsible for approving or signing",
+  },
+
+  {
+    fieldId: "95249867-8d27-43c4-9f05-517c500698e8",
+    response: "After completing the form and reviewing filled-out fields",
+  },
 ];
 
 export const ONBOARDING_REQUEST_LIST_ANSWER: OnboardAnswer[] = [
@@ -485,16 +531,41 @@ export const ONBOARDING_REQUEST_LIST_ANSWER: OnboardAnswer[] = [
     response: ["Cancelled", "Pending", "Rejected", "Approved"],
   },
   {
-    fieldId: "3091412c-2e88-42d5-9b6c-b809e0dac6d9",
-    response: "Approver's View Checkbox",
-  },
-  {
     fieldId: "07137c98-6159-4210-a064-08d883254f24",
     response: "Date Created",
   },
   {
     fieldId: "99c37d93-c82a-4bdf-908b-be0185e781d0",
     response: ["Date Updated", "Form description"],
+  },
+  {
+    fieldId: "4424d469-5d2e-49bc-b89b-9910bccd6c37",
+    response: "Click the copy button next to each ID",
+  },
+  {
+    fieldId: "853150dd-ae87-492a-bd86-a00190f3822f",
+    response: "User who initiated the request",
+  },
+  {
+    fieldId: "012bf794-500b-4944-a4fa-979c7e2efa95",
+    response: "Access full details of the request",
+  },
+  {
+    fieldId: "37523553-b6da-4cac-8c44-62363721e610",
+    response:
+      "Utilize the search bar for ID, form, status, requester, or approver",
+  },
+  {
+    fieldId: "e3ceadcc-5bed-4d6b-acf9-b623839ea3f1",
+    response: "Display requests where you are the approver exclusively",
+  },
+  {
+    fieldId: "bdf7fda2-58d8-455a-8951-50fecbda86ac",
+    response: "Access spreadsheet display of approved requests",
+  },
+  {
+    fieldId: "aa273e6e-97ea-4107-90c6-3a0ffe8ffd06",
+    response: "Utilize pagination",
   },
 ];
 
@@ -629,6 +700,117 @@ export const ONBOARDING_FORM_CREATE_REQUISITION_QUESTION: OnboardingTestFormValu
           field_response: "",
           field_section_duplicatable_id: "",
         },
+        {
+          field_id: "fac7715b-0ab8-49b0-9430-92007449e3d8",
+          field_name:
+            "Where can you find essential details about the form, such as form name, description, requester, and date created?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 5,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "fac7715b-0ab8-49b0-9430-92007449e3d8",
+            [
+              "Item Details Section",
+              "Main Section",
+              "Request Details",
+              "Signers Section",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "fcd51fd3-f943-47ee-851f-87ed6ac25586",
+          field_name: "What does the 'Item Details Section' allow you to do?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 5,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "fcd51fd3-f943-47ee-851f-87ed6ac25586",
+            [
+              "Automatically fill in fields",
+              "Add items to the form",
+              "Input item details",
+              "Approve requests",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "b48dd3f9-5df8-47e1-ad3b-63d1e45d925c",
+          field_name: "How can you add another item to the form?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 5,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "b48dd3f9-5df8-47e1-ad3b-63d1e45d925c",
+            [
+              "Click on the 'Submit' button",
+              "Use the 'Item Details Section'",
+              "Click the 'Item +' button",
+              "Review filled-out fields",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "4ab1a9bf-9b54-40c2-a7ef-4b159d00caa3",
+          field_name: "What is the purpose of the 'Signers Section'?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 5,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "4ab1a9bf-9b54-40c2-a7ef-4b159d00caa3",
+            [
+              "Automatically fill in signer details",
+              "Display individuals responsible for approving or signing",
+              "Add new signers to the form",
+              "Enable form submission",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "95249867-8d27-43c4-9f05-517c500698e8",
+          field_name: "When should you click on the 'Submit' button?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 5,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "95249867-8d27-43c4-9f05-517c500698e8",
+            [
+              "After completing the form and reviewing filled-out fields",
+              "Before filling in the required fields",
+              "When adding a new item",
+              "When automatically filling in grayed-out fields",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
       ],
     },
   ];
@@ -661,30 +843,6 @@ export const ONBOARDING_REQUEST_LIST_QUESTION: OnboardingTestFormValues["section
               "Pending",
               "Rejected",
               "Approved",
-            ]
-          ),
-
-          field_response: "",
-          field_section_duplicatable_id: "",
-        },
-        {
-          field_id: "3091412c-2e88-42d5-9b6c-b809e0dac6d9",
-          field_name:
-            "Which filter allows you to view only the requests you are approving?",
-          field_description: null,
-          field_is_required: true,
-          field_type: "DROPDOWN",
-          field_order: 1,
-          field_is_positive_metric: true,
-          field_is_read_only: false,
-          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
-          field_option: createOptionArray(
-            "3091412c-2e88-42d5-9b6c-b809e0dac6d9",
-            [
-              "Status Filter",
-              "Requestor Filter",
-              "Approver's View Checkbox",
-              "Date Created Filter",
             ]
           ),
 
@@ -732,6 +890,167 @@ export const ONBOARDING_REQUEST_LIST_QUESTION: OnboardingTestFormValues["section
           field_response: "",
           field_section_duplicatable_id: "",
         },
+        {
+          field_id: "4424d469-5d2e-49bc-b89b-9910bccd6c37",
+          field_name:
+            "How can you quickly copy Request, Jira, and OTP IDs from the 'Request List' table?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "4424d469-5d2e-49bc-b89b-9910bccd6c37",
+            [
+              "Click on the ID",
+              "Use the search bar",
+              "Click the copy button next to each ID",
+              "Sort the requests",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "853150dd-ae87-492a-bd86-a00190f3822f",
+          field_name:
+            "What does the 'Requested By' column provide in the 'Request List'?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "853150dd-ae87-492a-bd86-a00190f3822f",
+            [
+              "Form name",
+              "User who initiated the request",
+              "Request ID",
+              "OTP IDs",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "012bf794-500b-4944-a4fa-979c7e2efa95",
+          field_name:
+            "What does the 'View' button allow you to do in the 'Request List'?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "012bf794-500b-4944-a4fa-979c7e2efa95",
+            [
+              "Sort requests",
+              "Copy request IDs",
+              "Access full details of the request",
+              "Refresh the page",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "37523553-b6da-4cac-8c44-62363721e610",
+          field_name:
+            "How can you refine your search in the 'Request List' using filters?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "37523553-b6da-4cac-8c44-62363721e610",
+            [
+              "Click on the 'Sort' button",
+              "Use the 'Refresh' button",
+              "Click on Copy ID",
+              "Utilize the search bar for ID, form, status, requester, or approver",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "e3ceadcc-5bed-4d6b-acf9-b623839ea3f1",
+          field_name:
+            "What does the 'Approver's View' checkbox do in the 'Request List'?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "e3ceadcc-5bed-4d6b-acf9-b623839ea3f1",
+            [
+              "Sort requests based on approver status",
+              "Toggle display of pending requests",
+              "Display requests where you are the approver exclusively",
+              "Enable pagination",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "bdf7fda2-58d8-455a-8951-50fecbda86ac",
+          field_name:
+            "What does the 'SSOT Spreadsheet View' feature in the 'Request List' provide?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "bdf7fda2-58d8-455a-8951-50fecbda86ac",
+            [
+              "Sort requests",
+              "Download the spreadsheet",
+              "Access spreadsheet display of approved requests",
+              "Enable pagination",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
+        {
+          field_id: "aa273e6e-97ea-4107-90c6-3a0ffe8ffd06",
+          field_name:
+            "How can you navigate through multiple pages of the 'Request List'?",
+          field_description: null,
+          field_is_required: true,
+          field_type: "DROPDOWN",
+          field_order: 1,
+          field_is_positive_metric: true,
+          field_is_read_only: false,
+          field_section_id: "bd63eb8a-99b3-47e2-ab09-51c480bb1e6d",
+          field_option: createOptionArray(
+            "aa273e6e-97ea-4107-90c6-3a0ffe8ffd06",
+            [
+              "Use the search bar",
+              "Click on the 'Refresh' button",
+              "Enable the 'Approver's View' checkbox",
+              "Utilize pagination",
+            ]
+          ),
+          field_response: "",
+          field_section_duplicatable_id: "",
+        },
       ],
     },
   ];
@@ -768,6 +1087,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-dashboard-top-signer",
@@ -784,6 +1104,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-dashboard-monthly-statistics",
@@ -801,6 +1122,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     ),
     placement: "top",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-dashboard-filter-form",
@@ -816,6 +1138,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     ),
     placement: "bottom",
     spotlightClicks: true,
+    disableBeacon: true,
   },
   {
     target: ".onboarding-dashboard-filter-date-created",
@@ -833,6 +1156,7 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
     ),
     placement: "bottom",
     spotlightClicks: true,
+    disableBeacon: true,
   },
 ];
 
@@ -1551,7 +1875,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
         </Text>
       </Box>
     ),
-    placement: "bottom",
+    placement: "top",
     disableBeacon: true,
   },
   {
@@ -1565,7 +1889,8 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
         </Text>
       </Box>
     ),
-    placement: "bottom",
+    placement: "top",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-requisition-request-main",
@@ -1579,6 +1904,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
       </Box>
     ),
     placement: "top",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-requisition-request-item",
@@ -1591,6 +1917,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
       </Box>
     ),
     placement: "top",
+    disableBeacon: true,
   },
 
   {
@@ -1605,6 +1932,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
       </Box>
     ),
     placement: "top",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-requisition-request-action",
@@ -1613,21 +1941,20 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
         <Title order={4}>Request Action</Title>
 
         <Text align="center" mt="md" size="sm">
-          Utilize the &apos;Reference This Request&apos; button to create a new
-          request effortlessly by referencing the current one. Edit your
-          request, if pending, with the &apos;Edit Request&apos; button. Cancel
-          a request anytime with the &apos;Cancel Request&apos; button.
+          Reference this Request - create a new request effortlessly by
+          referencing the current one.
         </Text>
         <Text align="center" mt="md" size="sm">
-          Edit your request, if pending, with the &apos;Edit Request&apos;
-          button.
+          Approve or Reject the request if you are a signer.
         </Text>
+
         <Text align="center" mt="md" size="sm">
-          Cancel a request anytime with the &apos;Cancel Request&apos; button.
+          Edit or Cancel the pending request if you are the requestor
         </Text>
       </Box>
     ),
     placement: "top",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-requisition-request-signer",
@@ -1641,6 +1968,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
       </Box>
     ),
     placement: "top",
+    disableBeacon: true,
   },
   {
     target: ".onboarding-requisition-request-comment",
@@ -1654,6 +1982,7 @@ export const ONBOARDING_REQUISITION_REQUEST_STEP: Step[] = [
       </Box>
     ),
     placement: "top",
+    disableBeacon: true,
   },
 ];
 
@@ -1987,7 +2316,7 @@ export const ONBOARDING_REQUISITION_REQUEST_QUESTION: OnboardingTestFormValues["
         {
           field_id: "d7333d99-caa3-4295-b120-46008877b9d3",
           field_name:
-            "What actions can you perform in the 'Request Action' section?",
+            "What actions cannot be performed in the 'Request Action' section?",
           field_description: null,
           field_is_required: true,
           field_type: "DROPDOWN",
@@ -2001,7 +2330,7 @@ export const ONBOARDING_REQUISITION_REQUEST_QUESTION: OnboardingTestFormValues["
               "Cancel a request",
               "Reference an existing request",
               "Edit a request",
-              "All of the above",
+              "Export to PDF",
             ]
           ),
 
@@ -2121,7 +2450,7 @@ export const ONBOARDING_REQUISITION_REQUEST_ANSWER: OnboardAnswer[] = [
   },
   {
     fieldId: "d7333d99-caa3-4295-b120-46008877b9d3",
-    response: "All of the above",
+    response: "Export to PDF",
   },
   {
     fieldId: "3b33eafa-e4c5-4e32-adee-c91683abeb5d",

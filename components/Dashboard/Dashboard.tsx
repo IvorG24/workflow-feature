@@ -132,7 +132,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
       children: (
         <Box>
           <Title order={3}>Welcome to Dashboard Overview</Title>
-          <Text mt="xs" align="center">
+          <Text mt="xs" align="justify">
             Navigate through key features, including &apos;Total Requests,&apos;
             &apos;Top Requestor,&apos; &apos;Top Signer,&apos; and &apos;Monthly
             Statistics.&apos; Effortlessly track and manage your requests with

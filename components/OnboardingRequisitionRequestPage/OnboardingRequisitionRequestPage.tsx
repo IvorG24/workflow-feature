@@ -29,6 +29,7 @@ import {
   Container,
   Flex,
   Group,
+  Space,
   Stack,
   Text,
   Title,
@@ -318,13 +319,9 @@ const OnboardingRequisitionRequestPage = ({
               handleUpdateRequest={handleUpdateRequest}
               isRf
               isCashPurchase={false}
-              isUserPrimarySigner={
-                isUserSigner
-                  ? Boolean(isUserSigner.signer_is_primary_signer)
-                  : false
-              }
-              isEditable={isEditable}
-              canSignerTakeAction={canSignerTakeAction}
+              isUserPrimarySigner={true}
+              isEditable={true}
+              canSignerTakeAction={true}
               isDeletable={isDeletable}
               isUserRequester={isUserRequester}
               requestId={request.request_id}
@@ -351,6 +348,8 @@ const OnboardingRequisitionRequestPage = ({
           requestCommentList={requestCommentList}
         />
       </Box>
+
+      <Space h={250} />
 
       <JoyRideNoSSR
         callback={handleJoyrideCallback}

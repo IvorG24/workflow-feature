@@ -62,3 +62,11 @@ export const toTitleCase = (input: string) => {
     return match.toUpperCase();
   });
 };
+
+export const isUUID = (str: string | string[] | undefined) => {
+  if (str === undefined) return false;
+  if (Array.isArray(str)) return false;
+  const uuidPattern =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  return uuidPattern.test(str);
+};

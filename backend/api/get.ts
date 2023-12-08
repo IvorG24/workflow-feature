@@ -3936,3 +3936,23 @@ export const getOnboardList = async (
 
   return data;
 };
+
+// check if email list are onboarded
+export const checkIfEmailsOnboarded = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    emailList: string[];
+  }
+) => {
+  const { emailList } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("user_email")
+    .in("user_email", emailList);
+  if (error) throw error;
+
+  return emailList.map((email) => ({
+    email: email,
+    onboarded: data.map((userData) => userData.user_email).includes(email),
+  }));
+};

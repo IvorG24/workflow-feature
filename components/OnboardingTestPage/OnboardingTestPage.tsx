@@ -86,6 +86,7 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
         responses,
         answers: answerList,
       });
+      console.log(result);
       const onboardScore = result.filter((correct) => correct).length;
       const onboardTopScore = result.length;
 
@@ -136,7 +137,7 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
                 />
               </Center>
 
-              <Text>
+              <Text align="center">
                 Thank you for participating in the assessment. Your engagement
                 is appreciated! You&apos;ve completed a crucial step in
                 familiarizing yourself with our platform. If you have any
@@ -191,17 +192,13 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
   const openSuccessNoticeModal = () =>
     modals.open({
       centered: true,
-      title: (
-        <Title order={3} align="center">
-          Post-Onboarding Assessment
-        </Title>
-      ),
+      title: <Title order={3}>Post-Onboarding Assessment</Title>,
       closeOnEscape: false,
       closeOnClickOutside: false,
       withCloseButton: false,
       children: (
         <Box>
-          <Text>
+          <Text align="justify" tabIndex={3}>
             Congratulations on completing the onboarding! Please note that a
             brief assessment awaits you to reinforce your understanding of our
             platform&apos;s features.

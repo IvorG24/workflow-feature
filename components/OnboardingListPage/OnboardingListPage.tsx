@@ -58,14 +58,14 @@ const OnboardingListPage = ({ onboardList }: Props) => {
       onboardDescription:
         "Effortlessly create a requisition request using Formsly. This user-friendly feature guides you through the process, ensuring a seamless experience. Simplify requisition submission and make your workflow more efficient with Formsly's intuitive interface.",
       onboardingList: [],
-      path: "/team-requests/forms/d13b3b0f-14df-4277-b6c1-7c80f7e7a829/create/onboarding",
+      path: "/team-requests/forms/d13b3b0f-14df-4277-b6c1-7c80f7e7a829/create/onboarding?onboarding=true",
     },
     {
       onboardName: ONBOARD_NAME.REQUISITION_REQUEST,
       onboardDescription:
         "Streamline your workflow, review details, and easily take action on pending requests. This brief session will guide you through key features for a seamless experience on the Requisition Request Page.",
       onboardingList: [],
-      path: "/team-requests/requests/40a7c790-6b30-45f1-a29a-a398c4a5514d/onboarding?requestFormName=Requisition",
+      path: "/team-requests/requests/40a7c790-6b30-45f1-a29a-a398c4a5514d/onboarding?requestFormName=Requisition&onboarding=true",
     },
     {
       onboardName: ONBOARD_NAME.REQUEST_LIST,
