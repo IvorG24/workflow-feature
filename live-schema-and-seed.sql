@@ -826,8 +826,7 @@ RETURNS JSON AS $$
           INNER JOIN form_table ON request_form_id = form_id
           INNER JOIN team_member_table ON team_member_id = form_team_member_id
           WHERE 
-            request_project_id = '${projectId}'
-            AND team_member_team_id = '${teamId}'
+            team_member_team_id = '${teamId}'
         `
       )[0].count;
   
