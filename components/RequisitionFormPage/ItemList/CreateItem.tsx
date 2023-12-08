@@ -1,6 +1,7 @@
 import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { GL_ACCOUNT_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
@@ -40,6 +41,7 @@ const CreateItem = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const formId = router.query.formId as string;
+  const teamMember = useUserTeamMember();
 
   const activeTeam = useActiveTeam();
 
@@ -91,6 +93,7 @@ const CreateItem = ({
 
   const onSubmit = async (data: ItemForm) => {
     try {
+      if (!teamMember) throw new Error("Team member not found");
       const newItem = await createItem(supabaseClient, {
         itemDescription: data.descriptions.map((description, index) => {
           return {
@@ -106,6 +109,7 @@ const CreateItem = ({
           item_gl_account: data.glAccount,
           item_team_id: activeTeam.team_id,
           item_division_id_list: data.division.map((id) => `'${id}'`),
+          item_encoder_team_member_id: teamMember.team_member_id,
         },
         formId: formId,
       });

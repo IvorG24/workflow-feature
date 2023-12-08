@@ -350,11 +350,20 @@ const CreateRequisitionRequestPage = ({
           }
         );
 
+        const index = options.findIndex(
+          (value) => value.option_value === "Any"
+        );
+        if (index !== -1) {
+          const anyOption = options[index];
+          options.splice(index, 1);
+          options.unshift({ ...anyOption });
+        }
+
         return {
           ...description.item_field,
           field_section_duplicatable_id: duplicatableSectionId,
           field_option: options,
-          field_response: "",
+          field_response: index !== -1 ? "Any" : "",
         };
       });
 
