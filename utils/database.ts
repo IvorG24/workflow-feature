@@ -291,6 +291,7 @@ export interface Database {
       item_description_field_table: {
         Row: {
           item_description_field_date_created: string
+          item_description_field_encoder_team_member_id: string | null
           item_description_field_id: string
           item_description_field_is_available: boolean
           item_description_field_is_disabled: boolean
@@ -299,6 +300,7 @@ export interface Database {
         }
         Insert: {
           item_description_field_date_created?: string
+          item_description_field_encoder_team_member_id?: string | null
           item_description_field_id?: string
           item_description_field_is_available?: boolean
           item_description_field_is_disabled?: boolean
@@ -307,6 +309,7 @@ export interface Database {
         }
         Update: {
           item_description_field_date_created?: string
+          item_description_field_encoder_team_member_id?: string | null
           item_description_field_id?: string
           item_description_field_is_available?: boolean
           item_description_field_is_disabled?: boolean
@@ -314,6 +317,13 @@ export interface Database {
           item_description_field_value?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "item_description_field_table_item_description_field_encode_fkey"
+            columns: ["item_description_field_encoder_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_table"
+            referencedColumns: ["team_member_id"]
+          },
           {
             foreignKeyName: "item_description_field_table_item_description_field_item_d_fkey"
             columns: ["item_description_field_item_description_id"]
@@ -429,6 +439,7 @@ export interface Database {
       item_table: {
         Row: {
           item_date_created: string
+          item_encoder_team_member_id: string | null
           item_general_name: string
           item_gl_account: string
           item_id: string
@@ -439,6 +450,7 @@ export interface Database {
         }
         Insert: {
           item_date_created?: string
+          item_encoder_team_member_id?: string | null
           item_general_name: string
           item_gl_account: string
           item_id?: string
@@ -449,6 +461,7 @@ export interface Database {
         }
         Update: {
           item_date_created?: string
+          item_encoder_team_member_id?: string | null
           item_general_name?: string
           item_gl_account?: string
           item_id?: string
@@ -458,6 +471,13 @@ export interface Database {
           item_unit?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "item_table_item_encoder_team_member_id_fkey"
+            columns: ["item_encoder_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_table"
+            referencedColumns: ["team_member_id"]
+          },
           {
             foreignKeyName: "item_table_item_team_id_fkey"
             columns: ["item_team_id"]
