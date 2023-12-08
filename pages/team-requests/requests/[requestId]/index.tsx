@@ -22,13 +22,11 @@ export const getServerSideProps: GetServerSideProps =
             },
           }
         );
-
         if (error) throw error;
         return {
           props: data as Props,
         };
       } catch (e) {
-        console.error(e);
         return {
           redirect: {
             destination: "/500",
@@ -90,7 +88,6 @@ const Page = ({
       );
     }
   };
-
   return (
     <>
       <Meta

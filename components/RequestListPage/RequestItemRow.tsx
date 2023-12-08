@@ -37,7 +37,10 @@ const RequestItemRow = ({ request }: Props) => {
     request_signer,
   } = request;
 
-  const requestId = request.request_formsly_id || request.request_id;
+  const requestId =
+    request.request_formsly_id !== "-"
+      ? request.request_formsly_id
+      : request.request_id;
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
@@ -45,7 +48,7 @@ const RequestItemRow = ({ request }: Props) => {
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor
-              href={`/team-requests/requests/${request.request_id}`}
+              href={`/team-requests/requests/${requestId}`}
               target="_blank"
             >
               {requestId}
@@ -55,11 +58,7 @@ const RequestItemRow = ({ request }: Props) => {
           <CopyButton value={requestId}>
             {({ copied, copy }) => (
               <Tooltip
-                label={
-                  copied
-                    ? "Copied"
-                    : `Copy ${request.request_formsly_id ?? request.request_id}`
-                }
+                label={copied ? "Copied" : `Copy ${requestId}`}
                 onClick={copy}
               >
                 <ActionIcon>
@@ -154,9 +153,7 @@ const RequestItemRow = ({ request }: Props) => {
         <Group position="center">
           <ActionIcon
             color="blue"
-            onClick={() =>
-              router.push(`/team-requests/requests/${request.request_id}`)
-            }
+            onClick={() => router.push(`/team-requests/requests/${requestId}`)}
           >
             <IconArrowsMaximize size={16} />
           </ActionIcon>
