@@ -86,7 +86,6 @@ const OnboardingTestPage = ({ userId, questionList, answerList }: Props) => {
         responses,
         answers: answerList,
       });
-      console.log(result);
       const onboardScore = result.filter((correct) => correct).length;
       const onboardTopScore = result.length;
 

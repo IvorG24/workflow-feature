@@ -68,7 +68,6 @@ const OnboardingPage = ({ user }: Props) => {
           bucket: "USER_AVATARS",
         });
       }
-      console.log(isValidTeamId);
       await createUser(supabaseClient, {
         ...data,
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",

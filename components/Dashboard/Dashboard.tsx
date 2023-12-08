@@ -115,7 +115,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status } = data;
     if (status === STATUS.FINISHED) {
-      console.log("first");
       router.push(
         `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.DASHBOARD}`
       );

@@ -63,8 +63,6 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         message: "Invitation accepted.",
         color: "green",
       });
-      console.log(teamList.length);
-      console.log(teamList.length <= 0);
       if (teamList.length <= 0) {
         await router
           .push(`/team-requests/dashboard?onboarding=true`)

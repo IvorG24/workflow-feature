@@ -94,7 +94,6 @@ const OnboardingListPage = ({ onboardList }: Props) => {
         limit: 10,
         page: 1,
       });
-      console.log(data.length > 0);
       if (data.length > 0) return true;
       else return false;
     } catch (error) {
