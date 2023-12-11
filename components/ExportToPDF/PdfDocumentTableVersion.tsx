@@ -104,12 +104,12 @@ const styles = StyleSheet.create({
     width: "40%",
   },
   badge: {
-    padding: "0px 8px",
-    borderRadius: "16px",
-    fontSize: "8px",
+    padding: "0px 4px",
+    borderRadius: "8px",
+    fontSize: "7px",
     fontWeight: "bold",
     border: "solid 1px green",
-    marginTop: 5,
+    margin: 5,
   },
   flex: {
     display: "flex",
@@ -142,6 +142,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     alignItems: "center",
     justifyContent: "center",
+  },
+  Signature: {
+    width: "20%",
+  },
+  "Full Name": {
+    width: "20%",
+  },
+  Position: {
+    width: "20%",
+  },
+  "Approval Status": {
+    width: "20%",
+  },
+  "Date Approved": {
+    width: "20%",
   },
   icon: {
     width: "12px",
@@ -342,38 +357,63 @@ const PdfDocumentTableVersion = ({
           </View>
         </Fragment>
 
-        <View>
+        <Fragment>
           <View style={styles.divider} />
           <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
             Approvers
           </Text>
-          <View style={styles.column}>
-            {approverDetails.map((approver, i) => (
-              <View key={i} style={styles.approverContainer} wrap={false}>
-                <View style={[styles.approverColumn]}>
-                  {approver.signature && (
-                    <Image
-                      src={approver.signature}
-                      style={{ height: "50px", width: "75px" }}
-                    />
-                  )}
-                  <Text style={{ fontSize: 12, fontWeight: 600 }}>
-                    {approver.name}
-                  </Text>
-                  <Text style={{ color: "#868E96" }}>
-                    {approver.jobDescription}
-                  </Text>
-                  {formatStatus(approver.status)}
-                  <Text style={{ marginTop: "6px" }}>
-                    {approver.date
-                      ? new Date(approver.date).toLocaleDateString()
-                      : ""}
-                  </Text>
-                </View>
+          <View style={styles.table}>
+            <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
+              <View style={[styles.tableCol, styles["Signature"]]}>
+                <Text style={styles.tableHeader}>Signature</Text>
               </View>
-            ))}
+              <View style={[styles.tableCol, styles["Full Name"]]}>
+                <Text style={styles.tableHeader}>Full Name</Text>
+              </View>
+              <View style={[styles.tableCol, styles["Position"]]}>
+                <Text style={styles.tableHeader}>Position</Text>
+              </View>
+              <View style={[styles.tableCol, styles["Approval Status"]]}>
+                <Text style={styles.tableHeader}>Approval Status</Text>
+              </View>
+              <View style={[styles.tableCol, styles["Date Approved"]]}>
+                <Text style={styles.tableHeader}>Date Approved</Text>
+              </View>
+            </View>
+            {approverDetails.map((approver, index) => {
+              return (
+                <View style={styles.tableRow} key={index}>
+                  <View style={[styles.tableCol, styles["Signature"]]}>
+                    {approver.signature && (
+                      <Image
+                        src={approver.signature}
+                        style={{ height: "50px", width: "75px" }}
+                      />
+                    )}
+                  </View>
+                  <View style={[styles.tableCol, styles["Full Name"]]}>
+                    <Text style={styles.tableCell}>{approver.name}</Text>
+                  </View>
+                  <View style={[styles.tableCol, styles["Position"]]}>
+                    <Text style={styles.tableCell}>
+                      {approver.jobDescription}
+                    </Text>
+                  </View>
+                  <View style={[styles.tableCol, styles["Approval Status"]]}>
+                    {formatStatus(approver.status)}
+                  </View>
+                  <View style={[styles.tableCol, styles["Date Approved"]]}>
+                    <Text style={styles.tableCell}>
+                      {approver.date
+                        ? new Date(approver.date).toLocaleDateString()
+                        : ""}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
-        </View>
+        </Fragment>
         <Footer />
       </Page>
     </Document>
