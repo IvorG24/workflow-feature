@@ -90,42 +90,16 @@ const QuickOnboarding = ({ memberEmailList }: Props) => {
 
   // send email invite notification
   const sendEmailInvite = async (emailList: string[]) => {
-    const subject = `You have been invited to join ${team.team_name} on Formsly.`;
-
     for (const email of emailList) {
       try {
         const inviteToken = generateEmailInviteToken(email);
         const inviteUrl = `${window.location.origin}/api/quick-onboard?token=${inviteToken}`;
 
-        const newInviteUrlResponse = await fetch("/api/email-signup-link", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password: team.team_id,
-            redirectTo: inviteUrl,
-          }),
+        await supabaseClient.auth.signUp({
+          email,
+          password: team.team_id,
+          options: { emailRedirectTo: inviteUrl },
         });
-        const newInviteUrl = await newInviteUrlResponse.json();
-
-        const html = generateEmailHtml(`${newInviteUrl.link}`);
-
-        const response = await fetch("/api/send-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: email,
-            subject,
-            html,
-          }),
-        });
-
-        const responseData = await response.json();
-        return responseData;
       } catch (error) {
         console.error(error);
       }
@@ -144,18 +118,6 @@ const QuickOnboarding = ({ memberEmailList }: Props) => {
     });
 
     return jwtInviteToken;
-  };
-
-  const generateEmailHtml = (inviteUrl: string) => {
-    const html = `<p>Hi,</p>
-    <p>Please click the link below to accept the invitation. This invite is only valid for 48 hours.</p>
-    &nbsp;
-    <p><a href="${inviteUrl}">Join ${team.team_name} on Formsly.io</a></p>
-    &nbsp;
-    <p>Thank you,</p>
-    <p>Formsly Team</p>`;
-
-    return html;
   };
 
   return (
