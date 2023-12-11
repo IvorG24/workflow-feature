@@ -8,7 +8,6 @@ import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
-  FormSegmentType,
   FormType,
   ItemWithDescriptionType,
   TeamGroupTableRow,
@@ -25,9 +24,9 @@ import {
   Group,
   LoadingOverlay,
   Paper,
-  SegmentedControl,
   Space,
   Stack,
+  Switch,
   Text,
   TextInput,
   Title,
@@ -41,7 +40,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { FORM_SEGMENT_CHOCIES, ROW_PER_PAGE } from "@/utils/constant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
@@ -110,8 +109,7 @@ const RequisitionFormPage = ({
   );
 
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
-  const [segmentValue, setSegmentValue] =
-    useState<FormSegmentType>("Form Details");
+  const [switchValue, setSwitchValue] = useState(false);
 
   const [initialRequester, setInitialRequester] = useState(
     form.form_team_group.map((group) => group.team_group.team_group_id)
@@ -380,15 +378,22 @@ const RequisitionFormPage = ({
       />
       <Space h="xl" />
       <Center>
-        <SegmentedControl
-          data={FORM_SEGMENT_CHOCIES}
-          value={segmentValue}
-          onChange={(value) => setSegmentValue(value as FormSegmentType)}
+        <Switch
+          onLabel="Form Preview"
+          offLabel="Form Details"
+          size="xl"
+          checked={switchValue}
+          onChange={(e) => setSwitchValue(e.target.checked)}
+          sx={{
+            label: {
+              cursor: "pointer",
+            },
+          }}
         />
       </Center>
       <Space h="xl" />
 
-      {segmentValue === "Form Details" ? (
+      {!switchValue ? (
         <Box>
           <Paper p="xl" shadow="xs">
             {!isCreatingItem && !editItem ? (
@@ -435,7 +440,7 @@ const RequisitionFormPage = ({
         </Box>
       ) : null}
 
-      {segmentValue === "Form Preview" ? (
+      {switchValue ? (
         <Stack spacing="xl">
           <FormSection section={form.form_section[0]} />
           <FormSection

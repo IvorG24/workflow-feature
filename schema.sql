@@ -422,7 +422,12 @@ CREATE TABLE special_approver_item_table(
 
 CREATE TABLE equipment_category_table(
   equipment_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_category VARCHAR(4000) NOT NULL
+  equipment_category VARCHAR(4000) NOT NULL,
+  equipment_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_category_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  equipment_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Equipment category
@@ -431,7 +436,12 @@ CREATE TABLE equipment_category_table(
 
 CREATE TABLE equipment_brand_table(
   equipment_brand_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_brand VARCHAR(4000) NOT NULL
+  equipment_brand VARCHAR(4000) NOT NULL,
+  equipment_brand_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_brand_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_brand_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  equipment_brand_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Equipment brand
@@ -440,7 +450,12 @@ CREATE TABLE equipment_brand_table(
 
 CREATE TABLE equipment_model_table(
   equipment_model_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_model VARCHAR(4000) NOT NULL
+  equipment_model VARCHAR(4000) NOT NULL,
+  equipment_model_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_model_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_model_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  equipment_model_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Equipment model
@@ -449,7 +464,12 @@ CREATE TABLE equipment_model_table(
 
 CREATE TABLE equipment_component_category_table(
   equipment_component_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_component_category VARCHAR(4000) NOT NULL
+  equipment_component_category VARCHAR(4000) NOT NULL,
+  equipment_component_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_component_category_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_component_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  equipment_component_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Equipment component category model
@@ -459,8 +479,11 @@ CREATE TABLE equipment_component_category_table(
 CREATE TABLE equipment_table(
   equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_name VARCHAR(4000) NOT NULL,
+  equipment_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_is_available BOOLEAN DEFAULT true NOT NULL,
   
   equipment_equipment_category_id UUID REFERENCES equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -472,10 +495,13 @@ CREATE TABLE equipment_description_table(
   equipment_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_description_property_number VARCHAR(4000) NOT NULL,
   equipment_description_serial_number VARCHAR(4000) NOT NULL,
+  equipment_description_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_description_is_available BOOLEAN DEFAULT true NOT NULL,
   
   equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
-  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
 -- End: Equipment description
@@ -484,7 +510,12 @@ CREATE TABLE equipment_description_table(
 
 CREATE TABLE equipment_unit_of_measurement_table(
   equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_unit_of_measurement VARCHAR(4000) NOT NULL
+  equipment_unit_of_measurement VARCHAR(4000) NOT NULL,
+  equipment_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_unit_of_measurement_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Equipment unit of measurememt
@@ -495,12 +526,15 @@ CREATE TABLE equipment_part_table(
   equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_part_name VARCHAR(4000) NOT NULL,
   equipment_part_number VARCHAR(4000) NOT NULL,
+  equipment_part_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  equipment_part_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
   equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
   equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
 -- End: Equipment part
@@ -3986,7 +4020,7 @@ RETURNS JSON as $$
       const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit}`);
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false`)[0].count;
     
-      if(formName === 'Requisition'){
+      if (formName === 'Requisition'){
         const items = [];
         const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit}`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
@@ -4006,6 +4040,18 @@ RETURNS JSON as $$
         returnData = {
           items,
           itemListCount: Number(`${itemListCount}`),
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(`${teamProjectListCount}`),
+        }
+      } else if (formName === 'PED Part'){
+        const equipments = plv8.execute(`SELECT equipment_table.*, equipment_category FROM equipment_table INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false ORDER BY equipment_name ASC LIMIT ${limit}`);
+        const equipmentListCount = plv8.execute(`SELECT COUNT(*) FROM equipment_table WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false`)[0].count;
+
+        returnData = {
+          equipments,
+          equipmentListCount: Number(`${equipmentListCount}`),
           teamMemberList,
           teamGroupList,
           teamProjectList,
@@ -9483,13 +9529,6 @@ AS PERMISSIVE FOR SELECT
 USING (true);
 
 -------- End: POLICIES
-
----------- Start: INDEXES
-
-CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
-CREATE INDEX request_list_idx ON request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
-
--------- End: INDEXES
 
 ---------- Start: VIEWS
 

@@ -9490,13 +9490,6 @@ USING (true);
 
 -------- End: POLICIES
 
----------- Start: INDEXES
-
-CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
-CREATE INDEX request_list_idx ON request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
-
--------- End: INDEXES
-
 ---------- Start: VIEWS
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
