@@ -145,7 +145,7 @@ const Page = ({
     <>
       <Meta
         description="Edit Request Page"
-        url="/team-requests/requests/[requestId]/edit"
+        url="/<teamName>/requests/[requestId]/edit"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
       {!form.form_is_formsly_form ? (

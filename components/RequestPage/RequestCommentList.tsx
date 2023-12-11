@@ -4,7 +4,9 @@ import {
   createComment,
   createNotification,
 } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { RequestCommentType } from "@/utils/types";
 import { Divider, Group, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -28,6 +30,7 @@ type Props = {
 const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const userProfile = useUserProfile();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const user = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +99,9 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
             notification_app: "REQUEST",
             notification_type: "COMMENT",
             notification_content: `${commenterFullName} commented on your request`,
-            notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/requests/${requestData.requestId}`,
             notification_user_id: requestData.requestOwnerId,
             notification_team_id: requestData.teamId,
           });

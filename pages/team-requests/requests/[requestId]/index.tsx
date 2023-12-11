@@ -1,105 +1,43 @@
-import Meta from "@/components/Meta/Meta";
-import RequestPage from "@/components/RequestPage/RequestPage";
-import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
-import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
-import {
-  ConnectedRequestIdList,
-  RequestProjectSignerStatusType,
-  RequestWithResponseType,
-} from "@/utils/types";
+import { getTeam } from "@/backend/api/get";
+import { withActiveTeam } from "@/utils/server-side-protections";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps =
-  withAuthAndOnboardingRequestPage(
-    async ({ supabaseClient, user, context }) => {
-      try {
-        const { data, error } = await supabaseClient.rpc(
-          "request_page_on_load",
-          {
-            input_data: {
-              requestId: context.query.requestId,
-              userId: user.id,
-            },
-          }
-        );
-        if (error) throw error;
-        return {
-          props: data as Props,
-        };
-      } catch (e) {
+export const getServerSideProps: GetServerSideProps = withActiveTeam(
+  async ({ supabaseClient, context, teamId }) => {
+    try {
+      const activeTeam = await getTeam(supabaseClient, { teamId });
+
+      if (activeTeam) {
         return {
           redirect: {
-            destination: "/500",
+            destination: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name
+            )}/requests/${context.query.requestId}`,
+            permanent: false,
+          },
+        };
+      } else {
+        return {
+          redirect: {
+            destination: `/create-team`,
             permanent: false,
           },
         };
       }
+    } catch (e) {
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
     }
-  );
+  }
+);
 
-type Props = {
-  request: RequestWithResponseType;
-  connectedFormIdAndGroup: {
-    formId: string;
-    formIsForEveryone: boolean;
-    formIsMember: boolean;
-    formName: string;
-    formIsHidden: boolean;
-  };
-  connectedRequestIDList: ConnectedRequestIdList;
-  connectedForm: {
-    form_name: string;
-    form_id: string;
-    form_is_for_every_member: boolean;
-    form_is_member: boolean;
-    form_is_hidden: boolean;
-  }[];
-  canvassRequest?: string[];
-  projectSignerStatus?: RequestProjectSignerStatusType;
-};
-
-const Page = ({
-  request,
-  connectedFormIdAndGroup,
-  connectedRequestIDList,
-  connectedForm = [],
-  canvassRequest = [],
-  projectSignerStatus,
-}: Props) => {
-  const formslyForm = () => {
-    if (request.request_form.form_name === "Requisition") {
-      return (
-        <RequisitionRequestPage
-          request={request}
-          connectedForm={connectedForm}
-          connectedRequestIDList={connectedRequestIDList}
-          canvassRequest={canvassRequest}
-        />
-      );
-    } else {
-      return (
-        <RequestPage
-          request={request}
-          isFormslyForm
-          connectedFormIdAndGroup={connectedFormIdAndGroup}
-          connectedRequestIDList={connectedRequestIDList}
-          projectSignerStatus={projectSignerStatus}
-        />
-      );
-    }
-  };
-  return (
-    <>
-      <Meta
-        description="Request Page"
-        url="/team-requests/requests/[requestId]"
-      />
-      {request.request_form.form_is_formsly_form ? formslyForm() : null}
-      {!request.request_form.form_is_formsly_form ? (
-        <RequestPage request={request} />
-      ) : null}
-    </>
-  );
+const Page = () => {
+  return null;
 };
 
 export default Page;

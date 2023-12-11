@@ -1,3 +1,5 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestListItemType } from "@/utils/types";
 import {
@@ -31,6 +33,7 @@ const useStyles = createStyles(() => ({
 const RequestItemRow = ({ request }: Props) => {
   const { classes } = useStyles();
   const router = useRouter();
+  const activeTeam = useActiveTeam();
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
   const {
     request_team_member: { team_member_user: requestor },
@@ -48,7 +51,9 @@ const RequestItemRow = ({ request }: Props) => {
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor
-              href={`/team-requests/requests/${requestId}`}
+              href={`/${formatTeamNameToUrlKey(
+                activeTeam.team_name ?? ""
+              )}/requests/${requestId}`}
               target="_blank"
             >
               {requestId}
@@ -153,7 +158,13 @@ const RequestItemRow = ({ request }: Props) => {
         <Group position="center">
           <ActionIcon
             color="blue"
-            onClick={() => router.push(`/team-requests/requests/${requestId}`)}
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/requests/${requestId}`
+              )
+            }
           >
             <IconArrowsMaximize size={16} />
           </ActionIcon>

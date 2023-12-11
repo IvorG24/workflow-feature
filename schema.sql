@@ -845,13 +845,6 @@ RETURNS JSON AS $$
       formslyIdPrefix = `${project.team_project_code}${endId}`;
     }
 
-    const notificationValues = requestSignerNotificationInput
-    .map(
-      (notification) =>
-        `('${notification.notification_app}','${notification.notification_content}','/team-requests/requests/${isFormslyForm ? `${formslyIdPrefix}-${formslyIdSerial}` : requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
-    )
-    .join(",");
-    
     if (projectId === "") {
       request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
     } else {
@@ -862,7 +855,26 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+
+    const teamNameUrlKey = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}')`)[0];
+
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        const notificationValues = requestSignerNotificationInput
+        .map(
+          (notification) =>
+            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/requests/${isFormslyForm ? `${formslyIdPrefix}-${formslyIdSerial}` : requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+        )
+        .join(",");
+
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      }
+    }
     
  });
  return request_data;
@@ -895,15 +907,25 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
-    const notificationValues = requestSignerNotificationInput
-    .map(
-      (notification) =>
-        `('${notification.notification_app}','${notification.notification_content}','/team-requests/requests/${request_data.request_formsly_id ?? requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
-    )
-    .join(",");
+    const team_member_data = plv8.execute(`SELECT * FROM team_member_table WHERE request_team_member_id='${request_data.request_team_member_id}';`)[0];
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${team_member_data.team_member_team_id}'`)[0];
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
-    
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        const notificationValues = requestSignerNotificationInput
+        .map(
+          (notification) =>
+            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/requests/${request_data.request_formsly_id ?? requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+        )
+        .join(",");
+
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      }
+    }
  });
  return request_data;
 $$ LANGUAGE plv8;
@@ -938,7 +960,17 @@ RETURNS VOID AS $$
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
     
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestFormslyId ?? requestId}','${requestOwnerId}','${teamId}');`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/${teamNameUrlKey}/requests/${requestFormslyId ?? requestId}','${requestOwnerId}','${teamId}');`);
+      }
+    }
     
     if(isPrimarySigner===true){
       plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""} WHERE request_id='${requestId}';`);
@@ -6047,7 +6079,17 @@ RETURNS VOID AS $$
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()} their approval of this request.');`);
     
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} their approval of your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} their approval of your ${formName} request','/${teamNameUrlKey}/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+      }
+    }
     
     if(isPrimarySigner===true){
       plv8.execute(`UPDATE request_table SET request_status = 'PENDING', request_status_date_updated = NOW(), ${`request_jira_id=NULL`}, ${`request_jira_link=NULL`} WHERE request_id='${requestId}';`);
@@ -7707,6 +7749,13 @@ RETURNS VOID as $$
 $$ LANGUAGE plv8;
 
 -- End: Leave Team
+
+CREATE OR REPLACE FUNCTION format_team_name_to_url_key(team_name TEXT)
+RETURNS TEXT AS $$
+BEGIN
+  RETURN LOWER(regexp_replace(team_name, '\s+', '-', 'g'));
+END;
+$$ LANGUAGE plpgsql;
 
 -- Start: Redirect to team dashboard
 

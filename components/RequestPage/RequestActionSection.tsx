@@ -1,5 +1,7 @@
 import { checkIfJiraIDIsUnique } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Button,
   Flex,
@@ -51,6 +53,8 @@ const RequestActionSection = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const activeTeam = useActiveTeam();
+
   const {
     register,
     handleSubmit,
@@ -186,7 +190,9 @@ const RequestActionSection = ({
             fullWidth
             onClick={() =>
               router.push(
-                `/team-requests/requests/${requestId}/edit?referenceOnly=true`
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/requests/${requestId}/edit?referenceOnly=true`
               )
             }
           >
@@ -220,7 +226,9 @@ const RequestActionSection = ({
               fullWidth
               onClick={() =>
                 router.push(
-                  `/team-requests/requests/${router.query.requestId}/edit`
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/requests/${router.query.requestId}/edit`
                 )
               }
             >
