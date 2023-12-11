@@ -201,9 +201,7 @@ const EditRequisitionRequestPage = ({
           color: "red",
           autoClose: false,
         });
-        router.push(
-          `/team-requests/requests/${request.request_formsly_id_prefix}-${request.request_formsly_id_serial}`
-        );
+        router.push(`/team-requests/requests/${request.request_id}`);
         return;
       }
 
@@ -238,7 +236,7 @@ const EditRequisitionRequestPage = ({
         });
       }
 
-      const edittedRequest = await editRequest(supabaseClient, {
+      await editRequest(supabaseClient, {
         requestId: request.request_id,
         requestFormValues: newData,
         signers: [...filteredSignerList, ...additionalSignerList],
@@ -252,9 +250,7 @@ const EditRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(
-        `/team-requests/requests/${edittedRequest.request_formsly_id_prefix}-${edittedRequest.request_formsly_id_serial}`
-      );
+      router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -391,9 +387,7 @@ const EditRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(
-        `/team-requests/requests/${newRequest.request_formsly_id_prefix}-${newRequest.request_formsly_id_serial}`
-      );
+      router.push(`/team-requests/requests/${newRequest.request_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -757,7 +751,7 @@ const EditRequisitionRequestPage = ({
   return (
     <Container>
       <Title order={2} color="dimmed">
-        {referenceOnly ? "Reference" : "Edit"} Request
+        Edit Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
