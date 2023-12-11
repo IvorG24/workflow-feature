@@ -186,6 +186,7 @@ export const withAuthAndOnboardingRequestPage = <
     context: GetServerSidePropsContext;
     supabaseClient: SupabaseClient<Database>;
     user: User;
+    teamId: string;
   }) => Promise<GetServerSidePropsResult<P>>
 ): GetServerSideProps<P> => {
   return async (
@@ -223,9 +224,23 @@ export const withAuthAndOnboardingRequestPage = <
         };
       }
 
+      // * 3. Check if user has active team
       const user = session.user;
 
-      return getServerSidePropsFunc({ context, supabaseClient, user });
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+
+      if (!teamId) {
+        return {
+          redirect: {
+            destination: "/create-team",
+            permanent: false,
+          },
+        };
+      }
+
+      return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
     } catch (error) {
       console.error(error);
       return {
