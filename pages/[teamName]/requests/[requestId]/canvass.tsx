@@ -83,7 +83,7 @@ const Page = ({
     <>
       <Meta
         description="Canvass Page"
-        url="/team-requests/request/<requestId>/canvass"
+        url="/<teamName>/request/<requestId>/canvass"
       />
       <RequisitionCanvassPage
         canvassData={canvassData}
