@@ -188,22 +188,22 @@ export const getRequestList = async (
   } = params;
 
   const requestorCondition = requestor
-    ?.map((value) => `request_table.request_team_member_id = '${value}'`)
+    ?.map((value) => `request_view.request_team_member_id = '${value}'`)
     .join(" OR ");
   const approverCondition = approver
     ?.map((value) => `signer_table.signer_team_member_id = '${value}'`)
     .join(" OR ");
   const statusCondition = status
-    ?.map((value) => `request_table.request_status = '${value}'`)
+    ?.map((value) => `request_view.request_status = '${value}'`)
     .join(" OR ");
   const formCondition = form
-    ?.map((value) => `request_table.request_form_id = '${value}'`)
+    ?.map((value) => `request_view.request_form_id = '${value}'`)
     .join(" OR ");
 
   const searchCondition =
     search && validator.isUUID(search)
-      ? `request_table.request_id = '${search}'`
-      : `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+      ? `request_view.request_id = '${search}'`
+      : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
   const { data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {
@@ -2917,7 +2917,7 @@ export const getRequestFormslyId = async (
 ) => {
   const { requestId } = params;
   const { data, error } = await supabaseClient
-    .from("request_table")
+    .from("request_view")
     .select("request_formsly_id")
     .eq("request_id", requestId);
   if (error) throw error;
