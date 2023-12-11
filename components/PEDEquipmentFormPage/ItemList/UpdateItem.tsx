@@ -1,11 +1,15 @@
 import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
-import { createItem } from "@/backend/api/post";
+import { updateItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { GL_ACCOUNT_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
+  ItemDescriptionTableUpdate,
+  ItemForm,
+  ItemWithDescriptionType,
+} from "@/utils/types";
+import {
+  ActionIcon,
   Box,
   Button,
   Checkbox,
@@ -16,6 +20,7 @@ import {
   MultiSelect,
   Select,
   Stack,
+  Text,
   TextInput,
   Title,
 } from "@mantine/core";
@@ -28,20 +33,18 @@ import InputAddRemove from "../InputAddRemove";
 import MoveUpAndDown from "../MoveUpAndDown";
 
 type Props = {
-  setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
   setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
-  setItemCount: Dispatch<SetStateAction<number>>;
+  setEditItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
+  editItem: ItemWithDescriptionType;
 };
 
-const CreateItem = ({
-  setIsCreatingItem,
-  setItemList,
-  setItemCount,
-}: Props) => {
+const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const formId = router.query.formId as string;
-  const teamMember = useUserTeamMember();
+  const [toRemoveDescription, setToRemoveDescription] = useState<
+    { descriptionId: string; fieldId: string }[]
+  >([]);
 
   const activeTeam = useActiveTeam();
 
@@ -76,10 +79,19 @@ const CreateItem = ({
   const { register, getValues, formState, handleSubmit, control } =
     useForm<ItemForm>({
       defaultValues: {
-        descriptions: [{ description: "", withUoM: false }],
-        generalName: "",
-        unit: "",
+        descriptions: editItem.item_description.map((description) => {
+          return {
+            description: description.item_description_label,
+            withUoM: description.item_description_is_with_uom,
+            descriptionId: description.item_description_id,
+            fieldId: description.item_description_field_id,
+          };
+        }),
+        generalName: editItem.item_general_name,
+        unit: editItem.item_unit,
         isAvailable: true,
+        glAccount: editItem.item_gl_account,
+        division: editItem.item_division_id_list,
       },
     });
 
@@ -93,36 +105,65 @@ const CreateItem = ({
 
   const onSubmit = async (data: ItemForm) => {
     try {
-      if (!teamMember) throw new Error("Team member not found");
-      const newItem = await createItem(supabaseClient, {
-        itemDescription: data.descriptions.map((description, index) => {
-          return {
+      const toUpdate: ItemDescriptionTableUpdate[] = [];
+      const toAdd: ItemForm["descriptions"] = [];
+
+      data.descriptions.forEach((description, index) => {
+        if (description.descriptionId) {
+          toUpdate.push({
+            item_description_id: description.descriptionId,
+            item_description_is_with_uom: description.withUoM,
+            item_description_label: description.description.toUpperCase(),
+            item_description_field_id: description.fieldId,
+            item_description_order: index + 1,
+          });
+        } else {
+          toAdd.push({
             description: description.description.toUpperCase(),
             withUoM: description.withUoM,
             order: index + 1,
-          };
-        }),
-        itemData: {
-          item_general_name: data.generalName.toUpperCase(),
-          item_is_available: data.isAvailable,
-          item_unit: data.unit,
-          item_gl_account: data.glAccount,
-          item_team_id: activeTeam.team_id,
-          item_division_id_list: data.division.map((id) => `'${id}'`),
-          item_encoder_team_member_id: teamMember.team_member_id,
-        },
-        formId: formId,
+          });
+        }
       });
+
+      const newItem: ItemWithDescriptionType = await updateItem(
+        supabaseClient,
+        {
+          toAdd,
+          toUpdate,
+          toRemove: toRemoveDescription,
+          itemData: {
+            item_id: editItem.item_id,
+            item_general_name: data.generalName.toUpperCase(),
+            item_is_available: data.isAvailable,
+            item_unit: data.unit,
+            item_gl_account: data.glAccount,
+            item_team_id: activeTeam.team_id,
+            item_division_id_list: data.division.map((id) => `'${id}'`),
+          },
+          formId: formId,
+        }
+      );
+
       setItemList((prev) => {
-        prev.unshift(newItem);
-        return prev;
+        return prev.map((item) => {
+          if (item.item_id === editItem.item_id) {
+            return {
+              ...newItem,
+              item_description: newItem.item_description.sort(
+                (a, b) => a.item_description_order - b.item_description_order
+              ),
+            };
+          } else {
+            return item;
+          }
+        });
       });
-      setItemCount((prev) => prev + 1);
       notifications.show({
-        message: "Item created.",
+        message: "Item updated.",
         color: "green",
       });
-      setIsCreatingItem(false);
+      setEditItem(null);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -137,7 +178,7 @@ const CreateItem = ({
       <LoadingOverlay visible={formState.isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Add Item
+          Update Item
         </Title>
         <Divider mb="xl" />
 
@@ -156,6 +197,8 @@ const CreateItem = ({
                 },
                 validate: {
                   duplicate: async (value) => {
+                    if (value === editItem.item_general_name) return true;
+
                     const isExisting = await checkItemName(supabaseClient, {
                       itemName: value.toUpperCase(),
                       teamId: activeTeam.team_id,
@@ -163,7 +206,7 @@ const CreateItem = ({
                     return isExisting ? "Item already exists" : true;
                   },
                   validCharacters: (value) =>
-                    value.match(/^[a-zA-Z0-9 ]*$/)
+                    value.match(/^[a-zA-Z ]*$/)
                       ? true
                       : "General name must not include invalid character/s",
                 },
@@ -257,6 +300,7 @@ const CreateItem = ({
                       />
                     </Box>
                   )}
+
                   <TextInput
                     withAsterisk
                     label={`Description #${index + 1}`}
@@ -312,13 +356,40 @@ const CreateItem = ({
                       />
                     )}
                   />
+
+                  {fields.length > 1 && (
+                    <ActionIcon
+                      onClick={() => {
+                        remove(index);
+                        if (field.descriptionId && field.fieldId) {
+                          setToRemoveDescription((prev) => [
+                            ...prev,
+                            {
+                              descriptionId: `${field.descriptionId}`,
+                              fieldId: `${field.fieldId}`,
+                            },
+                          ]);
+                        }
+                      }}
+                      size="md"
+                      radius={100}
+                      variant="light"
+                      color="blue"
+                      mt={28}
+                      ml={10}
+                    >
+                      <Text size="lg" fw={700}>
+                        -
+                      </Text>
+                    </ActionIcon>
+                  )}
                 </Flex>
               );
             })}
             <InputAddRemove
               canAdd={fields.length < 20}
               onAdd={onAddInput}
-              canRemove={fields.length > 1}
+              canRemove={false}
               onRemove={() => remove(fields.length - 1)}
             />
             <Checkbox
@@ -337,7 +408,7 @@ const CreateItem = ({
             miw={100}
             mt={30}
             mr={14}
-            onClick={() => setIsCreatingItem(false)}
+            onClick={() => setEditItem(null)}
           >
             Cancel
           </Button>
@@ -347,4 +418,4 @@ const CreateItem = ({
   );
 };
 
-export default CreateItem;
+export default UpdateItem;

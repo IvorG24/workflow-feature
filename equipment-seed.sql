@@ -50,7 +50,7 @@ RETURNS VOID AS $$
       "CEMENT TREATED BASECOARSE PLANT",
       "CARGO TRUCK W/ CRANE (BOOM TRUCK)",
       "CARGO TRUCK WITH CRANE",
-      "(KNUCKLE TYPE)",
+      "KNUCKLE TYPE",
       "DOLLY TRAILER",
       "DRILLING RIG",
       "DRILLING RIG FOR CORING MACHINE",
@@ -279,8 +279,8 @@ RETURNS VOID AS $$
     const TEAM_ID = "a5a28977-6956-45c1-a624-b9e90911502e";
 
     // CATEGORY
-    const category_input = categoryList.map((category) => `('${category}')`).join(',');
-    const categoryData = plv8.execute(`INSERT INTO equipment_category_table (equipment_category) VALUES ${category_input} RETURNING *`);
+    const category_input = categoryList.map((category) => `('${category}', '${TEAM_ID}')`).join(',');
+    const categoryData = plv8.execute(`INSERT INTO equipment_category_table (equipment_category, equipment_category_team_id) VALUES ${category_input} RETURNING *`);
 
     // EQUIPMENT
     const equipment_input = equipmentNameList.map((equipmentName, index) => {
@@ -293,16 +293,16 @@ RETURNS VOID AS $$
     })
 
     // BRAND
-    const brand_input = tempBrandList.map((brand) => `('${brand}')`).join(',');
-    const brandData = plv8.execute(`INSERT INTO equipment_brand_table (equipment_brand) VALUES ${brand_input} RETURNING *`);
+    const brand_input = tempBrandList.map((brand) => `('${brand}', '${TEAM_ID}')`).join(',');
+    const brandData = plv8.execute(`INSERT INTO equipment_brand_table (equipment_brand, equipment_brand_team_id) VALUES ${brand_input} RETURNING *`);
 
     // MODEL
-    const model_input = tempModelList.map((model) => `('${model}')`).join(',');
-    const modelData = plv8.execute(`INSERT INTO equipment_model_table (equipment_model) VALUES ${model_input} RETURNING *`);
+    const model_input = tempModelList.map((model) => `('${model}', '${TEAM_ID}')`).join(',');
+    const modelData = plv8.execute(`INSERT INTO equipment_model_table (equipment_model, equipment_model_team_id) VALUES ${model_input} RETURNING *`);
 
     // Component Category
-    const component_category_input = componentCategoryList.map((category) => `('${category}')`).join(',');
-    const componentCategoryData = plv8.execute(`INSERT INTO equipment_component_category_table (equipment_component_category) VALUES ${component_category_input} RETURNING *`);
+    const component_category_input = componentCategoryList.map((category) => `('${category}', '${TEAM_ID}')`).join(',');
+    const componentCategoryData = plv8.execute(`INSERT INTO equipment_component_category_table (equipment_component_category, equipment_component_category_team_id) VALUES ${component_category_input} RETURNING *`);
 
     const getInitials = (str) => {
       const words = str.split(" ");
@@ -344,10 +344,10 @@ RETURNS VOID AS $$
     // EQUIPMENT PART UOM
     const equipmentUomData = plv8.execute(
       `
-        INSERT INTO equipment_unit_of_measurement_table (equipment_unit_of_measurement) VALUES
-        ('Assembly'),
-        ('Piece'),
-        ('Set')
+        INSERT INTO equipment_unit_of_measurement_table (equipment_unit_of_measurement, equipment_unit_of_measurement_team_id) VALUES
+        ('Assembly', '${TEAM_ID}'),
+        ('Piece', '${TEAM_ID}'),
+        ('Set', '${TEAM_ID}')
         RETURNING *
       `
     ); 

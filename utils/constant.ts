@@ -1245,6 +1245,11 @@ export const ITEM_UNIT_CHOICES = [
   "Celsius",
   "Percent",
   "Parts Per Million",
+  "Meter Per Second",
+  "Cubic Meter Per Second",
+  "Microfarad",
+  "Nanofarad",
+  "Picofarad",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
@@ -1316,4 +1321,10 @@ export const GL_ACCOUNT_CHOICES = [
   "Computer Software",
   "Temporary Facility",
   "Bidding",
+];
+
+export const FORM_SEGMENT_CHOCIES = [
+  { label: "Form Preview", value: "Form Preview" },
+  { label: "Form Details", value: "Form Details" },
+  { label: "Form Lookup", value: "Form Lookup" },
 ];

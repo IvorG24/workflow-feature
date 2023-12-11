@@ -62,3 +62,9 @@ export const toTitleCase = (input: string) => {
     return match.toUpperCase();
   });
 };
+
+export const capitalize = (str: string) => {
+  return str.replace(/\b\w/g, function (match) {
+    return match.toUpperCase();
+  });
+};

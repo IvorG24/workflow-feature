@@ -9,6 +9,11 @@ import {
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
+  EquipmentDescriptionTableInsert,
+  EquipmentLookupChoices,
+  EquipmentLookupTableInsert,
+  EquipmentPartTableInsert,
+  EquipmentTableInsert,
   FormTableRow,
   FormType,
   InvitationTableRow,
@@ -351,6 +356,8 @@ export const createItemDescriptionField = async (
         field.item_description_field_is_available,
       item_description_field_item_description_id:
         field.item_description_field_item_description_id,
+      item_description_field_encoder_team_member_id:
+        field.item_description_field_encoder_team_member_id,
     };
   });
   const { data: item, error: itemError } = await supabaseClient
@@ -954,4 +961,109 @@ export const createTicketComment = async (
   if (error) throw error;
 
   return { data, error };
+};
+
+// Create equipment
+export const createEquipment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentData: EquipmentTableInsert;
+    category: string;
+  }
+) => {
+  const { equipmentData, category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_table")
+    .insert(equipmentData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_category: category,
+  };
+};
+
+// Create equipment description
+export const createEquipmentDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentDescriptionData: EquipmentDescriptionTableInsert;
+    brand: string;
+    model: string;
+  }
+) => {
+  const { equipmentDescriptionData, brand, model } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_table")
+    .insert(equipmentDescriptionData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_description_brand: brand,
+    equipment_description_model: model,
+  };
+};
+
+// Create equipment part
+export const createEquipmentPart = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentPartData: EquipmentPartTableInsert;
+    brand: string;
+    model: string;
+    uom: string;
+    category: string;
+  }
+) => {
+  const { equipmentPartData, brand, model, uom, category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_part_table")
+    .insert(equipmentPartData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_part_brand: brand,
+    equipment_part_model: model,
+    equipment_part_unit_of_measurement: uom,
+    equipment_part_component_category: category,
+  };
+};
+
+// Create row in lookup table
+export const createRowInLookupTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    inputData: EquipmentLookupTableInsert;
+    tableName: EquipmentLookupChoices;
+  }
+) => {
+  const { tableName, inputData } = params;
+  const { data, error } = await supabaseClient
+    .from(`${tableName}_table`)
+    .insert(inputData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const id = `${tableName}_id`;
+  const value = tableName;
+  const status = `${tableName}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  };
+
+  return {
+    id: formattedData[id],
+    status: Boolean(formattedData[status]),
+    value: formattedData[value],
+  };
 };

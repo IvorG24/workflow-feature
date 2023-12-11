@@ -192,6 +192,62 @@ export type TicketCommentTableInsert =
 export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
+export type EquipmentTableRow =
+  Database["public"]["Tables"]["equipment_table"]["Row"];
+export type EquipmentTableInsert =
+  Database["public"]["Tables"]["equipment_table"]["Insert"];
+export type EquipmentTableUpdate =
+  Database["public"]["Tables"]["equipment_table"]["Update"];
+
+export type EquipmentDescriptionTableRow =
+  Database["public"]["Tables"]["equipment_description_table"]["Row"];
+export type EquipmentDescriptionTableInsert =
+  Database["public"]["Tables"]["equipment_description_table"]["Insert"];
+export type EquipmentDescriptionTableUpdate =
+  Database["public"]["Tables"]["equipment_description_table"]["Update"];
+
+export type EquipmentPartTableRow =
+  Database["public"]["Tables"]["equipment_part_table"]["Row"];
+export type EquipmentPartTableInsert =
+  Database["public"]["Tables"]["equipment_part_table"]["Insert"];
+export type EquipmentPartTableUpdate =
+  Database["public"]["Tables"]["equipment_part_table"]["Update"];
+
+export type EquipmentCategoryTableRow =
+  Database["public"]["Tables"]["equipment_category_table"]["Row"];
+export type EquipmentCategoryTableInsert =
+  Database["public"]["Tables"]["equipment_category_table"]["Insert"];
+export type EquipmentCategoryTableUpdate =
+  Database["public"]["Tables"]["equipment_category_table"]["Update"];
+
+export type EquipmentBrandTableRow =
+  Database["public"]["Tables"]["equipment_brand_table"]["Row"];
+export type EquipmentBrandTableInsert =
+  Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
+export type EquipmentBrandTableUpdate =
+  Database["public"]["Tables"]["equipment_brand_table"]["Update"];
+
+export type EquipmentModelTableRow =
+  Database["public"]["Tables"]["equipment_model_table"]["Row"];
+export type EquipmentModelTableInsert =
+  Database["public"]["Tables"]["equipment_model_table"]["Insert"];
+export type EquipmentModelTableUpdate =
+  Database["public"]["Tables"]["equipment_model_table"]["Update"];
+
+export type EquipmentUnitOfMeasurementTableRow =
+  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Row"];
+export type EquipmentUnitOfMeasurementTableInsert =
+  Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
+export type EquipmentUnitOfMeasurementTableUpdate =
+  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Update"];
+
+export type EquipmentComponentCategoryTableRow =
+  Database["public"]["Tables"]["equipment_component_category_table"]["Row"];
+export type EquipmentComponentCategoryTableInsert =
+  Database["public"]["Tables"]["equipment_component_category_table"]["Insert"];
+export type EquipmentComponentCategoryTableUpdate =
+  Database["public"]["Tables"]["equipment_component_category_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1058,3 +1114,77 @@ export type ApproverUnresolvedRequestListType = {
     request_status: string;
   };
 };
+
+export type EquipmentWithCategoryType = EquipmentTableRow & {
+  equipment_category: string;
+};
+
+export type EquipmentForm = {
+  name: string;
+  category: string;
+  isAvailable: boolean;
+};
+
+export type EquipmentDescriptionType = EquipmentDescriptionTableRow & {
+  equipment_description_brand: string;
+  equipment_description_model: string;
+};
+
+export type EquipmentDescriptionForm = {
+  propertyNumber: string;
+  serialNumber: string;
+  brand: string;
+  model: string;
+  isAvailable: boolean;
+};
+
+export type EquipmentPartType = EquipmentPartTableRow & {
+  equipment_part_brand: string;
+  equipment_part_model: string;
+  equipment_part_unit_of_measurement: string;
+  equipment_part_component_category: string;
+};
+
+export type EquipmentPartForm = {
+  name: string;
+  partNumber: string;
+  brand: string;
+  model: string;
+  uom: string;
+  category: string;
+  isAvailable: boolean;
+};
+
+export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
+
+export type LookupForm = {
+  value: string;
+  isAvailable: boolean;
+};
+
+export type EquipmentLookupChoices =
+  | "equipment_category"
+  | "equipment_brand"
+  | "equipment_model"
+  | "equipment_unit_of_measurement"
+  | "equipment_component_category";
+
+export type EquipmentLookupTable = {
+  id: string;
+  status: boolean;
+  value: string;
+};
+
+export type EquipmentLookupTableInsert =
+  | EquipmentCategoryTableInsert
+  | EquipmentBrandTableInsert
+  | EquipmentModelTableInsert
+  | EquipmentUnitOfMeasurementTableInsert
+  | EquipmentComponentCategoryTableInsert;
+
+export type EquipmentLookupTableUpdate =
+  | EquipmentCategoryTableUpdate
+  | EquipmentBrandTableUpdate
+  | EquipmentModelTableUpdate
+  | EquipmentUnitOfMeasurementTableUpdate
+  | EquipmentComponentCategoryTableUpdate;

@@ -1,5 +1,6 @@
 import { getForm } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
+import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
@@ -7,6 +8,7 @@ import SubconFormPage from "@/components/SubconFormPage/SubconFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
+  EquipmentWithCategoryType,
   FormType,
   ItemWithDescriptionType,
   ServiceWithScopeType,
@@ -60,6 +62,8 @@ type Props = {
   teamProjectListCount?: number;
   services?: ServiceWithScopeType[];
   serviceListCount?: number;
+  equipments?: EquipmentWithCategoryType[];
+  equipmentListCount?: number;
 };
 
 const Page = ({
@@ -74,6 +78,8 @@ const Page = ({
   teamProjectListCount = 0,
   services = [],
   serviceListCount = 0,
+  equipments = [],
+  equipmentListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -82,6 +88,18 @@ const Page = ({
           <RequisitionFormPage
             items={items}
             itemListCount={itemListCount}
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "PED Part":
+        return (
+          <PEDPartFormPage
+            equipments={equipments}
+            equipmentListCount={equipmentListCount}
             teamMemberList={teamMemberList}
             form={form}
             teamGroupList={teamGroupList}

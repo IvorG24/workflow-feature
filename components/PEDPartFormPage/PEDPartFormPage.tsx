@@ -8,9 +8,9 @@ import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
+  EquipmentWithCategoryType,
   FormSegmentType,
   FormType,
-  ItemWithDescriptionType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -50,14 +50,16 @@ import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSection from "../RequestFormPage/FormSection";
-import ItemDescription from "./ItemDescription/ItemDescription";
-import CreateItem from "./ItemList/CreateItem";
-import ItemList from "./ItemList/ItemList";
-import UpdateItem from "./ItemList/UpdateItem";
+import EquipmentDescription from "./EquipmentDescription/EquipmentDescription";
+import CreateEquipment from "./EquipmentList/CreateEquipment";
+import EquipmentList from "./EquipmentList/EquipmentList";
+import UpdateEquipment from "./EquipmentList/UpdateEquipment";
+import EquipmentPart from "./EquipmentPart/EquipmentPart";
+import PEDLookup from "./PEDLookup/PEDLookup";
 
 type Props = {
-  items: ItemWithDescriptionType[];
-  itemListCount: number;
+  equipments: EquipmentWithCategoryType[];
+  equipmentListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
   teamGroupList: TeamGroupTableRow[];
@@ -65,9 +67,9 @@ type Props = {
   teamProjectListCount: number;
 };
 
-const RequisitionFormPage = ({
-  items,
-  itemListCount,
+const PEDPartFormPage = ({
+  equipments,
+  equipmentListCount,
   teamMemberList,
   form,
   teamGroupList,
@@ -84,14 +86,13 @@ const RequisitionFormPage = ({
 
   const initialSignerIds: string[] = [];
 
-  const [isCreatingItem, setIsCreatingItem] = useState(false);
-  const [selectedItem, setSelectedItem] =
-    useState<ItemWithDescriptionType | null>(null);
-  const [editItem, setEditItem] = useState<ItemWithDescriptionType | null>(
-    null
-  );
-  const [itemList, setItemList] = useState(items);
-  const [itemCount, setItemCount] = useState(itemListCount);
+  const [isCreatingEquipment, setIsCreatingEquipment] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] =
+    useState<EquipmentWithCategoryType | null>(null);
+  const [editEquipment, setEditEquipment] =
+    useState<EquipmentWithCategoryType | null>(null);
+  const [equipmentList, setEquipmentList] = useState(equipments);
+  const [equipmentCount, setEquipmentCount] = useState(equipmentListCount);
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -391,44 +392,68 @@ const RequisitionFormPage = ({
       {segmentValue === "Form Details" ? (
         <Box>
           <Paper p="xl" shadow="xs">
-            {!isCreatingItem && !editItem ? (
-              <ItemList
-                itemList={itemList}
-                setItemList={setItemList}
-                itemCount={itemCount}
-                setItemCount={setItemCount}
-                setIsCreatingItem={setIsCreatingItem}
-                setSelectedItem={setSelectedItem}
-                setEditItem={setEditItem}
-                editItem={editItem}
+            {!isCreatingEquipment && !editEquipment ? (
+              <EquipmentList
+                equipmentList={equipmentList}
+                setEquipmentList={setEquipmentList}
+                equipmentCount={equipmentCount}
+                setEquipmentCount={setEquipmentCount}
+                setIsCreatingEquipment={setIsCreatingEquipment}
+                setSelectedEquipment={setSelectedEquipment}
+                setEditEquipment={setEditEquipment}
+                editEquipment={editEquipment}
               />
             ) : null}
-            {isCreatingItem ? (
-              <CreateItem
-                setIsCreatingItem={setIsCreatingItem}
-                setItemList={setItemList}
-                setItemCount={setItemCount}
+            {isCreatingEquipment ? (
+              <CreateEquipment
+                setIsCreatingEquipment={setIsCreatingEquipment}
+                setEquipmentList={setEquipmentList}
+                setEquipmentCount={setEquipmentCount}
               />
             ) : null}
-            {editItem ? (
-              <UpdateItem
-                setItemList={setItemList}
-                setEditItem={setEditItem}
-                editItem={editItem}
+            {editEquipment ? (
+              <UpdateEquipment
+                setEquipmentList={setEquipmentList}
+                setEditEquipment={setEditEquipment}
+                editEquipment={editEquipment}
               />
             ) : null}
           </Paper>
           <Space h="xl" />
           <Paper p="xl" shadow="xs">
-            {!selectedItem ? (
-              <Center>
-                <Text color="dimmed">No item selected</Text>
-              </Center>
+            {!selectedEquipment ? (
+              <Box>
+                <Title order={5} color="dimmed">
+                  Equipment Descriptions
+                </Title>
+                <Center>
+                  <Text color="dimmed">No equipment selected</Text>
+                </Center>
+              </Box>
             ) : null}
-            {selectedItem ? (
-              <ItemDescription
-                selectedItem={selectedItem}
-                setSelectedItem={setSelectedItem}
+            {selectedEquipment ? (
+              <EquipmentDescription
+                selectedEquipment={selectedEquipment}
+                setSelectedEquipment={setSelectedEquipment}
+              />
+            ) : null}
+          </Paper>
+          <Space h="xl" />
+          <Paper p="xl" shadow="xs">
+            {!selectedEquipment ? (
+              <Box>
+                <Title order={5} color="dimmed">
+                  Equipment Parts
+                </Title>
+                <Center>
+                  <Text color="dimmed">No equipment selected</Text>
+                </Center>
+              </Box>
+            ) : null}
+            {selectedEquipment ? (
+              <EquipmentPart
+                selectedEquipment={selectedEquipment}
+                setSelectedEquipment={setSelectedEquipment}
               />
             ) : null}
           </Paper>
@@ -446,6 +471,8 @@ const RequisitionFormPage = ({
           />
         </Stack>
       ) : null}
+
+      {segmentValue === "Form Lookup" ? <PEDLookup /> : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>
@@ -586,4 +613,4 @@ const RequisitionFormPage = ({
   );
 };
 
-export default RequisitionFormPage;
+export default PEDPartFormPage;
