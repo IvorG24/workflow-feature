@@ -70,7 +70,7 @@ const ReviewAppNavLink = () => {
           <IconTicket {...defaultIconProps} />
         </Box>
       ),
-      href: requisitionForm ? `/team-requests/tickets/create` : "",
+      href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
     },
   ];
 
@@ -111,7 +111,7 @@ const ReviewAppNavLink = () => {
           <IconListDetails {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/tickets`,
+      href: `/${activeTeamNameToUrl}/tickets`,
     },
   ];
 

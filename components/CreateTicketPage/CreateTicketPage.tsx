@@ -1,5 +1,7 @@
 import { createTicket } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { CreateTicketPageOnLoad } from "@/utils/types";
 import {
@@ -38,6 +40,7 @@ const CreateTicketPage = ({ member }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const activeTeam = useActiveTeam();
 
   const {
     handleSubmit,
@@ -59,7 +62,11 @@ const CreateTicketPage = ({ member }: Props) => {
         message: "Ticket created.",
         color: "green",
       });
-      router.push(`/team-requests/tickets/${ticket.ticket_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
+          ticket.ticket_id
+        }`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

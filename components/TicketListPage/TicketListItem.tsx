@@ -1,4 +1,5 @@
-import { toTitleCase } from "@/utils/string";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey, toTitleCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TicketListType } from "@/utils/types";
 import {
@@ -49,6 +50,10 @@ export const getTicketStatusColor = (status: string) => {
 const TicketListItem = ({ ticket }: Props) => {
   const { classes } = useStyles();
   const router = useRouter();
+  const activeTeam = useActiveTeam();
+  const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
+    activeTeam.team_name ?? ""
+  );
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
   const requester = ticket.ticket_requester;
   const approver = ticket.ticket_approver;
@@ -68,7 +73,9 @@ const TicketListItem = ({ ticket }: Props) => {
               },
             }}
             onClick={() =>
-              router.push(`/team-requests/tickets/${ticket.ticket_id}`)
+              router.push(
+                `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
+              )
             }
           >
             {ticket.ticket_id}
@@ -152,7 +159,9 @@ const TicketListItem = ({ ticket }: Props) => {
           <ActionIcon
             color="blue"
             onClick={() =>
-              router.push(`/team-requests/tickets/${ticket.ticket_id}`)
+              router.push(
+                `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
+              )
             }
           >
             <IconArrowsMaximize size={16} />

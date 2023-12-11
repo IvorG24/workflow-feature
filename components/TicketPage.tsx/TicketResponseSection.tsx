@@ -1,7 +1,9 @@
 import { createNotification, createTicketComment } from "@/backend/api/post";
 import { editTicketResponse } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
   Box,
@@ -45,6 +47,7 @@ const TicketResponseSection = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
   const canUserEditResponse =
     ["APPROVER", "OWNER"].includes(user.team_member_role || "") && isApprover;
 
@@ -116,7 +119,9 @@ const TicketResponseSection = ({
             notification_app: "REQUEST",
             notification_type: "COMMENT",
             notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} overrode your ticket`,
-            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/tickets/${ticket.ticket_id}`,
             notification_user_id:
               ticket.ticket_requester.team_member_user.user_id,
             notification_team_id: teamMember.team_member_team_id,

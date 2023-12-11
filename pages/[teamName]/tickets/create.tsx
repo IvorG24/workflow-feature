@@ -31,10 +31,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 const Page = ({ member }: CreateTicketPageOnLoad) => {
   return (
     <>
-      <Meta
-        description="Create Ticket Page"
-        url="/team-requests/tickets/create"
-      />
+      <Meta description="Create Ticket Page" url="/<teamName>/tickets/create" />
 
       <CreateTicketPage member={member} />
     </>
