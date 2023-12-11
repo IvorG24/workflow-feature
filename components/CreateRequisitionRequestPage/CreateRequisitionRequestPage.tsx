@@ -222,9 +222,7 @@ const CreateRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(
-        `/team-requests/requests/${request.request_formsly_id_prefix}-${request.request_formsly_id_serial}`
-      );
+      router.push(`/team-requests/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
