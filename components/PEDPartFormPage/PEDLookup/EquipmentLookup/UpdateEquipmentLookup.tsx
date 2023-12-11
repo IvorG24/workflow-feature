@@ -53,8 +53,8 @@ const UpdateEquipmentLookup = ({
   const onSubmit = async (data: LookupForm) => {
     try {
       const lookupValue = lookup.table;
-      const isAvailable = `${lookup}_is_available`;
-      const team = `${lookup}_team_id`;
+      const isAvailable = `${lookup.table}_is_available`;
+      const team = `${lookup.table}_team_id`;
 
       const newEquipmentLookup: EquipmentLookupTable =
         await updateEquipmentLookup(supabaseClient, {

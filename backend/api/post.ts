@@ -1046,6 +1046,7 @@ export const createRowInLookupTable = async (
   }
 ) => {
   const { tableName, inputData } = params;
+  console.log(params);
   const { data, error } = await supabaseClient
     .from(`${tableName}_table`)
     .insert(inputData)

@@ -55,9 +55,9 @@ const CreateEquipmentLookup = ({
   const onSubmit = async (data: LookupForm) => {
     try {
       const lookupValue = lookup.table;
-      const isAvaialble = `${lookup}_is_available`;
-      const encoder = `${lookup}_encoder_team_member_id`;
-      const team = `${lookup}_team_id`;
+      const isAvaialble = `${lookup.table}_is_available`;
+      const encoder = `${lookup.table}_encoder_team_member_id`;
+      const team = `${lookup.table}_team_id`;
 
       const newEquipmentLookup = await createRowInLookupTable(supabaseClient, {
         inputData: {
@@ -79,6 +79,7 @@ const CreateEquipmentLookup = ({
       });
       setIsCreatingEquipmentLookup(false);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

@@ -90,7 +90,7 @@ const EquipmentLookupList = ({
       setEquipmentLookupCount(Number(count));
     } catch (e) {
       notifications.show({
-        message: "Error on fetching equipment lookup list",
+        message: `Error on fetching equipment ${lookup.label} list`,
         color: "red",
       });
     }
@@ -232,9 +232,7 @@ const EquipmentLookupList = ({
                   children: (
                     <Text size={14}>
                       Are you sure you want to delete{" "}
-                      {checkList.length === 1
-                        ? "this equipment lookup?"
-                        : "these equipment categories?"}
+                      {`this equipment ${lookup.label}/s?`}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -292,7 +290,7 @@ const EquipmentLookupList = ({
             width: 40,
           },
           {
-            accessor: `${lookup}`,
+            accessor: `${lookup.table}`,
             title: `${lookup.label}`,
             render: (data) => <Text>{data.value}</Text>,
           },
