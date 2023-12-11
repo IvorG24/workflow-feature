@@ -129,7 +129,7 @@ const CreateEquipmentPart = ({
     try {
       const params = {
         equipment_part_name: data.name.toUpperCase(),
-        equipment_part_number: data.partNumber,
+        equipment_part_number: data.partNumber.toUpperCase(),
         equipment_part_brand_id: data.brand,
         equipment_part_model_id: data.model,
         equipment_part_unit_of_measurement_id: data.uom,
@@ -216,6 +216,11 @@ const CreateEquipmentPart = ({
               w="100%"
               label="Part Number"
               error={formState.errors.partNumber?.message}
+              sx={{
+                input: {
+                  textTransform: "uppercase",
+                },
+              }}
             />
             <Controller
               control={control}
