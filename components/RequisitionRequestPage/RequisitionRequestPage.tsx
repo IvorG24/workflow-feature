@@ -11,12 +11,14 @@ import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
 import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   useUserProfile,
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestIdList,
   ReceiverStatusType,
@@ -75,6 +77,7 @@ const RequisitionRequestPage = ({
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
+  const activeTeam = useActiveTeam();
 
   useEffect(() => {
     try {
@@ -298,7 +301,7 @@ const RequisitionRequestPage = ({
         message: "Request deleted.",
         color: "green",
       });
-      router.push("/team-requests/requests");
+      router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
