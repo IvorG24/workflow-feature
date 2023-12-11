@@ -40,6 +40,9 @@ const ReviewAppNavLink = () => {
   const forms = useFormList();
   const userTeamMemberData = useUserTeamMember();
   const unreadNotificationCount = useUnreadNotificationCount();
+  const activeTeamNameToUrl = formatTeamNameToUrlKey(
+    activeTeam.team_name ?? ""
+  );
 
   const rfForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Requisition"
@@ -57,9 +60,7 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: requisitionForm
-        ? `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
-            requisitionForm.form_id
-          }/create`
+        ? `/${activeTeamNameToUrl}/forms/${requisitionForm.form_id}/create`
         : "",
     },
     {
@@ -81,7 +82,7 @@ const ReviewAppNavLink = () => {
           <IconDashboard {...defaultIconProps} />
         </Box>
       ),
-      href: `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`,
+      href: `/${activeTeamNameToUrl}/dashboard`,
     },
     {
       label: `${startCase(activeApp)} List`,
