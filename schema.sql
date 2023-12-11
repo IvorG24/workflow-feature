@@ -9440,6 +9440,7 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 ---------- Start: VIEWS
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
+CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
 
 -------- End: VIEWS
 
