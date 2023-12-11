@@ -1251,7 +1251,8 @@ export const ITEM_UNIT_CHOICES = [
   "Nanofarad",
   "Picofarad",
   "Frames Per Second",
-  "Millimeter Of Mercury"
+  "Millimeter Of Mercury",
+  "Grams Per Square Meter",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
