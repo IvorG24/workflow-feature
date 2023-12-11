@@ -131,7 +131,7 @@ const ReviewAppNavLink = () => {
           <IconCirclePlus {...defaultIconProps} />
         </Box>
       ),
-      href: `/team/create`,
+      href: `/create-team`,
     },
   ];
 
@@ -143,7 +143,7 @@ const ReviewAppNavLink = () => {
           <IconCirclePlus {...defaultIconProps} />
         </Box>
       ),
-      href: `/team/create`,
+      href: `/create-team`,
     },
   ];
 

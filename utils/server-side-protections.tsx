@@ -292,7 +292,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
       if (!teamId) {
         return {
           redirect: {
-            destination: "/team/create",
+            destination: "/create-team",
             permanent: false,
           },
         };

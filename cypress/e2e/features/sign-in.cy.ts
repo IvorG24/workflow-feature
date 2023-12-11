@@ -26,6 +26,6 @@ describe("Sign In", () => {
     cy.get("[data-cy='onboarding-input-last-name']").type(
       `${userE.lastName}{enter}`
     );
-    cy.url().should("include", "/team/create");
+    cy.url().should("include", "/create-team");
   });
 });
