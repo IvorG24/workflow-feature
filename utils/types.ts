@@ -290,6 +290,8 @@ export type UserWithSignatureType = UserTableRow & {
 };
 
 export type RequestWithResponseType = RequestTableRow & {
+  request_formsly_id: string;
+} & {
   request_form: {
     form_id: string;
     form_name: string;
