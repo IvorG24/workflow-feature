@@ -3911,3 +3911,20 @@ export const getAllGroupOfTeamMember = async (
 
   return formattedData.map((group) => group.team_group.team_group_name);
 };
+
+// Check if team name already exists
+export const checkIfTeamNameExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamName: string }
+) => {
+  const { teamName } = params;
+
+  const { data, error } = await supabaseClient.rpc(
+    "check_if_team_name_exists",
+    { team_name: teamName }
+  );
+
+  if (error) throw error;
+
+  return data;
+};

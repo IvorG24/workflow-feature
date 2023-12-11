@@ -1,3 +1,4 @@
+import { checkIfTeamNameExists } from "@/backend/api/get";
 import {
   createFormslyPremadeForms,
   createTeam,
@@ -88,7 +89,7 @@ const CreateTeamForm = ({
 
       const teamData = await createTeam(supabaseClient, {
         team_id: teamId,
-        team_name: data.teamName,
+        team_name: data.teamName.trim(),
         team_user_id: user.user_id,
         team_logo: imageUrl,
       });
@@ -123,6 +124,7 @@ const CreateTeamForm = ({
       setIsCreatingTeam(false);
     }
   };
+
   return (
     <Paper p="xl" mt="xl">
       <form onSubmit={handleSubmit(handleCreateTeam)}>
@@ -161,8 +163,29 @@ const CreateTeamForm = ({
 
           <TextInput
             label="Team Name"
+            w="100%"
             withAsterisk
-            {...register("teamName", { required: true })}
+            {...register("teamName", {
+              required: true,
+              validate: {
+                isDuplicateTeamName: async (value: string) => {
+                  const isExisting = await checkIfTeamNameExists(
+                    supabaseClient,
+                    {
+                      teamName: value,
+                    }
+                  );
+                  return isExisting ? "Team name is already taken." : true;
+                },
+                isAlphaNumericWithSpaces: (value: string) => {
+                  const alphanumericWithSpacesRegex = /^[a-zA-Z0-9\s]*$/;
+
+                  return !alphanumericWithSpacesRegex.test(value.trim())
+                    ? "Team name must be alphanumeric (letters, numbers, and spaces only)."
+                    : true;
+                },
+              },
+            })}
             error={errors.teamName?.message}
           />
 
