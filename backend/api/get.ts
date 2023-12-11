@@ -1,4 +1,4 @@
-import { EditRequestOnLoadProps } from "@/pages/team-requests/requests/[requestId]/edit";
+import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
