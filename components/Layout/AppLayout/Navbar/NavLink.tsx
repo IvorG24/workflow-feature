@@ -123,7 +123,7 @@ const ReviewAppNavLink = () => {
           <IconUsersGroup {...defaultIconProps} />
         </Box>
       ),
-      href: `/team`,
+      href: `/${activeTeamNameToUrl}/settings`,
     },
     {
       label: "Create Team",

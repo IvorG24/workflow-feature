@@ -77,7 +77,7 @@ const SignInPage = () => {
             teamId: `${teamId}`,
             userEmail: `${invitedEmail}`,
           });
-          router.push(`/team/invitation/${invitationId}`);
+          router.push(`/invitation/${invitationId}`);
         } else {
           router.push(`/userActiveTeam`);
         }

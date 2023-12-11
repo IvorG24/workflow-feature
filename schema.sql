@@ -783,7 +783,7 @@ RETURNS JSON AS $$
     
     const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
 
-    if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/team/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
+    if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
  });
  return user_data;
@@ -1300,7 +1300,7 @@ RETURNS JSON AS $$
         notificationInput.push({
           notification_app: "GENERAL",
           notification_content: `You have been invited to join ${teamName}`,
-          notification_redirect_url: `/team/invitation/${invitationId}`,
+          notification_redirect_url: `/invitation/${invitationId}`,
           notification_type: "INVITE",
           notification_user_id: checkUserData.user_id,
         });

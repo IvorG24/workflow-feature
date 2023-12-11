@@ -75,9 +75,7 @@ const OnboardingPage = ({ user }: Props) => {
       });
 
       if (pendingInvitation) {
-        await router.push(
-          `/team/invitation/${pendingInvitation.invitation_id}`
-        );
+        await router.push(`/invitation/${pendingInvitation.invitation_id}`);
       } else {
         await router.push("/create-team");
       }

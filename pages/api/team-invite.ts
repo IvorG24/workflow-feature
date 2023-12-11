@@ -43,7 +43,7 @@ export default async function handler(
         userEmail: `${invitedEmail}`,
       });
 
-      res.redirect(`/team/invitation/${invitationId}`);
+      res.redirect(`/invitation/${invitationId}`);
     }
   } catch (error) {
     console.error(error);
