@@ -40,7 +40,10 @@ const RequestItemRow = ({ request }: Props) => {
     request_signer,
   } = request;
 
-  const requestId = request.request_formsly_id || request.request_id;
+  const requestId =
+    request.request_formsly_id === "-"
+      ? request.request_id
+      : request.request_formsly_id;
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
