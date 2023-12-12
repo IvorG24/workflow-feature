@@ -1,4 +1,4 @@
-import { getTeam } from "@/backend/api/get";
+import { getFormslyId, getTeam } from "@/backend/api/get";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { GetServerSideProps } from "next";
@@ -8,13 +8,16 @@ export const getServerSideProps: GetServerSideProps =
     async ({ supabaseClient, context, teamId }) => {
       try {
         const activeTeam = await getTeam(supabaseClient, { teamId });
+        const formslyId = await getFormslyId(supabaseClient, {
+          requestId: `${context.query.requestId}`,
+        });
 
         if (activeTeam) {
           return {
             redirect: {
               destination: `/${formatTeamNameToUrlKey(
                 activeTeam.team_name
-              )}/requests/${context.query.requestId}`,
+              )}/requests/${formslyId ?? context.query.requestId}`,
               permanent: false,
             },
           };
