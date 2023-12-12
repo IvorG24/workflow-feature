@@ -875,8 +875,6 @@ RETURNS JSON AS $$
     const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
-    const teamNameUrlKey = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}')`)[0];
-
     if (activeTeam) {
       const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
