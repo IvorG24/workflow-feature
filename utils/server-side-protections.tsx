@@ -1,4 +1,8 @@
-import { checkIfOwnerOrAdmin, getUserActiveTeamId } from "@/backend/api/get";
+import {
+  checkIfOwnerOrAdmin,
+  getTeam,
+  getUserActiveTeamId,
+} from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseClient, User } from "@supabase/supabase-js";
@@ -9,6 +13,8 @@ import {
 } from "next";
 import { SIGN_IN_PAGE_PATH } from "./constant";
 import { Database } from "./database";
+import { formatTeamNameToUrlKey } from "./string";
+import { TeamTableRow } from "./types";
 
 export const withAuth = <P extends { [key: string]: any }>(
   getServerSidePropsFunc: (params: {
@@ -240,6 +246,34 @@ export const withAuthAndOnboardingRequestPage = <
         };
       }
 
+      // * 4. Check if user active team match router active team
+
+      const userActiveTeam = await getTeam(supabaseClient, { teamId });
+
+      if (!userActiveTeam) {
+        return {
+          redirect: {
+            destination: "/create-team",
+            permanent: false,
+          },
+        };
+      }
+
+      const isUserMember =
+        context.query.teamName ===
+        formatTeamNameToUrlKey(userActiveTeam.team_name);
+
+      if (!isUserMember) {
+        return {
+          redirect: {
+            destination: `/${formatTeamNameToUrlKey(
+              userActiveTeam.team_name
+            )}/requests`,
+            permanent: false,
+          },
+        };
+      }
+
       return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
     } catch (error) {
       console.error(error);
@@ -258,7 +292,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
     context: GetServerSidePropsContext;
     supabaseClient: SupabaseClient<Database>;
     user: User;
-    teamId: string;
+    userActiveTeam: TeamTableRow;
   }) => Promise<GetServerSidePropsResult<P>>
 ): GetServerSideProps<P> => {
   return async (
@@ -313,7 +347,40 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
         };
       }
 
-      return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
+      // * 4. Check if user active team match router active team
+
+      const userActiveTeam = await getTeam(supabaseClient, { teamId });
+
+      if (!userActiveTeam) {
+        return {
+          redirect: {
+            destination: "/create-team",
+            permanent: false,
+          },
+        };
+      }
+
+      const isUserMember =
+        context.query.teamName ===
+        formatTeamNameToUrlKey(userActiveTeam.team_name);
+
+      if (!isUserMember) {
+        return {
+          redirect: {
+            destination: `/${formatTeamNameToUrlKey(
+              userActiveTeam.team_name
+            )}/requests`,
+            permanent: false,
+          },
+        };
+      }
+
+      return getServerSidePropsFunc({
+        context,
+        supabaseClient,
+        user,
+        userActiveTeam,
+      });
     } catch (error) {
       console.error(error);
       return {

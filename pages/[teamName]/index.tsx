@@ -1,36 +1,26 @@
-import { getTeam } from "@/backend/api/get";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient, teamId }) => {
+  async ({ userActiveTeam, context }) => {
     try {
-      const currentTeam = await getTeam(supabaseClient, { teamId });
+      const formattedTeamName = userActiveTeam.team_name
+        .replace(/\s+/g, "-")
+        .toLowerCase();
 
-      if (!currentTeam) {
+      if (formattedTeamName !== context.query.teamName || !formattedTeamName) {
         return {
           redirect: {
-            destination: "/",
-            permanent: false,
-          },
-        };
-      }
-
-      const teamName = currentTeam.team_name;
-      const formattedTeamName = teamName.replace(/\s+/g, "-").toLowerCase();
-
-      if (formattedTeamName) {
-        return {
-          redirect: {
-            destination: `/${formattedTeamName}/dashboard`,
+            destination: `/`,
             permanent: false,
           },
         };
       }
 
       return {
-        props: {
-          teamName,
+        redirect: {
+          destination: `/${formattedTeamName}/dashboard`,
+          permanent: false,
         },
       };
     } catch (error) {

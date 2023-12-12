@@ -172,7 +172,7 @@ const CreateTeamForm = ({
                   const isExisting = await checkIfTeamNameExists(
                     supabaseClient,
                     {
-                      teamName: value,
+                      teamName: value.trim(),
                     }
                   );
                   return isExisting ? "Team name is already taken." : true;

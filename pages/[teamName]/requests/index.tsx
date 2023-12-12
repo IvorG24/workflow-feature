@@ -3,11 +3,11 @@ import { getRequestListOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withActiveTeam } from "@/utils/server-side-protections";
 import { RequestListItemType, TeamMemberWithUserType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, user }) => {
     try {
       const requestListData = await getRequestListOnLoad(supabaseClient, {

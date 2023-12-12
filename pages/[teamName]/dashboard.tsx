@@ -1,25 +1,14 @@
-import { getTeam, getTicketList } from "@/backend/api/get";
+import { getTicketList } from "@/backend/api/get";
 import Dashboard from "@/components/Dashboard/Dashboard";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient, teamId }) => {
+  async ({ supabaseClient, userActiveTeam }) => {
     try {
-      const currentTeam = await getTeam(supabaseClient, { teamId });
-
-      if (!currentTeam) {
-        return {
-          redirect: {
-            destination: "/",
-            permanent: false,
-          },
-        };
-      }
-
       const { count: ticketListCount } = await getTicketList(supabaseClient, {
-        teamId,
+        teamId: userActiveTeam.team_id,
         limit: 13,
         page: 1,
         status: ["PENDING"],
