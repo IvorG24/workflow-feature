@@ -1,5 +1,6 @@
 import {
   checkIfOwnerOrAdmin,
+  getRequestTeamId,
   getTeam,
   getUserActiveTeamId,
 } from "@/backend/api/get";
@@ -11,6 +12,7 @@ import {
   GetServerSidePropsContext,
   GetServerSidePropsResult,
 } from "next";
+import { isUuid } from "uuidv4";
 import { SIGN_IN_PAGE_PATH } from "./constant";
 import { Database } from "./database";
 import { formatTeamNameToUrlKey } from "./string";
@@ -246,7 +248,7 @@ export const withAuthAndOnboardingRequestPage = <
         };
       }
 
-      // * 4. Check if user active team match router active team
+      // * 4. Check if user is a member
 
       const userActiveTeam = await getTeam(supabaseClient, { teamId });
 
@@ -259,11 +261,22 @@ export const withAuthAndOnboardingRequestPage = <
         };
       }
 
-      const isUserMember =
+      let isUserOnCorrectTeam =
         context.query.teamName ===
         formatTeamNameToUrlKey(userActiveTeam.team_name);
 
-      if (!isUserMember) {
+      if (context.query.requestId && isUuid(`${context.query.requestId}`)) {
+        const requestTeamId = await getRequestTeamId(supabaseClient, {
+          requestId: `${context.query.requestId}`,
+        });
+
+        if (requestTeamId) {
+          isUserOnCorrectTeam = requestTeamId === userActiveTeam.team_id;
+          console.log(!isUserOnCorrectTeam);
+        }
+      }
+
+      if (!isUserOnCorrectTeam) {
         return {
           redirect: {
             destination: `/${formatTeamNameToUrlKey(

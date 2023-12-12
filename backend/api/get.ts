@@ -3997,3 +3997,35 @@ export const checkIfEmailsOnboarded = async (
     onboarded: data.map((userData) => userData.user_email).includes(email),
   }));
 };
+
+// get request team id
+export const getRequestTeamId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select(
+      `request_team_member: request_team_member_id!inner(team_member_team_id)`
+    )
+    .eq("request_id", requestId)
+    .eq("request_is_disabled", false)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (data) {
+    const requestData = data as unknown as {
+      request_team_member: {
+        team_member_team_id: string;
+      };
+    };
+    return requestData.request_team_member.team_member_team_id;
+  } else {
+    return null;
+  }
+};
