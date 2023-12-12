@@ -193,7 +193,7 @@ const RequestActionSection = ({
   };
 
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper p="xl" shadow="xs" className="onboarding-requisition-request-action">
       <Title order={4} color="dimmed">
         Request Action
       </Title>

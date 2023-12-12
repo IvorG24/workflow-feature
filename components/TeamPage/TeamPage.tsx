@@ -36,6 +36,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
 import LeaveTeamSection from "./LeaveTeamSection";
+import QuickOnboarding from "./QuickOnboarding";
 import AdminGroup from "./TeamGroup/AdminGroup";
 import ApproverGroup from "./TeamGroup/ApproverGroup";
 import CreateGroup from "./TeamGroup/CreateGroup";
@@ -576,11 +577,14 @@ const TeamPage = ({
       </Box>
 
       {isOwnerOrAdmin && (
-        <InviteMember
-          isOwnerOrAdmin={isOwnerOrAdmin}
-          memberEmailList={memberEmailList}
-          teamMemberList={initialTeamMemberList}
-        />
+        <>
+          <InviteMember
+            isOwnerOrAdmin={isOwnerOrAdmin}
+            memberEmailList={memberEmailList}
+            teamMemberList={initialTeamMemberList}
+          />
+          <QuickOnboarding memberEmailList={memberEmailList} />
+        </>
       )}
 
       {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />}
