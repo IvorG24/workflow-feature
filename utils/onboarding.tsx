@@ -1163,6 +1163,8 @@ export const ONBOARDING_DASHBOARD_STEP: Step[] = [
 export const REQUISITION_REQUEST_SAMPLE: RequestWithResponseType = {
   request_id: "40a7c790-6b30-45f1-a29a-a398c4a5514d",
   request_formsly_id: "PM1-1",
+  request_formsly_id_prefix: "PM1",
+  request_formsly_id_serial: "1",
   request_date_created: "2023-12-05T03:00:35.924Z",
   request_status_date_updated: "2023-12-05T03:00:35.924Z",
   request_status: "PENDING",

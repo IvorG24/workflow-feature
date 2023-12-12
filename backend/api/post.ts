@@ -147,6 +147,23 @@ export const createTeamMember = async (
   return data;
 };
 
+// Create Team Member with team name
+export const createTeamMemberReturnTeamName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TeamMemberTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .insert(params)
+    .select("*, team:team_table(team_name)");
+  if (error) throw error;
+  return data as unknown as [
+    {
+      team: { team_name: string };
+    } & TeamMemberTableInsert
+  ];
+};
+
 // Create Team Invitation/s
 export const createTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
