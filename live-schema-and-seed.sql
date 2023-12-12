@@ -1347,7 +1347,7 @@ RETURNS JSON AS $$
         notificationInput.push({
           notification_app: "GENERAL",
           notification_content: `You have been invited to join ${teamName}`,
-          notification_redirect_url: `/user/invitation/${invitationId}`,
+          notification_redirect_url: `/invitation/${invitationId}`,
           notification_type: "INVITE",
           notification_user_id: checkUserData.user_id,
         });
