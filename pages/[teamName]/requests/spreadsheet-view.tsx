@@ -1,11 +1,11 @@
 import { getSSOTOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import SSOTSpreadsheetView from "@/components/SSOTSpreadhseetViewPage/SSOTSpreadhseetViewPage";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withActiveTeam } from "@/utils/server-side-protections";
 import { SSOTType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, user }) => {
     try {
       const ssotData = await getSSOTOnLoad(supabaseClient, {
@@ -38,7 +38,7 @@ const Page = ({ data, projectNameList, itemNameList }: Props) => {
     <>
       <Meta
         description="Spreadsheet View Page"
-        url="/team-requests/requests/spreadsheet-view"
+        url="/{teamName}/requests/spreadsheet-view"
       />
       <SSOTSpreadsheetView
         data={data}

@@ -2,6 +2,7 @@ import { getRequestList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormStatusType,
   RequestListItemType,
@@ -233,7 +234,13 @@ const RequestListPage = ({
         </Box>
         {isFormslyTeam ? (
           <Button
-            onClick={() => router.push("/team-requests/spreadsheet-view")}
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name
+                )}/requests/spreadsheet-view`
+              )
+            }
             sx={{ flex: 1 }}
             maw={300}
           >

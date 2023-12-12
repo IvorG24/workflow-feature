@@ -12,8 +12,10 @@ import useRealtimeProjectRequestSignerList from "@/hooks/useRealtimeRequestProje
 import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
 import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestIdList,
   FormStatusType,
@@ -89,6 +91,7 @@ const RequestPage = ({
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
   useEffect(() => {
     try {
@@ -569,7 +572,7 @@ const RequestPage = ({
         message: "Request deleted.",
         color: "green",
       });
-      router.push("/team-requests/requests");
+      router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -596,7 +599,9 @@ const RequestPage = ({
     });
 
   const getDirectory = (formId: string, formName: string) => {
-    let directory = `/team-requests/forms/${formId}`;
+    let directory = `/${formatTeamNameToUrlKey(
+      activeTeam.team_name
+    )}/forms/${formId}`;
     if (["Quotation", "Sourced Item"].includes(formName)) {
       directory += `/create?requisitionId=${request.request_id}`;
     } else if (formName === "Release Order") {

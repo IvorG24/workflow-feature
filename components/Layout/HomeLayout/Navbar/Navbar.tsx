@@ -1,4 +1,3 @@
-import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
 import {
   Button,
   Navbar as MantineNavbar,
@@ -68,7 +67,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: NavbarProps) => {
         </Stack>
         <Stack mt="md">
           {user ? (
-            <Button onClick={() => router.push(DEFAULT_LANDING_PAGE)}>
+            <Button onClick={() => router.push(`/userActiveTeam`)}>
               Go to Formsly
             </Button>
           ) : null}

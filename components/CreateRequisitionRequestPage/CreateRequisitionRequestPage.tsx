@@ -13,6 +13,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -215,6 +216,7 @@ const CreateRequisitionRequestPage = ({
         formName: form.form_name,
         isFormslyForm: true,
         projectId,
+        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
       notifications.show({
@@ -223,7 +225,9 @@ const CreateRequisitionRequestPage = ({
       });
 
       router.push(
-        `/team-requests/requests/${request.request_formsly_id_prefix}-${request.request_formsly_id_serial}`
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+          request.request_formsly_id_prefix
+        }-${request.request_formsly_id_serial}`
       );
     } catch (error) {
       notifications.show({

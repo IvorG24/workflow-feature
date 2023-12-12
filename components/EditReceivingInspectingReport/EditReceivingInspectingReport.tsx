@@ -7,9 +7,14 @@ import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails"
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid, regExp } from "@/utils/string";
+import {
+  formatTeamNameToUrlKey,
+  parseJSONIfValid,
+  regExp,
+} from "@/utils/string";
 import {
   FormType,
   OptionTableRow,
@@ -58,6 +63,7 @@ const EditReceivingInspectingReportPage = ({
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
   const requestorProfile = useUserProfile();
 
@@ -206,7 +212,11 @@ const EditReceivingInspectingReportPage = ({
             message: "Request can't be edited",
             color: "red",
           });
-          router.push(`/team-requests/requests/${request.request_id}`);
+          router.push(
+            `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+              request.request_id
+            }`
+          );
           return;
         }
 
@@ -217,13 +227,18 @@ const EditReceivingInspectingReportPage = ({
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
+          teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
         });
 
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(
+          `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+            request.request_id
+          }`
+        );
       }
     } catch (e) {
       console.error(e);

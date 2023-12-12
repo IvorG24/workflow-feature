@@ -76,10 +76,10 @@ const OnboardingPage = ({ user }: Props) => {
 
       if (pendingInvitation) {
         await router.push(
-          `/team/invitation/${pendingInvitation.invitation_id}`
+          `/user/invitation/${pendingInvitation.invitation_id}`
         );
       } else {
-        await router.push("/team/create");
+        await router.push("/create-team");
       }
 
       notifications.show({

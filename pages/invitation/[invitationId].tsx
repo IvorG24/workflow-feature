@@ -47,7 +47,7 @@ const Page = ({ invitation }: Props) => {
     <>
       <Meta
         description="Team Invitation Page"
-        url="/team/invitation/[invitationId]"
+        url="/user/invitation/[invitationId]"
       />
       <TeamInvitationPage invitation={invitation} />
     </>

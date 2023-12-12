@@ -8,10 +8,11 @@ import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails"
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { areEqual } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid } from "@/utils/string";
+import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
 import {
   FormType,
   OptionTableRow,
@@ -61,6 +62,7 @@ const EditSourcedItemRequestPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const requestorProfile = useUserProfile();
+  const activeTeam = useActiveTeam();
   const { setIsLoading } = useLoadingActions();
 
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
@@ -251,7 +253,11 @@ const EditSourcedItemRequestPage = ({
             message: "Request can't be edited",
             color: "red",
           });
-          router.push(`/team-requests/requests/${request.request_id}`);
+          router.push(
+            `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+              request.request_id
+            }`
+          );
           return;
         }
 
@@ -264,13 +270,18 @@ const EditSourcedItemRequestPage = ({
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: request_form.form_name,
+          teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
         });
 
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(
+          `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+            request.request_id
+          }`
+        );
       }
     } catch (e) {
       notifications.show({

@@ -476,7 +476,7 @@ plv8.subtransaction(function(){
   let supplierCondition = '';
   
   if(search.length !== 0){
-    searchCondition = `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+    searchCondition = `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
   }
 
   if(requisitionFilterCount || supplierList.length !== 0){
@@ -486,7 +486,7 @@ plv8.subtransaction(function(){
 
     if(supplierList.length !== 0){
       const quotationCondition = supplierList.map(supplier => `request_response_table.request_response='"${supplier}"'`).join(" OR ");
-      const quotationRequestIdList = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}' AND (${quotationCondition})`);
+      const quotationRequestIdList = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}' AND (${quotationCondition})`);
 
       if(quotationRequestIdList.length === 0){
         ssot_data = [];
@@ -499,7 +499,7 @@ plv8.subtransaction(function(){
       const requisitionCondition = quotationRequestIdList.map(requestId => `(request_response_request_id='${requestId.request_id}' AND request_response_field_id='${fieldId.field_id}')`).join(" OR ");
       const requisitionIdList = plv8.execute(`SELECT request_response FROM request_response_table WHERE ${requisitionCondition}`);
 
-      supplierCondition = requisitionIdList.map(requestId => `request_table.request_id = '${JSON.parse(requestId.request_response)}'`).join(' OR ');
+      supplierCondition = requisitionIdList.map(requestId => `request_view.request_id = '${JSON.parse(requestId.request_response)}'`).join(' OR ');
     }
 
     let orCondition = [...(condition ? [`${condition}`] : []), ...(searchCondition ? [`${searchCondition}`] : [])].join(' OR ');
@@ -508,22 +508,22 @@ plv8.subtransaction(function(){
       `
         SELECT * FROM (
           SELECT 
-            request_table.request_id, 
-            request_table.request_jira_id,
-            request_table.request_otp_id,
-            request_table.request_formsly_id,
-            request_table.request_date_created, 
-            request_table.request_team_member_id, 
+          request_view.request_id, 
+            request_view.request_jira_id,
+            request_view.request_otp_id,
+            request_view.request_formsly_id,
+            request_view.request_date_created, 
+            request_view.request_team_member_id, 
             request_response_table.request_response, 
-            ROW_NUMBER() OVER (PARTITION BY request_table.request_id) AS RowNumber 
-          FROM request_table INNER JOIN request_response_table ON request_table.request_id = request_response_table.request_response_request_id 
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS RowNumber 
+          FROM request_view INNER JOIN request_response_table ON request_view.request_id = request_response_table.request_response_request_id 
           WHERE 
-            request_table.request_status = 'APPROVED'
-            AND request_table.request_form_id = '${requisition_form.form_id}'
+            request_view.request_status = 'APPROVED'
+            AND request_view.request_form_id = '${requisition_form.form_id}'
             AND (
               ${[...(orCondition ? [`${orCondition}`] : []), ...(supplierCondition ? [`${supplierCondition}`] : [])].join(' AND ')}
             )
-          ORDER BY request_table.request_status_date_updated DESC
+          ORDER BY request_view.request_status_date_updated DESC
         ) AS a 
         WHERE a.RowNumber = ${requisitionFilterCount ? requisitionFilterCount : 1}
         OFFSET ${rowStart} 
@@ -532,7 +532,7 @@ plv8.subtransaction(function(){
     );
         
   }else{
-    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_table.request_jira_id, request_table.request_otp_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_view.request_jira_id, request_view.request_otp_id, request_date_created, request_team_member_id FROM request_view WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
   }
 
   ssot_data = requisition_requests.map((requisition) => {
@@ -556,7 +556,7 @@ plv8.subtransaction(function(){
     // Requisition team member
     const requisition_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${requisition.request_team_member_id}'`)[0];
 
-    const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
+    const quotation_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}'`);
     let quotation_list = [];
     if(quotation_ids.length !== 0){
       let quotation_condition = "";
@@ -564,7 +564,7 @@ plv8.subtransaction(function(){
         quotation_condition += `request_id='${quotation.request_id}' OR `;
       });
 
-      const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+      const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
       quotation_list = quotation_requests.map(quotation => {
         // Quotation request response
         const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
@@ -582,7 +582,7 @@ plv8.subtransaction(function(){
         // Quotation team member
         const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
-        const rir_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${rir_form.form_id}'`);
+        const rir_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${rir_form.form_id}'`);
         let rir_list = [];
         
         if(rir_ids.length !== 0){
@@ -591,7 +591,7 @@ plv8.subtransaction(function(){
             rir_condition += `request_id='${rir.request_id}' OR `;
           });
 
-          const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${rir_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+          const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${rir_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
           rir_list = rir_requests.map(rir => {
             // rir request response
             const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${rir.request_id}'`);
@@ -630,7 +630,7 @@ plv8.subtransaction(function(){
       });
     }
 
-    const sourced_item_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${sourced_item_form.form_id}'`);
+    const sourced_item_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${sourced_item_form.form_id}'`);
     let sourced_item_list = [];
     if(sourced_item_ids.length !== 0){
       let sourced_item_condition = "";
@@ -638,7 +638,7 @@ plv8.subtransaction(function(){
         sourced_item_condition += `request_id='${sourced_item.request_id}' OR `;
       });
 
-      const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+      const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
       sourced_item_list = sourced_item_requests.map(sourced_item => {
         // Sourced Item request response
         const sourced_item_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${sourced_item.request_id}'`);
@@ -656,7 +656,7 @@ plv8.subtransaction(function(){
         // Sourced Item team member
         const sourced_item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${sourced_item.request_team_member_id}'`)[0];
 
-        const ro_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${sourced_item.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${ro_form.form_id}'`);
+        const ro_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${sourced_item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${ro_form.form_id}'`);
         let ro_list = [];
         
         if(ro_ids.length !== 0){
@@ -665,7 +665,7 @@ plv8.subtransaction(function(){
             ro_condition += `request_id='${ro.request_id}' OR `;
           });
 
-          const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${ro_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+          const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${ro_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
           ro_list = ro_requests.map(ro => {
             // ro request response
             const ro_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${ro.request_id}'`);
@@ -683,7 +683,7 @@ plv8.subtransaction(function(){
             // ro team member
             const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
 
-            const transfer_receipt_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${transfer_receipt_form.form_id}'`);
+            const transfer_receipt_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${transfer_receipt_form.form_id}'`);
             let transfer_receipt_list = [];
             
             if(transfer_receipt_ids.length !== 0){
@@ -692,7 +692,7 @@ plv8.subtransaction(function(){
                 transfer_receipt_condition += `request_id='${transfer_receipt.request_id}' OR `;
               });
 
-              const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+              const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
               transfer_receipt_list = transfer_receipt_requests.map(transfer_receipt => {
                 // transfer_receipt request response
                 const transfer_receipt_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_response_table WHERE request_response_request_id='${transfer_receipt.request_id}'`);
@@ -783,7 +783,7 @@ RETURNS JSON AS $$
     
     const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
 
-    if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/team/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
+    if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
  });
  return user_data;
@@ -845,13 +845,6 @@ RETURNS JSON AS $$
       formslyIdPrefix = `${project.team_project_code}${endId}`;
     }
 
-    const notificationValues = requestSignerNotificationInput
-    .map(
-      (notification) =>
-        `('${notification.notification_app}','${notification.notification_content}','/team-requests/requests/${isFormslyForm ? `${formslyIdPrefix}-${formslyIdSerial}` : requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
-    )
-    .join(",");
-    
     if (projectId === "") {
       request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
     } else {
@@ -862,7 +855,26 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+
+    const teamNameUrlKey = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}')`)[0];
+
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        const notificationValues = requestSignerNotificationInput
+        .map(
+          (notification) =>
+            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/requests/${isFormslyForm ? `${formslyIdPrefix}-${formslyIdSerial}` : requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+        )
+        .join(",");
+
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      }
+    }
     
  });
  return request_data;
@@ -895,15 +907,25 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
-    const notificationValues = requestSignerNotificationInput
-    .map(
-      (notification) =>
-        `('${notification.notification_app}','${notification.notification_content}','/team-requests/requests/${request_data.request_formsly_id ?? requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
-    )
-    .join(",");
+    const team_member_data = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_id='${request_data.request_team_member_id}';`)[0];
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${team_member_data.team_member_team_id}'`)[0];
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
-    
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        const notificationValues = requestSignerNotificationInput
+        .map(
+          (notification) =>
+            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/requests/${request_data.request_formsly_id ?? requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+        )
+        .join(",");
+
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      }
+    }
  });
  return request_data;
 $$ LANGUAGE plv8;
@@ -938,7 +960,17 @@ RETURNS VOID AS $$
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
     
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/team-requests/requests/${requestFormslyId ?? requestId}','${requestOwnerId}','${teamId}');`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/${teamNameUrlKey}/requests/${requestFormslyId ?? requestId}','${requestOwnerId}','${teamId}');`);
+      }
+    }
     
     if(isPrimarySigner===true){
       plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""} WHERE request_id='${requestId}';`);
@@ -1300,7 +1332,7 @@ RETURNS JSON AS $$
         notificationInput.push({
           notification_app: "GENERAL",
           notification_content: `You have been invited to join ${teamName}`,
-          notification_redirect_url: `/team/invitation/${invitationId}`,
+          notification_redirect_url: `/user/invitation/${invitationId}`,
           notification_type: "INVITE",
           notification_user_id: checkUserData.user_id,
         });
@@ -6047,7 +6079,17 @@ RETURNS VOID AS $$
     
     plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()} their approval of this request.');`);
     
-    plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} their approval of your ${formName} request','/team-requests/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+
+    if (activeTeam) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} their approval of your ${formName} request','/${teamNameUrlKey}/requests/${requestId}','${requestOwnerId}','${teamId}');`);
+      }
+    }
     
     if(isPrimarySigner===true){
       plv8.execute(`UPDATE request_table SET request_status = 'PENDING', request_status_date_updated = NOW(), ${`request_jira_id=NULL`}, ${`request_jira_link=NULL`} WHERE request_id='${requestId}';`);
@@ -7777,6 +7819,15 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Redirect to team dashboard
+
+-- Start: Format team name to url key
+CREATE OR REPLACE FUNCTION format_team_name_to_url_key(team_name TEXT)
+RETURNS TEXT AS $$
+BEGIN
+  RETURN LOWER(regexp_replace(team_name, '\s+', '-', 'g'));
+END;
+$$ LANGUAGE plpgsql;
+-- End: Format team name to url key
 
 ---------- End: FUNCTIONS
 

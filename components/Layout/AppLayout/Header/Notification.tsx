@@ -4,7 +4,6 @@ import {
   useNotificationList,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
-import { useActiveApp } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   Button,
@@ -54,7 +53,6 @@ const Notification = () => {
 
   const notificationList = useNotificationList();
   const unreadNotificationCount = useUnreadNotificationCount();
-  const activeApp = useActiveApp();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
 
@@ -128,9 +126,7 @@ const Notification = () => {
         <Button
           variant="subtle"
           compact
-          onClick={() =>
-            router.push(`/team-${activeApp.toLowerCase()}s/notification`)
-          }
+          onClick={() => router.push(`/user/notification`)}
         >
           View all
         </Button>

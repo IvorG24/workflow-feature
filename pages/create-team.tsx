@@ -14,7 +14,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 const Page = () => {
   return (
     <>
-      <Meta description="Create Team Page" url="/team/create" />
+      <Meta description="Create Team Page" url="/create-team" />
       <CreateTeamPage />
     </>
   );

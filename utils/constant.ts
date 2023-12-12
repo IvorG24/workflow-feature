@@ -29,7 +29,6 @@ export const UUID_EXP =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 
 export const SIGN_IN_PAGE_PATH = "/sign-in";
-export const DEFAULT_LANDING_PAGE = "/team-requests/dashboard";
 
 export const defaultRequestFormBuilderSection = (
   formId: string
@@ -1246,7 +1245,7 @@ export const ITEM_UNIT_CHOICES = [
   "Percent",
   "Parts Per Million",
   "Meter Per Second",
-  "Cubic Meter Per Second"
+  "Cubic Meter Per Second",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [

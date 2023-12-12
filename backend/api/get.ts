@@ -1,4 +1,4 @@
-import { EditRequestOnLoadProps } from "@/pages/team-requests/requests/[requestId]/edit";
+import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -3910,4 +3910,41 @@ export const getAllGroupOfTeamMember = async (
   }[];
 
   return formattedData.map((group) => group.team_group.team_group_name);
+};
+
+// Check if team name already exists
+export const checkIfTeamNameExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamName: string }
+) => {
+  const { teamName } = params;
+
+  const { count, error } = await supabaseClient
+    .from("team_table")
+    .select("*", { count: "exact" })
+    .ilike("team_name", teamName);
+
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get formsly id
+export const getFormslyId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_view")
+    .select("request_formsly_id")
+    .eq("request_id", requestId)
+    .eq("request_is_disabled", false)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.request_formsly_id;
 };

@@ -44,7 +44,7 @@ type Props = {
 const Page = ({ notificationList, totalNotificationCount, tab }: Props) => {
   return (
     <>
-      <Meta description="Notification Page" url="/team-requests/notification" />
+      <Meta description="Notification Page" url="/user/notification" />
       <NotificationPage
         app="REQUEST"
         notificationList={notificationList}

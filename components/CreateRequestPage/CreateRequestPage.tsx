@@ -1,7 +1,9 @@
 import { createRequest } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -46,6 +48,7 @@ const CreateRequestPage = ({
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -96,13 +99,18 @@ const CreateRequestPage = ({
         formName: form.form_name,
         isFormslyForm: false,
         projectId: requestProjectId || "",
+        teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
       });
       removeLocalFormState();
       notifications.show({
         message: "Request created.",
         color: "green",
       });
-      router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+          request.request_id
+        }`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

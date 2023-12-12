@@ -3,8 +3,10 @@ import {
   createNotification,
   createTicketComment,
 } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   getFileType,
   getFileTypeColor,
@@ -59,6 +61,7 @@ type Props = {
 const TicketCommentSection = ({ ticket, commentList }: Props) => {
   const userProfile = useUserProfile();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const attachmentMaxFileSize = 5242880;
   const currentUser = useUserProfile();
@@ -113,7 +116,9 @@ const TicketCommentSection = ({ ticket, commentList }: Props) => {
             notification_app: "REQUEST",
             notification_type: "COMMENT",
             notification_content: `${`${userProfile.user_first_name} ${userProfile.user_last_name}`} commented on your request`,
-            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/tickets/${ticket.ticket_id}`,
             notification_user_id:
               ticket.ticket_requester.team_member_user.user_id,
             notification_team_id: teamMember.team_member_team_id,

@@ -410,6 +410,7 @@ export const createRequest = async (
     formName: string;
     isFormslyForm: boolean;
     projectId: string;
+    teamName: string;
   }
 ) => {
   const {
@@ -420,6 +421,7 @@ export const createRequest = async (
     formName,
     isFormslyForm,
     projectId,
+    teamName,
   } = params;
 
   const requestId = uuidv4();
@@ -486,7 +488,7 @@ export const createRequest = async (
       requestSignerNotificationInput.push({
         notification_app: "REQUEST",
         notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_redirect_url: `/${teamName}/requests/${requestId}`,
         notification_team_id: teamId,
         notification_type: "REQUEST",
         notification_user_id:
@@ -551,6 +553,7 @@ export const editRequest = async (
     teamId: string;
     requesterName: string;
     formName: string;
+    teamName: string;
   }
 ) => {
   const {
@@ -560,6 +563,7 @@ export const editRequest = async (
     teamId,
     requesterName,
     formName,
+    teamName,
   } = params;
 
   // get request response
@@ -639,7 +643,7 @@ export const editRequest = async (
       requestSignerNotificationInput.push({
         notification_app: "REQUEST",
         notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_redirect_url: `/${teamName}/requests/${requestId}`,
         notification_team_id: teamId,
         notification_type: "REQUEST",
         notification_user_id:
@@ -680,6 +684,7 @@ export const editRequest = async (
     })
     .select()
     .single();
+  console.log(error);
   if (error) throw error;
 
   return data as RequestTableRow;

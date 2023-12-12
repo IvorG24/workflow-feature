@@ -1,7 +1,7 @@
 import Meta from "@/components/Meta/Meta";
 import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
 import { isEmpty } from "@/utils/functions";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withActiveTeam } from "@/utils/server-side-protections";
 import {
   CanvassAdditionalDetailsType,
   CanvassLowestPriceType,
@@ -9,7 +9,7 @@ import {
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, context }) => {
     try {
       const { data, error } = await supabaseClient.rpc("canvass_page_on_load", {
@@ -83,7 +83,7 @@ const Page = ({
     <>
       <Meta
         description="Canvass Page"
-        url="/team-requests/request/<requestId>/canvass"
+        url="/<teamName>/request/<requestId>/canvass"
       />
       <RequisitionCanvassPage
         canvassData={canvassData}

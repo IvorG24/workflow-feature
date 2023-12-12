@@ -1,8 +1,10 @@
 import { createNotification, createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
 import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import {
   Button,
@@ -28,6 +30,7 @@ type Props = {
 
 const TicketPage = ({ ticket: initialTicket, user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
   const [ticket, setTicket] = useState(initialTicket);
   const [isEditingResponse, setIsEditingResponse] = useState(false);
@@ -64,7 +67,9 @@ const TicketPage = ({ ticket: initialTicket, user }: Props) => {
             notification_app: "REQUEST",
             notification_type: "COMMENT",
             notification_content: `An approver, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
-            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/tickets/${ticket.ticket_id}`,
             notification_user_id:
               ticket.ticket_requester.team_member_user.user_id,
             notification_team_id: teamMember.team_member_team_id,
