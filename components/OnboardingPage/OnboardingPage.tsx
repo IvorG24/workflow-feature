@@ -1,7 +1,11 @@
 import { checkUsername, getUserPendingInvitation } from "@/backend/api/get";
-import { createTeamMember, createUser, uploadImage } from "@/backend/api/post";
+import {
+  createTeamMemberReturnTeamName,
+  createUser,
+  uploadImage,
+} from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { isUUID } from "@/utils/string";
+import { formatTeamNameToUrlKey, isUUID } from "@/utils/string";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -79,17 +83,21 @@ const OnboardingPage = ({ user }: Props) => {
       });
 
       if (isValidTeamId) {
-        await createTeamMember(supabaseClient, {
+        const team = await createTeamMemberReturnTeamName(supabaseClient, {
           team_member_team_id: `${inviteTeamId}`,
           team_member_user_id: data.user_id,
         });
-        await router.push("/team-requests/dashboard?onboarding=true");
+
+        const activeTeamNameToUrl = formatTeamNameToUrlKey(
+          team[0].team.team_name ?? ""
+        );
+        await router.push(`/${activeTeamNameToUrl}/dashboard?onboarding=true`);
       } else if (pendingInvitation) {
         await router.push(
-          `/team/invitation/${pendingInvitation.invitation_id}?onboarding=true`
+          `/invitation/${pendingInvitation.invitation_id}?onboarding=true`
         );
       } else {
-        await router.push("/team/create?onboarding=true");
+        await router.push("/create-team?onboarding=true");
       }
 
       notifications.show({
