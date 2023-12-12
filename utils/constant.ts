@@ -1253,6 +1253,7 @@ export const ITEM_UNIT_CHOICES = [
   "Frames Per Second",
   "Millimeter Of Mercury",
   "Grams Per Square Meter",
+  "Cubic Meter Per Hour"
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
