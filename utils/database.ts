@@ -1536,12 +1536,6 @@ export type Database = {
         };
         Returns: Json;
       };
-      check_if_team_name_exists: {
-        Args: {
-          team_name: string;
-        };
-        Returns: boolean;
-      };
       check_requisition_form_status: {
         Args: {
           team_id: string;
@@ -1695,6 +1689,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      format_team_name_to_url_key: {
+        Args: {
+          team_name: string;
+        };
+        Returns: string;
+      };
       get_all_approved_requisition_json: {
         Args: {
           team_id: string;
@@ -1820,19 +1820,12 @@ export type Database = {
         };
         Returns: undefined;
       };
-      redirect_to_new_team:
-        | {
-            Args: {
-              input_data: Json;
-            };
-            Returns: Json;
-          }
-        | {
-            Args: {
-              teamname: string;
-            };
-            Returns: boolean;
-          };
+      redirect_to_new_team: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       request_page_on_load: {
         Args: {
           input_data: Json;

@@ -3919,12 +3919,12 @@ export const checkIfTeamNameExists = async (
 ) => {
   const { teamName } = params;
 
-  const { data, error } = await supabaseClient.rpc(
-    "check_if_team_name_exists",
-    { team_name: teamName }
-  );
+  const { count, error } = await supabaseClient
+    .from("team_table")
+    .select("*", { count: "exact" })
+    .ilike("team_name", teamName);
 
   if (error) throw error;
 
-  return data;
+  return Boolean(count);
 };

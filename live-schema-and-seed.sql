@@ -7835,25 +7835,6 @@ END;
 $$ LANGUAGE plpgsql;
 -- End: Format team name to url key
 
--- Start: Check if team name exists
-CREATE OR REPLACE FUNCTION check_if_team_name_exists(
-    team_name TEXT
-)
-RETURNS BOOLEAN AS $$
-  return plv8.subtransaction(function(){
-    const teamNameMatch = plv8.execute(
-      `SELECT COUNT(*) FROM team_table WHERE LOWER(team_name) = LOWER('${team_name}')`);
-
-    if (teamNameMatch.length > 0 && teamNameMatch[0].count > 0) {
-      return true;
-    } else {
-      return false;
-    }
-
-  });
-$$ LANGUAGE plv8;
--- Start: Check if team name exists
-
 ---------- End: FUNCTIONS
 
 
