@@ -1,4 +1,4 @@
-import { getFormslyId, getTeam } from "@/backend/api/get";
+import { getRequestFormslyId, getTeam } from "@/backend/api/get";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { GetServerSideProps } from "next";
@@ -8,7 +8,7 @@ export const getServerSideProps: GetServerSideProps =
     async ({ supabaseClient, context, teamId }) => {
       try {
         const activeTeam = await getTeam(supabaseClient, { teamId });
-        const formslyId = await getFormslyId(supabaseClient, {
+        const formslyId = await getRequestFormslyId(supabaseClient, {
           requestId: `${context.query.requestId}`,
         });
 

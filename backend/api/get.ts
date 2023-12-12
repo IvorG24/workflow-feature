@@ -2917,11 +2917,12 @@ export const getRequestFormslyId = async (
 ) => {
   const { requestId } = params;
   const { data, error } = await supabaseClient
-    .from("request_table")
+    .from("request_view")
     .select("request_formsly_id")
-    .eq("request_id", requestId);
+    .eq("request_id", requestId)
+    .maybeSingle();
   if (error) throw error;
-  const requestFormslyId = data[0].request_formsly_id;
+  const requestFormslyId = data ? data.request_formsly_id : null;
 
   return requestFormslyId;
 };
@@ -3950,26 +3951,6 @@ export const checkIfTeamNameExists = async (
   if (error) throw error;
 
   return Boolean(count);
-};
-
-// Get formsly id
-export const getFormslyId = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-  const { data, error } = await supabaseClient
-    .from("request_view")
-    .select("request_formsly_id")
-    .eq("request_id", requestId)
-    .eq("request_is_disabled", false)
-    .maybeSingle();
-
-  if (error) throw error;
-
-  return data?.request_formsly_id;
 };
 
 // Get onboard list

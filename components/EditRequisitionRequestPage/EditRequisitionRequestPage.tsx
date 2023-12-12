@@ -241,7 +241,7 @@ const EditRequisitionRequestPage = ({
         });
       }
 
-      await editRequest(supabaseClient, {
+      const edittedRequest = await editRequest(supabaseClient, {
         requestId: request.request_id,
         requestFormValues: newData,
         signers: [...filteredSignerList, ...additionalSignerList],
@@ -766,7 +766,7 @@ const EditRequisitionRequestPage = ({
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Edit Request
+        {referenceOnly ? "Reference" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
