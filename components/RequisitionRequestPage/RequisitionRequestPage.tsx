@@ -251,6 +251,7 @@ const RequisitionRequestPage = ({
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
         jiraLink: autoJiraLink,
+        requestFormslyId: request.request_formsly_id,
       });
 
       notifications.show({
