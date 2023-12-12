@@ -692,7 +692,6 @@ export const editRequest = async (
     })
     .select()
     .single();
-  console.log(error);
   if (error) throw error;
 
   return data as RequestTableRow;
