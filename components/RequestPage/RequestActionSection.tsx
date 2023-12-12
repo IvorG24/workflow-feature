@@ -45,7 +45,6 @@ const RequestActionSection = ({
   isRf,
   isCashPurchase,
   isUserPrimarySigner,
-  requestId,
   isEditable,
   canSignerTakeAction,
   isDeletable,
@@ -192,7 +191,7 @@ const RequestActionSection = ({
               router.push(
                 `/${formatTeamNameToUrlKey(
                   activeTeam.team_name ?? ""
-                )}/requests/${requestId}/edit?referenceOnly=true`
+                )}/requests/${router.query.requestId}/edit?referenceOnly=true`
               )
             }
           >
