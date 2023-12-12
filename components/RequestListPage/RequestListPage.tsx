@@ -3,7 +3,8 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { JoyRideNoSSR } from "@/utils/functions";
-import { ONBOARDING_REQUEST_LIST_STEP } from "@/utils/onboarding";
+import { ONBOARDING_REQUEST_LIST_STEP, ONBOARD_NAME } from "@/utils/onboarding";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormStatusType,
   RequestListItemType,
