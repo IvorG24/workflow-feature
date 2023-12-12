@@ -105,7 +105,7 @@ export const approveOrRejectRequest = async (
     teamId: string;
     jiraId?: string;
     jiraLink?: string;
-    requestFormslyId: string;
+    requestFormslyId?: string;
   }
 ) => {
   const { error } = await supabaseClient.rpc("approve_or_reject_request", {
