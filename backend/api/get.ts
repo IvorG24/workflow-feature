@@ -188,22 +188,22 @@ export const getRequestList = async (
   } = params;
 
   const requestorCondition = requestor
-    ?.map((value) => `request_view.request_team_member_id = '${value}'`)
+    ?.map((value) => `request_table.request_team_member_id = '${value}'`)
     .join(" OR ");
   const approverCondition = approver
     ?.map((value) => `signer_table.signer_team_member_id = '${value}'`)
     .join(" OR ");
   const statusCondition = status
-    ?.map((value) => `request_view.request_status = '${value}'`)
+    ?.map((value) => `request_table.request_status = '${value}'`)
     .join(" OR ");
   const formCondition = form
-    ?.map((value) => `request_view.request_form_id = '${value}'`)
+    ?.map((value) => `request_table.request_form_id = '${value}'`)
     .join(" OR ");
 
   const searchCondition =
     search && validator.isUUID(search)
-      ? `request_view.request_id = '${search}'`
-      : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+      ? `request_table.request_id = '${search}'`
+      : `request_table.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
   const { data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {
@@ -958,16 +958,39 @@ export const checkItemName = async (
 // check if item description already exists
 export const checkItemDescription = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { itemDescription: string; descriptionId: string }
+  params: {
+    itemDescription: string;
+    itemDescriptionUom: string;
+    descriptionId: string;
+  }
 ) => {
-  const { itemDescription, descriptionId } = params;
+  const { itemDescription, itemDescriptionUom, descriptionId } = params;
 
-  const { count, error } = await supabaseClient
+  let query = supabaseClient
     .from("item_description_field_table")
-    .select("*", { count: "exact", head: true })
+    .select(
+      `*${
+        itemDescriptionUom
+          ? ",item_description_field_uom: item_description_field_uom_table!inner(item_description_field_uom) "
+          : ""
+      }`,
+      {
+        count: "exact",
+        head: true,
+      }
+    )
     .eq("item_description_field_value", itemDescription)
     .eq("item_description_field_is_disabled", false)
     .eq("item_description_field_item_description_id", descriptionId);
+
+  if (itemDescriptionUom) {
+    query = query.eq(
+      "item_description_field_uom.item_description_field_uom",
+      itemDescriptionUom
+    );
+  }
+
+  const { count, error } = await query;
   if (error) throw error;
 
   return Boolean(count);
@@ -2894,7 +2917,7 @@ export const getRequestFormslyId = async (
 ) => {
   const { requestId } = params;
   const { data, error } = await supabaseClient
-    .from("request_view")
+    .from("request_table")
     .select("request_formsly_id")
     .eq("request_id", requestId);
   if (error) throw error;
@@ -3947,4 +3970,49 @@ export const getFormslyId = async (
   if (error) throw error;
 
   return data?.request_formsly_id;
+};
+
+// Get onboard list
+export const getOnboardList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    onboardName?: string;
+  }
+) => {
+  const { userId, onboardName } = params;
+
+  const query = supabaseClient
+    .from("user_onboard_table")
+    .select("*")
+    .eq("user_onboard_user_id", userId)
+
+    .order("user_onboard_date_created", { ascending: false });
+
+  if (onboardName) query.eq("user_onboard_name", onboardName);
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data;
+};
+
+// check if email list are onboarded
+export const checkIfEmailsOnboarded = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    emailList: string[];
+  }
+) => {
+  const { emailList } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("user_email")
+    .in("user_email", emailList);
+  if (error) throw error;
+
+  return emailList.map((email) => ({
+    email: email,
+    onboarded: data.map((userData) => userData.user_email).includes(email),
+  }));
 };

@@ -52,7 +52,11 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
       m={0}
       p={0}
       onClick={async () => {
-        await router.push(notification.notification_redirect_url || "");
+        const redirectUrl =
+          router.query.onboarding === "true"
+            ? `${notification.notification_redirect_url}?onboarding=true`
+            : `${notification.notification_redirect_url}`;
+        await router.push(redirectUrl);
         onReadNotification();
       }}
       sx={{ cursor: "pointer" }}

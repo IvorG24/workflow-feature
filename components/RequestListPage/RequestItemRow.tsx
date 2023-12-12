@@ -40,14 +40,11 @@ const RequestItemRow = ({ request }: Props) => {
     request_signer,
   } = request;
 
-  const requestId =
-    request.request_formsly_id !== "-"
-      ? request.request_formsly_id
-      : request.request_id;
+  const requestId = request.request_formsly_id || request.request_id;
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
-      <Grid.Col span={1}>
+      <Grid.Col span={1} className="onboarding-request-list-row-rid">
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor
@@ -63,7 +60,11 @@ const RequestItemRow = ({ request }: Props) => {
           <CopyButton value={requestId}>
             {({ copied, copy }) => (
               <Tooltip
-                label={copied ? "Copied" : `Copy ${requestId}`}
+                label={
+                  copied
+                    ? "Copied"
+                    : `Copy ${request.request_formsly_id ?? request.request_id}`
+                }
                 onClick={copy}
               >
                 <ActionIcon>
@@ -74,7 +75,7 @@ const RequestItemRow = ({ request }: Props) => {
           </CopyButton>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1}>
+      <Grid.Col span={1} className="onboarding-request-list-row-jira">
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor href={request.request_jira_link} target="_blank">
@@ -97,7 +98,7 @@ const RequestItemRow = ({ request }: Props) => {
           )}
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1}>
+      <Grid.Col span={1} className="onboarding-request-list-row-otp">
         <Flex justify="space-between">
           <Text truncate maw={150}>
             {request.request_otp_id}
@@ -119,12 +120,12 @@ const RequestItemRow = ({ request }: Props) => {
         </Flex>
       </Grid.Col>
 
-      <Grid.Col span={2}>
+      <Grid.Col span={2} className="onboarding-request-list-row-form">
         <Tooltip label={request.request_form.form_name} openDelay={2000}>
           <Text truncate>{request.request_form.form_name}</Text>
         </Tooltip>
       </Grid.Col>
-      <Grid.Col span={1}>
+      <Grid.Col span={1} className="onboarding-request-list-row-status">
         <Badge
           variant="filled"
           color={getStatusToColor(request.request_status)}
@@ -133,7 +134,11 @@ const RequestItemRow = ({ request }: Props) => {
         </Badge>
       </Grid.Col>
 
-      <Grid.Col span="auto" offset={0.5}>
+      <Grid.Col
+        span="auto"
+        offset={0.5}
+        className="onboarding-request-list-row-requester"
+      >
         <Flex px={0} gap={8} wrap="wrap">
           <Avatar
             src={requestor.user_avatar}
@@ -146,15 +151,15 @@ const RequestItemRow = ({ request }: Props) => {
           <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1}>
+      <Grid.Col span={1} className="onboarding-request-list-row-approver">
         <RequestSignerList signerList={request_signer} />
       </Grid.Col>
-      <Grid.Col span="content">
+      <Grid.Col span="content" className="onboarding-request-list-row-date">
         <Text miw={105}>
           {moment(request.request_date_created).format("MMM DD, YYYY")}
         </Text>
       </Grid.Col>
-      <Grid.Col span="content">
+      <Grid.Col span="content" className="onboarding-request-list-row-view">
         <Group position="center">
           <ActionIcon
             color="blue"

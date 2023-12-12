@@ -2,7 +2,6 @@ import { getRequestList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormStatusType,
   RequestListItemType,
@@ -25,14 +24,17 @@ import {
   Stack,
   Text,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { CallBackProps, STATUS } from "react-joyride";
 import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
 
@@ -74,8 +76,10 @@ const RequestListPage = ({
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const { colors } = useMantineTheme();
   const teamMember = useUserTeamMember();
   const [activePage, setActivePage] = useState(1);
+  const [isOnboarding, setIsOnboarding] = useState(false);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] =
     useState<RequestListItemType[]>(initialRequestList);
@@ -211,6 +215,63 @@ const RequestListPage = ({
     }
   };
 
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    if (status === STATUS.FINISHED) {
+      router.push(
+        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.REQUEST_LIST}`
+      );
+    }
+  };
+
+  const openRequestListOnboardingModal = () =>
+    modals.open({
+      centered: true,
+      closeOnEscape: false,
+      closeOnClickOutside: false,
+      withCloseButton: false,
+      children: (
+        <Box>
+          <Title order={3}>Welcome to Request List Onboarding</Title>
+          <Text mt="xs" align="center">
+            Effortlessly manage requests in the Request List. Streamline your
+            workflow, review details, and easily take action on pending
+            requests. This quick session will guide you through key features for
+            a seamless experience.
+          </Text>
+          <Flex justify="flex-end" direction="row" gap="md" mt="lg">
+            <Button
+              variant="outline"
+              onClick={() => {
+                modals.closeAll();
+                setIsOnboarding(false);
+                router.push("/team-requests/requests", undefined, {
+                  shallow: true,
+                });
+              }}
+            >
+              Skip Onboarding
+            </Button>
+            <Button
+              onClick={() => {
+                modals.closeAll();
+                setIsOnboarding(true);
+              }}
+            >
+              Start
+            </Button>
+          </Flex>
+        </Box>
+      ),
+    });
+
+  useEffect(() => {
+    if (router.query.onboarding) {
+      setIsOnboarding(true);
+      openRequestListOnboardingModal();
+    }
+  }, [router.query]);
+
   useEffect(() => {
     handlePagination();
   }, [activePage]);
@@ -243,6 +304,7 @@ const RequestListPage = ({
             }
             sx={{ flex: 1 }}
             maw={300}
+            className="onboarding-request-list-ssot"
           >
             SSOT Spreadsheet View
           </Button>
@@ -251,6 +313,7 @@ const RequestListPage = ({
           variant="light"
           leftIcon={<IconReload size={16} />}
           onClick={() => handleFilterForms()}
+          className="onboarding-request-list-refresh"
         >
           Refresh
         </Button>
@@ -277,7 +340,7 @@ const RequestListPage = ({
           loader={<Loader variant="dots" />}
         />
         {requestList.length > 0 ? (
-          <Paper withBorder>
+          <Paper withBorder className="onboarding-request-list-table">
             <ScrollArea h="fit-content" type="auto">
               <Stack spacing={0} miw={1074}>
                 <Box
@@ -350,8 +413,27 @@ const RequestListPage = ({
           onChange={setActivePage}
           total={Math.ceil(requestListCount / DEFAULT_REQUEST_LIST_LIMIT)}
           mt="xl"
+          className="onboarding-request-list-pagination"
         />
       </Flex>
+
+      <JoyRideNoSSR
+        callback={handleJoyrideCallback}
+        continuous
+        run={isOnboarding}
+        steps={ONBOARDING_REQUEST_LIST_STEP}
+        scrollToFirstStep
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        showProgress
+        styles={{
+          buttonNext: { backgroundColor: colors.blue[6] },
+          buttonBack: { color: colors.blue[6] },
+          beaconInner: { backgroundColor: colors.blue[6] },
+          tooltipContent: { padding: 0 },
+        }}
+      />
     </Container>
   );
 };

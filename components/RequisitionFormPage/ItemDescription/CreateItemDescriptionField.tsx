@@ -152,14 +152,22 @@ const CreateItemDescriptionField = ({
                       validate: {
                         duplicate: async (value) => {
                           const data = getValues("descriptions");
-                          const values = data.map((value) => value.value);
+                          const values = data.map(
+                            (value) =>
+                              `${value.value}${value.unitOfMeasurement ?? ""}`
+                          );
+
                           if (includesTwoTimes(values, value))
                             return "Value already exists";
 
+                          const uom = getValues(
+                            `descriptions.${index}.unitOfMeasurement`
+                          );
                           const isExisting = await checkItemDescription(
                             supabaseClient,
                             {
                               itemDescription: value,
+                              itemDescriptionUom: uom,
                               descriptionId: descriptionId,
                             }
                           );

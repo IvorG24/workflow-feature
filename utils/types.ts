@@ -192,6 +192,13 @@ export type TicketCommentTableInsert =
 export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
+export type UserOnboardTableRow =
+  Database["public"]["Tables"]["user_onboard_table"]["Row"];
+export type UserOnboardTableInsert =
+  Database["public"]["Tables"]["user_onboard_table"]["Insert"];
+export type UserOnboardTableUpdate =
+  Database["public"]["Tables"]["user_onboard_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -290,8 +297,6 @@ export type UserWithSignatureType = UserTableRow & {
 };
 
 export type RequestWithResponseType = RequestTableRow & {
-  request_formsly_id: string;
-} & {
   request_form: {
     form_id: string;
     form_name: string;

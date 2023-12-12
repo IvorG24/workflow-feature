@@ -5,15 +5,17 @@ import {
   getProjectSignerWithTeamMember,
   getSupplier,
 } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { JoyRideNoSSR } from "@/utils/functions";
+import {
+  ONBOARDING_CREATE_REQUEST_STEP,
+  ONBOARD_NAME,
+} from "@/utils/onboarding";
+
 import {
   FormType,
   FormWithResponseType,
@@ -24,16 +26,21 @@ import {
   Box,
   Button,
   Container,
+  Flex,
   LoadingOverlay,
   Space,
   Stack,
+  Text,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { CallBackProps, STATUS } from "react-joyride";
 import { v4 as uuidv4 } from "uuid";
 
 export type Section = FormWithResponseType["form_section"][0];
@@ -48,6 +55,8 @@ export type FieldWithResponseArray = Field & {
 };
 
 type Props = {
+  userId: string;
+  teamId: string;
   form: FormType;
   itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
@@ -58,17 +67,17 @@ type Props = {
   }[];
 };
 
-const CreateRequisitionRequestPage = ({
+const OnboardingCreateRequisitionRequestPage = ({
   form,
+  teamId,
   itemOptions,
   projectOptions,
-  specialApprover,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
-  const teamMember = useUserTeamMember();
-  const team = useActiveTeam();
+  const { colors } = useMantineTheme();
+  const [isOnboarding, setIsOnboarding] = useState(false);
 
   const [signerList, setSignerList] = useState(
     form.form_signer.map((signer) => ({
@@ -79,7 +88,6 @@ const CreateRequisitionRequestPage = ({
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
@@ -124,111 +132,12 @@ const CreateRequisitionRequestPage = ({
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
-
       setIsLoading(true);
-
-      const toBeCheckedSections = data.sections.slice(1);
-      const newSections: RequestFormValues["sections"] = [];
-      toBeCheckedSections.forEach((section) => {
-        // if new section if empty
-        if (newSections.length === 0) {
-          newSections.push(section);
-        } else {
-          let uniqueItem = true;
-          newSections.forEach((newSection) => {
-            // if section general name is equal
-            if (
-              newSection.section_field[0].field_response ===
-              section.section_field[0].field_response
-            ) {
-              let uniqueField = false;
-              // loop on every field except name and quantity
-              for (let i = 5; i < newSection.section_field.length; i++) {
-                if (
-                  newSection.section_field[i].field_response !==
-                  section.section_field[i].field_response
-                ) {
-                  uniqueField = true;
-                  break;
-                }
-              }
-              if (!uniqueField) {
-                newSection.section_field[2].field_response =
-                  Number(newSection.section_field[2].field_response) +
-                  Number(section.section_field[2].field_response);
-                uniqueItem = false;
-              }
-            }
-          });
-          if (uniqueItem) {
-            newSections.push(section);
-          }
-        }
-      });
-
-      const newData = {
-        sections: [data.sections[0], ...newSections],
-      };
-
-      const response = data.sections[0].section_field[0]
-        .field_response as string;
-
-      const projectId = data.sections[0].section_field[0].field_option.find(
-        (option) => option.option_value === response
-      )?.option_id as string;
-
-      // special approver
-      const additionalSignerList: FormType["form_signer"] = [];
-      const alreadyAddedAdditionalSigner: string[] = [];
-      if (specialApprover && specialApprover.length !== 0) {
-        const generalNameList = newSections.map(
-          (section) => section.section_field[0].field_response
+      if (data) {
+        router.push(
+          `/team-requests/forms/${router.query.formId}/create/onboarding/test?notice=success&path=/team-requests/forms/${router.query.formId}/create`
         );
-        specialApprover.map((approver) => {
-          if (
-            alreadyAddedAdditionalSigner.includes(
-              approver.special_approver_signer.signer_id
-            )
-          )
-            return;
-          if (
-            approver.special_approver_item_list.some((item) =>
-              generalNameList.includes(item)
-            )
-          ) {
-            additionalSignerList.push(approver.special_approver_signer);
-            alreadyAddedAdditionalSigner.push(
-              approver.special_approver_signer.signer_id
-            );
-          }
-        });
       }
-
-      const request = await createRequest(supabaseClient, {
-        requestFormValues: newData,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: [...signerList, ...additionalSignerList],
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: form.form_name,
-        isFormslyForm: true,
-        projectId,
-        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
-      });
-
-      notifications.show({
-        message: "Request created.",
-        color: "green",
-      });
-
-      router.push(
-        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-          request.request_formsly_id_prefix
-        }-${request.request_formsly_id_serial}`
-      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -290,10 +199,9 @@ const CreateRequisitionRequestPage = ({
     value: string | null
   ) => {
     const newSection = getValues(`sections.${index}`);
-
     if (value) {
       const item = await getItem(supabaseClient, {
-        teamId: team.team_id,
+        teamId: teamId,
         itemName: value,
       });
 
@@ -356,20 +264,11 @@ const CreateRequisitionRequestPage = ({
           }
         );
 
-        const index = options.findIndex(
-          (value) => value.option_value === "Any"
-        );
-        if (index !== -1) {
-          const anyOption = options[index];
-          options.splice(index, 1);
-          options.unshift({ ...anyOption });
-        }
-
         return {
           ...description.item_field,
           field_section_duplicatable_id: duplicatableSectionId,
           field_option: options,
-          field_response: index !== -1 ? "Any" : "",
+          field_response: "",
         };
       });
 
@@ -502,12 +401,11 @@ const CreateRequisitionRequestPage = ({
   };
 
   const supplierSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
     try {
       setIsSearching(true);
       const supplierList = await getSupplier(supabaseClient, {
         supplier: value ?? "",
-        teamId: teamMember.team_member_team_id,
+        teamId: teamId,
         fieldId: form.form_section[1].section_field[9].field_id,
       });
       setValue(`sections.${index}.section_field.9.field_option`, supplierList);
@@ -521,10 +419,65 @@ const CreateRequisitionRequestPage = ({
     }
   };
 
+  const openCreateRequestOnboardingModal = () =>
+    modals.open({
+      centered: true,
+      closeOnEscape: false,
+      closeOnClickOutside: false,
+      withCloseButton: false,
+      children: (
+        <Box>
+          <Title order={3}>Welcome to Request Creation</Title>
+          <Text mt="xs">
+            Explore and test your skills in creating requests. This quick
+            session will guide you through key features.
+          </Text>
+          <Text mt="md">
+            Feel free to experiment, and don&apos;t worry—this is a safe space
+            to learn and explore.
+          </Text>
+          <Flex justify="flex-end" direction="row" gap="md" mt="lg">
+            <Button
+              variant="outline"
+              onClick={() => {
+                modals.closeAll();
+                router.push(
+                  `/team-requests/forms/${router.query.formId}/create`
+                );
+              }}
+            >
+              Skip Onboarding
+            </Button>
+            <Button
+              onClick={() => {
+                modals.closeAll();
+                setIsOnboarding(true);
+              }}
+            >
+              Start
+            </Button>
+          </Flex>
+        </Box>
+      ),
+    });
+
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    if (status === STATUS.FINISHED) {
+      router.push(
+        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.CREATE_REQUISITION}`
+      );
+    }
+  };
+
+  useEffect(() => {
+    openCreateRequestOnboardingModal();
+  }, []);
+
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Request
+        Create Request Onboarding
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
@@ -536,6 +489,9 @@ const CreateRequisitionRequestPage = ({
               const sectionLastIndex = getValues("sections")
                 .map((sectionItem) => sectionItem.section_id)
                 .lastIndexOf(sectionIdToFind);
+              const duplicateSections = formSections.filter(
+                (section) => section.section_name === "Item"
+              );
 
               return (
                 <Box key={section.id}>
@@ -562,6 +518,8 @@ const CreateRequisitionRequestPage = ({
                           handleDuplicateSection(section.section_id)
                         }
                         fullWidth
+                        disabled={isOnboarding && duplicateSections.length > 1}
+                        className="onboarding-create-request-duplicate-item"
                       >
                         {section.section_name} +
                       </Button>
@@ -569,16 +527,41 @@ const CreateRequisitionRequestPage = ({
                 </Box>
               );
             })}
-            <Box pos="relative">
+            <Box
+              pos="relative"
+              className="onboarding-create-request-signer-section"
+            >
               <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
               <RequestFormSigner signerList={signerList} />
             </Box>
-            <Button type="submit">Submit</Button>
+            <Button
+              type="submit"
+              className="onboarding-create-request-submit-button"
+            >
+              Submit
+            </Button>
           </Stack>
         </form>
+        <JoyRideNoSSR
+          callback={handleJoyrideCallback}
+          continuous
+          run={true}
+          steps={ONBOARDING_CREATE_REQUEST_STEP}
+          scrollToFirstStep
+          hideCloseButton
+          disableCloseOnEsc
+          disableOverlayClose
+          showProgress
+          styles={{
+            buttonNext: { backgroundColor: colors.blue[6] },
+            buttonBack: { color: colors.blue[6] },
+            beaconInner: { backgroundColor: colors.blue[6] },
+            tooltipContent: { padding: 0 },
+          }}
+        />
       </FormProvider>
     </Container>
   );
 };
 
-export default CreateRequisitionRequestPage;
+export default OnboardingCreateRequisitionRequestPage;

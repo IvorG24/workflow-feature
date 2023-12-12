@@ -86,7 +86,11 @@ const RequestDetailsSection = ({
   };
 
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper
+      p="xl"
+      shadow="xs"
+      className="onboarding-requisition-request-request"
+    >
       <Title order={2}>{request.request_form.form_name}</Title>
       <Text mt="xs">{request.request_form.form_description}</Text>
 
@@ -126,11 +130,7 @@ const RequestDetailsSection = ({
       </Group>
       <Group spacing="md" mt="xl">
         <Title order={5}>Request ID:</Title>
-        <Text>
-          {request.request_formsly_id === "-"
-            ? request.request_id
-            : request.request_formsly_id}
-        </Text>
+        <Text>{request.request_formsly_id ?? request.request_id}</Text>
       </Group>
       {request.request_project.team_project_name && (
         <Group spacing="md" mt="xl">

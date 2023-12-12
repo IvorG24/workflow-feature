@@ -39,7 +39,12 @@ const RequestStatusTracker = ({
   const { classes } = useStyles();
 
   return (
-    <Paper w="100%" h="100%" withBorder>
+    <Paper
+      w="100%"
+      h="100%"
+      withBorder
+      className="onboarding-dashboard-total-request"
+    >
       <Group p="md" spacing="xs" className={classes.withBorderBottom}>
         <Center c="green">
           <IconChartDonutFilled />

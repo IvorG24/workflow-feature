@@ -66,3 +66,11 @@ export const toTitleCase = (input: string) => {
 export const formatTeamNameToUrlKey = (teamName: string) => {
   return teamName.replace(/\s+/g, "-").toLowerCase();
 };
+
+export const isUUID = (str: string | string[] | undefined) => {
+  if (str === undefined) return false;
+  if (Array.isArray(str)) return false;
+  const uuidPattern =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  return uuidPattern.test(str);
+};

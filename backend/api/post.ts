@@ -32,6 +32,7 @@ import {
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketTableRow,
+  UserOnboardTableInsert,
   UserTableInsert,
   UserTableRow,
 } from "@/utils/types";
@@ -518,6 +519,13 @@ export const createRequest = async (
     )
     .join(",");
 
+  const notificationValues = requestSignerNotificationInput
+    .map(
+      (notification) =>
+        `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+    )
+    .join(",");
+
   // create request
   const { data, error } = await supabaseClient
     .rpc("create_request", {
@@ -527,15 +535,15 @@ export const createRequest = async (
         teamMemberId: params.teamMemberId,
         responseValues,
         signerValues,
-        requestSignerNotificationInput,
+        notificationValues,
         formName,
         isFormslyForm,
         projectId,
-        teamId,
       },
     })
     .select()
     .single();
+
   if (error) throw error;
 
   return data as RequestTableRow;
@@ -673,13 +681,20 @@ export const editRequest = async (
     )
     .join(",");
 
+  const notificationValues = requestSignerNotificationInput
+    .map(
+      (notification) =>
+        `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+    )
+    .join(",");
+
   const { data, error } = await supabaseClient
     .rpc("edit_request", {
       input_data: {
         requestId,
         responseValues,
         signerValues,
-        requestSignerNotificationInput,
+        notificationValues,
       },
     })
     .select()
@@ -947,4 +962,21 @@ export const createTicketComment = async (
   if (error) throw error;
 
   return { data, error };
+};
+
+// Create onboard
+export const createOnboard = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    onboardData: UserOnboardTableInsert;
+  }
+) => {
+  const { onboardData } = params;
+  const { data, error } = await supabaseClient
+    .from("user_onboard_table")
+    .insert(onboardData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 };
