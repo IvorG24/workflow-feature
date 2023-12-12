@@ -136,9 +136,11 @@ const SelectTeam = () => {
       setUnreadNotification(unreadNotificationCount || 0);
     }
 
-    await router.push(
-      `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
-    );
+    if (newActiveTeam) {
+      await router.push(
+        `/${formatTeamNameToUrlKey(newActiveTeam.team_name)}/dashboard`
+      );
+    }
 
     setIsLoading(false);
   };

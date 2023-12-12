@@ -91,7 +91,7 @@ const ReviewAppNavLink = () => {
           <IconFiles {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/${activeApp.toLowerCase()}s`,
+      href: `/${activeTeamNameToUrl}/requests`,
     },
     {
       label: `Notification List`,
