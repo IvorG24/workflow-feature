@@ -907,7 +907,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
-    const team_member_data = plv8.execute(`SELECT * FROM team_member_table WHERE request_team_member_id='${request_data.request_team_member_id}';`)[0];
+    const team_member_data = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_id='${request_data.request_team_member_id}';`)[0];
     const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${team_member_data.team_member_team_id}'`)[0];
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
