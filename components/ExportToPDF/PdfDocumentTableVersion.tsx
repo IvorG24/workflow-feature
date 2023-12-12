@@ -146,6 +146,10 @@ const styles = StyleSheet.create({
   Signature: {
     width: "20%",
   },
+  SignatureCell: {
+    width: "20%",
+    textAlign: "center",
+  },
   "Full Name": {
     width: "20%",
   },
@@ -155,7 +159,7 @@ const styles = StyleSheet.create({
   "Approval Status": {
     width: "20%",
   },
-  "Date Approved": {
+  "Date Signed": {
     width: "20%",
   },
   icon: {
@@ -279,139 +283,145 @@ const PdfDocumentTableVersion = ({
           </View>
         </View>
 
-        <Fragment>
-          {
-            <View wrap={false}>
-              <View style={styles.divider} />
-              <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
-                {requestItems[0].title}
-              </Text>
-              <View style={styles.column}>
-                {requestItems[0].fields.map((detail, i) => (
-                  <View key={i} style={styles.rowItem}>
-                    <Text>{detail.label}</Text>
-                    <Text style={{ fontWeight: 600 }}>{detail.value}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          }
-
+        <View wrap={false}>
           <View style={styles.divider} />
           <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
-            Item
+            {requestItems[0].title}
           </Text>
-          <View style={styles.table}>
-            <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
-              <View style={[styles.tableCol, styles["General Name"]]}>
-                <Text style={styles.tableHeader}>Item</Text>
+          <View style={styles.column}>
+            {requestItems[0].fields.map((detail, i) => (
+              <View key={i} style={styles.rowItem}>
+                <Text>{detail.label}</Text>
+                <Text style={{ fontWeight: 600 }}>{detail.value}</Text>
               </View>
-              <View
-                style={[styles.tableCol, styles["Base Unit of Measurement"]]}
-              >
-                <Text style={styles.tableHeader}>Unit</Text>
-              </View>
-              <View style={[styles.tableCol, styles["Quantity"]]}>
-                <Text style={styles.tableHeader}>Quantity</Text>
-              </View>
-              <View style={[styles.tableCol, styles["GL Account"]]}>
-                <Text style={styles.tableHeader}>GL Account</Text>
-              </View>
-              <View style={[styles.tableCol, styles["CSI Code Description"]]}>
-                <Text style={styles.tableHeader}>CSI Description</Text>
-              </View>
-              <View style={[styles.tableCol, styles["CSI Code"]]}>
-                <Text style={styles.tableHeader}>CSI Code</Text>
-              </View>
-              <View style={[styles.tableCol, styles["Description"]]}>
-                <Text style={styles.tableHeader}>Item Description</Text>
-              </View>
-            </View>
-            {requestItems.slice(1).map((item, index) => {
-              let description = "";
-              item.fields.slice(9).forEach((field) => {
-                if (field.value) {
-                  description += `${field.label}: ${field.value}\n`;
-                }
-              });
-
-              return (
-                <View style={styles.tableRow} key={index}>
-                  {item.fields.slice(0, 6).map((field, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.tableCol,
-                        styles[field.label as ColumnType],
-                      ]}
-                    >
-                      <Text style={styles.tableCell}>{field.value}</Text>
-                    </View>
-                  ))}
-                  <View style={[styles.tableCol, styles.Description]}>
-                    <Text style={styles.tableCell}>{description}</Text>
-                  </View>
+            ))}
+          </View>
+        </View>
+        <View style={styles.divider} />
+        <Fragment>
+          <View wrap={false}>
+            <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+              Item
+            </Text>
+            <View style={styles.table}>
+              <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
+                <View style={[styles.tableCol, styles["General Name"]]}>
+                  <Text style={styles.tableHeader}>Item</Text>
                 </View>
-              );
-            })}
+                <View
+                  style={[styles.tableCol, styles["Base Unit of Measurement"]]}
+                >
+                  <Text style={styles.tableHeader}>Unit</Text>
+                </View>
+                <View style={[styles.tableCol, styles["Quantity"]]}>
+                  <Text style={styles.tableHeader}>Quantity</Text>
+                </View>
+                <View style={[styles.tableCol, styles["GL Account"]]}>
+                  <Text style={styles.tableHeader}>GL Account</Text>
+                </View>
+                <View style={[styles.tableCol, styles["CSI Code Description"]]}>
+                  <Text style={styles.tableHeader}>CSI Description</Text>
+                </View>
+                <View style={[styles.tableCol, styles["CSI Code"]]}>
+                  <Text style={styles.tableHeader}>CSI Code</Text>
+                </View>
+                <View style={[styles.tableCol, styles["Description"]]}>
+                  <Text style={styles.tableHeader}>Item Description</Text>
+                </View>
+              </View>
+              {requestItems.slice(1).map((item, index) => {
+                let description = "";
+                item.fields.slice(9).forEach((field) => {
+                  if (field.value) {
+                    description += `${field.label}: ${field.value}\n`;
+                  }
+                });
+
+                return (
+                  <View style={styles.tableRow} key={index}>
+                    {item.fields.slice(0, 6).map((field, i) => (
+                      <View
+                        key={i}
+                        style={[
+                          styles.tableCol,
+                          styles[field.label as ColumnType],
+                        ]}
+                      >
+                        <Text style={styles.tableCell}>{field.value}</Text>
+                      </View>
+                    ))}
+                    <View style={[styles.tableCol, styles.Description]}>
+                      <Text style={styles.tableCell}>{description}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
           </View>
         </Fragment>
 
         <Fragment>
-          <View style={styles.divider} />
-          <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
-            Approvers
-          </Text>
-          <View style={styles.table}>
-            <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
-              <View style={[styles.tableCol, styles["Signature"]]}>
-                <Text style={styles.tableHeader}>Signature</Text>
-              </View>
-              <View style={[styles.tableCol, styles["Full Name"]]}>
-                <Text style={styles.tableHeader}>Full Name</Text>
-              </View>
-              <View style={[styles.tableCol, styles["Position"]]}>
-                <Text style={styles.tableHeader}>Position</Text>
-              </View>
-              <View style={[styles.tableCol, styles["Approval Status"]]}>
-                <Text style={styles.tableHeader}>Approval Status</Text>
-              </View>
-              <View style={[styles.tableCol, styles["Date Approved"]]}>
-                <Text style={styles.tableHeader}>Date Approved</Text>
-              </View>
-            </View>
-            {approverDetails.map((approver, index) => {
-              return (
-                <View style={styles.tableRow} key={index}>
-                  <View style={[styles.tableCol, styles["Signature"]]}>
-                    {approver.signature && (
-                      <Image
-                        src={approver.signature}
-                        style={{ height: "50px", width: "75px" }}
-                      />
-                    )}
-                  </View>
-                  <View style={[styles.tableCol, styles["Full Name"]]}>
-                    <Text style={styles.tableCell}>{approver.name}</Text>
-                  </View>
-                  <View style={[styles.tableCol, styles["Position"]]}>
-                    <Text style={styles.tableCell}>
-                      {approver.jobDescription}
-                    </Text>
-                  </View>
-                  <View style={[styles.tableCol, styles["Approval Status"]]}>
-                    {formatStatus(approver.status)}
-                  </View>
-                  <View style={[styles.tableCol, styles["Date Approved"]]}>
-                    <Text style={styles.tableCell}>
-                      {approver.date
-                        ? new Date(approver.date).toLocaleDateString()
-                        : ""}
-                    </Text>
-                  </View>
+          <View wrap={false}>
+            <View style={styles.divider} />
+            <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+              Approvers
+            </Text>
+            <View style={styles.table}>
+              <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
+                <View style={[styles.tableCol, styles["Signature"]]}>
+                  <Text style={styles.tableHeader}>Signature</Text>
                 </View>
-              );
-            })}
+                <View style={[styles.tableCol, styles["Full Name"]]}>
+                  <Text style={styles.tableHeader}>Full Name</Text>
+                </View>
+                <View style={[styles.tableCol, styles["Position"]]}>
+                  <Text style={styles.tableHeader}>Position</Text>
+                </View>
+                <View style={[styles.tableCol, styles["Approval Status"]]}>
+                  <Text style={styles.tableHeader}>Approval Status</Text>
+                </View>
+                <View style={[styles.tableCol, styles["Date Signed"]]}>
+                  <Text style={styles.tableHeader}>Date Signed</Text>
+                </View>
+              </View>
+              {approverDetails.map((approver, index) => {
+                return (
+                  <View style={styles.tableRow} key={index}>
+                    <View style={[styles.tableCol, styles["SignatureCell"]]}>
+                      {approver.signature && (
+                        <Text>
+                          <Image
+                            src={approver.signature}
+                            style={{
+                              height: "50px",
+                              width: "75px",
+                            }}
+                          />
+                        </Text>
+                      )}
+                    </View>
+                    <View style={[styles.tableCol, styles["Full Name"]]}>
+                      <Text style={styles.tableCell}>{approver.name}</Text>
+                    </View>
+                    <View style={[styles.tableCol, styles["Position"]]}>
+                      <Text style={styles.tableCell}>
+                        {approver.jobDescription}
+                      </Text>
+                    </View>
+                    <View style={[styles.tableCol, styles["Approval Status"]]}>
+                      {formatStatus(approver.status)}
+                    </View>
+                    <View style={[styles.tableCol, styles["Date Signed"]]}>
+                      <Text style={styles.tableCell}>
+                        {approver.date
+                          ? new Date(approver.date).toLocaleDateString()
+                          : ""}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
           </View>
         </Fragment>
         <Footer />
