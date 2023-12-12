@@ -4,6 +4,7 @@ import {
   useUserAvatar,
   useUserIntials,
   useUserProfile,
+  useUserTeamMember,
 } from "@/stores/useUserStore";
 import {
   // NOTIFICATION_LIST_LIMIT,
@@ -41,6 +42,7 @@ const HeaderMenu = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
+  const teamMember = useUserTeamMember();
 
   // const activeApp = useActiveApp();
   // const activeTeam = useActiveTeam();
@@ -98,29 +100,31 @@ const HeaderMenu = () => {
 
   return (
     <Group spacing={16}>
-      <Menu
-        shadow="xs"
-        width={300}
-        radius={0}
-        closeOnItemClick={false}
-        position="bottom-end"
-      >
-        <Menu.Target>
-          <Indicator
-            disabled={false}
-            size="xs"
-            color="red"
-            label={unreadNotificationCount || ""}
-          >
-            <ActionIcon p={4}>
-              <IconBell />
-            </ActionIcon>
-          </Indicator>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Notification />
-        </Menu.Dropdown>
-      </Menu>
+      {!teamMember && (
+        <Menu
+          shadow="xs"
+          width={300}
+          radius={0}
+          closeOnItemClick={false}
+          position="bottom-end"
+        >
+          <Menu.Target>
+            <Indicator
+              disabled={false}
+              size="xs"
+              color="red"
+              label={unreadNotificationCount || ""}
+            >
+              <ActionIcon p={4}>
+                <IconBell />
+              </ActionIcon>
+            </Indicator>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Notification />
+          </Menu.Dropdown>
+        </Menu>
+      )}
 
       <Menu shadow="md" width={200} position="bottom-end" withArrow>
         <Menu.Target data-cy="header-account-button">
