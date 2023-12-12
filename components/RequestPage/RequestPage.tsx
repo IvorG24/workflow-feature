@@ -524,6 +524,7 @@ const RequestPage = ({
         formName: request.request_form.form_name,
         memberId: `${teamMember?.team_member_id}`,
         teamId: request.request_team_member.team_member_team_id,
+        requestFormslyId: request.request_formsly_id,
       });
 
       notifications.show({
