@@ -85,6 +85,10 @@ const RequestDetailsSection = ({
     }
   };
 
+  const primarySigner = request.request_signer.find(
+    (signer) => signer.request_signer_signer.signer_is_primary_signer
+  );
+
   return (
     <Paper
       p="xl"
@@ -113,7 +117,6 @@ const RequestDetailsSection = ({
             {`${requestor.user_first_name} ${requestor.user_last_name}`}
           </Text>
           <Text color="dimmed" size={14}>
-            {" "}
             {requestor.user_username}
           </Text>
         </Stack>
@@ -124,13 +127,35 @@ const RequestDetailsSection = ({
       </Group>
       <Group spacing="md" mt="xs">
         <Text>Status:</Text>
-        <Badge color={getStatusToColor(requestStatus.toLowerCase())}>
-          {requestStatus}
-        </Badge>
+        <Group spacing="xs">
+          <Badge color={getStatusToColor(requestStatus.toLowerCase())}>
+            {requestStatus}
+          </Badge>
+          {primarySigner &&
+            primarySigner.request_signer_status_date_updated &&
+            ["APPROVED", "REJECTED"].includes(request.request_status) && (
+              <Text color="dimmed">
+                on{" "}
+                {new Date(request.request_date_created).toLocaleDateString(
+                  "en-US",
+                  {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }
+                )}
+              </Text>
+            )}
+        </Group>
       </Group>
+
       <Group spacing="md" mt="xl">
         <Title order={5}>Request ID:</Title>
-        <Text>{request.request_formsly_id ?? request.request_id}</Text>
+        <Text>
+          {request.request_formsly_id === "-"
+            ? request.request_id
+            : request.request_id}
+        </Text>
       </Group>
       {request.request_project.team_project_name && (
         <Group spacing="md" mt="xl">

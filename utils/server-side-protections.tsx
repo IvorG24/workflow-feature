@@ -272,7 +272,6 @@ export const withAuthAndOnboardingRequestPage = <
 
         if (requestTeamId) {
           isUserOnCorrectTeam = requestTeamId === userActiveTeam.team_id;
-          console.log(!isUserOnCorrectTeam);
         }
       }
 
