@@ -1,4 +1,4 @@
-import { useUserIntials } from "@/stores/useUserStore";
+import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
 import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
 import { Avatar, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
@@ -17,7 +17,8 @@ type Props = {
 
 const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
   const userInitials = useUserIntials();
-  const user = formDetails.form_team_member.team_member_user;
+  const userProfile = useUserProfile();
+
   const { form_name, form_description, form_date_created } = formDetails;
 
   const formDateCreated = moment(form_date_created).format("MMM DD, YYYY");
@@ -37,16 +38,20 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
       <Flex gap="md" align="center" mt="xs">
         <Avatar
           size={50}
-          src={formDetails.form_team_member.team_member_user.user_avatar}
-          color={getAvatarColor(Number(`${user.user_id.charCodeAt(0)}`))}
+          src={userProfile?.user_avatar}
+          color={getAvatarColor(
+            Number(`${userProfile?.user_id.charCodeAt(0)}`)
+          )}
           radius="xl"
         >
           {userInitials}
         </Avatar>
         <Stack spacing={0}>
-          <Text>{`${user.user_first_name} ${user.user_last_name}`}</Text>
+          <Text>
+            {`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}
+          </Text>
           <Text color="dimmed" size={14}>
-            {user.user_username}
+            {userProfile?.user_username}
           </Text>
         </Stack>
       </Flex>
