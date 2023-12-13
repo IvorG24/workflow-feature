@@ -57,21 +57,16 @@ const styles = StyleSheet.create({
   },
   table: {
     width: "auto",
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
-    borderColor: "#DEE2E6",
   },
   tableRow: {
     flexDirection: "row",
+    borderTop: "1px solid #dee2e6",
+    borderBottom: "1px solid #dee2e6",
+    marginTop: "-0.5px",
   },
   tableCol: {
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
-    borderColor: "#DEE2E6",
+    borderLeft: "0.5px solid #dee2e6",
+    borderRight: "0.5px solid #dee2e6",
   },
   tableCell: {
     margin: 5,
@@ -242,7 +237,7 @@ const PdfDocumentTableVersion = ({
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.page} wrap>
         <View style={styles.header}>
           <View style={styles.column}>
             {requestDetails.map((detail, index) => (
@@ -283,7 +278,7 @@ const PdfDocumentTableVersion = ({
           </View>
         </View>
 
-        <View wrap={false}>
+        <View>
           <View style={styles.divider} />
           <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
             {requestItems[0].title}
@@ -299,7 +294,7 @@ const PdfDocumentTableVersion = ({
         </View>
         <View style={styles.divider} />
         <Fragment>
-          <View wrap={false}>
+          <View>
             <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
               Item
             </Text>
@@ -338,7 +333,7 @@ const PdfDocumentTableVersion = ({
                 });
 
                 return (
-                  <View style={styles.tableRow} key={index}>
+                  <View style={styles.tableRow} key={index} wrap={false}>
                     {item.fields.slice(0, 6).map((field, i) => (
                       <View
                         key={i}
@@ -361,7 +356,7 @@ const PdfDocumentTableVersion = ({
         </Fragment>
 
         <Fragment>
-          <View wrap={false}>
+          <View>
             <View style={styles.divider} />
             <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
               Approvers
@@ -386,7 +381,7 @@ const PdfDocumentTableVersion = ({
               </View>
               {approverDetails.map((approver, index) => {
                 return (
-                  <View style={styles.tableRow} key={index}>
+                  <View style={styles.tableRow} key={index} wrap={false}>
                     <View style={[styles.tableCol, styles["SignatureCell"]]}>
                       {approver.signature && (
                         <Text>
