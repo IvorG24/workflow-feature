@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import moment from "moment";
+import dynamic from "next/dynamic";
 
 // check if a value is empty
 export const isEmpty = (value: any) => {
@@ -118,3 +119,7 @@ export const safeParse = (str: string) => {
     return str;
   }
 };
+
+export const JoyRideNoSSR = dynamic(() => import("react-joyride"), {
+  ssr: false,
+});

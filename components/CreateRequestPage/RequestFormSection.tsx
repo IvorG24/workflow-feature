@@ -59,8 +59,14 @@ const RequestFormSection = ({
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
+
+  let sectionClassname = "";
+  if (section.section_name === "Main")
+    sectionClassname = "onboarding-create-request-main-section";
+  else if (section.section_name === "Item")
+    sectionClassname = "onboarding-create-request-item-section";
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper p="xl" shadow="xs" className={sectionClassname}>
       <Group position="apart">
         <Title order={4} color="dimmed">
           {section.section_name}
@@ -73,6 +79,7 @@ const RequestFormSection = ({
               }
               variant="light"
               color="red"
+              className="onboarding-create-request-remove-item"
             >
               <IconTrash size={16} />
             </ActionIcon>

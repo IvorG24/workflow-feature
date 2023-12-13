@@ -3934,3 +3934,48 @@ export const getAllGroupOfTeamMember = async (
 
   return formattedData.map((group) => group.team_group.team_group_name);
 };
+
+// Get onboard list
+export const getOnboardList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    onboardName?: string;
+  }
+) => {
+  const { userId, onboardName } = params;
+
+  const query = supabaseClient
+    .from("user_onboard_table")
+    .select("*")
+    .eq("user_onboard_user_id", userId)
+
+    .order("user_onboard_date_created", { ascending: false });
+
+  if (onboardName) query.eq("user_onboard_name", onboardName);
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data;
+};
+
+// check if email list are onboarded
+export const checkIfEmailsOnboarded = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    emailList: string[];
+  }
+) => {
+  const { emailList } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select("user_email")
+    .in("user_email", emailList);
+  if (error) throw error;
+
+  return emailList.map((email) => ({
+    email: email,
+    onboarded: data.map((userData) => userData.user_email).includes(email),
+  }));
+};

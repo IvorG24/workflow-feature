@@ -120,7 +120,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   };
 
   return (
-    <Stack>
+    <Stack className="onboarding-requisition-request-comment">
       <Paper p="xl" shadow="xs" mt="xl">
         <Group position="apart">
           <Title order={4} color="dimmed">

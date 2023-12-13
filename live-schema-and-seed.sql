@@ -421,6 +421,20 @@ CREATE TABLE special_approver_item_table(
 
 -- END: Special approver item table
 
+-- Start: User onboard table
+
+CREATE TABLE user_onboard_table(
+  user_onboard_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_onboard_name VARCHAR(4000) NOT NULL,
+  user_onboard_score INT NOT NULL,
+  user_onboard_top_score INT NOT NULL,
+
+  user_onboard_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_onboard_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+
+-- END: User onboard table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -779,11 +793,15 @@ RETURNS JSON AS $$
       user_username,
       user_avatar,
       user_phone_number,
-      user_job_title
+      user_job_title,
+      user_active_team_id
     } = input_data;
 
-    user_data = plv8.execute(`INSERT INTO user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
-    
+    if(user_active_team_id){
+        user_data = plv8.execute(`INSERT INTO user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title,user_active_team_id) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}','${user_active_team_id}') RETURNING *;`)[0];
+    }else{
+        user_data = plv8.execute(`INSERT INTO user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
+    }
     const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
 
     if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/team/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
@@ -7941,6 +7959,11 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_fie
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_onboard_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_onboard_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_onboard_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own onboard" ON user_onboard_table;
+
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
 AS PERMISSIVE FOR ALL
@@ -9400,6 +9423,33 @@ USING (
 CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_item_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+--- USER_ONBOARD_TABLE
+CREATE POLICY "Allow CREATE access for all users" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for authenticated users on own onboard" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  user_onboard_user_id IN (
+    SELECT user_onboard_user_id  
+    FROM user_onboard_table 
+    WHERE user_onboard_user_id = auth.uid()
+  )
+);
 
 -------- End: POLICIES
 

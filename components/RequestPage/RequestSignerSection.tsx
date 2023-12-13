@@ -65,7 +65,7 @@ const RequestSignerSection = ({ signerList }: Props) => {
   };
 
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper p="xl" shadow="xs" className="onboarding-requisition-request-signer">
       <Title order={4} color="dimmed">
         Signers
       </Title>
