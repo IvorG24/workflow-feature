@@ -7,7 +7,7 @@ import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { JoyRideNoSSR } from "@/utils/functions";
-import { startCase } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { InvitationWithTeam, TeamTableRow } from "@/utils/types";
 import {
@@ -64,11 +64,13 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         color: "green",
       });
       if (teamList.length <= 0) {
+        const teamName = teamListData[0].team_name;
+        const activeTeamNameToUrl = formatTeamNameToUrlKey(teamName);
         await router
-          .push(`/team-requests/dashboard?onboarding=true`)
+          .push(`/${activeTeamNameToUrl}/dashboard?onboarding=true`)
           .then(() => router.reload());
       } else {
-        await router.push(`/team/invitation/${invitation.invitation_id}`);
+        await router.push(`/invitation/${invitation.invitation_id}`);
         setTimeout(router.reload, 1000);
       }
     } catch {

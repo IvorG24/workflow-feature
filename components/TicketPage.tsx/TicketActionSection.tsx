@@ -1,7 +1,9 @@
 import { createNotification, createTicketComment } from "@/backend/api/post";
 import { updateTicketStatus } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
 import { Button, Flex, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
@@ -19,6 +21,7 @@ type Props = {
 
 const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
   const rejectTicketFormMethods = useForm<{ rejectionMessage: string }>({
     defaultValues: { rejectionMessage: "" },
@@ -70,7 +73,9 @@ const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
             notification_app: "REQUEST",
             notification_type: notificationType,
             notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} ${notificationContent}`,
-            notification_redirect_url: `/team-requests/tickets/${ticket.ticket_id}`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/tickets/${ticket.ticket_id}`,
             notification_user_id:
               ticket.ticket_requester.team_member_user.user_id,
             notification_team_id: teamMember.team_member_team_id,

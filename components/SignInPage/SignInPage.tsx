@@ -1,7 +1,7 @@
 import { getInvitationId } from "@/backend/api/get";
 import { checkIfEmailExists, signInUser } from "@/backend/api/post";
 import { JwtPayload } from "@/pages/api/team-invite";
-import { DEFAULT_LANDING_PAGE, JWT_SECRET_KEY } from "@/utils/constant";
+import { JWT_SECRET_KEY } from "@/utils/constant";
 import {
   Anchor,
   Box,
@@ -77,9 +77,9 @@ const SignInPage = () => {
             teamId: `${teamId}`,
             userEmail: `${invitedEmail}`,
           });
-          router.push(`/team/invitation/${invitationId}`);
+          router.push(`/user/invitation/${invitationId}`);
         } else {
-          router.push(DEFAULT_LANDING_PAGE);
+          router.push(`/userActiveTeam`);
         }
         return;
       }

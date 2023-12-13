@@ -1,3 +1,5 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { FormWithOwnerType } from "@/utils/types";
 import {
@@ -43,6 +45,7 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
   const router = useRouter();
   const { ref, hovered: isFormNameHovered } = useHover();
   const { colorScheme } = useMantineColorScheme();
+  const activeTeam = useActiveTeam();
 
   return (
     <Paper
@@ -57,7 +60,13 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
       <Flex direction="column" justify="space-between" mih={150}>
         <Flex direction="column">
           <Anchor
-            onClick={() => router.push(`/team-requests/forms/${form.form_id}`)}
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
+                  form.form_id
+                }`
+              )
+            }
           >
             <Tooltip
               label={form.form_name}

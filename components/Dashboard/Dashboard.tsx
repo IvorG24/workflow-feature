@@ -4,7 +4,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { JoyRideNoSSR } from "@/utils/functions";
 import { ONBOARDING_DASHBOARD_STEP, ONBOARD_NAME } from "@/utils/onboarding";
-import { startCase } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   Alert,
   Box,
@@ -241,7 +241,13 @@ const Dashboard = ({ ticketListCount }: Props) => {
                 <Text>{`Your team have (${ticketListCount}) pending tickets.`}</Text>
                 <Button
                   size="xs"
-                  onClick={() => router.push("/team-requests/tickets")}
+                  onClick={() =>
+                    router.push(
+                      `/${formatTeamNameToUrlKey(
+                        activeTeam.team_name ?? ""
+                      )}/tickets`
+                    )
+                  }
                 >
                   Resolve
                 </Button>

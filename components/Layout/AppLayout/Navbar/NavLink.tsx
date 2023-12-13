@@ -9,7 +9,7 @@ import {
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
-import { startCase } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
 import { Box, Space } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -40,6 +40,9 @@ const ReviewAppNavLink = () => {
   const forms = useFormList();
   const userTeamMemberData = useUserTeamMember();
   const unreadNotificationCount = useUnreadNotificationCount();
+  const activeTeamNameToUrl = formatTeamNameToUrlKey(
+    activeTeam.team_name ?? ""
+  );
 
   const rfForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Requisition"
@@ -57,7 +60,7 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: requisitionForm
-        ? `/team-requests/forms/${requisitionForm.form_id}/create`
+        ? `/${activeTeamNameToUrl}/forms/${requisitionForm.form_id}/create`
         : "",
     },
     {
@@ -67,7 +70,7 @@ const ReviewAppNavLink = () => {
           <IconTicket {...defaultIconProps} />
         </Box>
       ),
-      href: requisitionForm ? `/team-requests/tickets/create` : "",
+      href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
     },
   ];
 
@@ -79,7 +82,7 @@ const ReviewAppNavLink = () => {
           <IconDashboard {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/dashboard`,
+      href: `/${activeTeamNameToUrl}/dashboard`,
     },
     {
       label: `${startCase(activeApp)} List`,
@@ -88,7 +91,7 @@ const ReviewAppNavLink = () => {
           <IconFiles {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/${activeApp.toLowerCase()}s`,
+      href: `/${activeTeamNameToUrl}/requests`,
     },
     {
       label: `Notification List`,
@@ -97,7 +100,7 @@ const ReviewAppNavLink = () => {
           <IconBell {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/notification`,
+      href: `/user/notification`,
       withIndicator: userNotificationCount > 0,
       indicatorLabel: `${userNotificationCount}`,
     },
@@ -108,7 +111,7 @@ const ReviewAppNavLink = () => {
           <IconListDetails {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/tickets`,
+      href: `/${activeTeamNameToUrl}/tickets`,
     },
   ];
 
@@ -120,7 +123,7 @@ const ReviewAppNavLink = () => {
           <IconUsersGroup {...defaultIconProps} />
         </Box>
       ),
-      href: `/team`,
+      href: `/${activeTeamNameToUrl}/settings`,
     },
     {
       label: "Create Team",
@@ -129,7 +132,7 @@ const ReviewAppNavLink = () => {
           <IconCirclePlus {...defaultIconProps} />
         </Box>
       ),
-      href: `/team/create`,
+      href: `/create-team`,
     },
   ];
 
@@ -141,7 +144,7 @@ const ReviewAppNavLink = () => {
           <IconCirclePlus {...defaultIconProps} />
         </Box>
       ),
-      href: `/team/create`,
+      href: `/create-team`,
     },
   ];
 

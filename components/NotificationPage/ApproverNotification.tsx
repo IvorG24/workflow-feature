@@ -1,3 +1,5 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { ApproverUnresolvedRequestListType } from "@/utils/types";
 import {
   Badge,
@@ -28,6 +30,7 @@ type Props = {
 
 const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
   const router = useRouter();
+  const activeTeam = useActiveTeam();
   const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
     {
       key: "formsly-request-list-filter",
@@ -81,7 +84,7 @@ const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
       ...localFilter,
       isApproversView: true,
     });
-    router.push("/team-requests/requests");
+    router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
   };
 
   return (

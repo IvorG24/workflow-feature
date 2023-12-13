@@ -1,108 +1,92 @@
-import Meta from "@/components/Meta/Meta";
-import RequestPage from "@/components/RequestPage/RequestPage";
-import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
-import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import {
-  ConnectedRequestIdList,
-  RequestProjectSignerStatusType,
-  RequestWithResponseType,
-} from "@/utils/types";
+  getRequestFormslyId,
+  getTeam,
+  getUserActiveTeamId,
+} from "@/backend/api/get";
+import { checkIfEmailExists } from "@/backend/api/post";
+import { formatTeamNameToUrlKey } from "@/utils/string";
+import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps =
-  withAuthAndOnboardingRequestPage(
-    async ({ supabaseClient, user, context }) => {
-      try {
-        const { data, error } = await supabaseClient.rpc(
-          "request_page_on_load",
-          {
-            input_data: {
-              requestId: context.query.requestId,
-              userId: user.id,
-            },
-          }
-        );
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  try {
+    // * 1. Check if user is authenticated
+    const supabaseClient = createPagesServerClient(context);
+    const {
+      data: { session },
+    } = await supabaseClient.auth.getSession();
 
-        if (error) throw error;
-        return {
-          props: data as Props,
-        };
-      } catch (e) {
-        console.error(e);
-        return {
-          redirect: {
-            destination: "/500",
-            permanent: false,
-          },
-        };
-      }
+    if (!session) {
+      return {
+        redirect: {
+          destination: `/public-request/${context.query.requestId}`,
+          permanent: false,
+        },
+      };
     }
-  );
+    if (!session?.user?.email) throw new Error("No email in session");
 
-type Props = {
-  request: RequestWithResponseType;
-  connectedFormIdAndGroup: {
-    formId: string;
-    formIsForEveryone: boolean;
-    formIsMember: boolean;
-    formName: string;
-    formIsHidden: boolean;
-  };
-  connectedRequestIDList: ConnectedRequestIdList;
-  connectedForm: {
-    form_name: string;
-    form_id: string;
-    form_is_for_every_member: boolean;
-    form_is_member: boolean;
-    form_is_hidden: boolean;
-  }[];
-  canvassRequest?: string[];
-  projectSignerStatus?: RequestProjectSignerStatusType;
+    // * 2. Check if user is onboarded
+    if (
+      !(await checkIfEmailExists(supabaseClient, {
+        email: session.user.email,
+      }))
+    ) {
+      return {
+        redirect: {
+          destination: "/onboarding",
+          permanent: false,
+        },
+      };
+    }
+
+    // * 3. Check if user has active team
+    const user = session.user;
+
+    const teamId = await getUserActiveTeamId(supabaseClient, {
+      userId: user.id,
+    });
+
+    if (!teamId) {
+      return {
+        redirect: {
+          destination: "/create-team",
+          permanent: false,
+        },
+      };
+    }
+
+    const activeTeam = await getTeam(supabaseClient, { teamId });
+    const formslyId = await getRequestFormslyId(supabaseClient, {
+      requestId: `${context.query.requestId}`,
+    });
+
+    if (activeTeam) {
+      return {
+        redirect: {
+          destination: `/${formatTeamNameToUrlKey(
+            activeTeam.team_name
+          )}/requests/${formslyId}`,
+          permanent: false,
+        },
+      };
+    }
+
+    return {
+      props: {},
+    };
+  } catch (error) {
+    return {
+      redirect: {
+        destination: "/500",
+        permanent: false,
+      },
+    };
+  }
 };
 
-const Page = ({
-  request,
-  connectedFormIdAndGroup,
-  connectedRequestIDList,
-  connectedForm = [],
-  canvassRequest = [],
-  projectSignerStatus,
-}: Props) => {
-  const formslyForm = () => {
-    if (request.request_form.form_name === "Requisition") {
-      return (
-        <RequisitionRequestPage
-          request={request}
-          connectedForm={connectedForm}
-          connectedRequestIDList={connectedRequestIDList}
-          canvassRequest={canvassRequest}
-        />
-      );
-    } else {
-      return (
-        <RequestPage
-          request={request}
-          isFormslyForm
-          connectedFormIdAndGroup={connectedFormIdAndGroup}
-          connectedRequestIDList={connectedRequestIDList}
-          projectSignerStatus={projectSignerStatus}
-        />
-      );
-    }
-  };
-
-  return (
-    <>
-      <Meta
-        description="Request Page"
-        url="/team-requests/requests/[requestId]"
-      />
-      {request.request_form.form_is_formsly_form ? formslyForm() : null}
-      {!request.request_form.form_is_formsly_form ? (
-        <RequestPage request={request} />
-      ) : null}
-    </>
-  );
+const Page = () => {
+  return null;
 };
 
 export default Page;

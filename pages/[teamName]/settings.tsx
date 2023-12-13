@@ -55,7 +55,7 @@ const Page = ({
 }: Props) => {
   return (
     <>
-      <Meta description="Team Page" url="/team" />
+      <Meta description="Team Page" url="/teamName/settings" />
       <TeamPage
         team={team}
         teamMembers={teamMembers}

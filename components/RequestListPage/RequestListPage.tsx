@@ -4,6 +4,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { JoyRideNoSSR } from "@/utils/functions";
 import { ONBOARDING_REQUEST_LIST_STEP, ONBOARD_NAME } from "@/utils/onboarding";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormStatusType,
   RequestListItemType,
@@ -297,7 +298,13 @@ const RequestListPage = ({
         </Box>
         {isFormslyTeam ? (
           <Button
-            onClick={() => router.push("/team-requests/spreadsheet-view")}
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name
+                )}/requests/spreadsheet-view`
+              )
+            }
             sx={{ flex: 1 }}
             maw={300}
             className="onboarding-request-list-ssot"

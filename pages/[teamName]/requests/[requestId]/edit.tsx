@@ -8,7 +8,7 @@ import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/
 import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
 import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTransferReceiptPage";
 import Meta from "@/components/Meta/Meta";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withActiveTeam } from "@/utils/server-side-protections";
 import {
   FormType,
   OptionTableRow,
@@ -16,7 +16,7 @@ import {
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, user, context }) => {
     try {
       const referenceOnly = Boolean(context.query.referenceOnly === "true");
@@ -145,7 +145,7 @@ const Page = ({
     <>
       <Meta
         description="Edit Request Page"
-        url="/team-requests/requests/[requestId]/edit"
+        url="/<teamName>/requests/[requestId]/edit"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
       {!form.form_is_formsly_form ? (

@@ -41,7 +41,7 @@ type Props = {
 const Page = ({ teamMemberList, formId, groupList }: Props) => {
   return (
     <>
-      <Meta description="Build Request Page" url="/team-requests/forms/build" />
+      <Meta description="Build Request Page" url="/teamName/forms/build" />
       <BuildRequestFormPage
         teamMemberList={teamMemberList}
         formId={formId}

@@ -63,6 +63,10 @@ export const toTitleCase = (input: string) => {
   });
 };
 
+export const formatTeamNameToUrlKey = (teamName: string) => {
+  return teamName.replace(/\s+/g, "-").toLowerCase();
+};
+
 export const isUUID = (str: string | string[] | undefined) => {
   if (str === undefined) return false;
   if (Array.isArray(str)) return false;

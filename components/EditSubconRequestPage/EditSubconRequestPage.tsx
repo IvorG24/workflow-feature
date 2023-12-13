@@ -12,7 +12,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid } from "@/utils/string";
+import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
 import {
   FormType,
   OptionTableRow,
@@ -112,6 +112,8 @@ const EditSubconRequestPage = ({
       if (!requestorProfile) return;
       if (!teamMember) return;
 
+      const teamNameUrlKey = formatTeamNameToUrlKey(team.team_name ?? "");
+
       setIsLoading(true);
 
       const isPending = await checkIfRequestIsEditable(supabaseClient, {
@@ -123,7 +125,7 @@ const EditSubconRequestPage = ({
           message: "Request can't be edited",
           color: "red",
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(`/${teamNameUrlKey}/requests/${request.request_id}`);
         return;
       }
 
@@ -134,6 +136,7 @@ const EditSubconRequestPage = ({
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
+        teamName: teamNameUrlKey,
       });
 
       notifications.show({
@@ -141,7 +144,7 @@ const EditSubconRequestPage = ({
         color: "green",
       });
 
-      router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(`/${teamNameUrlKey}/requests/${request.request_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

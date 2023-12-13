@@ -7,9 +7,14 @@ import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails"
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid, regExp } from "@/utils/string";
+import {
+  formatTeamNameToUrlKey,
+  parseJSONIfValid,
+  regExp,
+} from "@/utils/string";
 import {
   FormType,
   OptionTableRow,
@@ -61,6 +66,7 @@ const EditTransferReceiptPage = ({
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
   const requestorProfile = useUserProfile();
 
@@ -118,6 +124,7 @@ const EditTransferReceiptPage = ({
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
+      const teamNameUrlKey = formatTeamNameToUrlKey(activeTeam.team_name);
       setIsLoading(true);
       let isValid = true;
       for (const section of data.sections.slice(2)) {
@@ -211,7 +218,7 @@ const EditTransferReceiptPage = ({
             message: "Request can't be edited",
             color: "red",
           });
-          router.push(`/team-requests/requests/${request.request_id}`);
+          router.push(`/${teamNameUrlKey}/requests/${request.request_id}`);
           return;
         }
 
@@ -222,13 +229,14 @@ const EditTransferReceiptPage = ({
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
+          teamName: teamNameUrlKey,
         });
 
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(`/${teamNameUrlKey}/requests/${request.request_id}`);
       }
     } catch (e) {
       notifications.show({

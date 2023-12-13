@@ -1,27 +1,14 @@
-import { getTicketList, getUserActiveTeamId } from "@/backend/api/get";
+import { getTicketList } from "@/backend/api/get";
 import Dashboard from "@/components/Dashboard/Dashboard";
 import Meta from "@/components/Meta/Meta";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withActiveTeam } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ supabaseClient, user }) => {
+export const getServerSideProps: GetServerSideProps = withActiveTeam(
+  async ({ supabaseClient, userActiveTeam }) => {
     try {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
-
-      if (!teamId) {
-        return {
-          redirect: {
-            destination: "/team/create",
-            permanent: false,
-          },
-        };
-      }
-
       const { count: ticketListCount } = await getTicketList(supabaseClient, {
-        teamId,
+        teamId: userActiveTeam.team_id,
         limit: 13,
         page: 1,
         status: ["PENDING"],
@@ -51,7 +38,7 @@ type Props = {
 const Page = ({ ticketListCount }: Props) => {
   return (
     <>
-      <Meta description="Request List Page" url="/team-requests/requests" />
+      <Meta description="Request List Page" url="/{teamName}/dashboard" />
       <Dashboard ticketListCount={ticketListCount} />
     </>
   );

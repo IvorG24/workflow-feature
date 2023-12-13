@@ -143,7 +143,7 @@ const Page = ({
     <>
       <Meta
         description="Create Request Page"
-        url="/team-requests/forms/[formId]/create"
+        url="/teamName/forms/[formId]/create"
       />
 
       {form.form_is_formsly_form ? formslyForm() : null}

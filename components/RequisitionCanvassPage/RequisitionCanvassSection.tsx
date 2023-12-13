@@ -1,3 +1,5 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Accordion,
   Box,
@@ -15,6 +17,7 @@ type Props = { canvassRequest: string[] };
 
 const RequisitionCanvassSection = ({ canvassRequest }: Props) => {
   const router = useRouter();
+  const activeTeam = useActiveTeam();
 
   const canvassSection = canvassRequest.map((request) => {
     return (
@@ -49,7 +52,9 @@ const RequisitionCanvassSection = ({ canvassRequest }: Props) => {
                 rightIcon={<IconFileAnalytics size={20} />}
                 onClick={() =>
                   router.push(
-                    `/team-requests/requests/${router.query.requestId}/canvass`
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}requests/${router.query.requestId}/canvass`
                   )
                 }
               >

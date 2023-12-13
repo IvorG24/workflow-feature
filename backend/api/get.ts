@@ -1,4 +1,4 @@
-import { EditRequestOnLoadProps } from "@/pages/team-requests/requests/[requestId]/edit";
+import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -2917,11 +2917,12 @@ export const getRequestFormslyId = async (
 ) => {
   const { requestId } = params;
   const { data, error } = await supabaseClient
-    .from("request_table")
+    .from("request_view")
     .select("request_formsly_id")
-    .eq("request_id", requestId);
+    .eq("request_id", requestId)
+    .maybeSingle();
   if (error) throw error;
-  const requestFormslyId = data[0].request_formsly_id;
+  const requestFormslyId = data ? data.request_formsly_id : null;
 
   return requestFormslyId;
 };
@@ -3935,6 +3936,23 @@ export const getAllGroupOfTeamMember = async (
   return formattedData.map((group) => group.team_group.team_group_name);
 };
 
+// Check if team name already exists
+export const checkIfTeamNameExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamName: string }
+) => {
+  const { teamName } = params;
+
+  const { count, error } = await supabaseClient
+    .from("team_table")
+    .select("*", { count: "exact" })
+    .ilike("team_name", teamName);
+
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
 // Get onboard list
 export const getOnboardList = async (
   supabaseClient: SupabaseClient<Database>,
@@ -3978,4 +3996,36 @@ export const checkIfEmailsOnboarded = async (
     email: email,
     onboarded: data.map((userData) => userData.user_email).includes(email),
   }));
+};
+
+// get request team id
+export const getRequestTeamId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select(
+      `request_team_member: request_team_member_id!inner(team_member_team_id)`
+    )
+    .eq("request_id", requestId)
+    .eq("request_is_disabled", false)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (data) {
+    const requestData = data as unknown as {
+      request_team_member: {
+        team_member_team_id: string;
+      };
+    };
+    return requestData.request_team_member.team_member_team_id;
+  } else {
+    return null;
+  }
 };

@@ -36,7 +36,7 @@ type Props = {
 const Page = ({ ticketList, ticketListCount, teamMemberList }: Props) => {
   return (
     <>
-      <Meta description="Ticket List Page" url="/team-requests/tickets" />
+      <Meta description="Ticket List Page" url="/<teamName>/tickets" />
 
       <TicketListPage
         ticketList={ticketList}

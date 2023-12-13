@@ -73,7 +73,7 @@ const CreateTeamPage = () => {
             mt="md"
             onClick={() => {
               modals.closeAll();
-              router.push("/team-requests/notification?onboarding=true");
+              router.push("/user/notification?onboarding=true");
             }}
           >
             <Box>

@@ -38,7 +38,7 @@ const Page = ({ itemList }: Props) => {
     <>
       <Meta
         description="Item Analytics Page"
-        url="/team-requests/item-analytics"
+        url="/{teamName}/item-analytics"
       />
       <ItemAnalyticsPage itemList={itemList} />
     </>

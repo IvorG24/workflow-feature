@@ -147,6 +147,23 @@ export const createTeamMember = async (
   return data;
 };
 
+// Create Team Member with team name
+export const createTeamMemberReturnTeamName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TeamMemberTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .insert(params)
+    .select("*, team:team_table(team_name)");
+  if (error) throw error;
+  return data as unknown as [
+    {
+      team: { team_name: string };
+    } & TeamMemberTableInsert
+  ];
+};
+
 // Create Team Invitation/s
 export const createTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
@@ -411,6 +428,7 @@ export const createRequest = async (
     formName: string;
     isFormslyForm: boolean;
     projectId: string;
+    teamName: string;
   }
 ) => {
   const {
@@ -421,6 +439,7 @@ export const createRequest = async (
     formName,
     isFormslyForm,
     projectId,
+    teamName,
   } = params;
 
   const requestId = uuidv4();
@@ -487,7 +506,7 @@ export const createRequest = async (
       requestSignerNotificationInput.push({
         notification_app: "REQUEST",
         notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_redirect_url: `/${teamName}/requests/${requestId}`,
         notification_team_id: teamId,
         notification_type: "REQUEST",
         notification_user_id:
@@ -517,13 +536,6 @@ export const createRequest = async (
     )
     .join(",");
 
-  const notificationValues = requestSignerNotificationInput
-    .map(
-      (notification) =>
-        `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
-    )
-    .join(",");
-
   // create request
   const { data, error } = await supabaseClient
     .rpc("create_request", {
@@ -533,15 +545,15 @@ export const createRequest = async (
         teamMemberId: params.teamMemberId,
         responseValues,
         signerValues,
-        notificationValues,
+        requestSignerNotificationInput,
         formName,
         isFormslyForm,
         projectId,
+        teamId,
       },
     })
     .select()
     .single();
-
   if (error) throw error;
 
   return data as RequestTableRow;
@@ -559,6 +571,7 @@ export const editRequest = async (
     teamId: string;
     requesterName: string;
     formName: string;
+    teamName: string;
   }
 ) => {
   const {
@@ -568,6 +581,7 @@ export const editRequest = async (
     teamId,
     requesterName,
     formName,
+    teamName,
   } = params;
 
   // get request response
@@ -647,7 +661,7 @@ export const editRequest = async (
       requestSignerNotificationInput.push({
         notification_app: "REQUEST",
         notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_redirect_url: `/${teamName}/requests/${requestId}`,
         notification_team_id: teamId,
         notification_type: "REQUEST",
         notification_user_id:

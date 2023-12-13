@@ -8,9 +8,10 @@ import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails"
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid } from "@/utils/string";
+import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
 import {
   FormType,
   OptionTableRow,
@@ -60,6 +61,7 @@ const EditQuotationRequestPage = ({
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
   const requestorProfile = useUserProfile();
 
@@ -190,7 +192,11 @@ const EditQuotationRequestPage = ({
             message: "Request can't be edited",
             color: "red",
           });
-          router.push(`/team-requests/requests/${request.request_id}`);
+          router.push(
+            `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+              request.request_id
+            }`
+          );
           return;
         }
 
@@ -201,13 +207,18 @@ const EditQuotationRequestPage = ({
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
+          teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
         });
 
         notifications.show({
           message: "Request edited.",
           color: "green",
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(
+          `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+            request.request_id
+          }`
+        );
       }
     } catch {
       notifications.show({

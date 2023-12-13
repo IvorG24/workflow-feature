@@ -7,9 +7,11 @@ import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetail
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { areEqual } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -64,6 +66,7 @@ const CreateSourcedItemRequestPage = ({
   const teamMember = useUserTeamMember();
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
+  const activeTeam = useActiveTeam();
 
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [previousProjectSite, setPreviousProjetcSite] = useState<string[]>([]);
@@ -241,13 +244,18 @@ const CreateSourcedItemRequestPage = ({
           formName: form.form_name,
           isFormslyForm: true,
           projectId: requestProjectId,
+          teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
         });
 
         notifications.show({
           message: "Request created.",
           color: "green",
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(
+          `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+            request.request_id
+          }`
+        );
       }
     } catch (e) {
       notifications.show({
