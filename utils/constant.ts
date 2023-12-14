@@ -1256,6 +1256,7 @@ export const ITEM_UNIT_CHOICES = [
   "Grams Per Square Meter",
   "Cubic Meter Per Hour",
   "Kiloampere",
+  "Beats Per Minute"
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
