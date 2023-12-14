@@ -42,6 +42,7 @@ const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
         status: undefined,
         isAscendingSort: false,
         isApproversView: false,
+        projectList: [],
       },
     }
   );

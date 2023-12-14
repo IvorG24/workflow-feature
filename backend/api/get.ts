@@ -171,6 +171,7 @@ export const getRequestList = async (
     search?: string;
     isApproversView: boolean;
     teamMemberId?: string;
+    project?: string[];
   }
 ) => {
   const {
@@ -185,6 +186,7 @@ export const getRequestList = async (
     search,
     isApproversView,
     teamMemberId,
+    project,
   } = params;
 
   const requestorCondition = requestor
@@ -199,12 +201,15 @@ export const getRequestList = async (
   const formCondition = form
     ?.map((value) => `request_view.request_form_id = '${value}'`)
     .join(" OR ");
+  const projectCondition = project
+    ?.map((value) => `request_view.request_formsly_id_prefix = '${value}'`)
+    .join(" OR ");
 
   const searchCondition =
     search && validator.isUUID(search)
       ? `request_view.request_id = '${search}'`
       : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
-  console.log("HERE");
+
   const { data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {
       teamId: teamId,
@@ -212,6 +217,7 @@ export const getRequestList = async (
       limit: limit,
       requestor: requestorCondition ? `AND (${requestorCondition})` : "",
       approver: approverCondition ? `AND (${approverCondition})` : "",
+      project: projectCondition ? `AND (${projectCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",

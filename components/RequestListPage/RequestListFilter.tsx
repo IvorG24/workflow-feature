@@ -1,4 +1,4 @@
-import { TeamMemberWithUserType } from "@/utils/types";
+import { TeamMemberWithUserType, TeamProjectTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Checkbox,
@@ -28,6 +28,7 @@ type RequestListFilterProps = {
       | RequestListLocalFilter
       | ((prevState: RequestListLocalFilter) => RequestListLocalFilter)
   ) => void;
+  projectList: TeamProjectTableRow[];
 };
 
 type FilterSelectedValuesType = {
@@ -35,6 +36,7 @@ type FilterSelectedValuesType = {
   status: string[];
   requestorList: string[];
   approverList: string[];
+  projectList: string[];
   isApproversView: boolean;
 };
 
@@ -45,6 +47,7 @@ const RequestListFilter = ({
   handleFilterForms,
   localFilter,
   setLocalFilter,
+  projectList,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -58,12 +61,14 @@ const RequestListFilter = ({
   const { ref: approverRef, focused: approverRefFocused } = useFocusWithin();
   const { ref: formRef, focused: formRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
+  const { ref: projectRef, focused: projectRefFocused } = useFocusWithin();
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       formList: [],
       status: [],
       requestorList: [],
       approverList: [],
+      projectList: [],
       isApproversView: false,
     });
 
@@ -91,6 +96,13 @@ const RequestListFilter = ({
     { value: "REJECTED", label: "Rejected" },
     { value: "CANCELED", label: "Canceled" },
   ];
+
+  const projectListChoices = projectList.map((project) => {
+    return {
+      label: project.team_project_name,
+      value: project.team_project_code,
+    };
+  });
 
   const { register, getValues, control, setValue } =
     useFormContext<FilterFormValues>();
@@ -209,6 +221,32 @@ const RequestListFilter = ({
             maw={320}
             disabled={filterSelectedValues.isApproversView}
             className="onboarding-request-list-filters-status"
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="projectList"
+        render={({ field: { value, onChange } }) => (
+          <MultiSelect
+            data={projectListChoices}
+            placeholder="Project"
+            ref={projectRef}
+            value={value}
+            onChange={(value) => {
+              onChange(value);
+              if (!projectRefFocused) handleFilterChange("projectList", value);
+            }}
+            onDropdownClose={() =>
+              handleFilterChange("projectList", value as string[])
+            }
+            {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={320}
+            disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-project"
           />
         )}
       />

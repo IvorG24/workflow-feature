@@ -2191,7 +2191,8 @@ RETURNS JSON AS $$
         sort,
         search,
         isApproversView,
-        teamMemberId
+        teamMemberId,
+        project
       } = input_data;
 
       const start = (page - 1) * limit;
@@ -2224,6 +2225,7 @@ RETURNS JSON AS $$
             ${approver}
             ${status}
             ${form}
+            ${project}
             ${search}
             ORDER BY request_view.request_date_created ${sort} 
             OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
@@ -2245,6 +2247,7 @@ RETURNS JSON AS $$
             ${approver}
             ${status}
             ${form}
+            ${project}
             ${search}
           `
         )[0];
@@ -3465,9 +3468,11 @@ RETURNS JSON AS $$
 
     const formList = formListData.map(form=>({ label: form.form_name, value: form.form_id }));
     
-    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "approver":"", "form":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
+    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "approver":"", "form":"", "project":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
 
-    request_data = {teamMemberId,teamMemberList,isFormslyTeam, formList, requestList: requestList.data, requestListCount: requestList.count}
+    const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
+
+    request_data = {teamMemberId,teamMemberList,isFormslyTeam, formList, requestList: requestList.data, requestListCount: requestList.count,projectList}
  });
  return request_data;
 $$ LANGUAGE plv8;

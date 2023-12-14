@@ -2191,49 +2191,209 @@ $$ LANGUAGE plv8;
 
 -- Start: Fetch request list
 
-CREATE OR REPLACE FUNCTION approve_or_reject_request(
+CREATE OR REPLACE FUNCTION fetch_request_list(
     input_data JSON
 )
-RETURNS VOID AS $$
-  plv8.subtransaction(function(){
-    const {
-      requestId,
-      isPrimarySigner,
-      requestSignerId,
-      requestOwnerId,
-      signerFullName,
-      formName,
-      requestAction,
-      memberId,
-      teamId,
-      jiraId,
-      jiraLink,
-      requestFormslyId
-    } = input_data;
+RETURNS JSON AS $$
+    let return_value
+    plv8.subtransaction(function(){
+      const {
+        teamId,
+        page,
+        limit,
+        requestor,
+        approver,
+        status,
+        form,
+        sort,
+        search,
+        isApproversView,
+        teamMemberId,
+        project
+      } = input_data;
 
-    const present = { APPROVED: "APPROVE", REJECTED: "REJECT" };
+      const start = (page - 1) * limit;
 
-    plv8.execute(`UPDATE request_signer_table SET request_signer_status = '${requestAction}', request_signer_status_date_updated = NOW() WHERE request_signer_signer_id='${requestSignerId}' AND request_signer_request_id='${requestId}';`);
-    
-    plv8.execute(`INSERT INTO comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${requestId}','${memberId}','ACTION_${requestAction}','${signerFullName} ${requestAction.toLowerCase()}  this request');`);
-    
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
-    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+      let request_list = [];
+      let request_count = 0;
 
-    if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
-      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+      if(!isApproversView) {
+        request_list = plv8.execute(
+          `
+            SELECT DISTINCT
+              request_id, 
+              request_formsly_id,
+              request_date_created, 
+              request_status,
+              request_team_member_id,
+              request_jira_id,
+              request_jira_link,
+              request_otp_id,
+              request_form_id
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            ${requestor}
+            ${approver}
+            ${status}
+            ${form}
+            ${project}
+            ${search}
+            ORDER BY request_view.request_date_created ${sort} 
+            OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+          `
+        );
 
-      if (teamNameUrlKey) {
-        plv8.execute(`INSERT INTO notification_table (notification_app,notification_type,notification_content,notification_redirect_url,notification_user_id,notification_team_id) VALUES ('REQUEST','${present[requestAction]}','${signerFullName} ${requestAction.toLowerCase()} your ${formName} request','/${teamNameUrlKey}/requests/${requestFormslyId ?? requestId}','${requestOwnerId}','${teamId}');`);
+        request_count = plv8.execute(
+          `
+            SELECT COUNT(DISTINCT request_id)
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            ${requestor}
+            ${approver}
+            ${status}
+            ${form}
+            ${project}
+            ${search}
+          `
+        )[0];
+      }else {
+        request_list = plv8.execute(
+          `
+            SELECT DISTINCT
+              request_view.request_id, 
+              request_view.request_formsly_id,
+              request_date_created, 
+              request_status,
+              request_team_member_id,
+              request_jira_id,
+              request_jira_link,
+              request_otp_id,
+              request_form_id
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND signer_team_member_id = '${teamMemberId}'
+            AND request_status = 'PENDING'
+            ORDER BY request_view.request_date_created ${sort} 
+            OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+          `
+        );
+        request_count = plv8.execute(
+          `
+            SELECT COUNT(DISTINCT request_id)
+            FROM request_view
+            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = '${teamId}'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND signer_team_member_id = '${teamMemberId}'
+            AND request_status = 'PENDING'
+          `
+        )[0];
       }
-    }
-    
-    if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""} WHERE request_id='${requestId}';`);
-    }
-    
- });
+
+      const request_data = request_list.map(request => {
+        const request_team_member = plv8.execute(
+          `
+            SELECT 
+              team_member_table.team_member_team_id, 
+              user_table.user_id,
+              user_table.user_first_name,
+              user_table.user_last_name,
+              user_table.user_avatar
+            FROM team_member_table
+            INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+            WHERE team_member_table.team_member_id = '${request.request_team_member_id}'
+          `
+        )[0];
+        const request_form = plv8.execute(`SELECT form_id, form_name, form_description FROM form_table WHERE form_id = '${request.request_form_id}'`)[0];
+        const request_signer = plv8.execute(
+          `
+            SELECT 
+              request_signer_table.request_signer_id, 
+              request_signer_table.request_signer_status, 
+              signer_table.signer_is_primary_signer,
+              user_table.user_id,
+              user_table.user_first_name,
+              user_table.user_last_name,
+              user_table.user_avatar
+            FROM request_signer_table
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            INNER JOIN team_member_table ON signer_table.signer_team_member_id = team_member_table.team_member_id
+            INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+            WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
+          `
+        ).map(signer => {
+          return {
+            request_signer_id: signer.request_signer_id,
+            request_signer_status: signer.request_signer_status,
+            request_signer: {
+              signer_is_primary_signer: signer.signer_is_primary_signer ,
+              signer_team_member: {
+                team_member_user: {
+                  user_id: signer.user_id,
+                  user_first_name: signer.user_first_name,
+                  user_last_name: signer.user_last_name,
+                  user_avatar: signer.user_avatar,
+                }
+              }
+            }
+          }
+        });
+
+        return {
+          request_id: request.request_id, 
+          request_formsly_id: request.request_formsly_id,
+          request_date_created: request.request_date_created, 
+          request_status: request.request_status, 
+          request_jira_id: request.request_jira_id,
+          request_jira_link: request.request_jira_link,
+          request_otp_id: request.request_otp_id,
+          request_team_member: {
+            team_member_team_id: request.request_team_member_id,
+            team_member_user: {
+              user_id: request_team_member.user_id, 
+              user_first_name: request_team_member.user_first_name,
+              user_last_name: request_team_member.user_last_name,
+              user_avatar: request_team_member.user_avatar,
+            },
+          }, 
+          request_form: {
+            form_id: request_form.form_id,
+            form_name: request_form.form_name,
+            form_description: request_form.form_description,
+            form_is_disabled: request_form.form_is_disabled,
+          }, 
+          request_signer: request_signer,
+        }
+      });
+
+      return_value = {
+        data: request_data, 
+        count: Number(request_count.count)
+      };
+    });
+    return return_value
 $$ LANGUAGE plv8;
 
 -- End: Fetch request list
@@ -3327,9 +3487,11 @@ RETURNS JSON AS $$
 
     const formList = formListData.map(form=>({ label: form.form_name, value: form.form_id }));
     
-    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "approver":"", "form":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
+    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "approver":"", "form":"", "project":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
 
-    request_data = {teamMemberId,teamMemberList,isFormslyTeam, formList, requestList: requestList.data, requestListCount: requestList.count}
+    const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
+
+    request_data = {teamMemberId,teamMemberList,isFormslyTeam, formList, requestList: requestList.data, requestListCount: requestList.count,projectList}
  });
  return request_data;
 $$ LANGUAGE plv8;
