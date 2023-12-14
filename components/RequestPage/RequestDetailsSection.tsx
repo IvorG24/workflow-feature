@@ -154,7 +154,7 @@ const RequestDetailsSection = ({
         <Text>
           {request.request_formsly_id === "-"
             ? request.request_id
-            : request.request_id}
+            : request.request_formsly_id}
         </Text>
       </Group>
       {request.request_project.team_project_name && (
