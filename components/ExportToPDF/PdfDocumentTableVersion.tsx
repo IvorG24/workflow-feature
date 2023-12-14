@@ -1,3 +1,4 @@
+import { convertTimestampToDateTime } from "@/utils/string";
 import {
   Document,
   Image,
@@ -154,12 +155,18 @@ const styles = StyleSheet.create({
   "Approval Status": {
     width: "20%",
   },
-  "Date Signed": {
+  "Date & Time Signed": {
     width: "20%",
   },
   icon: {
     width: "12px",
     height: "12px",
+  },
+  centerCell: {
+    textAlign: "center",
+  },
+  cellFontSize: {
+    fontSize: 8,
   },
 });
 
@@ -375,8 +382,8 @@ const PdfDocumentTableVersion = ({
                 <View style={[styles.tableCol, styles["Approval Status"]]}>
                   <Text style={styles.tableHeader}>Approval Status</Text>
                 </View>
-                <View style={[styles.tableCol, styles["Date Signed"]]}>
-                  <Text style={styles.tableHeader}>Date Signed</Text>
+                <View style={[styles.tableCol, styles["Date & Time Signed"]]}>
+                  <Text style={styles.tableHeader}>Date & Time Signed</Text>
                 </View>
               </View>
               {approverDetails.map((approver, index) => {
@@ -406,12 +413,21 @@ const PdfDocumentTableVersion = ({
                     <View style={[styles.tableCol, styles["Approval Status"]]}>
                       {formatStatus(approver.status)}
                     </View>
-                    <View style={[styles.tableCol, styles["Date Signed"]]}>
-                      <Text style={styles.tableCell}>
-                        {approver.date
-                          ? new Date(approver.date).toLocaleDateString()
-                          : ""}
-                      </Text>
+                    <View
+                      style={[styles.tableCol, styles["Date & Time Signed"]]}
+                    >
+                      <View style={(styles.tableCell, styles.centerCell)}>
+                        {approver.date && (
+                          <Text style={styles.cellFontSize}>
+                            {new Date(approver.date).toLocaleDateString()}
+                          </Text>
+                        )}
+                        {approver.date && (
+                          <Text style={styles.cellFontSize}>
+                            {convertTimestampToDateTime(approver.date)?.time}
+                          </Text>
+                        )}
+                      </View>
                     </View>
                   </View>
                 );
