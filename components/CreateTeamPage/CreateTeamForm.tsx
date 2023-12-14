@@ -1,12 +1,4 @@
 import { checkIfTeamNameExists } from "@/backend/api/get";
-import {
-  createFormslyPremadeForms,
-  createTeam,
-  createTeamMember,
-  uploadImage,
-} from "@/backend/api/post";
-import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
-import { useUserProfile } from "@/stores/useUserStore";
 import { TeamMemberTableRow, TeamTableRow } from "@/utils/types";
 import {
   Button,
@@ -24,9 +16,8 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
 import validator from "validator";
 import UploadLogo from "../UploadLogo/UploadAvatar";
 
@@ -49,86 +40,96 @@ const isValidImage = (mimeType: string) => {
   );
 };
 
-const CreateTeamForm = ({
-  changeStep,
-  setNewTeam,
-  setOwnerData,
-}: CreateFormProps) => {
-  const user = useUserProfile();
+const CreateTeamForm = ({}: // changeStep,
+// setNewTeam,
+// setOwnerData,
+CreateFormProps) => {
+  // const user = useUserProfile();
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  const { setTeamList } = useTeamActions();
-  const teamList = useTeamList();
+  // const { setTeamList } = useTeamActions();
+  // const teamList = useTeamList();
   const {
     register,
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>();
-  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  // const [isCreatingTeam, setIsCreatingTeam] = useState(false);
 
-  const handleCreateTeam = async (data: FormValues) => {
-    try {
-      setIsCreatingTeam(true);
-      if (!user) {
-        return notifications.show({
-          message: "Invalid User. Please login and try again.",
-          color: "red",
-        });
-      }
-      const teamId = uuidv4();
+  // const handleCreateTeam = async (data: FormValues) => {
+  //   try {
+  //     setIsCreatingTeam(true);
+  //     if (!user) {
+  //       return notifications.show({
+  //         message: "Invalid User. Please login and try again.",
+  //         color: "red",
+  //       });
+  //     }
+  //     const teamId = uuidv4();
 
-      let imageUrl = "";
-      if (data.teamLogo) {
-        imageUrl = await uploadImage(supabaseClient, {
-          id: teamId,
-          image: data.teamLogo,
-          bucket: "TEAM_LOGOS",
-        });
-      }
+  //     let imageUrl = "";
+  //     if (data.teamLogo) {
+  //       imageUrl = await uploadImage(supabaseClient, {
+  //         id: teamId,
+  //         image: data.teamLogo,
+  //         bucket: "TEAM_LOGOS",
+  //       });
+  //     }
 
-      const teamData = await createTeam(supabaseClient, {
-        team_id: teamId,
-        team_name: data.teamName.trim(),
-        team_user_id: user.user_id,
-        team_logo: imageUrl,
-      });
+  //     const teamData = await createTeam(supabaseClient, {
+  //       team_id: teamId,
+  //       team_name: data.teamName.trim(),
+  //       team_user_id: user.user_id,
+  //       team_logo: imageUrl,
+  //     });
 
-      const ownerData = (
-        await createTeamMember(supabaseClient, {
-          team_member_team_id: teamData.team_id,
-          team_member_user_id: user.user_id,
-          team_member_role: "OWNER",
-        })
-      )[0];
+  //     const ownerData = (
+  //       await createTeamMember(supabaseClient, {
+  //         team_member_team_id: teamData.team_id,
+  //         team_member_user_id: user.user_id,
+  //         team_member_role: "OWNER",
+  //       })
+  //     )[0];
 
-      if (data.isWithFormslyForms) {
-        await createFormslyPremadeForms(supabaseClient, {
-          teamMemberId: ownerData.team_member_id,
-        });
-      }
+  //     if (data.isWithFormslyForms) {
+  //       await createFormslyPremadeForms(supabaseClient, {
+  //         teamMemberId: ownerData.team_member_id,
+  //       });
+  //     }
 
-      if (teamData && ownerData) {
-        const updatedTeamList = [teamData, ...teamList];
-        setNewTeam(teamData);
-        setOwnerData(ownerData);
-        setTeamList(updatedTeamList);
-        changeStep((prev) => prev + 1);
-      }
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsCreatingTeam(false);
-    }
+  //     if (teamData && ownerData) {
+  //       const updatedTeamList = [teamData, ...teamList];
+  //       setNewTeam(teamData);
+  //       setOwnerData(ownerData);
+  //       setTeamList(updatedTeamList);
+  //       changeStep((prev) => prev + 1);
+  //     }
+  //   } catch (error) {
+  //     notifications.show({
+  //       message: "Something went wrong. Please try again later.",
+  //       color: "red",
+  //     });
+  //   } finally {
+  //     setIsCreatingTeam(false);
+  //   }
+  // };
+
+  const tempSubmit = () => {
+    return notifications.show({
+      message: "Create team is temporarily disabled",
+      color: "gray",
+    });
   };
 
   return (
     <Paper p="xl" mt="xl">
-      <form onSubmit={handleSubmit(handleCreateTeam)}>
-        <LoadingOverlay visible={isCreatingTeam} overlayBlur={2} />
+      <form onSubmit={handleSubmit(tempSubmit)}>
+        <LoadingOverlay
+          // visible={isCreatingTeam}
+          visible={false}
+          overlayBlur={2}
+        />
         <Stack spacing="lg">
           <Title order={4}>Enter team details</Title>
           <Controller
