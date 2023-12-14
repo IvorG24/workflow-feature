@@ -9,6 +9,7 @@ import {
   FormStatusType,
   RequestListItemType,
   TeamMemberWithUserType,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import {
   Alert,
@@ -46,6 +47,7 @@ export type FilterFormValues = {
   requestorList: string[];
   approverList: string[];
   formList: string[];
+  projectList: string[];
   status?: FormStatusType[];
   isAscendingSort: boolean;
   isApproversView: boolean;
@@ -59,6 +61,7 @@ export type RequestListLocalFilter = {
   status: FormStatusType[] | undefined;
   isAscendingSort: boolean;
   isApproversView: boolean;
+  projectList: string[];
 };
 
 type Props = {
@@ -67,6 +70,7 @@ type Props = {
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
+  projectList: TeamProjectTableRow[];
 };
 
 const RequestListPage = ({
@@ -75,6 +79,7 @@ const RequestListPage = ({
   teamMemberList,
   formList,
   isFormslyTeam,
+  projectList,
 }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
@@ -97,6 +102,7 @@ const RequestListPage = ({
         status: undefined,
         isAscendingSort: false,
         isApproversView: false,
+        projectList: [],
       },
     }
   );
@@ -121,6 +127,7 @@ const RequestListPage = ({
       status,
       isAscendingSort,
       isApproversView,
+      projectList,
     }: FilterFormValues = getValues()
   ) => {
     try {
@@ -149,6 +156,8 @@ const RequestListPage = ({
           approverList && approverList.length > 0 ? approverList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
+        project:
+          projectList && projectList.length > 0 ? projectList : undefined,
         search: search,
         isApproversView,
         teamMemberId: teamMember.team_member_id,
@@ -184,6 +193,7 @@ const RequestListPage = ({
         status,
         isAscendingSort,
         isApproversView,
+        projectList,
       } = getValues();
 
       const params = {
@@ -196,6 +206,8 @@ const RequestListPage = ({
           approverList && approverList.length > 0 ? approverList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
+        project:
+          projectList && projectList.length > 0 ? projectList : undefined,
         search: search,
         isApproversView,
         teamMemberId: teamMember.team_member_id,
@@ -330,6 +342,7 @@ const RequestListPage = ({
             formList={formList}
             localFilter={localFilter}
             setLocalFilter={setLocalFilter}
+            projectList={projectList}
           />
         </form>
       </FormProvider>
