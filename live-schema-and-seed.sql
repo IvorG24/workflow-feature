@@ -6222,7 +6222,7 @@ RETURNS JSON AS $$
           request_formsly_id,
           request_id
         FROM request_response_table
-        INNER JOIN request_table ON request_id = request_response_request_id
+        INNER JOIN request_view ON request_id = request_response_request_id
         WHERE 
           request_response = '"${itemName}"' AND
           request_response_field_id = '${generalNameFieldId}' AND
@@ -6237,7 +6237,7 @@ RETURNS JSON AS $$
       `
         SELECT COUNT(*)
         FROM request_response_table
-        INNER JOIN request_table ON request_id = request_response_request_id
+        INNER JOIN request_view ON request_id = request_response_request_id
         WHERE 
           request_response = '"${itemName}"' AND
           request_response_field_id = '${generalNameFieldId}' AND
@@ -7932,6 +7932,7 @@ ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 

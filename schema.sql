@@ -431,6 +431,20 @@ CREATE TABLE user_employee_number_table (
 
 -- END: User employee number table
 
+-- Start: User onboard table
+
+CREATE TABLE user_onboard_table(
+  user_onboard_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_onboard_name VARCHAR(4000) NOT NULL,
+  user_onboard_score INT NOT NULL,
+  user_onboard_top_score INT NOT NULL,
+
+  user_onboard_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_onboard_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+
+-- END: User onboard table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -6204,7 +6218,7 @@ RETURNS JSON AS $$
           request_formsly_id,
           request_id
         FROM request_response_table
-        INNER JOIN request_table ON request_id = request_response_request_id
+        INNER JOIN request_view ON request_id = request_response_request_id
         WHERE 
           request_response = '"${itemName}"' AND
           request_response_field_id = '${generalNameFieldId}' AND
@@ -6219,7 +6233,7 @@ RETURNS JSON AS $$
       `
         SELECT COUNT(*)
         FROM request_response_table
-        INNER JOIN request_table ON request_id = request_response_request_id
+        INNER JOIN request_view ON request_id = request_response_request_id
         WHERE 
           request_response = '"${itemName}"' AND
           request_response_field_id = '${generalNameFieldId}' AND
@@ -7913,6 +7927,7 @@ ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9576,6 +9591,33 @@ USING (
     SELECT user_id
     FROM user_table
     WHERE user_id = user_employee_number_user_id
+  )
+);
+
+--- USER_ONBOARD_TABLE
+CREATE POLICY "Allow CREATE access for all users" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for authenticated users on own onboard" ON "public"."user_onboard_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  user_onboard_user_id IN (
+    SELECT user_onboard_user_id  
+    FROM user_onboard_table 
+    WHERE user_onboard_user_id = auth.uid()
   )
 );
 
