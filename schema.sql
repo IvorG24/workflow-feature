@@ -418,6 +418,19 @@ CREATE TABLE special_approver_item_table(
 
 -- END: Special approver item table
 
+-- Start: User employee number table
+
+CREATE TABLE user_employee_number_table (
+    user_employee_number_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    user_employee_number_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    user_employee_number_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+    user_employee_number VARCHAR(4000) NOT NULL,
+
+    user_employee_number_user_id UUID REFERENCES user_table(user_id)
+);
+
+-- END: User employee number table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -3177,7 +3190,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get team member on load
 
-CREATE FUNCTION get_team_member_on_load(
+CREATE OR REPLACE FUNCTION get_team_member_on_load(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -3187,7 +3200,29 @@ RETURNS JSON AS $$
       teamMemberId
     } = input_data;
     
-    const member = plv8.execute(`SELECT tmt.* , ( SELECT row_to_json(usert) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE team_member_id='${teamMemberId}';`)[0];
+    const member = plv8.execute(
+      `
+        SELECT 
+          tmt.*, 
+          json_build_object( 
+            'user_id', usert.user_id, 
+            'user_first_name', usert.user_first_name, 
+            'user_last_name', usert.user_last_name, 
+            'user_avatar', usert.user_avatar, 
+            'user_email', usert.user_email,
+            'user_phone_number', usert.user_phone_number,
+            'user_username', usert.user_username,
+            'user_job_title', usert.user_job_title,
+            'user_employee_number', uent.user_employee_number
+          ) AS team_member_user 
+        FROM team_member_table tmt 
+        INNER JOIN user_table usert ON usert.user_id = tmt.team_member_user_id
+        LEFT JOIN user_employee_number_table uent 
+          ON uent.user_employee_number_user_id = usert.user_id
+          AND uent.user_employee_number_is_disabled = false
+        WHERE team_member_id='${teamMemberId}'
+      `
+    )[0];
 
     const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_group_member_table tgmt2 INNER JOIN team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
 
@@ -3246,10 +3281,14 @@ RETURNS JSON AS $$
           'user_first_name', usert.user_first_name, 
           'user_last_name', usert.user_last_name, 
           'user_avatar', usert.user_avatar, 
-          'user_email', usert.user_email 
+          'user_email', usert.user_email,
+          'user_employee_number', uent.user_employee_number
         ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id
+        LEFT JOIN user_employee_number_table uent 
+          ON uent.user_employee_number_user_id = usert.user_id
+          AND uent.user_employee_number_is_disabled=false
         WHERE 
           tmt.team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -3321,10 +3360,14 @@ RETURNS JSON AS $$
             'user_first_name', usert.user_first_name, 
             'user_last_name', usert.user_last_name, 
             'user_avatar', usert.user_avatar, 
-            'user_email', usert.user_email 
+            'user_email', usert.user_email,
+            'user_employee_number', uent.user_employee_number
           ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id
+        LEFT JOIN user_employee_number_table uent 
+          ON uent.user_employee_number_user_id = usert.user_id
+          AND uent.user_employee_number_is_disabled=false
         WHERE 
           tmt.team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -7869,6 +7912,7 @@ ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -8025,6 +8069,16 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_field_uom_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_onboard_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_onboard_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_onboard_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own onboard" ON user_onboard_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_number_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_employee_number_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -9485,6 +9539,45 @@ USING (
 CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_item_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+-- USER_EMPLOYEE_NUMBER_TABLE
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT user_id
+    FROM user_table
+    WHERE user_id = user_employee_number_user_id
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT user_id
+    FROM user_table
+    WHERE user_id = user_employee_number_user_id
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT user_id
+    FROM user_table
+    WHERE user_id = user_employee_number_user_id
+  )
+);
 
 -------- End: POLICIES
 
