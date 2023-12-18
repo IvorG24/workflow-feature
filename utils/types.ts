@@ -293,6 +293,8 @@ export type RequestType = {
 };
 
 export type UserWithSignatureType = UserTableRow & {
+  user_employee_number: string;
+} & {
   user_signature_attachment: AttachmentTableRow;
 };
 
@@ -383,6 +385,7 @@ export type TeamMemberType = {
     user_last_name: string;
     user_avatar: string;
     user_email: string;
+    user_employee_number: string;
   };
 };
 
@@ -909,7 +912,9 @@ export type TeamMemberWithUserDetails = {
 }[];
 
 export type TeamMemberOnLoad = {
-  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  member: TeamMemberTableRow & {
+    team_member_user: UserTableRow & { user_employee_number: string };
+  };
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;

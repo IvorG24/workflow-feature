@@ -39,6 +39,7 @@ import {
   TicketPageOnLoad,
   TicketStatusType,
   TicketType,
+  UserTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -262,11 +263,25 @@ export const getUserWithSignature = async (
   const { userId } = params;
   const { data, error } = await supabaseClient
     .from("user_table")
-    .select("*, user_signature_attachment: user_signature_attachment_id(*)")
+    .select(
+      "*, user_signature_attachment: user_signature_attachment_id(*), user_employee_number: user_employee_number_table(user_employee_number, user_employee_number_is_disabled)"
+    )
     .eq("user_id", userId)
+    .eq("user_employee_number.user_employee_number_is_disabled", false)
     .single();
   if (error) throw error;
-  return data;
+
+  const formattedData = data as unknown as UserTableRow & {
+    user_employee_number: { user_employee_number: string }[];
+  };
+
+  return {
+    ...formattedData,
+    user_employee_number:
+      formattedData.user_employee_number.length !== 0
+        ? formattedData.user_employee_number[0].user_employee_number
+        : null,
+  };
 };
 
 // Check username if it already exists

@@ -245,6 +245,7 @@ const UserSettingsPage = ({ user }: Props) => {
           avatarFile={avatarFile}
           onAvatarFileChange={setAvatarFile}
           isUpdatingPersonalInfo={isUpdatingPersonalInfo}
+          employeeNumber={user.user_employee_number}
         />
       </FormProvider>
 
