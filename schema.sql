@@ -422,6 +422,7 @@ CREATE TABLE special_approver_item_table(
 
 CREATE TABLE equipment_category_table(
   equipment_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_category VARCHAR(4000) NOT NULL,
   equipment_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_category_is_available BOOLEAN DEFAULT true NOT NULL,
@@ -436,6 +437,7 @@ CREATE TABLE equipment_category_table(
 
 CREATE TABLE equipment_brand_table(
   equipment_brand_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_brand_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_brand VARCHAR(4000) NOT NULL,
   equipment_brand_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_brand_is_available BOOLEAN DEFAULT true NOT NULL,
@@ -450,6 +452,7 @@ CREATE TABLE equipment_brand_table(
 
 CREATE TABLE equipment_model_table(
   equipment_model_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_model_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_model VARCHAR(4000) NOT NULL,
   equipment_model_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_model_is_available BOOLEAN DEFAULT true NOT NULL,
@@ -464,6 +467,7 @@ CREATE TABLE equipment_model_table(
 
 CREATE TABLE equipment_component_category_table(
   equipment_component_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_component_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_component_category VARCHAR(4000) NOT NULL,
   equipment_component_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_component_category_is_available BOOLEAN DEFAULT true NOT NULL,
@@ -478,6 +482,7 @@ CREATE TABLE equipment_component_category_table(
 
 CREATE TABLE equipment_table(
   equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_name VARCHAR(4000) NOT NULL,
   equipment_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_is_available BOOLEAN DEFAULT true NOT NULL,
@@ -493,6 +498,7 @@ CREATE TABLE equipment_table(
 
 CREATE TABLE equipment_description_table(
   equipment_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_description_property_number VARCHAR(4000) NOT NULL,
   equipment_description_serial_number VARCHAR(4000) NOT NULL,
   equipment_description_is_disabled BOOLEAN DEFAULT false NOT NULL,
@@ -510,6 +516,7 @@ CREATE TABLE equipment_description_table(
 
 CREATE TABLE equipment_unit_of_measurement_table(
   equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_unit_of_measurement VARCHAR(4000) NOT NULL,
   equipment_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
@@ -524,6 +531,7 @@ CREATE TABLE equipment_unit_of_measurement_table(
 
 CREATE TABLE equipment_part_table(
   equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_part_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_part_name VARCHAR(4000) NOT NULL,
   equipment_part_number VARCHAR(4000) NOT NULL,
   equipment_part_is_available BOOLEAN DEFAULT TRUE NOT NULL,
