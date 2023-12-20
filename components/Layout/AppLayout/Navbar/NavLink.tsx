@@ -12,9 +12,8 @@ import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
-import { Box, Button, Menu, Select, Space, Stack, Text } from "@mantine/core";
+import { Box, Button, Divider, Menu, Space, Stack } from "@mantine/core";
 import { usePrevious } from "@mantine/hooks";
-import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
@@ -25,7 +24,6 @@ import {
   IconFileText,
   IconFiles,
   IconListDetails,
-  IconSearch,
   IconTicket,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -68,13 +66,13 @@ const ReviewAppNavLink = () => {
     form_team_group: string[];
   };
 
-  const renderFormMenu = () => {
+  const renderCreateRequestMenu = () => {
     return (
       <Box h="fit-content" mt="md">
         <Menu
           shadow="1px 1px 3px rgba(0, 0, 0, .25)"
           withArrow
-          position="bottom-start"
+          position="right"
         >
           <Stack align="start" {...defaultNavLinkContainerProps}>
             <Menu.Target>
@@ -106,6 +104,63 @@ const ReviewAppNavLink = () => {
                   router.push(
                     `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
                   )
+                }
+              >
+                {form.form_name}
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
+        </Menu>
+      </Box>
+    );
+  };
+
+  const renderManageFormMenu = () => {
+    return (
+      <Box h="fit-content">
+        <Menu
+          shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+          withArrow
+          position="right"
+        >
+          <Stack align="start" {...defaultNavLinkContainerProps}>
+            <Menu.Target>
+              <Button
+                fw={400}
+                leftIcon={<IconFileText {...defaultIconProps} />}
+                variant="transparent"
+              >
+                Manage Form{unhiddenForms.length > 1 ? "s" : ""} (
+                {isFormslyTeam
+                  ? forms.length - UNHIDEABLE_FORMLY_FORMS.length
+                  : forms.length}
+                )
+              </Button>
+            </Menu.Target>
+            <Button
+              fw={400}
+              leftIcon={<IconFilePlus {...defaultIconProps} />}
+              variant="transparent"
+              onClick={() => router.push(`/${activeTeamNameToUrl}/forms/build`)}
+            >
+              Build Form
+            </Button>
+          </Stack>
+
+          <Menu.Dropdown>
+            <Menu.Item
+              key={"all-form"}
+              onClick={() => router.push(`/${activeTeamNameToUrl}/forms/`)}
+              c="blue"
+            >
+              View All
+            </Menu.Item>
+            <Divider />
+            {unhiddenForms.map((form) => (
+              <Menu.Item
+                key={form.form_id}
+                onClick={() =>
+                  router.push(`/${activeTeamNameToUrl}/forms/${form.form_id}`)
                 }
               >
                 {form.form_name}
@@ -239,21 +294,6 @@ const ReviewAppNavLink = () => {
     },
   ];
 
-  const handleFormSelection = (value: string | null) => {
-    setSelectedForm(value);
-    if (!value) return;
-    const formMatch = unhiddenForms.find((form) => form.form_name === value);
-
-    if (!formMatch) {
-      return notifications.show({
-        message: "Form cannot be found.",
-        color: "red",
-      });
-    }
-
-    router.push(`/${activeTeamNameToUrl}/forms/${formMatch.form_id}`);
-  };
-
   useEffect(() => {
     const fetchApproverRequestList = async () => {
       if (!userTeamMemberData) return;
@@ -289,7 +329,7 @@ const ReviewAppNavLink = () => {
       requisitionForm.form_team_group.length &&
       hasTeam ? (
         unhiddenForms.length > 1 ? (
-          renderFormMenu()
+          renderCreateRequestMenu()
         ) : (
           <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
         )
@@ -317,30 +357,20 @@ const ReviewAppNavLink = () => {
         <>
           {(userTeamMemberData?.team_member_role === "ADMIN" ||
             userTeamMemberData?.team_member_role === "OWNER") && (
-            <NavLinkSection
-              label={"Form"}
-              links={ownerAndAdminFormSection}
-              {...defaultNavLinkProps}
-            />
+            <>
+              <NavLinkSection
+                label={"Form"}
+                links={[]}
+                {...defaultNavLinkProps}
+              />
+              {/* <NavLinkSection
+                label={"Form"}
+                links={ownerAndAdminFormSection}
+                {...defaultNavLinkProps}
+              /> */}
+              {renderManageFormMenu()}
+            </>
           )}
-          <Select
-            label={
-              <Text size="xs" weight={400}>
-                Edit Form
-              </Text>
-            }
-            mt="sm"
-            searchable
-            clearable
-            placeholder="Search and select a form"
-            icon={<IconSearch size={12} stroke={1.5} />}
-            value={selectedForm}
-            data={unhiddenForms.map((form) => form.form_name)}
-            onChange={handleFormSelection}
-            styles={{
-              dropdown: { maxWidth: "fit-content" },
-            }}
-          />
         </>
       )}
 
