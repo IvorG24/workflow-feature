@@ -1,12 +1,6 @@
-import {
-  useActiveApp,
-  useActiveTeam,
-  useTeamList,
-} from "@/stores/useTeamStore";
-import { isEmpty } from "@/utils/functions";
+import { useActiveApp, useTeamList } from "@/stores/useTeamStore";
 import { Navbar as MantineNavbar, Skeleton, Stack } from "@mantine/core";
 import { useScrollLock } from "@mantine/hooks";
-import FormList from "./FormList";
 import NavLink from "./NavLink";
 import SelectTeam from "./SelectTeam";
 
@@ -16,7 +10,6 @@ type NavbarProps = {
 
 const Navbar = ({ openNavbar }: NavbarProps) => {
   const activeApp = useActiveApp();
-  const activeTeam = useActiveTeam();
   useScrollLock(openNavbar);
   const teamList = useTeamList();
   const hasTeam = teamList.length > 0;
@@ -52,7 +45,7 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
       {activeApp ? (
         <>
           <NavLink />
-          {!isEmpty(activeTeam) && hasTeam ? <FormList /> : null}
+          {/* {!isEmpty(activeTeam) && hasTeam ? <FormList /> : null} */}
         </>
       ) : null}
     </MantineNavbar>
