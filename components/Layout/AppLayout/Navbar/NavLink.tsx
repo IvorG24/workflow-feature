@@ -13,7 +13,6 @@ import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
 import { Box, Button, Divider, Menu, Space, Stack } from "@mantine/core";
-import { usePrevious } from "@mantine/hooks";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
@@ -37,7 +36,6 @@ const ReviewAppNavLink = () => {
   const defaultNavLinkContainerProps = { py: 5, mt: 3 };
 
   const [userNotificationCount, setUserNotificationCount] = useState(0);
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
 
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeApp = useActiveApp();
@@ -54,8 +52,6 @@ const ReviewAppNavLink = () => {
   const unhiddenForms = forms.filter(
     (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)
   );
-
-  const previousTeamId = usePrevious(activeTeam.team_id);
 
   const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
 
@@ -269,31 +265,6 @@ const ReviewAppNavLink = () => {
     },
   ];
 
-  const ownerAndAdminFormSection = [
-    {
-      label: `Manage Form${unhiddenForms.length > 1 ? "s" : ""} (${
-        isFormslyTeam
-          ? forms.length - UNHIDEABLE_FORMLY_FORMS.length
-          : forms.length
-      })`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconFileText {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/forms`,
-    },
-    {
-      label: "Build Form",
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconFilePlus {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/forms/build`,
-    },
-  ];
-
   useEffect(() => {
     const fetchApproverRequestList = async () => {
       if (!userTeamMemberData) return;
@@ -315,12 +286,6 @@ const ReviewAppNavLink = () => {
     };
     fetchApproverRequestList();
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
-
-  useEffect(() => {
-    if (activeTeam.team_id !== previousTeamId) {
-      setSelectedForm(null);
-    }
-  }, [activeTeam, previousTeamId]);
 
   return (
     <>
