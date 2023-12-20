@@ -12,10 +12,10 @@ import {
   GetServerSidePropsContext,
   GetServerSidePropsResult,
 } from "next";
-import { isUuid } from "uuidv4";
+
 import { SIGN_IN_PAGE_PATH } from "./constant";
 import { Database } from "./database";
-import { formatTeamNameToUrlKey } from "./string";
+import { formatTeamNameToUrlKey, isUUID } from "./string";
 import { TeamTableRow } from "./types";
 
 export const withAuth = <P extends { [key: string]: any }>(
@@ -265,7 +265,7 @@ export const withAuthAndOnboardingRequestPage = <
         context.query.teamName ===
         formatTeamNameToUrlKey(userActiveTeam.team_name);
 
-      if (context.query.requestId && isUuid(`${context.query.requestId}`)) {
+      if (context.query.requestId && isUUID(`${context.query.requestId}`)) {
         const requestTeamId = await getRequestTeamId(supabaseClient, {
           requestId: `${context.query.requestId}`,
         });

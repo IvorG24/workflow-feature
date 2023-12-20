@@ -43,8 +43,7 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
-import { v4 as uuidv4 } from "uuid";
-import validator from "validator";
+import { v4 as uuidv4, validate } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
@@ -173,6 +172,7 @@ export const getRequestList = async (
     isApproversView: boolean;
     teamMemberId?: string;
     project?: string[];
+    idFilter?: string[];
   }
 ) => {
   const {
@@ -188,6 +188,7 @@ export const getRequestList = async (
     isApproversView,
     teamMemberId,
     project,
+    idFilter,
   } = params;
 
   const requestorCondition = requestor
@@ -206,8 +207,12 @@ export const getRequestList = async (
     ?.map((value) => `request_view.request_formsly_id_prefix = '${value}'`)
     .join(" OR ");
 
+  const idFilterCondition = idFilter
+    ?.map((value) => `request_view.request_${value}_id IS NULL`)
+    .join(" AND ");
+
   const searchCondition =
-    search && validator.isUUID(search)
+    search && validate(search)
       ? `request_view.request_id = '${search}'`
       : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
@@ -220,6 +225,7 @@ export const getRequestList = async (
       approver: approverCondition ? `AND (${approverCondition})` : "",
       project: projectCondition ? `AND (${projectCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
+      idFilter: idFilterCondition ? `AND (${idFilterCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
@@ -3854,7 +3860,7 @@ export const getTicketList = async (
     .join(" OR ");
 
   const searchCondition =
-    search && search?.length > 0 && validator.isUUID(search)
+    search && search?.length > 0 && validate(search)
       ? `ticket_table.ticket_id = '${search}'`
       : `ticket_table.ticket_id::text LIKE '${search}%'`;
 

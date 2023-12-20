@@ -51,6 +51,7 @@ export type FilterFormValues = {
   status?: FormStatusType[];
   isAscendingSort: boolean;
   isApproversView: boolean;
+  idFilterList: string[];
 };
 
 export type RequestListLocalFilter = {
@@ -62,6 +63,7 @@ export type RequestListLocalFilter = {
   isAscendingSort: boolean;
   isApproversView: boolean;
   projectList: string[];
+  idFilterList: string[];
 };
 
 type Props = {
@@ -103,6 +105,7 @@ const RequestListPage = ({
         isAscendingSort: false,
         isApproversView: false,
         projectList: [],
+        idFilterList: [],
       },
     }
   );
@@ -128,6 +131,7 @@ const RequestListPage = ({
       isAscendingSort,
       isApproversView,
       projectList,
+      idFilterList,
     }: FilterFormValues = getValues()
   ) => {
     try {
@@ -158,6 +162,8 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         project:
           projectList && projectList.length > 0 ? projectList : undefined,
+        idFilter:
+          idFilterList && idFilterList.length > 0 ? idFilterList : undefined,
         search: search,
         isApproversView,
         teamMemberId: teamMember.team_member_id,
@@ -194,6 +200,7 @@ const RequestListPage = ({
         isAscendingSort,
         isApproversView,
         projectList,
+        idFilterList,
       } = getValues();
 
       const params = {
@@ -208,6 +215,8 @@ const RequestListPage = ({
         status: status && status.length > 0 ? status : undefined,
         project:
           projectList && projectList.length > 0 ? projectList : undefined,
+        idFilter:
+          idFilterList && idFilterList.length < 0 ? idFilterList : undefined,
         search: search,
         isApproversView,
         teamMemberId: teamMember.team_member_id,

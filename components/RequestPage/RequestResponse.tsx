@@ -20,7 +20,7 @@ import {
   IconFile,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import validator from "validator";
+import { validate } from "uuid";
 
 type RequestReponseProps = {
   response: {
@@ -61,7 +61,7 @@ const RequestResponse = ({
 
   useEffect(() => {
     const fetchRequestFormslyId = async () => {
-      if (validator.isUUID(linkDisplayValue.toString())) {
+      if (validate(linkDisplayValue.toString())) {
         const requestFormslyId = await getRequestFormslyId(supabaseClient, {
           requestId: linkDisplayValue,
         });
