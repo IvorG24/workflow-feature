@@ -185,6 +185,11 @@ const SelectTeam = () => {
             {(activeTeam.team_name[0] + activeTeam.team_name[1]).toUpperCase()}
           </Avatar>
         }
+        styles={{
+          dropdown: {
+            maxWidth: "fit-content",
+          },
+        }}
       />
     </>
   );
