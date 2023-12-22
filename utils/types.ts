@@ -199,6 +199,13 @@ export type UserOnboardTableInsert =
 export type UserOnboardTableUpdate =
   Database["public"]["Tables"]["user_onboard_table"]["Update"];
 
+export type ServiceCategoryTableRow =
+  Database["public"]["Tables"]["service_category_table"]["Row"];
+export type ServiceCategoryTableInsert =
+  Database["public"]["Tables"]["service_category_table"]["Insert"];
+export type ServiceCategoryTableUpdate =
+  Database["public"]["Tables"]["service_category_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1072,3 +1079,16 @@ export type ApproverUnresolvedRequestListType = {
     request_status: string;
   };
 };
+
+export type LookupTable = {
+  id: string;
+  status: boolean;
+  value: string;
+};
+
+export type LookupForm = {
+  value: string;
+  isAvailable: boolean;
+};
+
+export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";

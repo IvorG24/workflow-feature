@@ -1,6 +1,7 @@
 import Meta from "@/components/Meta/Meta";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
+import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import {
   ConnectedRequestIdList,
@@ -76,6 +77,8 @@ const Page = ({
           canvassRequest={canvassRequest}
         />
       );
+    } else if (request.request_form.form_name === "Services") {
+      return <ServicesRequestPage request={request} />;
     } else {
       return (
         <RequestPage

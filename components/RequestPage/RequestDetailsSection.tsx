@@ -63,7 +63,7 @@ const RequestDetailsSection = ({
 
   const isFormslyRequisitionRequest =
     request.request_form.form_is_formsly_form &&
-    request.request_form.form_name === "Requisition";
+    ["Requisition", "Services"].includes(request.request_form.form_name);
 
   const handleUpdateOtpID = async ({ otpID }: { otpID: string }) => {
     try {

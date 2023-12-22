@@ -3,6 +3,7 @@ import Meta from "@/components/Meta/Meta";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
+import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import SubconFormPage from "@/components/SubconFormPage/SubconFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
@@ -113,6 +114,16 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
             suppliers={suppliers}
             supplierListCount={supplierListCount}
+          />
+        );
+      case "Services":
+        return (
+          <ServicesFormPage
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
           />
         );
       default:

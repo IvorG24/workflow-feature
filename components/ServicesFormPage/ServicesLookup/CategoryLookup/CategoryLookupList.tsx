@@ -1,10 +1,10 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getNameList } from "@/backend/api/get";
+import { getLookupList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { SupplierTableRow } from "@/utils/types";
+import { LookupTable } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -21,7 +21,12 @@ import {
 import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconSearch,
+  IconSettings,
+  IconTrash,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 
@@ -34,59 +39,78 @@ const useStyles = createStyles((theme) => ({
       flexGrow: 1,
     },
   },
-  clickableColumn: {
-    "&:hover": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[7]
-          : theme.colors.gray[5],
-    },
-    cursor: "pointer",
-  },
 }));
 
 type Props = {
-  supplierList: SupplierTableRow[];
-  setSupplierList: Dispatch<SetStateAction<SupplierTableRow[]>>;
-  supplierCount: number;
-  setSupplierCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingSupplier: Dispatch<SetStateAction<boolean>>;
+  lookup: {
+    table: string;
+    label: string;
+  };
+  categoryLookupList: LookupTable[];
+  setCategoryLookupList: Dispatch<SetStateAction<LookupTable[]>>;
+  categoryLookupCount: number;
+  setCategoryLookupCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingCategoryLookup: Dispatch<SetStateAction<boolean>>;
+  setEditCategoryLookup: Dispatch<SetStateAction<LookupTable | null>>;
 };
 
-const SupplierList = ({
-  supplierList,
-  setSupplierList,
-  supplierCount,
-  setSupplierCount,
-  setIsCreatingSupplier,
+const CategoryLookupList = ({
+  lookup,
+  categoryLookupList,
+  setCategoryLookupList,
+  categoryLookupCount,
+  setCategoryLookupCount,
+  setIsCreatingCategoryLookup,
+  setEditCategoryLookup,
 }: Props) => {
+  const supabaseClient = useSupabaseClient();
   const { classes } = useStyles();
 
-  const supabaseClient = useSupabaseClient();
-  const activeTeam = useActiveTeam();
-
-  const [isLoading, setIsLoading] = useState(false);
+  const team = useActiveTeam();
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const headerCheckboxKey = generateRandomId();
 
-  const handleCheckRow = (supplierId: string) => {
-    if (checkList.includes(supplierId)) {
-      setCheckList(checkList.filter((id) => id !== supplierId));
+  const handleFetch = async (search: string, page: number) => {
+    setIsLoading(true);
+    try {
+      if (!team.team_id) return;
+      const { data, count } = await getLookupList(supabaseClient, {
+        lookup: lookup.table,
+        teamId: team.team_id,
+        search,
+        limit: ROW_PER_PAGE,
+        page,
+      });
+      setCategoryLookupList(data);
+      setCategoryLookupCount(Number(count));
+    } catch (e) {
+      notifications.show({
+        message: `Error on fetching category ${lookup.label} list`,
+        color: "red",
+      });
+    }
+    setIsLoading(false);
+  };
+
+  const handleCheckRow = (categoryLookupId: string) => {
+    if (checkList.includes(categoryLookupId)) {
+      setCheckList(checkList.filter((id) => id !== categoryLookupId));
     } else {
-      setCheckList([...checkList, supplierId]);
+      setCheckList([...checkList, categoryLookupId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const supplierIdList = supplierList.map(
-        (supplier) => supplier.supplier_id
+      const categoryLookupIdList = categoryLookupList.map(
+        (categoryLookup) => categoryLookup.id
       );
-      setCheckList(supplierIdList);
+      setCheckList(categoryLookupIdList);
     } else {
       setCheckList([]);
     }
@@ -99,51 +123,32 @@ const SupplierList = ({
     handleFetch(isEmpty ? "" : search, 1);
   };
 
-  const handleFetch = async (search: string, page: number) => {
-    setIsLoading(true);
-    try {
-      const { data, count } = await getNameList(supabaseClient, {
-        table: "supplier",
-        teamId: activeTeam.team_id,
-        search,
-        limit: ROW_PER_PAGE,
-        page: page,
-      });
-      setSupplierList(data as SupplierTableRow[]);
-      setSupplierCount(Number(count));
-    } catch {
-      notifications.show({
-        message: "Error on fetching supplier list",
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = supplierList;
+    const savedRecord = categoryLookupList;
 
     try {
-      const updatedSupplierList = supplierList.filter((supplier) => {
-        if (!checkList.includes(supplier.supplier_id)) {
-          return supplier;
+      const updatedCategoryLookupList = categoryLookupList.filter(
+        (categoryLookup) => {
+          if (!checkList.includes(categoryLookup.id)) {
+            return categoryLookup;
+          }
         }
-      });
-      setSupplierList(updatedSupplierList);
+      );
+      setCategoryLookupList(updatedCategoryLookupList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "supplier",
+        table: lookup.table,
       });
 
       notifications.show({
-        message: "Supplier/s deleted.",
+        message: `${lookup.label}/s deleted.`,
         color: "green",
       });
     } catch {
-      setSupplierList(savedRecord);
+      setCategoryLookupList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -152,21 +157,24 @@ const SupplierList = ({
     }
   };
 
-  const handleUpdateStatus = async (supplierId: string, value: boolean) => {
-    const savedRecord = supplierList;
+  const handleUpdateStatus = async (
+    categoryLookupId: string,
+    value: boolean
+  ) => {
+    const savedRecord = categoryLookupList;
     try {
-      setSupplierList((prev) =>
-        prev.map((supplier) => {
-          if (supplier.supplier_id !== supplierId) return supplier;
+      setCategoryLookupList((prev) =>
+        prev.map((categoryLookup) => {
+          if (categoryLookup.id !== categoryLookupId) return categoryLookup;
           return {
-            ...supplier,
-            supplier_is_available: value,
+            ...categoryLookup,
+            status: value,
           };
         })
       );
       await toggleStatus(supabaseClient, {
-        table: "supplier",
-        id: supplierId,
+        table: lookup.table,
+        id: categoryLookupId,
         status: value,
       });
     } catch {
@@ -174,7 +182,7 @@ const SupplierList = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      setSupplierList(savedRecord);
+      setCategoryLookupList(savedRecord);
     }
   };
 
@@ -183,11 +191,11 @@ const SupplierList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Suppliers
+            List of {lookup.label}
           </Title>
           <TextInput
             miw={250}
-            placeholder="Supplier Name"
+            placeholder="Search"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -211,6 +219,7 @@ const SupplierList = ({
             className={classes.flexGrow}
           />
         </Group>
+
         <Group className={classes.flexGrow}>
           {checkList.length !== 0 ? (
             <Button
@@ -223,9 +232,7 @@ const SupplierList = ({
                   children: (
                     <Text size={14}>
                       Are you sure you want to delete{" "}
-                      {checkList.length === 1
-                        ? "this supplier?"
-                        : "these suppliers?"}
+                      {`this category ${lookup.label}/s?`}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -240,21 +247,21 @@ const SupplierList = ({
           <Button
             rightIcon={<IconPlus size={16} />}
             className={classes.flexGrow}
-            onClick={() => setIsCreatingSupplier(true)}
+            onClick={() => setIsCreatingCategoryLookup(true)}
           >
             Add
           </Button>
         </Group>
       </Flex>
       <DataTable
-        idAccessor="supplier_id"
+        idAccessor="id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={supplierList}
+        records={categoryLookupList}
         columns={[
           {
             accessor: "checkbox",
@@ -264,48 +271,64 @@ const SupplierList = ({
                 className={classes.checkbox}
                 checked={
                   checkList.length > 0 &&
-                  checkList.length === supplierList.length
+                  checkList.length === categoryLookupList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
               />
             ),
-            render: ({ supplier_id }) => (
+            render: (data) => (
               <Checkbox
                 className={classes.checkbox}
                 size="xs"
-                checked={checkList.includes(supplier_id)}
+                checked={checkList.includes(data.id)}
                 onChange={() => {
-                  handleCheckRow(supplier_id);
+                  handleCheckRow(data.id);
                 }}
               />
             ),
             width: 40,
           },
           {
-            accessor: "supplier",
-            title: "Supplier Name",
-            render: ({ supplier }) => <Text>{supplier}</Text>,
+            accessor: `${lookup.table}`,
+            title: `${lookup.label}`,
+            render: (data) => <Text>{data.value}</Text>,
           },
           {
             accessor: "status",
             title: "Status",
             textAlignment: "center",
-            render: ({ supplier_is_available, supplier_id }) => (
+            render: (data) => (
               <Center>
                 <Checkbox
-                  checked={supplier_is_available}
+                  checked={data.status}
                   className={classes.checkbox}
                   size="xs"
                   onChange={(e) =>
-                    handleUpdateStatus(supplier_id, e.currentTarget.checked)
+                    handleUpdateStatus(data.id, e.currentTarget.checked)
                   }
                 />
               </Center>
             ),
           },
+          {
+            accessor: "edit",
+            title: "",
+            textAlignment: "center",
+            render: (category) => (
+              <Center>
+                <ActionIcon
+                  onClick={() => {
+                    setEditCategoryLookup(category);
+                  }}
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
+              </Center>
+            ),
+          },
         ]}
-        totalRecords={supplierCount}
+        totalRecords={categoryLookupCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -317,4 +340,4 @@ const SupplierList = ({
   );
 };
 
-export default SupplierList;
+export default CategoryLookupList;

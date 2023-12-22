@@ -2463,10 +2463,10 @@ export const getSupplier = async (
   const { supplier, teamId, fieldId } = params;
   const { data, error } = await supabaseClient
     .from("supplier_table")
-    .select("supplier_name")
+    .select("supplier")
     .eq("supplier_team_id", teamId)
-    .ilike("supplier_name", `%${supplier}%`)
-    .order("supplier_name", { ascending: true })
+    .ilike("supplier", `%${supplier}%`)
+    .order("supplier", { ascending: true })
     .limit(100);
   if (error) throw error;
 
@@ -2475,7 +2475,7 @@ export const getSupplier = async (
       option_field_id: fieldId,
       option_id: uuidv4(),
       option_order: index + 1,
-      option_value: supplier.supplier_name,
+      option_value: supplier.supplier,
     };
   });
 
@@ -4055,4 +4055,108 @@ export const getRequestTeamId = async (
   } else {
     return null;
   }
+};
+
+// Fetch all CSI Code
+export const getCSIDescriptionOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    divisionId: string;
+  }
+) => {
+  const { divisionId } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_division_id", divisionId)
+    .order("csi_code_level_three_description", { ascending: true });
+  if (error) throw error;
+  return data;
+};
+
+// Get lookup list
+export const getLookupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    lookup: string;
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { lookup, teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from(`${lookup}_table`)
+    .select("*", { count: "exact" })
+    .eq(`${lookup}_team_id`, teamId)
+    .eq(`${lookup}_is_disabled`, false);
+
+  if (search) {
+    query = query.ilike(`${lookup}`, `%${search}%`);
+  }
+
+  query.order(`${lookup}`, { ascending: true, foreignTable: "" });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const id = `${lookup}_id`;
+  const value = lookup;
+  const status = `${lookup}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  }[];
+
+  return {
+    data: formattedData.map((lookupData) => {
+      return {
+        id: lookupData[id],
+        status: Boolean(lookupData[status]),
+        value: lookupData[value],
+      };
+    }),
+    count,
+  };
+};
+
+// check if lookup table value already exists
+export const checkLookupTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { lookupTableName: string; value: string; teamId: string }
+) => {
+  const { lookupTableName, value, teamId } = params;
+  const { count, error } = await supabaseClient
+    .from(`${lookupTableName}_table`)
+    .select("*", { count: "exact", head: true })
+    .eq(`${lookupTableName}`, value)
+    .eq(`${lookupTableName}_is_disabled`, false)
+    .eq(`${lookupTableName}_team_id`, teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Fetch all CSI Code based on division description
+export const getCSICodeOptionsForServices = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    description: string;
+  }
+) => {
+  const { description } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_division_description", description);
+  if (error) throw error;
+
+  return data as CSICodeTableRow[];
 };

@@ -4,6 +4,7 @@ import EditReceivingInspectingReportPage from "@/components/EditReceivingInspect
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
+import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
 import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
 import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTransferReceiptPage";
@@ -81,6 +82,14 @@ const Page = ({
             itemOptions={itemOptions}
             projectOptions={projectOptions}
             specialApprover={specialApprover}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "Services":
+        return (
+          <EditServicesRequestPage
+            request={request}
+            projectOptions={projectOptions}
             referenceOnly={referenceOnly}
           />
         );

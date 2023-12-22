@@ -44,6 +44,13 @@ type RequestFormSectionProps = {
   sourcedItemFormMethods?: {
     onProjectSiteChange: () => void;
   };
+  servicesMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSIDivisionChange: (index: number, value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
 };
 
 const RequestFormSection = ({
@@ -56,6 +63,7 @@ const RequestFormSection = ({
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
+  servicesMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -103,6 +111,7 @@ const RequestFormSection = ({
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}
+            servicesMethods={servicesMethods}
           />
         ))}
       </Stack>
