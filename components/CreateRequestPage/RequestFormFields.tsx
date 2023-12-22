@@ -327,6 +327,7 @@ const RequestFormFields = ({
                   } else if (field.field_name === "Requesting Project") {
                     requisitionFormMethods?.onProjectNameChange(value);
                     subconFormMethods?.onProjectNameChange(value);
+                    servicesMethods?.onProjectNameChange(value);
                   } else if (field.field_name === "Service Name") {
                     subconFormMethods?.onServiceNameChange(sectionIndex, value);
                   } else if (field.field_name === "CSI Division") {
