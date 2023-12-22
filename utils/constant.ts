@@ -1259,6 +1259,7 @@ export const ITEM_UNIT_CHOICES = [
   "Beats Per Minute",
   "Micron",
   "Millimetre Per Minute",
+  "Milliampere",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [

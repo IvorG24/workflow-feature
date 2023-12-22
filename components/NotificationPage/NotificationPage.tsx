@@ -287,11 +287,7 @@ const NotificationPage = ({
           )}
           onChange={async (value) => {
             setActivePage(value);
-            await router.push(
-              `/team-${
-                app === "REQUEST" ? `${app.toLowerCase()}s` : app.toLowerCase()
-              }/notification?tab=${tab}&page=${value}`
-            );
+            await router.push(`/user/notification?tab=${tab}&page=${value}`);
             await handleGetNotificationList(value);
           }}
           mt="xl"
