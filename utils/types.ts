@@ -1067,3 +1067,16 @@ export type ApproverUnresolvedRequestListType = {
     request_status: string;
   };
 };
+
+export type UserIssuedItem = {
+  itemName: string;
+  itemUom: string;
+  itemQuantity: number;
+  variation: {
+    quantity: number;
+    specification: {
+      fieldName: string;
+      response: string;
+    }[];
+  }[];
+};
