@@ -8,7 +8,8 @@ import { IconList, IconTable } from "@tabler/icons-react";
 import moment from "moment";
 import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
 import PdfDocument from "./PdfDocument";
-import PdfDocumentTableVersion from "./PdfDocumentTableVersion";
+import RequisitionPdfDocumentTableVersion from "./RequisitionPdfDocumentTableVersion";
+import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
 
 type Props = {
   request: RequestWithResponseType;
@@ -142,6 +143,31 @@ const ExportToPdf = ({
     .split(" ")
     .join("-")}-${requestorFullName}`;
 
+  const getDocument = () => {
+    switch (request.request_form.form_name) {
+      case "Requisition":
+        return (
+          <RequisitionPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "Services":
+        return (
+          <ServicesPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+    }
+  };
+
   const [instance] = usePDF({
     document: (
       <PdfDocument
@@ -155,15 +181,7 @@ const ExportToPdf = ({
   });
 
   const [instanceTable] = usePDF({
-    document: (
-      <PdfDocumentTableVersion
-        requestDetails={requestDetails}
-        requestorDetails={requestorDetails}
-        requestIDs={requestIDs}
-        requestItems={requestItems}
-        approverDetails={approverDetails}
-      />
-    ),
+    document: getDocument(),
   });
 
   return (
@@ -192,7 +210,9 @@ const ExportToPdf = ({
             )}
 
             {request.request_form.form_is_formsly_form &&
-              request.request_form.form_name === "Requisition" && (
+              ["Requisition", "Services"].includes(
+                request.request_form.form_name
+              ) && (
                 <Menu.Item
                   component="a"
                   href={instanceTable.url ? instanceTable.url : "#"}

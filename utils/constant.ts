@@ -1332,3 +1332,9 @@ export const GL_ACCOUNT_CHOICES = [
   "Temporary Facility",
   "Bidding",
 ];
+
+export const FORM_SEGMENT_CHOCIES = [
+  { label: "Form Preview", value: "Form Preview" },
+  { label: "Form Details", value: "Form Details" },
+  { label: "Form Lookup", value: "Form Lookup" },
+];
