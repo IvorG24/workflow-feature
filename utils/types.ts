@@ -1135,3 +1135,77 @@ export type ApproverUnresolvedRequestListType = {
     request_status: string;
   };
 };
+
+export type EquipmentWithCategoryType = EquipmentTableRow & {
+  equipment_category: string;
+};
+
+export type EquipmentForm = {
+  name: string;
+  category: string;
+  isAvailable: boolean;
+};
+
+export type EquipmentDescriptionType = EquipmentDescriptionTableRow & {
+  equipment_description_brand: string;
+  equipment_description_model: string;
+};
+
+export type EquipmentDescriptionForm = {
+  propertyNumber: string;
+  serialNumber: string;
+  brand: string;
+  model: string;
+  isAvailable: boolean;
+};
+
+export type EquipmentPartType = EquipmentPartTableRow & {
+  equipment_part_brand: string;
+  equipment_part_model: string;
+  equipment_part_unit_of_measurement: string;
+  equipment_part_component_category: string;
+};
+
+export type EquipmentPartForm = {
+  name: string;
+  partNumber: string;
+  brand: string;
+  model: string;
+  uom: string;
+  category: string;
+  isAvailable: boolean;
+};
+
+export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
+
+export type LookupForm = {
+  value: string;
+  isAvailable: boolean;
+};
+
+export type EquipmentLookupChoices =
+  | "equipment_category"
+  | "equipment_brand"
+  | "equipment_model"
+  | "equipment_unit_of_measurement"
+  | "equipment_component_category";
+
+export type EquipmentLookupTable = {
+  id: string;
+  status: boolean;
+  value: string;
+};
+
+export type EquipmentLookupTableInsert =
+  | EquipmentCategoryTableInsert
+  | EquipmentBrandTableInsert
+  | EquipmentModelTableInsert
+  | EquipmentUnitOfMeasurementTableInsert
+  | EquipmentComponentCategoryTableInsert;
+
+export type EquipmentLookupTableUpdate =
+  | EquipmentCategoryTableUpdate
+  | EquipmentBrandTableUpdate
+  | EquipmentModelTableUpdate
+  | EquipmentUnitOfMeasurementTableUpdate
+  | EquipmentComponentCategoryTableUpdate;
