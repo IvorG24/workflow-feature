@@ -36,10 +36,7 @@ type Props = {
 const Page = ({ request }: Props) => {
   return (
     <>
-      <Meta
-        description="Request Page"
-        url="/team-requests/requests/[requestId]"
-      />
+      <Meta description="Request Page" url="/<teamName>/requests/[requestId]" />
       <Space h="xl" />
       <RequestPage
         request={request}

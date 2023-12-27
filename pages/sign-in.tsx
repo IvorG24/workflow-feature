@@ -1,6 +1,5 @@
 import Meta from "@/components/Meta/Meta";
 import SignInPage from "@/components/SignInPage/SignInPage";
-import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
@@ -13,7 +12,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (user) {
     return {
       redirect: {
-        destination: DEFAULT_LANDING_PAGE,
+        destination: `/userActiveTeam`,
         permanent: false,
       },
     };

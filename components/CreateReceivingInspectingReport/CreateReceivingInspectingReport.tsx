@@ -4,9 +4,10 @@ import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetail
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { regExp } from "@/utils/string";
+import { formatTeamNameToUrlKey, regExp } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -58,6 +59,7 @@ const CreateReceivingInspectingReportPage = ({
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
   const requestorProfile = useUserProfile();
 
@@ -207,13 +209,18 @@ const CreateReceivingInspectingReportPage = ({
           formName: form.form_name,
           isFormslyForm: true,
           projectId: requestProjectId,
+          teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
         });
 
         notifications.show({
           message: "Request created.",
           color: "green",
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(
+          `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+            request.request_id
+          }`
+        );
       }
     } catch (e) {
       console.error(e);

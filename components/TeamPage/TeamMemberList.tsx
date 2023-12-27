@@ -69,6 +69,8 @@ const TeamMemberList = ({
 
         <td>{startCase(role.toLowerCase())}</td>
 
+        <td>{member.team_member_user.user_employee_number ?? "---"}</td>
+
         <td>
           <TeamMemberMenu
             member={member}
@@ -114,6 +116,7 @@ const TeamMemberList = ({
               <tr>
                 <th>Name</th>
                 <th>Role</th>
+                <th>Employee Number</th>
                 <th></th>
               </tr>
             </thead>

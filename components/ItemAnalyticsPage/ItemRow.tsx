@@ -1,4 +1,5 @@
-import { addCommaToNumber } from "@/utils/string";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { addCommaToNumber, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor } from "@/utils/styling";
 import {
   Anchor,
@@ -33,6 +34,7 @@ type Props = {
 
 const ItemRow = ({ result }: Props) => {
   const { classes } = useStyles();
+  const activeTeam = useActiveTeam();
   const [
     descriptionOpened,
     { close: descrpitionClose, open: descriptionOpen },
@@ -77,7 +79,9 @@ const ItemRow = ({ result }: Props) => {
     <tr>
       <td>
         <Anchor
-          href={`/team-requests/requests/${result.request_id}`}
+          href={`/${formatTeamNameToUrlKey(
+            activeTeam.team_name ?? ""
+          )}/requests/${result.request_id}`}
           target="_blank"
         >
           {result.request_formsly_id}

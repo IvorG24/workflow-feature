@@ -192,6 +192,20 @@ export type TicketCommentTableInsert =
 export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
+export type UserOnboardTableRow =
+  Database["public"]["Tables"]["user_onboard_table"]["Row"];
+export type UserOnboardTableInsert =
+  Database["public"]["Tables"]["user_onboard_table"]["Insert"];
+export type UserOnboardTableUpdate =
+  Database["public"]["Tables"]["user_onboard_table"]["Update"];
+
+export type ServiceCategoryTableRow =
+  Database["public"]["Tables"]["service_category_table"]["Row"];
+export type ServiceCategoryTableInsert =
+  Database["public"]["Tables"]["service_category_table"]["Insert"];
+export type ServiceCategoryTableUpdate =
+  Database["public"]["Tables"]["service_category_table"]["Update"];
+
 export type EquipmentTableRow =
   Database["public"]["Tables"]["equipment_table"]["Row"];
 export type EquipmentTableInsert =
@@ -342,10 +356,14 @@ export type RequestType = {
 };
 
 export type UserWithSignatureType = UserTableRow & {
+  user_employee_number: string;
+} & {
   user_signature_attachment: AttachmentTableRow;
 };
 
 export type RequestWithResponseType = RequestTableRow & {
+  request_formsly_id: string;
+} & {
   request_form: {
     form_id: string;
     form_name: string;
@@ -430,6 +448,7 @@ export type TeamMemberType = {
     user_last_name: string;
     user_avatar: string;
     user_email: string;
+    user_employee_number: string;
   };
 };
 
@@ -956,7 +975,9 @@ export type TeamMemberWithUserDetails = {
 }[];
 
 export type TeamMemberOnLoad = {
-  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  member: TeamMemberTableRow & {
+    team_member_user: UserTableRow & { user_employee_number: string };
+  };
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1114,77 +1135,3 @@ export type ApproverUnresolvedRequestListType = {
     request_status: string;
   };
 };
-
-export type EquipmentWithCategoryType = EquipmentTableRow & {
-  equipment_category: string;
-};
-
-export type EquipmentForm = {
-  name: string;
-  category: string;
-  isAvailable: boolean;
-};
-
-export type EquipmentDescriptionType = EquipmentDescriptionTableRow & {
-  equipment_description_brand: string;
-  equipment_description_model: string;
-};
-
-export type EquipmentDescriptionForm = {
-  propertyNumber: string;
-  serialNumber: string;
-  brand: string;
-  model: string;
-  isAvailable: boolean;
-};
-
-export type EquipmentPartType = EquipmentPartTableRow & {
-  equipment_part_brand: string;
-  equipment_part_model: string;
-  equipment_part_unit_of_measurement: string;
-  equipment_part_component_category: string;
-};
-
-export type EquipmentPartForm = {
-  name: string;
-  partNumber: string;
-  brand: string;
-  model: string;
-  uom: string;
-  category: string;
-  isAvailable: boolean;
-};
-
-export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
-
-export type LookupForm = {
-  value: string;
-  isAvailable: boolean;
-};
-
-export type EquipmentLookupChoices =
-  | "equipment_category"
-  | "equipment_brand"
-  | "equipment_model"
-  | "equipment_unit_of_measurement"
-  | "equipment_component_category";
-
-export type EquipmentLookupTable = {
-  id: string;
-  status: boolean;
-  value: string;
-};
-
-export type EquipmentLookupTableInsert =
-  | EquipmentCategoryTableInsert
-  | EquipmentBrandTableInsert
-  | EquipmentModelTableInsert
-  | EquipmentUnitOfMeasurementTableInsert
-  | EquipmentComponentCategoryTableInsert;
-
-export type EquipmentLookupTableUpdate =
-  | EquipmentCategoryTableUpdate
-  | EquipmentBrandTableUpdate
-  | EquipmentModelTableUpdate
-  | EquipmentUnitOfMeasurementTableUpdate
-  | EquipmentComponentCategoryTableUpdate;

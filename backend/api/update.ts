@@ -113,6 +113,7 @@ export const approveOrRejectRequest = async (
     teamId: string;
     jiraId?: string;
     jiraLink?: string;
+    requestFormslyId?: string;
   }
 ) => {
   const { error } = await supabaseClient.rpc("approve_or_reject_request", {
@@ -615,6 +616,40 @@ export const updateEquipmentLookup = async (
   const { data, error } = await supabaseClient
     .from(`${tableName}_table`)
     .update(equipmentLookupData)
+    .eq(`${tableName}_id`, lookupId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const id = `${tableName}_id`;
+  const value = tableName;
+  const status = `${tableName}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  };
+
+  return {
+    id: formattedData[id],
+    status: Boolean(formattedData[status]),
+    value: formattedData[value],
+  };
+};
+
+// Update lookup
+export const updateLookup = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    lookupData: JSON;
+    tableName: string;
+    lookupId: string;
+  }
+) => {
+  const { lookupData, tableName, lookupId } = params;
+
+  const { data, error } = await supabaseClient
+    .from(`${tableName}_table`)
+    .update(lookupData)
     .eq(`${tableName}_id`, lookupId)
     .select()
     .single();

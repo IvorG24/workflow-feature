@@ -1,5 +1,7 @@
 import { checkIfJiraIDIsUnique } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Button,
   Flex,
@@ -43,7 +45,6 @@ const RequestActionSection = ({
   isRf,
   isCashPurchase,
   isUserPrimarySigner,
-  requestId,
   isEditable,
   canSignerTakeAction,
   isDeletable,
@@ -51,6 +52,8 @@ const RequestActionSection = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const activeTeam = useActiveTeam();
+
   const {
     register,
     handleSubmit,
@@ -62,6 +65,14 @@ const RequestActionSection = ({
   const resetValue = () => {
     setValue("jiraId", "");
     setError("jiraId", { message: "" });
+  };
+
+  const isValidJiraId = async (jiraId: string) => {
+    const newJiraTicketData = await fetch(
+      `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
+    );
+
+    return newJiraTicketData.ok ? true : false;
   };
 
   const handleAction = (action: string, color: string) => {
@@ -80,9 +91,18 @@ const RequestActionSection = ({
               Are you sure you want to {action} this request?
             </Text>
             <form
-              onSubmit={handleSubmit((data) => {
-                handleUpdateRequest("APPROVED", data.jiraId);
-                modals.close("approveRf");
+              onSubmit={handleSubmit(async (data) => {
+                const checkJiraIdIfValid = await isValidJiraId(data.jiraId);
+                if (checkJiraIdIfValid) {
+                  handleUpdateRequest("APPROVED", data.jiraId.toUpperCase());
+                  modals.close("approveRf");
+                } else {
+                  notifications.show({
+                    message: "Jira ID is invalid or does not exist.",
+                    color: "red",
+                  });
+                  return "Jira ID is invalid.";
+                }
               })}
             >
               <Stack mt="xl" spacing="xs">
@@ -106,14 +126,15 @@ const RequestActionSection = ({
                       checkIfUnique: async (value) => {
                         if (
                           await checkIfJiraIDIsUnique(supabaseClient, {
-                            value: value,
+                            value: value.toUpperCase(),
                           })
                         ) {
                           notifications.show({
-                            message: "Jira ID already exists.",
+                            message:
+                              "Jira ID is already used by another request.",
                             color: "red",
                           });
-                          return "Jira ID already exists.";
+                          return "Jira ID is already used by another request.";
                         } else {
                           return true;
                         }
@@ -175,7 +196,7 @@ const RequestActionSection = ({
   };
 
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper p="xl" shadow="xs" className="onboarding-requisition-request-action">
       <Title order={4} color="dimmed">
         Request Action
       </Title>
@@ -186,7 +207,9 @@ const RequestActionSection = ({
             fullWidth
             onClick={() =>
               router.push(
-                `/team-requests/requests/${requestId}/edit?referenceOnly=true`
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/requests/${router.query.requestId}/edit?referenceOnly=true`
               )
             }
           >
@@ -220,7 +243,9 @@ const RequestActionSection = ({
               fullWidth
               onClick={() =>
                 router.push(
-                  `/team-requests/requests/${router.query.requestId}/edit`
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/requests/${router.query.requestId}/edit`
                 )
               }
             >

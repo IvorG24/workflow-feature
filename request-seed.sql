@@ -308,7 +308,7 @@ INSERT INTO item_description_field_table (item_description_field_id, item_descri
 ('ef251b7b-b2cb-4d98-b42a-74a0cf790ce8', 'Metal', '442cd87f-25c4-482b-ba4b-d2ab1a852725'),
 ('d86f3986-1444-446a-b4ad-ce9fdf405abc', '5 inch', '3cff6f0b-bc0e-4d29-a040-7417439f164b');
 
-INSERT INTO supplier_table (supplier_id, supplier_name, supplier_team_id) VALUES
+INSERT INTO supplier_table (supplier_id, supplier, supplier_team_id) VALUES
 ('d07f34da-75db-4fe1-a85b-8c540314769a', 'Techrom Computer Shop', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
 ('b501e500-eeb8-43c7-93ec-642ffe15d66a', 'Symmetric Intercontinental IT Solutions Inc', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),
 ('39db91c4-4cd2-44ce-8482-b98862edfa40', 'Fire Solution Inc', '2cfc4947-a9be-43f8-9037-c0ae7ec04bd2'),

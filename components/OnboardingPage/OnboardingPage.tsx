@@ -1,6 +1,11 @@
 import { checkUsername, getUserPendingInvitation } from "@/backend/api/get";
-import { createUser, uploadImage } from "@/backend/api/post";
+import {
+  createTeamMemberReturnTeamName,
+  createUser,
+  uploadImage,
+} from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { formatTeamNameToUrlKey, isUUID } from "@/utils/string";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -56,6 +61,9 @@ const OnboardingPage = ({ user }: Props) => {
   const handleOnboardUser = async (data: OnboardUserParams) => {
     setIsLoading(true);
     try {
+      const { inviteTeamId } = router.query;
+      const isValidTeamId = isUUID(inviteTeamId);
+
       let imageUrl = "";
       if (avatarFile) {
         imageUrl = await uploadImage(supabaseClient, {
@@ -64,9 +72,9 @@ const OnboardingPage = ({ user }: Props) => {
           bucket: "USER_AVATARS",
         });
       }
-
       await createUser(supabaseClient, {
         ...data,
+        user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
       });
 
@@ -74,12 +82,22 @@ const OnboardingPage = ({ user }: Props) => {
         userEmail: data.user_email,
       });
 
-      if (pendingInvitation) {
+      if (isValidTeamId) {
+        const team = await createTeamMemberReturnTeamName(supabaseClient, {
+          team_member_team_id: `${inviteTeamId}`,
+          team_member_user_id: data.user_id,
+        });
+
+        const activeTeamNameToUrl = formatTeamNameToUrlKey(
+          team[0].team.team_name ?? ""
+        );
+        await router.push(`/${activeTeamNameToUrl}/dashboard?onboarding=true`);
+      } else if (pendingInvitation) {
         await router.push(
-          `/team/invitation/${pendingInvitation.invitation_id}`
+          `/invitation/${pendingInvitation.invitation_id}?onboarding=true`
         );
       } else {
-        await router.push("/team/create");
+        await router.push("/create-team?onboarding=true");
       }
 
       notifications.show({

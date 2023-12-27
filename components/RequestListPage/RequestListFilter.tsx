@@ -1,4 +1,4 @@
-import { TeamMemberWithUserType } from "@/utils/types";
+import { TeamMemberWithUserType, TeamProjectTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Checkbox,
@@ -28,6 +28,7 @@ type RequestListFilterProps = {
       | RequestListLocalFilter
       | ((prevState: RequestListLocalFilter) => RequestListLocalFilter)
   ) => void;
+  projectList: TeamProjectTableRow[];
 };
 
 type FilterSelectedValuesType = {
@@ -35,6 +36,8 @@ type FilterSelectedValuesType = {
   status: string[];
   requestorList: string[];
   approverList: string[];
+  projectList: string[];
+  idFilterList: string[];
   isApproversView: boolean;
 };
 
@@ -45,6 +48,7 @@ const RequestListFilter = ({
   handleFilterForms,
   localFilter,
   setLocalFilter,
+  projectList,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -58,12 +62,17 @@ const RequestListFilter = ({
   const { ref: approverRef, focused: approverRefFocused } = useFocusWithin();
   const { ref: formRef, focused: formRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
+  const { ref: projectRef, focused: projectRefFocused } = useFocusWithin();
+  const { ref: idFilterRef, focused: idFilterRefFocused } = useFocusWithin();
+
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       formList: [],
       status: [],
       requestorList: [],
       approverList: [],
+      projectList: [],
+      idFilterList: [],
       isApproversView: false,
     });
 
@@ -92,6 +101,18 @@ const RequestListFilter = ({
     { value: "CANCELED", label: "Canceled" },
   ];
 
+  const idFilterList = [
+    { value: "otp", label: "No OTP ID" },
+    { value: "jira", label: "No JIRA ID" },
+  ];
+
+  const projectListChoices = projectList.map((project) => {
+    return {
+      label: project.team_project_name,
+      value: project.team_project_code,
+    };
+  });
+
   const { register, getValues, control, setValue } =
     useFormContext<FilterFormValues>();
 
@@ -118,7 +139,7 @@ const RequestListFilter = ({
   }, [localFilter, setValue]);
 
   return (
-    <Flex gap="sm" wrap="wrap" align="center">
+    <Flex gap="sm" wrap="wrap" align="center" direction="row">
       <Controller
         control={control}
         name="isAscendingSort"
@@ -136,6 +157,7 @@ const RequestListFilter = ({
                 size={36}
                 color="dark.3"
                 variant="outline"
+                className="onboarding-request-list-sort"
               >
                 {value ? (
                   <IconSortAscending size={18} />
@@ -159,6 +181,7 @@ const RequestListFilter = ({
         miw={250}
         maw={320}
         disabled={filterSelectedValues.isApproversView}
+        className="onboarding-request-list-filters-rid"
       />
 
       <Controller
@@ -181,6 +204,7 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-form"
           />
         )}
       />
@@ -205,6 +229,33 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-status"
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="projectList"
+        render={({ field: { value, onChange } }) => (
+          <MultiSelect
+            data={projectListChoices}
+            placeholder="Project"
+            ref={projectRef}
+            value={value}
+            onChange={(value) => {
+              onChange(value);
+              if (!projectRefFocused) handleFilterChange("projectList", value);
+            }}
+            onDropdownClose={() =>
+              handleFilterChange("projectList", value as string[])
+            }
+            {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={320}
+            disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-project"
           />
         )}
       />
@@ -229,6 +280,7 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-requestor"
           />
         )}
       />
@@ -253,6 +305,32 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-approver"
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="idFilterList"
+        render={({ field: { value, onChange } }) => (
+          <MultiSelect
+            placeholder="OTP and Jira ID"
+            ref={idFilterRef}
+            data={idFilterList}
+            value={value}
+            onChange={(value) => {
+              onChange(value);
+              if (!idFilterRefFocused)
+                handleFilterChange("idFilterList", value);
+            }}
+            onDropdownClose={() => handleFilterChange("idFilterList", value)}
+            {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={320}
+            disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-id-filter"
           />
         )}
       />
@@ -273,6 +351,7 @@ const RequestListFilter = ({
               cursor: "pointer",
             },
           }}
+          className="onboarding-request-list-filters-approver-view"
         />
       </Tooltip>
     </Flex>

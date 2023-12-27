@@ -3,6 +3,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useNotificationActions } from "@/stores/useNotificationStore";
 import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions, useUserProfile } from "@/stores/useUserStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { TeamTableRow } from "@/utils/types";
 import { Button, Paper, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -45,7 +46,7 @@ const TeamCard = ({ team }: TeamCardProps) => {
       setNotificationList([]);
       setUnreadNotification(0);
       setFormList(data.formList);
-      await router.push("/team-requests/requests");
+      await router.push(`/${formatTeamNameToUrlKey(team.team_name)}/requests`);
       setIsLoading(false);
     } catch (error) {
       notifications.show({

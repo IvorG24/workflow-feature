@@ -60,7 +60,12 @@ const RequestorTable = ({
   }, [isInView]);
 
   return (
-    <ScrollArea w="100%" h="100%" onScrollCapture={handleScroll}>
+    <ScrollArea
+      w="100%"
+      h="100%"
+      onScrollCapture={handleScroll}
+      className="onboarding-dashboard-top-requestor"
+    >
       <Paper w={{ base: "100%" }} mih={420} withBorder>
         <Group p="md" spacing="xs" className={classes.withBorderBottom}>
           <Center c="green">

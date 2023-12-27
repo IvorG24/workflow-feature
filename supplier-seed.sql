@@ -3771,13 +3771,13 @@ RETURNS VOID AS $$
 
     const supplierInput = supplierData.map((supplier) => {
       return {
-        supplier_name: supplier,
+        supplier: supplier,
         supplier_team_id: TEAM_ID
       }
     });
 
-    const supplier_input = supplierInput.map((supplier) => `('${supplier.supplier_name}', '${supplier.supplier_team_id}')`).join(',');
-    plv8.execute(`INSERT INTO supplier_table (supplier_name, supplier_team_id) VALUES ${supplier_input}`);
+    const supplier_input = supplierInput.map((supplier) => `('${supplier.supplier}', '${supplier.supplier_team_id}')`).join(',');
+    plv8.execute(`INSERT INTO supplier_table (supplier, supplier_team_id) VALUES ${supplier_input}`);
   })
 $$ LANGUAGE plv8;
 SELECT supplier_seed();

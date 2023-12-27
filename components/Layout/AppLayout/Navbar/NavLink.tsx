@@ -7,28 +7,33 @@ import {
   useTeamList,
 } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
-import { startCase } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
-import { Box, Space } from "@mantine/core";
+import { Box, Button, Divider, Menu, Space, Stack } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
   IconCirclePlus,
   IconDashboard,
   IconFile,
+  IconFilePlus,
+  IconFileText,
   IconFiles,
   IconListDetails,
   IconTicket,
   IconUsersGroup,
 } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import NavLinkSection from "./NavLinkSection";
 
 const ReviewAppNavLink = () => {
   const defaultIconProps = { size: 20, stroke: 1 };
   const defaultNavLinkProps = { px: 0 };
+  const defaultNavLinkContainerProps = { py: 5, mt: 3 };
 
   const [userNotificationCount, setUserNotificationCount] = useState(0);
 
@@ -40,6 +45,15 @@ const ReviewAppNavLink = () => {
   const forms = useFormList();
   const userTeamMemberData = useUserTeamMember();
   const unreadNotificationCount = useUnreadNotificationCount();
+  const activeTeamNameToUrl = formatTeamNameToUrlKey(
+    activeTeam.team_name ?? ""
+  );
+  const router = useRouter();
+  const unhiddenForms = forms.filter(
+    (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)
+  );
+
+  const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
 
   const rfForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Requisition"
@@ -48,26 +62,132 @@ const ReviewAppNavLink = () => {
     form_team_group: string[];
   };
 
+  const renderCreateRequestMenu = () => {
+    return (
+      <Box h="fit-content" mt="md">
+        <Menu
+          shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+          withArrow
+          position="right"
+        >
+          <Stack align="start" {...defaultNavLinkContainerProps}>
+            <Menu.Target>
+              <Button
+                fw={400}
+                leftIcon={<IconFile {...defaultIconProps} />}
+                variant="transparent"
+              >
+                Create Request
+              </Button>
+            </Menu.Target>
+            <Button
+              fw={400}
+              leftIcon={<IconTicket {...defaultIconProps} />}
+              variant="transparent"
+              onClick={() =>
+                router.push(`/${activeTeamNameToUrl}/tickets/create`)
+              }
+            >
+              Create Ticket
+            </Button>
+          </Stack>
+
+          <Menu.Dropdown>
+            {unhiddenForms.map((form) => (
+              <Menu.Item
+                key={form.form_id}
+                onClick={() =>
+                  router.push(
+                    `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                  )
+                }
+              >
+                {form.form_name}
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
+        </Menu>
+      </Box>
+    );
+  };
+
+  const renderManageFormMenu = () => {
+    return (
+      <Box h="fit-content">
+        <Menu
+          shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+          withArrow
+          position="right"
+        >
+          <Stack align="start" {...defaultNavLinkContainerProps}>
+            <Menu.Target>
+              <Button
+                fw={400}
+                leftIcon={<IconFileText {...defaultIconProps} />}
+                variant="transparent"
+              >
+                Manage Form{unhiddenForms.length > 1 ? "s" : ""} (
+                {isFormslyTeam
+                  ? forms.length - UNHIDEABLE_FORMLY_FORMS.length
+                  : forms.length}
+                )
+              </Button>
+            </Menu.Target>
+            <Button
+              fw={400}
+              leftIcon={<IconFilePlus {...defaultIconProps} />}
+              variant="transparent"
+              onClick={() => router.push(`/${activeTeamNameToUrl}/forms/build`)}
+            >
+              Build Form
+            </Button>
+          </Stack>
+
+          <Menu.Dropdown>
+            <Menu.Item
+              key={"all-form"}
+              onClick={() => router.push(`/${activeTeamNameToUrl}/forms/`)}
+              c="blue"
+            >
+              View All
+            </Menu.Item>
+            <Divider />
+            {unhiddenForms.map((form) => (
+              <Menu.Item
+                key={form.form_id}
+                onClick={() =>
+                  router.push(`/${activeTeamNameToUrl}/forms/${form.form_id}`)
+                }
+              >
+                {form.form_name}
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
+        </Menu>
+      </Box>
+    );
+  };
+
   const tempCreateRequest = [
     {
       label: "Create Request",
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconFile {...defaultIconProps} />
         </Box>
       ),
       href: requisitionForm
-        ? `/team-requests/forms/${requisitionForm.form_id}/create`
+        ? `/${activeTeamNameToUrl}/forms/${requisitionForm.form_id}/create`
         : "",
     },
     {
       label: "Create Ticket",
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconTicket {...defaultIconProps} />
         </Box>
       ),
-      href: requisitionForm ? `/team-requests/tickets/create` : "",
+      href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
     },
   ];
 
@@ -75,40 +195,40 @@ const ReviewAppNavLink = () => {
     {
       label: `Dashboard`,
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconDashboard {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/dashboard`,
+      href: `/${activeTeamNameToUrl}/dashboard`,
     },
     {
       label: `${startCase(activeApp)} List`,
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconFiles {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/${activeApp.toLowerCase()}s`,
+      href: `/${activeTeamNameToUrl}/requests`,
     },
     {
       label: `Notification List`,
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconBell {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/notification`,
+      href: `/user/notification`,
       withIndicator: userNotificationCount > 0,
       indicatorLabel: `${userNotificationCount}`,
     },
     {
       label: `Ticket List`,
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconListDetails {...defaultIconProps} />
         </Box>
       ),
-      href: `/team-${activeApp.toLowerCase()}s/tickets`,
+      href: `/${activeTeamNameToUrl}/tickets`,
     },
   ];
 
@@ -116,20 +236,20 @@ const ReviewAppNavLink = () => {
     {
       label: "Manage Team",
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconUsersGroup {...defaultIconProps} />
         </Box>
       ),
-      href: `/team`,
+      href: `/${activeTeamNameToUrl}/settings`,
     },
     {
       label: "Create Team",
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconCirclePlus {...defaultIconProps} />
         </Box>
       ),
-      href: `/team/create`,
+      href: `/create-team`,
     },
   ];
 
@@ -137,11 +257,11 @@ const ReviewAppNavLink = () => {
     {
       label: "Create Team",
       icon: (
-        <Box ml="sm" py={5} mt={3}>
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconCirclePlus {...defaultIconProps} />
         </Box>
       ),
-      href: `/team/create`,
+      href: `/create-team`,
     },
   ];
 
@@ -173,7 +293,11 @@ const ReviewAppNavLink = () => {
       requisitionForm.form_is_hidden === false &&
       requisitionForm.form_team_group.length &&
       hasTeam ? (
-        <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
+        unhiddenForms.length > 1 ? (
+          renderCreateRequestMenu()
+        ) : (
+          <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
+        )
       ) : null}
 
       {!isEmpty(activeTeam) && hasTeam ? (
@@ -193,6 +317,27 @@ const ReviewAppNavLink = () => {
         }
         {...defaultNavLinkProps}
       />
+
+      {forms.length > 0 && (
+        <>
+          {(userTeamMemberData?.team_member_role === "ADMIN" ||
+            userTeamMemberData?.team_member_role === "OWNER") && (
+            <>
+              <NavLinkSection
+                label={"Form"}
+                links={[]}
+                {...defaultNavLinkProps}
+              />
+              {/* <NavLinkSection
+                label={"Form"}
+                links={ownerAndAdminFormSection}
+                {...defaultNavLinkProps}
+              /> */}
+              {renderManageFormMenu()}
+            </>
+          )}
+        </>
+      )}
 
       <Space h="sm" />
     </>

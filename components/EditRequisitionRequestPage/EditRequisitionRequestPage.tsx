@@ -15,6 +15,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { isStringParsable, safeParse } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -201,7 +202,11 @@ const EditRequisitionRequestPage = ({
           color: "red",
           autoClose: false,
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(
+          `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+            request.request_formsly_id_prefix
+          }-${request.request_formsly_id_serial}`
+        );
         return;
       }
 
@@ -236,13 +241,14 @@ const EditRequisitionRequestPage = ({
         });
       }
 
-      await editRequest(supabaseClient, {
+      const edittedRequest = await editRequest(supabaseClient, {
         requestId: request.request_id,
         requestFormValues: newData,
         signers: [...filteredSignerList, ...additionalSignerList],
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: request_form.form_name,
+        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
       notifications.show({
@@ -250,7 +256,11 @@ const EditRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+          edittedRequest.request_formsly_id_prefix
+        }-${edittedRequest.request_formsly_id_serial}`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -380,6 +390,7 @@ const EditRequisitionRequestPage = ({
         formName: request.request_form.form_name,
         isFormslyForm: true,
         projectId,
+        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
       notifications.show({
@@ -387,7 +398,11 @@ const EditRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(`/team-requests/requests/${newRequest.request_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+          newRequest.request_formsly_id_prefix
+        }-${newRequest.request_formsly_id_serial}`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -751,7 +766,7 @@ const EditRequisitionRequestPage = ({
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Edit Request
+        {referenceOnly ? "Reference" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>

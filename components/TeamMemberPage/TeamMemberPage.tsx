@@ -21,7 +21,9 @@ import MemberGroup from "./MemberGroup";
 import MemberProject from "./MemberProject";
 
 type Props = {
-  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  member: TeamMemberTableRow & {
+    team_member_user: UserTableRow & { user_employee_number: string };
+  };
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -116,6 +118,16 @@ const TeamMemberPage = ({
               variant="filled"
               readOnly
               value={`${member.team_member_user.user_job_title}`}
+            />
+          </Flex>
+
+          <Flex direction={{ base: "column", md: "row" }} gap={16}>
+            <TextInput
+              w="100%"
+              label="Employee Number"
+              variant="filled"
+              readOnly
+              value={`${member.team_member_user.user_employee_number ?? "---"}`}
             />
           </Flex>
         </Stack>

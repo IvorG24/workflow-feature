@@ -26,6 +26,7 @@ type Props = {
   avatarFile: File | null;
   onAvatarFileChange: Dispatch<SetStateAction<File | null>>;
   isUpdatingPersonalInfo: boolean;
+  employeeNumber?: string | null;
 };
 
 const PersonalInfo = ({
@@ -33,6 +34,7 @@ const PersonalInfo = ({
   avatarFile,
   onAvatarFileChange,
   isUpdatingPersonalInfo,
+  employeeNumber,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
   const user = useUserProfile();
@@ -44,7 +46,7 @@ const PersonalInfo = ({
     control,
     getValues,
     setError,
-    formState: { errors, isDirty, defaultValues },
+    formState: { errors, isDirty, defaultValues, },
   } = useFormContext<PersonalInfoForm>();
 
   const prevAvatarFile = usePrevious(avatarFile);
@@ -215,6 +217,15 @@ const PersonalInfo = ({
                   },
                 })}
                 error={errors.user_job_title?.message}
+              />
+            </Flex>
+
+            <Flex direction={{ base: "column", md: "row" }} gap={16}>
+              <TextInput
+                w="100%"
+                label="Employee Number"
+                disabled={true}
+                value={employeeNumber ?? "---"}
               />
             </Flex>
 
