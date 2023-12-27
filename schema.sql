@@ -593,7 +593,7 @@ CREATE TABLE service_category_table(
 
 -- Start: General unit of measurement table
 
-CREATE TABLE service_category_table(
+CREATE TABLE general_unit_of_measurement_table(
   general_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   general_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   general_unit_of_measurement VARCHAR(4000) NOT NULL,
