@@ -22,6 +22,23 @@ export const defaultMantineColorList = [
   "teal",
 ];
 
+export const defaultMantineColorHexList = [
+  "#25262B",
+  "#868E96",
+  "#FA5252",
+  "#E64980",
+  "#BE4BDB",
+  "#7950F2",
+  "#4C6EF5",
+  "#228BE6",
+  "#15AABF",
+  "#12B886",
+  "#40C057",
+  "#82C91E",
+  "#FAB005",
+  "#FD7E14",
+];
+
 export const getAvatarColor = (number: number) => {
   const randomColor =
     defaultMantineColorList[number % defaultMantineColorList.length];
