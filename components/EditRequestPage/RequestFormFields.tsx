@@ -73,6 +73,13 @@ type RequestFormFieldsProps = {
     onProjectSiteChange: () => void;
   };
   referenceOnly?: boolean;
+  serviceFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSIDivisionChange: (index: number, value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
 };
 
 const RequestFormFields = ({
@@ -86,6 +93,7 @@ const RequestFormFields = ({
   formslyFormName = "",
   sourcedItemFormMethods,
   referenceOnly,
+  serviceFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     control,
@@ -383,10 +391,13 @@ const RequestFormFields = ({
                         prevValue === null ? null : `${prevValue}`
                       );
                     } else if (field.field_name === "CSI Code Description") {
-                      requisitionFormMethods?.onCSICodeChange(
-                        sectionIndex,
-                        value
-                      );
+                      requisitionFormMethods &&
+                        requisitionFormMethods.onCSICodeChange(
+                          sectionIndex,
+                          value
+                        );
+                      serviceFormMethods &&
+                        serviceFormMethods.onCSICodeChange(sectionIndex, value);
                     } else if (field.field_name === "Source Project") {
                       sourcedItemFormMethods?.onProjectSiteChange();
                     } else if (field.field_name === "Requesting Project") {
@@ -394,6 +405,11 @@ const RequestFormFields = ({
                       subconFormMethods?.onProjectNameChange(value);
                     } else if (field.field_name === "Service Name") {
                       subconFormMethods?.onServiceNameChange(
+                        sectionIndex,
+                        value
+                      );
+                    } else if (field.field_name === "CSI Division") {
+                      serviceFormMethods?.onCSIDivisionChange(
                         sectionIndex,
                         value
                       );

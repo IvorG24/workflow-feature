@@ -40,11 +40,11 @@ import {
   TicketStatusType,
   TicketType,
   UserIssuedItem,
+  UserTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
-import { v4 as uuidv4 } from "uuid";
-import validator from "validator";
+import { v4 as uuidv4, validate } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
@@ -173,6 +173,7 @@ export const getRequestList = async (
     isApproversView: boolean;
     teamMemberId?: string;
     project?: string[];
+    idFilter?: string[];
   }
 ) => {
   const {
@@ -188,6 +189,7 @@ export const getRequestList = async (
     isApproversView,
     teamMemberId,
     project,
+    idFilter,
   } = params;
 
   const requestorCondition = requestor
@@ -206,8 +208,12 @@ export const getRequestList = async (
     ?.map((value) => `request_view.request_formsly_id_prefix = '${value}'`)
     .join(" OR ");
 
+  const idFilterCondition = idFilter
+    ?.map((value) => `request_view.request_${value}_id IS NULL`)
+    .join(" AND ");
+
   const searchCondition =
-    search && validator.isUUID(search)
+    search && validate(search)
       ? `request_view.request_id = '${search}'`
       : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
@@ -220,6 +226,7 @@ export const getRequestList = async (
       approver: approverCondition ? `AND (${approverCondition})` : "",
       project: projectCondition ? `AND (${projectCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
+      idFilter: idFilterCondition ? `AND (${idFilterCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
@@ -263,11 +270,25 @@ export const getUserWithSignature = async (
   const { userId } = params;
   const { data, error } = await supabaseClient
     .from("user_table")
-    .select("*, user_signature_attachment: user_signature_attachment_id(*)")
+    .select(
+      "*, user_signature_attachment: user_signature_attachment_id(*), user_employee_number: user_employee_number_table(user_employee_number, user_employee_number_is_disabled)"
+    )
     .eq("user_id", userId)
+    .eq("user_employee_number.user_employee_number_is_disabled", false)
     .single();
   if (error) throw error;
-  return data;
+
+  const formattedData = data as unknown as UserTableRow & {
+    user_employee_number: { user_employee_number: string }[];
+  };
+
+  return {
+    ...formattedData,
+    user_employee_number:
+      formattedData.user_employee_number.length !== 0
+        ? formattedData.user_employee_number[0].user_employee_number
+        : null,
+  };
 };
 
 // Check username if it already exists
@@ -2443,10 +2464,10 @@ export const getSupplier = async (
   const { supplier, teamId, fieldId } = params;
   const { data, error } = await supabaseClient
     .from("supplier_table")
-    .select("supplier_name")
+    .select("supplier")
     .eq("supplier_team_id", teamId)
-    .ilike("supplier_name", `%${supplier}%`)
-    .order("supplier_name", { ascending: true })
+    .ilike("supplier", `%${supplier}%`)
+    .order("supplier", { ascending: true })
     .limit(100);
   if (error) throw error;
 
@@ -2455,7 +2476,7 @@ export const getSupplier = async (
       option_field_id: fieldId,
       option_id: uuidv4(),
       option_order: index + 1,
-      option_value: supplier.supplier_name,
+      option_value: supplier.supplier,
     };
   });
 
@@ -3840,7 +3861,7 @@ export const getTicketList = async (
     .join(" OR ");
 
   const searchCondition =
-    search && search?.length > 0 && validator.isUUID(search)
+    search && search?.length > 0 && validate(search)
       ? `ticket_table.ticket_id = '${search}'`
       : `ticket_table.ticket_id::text LIKE '${search}%'`;
 
@@ -4035,6 +4056,110 @@ export const getRequestTeamId = async (
   } else {
     return null;
   }
+};
+
+// Fetch all CSI Code
+export const getCSIDescriptionOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    divisionId: string;
+  }
+) => {
+  const { divisionId } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_division_id", divisionId)
+    .order("csi_code_level_three_description", { ascending: true });
+  if (error) throw error;
+  return data;
+};
+
+// Get lookup list
+export const getLookupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    lookup: string;
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { lookup, teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from(`${lookup}_table`)
+    .select("*", { count: "exact" })
+    .eq(`${lookup}_team_id`, teamId)
+    .eq(`${lookup}_is_disabled`, false);
+
+  if (search) {
+    query = query.ilike(`${lookup}`, `%${search}%`);
+  }
+
+  query.order(`${lookup}`, { ascending: true, foreignTable: "" });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const id = `${lookup}_id`;
+  const value = lookup;
+  const status = `${lookup}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  }[];
+
+  return {
+    data: formattedData.map((lookupData) => {
+      return {
+        id: lookupData[id],
+        status: Boolean(lookupData[status]),
+        value: lookupData[value],
+      };
+    }),
+    count,
+  };
+};
+
+// check if lookup table value already exists
+export const checkLookupTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { lookupTableName: string; value: string; teamId: string }
+) => {
+  const { lookupTableName, value, teamId } = params;
+  const { count, error } = await supabaseClient
+    .from(`${lookupTableName}_table`)
+    .select("*", { count: "exact", head: true })
+    .eq(`${lookupTableName}`, value)
+    .eq(`${lookupTableName}_is_disabled`, false)
+    .eq(`${lookupTableName}_team_id`, teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Fetch all CSI Code based on division description
+export const getCSICodeOptionsForServices = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    description: string;
+  }
+) => {
+  const { description } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_division_description", description);
+  if (error) throw error;
+
+  return data as CSICodeTableRow[];
 };
 
 // Get user issued item list

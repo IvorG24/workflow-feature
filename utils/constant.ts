@@ -1256,7 +1256,10 @@ export const ITEM_UNIT_CHOICES = [
   "Grams Per Square Meter",
   "Cubic Meter Per Hour",
   "Kiloampere",
-  "Beats Per Minute"
+  "Beats Per Minute",
+  "Micron",
+  "Millimetre Per Minute",
+  "Milliampere",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
@@ -1328,4 +1331,10 @@ export const GL_ACCOUNT_CHOICES = [
   "Computer Software",
   "Temporary Facility",
   "Bidding",
+];
+
+export const FORM_SEGMENT_CHOCIES = [
+  { label: "Form Preview", value: "Form Preview" },
+  { label: "Form Details", value: "Form Details" },
+  { label: "Form Lookup", value: "Form Lookup" },
 ];

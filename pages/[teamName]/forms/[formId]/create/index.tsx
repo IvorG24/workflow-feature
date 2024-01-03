@@ -3,6 +3,7 @@ import CreateReceivingInspectingReportPage from "@/components/CreateReceivingIns
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
+import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
 import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
 import CreateTransferReceiptPage from "@/components/CreateTransferReceiptPage/CreateTransferReceiptPage";
@@ -86,6 +87,13 @@ const Page = ({
           <CreateSubconRequestPage
             form={form}
             serviceOptions={serviceOptions}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Services":
+        return (
+          <CreateServicesRequestPage
+            form={form}
             projectOptions={projectOptions}
           />
         );

@@ -37,6 +37,7 @@ type FilterSelectedValuesType = {
   requestorList: string[];
   approverList: string[];
   projectList: string[];
+  idFilterList: string[];
   isApproversView: boolean;
 };
 
@@ -62,6 +63,8 @@ const RequestListFilter = ({
   const { ref: formRef, focused: formRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const { ref: projectRef, focused: projectRefFocused } = useFocusWithin();
+  const { ref: idFilterRef, focused: idFilterRefFocused } = useFocusWithin();
+
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       formList: [],
@@ -69,6 +72,7 @@ const RequestListFilter = ({
       requestorList: [],
       approverList: [],
       projectList: [],
+      idFilterList: [],
       isApproversView: false,
     });
 
@@ -95,6 +99,11 @@ const RequestListFilter = ({
     { value: "PENDING", label: "Pending" },
     { value: "REJECTED", label: "Rejected" },
     { value: "CANCELED", label: "Canceled" },
+  ];
+
+  const idFilterList = [
+    { value: "otp", label: "No OTP ID" },
+    { value: "jira", label: "No JIRA ID" },
   ];
 
   const projectListChoices = projectList.map((project) => {
@@ -297,6 +306,31 @@ const RequestListFilter = ({
             maw={320}
             disabled={filterSelectedValues.isApproversView}
             className="onboarding-request-list-filters-approver"
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="idFilterList"
+        render={({ field: { value, onChange } }) => (
+          <MultiSelect
+            placeholder="OTP and Jira ID"
+            ref={idFilterRef}
+            data={idFilterList}
+            value={value}
+            onChange={(value) => {
+              onChange(value);
+              if (!idFilterRefFocused)
+                handleFilterChange("idFilterList", value);
+            }}
+            onDropdownClose={() => handleFilterChange("idFilterList", value)}
+            {...inputFilterProps}
+            sx={{ flex: 1 }}
+            miw={250}
+            maw={320}
+            disabled={filterSelectedValues.isApproversView}
+            className="onboarding-request-list-filters-id-filter"
           />
         )}
       />

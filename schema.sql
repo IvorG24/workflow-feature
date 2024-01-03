@@ -296,10 +296,11 @@ CREATE TABLE item_description_field_table(
 CREATE TABLE supplier_table(
   supplier_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   supplier_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  supplier VARCHAR(4000) NOT NULL,
   supplier_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   supplier_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  supplier_name VARCHAR(4000) NOT NULL,
-
+  
+  supplier_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -418,6 +419,19 @@ CREATE TABLE special_approver_item_table(
 
 -- END: Special approver item table
 
+-- Start: User employee number table
+
+CREATE TABLE user_employee_number_table (
+    user_employee_number_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    user_employee_number_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    user_employee_number_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+    user_employee_number VARCHAR(4000) NOT NULL,
+
+    user_employee_number_user_id UUID REFERENCES user_table(user_id)
+);
+
+-- END: User employee number table
+
 -- Start: User onboard table
 
 CREATE TABLE user_onboard_table(
@@ -431,6 +445,36 @@ CREATE TABLE user_onboard_table(
 );
 
 -- END: User onboard table
+
+-- Start: Service category table
+
+CREATE TABLE service_category_table(
+  service_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_category VARCHAR(4000) NOT NULL,
+  service_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  service_category_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  service_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  service_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Service category table
+
+-- Start: General unit of measurement table
+
+CREATE TABLE general_unit_of_measurement_table(
+  general_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  general_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  general_unit_of_measurement VARCHAR(4000) NOT NULL,
+  general_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  general_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  general_unit_of_measurement_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: General unit of measurement table
 
 ---------- End: TABLES
 
@@ -849,6 +893,8 @@ RETURNS JSON AS $$
       
       if(formName==='Quotation') {
         endId = `Q`;
+      } else if(formName==='Services') {
+        endId = `S`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
       } else if(formName==='Receiving Inspecting Report') {
@@ -2206,7 +2252,8 @@ RETURNS JSON AS $$
         search,
         isApproversView,
         teamMemberId,
-        project
+        project,
+        idFilter
       } = input_data;
 
       const start = (page - 1) * limit;
@@ -2240,6 +2287,7 @@ RETURNS JSON AS $$
             ${status}
             ${form}
             ${project}
+            ${idFilter}
             ${search}
             ORDER BY request_view.request_date_created ${sort} 
             OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
@@ -2262,6 +2310,7 @@ RETURNS JSON AS $$
             ${status}
             ${form}
             ${project}
+            ${idFilter}
             ${search}
           `
         )[0];
@@ -3191,7 +3240,7 @@ $$ LANGUAGE plv8;
 
 -- Start: Get team member on load
 
-CREATE FUNCTION get_team_member_on_load(
+CREATE OR REPLACE FUNCTION get_team_member_on_load(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -3201,7 +3250,29 @@ RETURNS JSON AS $$
       teamMemberId
     } = input_data;
     
-    const member = plv8.execute(`SELECT tmt.* , ( SELECT row_to_json(usert) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id ) AS team_member_user FROM team_member_table tmt WHERE team_member_id='${teamMemberId}';`)[0];
+    const member = plv8.execute(
+      `
+        SELECT 
+          tmt.*, 
+          json_build_object( 
+            'user_id', usert.user_id, 
+            'user_first_name', usert.user_first_name, 
+            'user_last_name', usert.user_last_name, 
+            'user_avatar', usert.user_avatar, 
+            'user_email', usert.user_email,
+            'user_phone_number', usert.user_phone_number,
+            'user_username', usert.user_username,
+            'user_job_title', usert.user_job_title,
+            'user_employee_number', uent.user_employee_number
+          ) AS team_member_user 
+        FROM team_member_table tmt 
+        INNER JOIN user_table usert ON usert.user_id = tmt.team_member_user_id
+        LEFT JOIN user_employee_number_table uent 
+          ON uent.user_employee_number_user_id = usert.user_id
+          AND uent.user_employee_number_is_disabled = false
+        WHERE team_member_id='${teamMemberId}'
+      `
+    )[0];
 
     const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_group_member_table tgmt2 INNER JOIN team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
 
@@ -3260,10 +3331,14 @@ RETURNS JSON AS $$
           'user_first_name', usert.user_first_name, 
           'user_last_name', usert.user_last_name, 
           'user_avatar', usert.user_avatar, 
-          'user_email', usert.user_email 
+          'user_email', usert.user_email,
+          'user_employee_number', uent.user_employee_number
         ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id
+        LEFT JOIN user_employee_number_table uent 
+          ON uent.user_employee_number_user_id = usert.user_id
+          AND uent.user_employee_number_is_disabled=false
         WHERE 
           tmt.team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -3335,10 +3410,14 @@ RETURNS JSON AS $$
             'user_first_name', usert.user_first_name, 
             'user_last_name', usert.user_last_name, 
             'user_avatar', usert.user_avatar, 
-            'user_email', usert.user_email 
+            'user_email', usert.user_email,
+            'user_employee_number', uent.user_employee_number
           ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id
+        LEFT JOIN user_employee_number_table uent 
+          ON uent.user_employee_number_user_id = usert.user_id
+          AND uent.user_employee_number_is_disabled=false
         WHERE 
           tmt.team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -3460,7 +3539,7 @@ $$ LANGUAGE plv8;
 
 -- END: Get request list on load
 
-CREATE FUNCTION get_request_list_on_load(
+CREATE OR REPLACE FUNCTION get_request_list_on_load(
     input_data JSON
 )
 RETURNS JSON AS $$
@@ -3482,7 +3561,7 @@ RETURNS JSON AS $$
 
     const formList = formListData.map(form=>({ label: form.form_name, value: form.form_id }));
     
-    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "approver":"", "form":"", "project":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
+    const requestList = plv8.execute(`SELECT fetch_request_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requestor":"", "approver":"", "form":"", "idFilter":"", "project":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_request_list;
 
     const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
@@ -4333,7 +4412,7 @@ RETURNS JSON as $$
               supplier_is_available = true
               AND supplier_is_disabled = false
               AND supplier_team_id = '${teamId}'
-            ORDER BY supplier_name ASC
+            ORDER BY supplier ASC
             LIMIT 100
           `
         );
@@ -4343,7 +4422,7 @@ RETURNS JSON as $$
             option_field_id: form.form_section[0].section_field[0].field_id,
             option_id: suppliers.supplier_id,
             option_order: index,
-            option_value: suppliers.supplier_name,
+            option_value: suppliers.supplier,
           };
         });
 
@@ -4480,6 +4559,147 @@ RETURNS JSON as $$
             ],
           },
           serviceOptions,
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "Services") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((suppliers, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[9].field_id,
+            option_id: suppliers.supplier_id,
+            option_order: index,
+            option_value: suppliers.supplier,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM service_category_table
+            WHERE 
+              service_category_team_id = '${teamMember.team_member_team_id}'
+              AND service_category_is_disabled = false
+              AND service_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.service_category_id,
+            option_order: index,
+            option_value: category.service_category,
+          };
+        });
+
+        const csiDivisions = plv8.execute(
+          `
+            SELECT *
+            FROM distinct_division_view
+          `
+        );
+
+        const csiDivisionOption = csiDivisions.map((division, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: division.csi_code_division_description,
+            option_order: index,
+            option_value: division.csi_code_division_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT *
+            FROM general_unit_of_measurement_table
+            WHERE 
+              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[3].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 3),
+                   {
+                    ...form.form_section[1].section_field[3],
+                    field_option: unitOfMeasurementOptions
+                  },
+                  {
+                    ...form.form_section[1].section_field[4],
+                    field_option: csiDivisionOption
+                  },
+                  ...form.form_section[1].section_field.slice(5, 9),
+                  {
+                    ...form.form_section[1].section_field[9],
+                    field_option: supplierOptions
+                  }
+                ],
+              },
+            ],
+          },
           projectOptions,
         }
         return;
@@ -6175,7 +6395,7 @@ RETURNS JSON AS $$
           request_formsly_id,
           request_id
         FROM request_response_table
-        INNER JOIN request_table ON request_id = request_response_request_id
+        INNER JOIN request_view ON request_id = request_response_request_id
         WHERE 
           request_response = '"${itemName}"' AND
           request_response_field_id = '${generalNameFieldId}' AND
@@ -6190,7 +6410,7 @@ RETURNS JSON AS $$
       `
         SELECT COUNT(*)
         FROM request_response_table
-        INNER JOIN request_table ON request_id = request_response_request_id
+        INNER JOIN request_view ON request_id = request_response_request_id
         WHERE 
           request_response = '"${itemName}"' AND
           request_response_field_id = '${generalNameFieldId}' AND
@@ -6428,7 +6648,7 @@ RETURNS JSON AS $$
           WHERE supplier_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
               AND supplier_is_disabled = false
               AND supplier_is_available = true
-          ORDER BY supplier_name ASC
+          ORDER BY supplier ASC
           LIMIT 100;
         `);
 
@@ -6444,7 +6664,7 @@ RETURNS JSON AS $$
             option_field_id: preferredSupplierField.field_id,
             option_id: supplier.supplier_id,
             option_order: index,
-            option_value: supplier.supplier_name,
+            option_value: supplier.supplier,
           };
         });
 
@@ -6680,6 +6900,170 @@ RETURNS JSON AS $$
           projectOptions,
           specialApprover: specialApproverWithItem
         }
+      } else if (form.form_name === "Services") {
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((supplier, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[9].field_id,
+            option_id: supplier.supplier_id,
+            option_order: index,
+            option_value: supplier.supplier,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM service_category_table
+            WHERE 
+              service_category_team_id = '${teamId}'
+              AND service_category_is_disabled = false
+              AND service_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.service_category_id,
+            option_order: index,
+            option_value: category.service_category,
+          };
+        });
+
+        const csiDivisions = plv8.execute(
+          `
+            SELECT *
+            FROM distinct_division_view
+          `
+        );
+
+        const csiDivisionOption = csiDivisions.map((division, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: division.csi_code_division_description,
+            option_order: index,
+            option_value: division.csi_code_division_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT *
+            FROM general_unit_of_measurement_table
+            WHERE 
+              general_unit_of_measurement_team_id = '${teamId}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[3].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        const sectionWithDuplicateList = form.form_section
+          .slice(1)
+          .map((section) => {
+            return {
+              ...section,
+              section_field: section.section_field,
+            }
+          });
+
+        const requestSectionList = sectionWithDuplicateList
+          .map((section) => {
+            const requestDivision = JSON.parse(section.section_field[4].field_response[0].request_response);
+
+            const csiCodeList = plv8.execute(`
+              SELECT *
+              FROM csi_code_table
+              WHERE csi_code_division_description = '${requestDivision}'
+            `);
+
+            const csiCodeOptions = csiCodeList.map((csiCode, index) => {
+              return {
+                option_field_id: form.form_section[0].section_field[0].field_id,
+                option_id: csiCode.csi_code_level_three_description,
+                option_order: index,
+                option_value: csiCode.csi_code_level_three_description,
+              };
+            });
+
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_option: categoryOptions,
+                },
+                ...section.section_field.slice(1, 3),
+                {
+                  ...section.section_field[3],
+                  field_option: unitOfMeasurementOptions,
+                },
+                {
+                  ...section.section_field[4],
+                  field_option: csiDivisionOption,
+                },
+                {
+                  ...section.section_field[5],
+                  field_option: csiCodeOptions,
+                },
+                ...section.section_field.slice(6, 9),
+                {
+                  ...section.section_field[9],
+                  field_option: supplierOptions,
+                },
+              ],
+            };
+          });
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              ...requestSectionList,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          projectOptions
+        }
       } else if (form.form_name === "Subcon") {
         const serviceList = plv8.execute(`
           SELECT *
@@ -6824,7 +7208,6 @@ RETURNS JSON AS $$
           serviceOptions,
           projectOptions,
         };
-        
       } else if (form.form_name === "Sourced Item") {
         const requisitionId = JSON.parse(form.form_section[0].section_field.find(
           (field) => field.field_name === "Requisition ID"
@@ -7340,8 +7723,8 @@ RETURNS JSON AS $$
           SELECT * 
           FROM supplier_table
           WHERE supplier_team_id = '${teamId}'
-            AND supplier_name ILIKE '%${supplierResponse}%'
-          ORDER BY supplier_name ASC
+            AND supplier ILIKE '%${supplierResponse}%'
+          ORDER BY supplier ASC
           LIMIT 100;
         `);
 
@@ -7350,7 +7733,7 @@ RETURNS JSON AS $$
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
             option_order: index + 1,
-            option_value: supplier.supplier_name,
+            option_value: supplier.supplier,
           };
         });
 
@@ -7390,7 +7773,6 @@ RETURNS JSON AS $$
           originalItemOptions: itemOptions,
           requestingProject: request.request_project.team_project_name,
         };
-
       } else if (form.form_name === "Receiving Inspecting Report") {
         const quotationId =
           JSON.parse(form.form_section[0].section_field.slice(-1)[0].field_response[0]
@@ -8041,6 +8423,7 @@ ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
@@ -8203,6 +8586,11 @@ DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_onboard_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_onboard_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_onboard_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own onboard" ON user_onboard_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_number_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_employee_number_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -9663,6 +10051,45 @@ USING (
 CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_item_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+-- USER_EMPLOYEE_NUMBER_TABLE
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT user_id
+    FROM user_table
+    WHERE user_id = user_employee_number_user_id
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT user_id
+    FROM user_table
+    WHERE user_id = user_employee_number_user_id
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "public"."user_employee_number_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT user_id
+    FROM user_table
+    WHERE user_id = user_employee_number_user_id
+  )
+);
 
 --- USER_ONBOARD_TABLE
 CREATE POLICY "Allow CREATE access for all users" ON "public"."user_onboard_table"

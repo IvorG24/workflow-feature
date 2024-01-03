@@ -989,3 +989,34 @@ export const createOnboard = async (
   if (error) throw error;
   return data;
 };
+
+// Create row in lookup table
+export const createRowInLookupTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    inputData: JSON;
+    tableName: string;
+  }
+) => {
+  const { tableName, inputData } = params;
+  const { data, error } = await supabaseClient
+    .from(`${tableName}_table`)
+    .insert(inputData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const id = `${tableName}_id`;
+  const value = tableName;
+  const status = `${tableName}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  };
+
+  return {
+    id: formattedData[id],
+    status: Boolean(formattedData[status]),
+    value: formattedData[value],
+  };
+};

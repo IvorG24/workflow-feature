@@ -199,6 +199,13 @@ export type UserOnboardTableInsert =
 export type UserOnboardTableUpdate =
   Database["public"]["Tables"]["user_onboard_table"]["Update"];
 
+export type ServiceCategoryTableRow =
+  Database["public"]["Tables"]["service_category_table"]["Row"];
+export type ServiceCategoryTableInsert =
+  Database["public"]["Tables"]["service_category_table"]["Insert"];
+export type ServiceCategoryTableUpdate =
+  Database["public"]["Tables"]["service_category_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -293,6 +300,8 @@ export type RequestType = {
 };
 
 export type UserWithSignatureType = UserTableRow & {
+  user_employee_number: string;
+} & {
   user_signature_attachment: AttachmentTableRow;
 };
 
@@ -383,6 +392,7 @@ export type TeamMemberType = {
     user_last_name: string;
     user_avatar: string;
     user_email: string;
+    user_employee_number: string;
   };
 };
 
@@ -909,7 +919,9 @@ export type TeamMemberWithUserDetails = {
 }[];
 
 export type TeamMemberOnLoad = {
-  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  member: TeamMemberTableRow & {
+    team_member_user: UserTableRow & { user_employee_number: string };
+  };
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1067,6 +1079,19 @@ export type ApproverUnresolvedRequestListType = {
     request_status: string;
   };
 };
+
+export type LookupTable = {
+  id: string;
+  status: boolean;
+  value: string;
+};
+
+export type LookupForm = {
+  value: string;
+  isAvailable: boolean;
+};
+
+export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
 
 export type UserIssuedItem = {
   itemName: string;
