@@ -8242,6 +8242,8 @@ RETURNS JSON AS $$
   plv8.subtransaction(function(){
     const {
       teamMemberId,
+      startDate,
+      endDate
     } = input_data;
 
 
@@ -8251,6 +8253,7 @@ RETURNS JSON AS $$
       WHERE request_team_member_id='${teamMemberId}'
       AND request_form_id='d13b3b0f-14df-4277-b6c1-7c80f7e7a829' 
       AND request_status='APPROVED' 
+      AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
       ORDER BY request_date_created DESC;
     `);
 
