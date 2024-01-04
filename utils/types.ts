@@ -1092,3 +1092,16 @@ export type LookupForm = {
 };
 
 export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
+
+export type UserIssuedItem = {
+  itemName: string;
+  itemUom: string;
+  itemQuantity: number;
+  variation: {
+    quantity: number;
+    specification: {
+      fieldName: string;
+      response: string;
+    }[];
+  }[];
+};

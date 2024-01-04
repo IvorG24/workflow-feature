@@ -13,6 +13,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/server": "^11.11.0",
+    "@mantine/carousel": "^6.0.11",
     "@mantine/core": "^6.0.11",
     "@mantine/dates": "^6.0.11",
     "@mantine/hooks": "^6.0.11",
@@ -33,6 +34,7 @@
     "chart.js": "^4.3.0",
     "compressorjs": "^1.2.1",
     "cookies-next": "^2.1.1",
+    "embla-carousel-react": "^7.1.0",
     "eslint": "8.40.0",
     "eslint-config-next": "13.4.2",
     "jsonwebtoken": "^8.5.1",

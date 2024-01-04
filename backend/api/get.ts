@@ -39,6 +39,7 @@ import {
   TicketPageOnLoad,
   TicketStatusType,
   TicketType,
+  UserIssuedItem,
   UserTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -4159,4 +4160,21 @@ export const getCSICodeOptionsForServices = async (
   if (error) throw error;
 
   return data as CSICodeTableRow[];
+};
+
+// Get user issued item list
+export const getUserIssuedItemList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("analyze_user_issued_item", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as { data: UserIssuedItem[]; raw: UserIssuedItem[] };
 };

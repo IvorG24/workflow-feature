@@ -8232,6 +8232,167 @@ END;
 $$ LANGUAGE plpgsql;
 -- End: Format team name to url key
 
+-- Start: Analyze user issued item
+
+CREATE OR REPLACE FUNCTION analyze_user_issued_item(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      startDate,
+      endDate
+    } = input_data;
+
+
+    const requestListData = plv8.execute(`
+      SELECT request_id
+      FROM request_table 
+      WHERE request_team_member_id='${teamMemberId}'
+      AND request_form_id='d13b3b0f-14df-4277-b6c1-7c80f7e7a829' 
+      AND request_status='APPROVED' 
+      AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
+      ORDER BY request_date_created DESC;
+    `);
+
+    if(requestListData.length<=0) {
+      returnData = { data: [] }
+      return;
+    }
+
+    const requestListQuery = requestListData.map(request=>`'${request.request_id}'`).join(",");
+
+    const skippedField = [
+      "GL Account",
+      "CSI Code Description",
+      "CSI Code",
+      "Division Description",
+      "Level 2 Major Group Description",
+      "Level 2 Minor Group Description",
+      "Preferred Supplier",
+      "Requesting Project",
+      "Type",
+      "Date Needed",
+      "Purpose"
+    ]
+
+    const skippedFieldQuery = skippedField.map(field=>`'${field}'`).join(",");
+
+    const responseListData = plv8.execute(`
+      SELECT 
+        rrt.*,
+        ft.field_name,
+        ft.field_section_id
+      FROM request_response_table rrt 
+      INNER JOIN field_table ft ON rrt.request_response_field_id = ft.field_id 
+      WHERE rrt.request_response_request_id IN (${requestListQuery})
+      AND ft.field_name NOT IN (${skippedFieldQuery});
+    `);
+
+    const itemSpecificList = {};
+
+    responseListData.forEach(item => {
+        const key = `${item.request_response_request_id}-${item.request_response_duplicatable_section_id || ''}`;
+
+        if (!itemSpecificList[key]) {
+            itemSpecificList[key] = [];
+        }
+
+        itemSpecificList[key].push({
+            request_response_id: item.request_response_id,
+            request_response: JSON.parse(item.request_response),
+            request_response_duplicatable_section_id: item.request_response_duplicatable_section_id,
+            request_response_request_id: item.request_response_request_id,
+            request_response_field_id: item.request_response_field_id,
+            field_name: item.field_name,
+            field_section_id: item.field_section_id,
+        });
+    });
+    
+    const nonUniqueitemList = [];
+
+    for (const key in itemSpecificList) {
+        const items = itemSpecificList[key];
+
+        const formattedItem = {
+            itemName: "",
+            itemUom: "",
+            itemQuantity: 0,
+            variation: [{
+              quantity: 0,
+              specification: []
+            }]
+        };
+        
+            
+
+        items.forEach(item => {
+            switch (item.field_name) {
+                case "General Name":
+                    formattedItem.itemName = item.request_response;
+                    break;
+                case "Base Unit of Measurement":
+                    formattedItem.itemUom = item.request_response;
+                    break;
+                case "Quantity":
+                    formattedItem.itemQuantity = item.request_response;
+                    formattedItem.variation[0].quantity = item.request_response;
+                    break;
+                default:
+                    formattedItem.variation[0].specification.push({
+                        fieldName: item.field_name,
+                        response: `${item.request_response}`
+                    });
+                    break;
+            }
+        });
+        
+        nonUniqueitemList.push(formattedItem);
+    }
+
+    const mergedItems = [];
+  
+    Object.values(nonUniqueitemList).forEach((item) => {
+        const existingItem = mergedItems.find(
+          (mergedItem) =>
+            mergedItem.itemName === item.itemName &&
+            mergedItem.itemUom === item.itemUom
+        );
+
+        if (existingItem) {
+          const existingVariation = existingItem.variation.find(
+            (variation) =>
+              JSON.stringify(variation.specification) ===
+              JSON.stringify(item.variation[0].specification)
+          );
+
+          if (existingVariation) {
+            existingVariation.quantity += Number(item.variation[0].quantity);
+          } else {
+            
+            existingItem.variation.push(item.variation[0]);
+          }
+            existingItem.itemQuantity = existingItem.variation
+              .map((spec) => spec.quantity)
+              .reduce((a, c) => a + c, 0);
+        } else {
+          mergedItems.push({ ...item });
+        }
+      });
+
+    const itemList = mergedItems.sort((a, b) => b.itemQuantity - a.itemQuantity);
+
+    returnData = {
+      data: itemList,
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Analyze user issued item
+
 ---------- End: FUNCTIONS
 
 
