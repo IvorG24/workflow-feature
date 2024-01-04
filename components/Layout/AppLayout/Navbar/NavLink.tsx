@@ -12,7 +12,15 @@ import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
-import { Box, Button, Divider, Menu, Space, Stack } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Divider,
+  Menu,
+  Portal,
+  Space,
+  Stack,
+} from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
@@ -92,20 +100,22 @@ const ReviewAppNavLink = () => {
             </Button>
           </Stack>
 
-          <Menu.Dropdown>
-            {unhiddenForms.map((form) => (
-              <Menu.Item
-                key={form.form_id}
-                onClick={() =>
-                  router.push(
-                    `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                  )
-                }
-              >
-                {form.form_name}
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
+          <Portal>
+            <Menu.Dropdown>
+              {unhiddenForms.map((form) => (
+                <Menu.Item
+                  key={form.form_id}
+                  onClick={() =>
+                    router.push(
+                      `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                    )
+                  }
+                >
+                  {form.form_name}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Portal>
         </Menu>
       </Box>
     );
@@ -143,26 +153,28 @@ const ReviewAppNavLink = () => {
             </Button>
           </Stack>
 
-          <Menu.Dropdown>
-            <Menu.Item
-              key={"all-form"}
-              onClick={() => router.push(`/${activeTeamNameToUrl}/forms/`)}
-              c="blue"
-            >
-              View All
-            </Menu.Item>
-            <Divider />
-            {unhiddenForms.map((form) => (
+          <Portal>
+            <Menu.Dropdown>
               <Menu.Item
-                key={form.form_id}
-                onClick={() =>
-                  router.push(`/${activeTeamNameToUrl}/forms/${form.form_id}`)
-                }
+                key={"all-form"}
+                onClick={() => router.push(`/${activeTeamNameToUrl}/forms/`)}
+                c="blue"
               >
-                {form.form_name}
+                View All
               </Menu.Item>
-            ))}
-          </Menu.Dropdown>
+              <Divider />
+              {unhiddenForms.map((form) => (
+                <Menu.Item
+                  key={form.form_id}
+                  onClick={() =>
+                    router.push(`/${activeTeamNameToUrl}/forms/${form.form_id}`)
+                  }
+                >
+                  {form.form_name}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Portal>
         </Menu>
       </Box>
     );

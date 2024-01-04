@@ -20,13 +20,13 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
   const hasTeam = teamList.length > 0;
 
   return (
-    <ScrollArea offsetScrollbars={false} scrollbarSize={10}>
-      <MantineNavbar
-        p="md"
-        hiddenBreakpoint="sm"
-        hidden={!openNavbar}
-        width={{ sm: 200, lg: 300 }}
-      >
+    <MantineNavbar
+      p="md"
+      hiddenBreakpoint="sm"
+      hidden={!openNavbar}
+      width={{ sm: 200, lg: 300 }}
+    >
+      <ScrollArea offsetScrollbars={false} scrollbarSize={10}>
         {hasTeam ? <SelectTeam /> : null}
         {!activeApp && hasTeam ? (
           <Stack>
@@ -54,8 +54,8 @@ const Navbar = ({ openNavbar }: NavbarProps) => {
             {/* {!isEmpty(activeTeam) && hasTeam ? <FormList /> : null} */}
           </>
         ) : null}
-      </MantineNavbar>
-    </ScrollArea>
+      </ScrollArea>
+    </MantineNavbar>
   );
 };
 
