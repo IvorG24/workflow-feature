@@ -85,14 +85,6 @@ const UserItemBarChart: React.FC<HorizontalBarChartProps> = ({ data }) => {
         border: {
           display: false,
         },
-        grid: {
-          display: false,
-          drawOnChartArea: false,
-          drawTicks: false,
-        },
-        ticks: {
-          display: false,
-        },
       },
       y: {
         stacked: true,
