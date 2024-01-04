@@ -311,7 +311,7 @@ const RequestListPage = ({
   }, [activeTeam.team_id, teamMember, localFilter]);
 
   return (
-    <Container maw={1300} h="100%">
+    <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap">
         <Box>
           <Title order={4}>Request List Page</Title>
