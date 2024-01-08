@@ -1260,6 +1260,7 @@ export const ITEM_UNIT_CHOICES = [
   "Micron",
   "Millimetre Per Minute",
   "Milliampere",
+  "Linear Meter",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
