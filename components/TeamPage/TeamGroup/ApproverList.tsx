@@ -288,7 +288,7 @@ const ApproverList = ({
         </Group>
       </Flex>
       <DataTable
-        idAccessor="team_group_approver_id"
+        idAccessor="team_member_id"
         mt="xs"
         withBorder
         fw="bolder"
