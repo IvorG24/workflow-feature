@@ -6,6 +6,7 @@ import {
 import { udpateUser } from "@/backend/api/update";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { trimObjectProperties } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -120,7 +121,7 @@ const UserSettingsPage = ({ user }: Props) => {
       }
 
       await udpateUser(supabaseClient, {
-        ...data,
+        ...trimObjectProperties(data),
         user_avatar: imageUrl ? imageUrl : data.user_avatar,
       });
 
