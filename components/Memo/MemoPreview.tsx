@@ -16,9 +16,10 @@ import { MemoFormValues } from "./CreateMemoFormPage";
 
 type Props = {
   data: MemoFormValues;
+  teamMemoCount: number;
 };
 
-const MemoPreview = ({ data }: Props) => {
+const MemoPreview = ({ data, teamMemoCount }: Props) => {
   const team = useActiveTeam();
   const teamName = team.team_name ?? "";
 
@@ -72,7 +73,7 @@ const MemoPreview = ({ data }: Props) => {
           value: `MEMO-${teamName
             .toUpperCase()
             .split(" ")
-            .join("")}-${moment().format("YYYY")}-01`,
+            .join("")}-${moment().format("YYYY")}-${teamMemoCount + 1}`,
         })}
         {memoData({
           label: "Date",

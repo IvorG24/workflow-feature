@@ -4178,3 +4178,20 @@ export const getUserIssuedItemList = async (
 
   return data as unknown as { data: UserIssuedItem[]; raw: UserIssuedItem[] };
 };
+
+// Get team memo total count
+export const getTeamMemoCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { count, error } = await supabaseClient
+    .from("memo_table")
+    .select("*", { count: "exact", head: true })
+    .eq("memo_team_id", params.teamId);
+
+  if (error) throw error;
+
+  return Number(count);
+};

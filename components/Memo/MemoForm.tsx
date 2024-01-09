@@ -63,8 +63,8 @@ const MemoForm = ({ onSubmit }: Props) => {
           mb="sm"
         />
         {lineItemList.map((lineItem, lineItemIndex) => (
-          <>
-            <Box key={lineItem.id}>
+          <Stack key={lineItem.id}>
+            <Box>
               <Group position="apart">
                 {" "}
                 <Text weight={600}>
@@ -168,7 +168,7 @@ const MemoForm = ({ onSubmit }: Props) => {
                 </Button>
               )}
             </Group>
-          </>
+          </Stack>
         ))}
 
         <Flex

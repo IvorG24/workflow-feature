@@ -18,6 +18,7 @@ export type MemoFormValues = {
 
 type Props = {
   user: UserTableRow;
+  teamMemoCount: number;
 };
 
 export const getDefaultMemoLineItemValue = ({
@@ -28,7 +29,7 @@ export const getDefaultMemoLineItemValue = ({
   line_item_content: content,
 });
 
-const CreateMemoFormPage = ({ user }: Props) => {
+const CreateMemoFormPage = ({ user, teamMemoCount }: Props) => {
   const userFullname = `${user.user_first_name} ${user.user_last_name}`;
 
   const memoFormMethods = useForm<MemoFormValues>({
@@ -82,7 +83,7 @@ const CreateMemoFormPage = ({ user }: Props) => {
           </Tabs.Panel>
 
           <Tabs.Panel value="preview" pt="xs">
-            <MemoPreview data={previewData} />
+            <MemoPreview data={previewData} teamMemoCount={teamMemoCount} />
           </Tabs.Panel>
         </Tabs>
       </Paper>

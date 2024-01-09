@@ -474,6 +474,44 @@ CREATE TABLE general_unit_of_measurement_table(
   general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
+CREATE TABLE memo_table (
+    memo_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_subject VARCHAR(4000) NOT NULL,
+    memo_author_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+    memo_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+    memo_reference_number_prefix VARCHAR(4000) NOT NULL,
+    memo_reference_number_serial VARCHAR(4000) NOT NULL,
+    memo_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    memo_date_updated TIMESTAMPTZ,
+    memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+);
+
+CREATE TABLE memo_signer_table (
+    memo_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_signer_status VARCHAR(60) DEFAULT 'PENDING' NOT NULL,
+    memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+    memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_line_item_table (
+    memo_line_item_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_line_item_content VARCHAR(4000) NOT NULL,
+    memo_line_item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    memo_line_item_date_updated TIMESTAMPTZ,
+    memo_line_item_order INT NOT NULL,
+    memo_line_item_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_line_item_attachment_table (
+    memo_line_item_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_line_item_attachment_name VARCHAR(4000) NOT NULL, -- Name of the file in the Supabase bucket
+    memo_line_item_attachment_caption VARCHAR(4000),
+    memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) NOT NULL
+);
+
+
+
+
 -- End: General unit of measurement table
 
 ---------- End: TABLES
