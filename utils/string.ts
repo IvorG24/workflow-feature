@@ -1,3 +1,5 @@
+import { NodeHtmlMarkdown } from "node-html-markdown";
+
 export const isValidTeamName = (name: string): boolean => {
   const allowedCharsRegex = /^[a-zA-Z0-9 ,;\/?:@&=+$\-_.!]*$/;
 
@@ -92,4 +94,10 @@ export const convertTimestampToDateTime = (
     console.error(error);
     return null;
   }
+};
+
+export const parseHtmlToMarkdown = (html: string) => {
+  const htmlToMarkdownParser = new NodeHtmlMarkdown();
+
+  return htmlToMarkdownParser.translate(html);
 };
