@@ -83,6 +83,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
         user_avatar,
         user_signature_attachment,
         user_job_title,
+        user_id,
       },
     } = selectedSigner;
 
@@ -105,6 +106,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
       signer_avatar: user_avatar,
       signer_signature: user_signature_attachment,
       signer_job_title: user_job_title,
+      signer_user_id: user_id,
     };
 
     insertSignerItem(selectedSignerList.length, newMemoSigner);

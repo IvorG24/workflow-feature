@@ -8468,8 +8468,8 @@ RETURNS JSON AS $$
       lineItemData
     } = input_data;
 
-    const memoCount = plv8.execute(`SELECT COUNT(*) FROM memo_table WHERE memo_team_id = '${memoData.memo_team_id}'`)[0].count;
-    const memo_reference_number_serial = (Number(memoCount) + 1).toString(16).toUpperCase();
+    const memo_count = plv8.execute(`SELECT COUNT(*) FROM memo_table WHERE memo_team_id = '${memoData.memo_team_id}'`)[0].count;
+    const memo_reference_number_serial = (Number(memo_count) + 1).toString(16).toUpperCase();
     memoData.memo_reference_number_serial = memo_reference_number_serial;
 
     new_memo_data = plv8.execute(`
@@ -8533,6 +8533,29 @@ RETURNS JSON AS $$
       `);
     }
 
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${memoData.memo_team_id}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+    const memo_author_data = plv8.execute(`SELECT user_first_name, user_last_name FROM user_table WHERE user_id = '${memoData.memo_author_user_id}' LIMIT 1`)[0];
+
+    const signerNotificationInput = signerData.map((signer) => ({notification_app: 'REQUEST', notification_content: `${memo_author_data.user_first_name} ${memo_author_data.user_last_name} requested you to sign his/her memo`, notification_redirect_url: '', notification_team_id: memoData.memo_team_id, notification_type: 'MEMO-APPROVAL', notification_user_id: signer.memo_signer_user_id}));
+
+    
+    if (activeTeam && memo_author_data) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        const notificationValues = signerNotificationInput
+        .map(
+          (notification) =>
+            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/memo/${new_memo_data.memo_id}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+        )
+        .join(",");
+
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      }
+    }
+
  });
  return new_memo_data;
 $$ LANGUAGE plv8;
@@ -8579,7 +8602,7 @@ RETURNS JSON AS $$
         FROM memo_signer_table 
         INNER JOIN team_member_table tm ON tm.team_member_id = memo_signer_team_member_id 
         INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id 
-        INNER JOIN attachment_table ON attachment_id = ut.user_signature_attachment_id
+        LEFT JOIN attachment_table ON attachment_id = ut.user_signature_attachment_id
         WHERE memo_signer_memo_id = '${memo_id}'
     `);
 

@@ -39,6 +39,7 @@ export type MemoFormValues = {
       | (AttachmentTableRow & { attachment_public_url?: string })
       | null;
     signer_job_title: string | null;
+    signer_user_id: string;
   }[];
 };
 
@@ -97,6 +98,7 @@ const CreateMemoFormPage = ({
           memo_signer_order: signerIndex,
           memo_signer_is_primary: signer.signer_is_primary,
           memo_signer_team_member_id: signer.signer_team_member_id,
+          memo_signer_user_id: signer.signer_user_id,
         }));
 
       // automatically make signer primary if signerList has only 1 signer

@@ -1,6 +1,9 @@
+import { createNotification } from "@/backend/api/post";
 import { approveOrRejectMemo } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor } from "@/utils/styling";
 import { MemoType } from "@/utils/types";
 import {
@@ -115,6 +118,7 @@ const renderSignerItem = (
 
 const MemoPage = ({ memo }: Props) => {
   const userTeamMemberData = useUserTeamMember();
+  const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const { memo_author_user } = memo;
@@ -148,6 +152,8 @@ const MemoPage = ({ memo }: Props) => {
     isPrimarySigner: boolean
   ) => {
     try {
+      const signer = userSignerData?.memo_signer_team_member.user;
+
       setIsLoading(true);
       await approveOrRejectMemo(supabaseClient, {
         memoSignerId: signerId,
@@ -155,6 +161,20 @@ const MemoPage = ({ memo }: Props) => {
         action,
         isPrimarySigner,
       });
+
+      await createNotification(supabaseClient, {
+        notification_app: "REQUEST",
+        notification_type: `MEMO-${action}`,
+        notification_content: `${signer?.user_first_name} ${
+          signer?.user_last_name
+        } ${action.toLowerCase()} your request`,
+        notification_redirect_url: `/${formatTeamNameToUrlKey(
+          activeTeam.team_name ?? ""
+        )}/memo/${memo.memo_id}`,
+        notification_user_id: `${memo.memo_author_user.user_id}`,
+        notification_team_id: activeTeam.team_id,
+      });
+
       setUserSignerStatus(action);
 
       if (isPrimarySigner) {

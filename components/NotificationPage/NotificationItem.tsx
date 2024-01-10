@@ -12,6 +12,7 @@ import {
 import {
   IconFile,
   IconFileAlert,
+  IconFileDescription,
   IconFileDislike,
   IconFileLike,
   IconMail,
@@ -45,6 +46,10 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
     else if (type === "REVIEW") return <IconMessage2 size={20} />;
     else if (type === "REVERSE")
       return <IconRefresh size={20} color="#FF922B" />;
+    else if (type === "MEMO-APPROVAL")
+      return <IconFileDescription size={20} color="#FF922B" />;
+    else if (type === "MEMO-APPROVED")
+      return <IconFileDescription size={20} color="#40C057" />;
   };
 
   return (

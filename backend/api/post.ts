@@ -1037,6 +1037,7 @@ export const createTeamMemo = async (
       memo_signer_order: number;
       memo_signer_is_primary: boolean;
       memo_signer_team_member_id: string;
+      memo_signer_user_id: string;
     }[];
     lineItemData: MemoLineItem[];
   }
@@ -1059,7 +1060,7 @@ export const createTeamMemo = async (
   const { data, error } = await supabaseClient.rpc("create_memo", {
     input_data,
   });
-
+  console.log(error);
   if (error) throw Error;
 
   return data as MemoTableRow;
