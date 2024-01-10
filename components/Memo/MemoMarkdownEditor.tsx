@@ -1,5 +1,6 @@
 import { Box } from "@mantine/core";
 import { RichTextEditor } from "@mantine/tiptap";
+import Placeholder from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
@@ -10,7 +11,10 @@ type Props = {
 
 const MemoMarkdownEditor = ({ value, onChange }: Props) => {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: "Type your memo content here" }),
+    ],
     content: value,
     onUpdate: ({ editor }) => {
       onChange(editor?.getHTML());
@@ -22,7 +26,7 @@ const MemoMarkdownEditor = ({ value, onChange }: Props) => {
 
   return (
     <Box>
-      <RichTextEditor editor={editor}>
+      <RichTextEditor mih={150} editor={editor}>
         <RichTextEditor.Toolbar sticky stickyOffset={40}>
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.Bold />

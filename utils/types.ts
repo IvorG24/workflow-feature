@@ -216,7 +216,8 @@ export type AttachmentBucketType =
   | "USER_SIGNATURES"
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
-  | "REQUEST_ATTACHMENTS";
+  | "REQUEST_ATTACHMENTS"
+  | "MEMO_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -1118,4 +1119,11 @@ export type MemoSignerItem = {
       | (AttachmentTableRow & { attachment_public_url?: string })
       | null;
   };
+};
+
+export type MemoLineItem = {
+  memo_line_item_content: string;
+  memo_line_item_attachment?: File | Blob;
+  memo_line_item_attachment_name?: string;
+  memo_line_item_attachment_caption?: string;
 };

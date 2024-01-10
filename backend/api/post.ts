@@ -17,6 +17,7 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  MemoLineItem,
   NotificationTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -1020,3 +1021,82 @@ export const createRowInLookupTable = async (
     value: formattedData[value],
   };
 };
+
+// Create memo
+export const createTeamMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memoData: {
+      memo_author_user_id: string;
+      memo_subject: string;
+      memo_team_id: string;
+      memo_reference_number_prefix: string;
+    };
+    signerData: {
+      memo_signer_order: number;
+      memo_signer_is_primary: boolean;
+      memo_signer_team_member_id: string;
+    }[];
+    lineItemData: MemoLineItem[];
+  }
+) => {
+  const { memoData, signerData, lineItemData } = params;
+
+  // upload attachments
+  const updatedLineItemData = await processAllMemoLineItems(
+    lineItemData,
+    supabaseClient
+  );
+
+  const input_data = {
+    memoData,
+    signerData,
+    lineItemData: updatedLineItemData,
+  };
+
+  // create memo
+  const { data, error } = await supabaseClient.rpc("create_memo", {
+    input_data,
+  });
+
+  console.log(input_data);
+
+  console.log(error);
+
+  if (error) throw Error;
+
+  return data;
+};
+
+const processAllMemoLineItems = async (
+  lineItemData: MemoLineItem[],
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const processedLineItems = await Promise.all(
+    lineItemData.map(async (lineItem) => {
+      const memo_line_item_id = uuidv4();
+
+      if (lineItem.memo_line_item_attachment) {
+        const bucket = "MEMO_ATTACHMENTS";
+        const attachmentPublicUrl = await uploadImage(supabaseClient, {
+          id: uuidv4(),
+          image: lineItem.memo_line_item_attachment,
+          bucket,
+        });
+
+        return {
+          ...lineItem,
+          memo_line_item_id,
+          memo_line_item_attachment_public_url: attachmentPublicUrl,
+          memo_line_item_attachment_storage_bucket: bucket,
+        };
+      }
+
+      return { ...lineItem, memo_line_item_id };
+    })
+  );
+
+  return JSON.parse(JSON.stringify(processedLineItems));
+};
+
+// End create memo

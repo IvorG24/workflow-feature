@@ -8,6 +8,7 @@ import {
   Flex,
   Group,
   Image as MantineImage,
+  Paper,
   Stack,
   Text,
 } from "@mantine/core";
@@ -86,7 +87,7 @@ const MemoPreview = ({ data, teamMemoCount }: Props) => {
   }, [data]);
 
   return (
-    <Box mt="md">
+    <Paper mt="md" p="md" radius="md">
       <Text mb="md" weight={700}>
         MEMORANDUM
       </Text>
@@ -140,7 +141,7 @@ const MemoPreview = ({ data, teamMemoCount }: Props) => {
           </Flex>
         )}
       </Stack>
-    </Box>
+    </Paper>
   );
 };
 

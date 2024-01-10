@@ -20,6 +20,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('USER_SIGNATURES', 'USER_SIGNATUR
 INSERT INTO storage.buckets (id, name) VALUES ('TEAM_LOGOS', 'TEAM_LOGOS');
 INSERT INTO storage.buckets (id, name) VALUES ('COMMENT_ATTACHMENTS', 'COMMENT_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('REQUEST_ATTACHMENTS', 'REQUEST_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('MEMO_ATTACHMENTS', 'MEMO_ATTACHMENTS');
 
 UPDATE storage.buckets SET public = true;
 
@@ -685,8 +686,11 @@ CREATE TABLE memo_line_item_attachment_table (
     memo_line_item_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
     memo_line_item_attachment_name VARCHAR(4000) NOT NULL,
     memo_line_item_attachment_caption VARCHAR(4000),
+    memo_line_item_attachment_storage_bucket VARCHAR(4000) NOT NULL,
+    memo_line_item_attachment_public_url VARCHAR(4000) NOT NULL,
     memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) NOT NULL
 );
+
 
 -- End: Memo feature table
 
@@ -8448,6 +8452,91 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 -- End: Format team name to url key
+
+-- Start: Create memo
+
+CREATE OR REPLACE FUNCTION create_memo(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let new_memo_data;
+  plv8.subtransaction(function(){
+    const {
+      memoData,
+      signerData,
+      lineItemData
+    } = input_data;
+
+    const memoCount = plv8.execute(`SELECT COUNT(*) FROM memo_table WHERE memo_team_id = '${memoData.memo_team_id}'`)[0].count;
+    const memo_reference_number_serial = (Number(memoCount) + 1).toString(16).toUpperCase();
+    memoData.memo_reference_number_serial = memo_reference_number_serial;
+
+    new_memo_data = plv8.execute(`
+      INSERT INTO memo_table (
+        memo_team_id,
+        memo_author_user_id,
+        memo_subject,
+        memo_reference_number_prefix,
+        memo_reference_number_serial
+      ) 
+      VALUES (
+        '${memoData.memo_team_id}',
+        '${memoData.memo_author_user_id}',
+        '${memoData.memo_subject}',
+        '${memoData.memo_reference_number_prefix}',
+        '${memoData.memo_reference_number_serial}'
+      ) 
+      RETURNING *;
+    `)[0];
+
+    const signerTableValues = signerData.map((signer) => `('${signer.memo_signer_is_primary}','${signer.memo_signer_order}','${signer.memo_signer_team_member_id}', '${new_memo_data.memo_id}')`).join(",");
+
+    plv8.execute(`INSERT INTO memo_signer_table (memo_signer_is_primary, memo_signer_order, memo_signer_team_member_id, memo_signer_memo_id) VALUES ${signerTableValues}`);
+
+    let lineItemTableValues = [];
+    let lineItemAttachmentTableValues = [];
+
+    lineItemData.forEach((lineItem, lineItemIndex) => {
+      const lineItemValues = `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${new_memo_data.memo_id}')`
+
+      lineItemTableValues.push(lineItemValues)
+
+      if (lineItem.memo_line_item_attachment) {
+
+        const lineItemAttachmentValues = `('${lineItem.memo_line_item_attachment_name}', '${lineItem.memo_line_item_attachment_caption}', '${lineItem.memo_line_item_attachment_storage_bucket}', '${lineItem.memo_line_item_attachment_public_url}', '${lineItem.memo_line_item_id}')`
+
+        lineItemAttachmentTableValues.push(lineItemAttachmentValues)
+      }
+    });
+
+    plv8.execute(`
+      INSERT INTO memo_line_item_table (
+        memo_line_item_id,
+        memo_line_item_content,
+        memo_line_item_order,
+        memo_line_item_memo_id
+      ) VALUES 
+      ${lineItemTableValues.join(",")}
+    `);
+
+    if (lineItemAttachmentTableValues.length > 0) {
+      plv8.execute(`
+        INSERT INTO memo_line_item_attachment_table (
+          memo_line_item_attachment_name,
+          memo_line_item_attachment_caption,
+          memo_line_item_attachment_storage_bucket,
+          memo_line_item_attachment_public_url,
+          memo_line_item_attachment_line_item_id
+        ) VALUES 
+        ${lineItemAttachmentTableValues.join(",")}
+      `);
+    }
+
+ });
+ return new_memo_data;
+$$ LANGUAGE plv8;
+
+-- End: Create memo
 
 ---------- End: FUNCTIONS
 

@@ -1,3 +1,4 @@
+import moment from "moment";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 
 export const isValidTeamName = (name: string): boolean => {
@@ -118,4 +119,10 @@ export const getInitials = (fullname: string) => {
   const words = fullname.trim().split(" ");
   const initials = words.map((word) => word[0].toUpperCase()).join("");
   return initials;
+};
+
+export const getMemoReferencePrefix = (teamName: string) => {
+  return `MEMO-${teamName.toUpperCase().split(" ").join("")}-${moment().format(
+    "YYYY"
+  )}`;
 };
